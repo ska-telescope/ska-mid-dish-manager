@@ -1,7 +1,9 @@
 # pylint: disable=abstract-method
 import enum
+import logging
 
 from ska_tango_base import SKAController
+from ska_tango_base.base import TaskExecutorComponentManager
 from tango.server import run, attribute
 
 
@@ -42,8 +44,32 @@ class Band(enum.IntEnum):
     UNDEFINED = 9
 
 
+class DishManagerComponentManager(TaskExecutorComponentManager):
+    def __init__(
+        self,
+        *args,
+        max_workers: Optional[int] = None,
+        logger: logging.Logger = None,
+        **kwargs,
+    ):
+        """"""
+        super().__init__(*args, max_workers=max_workers, logger=logger, **kwargs)
+
 class DishManager(SKAController):
     """"""
+
+    def create_component_manager(self):
+        """Create the component manager for DishManager
+        
+        :return: Instance of DishManagerComponentManager
+        :rtype: DishManagerComponentManager
+        """
+        return DishManagerComponentManager(
+            max_workers=1,
+            logger=self.logger,
+            communication_state_callback=None,
+            component_state_callback=None,
+        )
     class InitCommand(SKAController.InitCommand):
         """"""
 
