@@ -1,5 +1,5 @@
 SKA Dish Manager Documentation
-========================================
+==============================
 
 .. automodule:: ska_mid_dish_manager
 

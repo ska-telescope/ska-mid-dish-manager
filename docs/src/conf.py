@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'SKA Dish Manager Simulator'
+project = 'SKA Dish Manager'
 copyright = '2022, KAROO Team'
 author = 'KAROO Team'
 
