@@ -2,6 +2,8 @@
 import enum
 import logging
 
+from typing import Optional
+
 from ska_tango_base import SKAController
 from ska_tango_base.base import TaskExecutorComponentManager
 from tango import DevVarDoubleArray
@@ -56,6 +58,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """"""
         super().__init__(*args, max_workers=max_workers, logger=logger, **kwargs)
 
+
 class DishManager(SKAController):
     """"""
 
@@ -71,6 +74,7 @@ class DishManager(SKAController):
             communication_state_callback=None,
             component_state_callback=None,
         )
+
     class InitCommand(SKAController.InitCommand):
         """"""
 
@@ -88,6 +92,7 @@ class DishManager(SKAController):
             device._capturing = False
 
     ###### Attributes ######
+
     dishMode = attribute(
         dtype=DishMode,
         doc="Dish rolled-up operating mode in Dish Control Model (SCM) notation"
@@ -140,6 +145,7 @@ class DishManager(SKAController):
         return self._capturing
 
     ###### Commands ######
+
     @command(dtype_in=None, dtype_out=None)
     def ConfigureBand1():
         return
