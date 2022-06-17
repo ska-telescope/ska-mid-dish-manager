@@ -4,7 +4,8 @@ import logging
 
 from ska_tango_base import SKAController
 from ska_tango_base.base import TaskExecutorComponentManager
-from tango.server import run, attribute
+from tango import DevVarDoubleArray
+from tango.server import run, attribute, command
 
 
 class DishMode(enum.IntEnum):
@@ -76,7 +77,6 @@ class DishManager(SKAController):
         def do(self):
             """"""
             super().do()
-
             device = self.target
             device._dish_mode = DishMode.STANDBY_LP
             device._pointing_state = PointingState.NONE
@@ -138,6 +138,83 @@ class DishManager(SKAController):
 
     def read_capturing(self):
         return self._capturing
+
+    ###### Commands ######
+    @command(dtype_in=None, dtype_out=None)
+    def ConfigureBand1():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def ConfigureBand2():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def ConfigureBand3():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def ConfigureBand4():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def ConfigureBand5a():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def ConfigureBand5b():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def ConfigureBand5c():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def Scan():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def SetMaintenanceMode():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def SetOperateMode():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def SetStandbyLPMode():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def SetStandbyFPMode():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def SetStowMode():
+        return
+
+    @command(
+        dtype_in=DevVarDoubleArray,
+        doc_in="[0]: Azimuth\n[1]: Elevation",
+        dtype_out=None
+    )
+    def Slew():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def StartCapture():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def StopCapture():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def Track():
+        return
+
+    @command(dtype_in=None, dtype_out=None)
+    def TrackStop():
+        return
 
 
 def main(args=None, **kwargs):
