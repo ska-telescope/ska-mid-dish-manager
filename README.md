@@ -1,5 +1,5 @@
-Dish Manager Simulator
-========================
+Dish Manager
+============
 
 [![Documentation Status]
 
