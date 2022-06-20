@@ -53,7 +53,7 @@ def test_dish_manager_conforms_to_ska_wide_spec(dish_manager):
     with mock.patch("tango.DeviceProxy") as dp:
         dp.return_value = dish_manager
         result = validate_device_from_url(
-            dish_manager.name(),
+            dp.name(),
             SPEC_URLS["ska_tango_guide_ska_wide"],
             False,
         )
@@ -64,7 +64,7 @@ def test_dish_manager_conforms_to_dish_master_spec(dish_manager):
     with mock.patch("tango.DeviceProxy") as dp:
         dp.return_value = dish_manager
         result = validate_device_from_url(
-            dp.name,
+            dp.name(),
             SPEC_URLS["dish_master"],
             False,
         )
