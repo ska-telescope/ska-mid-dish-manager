@@ -56,7 +56,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         **kwargs,
     ):
         """"""
-        super().__init__(*args, max_workers=max_workers, logger=logger, **kwargs)
+        super().__init__(
+            *args, max_workers=max_workers, logger=logger, **kwargs
+        )
 
 
 class DishManager(SKAController):
@@ -64,7 +66,7 @@ class DishManager(SKAController):
 
     def create_component_manager(self):
         """Create the component manager for DishManager
-        
+
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
         """
@@ -81,12 +83,12 @@ class DishManager(SKAController):
         def do(self):
             """"""
             super().do()
-            device = self.target
+            device = self._device
             device._dish_mode = DishMode.STANDBY_LP
             device._pointing_state = PointingState.NONE
             device._desired_pointing = [0.0, 0.0, 0.0]
             device._achieved_pointing = [0.0, 0.0, 0.0]
-            device._azimuthOverWrap = False
+            device._azimuth_over_wrap = False
             device._achieved_target_lock = False
             device._configured_band = Band.UNKNOWN
             device._capturing = False
@@ -95,7 +97,7 @@ class DishManager(SKAController):
 
     dishMode = attribute(
         dtype=DishMode,
-        doc="Dish rolled-up operating mode in Dish Control Model (SCM) notation"
+        doc="Dish rolled-up operating mode in Dish Control Model (SCM) notation",
     )
     pointingState = attribute(
         dtype=PointingState,
@@ -125,15 +127,18 @@ class DishManager(SKAController):
 
     def read_dishMode(self):
         return self._dish_mode
-    
+
     def read_pointingState(self):
         return self._pointing_state
-    
+
     def read_desiredPointing(self):
         return self._desired_pointing
 
     def read_achievedPointing(self):
         return self._achieved_pointing
+
+    def read_azimuthOverWrap(self):
+        return self._azimuth_over_wrap
 
     def read_achievedTargetLock(self):
         return self._achieved_target_lock
@@ -201,7 +206,7 @@ class DishManager(SKAController):
     @command(
         dtype_in=DevVarDoubleArray,
         doc_in="[0]: Azimuth\n[1]: Elevation",
-        dtype_out=None
+        dtype_out=None,
     )
     def Slew():
         return
