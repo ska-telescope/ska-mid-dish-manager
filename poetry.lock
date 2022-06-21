@@ -7,14 +7,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "assertpy"
-version = "1.1"
-description = "Simple assertion library for unit testing in python with a fluent API"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "astroid"
 version = "2.11.6"
 description = "An abstract syntax tree for Python with inference support."
@@ -122,6 +114,14 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, 
 
 [package.extras]
 graph = ["objgraph (>=1.7.2)"]
+
+[[package]]
+name = "enum34"
+version = "1.1.10"
+description = "Python 3.4 Enum backported to 3.3, 3.2, 3.1, 2.7, 2.6, 2.5, and 2.4"
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "flake8"
@@ -343,13 +343,14 @@ diagrams = ["railroad-diagrams", "jinja2"]
 
 [[package]]
 name = "pytango"
-version = "9.3.4"
+version = "9.3.3"
 description = "A python binding for the Tango control system"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.dependencies]
+enum34 = "*"
 six = ">=1.10"
 
 [[package]]
@@ -562,15 +563,12 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "b45ca29644737fb82a2c26bd9c11e554a854d03578d0869e64775608f6ee05f0"
+content-hash = "6b6b65e36dff29081dac7ab0d67e97c1df691513fe6ccffd76893f489a1fd8bb"
 
 [metadata.files]
 argparse = [
     {file = "argparse-1.4.0-py2.py3-none-any.whl", hash = "sha256:c31647edb69fd3d465a847ea3157d37bed1f95f19760b11a47aa91c04b666314"},
     {file = "argparse-1.4.0.tar.gz", hash = "sha256:62b089a55be1d8949cd2bc7e0df0bddb9e028faefc8c32038cc84862aefdd6e4"},
-]
-assertpy = [
-    {file = "assertpy-1.1.tar.gz", hash = "sha256:acc64329934ad71a3221de185517a43af33e373bb44dc05b5a9b174394ef4833"},
 ]
 astroid = [
     {file = "astroid-2.11.6-py3-none-any.whl", hash = "sha256:ba33a82a9a9c06a5ceed98180c5aab16e29c285b828d94696bf32d6015ea82a9"},
@@ -683,6 +681,11 @@ debugpy = [
 dill = [
     {file = "dill-0.3.5.1-py2.py3-none-any.whl", hash = "sha256:33501d03270bbe410c72639b350e941882a8b0fd55357580fbc873fba0c59302"},
     {file = "dill-0.3.5.1.tar.gz", hash = "sha256:d75e41f3eff1eee599d738e76ba8f4ad98ea229db8b085318aa2b3333a208c86"},
+]
+enum34 = [
+    {file = "enum34-1.1.10-py2-none-any.whl", hash = "sha256:a98a201d6de3f2ab3db284e70a33b0f896fbf35f8086594e8c9e74b909058d53"},
+    {file = "enum34-1.1.10-py3-none-any.whl", hash = "sha256:c3858660960c984d6ab0ebad691265180da2b43f07e061c0f8dca9ef3cffd328"},
+    {file = "enum34-1.1.10.tar.gz", hash = "sha256:cce6a7477ed816bd2542d03d53db9f0db935dd013b70f336a95c73979289f248"},
 ]
 flake8 = [
     {file = "flake8-3.9.2-py2.py3-none-any.whl", hash = "sha256:bf8fd333346d844f616e8d47905ef3a3384edae6b4e9beb0c5101e25e3110907"},
@@ -825,15 +828,15 @@ pyparsing = [
     {file = "pyparsing-3.0.9.tar.gz", hash = "sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb"},
 ]
 pytango = [
-    {file = "pytango-9.3.4-cp27-cp27m-win32.whl", hash = "sha256:ed5f770841be290ed51ffa809e9b076aa6389a1451e2a6dfdbcefc8dc764f947"},
-    {file = "pytango-9.3.4-cp27-cp27m-win_amd64.whl", hash = "sha256:d1b337fdf188ad63080487d2445964714cd74e7aa291a0dae6a34bc0ba30e733"},
-    {file = "pytango-9.3.4-cp36-cp36m-win32.whl", hash = "sha256:a48a54ea60381ab5c0640b3219995538ad6682deb0c8c07bda7bacb5c5f8a663"},
-    {file = "pytango-9.3.4-cp36-cp36m-win_amd64.whl", hash = "sha256:251ae346767b9a1c0bcde571dfd56b5e9ebda344574b484192d5506d015027c3"},
-    {file = "pytango-9.3.4-cp37-cp37m-win32.whl", hash = "sha256:26f152eaca1069932eb67f2ebbf7f4fb116406a18ae5f4598851ecf34df462e4"},
-    {file = "pytango-9.3.4-cp37-cp37m-win_amd64.whl", hash = "sha256:28ad74b47b7f29c449552f26840f45c627ab6ea58d8974e82a5a1befd65ad01e"},
-    {file = "pytango-9.3.4-cp38-cp38-win32.whl", hash = "sha256:4e85dccd6112a4cb132f0aa463da73eeb8efeb49b8dcb1a267200828b35d0434"},
-    {file = "pytango-9.3.4-cp38-cp38-win_amd64.whl", hash = "sha256:4e4725bd21cf69496eb793e8263df2e3cb330f353c53378e6de29a8829524d7f"},
-    {file = "pytango-9.3.4.tar.gz", hash = "sha256:9c7ecb4ad418963557a8d929dd8d5ab917b8aa377b172f50ab2e7136755f4f28"},
+    {file = "pytango-9.3.3-cp27-cp27m-win32.whl", hash = "sha256:c481628c0b7b0cda737adbf6194d0d143f66352e04e310912c9bae236ed2e482"},
+    {file = "pytango-9.3.3-cp27-cp27m-win_amd64.whl", hash = "sha256:beeab13f0ce32c5d226da2c9b33dc07eb92b4c7a320164c34ff2666b2ea583a3"},
+    {file = "pytango-9.3.3-cp36-cp36m-win32.whl", hash = "sha256:3d566fe6f091b12032d5ad90465f3770f02ccc7e8bd7345543074936676eb3d9"},
+    {file = "pytango-9.3.3-cp36-cp36m-win_amd64.whl", hash = "sha256:b0627968afbc3bfc6d5f81c8d2094a823f57e489853704493b85b1628423c7e0"},
+    {file = "pytango-9.3.3-cp37-cp37m-win32.whl", hash = "sha256:4c70dd4c634b8514b6022641d02512f7d275f80e226d39765954d0f91b003c5e"},
+    {file = "pytango-9.3.3-cp37-cp37m-win_amd64.whl", hash = "sha256:eef2db112050c04ade0b3d2fc1540b8f8ff2f9029034ddc8806afc0053b404da"},
+    {file = "pytango-9.3.3-cp38-cp38-win32.whl", hash = "sha256:2e166d1e887488f368144caabb1afd4b0026a1a5a190ea76c52e92d7420429d9"},
+    {file = "pytango-9.3.3-cp38-cp38-win_amd64.whl", hash = "sha256:133efb1b70c95a24ae129941c76c9485e8ebdc5cd3edac803257f30091f2bb61"},
+    {file = "pytango-9.3.3.tar.gz", hash = "sha256:c09fc7a44cac8c2d95d3ad39ba644998e8f468c730dc495443a74de05a07e9f9"},
 ]
 pytest = [
     {file = "pytest-7.1.2-py3-none-any.whl", hash = "sha256:13d0e3ccfc2b6e26be000cb6568c832ba67ba32e719443bfe725814d3c42433c"},
