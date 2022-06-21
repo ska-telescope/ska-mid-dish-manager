@@ -43,8 +43,9 @@ class Band(enum.IntEnum):
     B5a = 5
     B5b = 6
     B5c = 7
-    ERROR = 8
-    UNDEFINED = 9
+    NONE = 8
+    ERROR = 9
+    UNDEFINED = 10
 
 
 class DishManagerComponentManager(TaskExecutorComponentManager):
