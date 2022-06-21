@@ -12,4 +12,4 @@ def test_dishes_are_available(dish_number):
     assert isinstance(dish_manager_proxy.ping(), int)
     assert dish_manager_proxy.State() == DevState.STANDBY
     assert dish_manager_proxy.dishMode.name == "STANDBY_LP"
-    assert dish_manager_proxy.pointingState.name == "NONE"
+    assert dish_manager_proxy.pointingState.name == "UNKNOWN"

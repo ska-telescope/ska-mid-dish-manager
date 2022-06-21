@@ -77,15 +77,15 @@ class DishManager(SKAController):
             """"""
             super().do()
             device = self._device
-            device._dish_mode = DishMode.STARTUP
-            device._pointing_state = PointingState.NONE
+            device._dish_mode = DishMode.STANDBY_LP
+            device._pointing_state = PointingState.UNKNOWN
             device._desired_pointing = [0.0, 0.0, 0.0]
             device._achieved_pointing = [0.0, 0.0, 0.0]
             device._azimuth_over_wrap = False
             device._achieved_target_lock = False
-            device._configured_band = Band.UNKNOWN
+            device._configured_band = Band.NONE
             device._capturing = False
-            device.op_state_model.perform_action("component_unknown")
+            device.op_state_model.perform_action("component_standby")
 
     ###### Attributes ######
 
