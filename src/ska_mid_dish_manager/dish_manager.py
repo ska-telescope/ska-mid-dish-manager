@@ -6,7 +6,7 @@ from typing import Optional
 
 from ska_tango_base import SKAController
 from ska_tango_base.base import TaskExecutorComponentManager
-from tango import DevVarDoubleArray
+from tango import DevVarDoubleArray, AttrWriteType
 from tango.server import run, attribute, command
 
 
@@ -16,7 +16,7 @@ class DishMode(enum.IntEnum):
     STARTUP = 2
     SHUTDOWN = 3
     STANDBY_LP = 4
-    STANBY_FP = 5
+    STANDBY_FP = 5
     STOW = 6
     CONFIG = 7
     OPERATE = 8
