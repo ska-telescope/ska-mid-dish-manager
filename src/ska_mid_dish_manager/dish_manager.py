@@ -23,26 +23,21 @@ class DishMode(enum.IntEnum):
 
 
 class PointingState(enum.IntEnum):
-    NONE = 0
-    READY = 1
-    SLEW = 2
-    TRACK = 3
-    SCAN = 4
-    UNKNOWN = 5
+    READY = 0
+    SLEW = 1
+    TRACK = 2
+    SCAN = 3
+    UNKNOWN = 4
 
 
 class Band(enum.IntEnum):
-    UNKNOWN = 0
+    NONE = 0
     B1 = 1
     B2 = 2
     B3 = 3
     B4 = 4
     B5a = 5
     B5b = 6
-    B5c = 7
-    NONE = 8
-    ERROR = 9
-    UNDEFINED = 10
 
 
 class DishManagerComponentManager(TaskExecutorComponentManager):
