@@ -105,6 +105,7 @@ class DishManager(SKAController):
     desiredPointing = attribute(
         max_dim_x=3,
         dtype=(float,),
+        access=AttrWriteType.READ_WRITE,
     )
     achievedPointing = attribute(
         max_dim_x=3,
@@ -133,6 +134,9 @@ class DishManager(SKAController):
 
     def read_desiredPointing(self):
         return self._desired_pointing
+
+    def write_desiredPointing(self, value):
+        self._desired_pointing = value
 
     def read_achievedPointing(self):
         return self._achieved_pointing
