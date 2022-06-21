@@ -11,18 +11,15 @@ from tango.server import run, attribute, command
 
 
 class DishMode(enum.IntEnum):
-    UNKNOWN = 0
-    OFF = 1
-    STARTUP = 2
-    SHUTDOWN = 3
-    STANDBY_LP = 4
-    STANDBY_FP = 5
+    OFF = 0
+    STARTUP = 1
+    SHUTDOWN = 2
+    STANDBY_LP = 3
+    STANDBY_FP = 4
+    MAINTENANCE = 5
     STOW = 6
     CONFIG = 7
     OPERATE = 8
-    MAINTENANCE = 9
-    FORBIDDEN = 10
-    ERROR = 11
 
 
 class PointingState(enum.IntEnum):
