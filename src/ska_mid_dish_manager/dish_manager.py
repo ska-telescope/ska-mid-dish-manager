@@ -82,7 +82,7 @@ class DishManager(SKAController):
             """"""
             super().do()
             device = self._device
-            device._dish_mode = DishMode.STANDBY_LP
+            device._dish_mode = DishMode.STARTUP
             device._pointing_state = PointingState.NONE
             device._desired_pointing = [0.0, 0.0, 0.0]
             device._achieved_pointing = [0.0, 0.0, 0.0]
