@@ -90,7 +90,7 @@ class DishManager(SKAController):
             device._achieved_target_lock = False
             device._configured_band = Band.UNKNOWN
             device._capturing = False
-            device.op_state_model.perform_action("component_standby")
+            device.op_state_model.perform_action("component_unknown")
 
     ###### Attributes ######
 
