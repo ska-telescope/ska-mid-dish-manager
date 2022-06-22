@@ -45,8 +45,6 @@ K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 endif
 
 # include makefile targets from the submodule
--include .make/ansible.mk
--include .make/cpp.mk
 -include .make/k8s.mk
 -include .make/helm.mk
 -include .make/oci.mk
@@ -58,4 +56,4 @@ endif
 -include PrivateRules.mak
 
 K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
-	--set global.tango_host=$(TANGO_HOST) --set "global.dish_lmc_server_instances="'$(SERVER_INSTANCES)' $(CUSTOM_VALUES)
+	--set global.tango_host=$(TANGO_HOST) --set "global.dishes="'$(SERVER_INSTANCES)' $(CUSTOM_VALUES)
