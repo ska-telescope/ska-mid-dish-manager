@@ -4,7 +4,7 @@ Dish Manager
 [![Documentation Status](https://readthedocs.org/projects/ska-mid-dish-manager/badge/?version=latest)](https://developer.skao.int/projects/ska-mid-dish-manager/en/latest/?badge=latest)
 
 
-This device provides master control and rolled-up monitoring of dish. When commanded, it propagates the associated command to the relevant sub-elements and updates its related attributes based on the aggregation of progress reported by those sub-elements. It also exposes attributes which directly relate to certain states of the sub-elements without making a proxy to those sub-element devices.
+This device provides master control and rolled-up monitoring of dish. When commanded, it propagates the associated command to the relevant subservient devices and updates its related attributes based on the aggregation of progress reported by those devices.
 
 ## Requirements
 
@@ -20,16 +20,16 @@ The system used for development needs to have Python 3 and `pip` installed.
 git clone git@gitlab.com:ska-telescope/ska-mid-dish-manager.git
 ```
 
-- Install the package
+- Install poetry
 
 ```bash
- python3 -m pip install .
+pip install poetry
 ```
 
-Install the requirements.
+Install the dependencies and the package.
 
 ```bash
-$ pip install poetry
+$ poetry install
 ```
 
 ## Testing
@@ -37,17 +37,14 @@ $ pip install poetry
 - Run the tests
 
 ```bash
-tox
+make python-test
 ```
 
 - Lint
 
 ```bash
-tox -e lint
+make python-lint
 ```
 
 ## Writing documentation
-
-The documentation generator for this project is not available currently
-
-### Build the documentation
+The documentation for this project, including how to get started with it, can be found in the docs folder.

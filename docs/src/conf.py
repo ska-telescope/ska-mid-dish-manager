@@ -4,20 +4,22 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
+import os
+import sys
+
+# prevent circular imports...
+# see https://github.com/sphinx-doc/sphinx/issues/9243
+import sphinx.ext.autodoc
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import os
-import sys
-sys.path.insert(0, os.path.abspath('../../src'))
+sys.path.insert(0, os.path.abspath("../../src"))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'SKA Dish Manager'
+project = 'SKA Mid Dish Manager'
 copyright = '2022, KAROO Team'
 author = 'KAROO Team'
 

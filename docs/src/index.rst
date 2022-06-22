@@ -1,7 +1,7 @@
-SKA Dish Manager Documentation
-==============================
-
-.. automodule:: ska_mid_dish_manager
+==================================
+SKA Mid Dish Manager Documentation
+==================================
+This project device is developing the tango device which provides master control and rolled-up monitoring of dish.
 
 .. toctree::
    :maxdepth: 2
