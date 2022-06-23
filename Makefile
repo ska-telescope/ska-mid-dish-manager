@@ -11,8 +11,6 @@ DOCKER_FILE_PATH=Dockerfile
 MINIKUBE ?= true ## Minikube or not
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 
-SERVER_INSTANCES ?= {1}
-
 ifeq ($(MAKECMDGOALS),python-test)
 MARK = unit
 endif
@@ -44,6 +42,10 @@ CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 endif
 
+K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
+	--set global.tango_host=$(TANGO_HOST) \
+	$(CUSTOM_VALUES)
+
 # include makefile targets from the submodule
 -include .make/k8s.mk
 -include .make/helm.mk
@@ -54,6 +56,3 @@ endif
 
 # include your own private variables for custom deployment configuration
 -include PrivateRules.mak
-
-K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
-	--set global.tango_host=$(TANGO_HOST) --set "global.dishes="'$(SERVER_INSTANCES)' $(CUSTOM_VALUES)
