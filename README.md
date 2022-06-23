@@ -1,7 +1,7 @@
 Dish Manager
 ============
 
-[![Documentation Status](https://readthedocs.org/projects/ska-mid-dish-manager/badge/?version=latest)](https://developer.skao.int/projects/ska-mid-dish-manager/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/ska-telescope-ska-mid-dish-manager/badge/?version=latest)](https://developer.skao.int/projects/ska-mid-dish-manager/en/latest/?badge=latest)
 
 
 This device provides master control and rolled-up monitoring of dish. When commanded, it propagates the associated command to the relevant subservient devices and updates its related attributes based on the aggregation of progress reported by those devices.
