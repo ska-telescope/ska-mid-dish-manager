@@ -1,9 +1,7 @@
+"""Tests that check that the Dish Manager conforms to the ICD"""
 import pytest
-
 from tango import DeviceProxy
-
 from tango_simlib.utilities.validate_device import validate_device_from_url
-
 
 SPEC_URLS = {
     "dish_master": (
@@ -21,6 +19,7 @@ SPEC_URLS = {
 @pytest.mark.SKA_mid
 @pytest.mark.parametrize("dish_number", ["0001", "0002", "0003", "0004"])
 def test_dish_manager_conforms_to_ska_wide_spec(dish_number):
+    """Test that the interface conforms to the base tango interface"""
     dish_manager_proxy = DeviceProxy(f"mid_d{dish_number}/elt/master")
     result = validate_device_from_url(
         dish_manager_proxy.name(),
@@ -34,6 +33,7 @@ def test_dish_manager_conforms_to_ska_wide_spec(dish_number):
 @pytest.mark.SKA_mid
 @pytest.mark.parametrize("dish_number", ["0001", "0002", "0003", "0004"])
 def test_dish_manager_conforms_to_dish_master_spec(dish_number):
+    """Test that the device inteface conforms to the Dish Manager interface"""
     dish_manager_proxy = DeviceProxy(f"mid_d{dish_number}/elt/master")
     result = validate_device_from_url(
         dish_manager_proxy.name(),

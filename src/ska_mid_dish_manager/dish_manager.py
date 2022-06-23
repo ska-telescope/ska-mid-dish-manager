@@ -1,43 +1,54 @@
 # pylint: disable=abstract-method
+# pylint: disable=missing-module-docstring
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
 import enum
 import logging
-
 from typing import Optional
 
 from ska_tango_base import SKAController
 from ska_tango_base.base import TaskExecutorComponentManager
-from tango import DevVarDoubleArray, AttrWriteType
-from tango.server import run, attribute, command
+from tango import AttrWriteType, DevVarDoubleArray
+from tango.server import attribute, command, run
 
 
 class DishMode(enum.IntEnum):
-    OFF = 0
-    STARTUP = 1
-    SHUTDOWN = 2
-    STANDBY_LP = 3
-    STANDBY_FP = 4
-    MAINTENANCE = 5
+    UNKNOWN = 0
+    OFF = 1
+    STARTUP = 2
+    SHUTDOWN = 3
+    STANDBY_LP = 4
+    STANDBY_FP = 5
     STOW = 6
     CONFIG = 7
     OPERATE = 8
+    MAINTENANCE = 9
+    FORBIDDEN = 10
+    ERROR = 11
 
 
 class PointingState(enum.IntEnum):
-    READY = 0
-    SLEW = 1
-    TRACK = 2
-    SCAN = 3
-    UNKNOWN = 4
+    NONE = 0
+    READY = 1
+    SLEW = 2
+    TRACK = 3
+    SCAN = 4
+    UNKNOWN = 5
 
 
 class Band(enum.IntEnum):
-    NONE = 0
+    UNKNOWN = 0
     B1 = 1
     B2 = 2
     B3 = 3
     B4 = 4
+    # pylint: disable=invalid-name
     B5a = 5
     B5b = 6
+    B5c = 7
+    NONE = 8
+    ERROR = 9
+    UNDEFINED = 10
 
 
 class DishManagerComponentManager(TaskExecutorComponentManager):
@@ -49,13 +60,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         **kwargs,
     ):
         """"""
+        # pylint: disable=useless-super-delegation
         super().__init__(
             *args, max_workers=max_workers, logger=logger, **kwargs
         )
 
 
-class DishManager(SKAController):
-    """"""
+class DishManager(SKAController):  # pylint: disable=too-many-public-methods
+    """
+    The Dish Manager of the Dish LMC subsytem
+    """
 
     def create_component_manager(self):
         """Create the component manager for DishManager
@@ -70,13 +84,18 @@ class DishManager(SKAController):
             component_state_callback=None,
         )
 
-    class InitCommand(SKAController.InitCommand):
-        """"""
+    class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
+        """
+        A class for the Dish Manager's init_device() method
+        """
 
         def do(self):
-            """"""
+            """
+            Initializes the attributes and properties of the DishManager
+            """
             super().do()
             device = self._device
+            # pylint: disable=protected-access
             device._dish_mode = DishMode.STANDBY_LP
             device._pointing_state = PointingState.UNKNOWN
             device._desired_pointing = [0.0, 0.0, 0.0]
@@ -87,11 +106,12 @@ class DishManager(SKAController):
             device._capturing = False
             device.op_state_model.perform_action("component_standby")
 
-    ###### Attributes ######
+    # Attributes
 
     dishMode = attribute(
         dtype=DishMode,
-        doc="Dish rolled-up operating mode in Dish Control Model (SCM) notation",
+        doc="Dish rolled-up operating mode in Dish Control Model (SCM) "
+        "notation",
     )
     pointingState = attribute(
         dtype=PointingState,
@@ -118,8 +138,8 @@ class DishManager(SKAController):
         dtype=bool,
     )
 
-    ###### Attribute's methods ######
-
+    # Attribute's methods
+    # pylint: disable=invalid-name
     def read_dishMode(self):
         return self._dish_mode
 
@@ -130,6 +150,7 @@ class DishManager(SKAController):
         return self._desired_pointing
 
     def write_desiredPointing(self, value):
+        # pylint: disable=attribute-defined-outside-init
         self._desired_pointing = value
 
     def read_achievedPointing(self):
@@ -147,58 +168,58 @@ class DishManager(SKAController):
     def read_capturing(self):
         return self._capturing
 
-    ###### Commands ######
-
+    # Commands
+    # pylint: disable=no-self-use
     @command(dtype_in=None, dtype_out=None)
-    def ConfigureBand1():
+    def ConfigureBand1(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def ConfigureBand2():
+    def ConfigureBand2(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def ConfigureBand3():
+    def ConfigureBand3(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def ConfigureBand4():
+    def ConfigureBand4(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def ConfigureBand5a():
+    def ConfigureBand5a(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def ConfigureBand5b():
+    def ConfigureBand5b(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def ConfigureBand5c():
+    def ConfigureBand5c(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def Scan():
+    def Scan(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def SetMaintenanceMode():
+    def SetMaintenanceMode(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def SetOperateMode():
+    def SetOperateMode(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def SetStandbyLPMode():
+    def SetStandbyLPMode(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def SetStandbyFPMode():
+    def SetStandbyFPMode(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def SetStowMode():
+    def SetStowMode(self):
         return
 
     @command(
@@ -206,23 +227,23 @@ class DishManager(SKAController):
         doc_in="[0]: Azimuth\n[1]: Elevation",
         dtype_out=None,
     )
-    def Slew():
+    def Slew(self, argin):  # pylint: disable=unused-argument
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def StartCapture():
+    def StartCapture(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def StopCapture():
+    def StopCapture(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def Track():
+    def Track(self):
         return
 
     @command(dtype_in=None, dtype_out=None)
-    def TrackStop():
+    def TrackStop(self):
         return
 
 
