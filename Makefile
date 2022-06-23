@@ -18,7 +18,7 @@ MARK = unit
 endif
 
 ifeq ($(MAKECMDGOALS),k8s-test)
-MARK = not (acceptance or unit or skampi-confidence)
+MARK = acceptance
 endif
 
 # this is for skampi prerun
