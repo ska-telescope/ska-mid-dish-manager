@@ -51,9 +51,14 @@ tango-simlib = "^0.9.4"
 
 [tool.pytest.ini_options]
 testpaths = "tests"
-addopts = "--json-report --json-report-file=build/reports/report.json --cov-report html:build/htmlcov --cov-report xml:build/reports/code-coverage.xml --cov-report term:skip-covered --cov=ska_low_mccs --junitxml=build/reports/unit-tests.xml --verbose"
+addopts = "--json-report --json-report-file=build/reports/report.json --cov-report html:build/htmlcov --cov-report xml:build/reports/code-coverage.xml --cov-report term:skip-covered --cov=ska_mid_dish_manager --junitxml=build/reports/unit-tests.xml --verbose"
 console_output_style = "progress"
 junit_family = "legacy"
+markers = [
+    "unit",
+    "acceptance",
+    "SKA_mid"
+]
 
 [tool.isort]
 multi_line_output = 3
@@ -67,7 +72,7 @@ source = ["src"]
 [tool.coverage.run]
 data_file = ".coverage/.coverage"
 branch = true
-source = ["ska_low_mccs"]
+source = ["ska_mid_dish_manager"]
 
 [tool.coverage.report]
 show_missing = false
