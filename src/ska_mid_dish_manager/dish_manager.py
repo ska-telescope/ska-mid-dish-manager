@@ -71,6 +71,11 @@ class DishManager(SKAController):  # pylint: disable=too-many-public-methods
     The Dish Manager of the Dish LMC subsystem
     """
 
+    def __init__(self, *args, **kwargs):
+        """Define DishManager variables"""
+        self._desired_pointing = None
+        super().__init__(*args, **kwargs)
+
     def create_component_manager(self):
         """Create the component manager for DishManager
 
