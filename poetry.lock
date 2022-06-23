@@ -7,14 +7,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "assertpy"
-version = "1.1"
-description = "Simple assertion library for unit testing in python with a fluent API"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "astroid"
 version = "2.11.6"
 description = "An abstract syntax tree for Python with inference support."
@@ -670,15 +662,12 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "9593caf26ff42be2aa2fe0e6482797f89633e7dbb2cde92bd2aa13859866cb87"
+content-hash = "5995898d1ecd16d420d3b247cfacd054b9969451795fb54d16780d694344b3d5"
 
 [metadata.files]
 argparse = [
     {file = "argparse-1.4.0-py2.py3-none-any.whl", hash = "sha256:c31647edb69fd3d465a847ea3157d37bed1f95f19760b11a47aa91c04b666314"},
     {file = "argparse-1.4.0.tar.gz", hash = "sha256:62b089a55be1d8949cd2bc7e0df0bddb9e028faefc8c32038cc84862aefdd6e4"},
-]
-assertpy = [
-    {file = "assertpy-1.1.tar.gz", hash = "sha256:acc64329934ad71a3221de185517a43af33e373bb44dc05b5a9b174394ef4833"},
 ]
 astroid = [
     {file = "astroid-2.11.6-py3-none-any.whl", hash = "sha256:ba33a82a9a9c06a5ceed98180c5aab16e29c285b828d94696bf32d6015ea82a9"},

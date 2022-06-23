@@ -17,7 +17,7 @@ SPEC_URLS = {
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
-@pytest.mark.parametrize("dish_number", ["0001", "0002", "0003", "0004"])
+@pytest.mark.parametrize("dish_number", ["0001"])
 def test_dish_manager_conforms_to_ska_wide_spec(dish_number):
     """Test that the interface conforms to the base tango interface"""
     dish_manager_proxy = DeviceProxy(f"mid_d{dish_number}/elt/master")
@@ -31,7 +31,7 @@ def test_dish_manager_conforms_to_ska_wide_spec(dish_number):
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
-@pytest.mark.parametrize("dish_number", ["0001", "0002", "0003", "0004"])
+@pytest.mark.parametrize("dish_number", ["0001"])
 def test_dish_manager_conforms_to_dish_master_spec(dish_number):
     """Test that the device inteface conforms to the Dish Manager interface"""
     dish_manager_proxy = DeviceProxy(f"mid_d{dish_number}/elt/master")
