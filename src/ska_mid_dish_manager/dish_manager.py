@@ -68,7 +68,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
 class DishManager(SKAController):  # pylint: disable=too-many-public-methods
     """
-    The Dish Manager of the Dish LMC subsytem
+    The Dish Manager of the Dish LMC subsystem
     """
 
     def create_component_manager(self):
