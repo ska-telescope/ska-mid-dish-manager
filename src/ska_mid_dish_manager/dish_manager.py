@@ -84,7 +84,9 @@ class DishManager(SKAController):  # pylint: disable=too-many-public-methods
             component_state_callback=None,
         )
 
-    class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
+    class InitCommand(
+        SKAController.InitCommand
+    ):  # pylint: disable=too-few-public-methods
         """
         A class for the Dish Manager's init_device() method
         """
