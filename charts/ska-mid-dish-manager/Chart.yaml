@@ -1,0 +1,29 @@
+apiVersion: v2
+name: ska-mid-dish-manager
+description: An application for the SKA Dish Manager TANGO device server(s).
+type: application
+version: 0.0.1
+appVersion: "0.0.1"
+home: https://gitlab.com/ska-telescope/ska-mid-dish-manager/
+icon: http://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
+sources:
+  - https://gitlab.com/ska-telescope/ska-mid-dish-manager/
+maintainers:
+  - name: Katleho Madisa
+    email: kmadisa@sarao.ac.za
+  - name: Johan Venter
+    email: jventer@sarao.ac.za
+  - name: Paul Swart
+    email: p.swart@sarao.ac.za
+  - name: Samuel Twum
+    email: stwum@sarao.ac.za
+  - name: Phelokazi dube
+    email: pdube@sarao.ac.za
+dependencies:
+- name: ska-tango-base
+  version: 0.3.11
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-tango-base.enabled,global.sub-system.ska-tango-base.enabled
+- name: ska-tango-util
+  version: 0.3.11
+  repository: https://artefact.skao.int/repository/helm-internal
