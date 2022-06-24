@@ -11,10 +11,11 @@ This device provides master control and rolled-up monitoring of dish. When comma
   :width: 100%
   :alt: Dish LMC diagram
 
-
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Modules
+
+   modules/modules.rst
 
 Indices and tables
 ==================
