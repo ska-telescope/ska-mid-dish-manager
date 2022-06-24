@@ -4,9 +4,10 @@ from tango import DeviceProxy
 from tango_simlib.utilities.validate_device import validate_device_from_url
 
 SPEC_URLS = {
-    "dish_master": (
-        "https://gitlab.com/ska-telescope/telescope-model/-/raw/"
-        "master/spec/tango/dsh/DishMaster.yaml"
+    "dish_manager": (
+        "https://gitlab.com/ska-telescope/ska-telmodel/-/raw/"
+        "kar-399-update-the-dish-manager-spec-file/spec/tango/dsh/"
+        "DishManager.yaml"
     ),
     "ska_tango_guide_ska_wide": (
         "https://gitlab.com/ska-telescope/telescope-model/-/raw/"
@@ -35,7 +36,7 @@ def test_dish_manager_conforms_to_dish_master_spec():
     dish_manager_proxy = DeviceProxy("mid_d0001/elt/master")
     result = validate_device_from_url(
         dish_manager_proxy.name(),
-        SPEC_URLS["dish_master"],
+        SPEC_URLS["dish_manager"],
         False,
     )
     assert not result
