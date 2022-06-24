@@ -1,0 +1,41 @@
+@startuml
+
+left to right direction
+skinparam nodesep 50
+skinparam ranksep 10
+
+rectangle "303-000000 TMC" {
+  component "Dish \nLeaf Node" as DLN #lightgreen
+  component "Subarray \nNode" as SAN #lightgreen
+  component "Central \nNode" as CN #lightgreen
+}
+
+package "[[https://gitlab.com/ska-telescope/ska-dish-lmc ska-dish-lmc]]" #white {
+  rectangle "320‐000000 Dish LMC" as LMC #lightskyblue {
+    component DishManager #lightgreen
+    component DishLogger as Log #lightgreen
+    component DSManager #lightgreen
+  }
+  component "Dish Structure \nSimulator" as DS #white
+  component "SPFC \nSimulator" as SPFCdevice #lightgreen
+  component "SPFRx \nSimulator" as SPFRxC #lightgreen
+}
+
+CN -down- SAN : **TANGO**
+SAN -down- DLN : **TANGO**
+DLN =down= DishManager : SKA‐TEL‐SKO‐0000150 \n I.S1M.TM_DSH.001 \n **TANGO**
+
+DishManager -down- Log : **TANGO**
+DishManager -down- DSManager : **TANGO**
+DishManager =down= SPFRxC : SKA-TEL-DSH-0000054 \n I.M.LMC.RX.1 \n **TANGO**
+DishManager -down- SPFCdevice : SKA-TEL-DSH-0000055 \n LMC_SPF.01 \n **TANGO**
+DSManager =down= DS : \n DS_LMC.01 \n **TCP/IP**
+
+
+rectangle Legend {
+  component "TANGO device" #lightgreen
+  component "Component" #white
+  package "Package" #white
+  }
+
+@enduml
