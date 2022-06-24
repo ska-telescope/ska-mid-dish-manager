@@ -513,6 +513,7 @@ class DishManager(SKAController):
         return self._noise_diode_config
 
     def write_noiseDiodeConfig(self, value):
+        # pylint: disable=attribute-defined-outside-init
         self._noise_diode_config = value
 
     def read_pointingState(self):
