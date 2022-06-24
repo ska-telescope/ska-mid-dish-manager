@@ -68,7 +68,7 @@ class TrackProgramMode(enum.IntEnum):
     POLY = 2
 
 
-class TrackTableLoadMore(enum.IntEnum):
+class TrackTableLoadMode(enum.IntEnum):
     ADD = 0
     NEW = 1
 
@@ -156,7 +156,7 @@ class DishManager(SKAController):
             device._synchronised = False
             device._track_interpolation_mode = TrackInterpolationMode.NEWTON
             device._track_program_mode = TrackProgramMode.TABLEA
-            device._track_table_load_more = TrackTableLoadMore.ADD
+            device._track_table_load_mode = TrackTableLoadMode.ADD
             device._usage_status = UsageStatus.IDLE
             device.op_state_model.perform_action("component_standby")
 
@@ -343,8 +343,8 @@ class DishManager(SKAController):
         "stream) used in the ACU for tracking. Coordinates given in the "
         "programTrackTable attribute are loaded in ACU in the selected table.",
     )
-    trackTableLoadMore = attribute(
-        dtype=TrackTableLoadMore,
+    trackTableLoadMode = attribute(
+        dtype=TrackTableLoadMode,
         access=AttrWriteType.READ_WRITE,
         doc="Selects track table load mode.\nWith ADD selected, Dish will "
         "add the coordinate set given in programTrackTable attribute to the "
@@ -553,12 +553,12 @@ class DishManager(SKAController):
         # pylint: disable=attribute-defined-outside-init
         self._track_program_mode = value
 
-    def read_trackTableLoadMore(self):
-        return self._track_table_load_more
+    def read_trackTableLoadMode(self):
+        return self._track_table_load_mode
 
-    def write_trackTableLoadMore(self, value):
+    def write_trackTableLoadMode(self, value):
         # pylint: disable=attribute-defined-outside-init
-        self._track_table_load_more = value
+        self._track_table_load_mode = value
 
     def read_synchronised(self):
         return self._synchronised
