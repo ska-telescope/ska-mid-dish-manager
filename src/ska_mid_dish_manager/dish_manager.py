@@ -8,8 +8,13 @@ from typing import Optional
 
 from ska_tango_base import SKAController
 from ska_tango_base.base import TaskExecutorComponentManager
-from tango import AttrWriteType, DeviceProxy, DevVarDoubleArray
-from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
+from tango import (
+    AttrWriteType,
+    DevFloat,
+    DeviceProxy,
+    DevVarDoubleArray,
+    DispLevel,
+)
 from tango.server import attribute, command, run
 
 
@@ -23,6 +28,7 @@ class DishMode(enum.IntEnum):
     STOW = 6
     CONFIG = 7
     OPERATE = 8
+    UNKNOWN = 9
 
 
 class PointingState(enum.IntEnum):
@@ -75,6 +81,7 @@ class TrackTableLoadMode(enum.IntEnum):
 
 
 class DishManagerComponentManager(TaskExecutorComponentManager):
+    # pylint: disable=too-few-public-methods
     def __init__(
         self,
         *args,
@@ -116,6 +123,7 @@ class DishManager(SKAController):
         A class for the Dish Manager's init_device() method
         """
 
+        # pylint: disable=invalid-name
         def do(self):
             """
             Initializes the attributes and properties of the DishManager
