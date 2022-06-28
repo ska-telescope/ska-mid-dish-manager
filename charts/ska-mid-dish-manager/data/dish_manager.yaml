@@ -24,6 +24,12 @@ server:
                 - name: "LoggingLevelDefault"
                   values:
                     - "5"
+                - name: "MaxCapabilities"
+                  values:
+                    - "BANDS:6"
+                - name: "GroupDefinitions"
+                  values:
+                    - ""
   {{- end }}
 depends_on:
   - device: sys/database/2

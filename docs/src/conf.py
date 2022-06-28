@@ -4,6 +4,9 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+# Generate modules:
+#  sphinx-apidoc -o ./src/modules/ ../src/ska_mid_dish_manager/
+
 import os
 import sys
 
