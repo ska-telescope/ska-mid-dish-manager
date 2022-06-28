@@ -4,6 +4,9 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+# Generate modules:
+#  sphinx-apidoc -o ./src/modules/ ../src/ska_mid_dish_manager/
+
 import os
 import sys
 
@@ -17,7 +20,15 @@ import sphinx.ext.autodoc
 sys.path.insert(0, os.path.abspath("../../src"))
 
 
+def setup(app):
+    """
+    Initialise app.
+    """
+    app.add_css_file("css/custom.css")
+    app.add_js_file("js/gitlab.js")
+
 # -- Project information -----------------------------------------------------
+
 
 project = 'SKA Mid Dish Manager'
 copyright = '2022, KAROO Team'
@@ -48,7 +59,7 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
