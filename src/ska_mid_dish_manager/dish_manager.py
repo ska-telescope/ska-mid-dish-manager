@@ -8,7 +8,7 @@ from typing import Optional
 
 from ska_tango_base import SKAController
 from ska_tango_base.base import TaskExecutorComponentManager
-from tango import AttrWriteType, DevVarDoubleArray
+from tango import AttrWriteType, DeviceProxy, DevVarDoubleArray
 from tango.server import attribute, command, run
 
 
@@ -103,7 +103,25 @@ class DishManager(SKAController):  # pylint: disable=too-many-public-methods
             super().do()
             device = self._device
             # pylint: disable=protected-access
-            device._dish_mode = DishMode.STANDBY_LP
+
+            # dishMode on init to be determined by the aggregation
+            # of the modes from the subservient devices
+            dish_structure = DeviceProxy("mid_d0001/lmc/ds_simulator")
+            spf = DeviceProxy("mid_d0001/spf/simulator")
+            spfrx = DeviceProxy("mid_d0001/spfrx/simulator")
+
+            # this will need to be a background thread that runs
+            # always checking the values of the underlying devices
+
+            if (
+                dish_structure.operatingMode.name == "STANDBY-LP"
+                and spf.operatingMode.name == "STANDBY-LP"
+                and spfrx.operatingMode.name == "STANDBY"
+            ):
+                device._dish_mode = DishMode.STANDBY_LP
+            else:
+                device._dish_mode = DishMode.UNKNOWN
+
             device._pointing_state = PointingState.UNKNOWN
             device._desired_pointing = [0.0, 0.0, 0.0]
             device._achieved_pointing = [0.0, 0.0, 0.0]
