@@ -1,14 +1,13 @@
 # pylint: disable=W0223
 """Component Manager for a Tango device"""
-import logging
 import time
 from threading import Event
 from typing import Any, AnyStr, Callable, Optional
 
+import tango
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
 from ska_tango_base.control_model import CommunicationStatus
 from ska_tango_base.executor import TaskStatus
-from tango import DevFailed, DeviceProxy, EventData, EventType
 
 SLEEP_TIME_BETWEEN_RECONNECTS = 1  # seconds
 
@@ -43,37 +42,48 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     def start_communicating(self):
         """
-        Create the DeviceProxy in a thread
+        Create the DeviceProxy in a thread, retrying until we are successful
         """
-        self.submit_task(
-            self._create_device_poxy,
-            args=[self._tango_device_fqdn, self.logger],
-            task_callback=self._device_proxy_creation_cb,
-        )
+        if not self._device_proxy:
+            self.submit_task(
+                self._create_device_proxy,
+                args=[self._tango_device_fqdn],
+                task_callback=self._device_proxy_creation_cb,
+            )
 
-    def _state_subscription_event_callback(self, event_data: EventData):
+    def _state_subscription_event_callback(self, event_data: tango.EventData):
+        """Updates communication_state when the State subscription sends an event
+
+        :param event_data: The event data
+        :type event_data: EventData
+        """
         if event_data.err:
-            self.communication_state = CommunicationStatus.NOT_ESTABLISHED
+            self._communication_state = CommunicationStatus.NOT_ESTABLISHED
         else:
-            self.communication_state = CommunicationStatus.ESTABLISHED
+            self._communication_state = CommunicationStatus.ESTABLISHED
 
     def _device_proxy_creation_cb(
-        self, status: TaskStatus, result: Any = None, retry_count=0
+        self, status: TaskStatus, result: Any = None, retry_count: int = 0
     ):
-        """Callback to be called as _create_device_poxy runs
+        """Callback to be called as _create_device_proxy runs
 
         :param status: The result of the task
         :type status: TaskStatus
         :param result: Either None or the DeviceProxy
         :type result: Optional[DeviceProxy]
+        :param retry_count: The number of connection retries
+        :type retry_count: int
         """
-        if status == TaskStatus.COMPLETED and isinstance(result, DeviceProxy):
+        if status == TaskStatus.COMPLETED and isinstance(
+            result, tango.DeviceProxy
+        ):
             self._device_proxy = result
             self._state_subscription_id = self._device_proxy.subscribe_event(
                 "State",
-                EventType.CHANGE_EVENT,
+                tango.EventType.CHANGE_EVENT,
                 self._state_subscription_event_callback,
             )
+            self._communication_state = CommunicationStatus.ESTABLISHED
 
         if status == TaskStatus.QUEUED:
             self.logger.info("Device Proxy creation task queued")
@@ -81,21 +91,21 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if status == TaskStatus.ABORTED:
             self.logger.info("Device Proxy creation task aborted")
 
-        if status == TaskStatus.FAILED and isinstance(result, Exception):
-            self.logger.exception(result)
-            if retry_count:
-                self.logger.info("Retry count [%s]", retry_count)
+        if status == TaskStatus.FAILED:
+            if isinstance(result, Exception):
+                self.logger.exception(result)
+            else:
+                self.logger.error(
+                    "Device Proxy creation task failed [%s]", result
+                )
 
-        if status == TaskStatus.FAILED and not isinstance(result, Exception):
-            self.logger.error("Device Proxy creation task failed [%s]", result)
             if retry_count:
                 self.logger.info("Retry count [%s]", retry_count)
 
     @classmethod
-    def _create_device_poxy(
+    def _create_device_proxy(
         cls,
         tango_device_fqdn: AnyStr,
-        _: logging.Logger,
         task_abort_event: Event = None,
         task_callback: Callable = None,
     ):
@@ -105,30 +115,48 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         This method should be passed to ThreadPoolExecutor
         """
-        retry_count = 0
-        while True:
+        try:
+            retry_count = 0
+            while True:
+                # If we ever need to abort this task
+                if task_abort_event and task_abort_event.is_set():
+                    task_callback(status=TaskStatus.ABORTED, result=None)
+                    return
 
-            # If we ever need to abort this task
-            if task_abort_event and task_abort_event.is_set():
-                task_callback(status=TaskStatus.ABORTED, result=None)
-                return
-            try:
-                retry_count += 1
-                device_proxy = DeviceProxy(tango_device_fqdn)
-                task_callback(status=TaskStatus.COMPLETED, result=device_proxy)
-                return
-            except DevFailed as connect_error:
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=connect_error,
-                    retry_count=retry_count,
-                )
-                time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
+                try:
+                    retry_count += 1
+                    device_proxy = tango.DeviceProxy(tango_device_fqdn)
+                    # Check the device is up
+                    device_proxy.ping()
+                    task_callback(
+                        status=TaskStatus.COMPLETED, result=device_proxy
+                    )
+                    return
+
+                except tango.DevFailed as connect_error:
+                    task_callback(
+                        status=TaskStatus.FAILED,
+                        result=connect_error,
+                        retry_count=retry_count,
+                    )
+                    time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
+        # Broad except otherwise this code may fail silently
+        except Exception as err:  # pylint: disable=W0703
+            task_callback(status=TaskStatus.FAILED, result=err)
 
     def stop_communicating(self):
+        self._communication_state = CommunicationStatus.NOT_ESTABLISHED
         self.abort_tasks()
         if self._state_subscription_id and self._device_proxy:
-            self._device_proxy.unsubscribe_event(self._state_subscription_id)
+            try:
+                self._device_proxy.unsubscribe_event(
+                    self._state_subscription_id
+                )
+            except tango.DevFailed:
+                pass
+
+        self._device_proxy = None
+        self._state_subscription_id = None
 
     def standby(self, task_callback: Callable):
         pass
