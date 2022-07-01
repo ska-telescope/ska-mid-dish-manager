@@ -9,13 +9,14 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.timeout(10)
-def test_non_existant_component(caplog):
+def test_non_existing_component(caplog):
     caplog.set_level(logging.INFO)
-    tcmanager = TangoDeviceComponentManager(
+    tc_manager = TangoDeviceComponentManager(
         "fake/fqdn/1", max_workers=1, logger=LOGGER
     )
     while "Retry count [3]" not in caplog.text:
         pass
-    assert tcmanager.communication_state == CommunicationStatus.DISABLED
-    tcmanager.stop_communicating()
-    assert tcmanager.communication_state == CommunicationStatus.NOT_ESTABLISHED
+    assert tc_manager.communication_state == CommunicationStatus.DISABLED
+    tc_manager.stop_communicating()
+    assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
+
