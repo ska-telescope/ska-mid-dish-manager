@@ -18,5 +18,6 @@ def test_non_existing_component(caplog):
         pass
     assert tc_manager.communication_state == CommunicationStatus.DISABLED
     tc_manager.stop_communicating()
-    assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
-
+    assert (
+        tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
+    )

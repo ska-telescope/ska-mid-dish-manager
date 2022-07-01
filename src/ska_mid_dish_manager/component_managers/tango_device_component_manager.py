@@ -10,6 +10,7 @@ from ska_tango_base.control_model import CommunicationStatus
 from ska_tango_base.executor import TaskStatus
 
 SLEEP_TIME_BETWEEN_RECONNECTS = 1  # seconds
+STATE_ATTR_POLL_PERIOD = 3000
 
 
 class TangoDeviceComponentManager(TaskExecutorComponentManager):
@@ -78,6 +79,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             result, tango.DeviceProxy
         ):
             self._device_proxy = result
+
+            # Try and subscribe to State, if not polled, the enable polling
+            if not self._device_proxy.get_attribute_poll_period("State"):
+                self._device_proxy.poll_attribute(
+                    "State", STATE_ATTR_POLL_PERIOD
+                )
+
             self._state_subscription_id = self._device_proxy.subscribe_event(
                 "State",
                 tango.EventType.CHANGE_EVENT,
