@@ -26,6 +26,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._tango_device_fqdn = tango_device_fqdn
         self._device_proxy = None
         self._state_subscription_id = None
+        self._connect_in_progress = False
         super().__init__(
             *args,
             max_workers=max_workers,
@@ -45,10 +46,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         Create the DeviceProxy in a thread, retrying until we are successful
         """
-        if not self._device_proxy:
+        self._communication_state = CommunicationStatus.NOT_ESTABLISHED
+        if not self._connect_in_progress:
             self.submit_task(
                 self._create_device_proxy,
-                args=[self._tango_device_fqdn],
+                args=[self._tango_device_fqdn, self._device_proxy],
                 task_callback=self._device_proxy_creation_cb,
             )
 
@@ -59,7 +61,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :type event_data: EventData
         """
         if event_data.err:
+            # Try to reconnect when connection lost
             self._communication_state = CommunicationStatus.NOT_ESTABLISHED
+            self.start_communicating()
         else:
             self._communication_state = CommunicationStatus.ESTABLISHED
 
@@ -75,6 +79,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param retry_count: The number of connection retries
         :type retry_count: int
         """
+        if status == TaskStatus.QUEUED:
+            self._connect_in_progress = True
+            self._communication_state = CommunicationStatus.NOT_ESTABLISHED
+        else:
+            self._connect_in_progress = False
+
         if status == TaskStatus.COMPLETED and isinstance(
             result, tango.DeviceProxy
         ):
@@ -114,6 +124,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def _create_device_proxy(
         cls,
         tango_device_fqdn: AnyStr,
+        device_proxy: Optional[tango.DeviceProxy],
         task_abort_event: Event = None,
         task_callback: Callable = None,
     ):
@@ -122,6 +133,16 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         `SLEEP_TIME_BETWEEN_RECONNECTS` seconds
 
         This method should be passed to ThreadPoolExecutor
+
+        :param tango_device_fqdn: Address of the Tango device
+        :type tango_device_fqdn: AnyStr
+        :param device_proxy: A DeviceProxy if it exists, if none it will
+            be created
+        :type device_proxy: Optional[tango.DeviceProxy]
+        :param task_abort_event: Check whether tasks have been aborted
+        :type task_abort_event: Event, optional
+        :param task_callback: Callback to report status
+        :type task_callback: Callable, optional
         """
         try:
             retry_count = 0
@@ -133,7 +154,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
                 try:
                     retry_count += 1
-                    device_proxy = tango.DeviceProxy(tango_device_fqdn)
+                    if not device_proxy:
+                        device_proxy = tango.DeviceProxy(tango_device_fqdn)
                     # Check the device is up
                     device_proxy.ping()
                     task_callback(
