@@ -14,7 +14,7 @@ def test_non_existing_component(caplog):
     tc_manager = TangoDeviceComponentManager(
         "fake/fqdn/1", max_workers=1, logger=LOGGER
     )
-    while "Retry count [3]" not in caplog.text:
+    while "Connection retry count [3]" not in caplog.text:
         pass
     assert tc_manager.communication_state == CommunicationStatus.DISABLED
     tc_manager.stop_communicating()

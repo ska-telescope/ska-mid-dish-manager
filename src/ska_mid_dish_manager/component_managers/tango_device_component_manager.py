@@ -28,7 +28,7 @@ STATE_ATTR_POLL_PERIOD = 3000
 
 
 class LostConnection(Exception):
-    pass
+    """Exception for losing connection to the Tango device"""
 
 
 class TangoDeviceComponentManager(TaskExecutorComponentManager):
@@ -39,6 +39,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         tango_device_fqdn: AnyStr,
         *args,
         max_workers: Optional[int] = None,
+        communication_state_callback: Optional[Callable] = None,
+        component_state_callback: Optional[Callable] = None,
         **kwargs,
     ):
         self._tango_device_fqdn = tango_device_fqdn
@@ -48,19 +50,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         super().__init__(
             *args,
             max_workers=max_workers,
-            communication_state_callback=self._communication_state_cb,
-            component_state_callback=self._component_state_cb,
+            communication_state_callback=communication_state_callback,
+            component_state_callback=component_state_callback,
             **kwargs,
         )
         self.start_communicating()
-
-    def _communication_state_cb(
-        self, communication_state: CommunicationStatus
-    ):
-        pass
-
-    def _component_state_cb(self, *args, **kwargs):
-        pass
 
     def start_communicating(self):
         """
@@ -97,6 +91,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param task_callback: Callback to report status
         :type task_callback: Callable, optional
         """
+        task_callback(status=TaskStatus.IN_PROGRESS, retry_count=0)
         with tango.EnsureOmniThread():
             try:
                 retry_count = 0
@@ -110,15 +105,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                         retry_count += 1
                         if not device_proxy:
                             device_proxy = tango.DeviceProxy(tango_device_fqdn)
+                        device_proxy.ping()
                         task_callback(
                             status=TaskStatus.COMPLETED, result=device_proxy
                         )
                         return
 
-                    except tango.DevFailed as connect_error:
+                    except tango.DevFailed:
                         task_callback(
-                            status=TaskStatus.FAILED,
-                            result=connect_error,
+                            status=TaskStatus.IN_PROGRESS,
                             retry_count=retry_count,
                         )
                         time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
@@ -142,10 +137,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param retry_count: The number of connection retries
         :type retry_count: int
         """
-        self.logger.info("Device Proxy creation task message [%s]", message)
+        self.logger.debug(
+            "Device Proxy creation callback [%s, %s, %s, %s]",
+            status,
+            result,
+            retry_count,
+            message,
+        )
 
-        if status == TaskStatus.QUEUED:
-            self.logger.info("Device Proxy creation task queued")
+        if status == TaskStatus.IN_PROGRESS:
             self._connect_in_progress = True
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
@@ -153,30 +153,35 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         else:
             self._connect_in_progress = False
 
+        if status == TaskStatus.QUEUED:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+
         if status == TaskStatus.COMPLETED:
-            self.logger.info("Device Proxy creation task completed")
             with tango.EnsureOmniThread():
-                # Just double check that we indeed did get a DeviceProxy
-                assert isinstance(result, tango.DeviceProxy)
-
                 self._device_proxy = result
-
                 # Try and subscribe to State, if not polled, the enable polling
-                if not self._device_proxy.get_attribute_poll_period("State"):
-                    self._device_proxy.poll_attribute(
-                        "State", STATE_ATTR_POLL_PERIOD
-                    )
+                try:
+                    if not self._device_proxy.get_attribute_poll_period(
+                        "State"
+                    ):
+                        self._device_proxy.poll_attribute(
+                            "State", STATE_ATTR_POLL_PERIOD
+                        )
 
-                self._state_subscription_id = (
-                    self._device_proxy.subscribe_event(
-                        "State",
-                        tango.EventType.CHANGE_EVENT,
-                        self._state_subscription_event_callback,
+                    self._state_subscription_id = (
+                        self._device_proxy.subscribe_event(
+                            "State",
+                            tango.EventType.CHANGE_EVENT,
+                            self._state_subscription_event_callback,
+                        )
                     )
-                )
-                self._update_communication_state(
-                    CommunicationStatus.ESTABLISHED
-                )
+                    self._update_communication_state(
+                        CommunicationStatus.ESTABLISHED
+                    )
+                except tango.CommunicationFailed:
+                    self.start_communicating()
 
         if status == TaskStatus.ABORTED:
             self.logger.info("Device Proxy creation task aborted")
@@ -189,8 +194,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                     "Device Proxy creation task failed [%s]", result
                 )
 
-            if retry_count:
-                self.logger.info("Retry count [%s]", retry_count)
+        if retry_count:
+            self.logger.info("Connection retry count [%s]", retry_count)
 
     def _state_subscription_event_callback(self, event_data: tango.EventData):
         """Updates communication_state when the State subscription sends an event
@@ -198,11 +203,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: The event data
         :type event_data: EventData
         """
+        self.logger.debug(f"Status event callback [{event_data}]")
         if event_data.err:
             # Try to reconnect when connection lost
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
             self.start_communicating()
         else:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
@@ -219,8 +222,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                         self._state_subscription_id
                     )
                 except tango.DevFailed:
+                    # If the device restarted the subscription will not be
+                    # registered
                     pass
-
             self._device_proxy = None
             self._state_subscription_id = None
 
@@ -244,17 +248,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                     "Communication status not CommunicationStatus.ESTABLISHED"
                 )
             if not self._device_proxy:
-                raise LostConnection(
-                    "DeviceProxy not created"
-                )
+                raise LostConnection("DeviceProxy not created")
             with tango.EnsureOmniThread():
                 return self._device_proxy.command_inout(
                     command_name, command_arg
                 )
         except (tango.ConnectionFailed, LostConnection) as err:
-            if not self._connect_in_progress:
-                self.stop_communicating()
-                self.start_communicating()
+            self.start_communicating()
             raise LostConnection(
                 f"Connection to [{self._tango_device_fqdn}] not established. "
                 "Retrying connection"
