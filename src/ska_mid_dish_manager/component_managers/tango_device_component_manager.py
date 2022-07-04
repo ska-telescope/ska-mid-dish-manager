@@ -36,10 +36,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         self.start_communicating()
 
-    def _communication_state_cb(self):
+    def _communication_state_cb(
+        self, communication_state: CommunicationStatus
+    ):
         pass
 
-    def _component_state_cb(self):
+    def _component_state_cb(self, *args, **kwargs):
         pass
 
     def start_communicating(self):
@@ -61,10 +63,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         if event_data.err:
             # Try to reconnect when connection lost
-            self._communication_state = CommunicationStatus.NOT_ESTABLISHED
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             self.start_communicating()
         else:
-            self._communication_state = CommunicationStatus.ESTABLISHED
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
     def _device_proxy_creation_cb(
         self, status: TaskStatus, result: Any = None, retry_count: int = 0
@@ -80,7 +84,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         if status == TaskStatus.QUEUED:
             self._connect_in_progress = True
-            self._communication_state = CommunicationStatus.NOT_ESTABLISHED
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
         else:
             self._connect_in_progress = False
 
@@ -103,7 +109,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                         self._state_subscription_event_callback,
                     )
                 )
-                self._communication_state = CommunicationStatus.ESTABLISHED
+                self._update_communication_state(
+                    CommunicationStatus.ESTABLISHED
+                )
 
         if status == TaskStatus.QUEUED:
             self.logger.info("Device Proxy creation task queued")
@@ -179,7 +187,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     def stop_communicating(self):
         with tango.EnsureOmniThread():
-            self._communication_state = CommunicationStatus.NOT_ESTABLISHED
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
             self.abort_tasks()
             if self._state_subscription_id and self._device_proxy:
                 try:
