@@ -243,10 +243,35 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
             )
-            self.abort_tasks(aborted_callback)
             self._unsubscribe_state_events()
             self._device_proxy = None
+            self.abort_tasks(aborted_callback)
 
+    def _check_connection(func):
+        """Connection check decorator.
+
+        Execute the method, if communication fails, commence reconnection.
+        """
+
+        def _decorator(self, *args, **kwargs):
+            try:
+                if self.communication_state != CommunicationStatus.ESTABLISHED:
+                    raise LostConnection(
+                        "Communication status not ESTABLISHED"
+                    )
+                if not self._device_proxy:
+                    raise LostConnection("DeviceProxy not created")
+                return func(self, *args, **kwargs)
+            except (tango.ConnectionFailed, LostConnection) as err:
+                self.start_communicating()
+                raise LostConnection(
+                    f"[{self._tango_device_fqdn}] not connected. "
+                    "Retry in progress"
+                ) from err
+
+        return _decorator
+
+    @_check_connection
     def run_device_command(
         self, command_name: AnyStr, command_arg: Optional[Any] = None
     ) -> Any:
@@ -261,20 +286,5 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param command_arg: The Tango command paramater
         :type command_arg: Optional Any
         """
-        try:
-            if self.communication_state != CommunicationStatus.ESTABLISHED:
-                raise LostConnection(
-                    "Communication status not CommunicationStatus.ESTABLISHED"
-                )
-            if not self._device_proxy:
-                raise LostConnection("DeviceProxy not created")
-            with tango.EnsureOmniThread():
-                return self._device_proxy.command_inout(
-                    command_name, command_arg
-                )
-        except (tango.ConnectionFailed, LostConnection) as err:
-            self.start_communicating()
-            raise LostConnection(
-                f"Connection to [{self._tango_device_fqdn}] not established. "
-                "Retrying connection"
-            ) from err
+        with tango.EnsureOmniThread():
+            return self._device_proxy.command_inout(command_name, command_arg)
