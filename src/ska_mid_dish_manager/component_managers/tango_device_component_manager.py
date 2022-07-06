@@ -1,8 +1,9 @@
 # pylint: disable=W0223
 """Component Manager for a Tango device"""
 import time
+from dataclasses import dataclass
 from threading import Event
-from typing import Any, AnyStr, Callable, Optional
+from typing import Any, AnyStr, Callable, List, Optional
 
 import tango
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
@@ -15,6 +16,39 @@ STATE_ATTR_POLL_PERIOD = 3000
 
 class LostConnection(Exception):
     """Exception for losing connection to the Tango device"""
+
+
+@dataclass
+class MonitoredAttribute:
+    attr_name: str
+    subscription_id: Optional[int] = None
+    attr_value: Optional[Any] = None
+
+    def subscribe(
+        self,
+        device_proxy: tango.DeviceProxy,
+        subscription_callback: Optional[Callable] = None,
+    ):
+        # State has to be monitored since we use it to keep track
+        # of communication state
+        if self.attr_name == "State":
+            if not device_proxy.get_attribute_poll_period("State"):
+                self._device_proxy.poll_attribute(
+                    "State", STATE_ATTR_POLL_PERIOD
+                )
+        self.unsubscribe(device_proxy)
+        self.subscription_id = device_proxy.subscribe_event(
+            self.attr_name, tango.EventType.CHANGE_EVENT, subscription_callback
+        )
+
+    def unsubscribe(self, device_proxy: tango.DeviceProxy):
+        if self.subscription_id:
+            try:
+                device_proxy.unsubscribe_event(self.subscription_id)
+            except (tango.EventSystemFailed, KeyError):
+                # If the device went away, we may have lost the sub
+                pass
+        self.subscription_id = None
 
 
 class TangoDeviceComponentManager(TaskExecutorComponentManager):
@@ -47,9 +81,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         component_state_callback: Optional[Callable] = None,
         **kwargs,
     ):
-        self._tango_device_fqdn = tango_device_fqdn
-        self._device_proxy = None
-        self._state_subscription_id = None
+        self._tango_device_fqdn: str = tango_device_fqdn
+        self._device_proxy: Optional[tango.DeviceProxy] = None
+        self._monitored_attributes: List[MonitoredAttribute] = [
+            MonitoredAttribute("State")
+        ]
 
         super().__init__(
             *args,
@@ -61,7 +97,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         # Init the component state
         self._component_state["connection_in_progress"] = False
-        self._component_state["device_state"] = "UNKNOWN"
+        for monitored_state in self._monitored_attributes:
+            self._component_state[monitored_state.attr_name] = "UNKNOWN"
 
         self.start_communicating()
 
@@ -76,6 +113,30 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 args=[self._tango_device_fqdn, self._device_proxy],
                 task_callback=self._device_proxy_creation_cb,
             )
+
+    def _check_connection(func):
+        """Connection check decorator.
+
+        Execute the method, if communication fails, commence reconnection.
+        """
+
+        def _decorator(self, *args, **kwargs):
+            try:
+                if self.communication_state != CommunicationStatus.ESTABLISHED:
+                    raise LostConnection(
+                        "Communication status not ESTABLISHED"
+                    )
+                if not self._device_proxy:
+                    raise LostConnection("DeviceProxy not created")
+                return func(self, *args, **kwargs)
+            except (tango.ConnectionFailed, LostConnection) as err:
+                self.start_communicating()
+                raise LostConnection(
+                    f"[{self._tango_device_fqdn}] not connected. "
+                    "Retry in progress"
+                ) from err
+
+        return _decorator
 
     @classmethod
     def _create_device_proxy(
@@ -165,31 +226,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             with tango.EnsureOmniThread():
                 if not self._device_proxy:
                     self._device_proxy = result
-                # Try and subscribe to State, if not polled, the enable polling
-                try:
-                    if not self._device_proxy.get_attribute_poll_period(
-                        "State"
-                    ):
-                        self._device_proxy.poll_attribute(
-                            "State", STATE_ATTR_POLL_PERIOD
-                        )
 
-                    self._unsubscribe_state_events()
-
-                    self._state_subscription_id = (
-                        self._device_proxy.subscribe_event(
-                            "State",
-                            tango.EventType.CHANGE_EVENT,
-                            self._state_subscription_event_callback,
-                        )
+                # If the device went away completely we may have
+                # lost or subscriptions, redo them
+                for monitored_attr in self._monitored_attributes:
+                    monitored_attr.subscribe(
+                        self._device_proxy,
+                        self._subscription_event_callback,
                     )
-
-                    self._update_communication_state(
-                        CommunicationStatus.ESTABLISHED
-                    )
-                except tango.CommunicationFailed as err:
-                    self.logger.exception(err)
-                    # self.start_communicating()
+                self._update_communication_state(
+                    CommunicationStatus.ESTABLISHED
+                )
 
         if status == TaskStatus.ABORTED:
             self.logger.info("Device Proxy creation task aborted")
@@ -205,33 +252,44 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if retry_count:
             self.logger.info("Connection retry count [%s]", retry_count)
 
-    def _state_subscription_event_callback(self, event_data: tango.EventData):
-        """Updates communication_state when the State subscription sends an event
+    def _subscription_event_callback(self, event_data: tango.EventData):
+        """Try to reconnect if the State event has an error.
+
+        Otherwise just updates state
 
         :param event_data: The event data
         :type event_data: EventData
         """
-        self.logger.debug(f"Status event callback [{event_data}]")
+        self.logger.debug(f"Event callback [{event_data}]")
+        if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+            return
+
         if event_data.err:
+            new_state = {}
+            for component_state_name in self._component_state.keys():
+                if component_state_name == "connection_in_progress":
+                    continue
+                new_state[component_state_name] = "UNKNOWN"
+            self._update_component_state(**new_state)
             self.start_communicating()
-        else:
-            self._update_component_state(
-                device_state=event_data.attr_value.value
-            )
+            return
 
-    def _unsubscribe_state_events(self):
+        attr_name = event_data.attr_value.name
+
+        # Add it so component state if not there
+        if attr_name not in self._component_state:
+            self._component_state[attr_name] = None
+
+        self._update_component_state(
+            **{attr_name: str(event_data.attr_value.value)}
+        )
+
+    def _unsubscribe_events(self):
         """Attempt to unsubscribe event subscriptions"""
-        if self._state_subscription_id and self._device_proxy:
-            try:
-                self._device_proxy.unsubscribe_event(
-                    self._state_subscription_id
-                )
-            except tango.DevFailed:
-                # If the device restarted the subscription will not be
-                # registered
-                pass
-        self._state_subscription_id = None
+        for monitored_attr in self._monitored_attributes:
+            monitored_attr.unsubscribe(self._device_proxy)
 
+    @_check_connection
     def stop_communicating(self, aborted_callback: Optional[Callable] = None):
         """Break off communication with the device.
 
@@ -243,33 +301,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
             )
-            self._unsubscribe_state_events()
+            self._unsubscribe_events()
             self._device_proxy = None
             self.abort_tasks(aborted_callback)
-
-    def _check_connection(func):
-        """Connection check decorator.
-
-        Execute the method, if communication fails, commence reconnection.
-        """
-
-        def _decorator(self, *args, **kwargs):
-            try:
-                if self.communication_state != CommunicationStatus.ESTABLISHED:
-                    raise LostConnection(
-                        "Communication status not ESTABLISHED"
-                    )
-                if not self._device_proxy:
-                    raise LostConnection("DeviceProxy not created")
-                return func(self, *args, **kwargs)
-            except (tango.ConnectionFailed, LostConnection) as err:
-                self.start_communicating()
-                raise LostConnection(
-                    f"[{self._tango_device_fqdn}] not connected. "
-                    "Retry in progress"
-                ) from err
-
-        return _decorator
 
     @_check_connection
     def run_device_command(
@@ -288,3 +322,29 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         with tango.EnsureOmniThread():
             return self._device_proxy.command_inout(command_name, command_arg)
+
+    @_check_connection
+    def monitor_attribute(self, attribute_name: str):
+        """Update the component state with the Attribute value as it changes
+
+        :param attribute_name: Attribute to keep track of
+        :type attribute_name: str
+        """
+        monitored_attribute = MonitoredAttribute(attribute_name)
+        monitored_attribute.subscribe(
+            self._device_proxy,
+            subscription_callback=self._subscription_event_callback,
+        )
+        self._monitored_attributes.append(monitored_attribute)
+
+    @_check_connection
+    def unmonitor_attribute(self, attribute_name: str):
+        """Stop monitoring an attribute
+
+        :param attribute_name: Attribute to stop monitoring
+        :type attribute_name: str
+        """
+        for monitored_attribute in self._monitored_attributes:
+            if monitored_attribute.attr_name == attribute_name:
+                monitored_attribute.unsubscribe(self._device_proxy)
+        self._monitored_attributes.remove(monitored_attribute)
