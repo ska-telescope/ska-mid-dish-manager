@@ -43,9 +43,7 @@ class MonitoredAttribute:
         # of communication state
         if self.attr_name == "State":
             if not device_proxy.get_attribute_poll_period("State"):
-                self._device_proxy.poll_attribute(
-                    "State", STATE_ATTR_POLL_PERIOD
-                )
+                device_proxy.poll_attribute("State", STATE_ATTR_POLL_PERIOD)
         self.unsubscribe(device_proxy)
         self.subscription_id = device_proxy.subscribe_event(
             self.attr_name, tango.EventType.CHANGE_EVENT, subscription_callback
@@ -130,8 +128,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 task_callback=self._device_proxy_creation_cb,
             )
 
-    def _check_connection(func):
+    def _check_connection(func):  # pylint: disable=E0213
         """Connection check decorator.
+
+        This is a workaround for decorators in classes.
 
         Execute the method, if communication fails, commence reconnection.
         """
@@ -142,14 +142,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                     raise LostConnection(
                         "Communication status not ESTABLISHED"
                     )
-                if not self._device_proxy:
+                if not self._device_proxy:  # pylint: disable=W0212
                     raise LostConnection("DeviceProxy not created")
-                return func(self, *args, **kwargs)
+                return func(self, *args, **kwargs)  # pylint: disable=E1102
             except (tango.ConnectionFailed, LostConnection) as err:
-                self.start_communicating()
+                self.start_communicating()  # pylint: disable=W0212
                 raise LostConnection(
-                    f"[{self._tango_device_fqdn}] not connected. "
-                    "Retry in progress"
+                    f"[{self._tango_device_fqdn}]"  # pylint: disable=W0212
+                    "  not connected. Retry in progress"
                 ) from err
 
         return _decorator
@@ -278,7 +278,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         self.logger.debug(f"Event callback [{event_data}]")
 
-        event_time_stamp = event_data.reception_date.isoformat()
+        if event_data.attr_value:
+            event_time_stamp = event_data.attr_value.time.isoformat()
+        else:
+            event_time_stamp = event_data.reception_date.isoformat()
         # Ignore events that are late
         if event_time_stamp < self.latest_event_message_timestamp:
             return
@@ -290,7 +293,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         if event_data.err:
             new_state = {}
-            for component_state_name in self._component_state.keys():
+            for component_state_name in self._component_state:
                 if component_state_name == "connection_in_progress":
                     continue
                 new_state[component_state_name] = "UNKNOWN"
