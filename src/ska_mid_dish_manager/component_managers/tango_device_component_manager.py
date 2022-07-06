@@ -1,8 +1,8 @@
 # pylint: disable=W0223
 """Component Manager for a Tango device"""
 import time
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
 from threading import Event
 from typing import Any, AnyStr, Callable, List, Optional
 
@@ -21,6 +21,8 @@ class LostConnection(Exception):
 
 @dataclass
 class MonitoredAttribute:
+    """Package together the information needed for a subscription"""
+
     attr_name: str
     subscription_id: Optional[int] = None
 
@@ -29,6 +31,14 @@ class MonitoredAttribute:
         device_proxy: tango.DeviceProxy,
         subscription_callback: Optional[Callable] = None,
     ):
+        """Subscribe to change events for this attribute
+
+        :param device_proxy: The tango device proxy
+        :type device_proxy: tango.DeviceProxy
+        :param subscription_callback: Event callback subscription,
+            defaults to None
+        :type subscription_callback: Optional[Callable], optional
+        """
         # State has to be monitored since we use it to keep track
         # of communication state
         if self.attr_name == "State":
@@ -42,6 +52,11 @@ class MonitoredAttribute:
         )
 
     def unsubscribe(self, device_proxy: tango.DeviceProxy):
+        """Unsubscribe from change events
+
+        :param device_proxy: The tango DeviceProxy
+        :type device_proxy: tango.DeviceProxy
+        """
         if self.subscription_id:
             try:
                 device_proxy.unsubscribe_event(self.subscription_id)
@@ -65,7 +80,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     Reconnection will then be attempted.
 
     Note that in local testing the event that indicates that connection
-    to the deviec is lost can take up to 15s to fire. Due to this latency
+    to the device is lost can take up to 15s to fire. Due to this latency
     a method is made available that will execute a command on the device,
     but first check that the device is up. If not a `LostConnection`
     exception is thrown and the communication state set to `NOT_ESTABLISHED`
@@ -326,7 +341,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         :param command_name: The Tango command to run
         :type command_name: AnyStr
-        :param command_arg: The Tango command paramater
+        :param command_arg: The Tango command parameter
         :type command_arg: Optional Any
         """
         with tango.EnsureOmniThread():
@@ -356,4 +371,4 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         for monitored_attribute in self._monitored_attributes:
             if monitored_attribute.attr_name == attribute_name:
                 monitored_attribute.unsubscribe(self._device_proxy)
-        self._monitored_attributes.remove(monitored_attribute)
+                self._monitored_attributes.remove(monitored_attribute)
