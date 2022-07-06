@@ -1,6 +1,7 @@
 # pylint: disable=W0223
 """Component Manager for a Tango device"""
 import time
+from datetime import datetime
 from dataclasses import dataclass
 from threading import Event
 from typing import Any, AnyStr, Callable, List, Optional
@@ -86,6 +87,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._monitored_attributes: List[MonitoredAttribute] = [
             MonitoredAttribute("State")
         ]
+        self.latest_event_message_timestamp = datetime.now().isoformat()
 
         super().__init__(
             *args,
@@ -261,6 +263,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :type event_data: EventData
         """
         self.logger.debug(f"Event callback [{event_data}]")
+
+        event_time_stamp = event_data.reception_date.isoformat()
+        # Ignore events that are late
+        if event_time_stamp < self.latest_event_message_timestamp:
+            return
+
+        self.latest_event_message_timestamp = event_time_stamp
+
         if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
             return
 
