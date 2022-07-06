@@ -23,7 +23,6 @@ class LostConnection(Exception):
 class MonitoredAttribute:
     attr_name: str
     subscription_id: Optional[int] = None
-    attr_value: Optional[Any] = None
 
     def subscribe(
         self,
