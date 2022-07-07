@@ -20,6 +20,7 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.timeout(10)
 @pytest.mark.forked
+@pytest.mark.unit
 def test_non_existing_component(caplog):
     caplog.set_level(logging.INFO)
     _DeviceProxy = tango.DeviceProxy
@@ -80,6 +81,7 @@ def tango_test_context():
 
 
 @pytest.mark.forked
+@pytest.mark.unit
 def test_happy_path(tango_test_context):
     device_name = tango_test_context.name()
     _DeviceProxy = tango.DeviceProxy
