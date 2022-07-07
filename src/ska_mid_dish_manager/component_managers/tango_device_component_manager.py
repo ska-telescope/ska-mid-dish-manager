@@ -42,7 +42,7 @@ class MonitoredAttribute:
         # State has to be monitored since we use it to keep track
         # of communication state
         if self.attr_name == "State":
-            if not device_proxy.get_attribute_poll_period("State"):
+            if not device_proxy.is_attribute_polled("State"):
                 device_proxy.poll_attribute("State", STATE_ATTR_POLL_PERIOD)
         self.unsubscribe(device_proxy)
         self.subscription_id = device_proxy.subscribe_event(
