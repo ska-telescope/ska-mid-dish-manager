@@ -14,6 +14,8 @@ from ska_mid_dish_manager.component_managers import (
     LostConnection,
     TangoDeviceComponentManager,
 )
+from ska_mid_dish_manager import DishManagerComponentManager, DishMode
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -101,3 +103,28 @@ def test_happy_path(tango_test_context):
         assert (
             tc_manager.communication_state == CommunicationStatus.ESTABLISHED
         )
+
+
+@pytest.mark.forked
+@pytest.mark.unit
+def test_happy_path_for_startup(tango_test_context):
+    device_name = tango_test_context.name()
+    _DeviceProxy = tango.DeviceProxy
+    mock_cb = mock.Mock()
+    with mock.patch(
+        "tango.DeviceProxy",
+        wraps=lambda fqdn, *args, **kwargs: _DeviceProxy(
+            "tango://{0}:{1}/{2}#dbase=no".format(get_host_ip(), PORT, fqdn),
+            *args,
+            **kwargs
+        ),
+    ):
+        tc_manager = DishManagerComponentManager(
+            device_name, max_workers=1, logger=LOGGER, dish_mode_callback = mock_cb
+        )
+
+        time.sleep(0.1)
+        # assert (
+        #     tc_manager.communication_state == CommunicationStatus.ESTABLISHED
+        # )
+        mock_cb.assert_called_with((DishMode.STANDBY_LP,))
