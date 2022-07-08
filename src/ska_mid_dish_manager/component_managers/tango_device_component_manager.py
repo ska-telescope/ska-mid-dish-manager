@@ -266,7 +266,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 )
 
         if retry_count:
-            self.logger.info("Connection retry count [%s]", retry_count)
+            self.logger.info(
+                "Connection retry count [%s] for device [%s]",
+                retry_count,
+                self._tango_device_fqdn,
+            )
 
     def _subscription_event_callback(self, event_data: tango.EventData):
         """Try to reconnect if the State event has an error.

@@ -8,8 +8,17 @@ from typing import Optional
 
 from ska_tango_base import SKAController
 from ska_tango_base.base import TaskExecutorComponentManager
-from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
+from ska_tango_base.control_model import CommunicationStatus
+from tango import (
+    AttrWriteType,
+    DevFloat,
+    DevState,
+    DevVarDoubleArray,
+    DispLevel,
+)
 from tango.server import attribute, command, run
+
+from ska_mid_dish_manager.component_managers import TangoDeviceComponentManager
 
 
 class DishMode(enum.IntEnum):
@@ -73,9 +82,10 @@ class TrackTableLoadMode(enum.IntEnum):
     NEW = 1
 
 
-class DishManagerComponentManager(TaskExecutorComponentManager):
+class DishManagerComponentManager(TangoDeviceComponentManager):
     def __init__(
         self,
+        fqdn,
         *args,
         max_workers: Optional[int] = None,
         logger: logging.Logger = None,
@@ -84,8 +94,73 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """"""
         # pylint: disable=useless-super-delegation
         super().__init__(
-            *args, max_workers=max_workers, logger=logger, **kwargs
+            fqdn, *args, max_workers=max_workers, logger=logger, **kwargs
         )
+
+        self._ds_connection = False
+        self._spfrx_connection = False
+        self._spf_connection = False
+        self.dish_mode_callback = kwargs["dish_mode_callback"]
+
+        self.ds_component_manager = TangoDeviceComponentManager(
+            "mid_d0001/lmc/ds_simulator",
+            logger=logger,
+            component_state_callback=self._component_state_cb,
+            communication_state_callback=self._ds_component_communication_state_cb,
+        )
+        self.spfrx_component_manager = TangoDeviceComponentManager(
+            "mid_d0001/spfrx/simulator",
+            logger=logger,
+            component_state_callback=self._component_state_cb,
+            communication_state_callback=self._spfrx_component_communication_state_cb,
+        )
+        self.spf_component_manager = TangoDeviceComponentManager(
+            "mid_d0001/spf/simulator",
+            logger=logger,
+            component_state_callback=self._component_state_cb,
+            communication_state_callback=self._spf_component_communication_state_cb,
+        )
+
+    def _update_dish_mode(self):
+        self.logger.info(
+            "Updating dish mode ds[%s], spfrx[%s], spf[%s]",
+            self._ds_connection,
+            self._spfrx_connection,
+            self._spf_connection,
+        )
+        if (
+            self._ds_connection
+            and self._spfrx_connection
+            and self._spf_connection
+        ):
+            self.logger.info("Changing dish mode")
+            self.dish_mode_callback(DishMode.STANDBY_LP)
+
+    def _ds_component_communication_state_cb(self, *args, **kwargs):
+        self.logger.info(args[0])
+        self.logger.info(kwargs)
+        if args[0] == CommunicationStatus.ESTABLISHED:
+            self.logger.info("DS connection established")
+            self._ds_connection = True
+            self._update_dish_mode()
+
+    def _spfrx_component_communication_state_cb(self, *args, **kwargs):
+        self.logger.info(args)
+        if args[0] == CommunicationStatus.ESTABLISHED:
+            self.logger.info("SPRFx connection established")
+            self._spfrx_connection = True
+            self._update_dish_mode()
+
+    def _spf_component_communication_state_cb(self, *args, **kwargs):
+        self.logger.info(args)
+        if args[0] == CommunicationStatus.ESTABLISHED:
+            self.logger.info("SPF connection established")
+            self._spf_connection = True
+            self._update_dish_mode()
+
+    def _component_state_cb(self, *args, **kwargs):
+        self.logger.info(args)
+        self.logger.info(kwargs)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -102,11 +177,17 @@ class DishManager(SKAController):
         :rtype: DishManagerComponentManager
         """
         return DishManagerComponentManager(
+            "mid_d0005/elt/master",
             max_workers=1,
             logger=self.logger,
-            communication_state_callback=None,
+            dish_mode_callback=self._update_dish_mode,
             component_state_callback=None,
         )
+
+    def _update_dish_mode(self, *args, **kwargs):
+        self.logger.info(args)
+        self.logger.info(kwargs)
+        self._dish_mode = DishMode.STANDBY_LP
 
     class InitCommand(
         SKAController.InitCommand
@@ -143,7 +224,7 @@ class DishManager(SKAController):
             device._configured_band = Band.NONE
             device._configure_target_lock = []
             device._desired_pointing = [0.0, 0.0, 0.0]
-            device._dish_mode = DishMode.STANDBY_LP
+            device._dish_mode = DishMode.STARTUP
             device._dsh_max_short_term_power = 13.5
             device._dsh_power_curtailment = True
             device._frequency_response = [[], []]
