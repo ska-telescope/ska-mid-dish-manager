@@ -2,20 +2,39 @@ import socket
 
 import pytest
 import tango
-from tango.test_context import MultiDeviceTestContext, get_host_ip
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
+from tango import DevState
+from tango.server import Device
+from tango.test_context import MultiDeviceTestContext, get_host_ip
 
+
+class SimpleDev(Device):
+    def init_device(self):
+        super(Device, self).init_device()
+        self.set_state(DevState.ON)
+        self.set_change_event("State", True)
+
+
+@pytest.fixture(name="SimpleDevice")
+def simple_device():
+    """
+    Return the Tango event callback group under test.
+
+    :return: the Tango event callback group under test.
+    """
+    return SimpleDev
 
 
 @pytest.fixture()
-def callback_group() -> MockTangoEventCallbackGroup:
+def change_event_cb() -> MockTangoEventCallbackGroup:
     """
     Return the Tango event callback group under test.
 
     :return: the Tango event callback group under test.
     """
     return MockTangoEventCallbackGroup(
-        "dish_mode_callback", timeout=2.0
+        "dishMode",
+        timeout=2.0,
     )
 
 
@@ -51,7 +70,9 @@ def multi_device_tango_context(
     mocker.patch(
         "tango.DeviceProxy",
         wraps=lambda fqdn, *args, **kwargs: _DeviceProxy(
-            "tango://{0}:{1}/{2}#dbase=no".format(HOST, PORT, fqdn), *args, **kwargs
+            "tango://{0}:{1}/{2}#dbase=no".format(HOST, PORT, fqdn),
+            *args,
+            **kwargs
         ),
     )
     with MultiDeviceTestContext(

@@ -6,18 +6,26 @@ from unittest import mock
 import pytest
 import tango
 from ska_tango_base.control_model import CommunicationStatus
-from tango import DevState
-from tango.server import Device
 from tango.test_context import DeviceTestContext, get_host_ip
 
 from ska_mid_dish_manager.component_managers import (
     LostConnection,
     TangoDeviceComponentManager,
 )
-from ska_mid_dish_manager import DishManagerComponentManager, DishMode
-
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _get_open_port():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(("", 0))
+    s.listen(1)
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+
+PORT = _get_open_port()
 
 
 @pytest.mark.timeout(10)
@@ -47,27 +55,8 @@ def test_non_existing_component(caplog):
             tc_manager.stop_communicating()
 
 
-class TestDevice(Device):
-    def init_device(self):
-        super(Device, self).init_device()
-        self.set_state(DevState.ON)
-        self.set_change_event("State", True, True)
-
-
-def _get_open_port():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(("", 0))
-    s.listen(1)
-    port = s.getsockname()[1]
-    s.close()
-    return port
-
-
-PORT = _get_open_port()
-
-
 @pytest.fixture
-def tango_test_context():
+def tango_test_context(SimpleDevice):
     _DeviceProxy = tango.DeviceProxy
     mock.patch(
         "tango.DeviceProxy",
@@ -78,7 +67,9 @@ def tango_test_context():
         ),
     )
 
-    with DeviceTestContext(TestDevice, port=PORT, host=get_host_ip()) as proxy:
+    with DeviceTestContext(
+        SimpleDevice, port=PORT, host=get_host_ip()
+    ) as proxy:
         yield proxy
 
 
@@ -103,28 +94,3 @@ def test_happy_path(tango_test_context):
         assert (
             tc_manager.communication_state == CommunicationStatus.ESTABLISHED
         )
-
-
-@pytest.mark.forked
-@pytest.mark.unit
-def test_happy_path_for_startup(tango_test_context):
-    device_name = tango_test_context.name()
-    _DeviceProxy = tango.DeviceProxy
-    mock_cb = mock.Mock()
-    with mock.patch(
-        "tango.DeviceProxy",
-        wraps=lambda fqdn, *args, **kwargs: _DeviceProxy(
-            "tango://{0}:{1}/{2}#dbase=no".format(get_host_ip(), PORT, fqdn),
-            *args,
-            **kwargs
-        ),
-    ):
-        tc_manager = DishManagerComponentManager(
-            device_name, max_workers=1, logger=LOGGER, dish_mode_callback = mock_cb
-        )
-
-        time.sleep(0.1)
-        # assert (
-        #     tc_manager.communication_state == CommunicationStatus.ESTABLISHED
-        # )
-        mock_cb.assert_called_with((DishMode.STANDBY_LP,))

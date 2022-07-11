@@ -187,7 +187,8 @@ class DishManager(SKAController):
     def _update_dish_mode(self, *args, **kwargs):
         self.logger.info(args)
         self.logger.info(kwargs)
-        self._dish_mode = DishMode.STANDBY_LP
+        self._dish_mode = args[0]
+        self.push_change_event("dishMode", self._dish_mode)
 
     class InitCommand(
         SKAController.InitCommand
@@ -240,6 +241,9 @@ class DishManager(SKAController):
             device._track_table_load_mode = TrackTableLoadMode.ADD
             device._usage_status = UsageStatus.IDLE
             device.op_state_model.perform_action("component_standby")
+
+            # push change events for dishMode: needed to use testing library
+            device.set_change_event("dishMode", True, False)
 
     # Attributes
 
