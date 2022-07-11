@@ -282,13 +282,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         self.logger.debug(f"Event callback [{event_data}]")
 
+        # We tend to get error events after comms have been reestablished.
+        # Ignore the error events if it's older than a valid event
         if event_data.attr_value:
             event_time_stamp = event_data.attr_value.time.isoformat()
+            if event_time_stamp < self.latest_event_message_timestamp:
+                return
         else:
             event_time_stamp = event_data.reception_date.isoformat()
-        # Ignore events that are late
-        if event_time_stamp < self.latest_event_message_timestamp:
-            return
 
         self.latest_event_message_timestamp = event_time_stamp
 
