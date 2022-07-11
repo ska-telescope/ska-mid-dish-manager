@@ -42,7 +42,8 @@ def change_event_cb() -> MockTangoEventCallbackGroup:
 def devices_to_test(request):
     """Fixture for devices to test."""
     raise NotImplementedError(
-        "You have to specify the devices to test by overriding the 'devices_to_test' fixture."
+        "You have to specify the devices totest by "
+        " overriding the 'devices_to_test' fixture."
     )
 
 
