@@ -286,10 +286,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # Ignore the error events if it's older than a valid event
         if event_data.attr_value:
             event_time_stamp = event_data.attr_value.time.isoformat()
-            if event_time_stamp < self.latest_event_message_timestamp:
-                return
         else:
             event_time_stamp = event_data.reception_date.isoformat()
+            if event_time_stamp < self.latest_event_message_timestamp:
+                return
 
         self.latest_event_message_timestamp = event_time_stamp
 
