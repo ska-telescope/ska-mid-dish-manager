@@ -4,9 +4,10 @@
 # pylint: disable=missing-function-docstring
 import enum
 import logging
-from typing import Optional
 
 from ska_tango_base import SKAController
+from ska_tango_base.commands import DeviceInitCommand, ResultCode
+from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.control_model import CommunicationStatus
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, run
@@ -75,85 +76,50 @@ class TrackTableLoadMode(enum.IntEnum):
     NEW = 1
 
 
-class DishManagerComponentManager(TangoDeviceComponentManager):
+class DishManagerComponentManager(BaseComponentManager):
     def __init__(
         self,
-        fqdn,
         *args,
-        max_workers: Optional[int] = None,
         logger: logging.Logger = None,
         **kwargs,
     ):
         """"""
         # pylint: disable=useless-super-delegation
         super().__init__(
-            fqdn, *args, max_workers=max_workers, logger=logger, **kwargs
+            *args, logger=logger, **kwargs
         )
-
-        self._ds_connection = False
-        self._spfrx_connection = False
-        self._spf_connection = False
-        self.dish_mode_callback = kwargs["dish_mode_callback"]
-
-        self.ds_component_manager = TangoDeviceComponentManager(
+        self._ds_component_manager = TangoDeviceComponentManager(
             "mid_d0001/lmc/ds_simulator",
             logger=logger,
-            component_state_callback=self._component_state_cb,
-            communication_state_callback=self._ds_communication_state_cb,
+            component_state_callback=None,
+            communication_state_callback=self._communication_state_changed,
         )
-        self.spfrx_component_manager = TangoDeviceComponentManager(
+        self._spfrx_component_manager = TangoDeviceComponentManager(
             "mid_d0001/spfrx/simulator",
             logger=logger,
-            component_state_callback=self._component_state_cb,
-            communication_state_callback=self._spfrx_communication_state_cb,
+            component_state_callback=None,
+            communication_state_callback=self._communication_state_changed,
         )
-        self.spf_component_manager = TangoDeviceComponentManager(
+        self._spf_component_manager = TangoDeviceComponentManager(
             "mid_d0001/spf/simulator",
             logger=logger,
-            component_state_callback=self._component_state_cb,
-            communication_state_callback=self._spf_communication_state_cb,
+            component_state_callback=None,
+            communication_state_callback=self._communication_state_changed,
         )
 
-    def _update_dish_mode(self):
-        self.logger.info(
-            "Updating dish mode ds[%s], spfrx[%s], spf[%s]",
-            self._ds_connection,
-            self._spfrx_connection,
-            self._spf_connection,
-        )
+    def _communication_state_changed(self, *args, **kwargs):
+        if not hasattr(self, "_ds_component_manager"):
+            # init command hasnt run yet. this will cause init device to fail
+            return
         if (
-            self._ds_connection
-            and self._spfrx_connection
-            and self._spf_connection
-        ):
-            self.logger.info("Changing dish mode")
-            self.dish_mode_callback(DishMode.STANDBY_LP)
-
-    def _ds_communication_state_cb(self, *args, **kwargs):
-        self.logger.info(args[0])
-        self.logger.info(kwargs)
-        if args[0] == CommunicationStatus.ESTABLISHED:
-            self.logger.info("DS connection established")
-            self._ds_connection = True
-            self._update_dish_mode()
-
-    def _spfrx_communication_state_cb(self, *args, **kwargs):
-        self.logger.info(args)
-        if args[0] == CommunicationStatus.ESTABLISHED:
-            self.logger.info("SPRFx connection established")
-            self._spfrx_connection = True
-            self._update_dish_mode()
-
-    def _spf_communication_state_cb(self, *args, **kwargs):
-        self.logger.info(args)
-        if args[0] == CommunicationStatus.ESTABLISHED:
-            self.logger.info("SPF connection established")
-            self._spf_connection = True
-            self._update_dish_mode()
-
-    def _component_state_cb(self, *args, **kwargs):
-        self.logger.info(args)
-        self.logger.info(kwargs)
+            self._ds_component_manager.communication_state == CommunicationStatus.ESTABLISHED and
+            self._spfrx_component_manager.communication_state == CommunicationStatus.ESTABLISHED and
+            self._spf_component_manager.communication_state == CommunicationStatus.ESTABLISHED
+            ):
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
+            self._update_component_state(dish_mode=DishMode.STANDBY_LP)
+        else:
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -170,22 +136,22 @@ class DishManager(SKAController):
         :rtype: DishManagerComponentManager
         """
         return DishManagerComponentManager(
-            "mid_d0005/elt/master",
-            max_workers=1,
             logger=self.logger,
-            dish_mode_callback=self._dish_mode_cb,
-            component_state_callback=None,
+            communication_state_callback=None,
+            component_state_callback=self._component_state_changed,
         )
 
-    def _dish_mode_cb(self, *args, **kwargs):
-        self.logger.info(args)
-        self.logger.info(kwargs)
-        # pylint: disable=attribute-defined-outside-init
-        self._dish_mode = args[0]
-        self.push_change_event("dishMode", self._dish_mode)
+    def _component_state_changed(self, *args, **kwargs):
+        if not hasattr(self, "_dish_mode"):
+            return
+        if "dish_mode" in kwargs:
+            # rules might be here
+            self._dish_mode = kwargs["dish_mode"]
+            self.push_change_event("dishMode", self._dish_mode)
+        
 
     class InitCommand(
-        SKAController.InitCommand
+        DeviceInitCommand
     ):  # pylint: disable=too-few-public-methods
         """
         A class for the Dish Manager's init_device() method
@@ -195,7 +161,6 @@ class DishManager(SKAController):
             """
             Initializes the attributes and properties of the DishManager
             """
-            super().do()
             device = self._device
             # pylint: disable=protected-access
             device._achieved_pointing = [0.0, 0.0, 0.0]
@@ -238,6 +203,7 @@ class DishManager(SKAController):
 
             # push change events for dishMode: needed to use testing library
             device.set_change_event("dishMode", True, False)
+            super().do()
 
     # Attributes
 
