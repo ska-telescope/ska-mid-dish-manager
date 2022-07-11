@@ -86,7 +86,7 @@ class DishManagerComponentManager(BaseComponentManager):
         """"""
         # pylint: disable=useless-super-delegation
         super().__init__(
-            *args, logger=logger, **kwargs
+            *args, logger=logger, dish_mode=DishMode.STARTUP, **kwargs
         )
         self._ds_component_manager = TangoDeviceComponentManager(
             "mid_d0001/lmc/ds_simulator",
@@ -203,7 +203,6 @@ class DishManager(SKAController):
 
             # push change events for dishMode: needed to use testing library
             device.set_change_event("dishMode", True, False)
-            super().do()
 
     # Attributes
 
