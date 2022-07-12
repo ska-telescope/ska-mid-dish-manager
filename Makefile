@@ -19,11 +19,6 @@ ifeq ($(MAKECMDGOALS),k8s-test)
 MARK = acceptance
 endif
 
-# this is for skampi prerun
-ifeq ($(MAKECMDGOALS),k8s-do-test)
-MARK = skampi-confidence
-endif
-
 # Set the specific environment variables required for pytest
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
