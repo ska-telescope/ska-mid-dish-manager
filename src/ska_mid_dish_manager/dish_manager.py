@@ -6,7 +6,6 @@ import enum
 import logging
 
 from ska_tango_base import SKAController
-from ska_tango_base.commands import DeviceInitCommand, ResultCode
 from ska_tango_base.base.component_manager import BaseComponentManager
 from ska_tango_base.control_model import CommunicationStatus
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
@@ -107,19 +106,26 @@ class DishManagerComponentManager(BaseComponentManager):
             communication_state_callback=self._communication_state_changed,
         )
 
+    # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
+        # communication state will come from args and kwargs
         if not hasattr(self, "_ds_component_manager"):
             # init command hasnt run yet. this will cause init device to fail
             return
         if (
-            self._ds_component_manager.communication_state == CommunicationStatus.ESTABLISHED and
-            self._spfrx_component_manager.communication_state == CommunicationStatus.ESTABLISHED and
-            self._spf_component_manager.communication_state == CommunicationStatus.ESTABLISHED
-            ):
+            self._ds_component_manager.communication_state
+            == CommunicationStatus.ESTABLISHED
+            and self._spfrx_component_manager.communication_state
+            == CommunicationStatus.ESTABLISHED
+            and self._spf_component_manager.communication_state
+            == CommunicationStatus.ESTABLISHED
+        ):
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
             self._update_component_state(dish_mode=DishMode.STANDBY_LP)
         else:
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
 
 
 # pylint: disable=too-many-instance-attributes
@@ -141,17 +147,18 @@ class DishManager(SKAController):
             component_state_callback=self._component_state_changed,
         )
 
+    # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
         if not hasattr(self, "_dish_mode"):
             return
         if "dish_mode" in kwargs:
             # rules might be here
+            # pylint: disable=attribute-defined-outside-init
             self._dish_mode = kwargs["dish_mode"]
             self.push_change_event("dishMode", self._dish_mode)
-        
 
     class InitCommand(
-        DeviceInitCommand
+        SKAController.InitCommand
     ):  # pylint: disable=too-few-public-methods
         """
         A class for the Dish Manager's init_device() method
@@ -203,6 +210,7 @@ class DishManager(SKAController):
 
             # push change events for dishMode: needed to use testing library
             device.set_change_event("dishMode", True, False)
+            super().do()
 
     # Attributes
 
