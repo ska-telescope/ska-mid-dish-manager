@@ -4,12 +4,14 @@
 # pylint: disable=missing-function-docstring
 import enum
 import logging
-from typing import Optional
 
 from ska_tango_base import SKAController
-from ska_tango_base.base import TaskExecutorComponentManager
+from ska_tango_base.base.component_manager import BaseComponentManager
+from ska_tango_base.control_model import CommunicationStatus
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, run
+
+from ska_mid_dish_manager.component_managers import TangoDeviceComponentManager
 
 
 class DishMode(enum.IntEnum):
@@ -73,19 +75,57 @@ class TrackTableLoadMode(enum.IntEnum):
     NEW = 1
 
 
-class DishManagerComponentManager(TaskExecutorComponentManager):
+class DishManagerComponentManager(BaseComponentManager):
     def __init__(
         self,
         *args,
-        max_workers: Optional[int] = None,
         logger: logging.Logger = None,
         **kwargs,
     ):
         """"""
         # pylint: disable=useless-super-delegation
         super().__init__(
-            *args, max_workers=max_workers, logger=logger, **kwargs
+            *args, logger=logger, dish_mode=DishMode.STARTUP, **kwargs
         )
+        self._ds_component_manager = TangoDeviceComponentManager(
+            "mid_d0001/lmc/ds_simulator",
+            logger=logger,
+            component_state_callback=None,
+            communication_state_callback=self._communication_state_changed,
+        )
+        self._spfrx_component_manager = TangoDeviceComponentManager(
+            "mid_d0001/spfrx/simulator",
+            logger=logger,
+            component_state_callback=None,
+            communication_state_callback=self._communication_state_changed,
+        )
+        self._spf_component_manager = TangoDeviceComponentManager(
+            "mid_d0001/spf/simulator",
+            logger=logger,
+            component_state_callback=None,
+            communication_state_callback=self._communication_state_changed,
+        )
+
+    # pylint: disable=unused-argument
+    def _communication_state_changed(self, *args, **kwargs):
+        # communication state will come from args and kwargs
+        if not hasattr(self, "_ds_component_manager"):
+            # init command hasnt run yet. this will cause init device to fail
+            return
+        if (
+            self._ds_component_manager.communication_state
+            == CommunicationStatus.ESTABLISHED
+            and self._spfrx_component_manager.communication_state
+            == CommunicationStatus.ESTABLISHED
+            and self._spf_component_manager.communication_state
+            == CommunicationStatus.ESTABLISHED
+        ):
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
+            self._update_component_state(dish_mode=DishMode.STANDBY_LP)
+        else:
+            self._update_communication_state(
+                CommunicationStatus.NOT_ESTABLISHED
+            )
 
 
 # pylint: disable=too-many-instance-attributes
@@ -102,11 +142,20 @@ class DishManager(SKAController):
         :rtype: DishManagerComponentManager
         """
         return DishManagerComponentManager(
-            max_workers=1,
             logger=self.logger,
             communication_state_callback=None,
-            component_state_callback=None,
+            component_state_callback=self._component_state_changed,
         )
+
+    # pylint: disable=unused-argument
+    def _component_state_changed(self, *args, **kwargs):
+        if not hasattr(self, "_dish_mode"):
+            return
+        if "dish_mode" in kwargs:
+            # rules might be here
+            # pylint: disable=attribute-defined-outside-init
+            self._dish_mode = kwargs["dish_mode"]
+            self.push_change_event("dishMode", self._dish_mode)
 
     class InitCommand(
         SKAController.InitCommand
@@ -119,7 +168,6 @@ class DishManager(SKAController):
             """
             Initializes the attributes and properties of the DishManager
             """
-            super().do()
             device = self._device
             # pylint: disable=protected-access
             device._achieved_pointing = [0.0, 0.0, 0.0]
@@ -143,7 +191,7 @@ class DishManager(SKAController):
             device._configured_band = Band.NONE
             device._configure_target_lock = []
             device._desired_pointing = [0.0, 0.0, 0.0]
-            device._dish_mode = DishMode.STANDBY_LP
+            device._dish_mode = DishMode.STARTUP
             device._dsh_max_short_term_power = 13.5
             device._dsh_power_curtailment = True
             device._frequency_response = [[], []]
@@ -159,6 +207,10 @@ class DishManager(SKAController):
             device._track_table_load_mode = TrackTableLoadMode.ADD
             device._usage_status = UsageStatus.IDLE
             device.op_state_model.perform_action("component_standby")
+
+            # push change events for dishMode: needed to use testing library
+            device.set_change_event("dishMode", True, False)
+            super().do()
 
     # Attributes
 
