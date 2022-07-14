@@ -23,6 +23,7 @@ def test_node_count(dish_mode_model):
     [
         ("STANDBY_FP", "SetOperateMode", True),
         ("STANDBY_LP", "SetOperateMode", False),
+        ("MAINTENANCE", "SetStandbyLPMode", True),
     ],
 )
 def test_is_mode_transition_allowed(

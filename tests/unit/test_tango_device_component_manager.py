@@ -8,7 +8,7 @@ import tango
 from ska_tango_base.control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext, get_host_ip
 
-from ska_mid_dish_manager.component_managers import (
+from ska_mid_dish_manager.component_managers.tango_device_cm import (
     LostConnection,
     TangoDeviceComponentManager,
 )

@@ -1,3 +1,8 @@
+# pylint: disable=abstract-method
+# pylint: disable=missing-module-docstring
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
+# pylint: disable=too-few-public-methods
 import networkx as nx
 
 CONFIG_COMMANDS = (
@@ -26,7 +31,8 @@ class DishModeModel:
     def __init__(self):
         self.dishmode_graph = self._build_model()
 
-    def _build_model(self):
+    @classmethod
+    def _build_model(cls):
         dishmode_graph = nx.DiGraph()
         for node in DISH_MODE_NODES:
             dishmode_graph.add_node(node)
@@ -45,6 +51,9 @@ class DishModeModel:
         dishmode_graph.add_edge(
             "STANDBY_LP", "STANDBY_FP", commands=["SetStandbyFPMode"]
         )
+        dishmode_graph.add_edge(
+            "STANDBY_LP", "MAINTENANCE", commands=["SetMaintenanceMode"]
+        )
 
         # For Standby_FP to other modes
         dishmode_graph.add_edge(
@@ -55,6 +64,9 @@ class DishModeModel:
         )
         dishmode_graph.add_edge(
             "STANDBY_FP", "OPERATE", commands=["SetOperateMode"]
+        )
+        dishmode_graph.add_edge(
+            "STANDBY_FP", "MAINTENANCE", commands=["SetMaintenanceMode"]
         )
 
         # For Operate to other modes
@@ -86,12 +98,14 @@ class DishModeModel:
                 continue
             dishmode_graph.add_edge(node, "STOW", commands=["SetStowMode"])
 
-        # From any LP/FP mode to Maintenance
+        # From Maintenance to other modes
         dishmode_graph.add_edge(
-            "STANDBY_FP", "MAINTENANCE", commands=["SetMaintenanceMode"]
+            "MAINTENANCE",
+            "STANDBY_LP",
+            commands=["SetStandbyLPMode"],
         )
         dishmode_graph.add_edge(
-            "STANDBY_LP", "MAINTENANCE", commands=["SetMaintenanceMode"]
+            "MAINTENANCE", "STANDBY_FP", commands=["SetStandbyFPMode"]
         )
 
         return dishmode_graph

@@ -2,130 +2,24 @@
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
-import enum
-import logging
 
 from ska_tango_base import SKAController
-from ska_tango_base.base.component_manager import BaseComponentManager
-from ska_tango_base.control_model import CommunicationStatus
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, run
 
-from ska_mid_dish_manager.component_managers import TangoDeviceComponentManager
-
-
-class DishMode(enum.IntEnum):
-    OFF = 0
-    STARTUP = 1
-    SHUTDOWN = 2
-    STANDBY_LP = 3
-    STANDBY_FP = 4
-    MAINTENANCE = 5
-    STOW = 6
-    CONFIG = 7
-    OPERATE = 8
-
-
-class PointingState(enum.IntEnum):
-    READY = 0
-    SLEW = 1
-    TRACK = 2
-    SCAN = 3
-    UNKNOWN = 4
-
-
-class Band(enum.IntEnum):
-    NONE = 0
-    B1 = 1
-    B2 = 2
-    B3 = 3
-    B4 = 4
-    # pylint: disable=invalid-name
-    B5a = 5
-    B5b = 6
-
-
-class UsageStatus(enum.IntEnum):
-    BUSY = 0
-    ANY = 1
-    IDLE = 2
-    ACTIVE = 3
-
-
-class PowerState(enum.IntEnum):
-    OFF = 0
-    UPS = 1
-    LOW = 2
-    FULL = 3
-
-
-class TrackInterpolationMode(enum.IntEnum):
-    NEWTON = 0
-    SPLINE = 1
-
-
-class TrackProgramMode(enum.IntEnum):
-    TABLEA = 0
-    TABLEB = 1
-    POLY = 2
-
-
-class TrackTableLoadMode(enum.IntEnum):
-    ADD = 0
-    NEW = 1
-
-
-class DishManagerComponentManager(BaseComponentManager):
-    def __init__(
-        self,
-        *args,
-        logger: logging.Logger = None,
-        **kwargs,
-    ):
-        """"""
-        # pylint: disable=useless-super-delegation
-        super().__init__(
-            *args, logger=logger, dish_mode=DishMode.STARTUP, **kwargs
-        )
-        self._ds_component_manager = TangoDeviceComponentManager(
-            "mid_d0001/lmc/ds_simulator",
-            logger=logger,
-            component_state_callback=None,
-            communication_state_callback=self._communication_state_changed,
-        )
-        self._spfrx_component_manager = TangoDeviceComponentManager(
-            "mid_d0001/spfrx/simulator",
-            logger=logger,
-            component_state_callback=None,
-            communication_state_callback=self._communication_state_changed,
-        )
-        self._spf_component_manager = TangoDeviceComponentManager(
-            "mid_d0001/spf/simulator",
-            logger=logger,
-            component_state_callback=None,
-            communication_state_callback=self._communication_state_changed,
-        )
-
-    # pylint: disable=unused-argument
-    def _communication_state_changed(self, *args, **kwargs):
-        # communication state will come from args and kwargs
-        if not hasattr(self, "_ds_component_manager"):
-            # init command hasnt run yet. this will cause init device to fail
-            return
-        if (
-            self._ds_component_manager.communication_state
-            == CommunicationStatus.ESTABLISHED
-            and self._spfrx_component_manager.communication_state
-            == CommunicationStatus.ESTABLISHED
-            and self._spf_component_manager.communication_state
-            == CommunicationStatus.ESTABLISHED
-        ):
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
-            self._update_component_state(dish_mode=DishMode.STANDBY_LP)
-        else:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
+from ska_mid_dish_manager.component_managers.dish_manager_cm import (
+    DishManagerComponentManager,
+)
+from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    DishMode,
+    PointingState,
+    PowerState,
+    TrackInterpolationMode,
+    TrackProgramMode,
+    TrackTableLoadMode,
+    UsageStatus,
+)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -777,7 +671,7 @@ class DishManager(SKAController):
         perform power management (load curtailment), and also to conserve
         energy for non‐operating dishes.
         """
-        return
+        self._component_manager.set_standby_lp_mode()
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def SetStandbyFPMode(self):
