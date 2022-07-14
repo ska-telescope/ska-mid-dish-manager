@@ -1,5 +1,4 @@
 import networkx as nx
-from click import command
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
