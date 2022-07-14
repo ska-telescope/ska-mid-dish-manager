@@ -88,6 +88,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def __init__(
         self,
         tango_device_fqdn: AnyStr,
+        logger,
         *args,
         max_workers: Optional[int] = None,
         communication_state_callback: Optional[Callable] = None,
@@ -102,6 +103,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self.latest_event_message_timestamp = datetime.now().isoformat()
 
         super().__init__(
+            logger,
             *args,
             max_workers=max_workers,
             communication_state_callback=communication_state_callback,
@@ -353,7 +355,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :type command_arg: Optional Any
         """
         with tango.EnsureOmniThread():
-            return self._device_proxy.command_inout(command_name, command_arg)
+            self.logger.info(
+                f"Executing command: {command_name} for "
+                "device {self._tango_device_fqdn}"
+            )
+            result = self._device_proxy.command_inout(
+                command_name, command_arg
+            )
+            self.logger.info(f"Executing command: {result}")
+            return result
 
     @_check_connection
     def monitor_attribute(self, attribute_name: str):

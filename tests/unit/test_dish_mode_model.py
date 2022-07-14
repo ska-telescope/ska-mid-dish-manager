@@ -1,7 +1,7 @@
 import pytest
 
-from ska_mid_dish_manager import DishMode
-from ska_mid_dish_manager.models import DishModeModel
+from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
 
 @pytest.fixture(scope="module")

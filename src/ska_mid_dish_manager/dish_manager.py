@@ -222,6 +222,7 @@ class DishManager(SKAController):
     )
     dishMode = attribute(
         dtype=DishMode,
+        access=AttrWriteType.WRITE,
         doc="Dish rolled-up operating mode in Dish Control Model (SCM) "
         "notation",
     )
@@ -437,6 +438,12 @@ class DishManager(SKAController):
 
     def read_dishMode(self):
         return self._dish_mode
+
+    def write_dishMode(self, value):
+        # pylint: disable=attribute-defined-outside-init
+        self._dish_mode = value
+        # pylint: disable=protected-access
+        self.component_manager._update_component_state(dish_mode=value)
 
     def read_dshMaxShortTermPower(self):
         return self._dsh_max_short_term_power
@@ -671,7 +678,7 @@ class DishManager(SKAController):
         perform power management (load curtailment), and also to conserve
         energy for non‐operating dishes.
         """
-        self._component_manager.set_standby_lp_mode()
+        self.component_manager.set_standby_lp_mode()
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def SetStandbyFPMode(self):
