@@ -116,13 +116,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         for monitored_state in self._monitored_attributes:
             self._component_state[monitored_state.attr_name] = "UNKNOWN"
 
-        self.start_communicating()
-
     def start_communicating(self):
         """
         Create the DeviceProxy in a thread, retrying until we are successful
         """
         if not self.component_state["connection_in_progress"]:
+            self.logger.info(
+                "Starting communication to [%s]", self.tango_device_fqdn
+            )
             self._update_component_state(connection_in_progress=True)
             self.submit_task(
                 self._create_device_proxy,
@@ -254,6 +255,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                     )
                 self._update_communication_state(
                     CommunicationStatus.ESTABLISHED
+                )
+                self.logger.info(
+                    "Comms established to [%s]", self.tango_device_fqdn
                 )
 
         if status == TaskStatus.ABORTED:

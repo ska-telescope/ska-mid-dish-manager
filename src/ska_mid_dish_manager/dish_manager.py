@@ -43,8 +43,6 @@ class DishManager(SKAController):
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
-        if not hasattr(self, "_dish_mode"):
-            return
         if "dish_mode" in kwargs:
             # rules might be here
             # pylint: disable=attribute-defined-outside-init
@@ -62,7 +60,7 @@ class DishManager(SKAController):
             """
             Initializes the attributes and properties of the DishManager
             """
-            device = self._device
+            device: DishManager = self._device
             # pylint: disable=protected-access
             device._achieved_pointing = [0.0, 0.0, 0.0]
             device._achieved_target_lock = False
@@ -104,6 +102,7 @@ class DishManager(SKAController):
 
             # push change events for dishMode: needed to use testing library
             device.set_change_event("dishMode", True, False)
+            device.component_manager.start_communicating()
             super().do()
 
     # Attributes
@@ -222,7 +221,6 @@ class DishManager(SKAController):
     )
     dishMode = attribute(
         dtype=DishMode,
-        access=AttrWriteType.WRITE,
         doc="Dish rolled-up operating mode in Dish Control Model (SCM) "
         "notation",
     )
@@ -438,12 +436,6 @@ class DishManager(SKAController):
 
     def read_dishMode(self):
         return self._dish_mode
-
-    def write_dishMode(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._dish_mode = value
-        # pylint: disable=protected-access
-        self.component_manager._update_component_state(dish_mode=value)
 
     def read_dshMaxShortTermPower(self):
         return self._dsh_max_short_term_power
