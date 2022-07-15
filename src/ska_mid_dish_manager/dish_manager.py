@@ -36,7 +36,7 @@ class DishManager(SKAController):
         :rtype: DishManagerComponentManager
         """
         return DishManagerComponentManager(
-            logger=self.logger,
+            self.logger,
             communication_state_callback=None,
             component_state_callback=self._component_state_changed,
         )

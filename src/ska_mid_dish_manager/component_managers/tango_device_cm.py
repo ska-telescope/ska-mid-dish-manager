@@ -95,7 +95,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         component_state_callback: Optional[Callable] = None,
         **kwargs,
     ):
-        self._tango_device_fqdn: str = tango_device_fqdn
+        self.tango_device_fqdn: str = tango_device_fqdn
         self._device_proxy: Optional[tango.DeviceProxy] = None
         self._monitored_attributes: List[MonitoredAttribute] = [
             MonitoredAttribute("State")
@@ -126,7 +126,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._update_component_state(connection_in_progress=True)
             self.submit_task(
                 self._create_device_proxy,
-                args=[self._tango_device_fqdn, self._device_proxy],
+                args=[self.tango_device_fqdn, self._device_proxy],
                 task_callback=self._device_proxy_creation_cb,
             )
 
@@ -150,7 +150,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except (tango.ConnectionFailed, LostConnection) as err:
                 self.start_communicating()  # pylint: disable=W0212
                 raise LostConnection(
-                    f"[{self._tango_device_fqdn}]"  # pylint: disable=W0212
+                    f"[{self.tango_device_fqdn}]"  # pylint: disable=W0212
                     "  not connected. Retry in progress"
                 ) from err
 
@@ -271,7 +271,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self.logger.info(
                 "Connection retry count [%s] for device [%s]",
                 retry_count,
-                self._tango_device_fqdn,
+                self.tango_device_fqdn,
             )
 
     def _subscription_event_callback(self, event_data: tango.EventData):
@@ -355,14 +355,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :type command_arg: Optional Any
         """
         with tango.EnsureOmniThread():
-            self.logger.info(
-                f"Executing command: {command_name} for "
-                "device {self._tango_device_fqdn}"
-            )
             result = self._device_proxy.command_inout(
                 command_name, command_arg
             )
-            self.logger.info(f"Executing command: {result}")
+            self.logger.info(
+                "Result of [%s] on [%s] is [%s]",
+                command_name,
+                self.tango_device_fqdn,
+                result,
+            )
             return result
 
     @_check_connection

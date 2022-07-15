@@ -20,17 +20,17 @@ from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 class DishManagerComponentManager(TaskExecutorComponentManager):
     def __init__(
         self,
+        logger: logging.Logger,
         *args,
         max_workers: int = 3,
-        logger: logging.Logger = None,
         **kwargs,
     ):
         """"""
         # pylint: disable=useless-super-delegation
         super().__init__(
+            logger,
             *args,
             max_workers=max_workers,
-            logger=logger,
             dish_mode=DishMode.STARTUP,
             **kwargs,
         )
@@ -93,15 +93,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         cls,
         component_manager: TangoDeviceComponentManager,
         command_name: AnyStr,
-        _task_abort_event: Event = None,
+        task_abort_event: Event = None,
         task_callback: Callable = None,
     ):
+        if task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                message=f"From {component_manager.tango_device_fqdn}",
+            )
+            return
         try:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+            task_callback(
+                status=TaskStatus.IN_PROGRESS,
+                message=f"From {component_manager.tango_device_fqdn}",
+            )
             command_result = component_manager.run_device_command(command_name)
-            task_callback(status=TaskStatus.COMPLETED, result=command_result)
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result=command_result,
+                message=f"From {component_manager.tango_device_fqdn}",
+            )
         except Exception as err:  # pylint: disable=W0703
-            task_callback(status=TaskStatus.FAILED, result=err)
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=err,
+                message=f"From {component_manager.tango_device_fqdn}",
+            )
 
     def set_standby_lp_mode(self):
         if self._dish_mode_model.is_command_allowed(
@@ -112,20 +129,43 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # DS -> setstanby-lp
             # SPF -> setstanby-lp
             # SPFRx -> setstandby
-            self.submit_task(
+            result = self.submit_task(
                 self._execute_sub_device_command,
-                args=[self._ds_component_manager, "SetStandbyLPMode"],
+                args=[
+                    self._ds_component_manager,
+                    "SetStandbyLPMode",
+                ],
                 task_callback=self._task_callback,
             )
-            self.submit_task(
+            self.logger.info(
+                "Result of SetStandbyLPMode on ds_component_manager [%s]",
+                result,
+            )
+            result = self.submit_task(
                 self._execute_sub_device_command,
-                args=[self._spf_component_manager, "SetStandbyLPMode"],
+                args=[
+                    self.logger,
+                    self._spf_component_manager,
+                    "SetStandbyLPMode",
+                ],
                 task_callback=self._task_callback,
             )
-            self.submit_task(
+            self.logger.info(
+                "Result of SetStandbyLPMode on spf_component_manager [%s]",
+                result,
+            )
+            result = self.submit_task(
                 self._execute_sub_device_command,
-                args=[self._spfrx_component_manager, "SetStandbyMode"],
+                args=[
+                    self.logger,
+                    self._spfrx_component_manager,
+                    "SetStandbyLPMode",
+                ],
                 task_callback=self._task_callback,
+            )
+            self.logger.info(
+                "Result of SetStandbyLPMode on spfrx_component_manager [%s]",
+                result,
             )
         else:
             raise Exception
