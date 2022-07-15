@@ -327,7 +327,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         for monitored_attr in self._monitored_attributes:
             monitored_attr.unsubscribe(self._device_proxy)
 
-    @_check_connection
     def stop_communicating(self, aborted_callback: Optional[Callable] = None):
         """Break off communication with the device.
 

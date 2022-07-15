@@ -167,3 +167,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
         else:
             raise Exception
+
+    def stop_communicating(self):
+        for com_man in self.component_managers.values():
+            com_man.stop_communicating()
+
+    def abort_tasks(self, task_callback: Optional[Callable] = None):
+        self.stop_communicating()
+        for com_man in self.component_managers.values():
+            com_man.abort_tasks(task_callback)
+        return super().abort_tasks(task_callback)
