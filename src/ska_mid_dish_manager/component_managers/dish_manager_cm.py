@@ -70,8 +70,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
     def start_communicating(self):
-        for cm in self.component_managers.values():
-            cm.start_communicating()
+        for com_man in self.component_managers.values():
+            com_man.start_communicating()
 
     def _task_callback(
         self,
@@ -130,7 +130,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             result = self.submit_task(
                 self._execute_sub_device_command,
                 args=[
-                    self._ds_component_manager,
+                    self.component_managers["DS"],
                     "SetStandbyLPMode",
                 ],
                 task_callback=self._task_callback,
@@ -143,7 +143,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._execute_sub_device_command,
                 args=[
                     self.logger,
-                    self._spf_component_manager,
+                    self.component_managers["SPF"],
                     "SetStandbyLPMode",
                 ],
                 task_callback=self._task_callback,
@@ -156,7 +156,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._execute_sub_device_command,
                 args=[
                     self.logger,
-                    self._spfrx_component_manager,
+                    self.component_managers["SPFRX"],
                     "SetStandbyLPMode",
                 ],
                 task_callback=self._task_callback,
