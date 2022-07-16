@@ -1,5 +1,6 @@
 import logging
 import socket
+from threading import Lock
 from unittest import mock
 
 import pytest
@@ -41,7 +42,7 @@ def test_non_existing_component(caplog):
         ),
     ):
         tc_manager = TangoDeviceComponentManager(
-            "fake/fqdn/1", LOGGER, max_workers=1
+            "fake/fqdn/1", LOGGER, Lock(), max_workers=1
         )
         tc_manager.start_communicating()
         while "Connection retry count [3]" not in caplog.text:
@@ -71,10 +72,10 @@ def tango_test_context(SimpleDevice):
         yield proxy
 
 
-@pytest.mark.skip(reason="Intermittent segfault")
 @pytest.mark.forked
 @pytest.mark.unit
 def test_happy_path(tango_test_context, caplog):
+    caplog.set_level(logging.INFO)
     device_name = tango_test_context.name()
     _DeviceProxy = tango.DeviceProxy
     with mock.patch(
@@ -86,10 +87,10 @@ def test_happy_path(tango_test_context, caplog):
         ),
     ):
         tc_manager = TangoDeviceComponentManager(
-            device_name, LOGGER, max_workers=1
+            device_name, LOGGER, Lock(), max_workers=1
         )
         tc_manager.start_communicating()
-        while "Comms established to" not in caplog.records:
+        while "Comms established" not in caplog.text:
             pass
         assert (
             tc_manager.communication_state == CommunicationStatus.ESTABLISHED

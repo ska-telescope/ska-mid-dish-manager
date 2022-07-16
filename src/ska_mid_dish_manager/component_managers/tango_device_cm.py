@@ -29,6 +29,7 @@ class MonitoredAttribute:
     def subscribe(
         self,
         device_proxy: tango.DeviceProxy,
+        tango_guard,
         subscription_callback: Optional[Callable] = None,
     ):
         """Subscribe to change events for this attribute
@@ -42,14 +43,20 @@ class MonitoredAttribute:
         # State has to be monitored since we use it to keep track
         # of communication state
         if self.attr_name == "State":
-            if not device_proxy.is_attribute_polled("State"):
-                device_proxy.poll_attribute("State", STATE_ATTR_POLL_PERIOD)
-        self.unsubscribe(device_proxy)
-        self.subscription_id = device_proxy.subscribe_event(
-            self.attr_name, tango.EventType.CHANGE_EVENT, subscription_callback
-        )
+            with tango_guard:
+                if not device_proxy.is_attribute_polled("State"):
+                    device_proxy.poll_attribute(
+                        "State", STATE_ATTR_POLL_PERIOD
+                    )
+        self.unsubscribe(device_proxy, tango_guard)
+        with tango_guard:
+            self.subscription_id = device_proxy.subscribe_event(
+                self.attr_name,
+                tango.EventType.CHANGE_EVENT,
+                subscription_callback,
+            )
 
-    def unsubscribe(self, device_proxy: tango.DeviceProxy):
+    def unsubscribe(self, device_proxy: tango.DeviceProxy, tango_guard):
         """Unsubscribe from change events
 
         :param device_proxy: The tango DeviceProxy
@@ -57,7 +64,8 @@ class MonitoredAttribute:
         """
         if self.subscription_id:
             try:
-                device_proxy.unsubscribe_event(self.subscription_id)
+                with tango_guard:
+                    device_proxy.unsubscribe_event(self.subscription_id)
             except (tango.EventSystemFailed, KeyError):
                 # If the device went away, we may have lost the sub
                 pass
@@ -89,6 +97,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self,
         tango_device_fqdn: AnyStr,
         logger,
+        tango_guard,
         *args,
         max_workers: Optional[int] = None,
         communication_state_callback: Optional[Callable] = None,
@@ -96,6 +105,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         **kwargs,
     ):
         self.tango_device_fqdn: str = tango_device_fqdn
+        self.tango_guard = tango_guard
         self._device_proxy: Optional[tango.DeviceProxy] = None
         self._monitored_attributes: List[MonitoredAttribute] = [
             MonitoredAttribute("State")
@@ -127,7 +137,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._update_component_state(connection_in_progress=True)
             self.submit_task(
                 self._create_device_proxy,
-                args=[self.tango_device_fqdn, self._device_proxy],
+                args=[
+                    self.tango_device_fqdn,
+                    self.tango_guard,
+                    self._device_proxy,
+                ],
                 task_callback=self._device_proxy_creation_cb,
             )
 
@@ -161,6 +175,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def _create_device_proxy(
         cls,
         tango_device_fqdn: AnyStr,
+        tango_guard,
         device_proxy: Optional[tango.DeviceProxy],
         task_abort_event: Event = None,
         task_callback: Callable = None,
@@ -181,35 +196,36 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param task_callback: Callback to report status
         :type task_callback: Callable, optional
         """
-        with tango.EnsureOmniThread():
-            try:
-                task_callback(status=TaskStatus.IN_PROGRESS)
-                retry_count = 0
-                while True:
-                    # Leave thread if aborted
-                    if task_abort_event and task_abort_event.is_set():
-                        task_callback(status=TaskStatus.ABORTED, result=None)
-                        return
+        try:
+            task_callback(status=TaskStatus.IN_PROGRESS)
+            retry_count = 0
+            while True:
+                # Leave thread if aborted
+                if task_abort_event and task_abort_event.is_set():
+                    task_callback(status=TaskStatus.ABORTED, result=None)
+                    return
 
-                    try:
-                        retry_count += 1
-                        if not device_proxy:
+                try:
+                    retry_count += 1
+                    if not device_proxy:
+                        with tango_guard:
                             device_proxy = tango.DeviceProxy(tango_device_fqdn)
+                    with tango_guard:
                         device_proxy.ping()
-                        task_callback(
-                            status=TaskStatus.COMPLETED, result=device_proxy
-                        )
-                        return
+                    task_callback(
+                        status=TaskStatus.COMPLETED, result=device_proxy
+                    )
+                    return
 
-                    except tango.DevFailed:
-                        task_callback(
-                            status=TaskStatus.IN_PROGRESS,
-                            retry_count=retry_count,
-                        )
-                        time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
-            # Broad except otherwise this code fails silently
-            except Exception as err:  # pylint: disable=W0703
-                task_callback(status=TaskStatus.FAILED, result=err)
+                except tango.DevFailed:
+                    task_callback(
+                        status=TaskStatus.IN_PROGRESS,
+                        retry_count=retry_count,
+                    )
+                    time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
+        # Broad except otherwise this code fails silently
+        except Exception as err:  # pylint: disable=W0703
+            task_callback(status=TaskStatus.FAILED, result=err)
 
     def _device_proxy_creation_cb(
         self,
@@ -235,30 +251,29 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             message,
         )
 
-        if status == TaskStatus.QUEUED:
+        if status != TaskStatus.COMPLETED:
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
             )
 
         if status == TaskStatus.COMPLETED:
             self._update_component_state(connection_in_progress=False)
-            with tango.EnsureOmniThread():
-                if not self._device_proxy:
-                    self._device_proxy = result
 
-                # If the device went away completely we may have
-                # lost or subscriptions, redo them
-                for monitored_attr in self._monitored_attributes:
-                    monitored_attr.subscribe(
-                        self._device_proxy,
-                        self._subscription_event_callback,
-                    )
-                self._update_communication_state(
-                    CommunicationStatus.ESTABLISHED
+            if not self._device_proxy:
+                self._device_proxy = result
+
+            # If the device went away completely we may have
+            # lost or subscriptions, redo them
+            for monitored_attr in self._monitored_attributes:
+                monitored_attr.subscribe(
+                    self._device_proxy,
+                    self.tango_guard,
+                    self._subscription_event_callback,
                 )
-                self.logger.info(
-                    "Comms established to [%s]", self.tango_device_fqdn
-                )
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
+            self.logger.info(
+                "Comms established to [%s]", self.tango_device_fqdn
+            )
 
         if status == TaskStatus.ABORTED:
             self.logger.info("Device Proxy creation task aborted")
@@ -325,22 +340,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def _unsubscribe_events(self):
         """Attempt to unsubscribe event subscriptions"""
         for monitored_attr in self._monitored_attributes:
-            monitored_attr.unsubscribe(self._device_proxy)
+            monitored_attr.unsubscribe(self._device_proxy, self.tango_guard)
 
-    def stop_communicating(self, aborted_callback: Optional[Callable] = None):
+    def stop_communicating(self):
         """Break off communication with the device.
 
         :param aborted_callback: callback to call when abort completes,
             defaults to None
         :type aborted_callback: Optional[Callable], optional
         """
-        with tango.EnsureOmniThread():
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self._unsubscribe_events()
-            self._device_proxy = None
-            self.abort_tasks(aborted_callback)
+        self._unsubscribe_events()
+        self._device_proxy = None
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     @_check_connection
     def run_device_command(
@@ -357,17 +368,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param command_arg: The Tango command parameter
         :type command_arg: Optional Any
         """
-        with tango.EnsureOmniThread():
+        with self.tango_guard:
             result = self._device_proxy.command_inout(
                 command_name, command_arg
             )
-            self.logger.info(
-                "Result of [%s] on [%s] is [%s]",
-                command_name,
-                self.tango_device_fqdn,
-                result,
-            )
-            return result
+        self.logger.info(
+            "Result of [%s] on [%s] is [%s]",
+            command_name,
+            self.tango_device_fqdn,
+            result,
+        )
+        return result
 
     @_check_connection
     def monitor_attribute(self, attribute_name: str):
@@ -392,5 +403,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         for monitored_attribute in self._monitored_attributes:
             if monitored_attribute.attr_name == attribute_name:
-                monitored_attribute.unsubscribe(self._device_proxy)
+                monitored_attribute.unsubscribe(
+                    self._device_proxy, self.tango_guard
+                )
                 self._monitored_attributes.remove(monitored_attribute)

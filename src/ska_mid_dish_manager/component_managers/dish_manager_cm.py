@@ -3,11 +3,12 @@
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
 import logging
-from threading import Event
+from threading import Event, Lock
 from typing import Any, AnyStr, Callable, Optional
 
+import tango
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
-from ska_tango_base.control_model import CommunicationStatus
+from ska_tango_base.control_model import CommunicationStatus, HealthState
 from ska_tango_base.executor import TaskStatus
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import (
@@ -15,6 +16,27 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import (
 )
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
+
+
+class TangoGuard:
+    """We have several threads interacting with Tango devices.
+
+    In an effort to prevent Tango segfaults, we found that
+    limiting any interaction helps.
+    """
+
+    def __init__(self, tango_interaction_lock: Lock) -> None:
+        self.tango_interaction_lock = tango_interaction_lock
+
+    def __enter__(self):
+        self.tango_interaction_lock.acquire(timeout=30)
+        with tango.EnsureOmniThread():
+            yield
+
+    def __exit__(self, type, value, traceback):
+        if self.tango_interaction_lock.locked():
+            self.tango_interaction_lock.release()
+        return False  # Re raise any exception
 
 
 class DishManagerComponentManager(TaskExecutorComponentManager):
@@ -31,29 +53,37 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             logger,
             *args,
             max_workers=max_workers,
-            dish_mode=DishMode.STARTUP,
+            dish_mode=None,
+            health_state=None,
             **kwargs,
         )
         self._dish_mode_model = DishModeModel()
         self.component_managers = {}
+        self.tango_guard = TangoGuard(Lock())
         self.component_managers["DS"] = TangoDeviceComponentManager(
             "mid_d0001/lmc/ds_simulator",
             logger,
+            self.tango_guard,
             component_state_callback=None,
             communication_state_callback=self._communication_state_changed,
         )
         self.component_managers["SPFRX"] = TangoDeviceComponentManager(
             "mid_d0001/spfrx/simulator",
             logger,
+            self.tango_guard,
             component_state_callback=None,
             communication_state_callback=self._communication_state_changed,
         )
         self.component_managers["SPF"] = TangoDeviceComponentManager(
             "mid_d0001/spf/simulator",
             logger,
+            self.tango_guard,
             component_state_callback=None,
             communication_state_callback=self._communication_state_changed,
         )
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        self._update_component_state(dish_mode=DishMode.STARTUP)
+        self._update_component_state(health_state=HealthState.UNKNOWN)
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
@@ -64,10 +94,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ):
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
             self._update_component_state(dish_mode=DishMode.STANDBY_LP)
+            self._update_component_state(health_state=HealthState.OK)
         else:
             self._update_communication_state(
                 CommunicationStatus.NOT_ESTABLISHED
             )
+            self._update_component_state(health_state=HealthState.FAILED)
 
     def start_communicating(self):
         for com_man in self.component_managers.values():

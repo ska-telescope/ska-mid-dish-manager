@@ -1,5 +1,4 @@
 import logging
-import queue
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -29,7 +28,7 @@ def devices_to_test(SimpleDevice):
     ]
 
 
-@pytest.mark.skip(reason="Event system making test fail intermittently")
+@pytest.mark.xfail(reason="Intermittent Segfaults")
 @pytest.mark.forked
 @pytest.mark.unit
 def test_dish_transitions_to_lp_mode_after_startup(multi_device_tango_context):
@@ -44,7 +43,7 @@ def test_dish_transitions_to_lp_mode_after_startup(multi_device_tango_context):
         tango.EventType.CHANGE_EVENT,
         cb["dishMode"],
     )
-    cb.assert_change_event("dishMode", DishMode.STANDBY_LP, lookahead=10)
+    cb.assert_change_event("dishMode", DishMode.STANDBY_LP)
 
 
 @pytest.mark.unit
