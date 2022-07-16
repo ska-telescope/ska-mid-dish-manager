@@ -33,7 +33,7 @@ class TangoGuard:
         with tango.EnsureOmniThread():
             yield
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, atype, value, traceback):
         if self.tango_interaction_lock.locked():
             self.tango_interaction_lock.release()
         return False  # Re raise any exception

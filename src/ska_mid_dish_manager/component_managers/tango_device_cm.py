@@ -172,7 +172,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         return _decorator
 
     @classmethod
-    def _create_device_proxy(
+    def _create_device_proxy(  # pylint: disable=too-many-arguments
         cls,
         tango_device_fqdn: AnyStr,
         tango_guard,
@@ -390,6 +390,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         monitored_attribute = MonitoredAttribute(attribute_name)
         monitored_attribute.subscribe(
             self._device_proxy,
+            self.tango_guard,
             subscription_callback=self._subscription_event_callback,
         )
         self._monitored_attributes.append(monitored_attribute)
