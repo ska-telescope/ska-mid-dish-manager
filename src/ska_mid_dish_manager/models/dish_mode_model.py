@@ -27,6 +27,10 @@ DISH_MODE_NODES = (
 )
 
 
+class CommandNotAllowed(Exception):
+    pass
+
+
 class DishModeModel:
     def __init__(self):
         self.dishmode_graph = self._build_model()
@@ -111,9 +115,18 @@ class DishModeModel:
         return dishmode_graph
 
     def is_command_allowed(self, dish_mode=None, command_name=None):
+        allowed_commands = []
         for from_mode, _, commands in self.dishmode_graph.edges.data(
             "commands"
         ):
-            if from_mode == dish_mode and command_name in commands:
-                return True
-        return False
+            if from_mode == dish_mode:
+                allowed_commands = commands
+                break
+        if command_name in allowed_commands:
+            return True
+        raise CommandNotAllowed(
+            (
+                f"[{command_name}] not allowed in dishMode "
+                f"[{dish_mode}], only allowed to do {allowed_commands}"
+            )
+        )

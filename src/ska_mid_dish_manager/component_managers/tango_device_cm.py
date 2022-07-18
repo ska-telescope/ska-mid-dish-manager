@@ -19,6 +19,31 @@ class LostConnection(Exception):
     """Exception for losing connection to the Tango device"""
 
 
+def _check_connection(func):  # pylint: disable=E0213
+    """Connection check decorator.
+
+    This is a workaround for decorators in classes.
+
+    Execute the method, if communication fails, commence reconnection.
+    """
+
+    def _decorator(self, *args, **kwargs):
+        try:
+            if self.communication_state != CommunicationStatus.ESTABLISHED:
+                raise LostConnection("Communication status not ESTABLISHED")
+            if not self._device_proxy:  # pylint: disable=W0212
+                raise LostConnection("DeviceProxy not created")
+            return func(self, *args, **kwargs)  # pylint: disable=E1102
+        except (tango.ConnectionFailed, LostConnection) as err:
+            self.start_communicating()  # pylint: disable=W0212
+            raise LostConnection(
+                f"[{self.tango_device_fqdn}]"  # pylint: disable=W0212
+                "  not connected. Retry in progress"
+            ) from err
+
+    return _decorator
+
+
 @dataclass
 class MonitoredAttribute:
     """Package together the information needed for a subscription"""
@@ -34,11 +59,11 @@ class MonitoredAttribute:
     ):
         """Subscribe to change events for this attribute
 
-        :param device_proxy: The tango device proxy
-        :type device_proxy: tango.DeviceProxy
-        :param subscription_callback: Event callback subscription,
+        :param: device_proxy: The tango device proxy
+        :type: device_proxy: tango.DeviceProxy
+        :param: subscription_callback: Event callback subscription,
             defaults to None
-        :type subscription_callback: Optional[Callable], optional
+        :type: subscription_callback: Optional[Callable], optional
         """
         # State has to be monitored since we use it to keep track
         # of communication state
@@ -59,8 +84,8 @@ class MonitoredAttribute:
     def unsubscribe(self, device_proxy: tango.DeviceProxy, tango_guard):
         """Unsubscribe from change events
 
-        :param device_proxy: The tango DeviceProxy
-        :type device_proxy: tango.DeviceProxy
+        :param: device_proxy: The tango DeviceProxy
+        :type: device_proxy: tango.DeviceProxy
         """
         if self.subscription_id:
             try:
@@ -145,32 +170,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 task_callback=self._device_proxy_creation_cb,
             )
 
-    def _check_connection(func):  # pylint: disable=E0213
-        """Connection check decorator.
-
-        This is a workaround for decorators in classes.
-
-        Execute the method, if communication fails, commence reconnection.
-        """
-
-        def _decorator(self, *args, **kwargs):
-            try:
-                if self.communication_state != CommunicationStatus.ESTABLISHED:
-                    raise LostConnection(
-                        "Communication status not ESTABLISHED"
-                    )
-                if not self._device_proxy:  # pylint: disable=W0212
-                    raise LostConnection("DeviceProxy not created")
-                return func(self, *args, **kwargs)  # pylint: disable=E1102
-            except (tango.ConnectionFailed, LostConnection) as err:
-                self.start_communicating()  # pylint: disable=W0212
-                raise LostConnection(
-                    f"[{self.tango_device_fqdn}]"  # pylint: disable=W0212
-                    "  not connected. Retry in progress"
-                ) from err
-
-        return _decorator
-
     @classmethod
     def _create_device_proxy(  # pylint: disable=too-many-arguments
         cls,
@@ -186,15 +185,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         This method should be passed to ThreadPoolExecutor
 
-        :param tango_device_fqdn: Address of the Tango device
-        :type tango_device_fqdn: AnyStr
-        :param device_proxy: A DeviceProxy if it exists, if none it will
+        :param: tango_device_fqdn: Address of the Tango device
+        :type: tango_device_fqdn: AnyStr
+        :param: device_proxy: A DeviceProxy if it exists, if none it will
             be created
-        :type device_proxy: Optional[tango.DeviceProxy]
-        :param task_abort_event: Check whether tasks have been aborted
-        :type task_abort_event: Event, optional
-        :param task_callback: Callback to report status
-        :type task_callback: Callable, optional
+        :type: device_proxy: Optional[tango.DeviceProxy]
+        :param: task_abort_event: Check whether tasks have been aborted
+        :type: task_abort_event: Event, optional
+        :param: task_callback: Callback to report status
+        :type: task_callback: Callable, optional
         """
         try:
             task_callback(status=TaskStatus.IN_PROGRESS)
@@ -236,12 +235,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     ):
         """Callback to be called as _create_device_proxy runs
 
-        :param status: The result of the task
-        :type status: TaskStatus
-        :param result: Either None or the DeviceProxy
-        :type result: Optional[DeviceProxy]
-        :param retry_count: The number of connection retries
-        :type retry_count: int
+        :param: status: The result of the task
+        :type: status: TaskStatus
+        :param: result: Either None or the DeviceProxy
+        :type: result: Optional[DeviceProxy]
+        :param: retry_count: The number of connection retries
+        :type: retry_count: int
         """
         self.logger.debug(
             "Device Proxy creation callback [%s, %s, %s, %s]",
@@ -298,8 +297,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         Otherwise just updates state
 
-        :param event_data: The event data
-        :type event_data: EventData
+        :param: event_data: The event data
+        :type: event_data: EventData
         """
         self.logger.debug(f"Event callback [{event_data}]")
 
@@ -345,9 +344,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def stop_communicating(self):
         """Break off communication with the device.
 
-        :param aborted_callback: callback to call when abort completes,
+        :param: aborted_callback: callback to call when abort completes,
             defaults to None
-        :type aborted_callback: Optional[Callable], optional
+        :type: aborted_callback: Optional[Callable], optional
         """
         self._unsubscribe_events()
         self._device_proxy = None
@@ -363,10 +362,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             - Mark `communication_state` as NOT_ESTABLISHED
             - Kick off the reconnect attempts
 
-        :param command_name: The Tango command to run
-        :type command_name: AnyStr
-        :param command_arg: The Tango command parameter
-        :type command_arg: Optional Any
+        :param: command_name: The Tango command to run
+        :type: command_name: AnyStr
+        :param: command_arg: The Tango command parameter
+        :type: command_arg: Optional Any
         """
         with self.tango_guard:
             result = self._device_proxy.command_inout(
@@ -384,8 +383,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def monitor_attribute(self, attribute_name: str):
         """Update the component state with the Attribute value as it changes
 
-        :param attribute_name: Attribute to keep track of
-        :type attribute_name: str
+        :param: attribute_name: Attribute to keep track of
+        :type: attribute_name: str
         """
         monitored_attribute = MonitoredAttribute(attribute_name)
         monitored_attribute.subscribe(
@@ -399,8 +398,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def unmonitor_attribute(self, attribute_name: str):
         """Stop monitoring an attribute
 
-        :param attribute_name: Attribute to stop monitoring
-        :type attribute_name: str
+        :param: attribute_name: Attribute to stop monitoring
+        :type: attribute_name: str
         """
         for monitored_attribute in self._monitored_attributes:
             if monitored_attribute.attr_name == attribute_name:

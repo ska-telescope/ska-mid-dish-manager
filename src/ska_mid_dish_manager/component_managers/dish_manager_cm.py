@@ -15,7 +15,10 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import (
     TangoDeviceComponentManager,
 )
 from ska_mid_dish_manager.models.dish_enums import DishMode
-from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
+from ska_mid_dish_manager.models.dish_mode_model import (
+    CommandNotAllowed,
+    DishModeModel,
+)
 
 
 class TangoGuard:
@@ -105,7 +108,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         for com_man in self.component_managers.values():
             com_man.start_communicating()
 
-    def _task_callback(
+    def _cm_task_callback(
         self,
         status: TaskStatus,
         result: Optional[Any] = None,
@@ -150,55 +153,64 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 message=f"From {component_manager.tango_device_fqdn}",
             )
 
-    def set_standby_lp_mode(self):
-        if self._dish_mode_model.is_command_allowed(
-            dish_mode=DishMode(self.component_state["dish_mode"]).name,
-            command_name="SetStandbyLPMode",
-        ):
-            # commands to call
-            # DS -> setstanby-lp
-            # SPF -> setstanby-lp
-            # SPFRx -> setstandby
-            result = self.submit_task(
-                self._execute_sub_device_command,
-                args=[
-                    self.component_managers["DS"],
-                    "SetStandbyLPMode",
-                ],
-                task_callback=self._task_callback,
-            )
-            self.logger.info(
-                "Result of SetStandbyLPMode on ds_component_manager [%s]",
-                result,
-            )
-            result = self.submit_task(
-                self._execute_sub_device_command,
-                args=[
-                    self.logger,
-                    self.component_managers["SPF"],
-                    "SetStandbyLPMode",
-                ],
-                task_callback=self._task_callback,
-            )
-            self.logger.info(
-                "Result of SetStandbyLPMode on spf_component_manager [%s]",
-                result,
-            )
-            result = self.submit_task(
-                self._execute_sub_device_command,
-                args=[
-                    self.logger,
-                    self.component_managers["SPFRX"],
-                    "SetStandbyLPMode",
-                ],
-                task_callback=self._task_callback,
-            )
-            self.logger.info(
-                "Result of SetStandbyLPMode on spfrx_component_manager [%s]",
-                result,
-            )
-        else:
-            raise Exception
+    def set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
+
+        task_callback(
+            status=TaskStatus.IN_PROGRESS,
+            message="SetStandbyLPMode started",
+        )
+
+        try:
+
+            if self._dish_mode_model.is_command_allowed(
+                dish_mode=DishMode(self.component_state["dish_mode"]).name,
+                command_name="SetStandbyLPMode",
+            ):
+                # commands to call
+                # DS -> setstanby-lp
+                # SPF -> setstanby-lp
+                # SPFRx -> setstandby
+                result = self.submit_task(
+                    self._execute_sub_device_command,
+                    args=[
+                        self.component_managers["DS"],
+                        "SetStandbyLPMode",
+                    ],
+                    task_callback=self._cm_task_callback,
+                )
+                self.logger.info(
+                    "Result of SetStandbyLPMode on ds_component_manager [%s]",
+                    result,
+                )
+                result = self.submit_task(
+                    self._execute_sub_device_command,
+                    args=[
+                        self.logger,
+                        self.component_managers["SPF"],
+                        "SetStandbyLPMode",
+                    ],
+                    task_callback=self._cm_task_callback,
+                )
+                self.logger.info(
+                    "Result of SetStandbyLPMode on spf_component_manager [%s]",
+                    result,
+                )
+                result = self.submit_task(
+                    self._execute_sub_device_command,
+                    args=[
+                        self.logger,
+                        self.component_managers["SPFRX"],
+                        "SetStandbyLPMode",
+                    ],
+                    task_callback=self._cm_task_callback,
+                )
+                self.logger.info(
+                    "Result of SetStandbyLPMode on spfrx_component_manager [%s]",
+                    result,
+                )
+        # We dont know what exceptions may be raised
+        except Exception as err:
+            task_callback(status=TaskStatus.FAILED, err=err)
 
     def stop_communicating(self):
         for com_man in self.component_managers.values():

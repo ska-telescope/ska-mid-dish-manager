@@ -2,7 +2,7 @@
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
-
+from functools import partial
 from ska_tango_base import SKAController
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, run
@@ -20,6 +20,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackTableLoadMode,
     UsageStatus,
 )
+import weakref
 
 
 # pylint: disable=too-many-instance-attributes
@@ -28,6 +29,8 @@ class DishManager(SKAController):
     """
     The Dish Manager of the Dish LMC subsystem
     """
+
+    instances = weakref.WeakValueDictionary()
 
     def create_component_manager(self):
         """Create the component manager for DishManager
@@ -48,6 +51,9 @@ class DishManager(SKAController):
             # pylint: disable=attribute-defined-outside-init
             self._dish_mode = kwargs["dish_mode"]
             self.push_change_event("dishMode", self._dish_mode)
+
+    def _dish_manager_task_callback(self, method_name, *args, **kwargs):
+        self.logger.info("Callback for [%s] [%s] [%s]", method_name, args, kwargs)
 
     class InitCommand(
         SKAController.InitCommand
@@ -102,6 +108,7 @@ class DishManager(SKAController):
 
             # push change events for dishMode: needed to use testing library
             device.set_change_event("dishMode", True, False)
+            device.instances[device.get_name()] = device
             device.component_manager.start_communicating()
             super().do()
 
@@ -654,7 +661,11 @@ class DishManager(SKAController):
         """
         return
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        dtype_out="DevVarStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
     def SetStandbyLPMode(self):
         """
         This command triggers the Dish to transition to the STANDBY‐LP Dish
@@ -670,7 +681,12 @@ class DishManager(SKAController):
         perform power management (load curtailment), and also to conserve
         energy for non‐operating dishes.
         """
-        self.component_manager.set_standby_lp_mode()
+        return_code, message = self.component_manager.submit_task(
+            self.component_manager.set_standby_lp_mode,
+            args=[],
+            task_callback=partial(self._dish_manager_task_callback, "SetStandbyLPMode"),
+        )
+        return f"{return_code}", message
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def SetStandbyFPMode(self):
