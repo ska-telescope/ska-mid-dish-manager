@@ -1,5 +1,5 @@
 import logging
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 import tango
@@ -23,11 +23,11 @@ def test_standby_in_lp(patched_tango, caplog):
         assert dm.dishMode == DishMode.STANDBY_LP
         result_code, message = dm.SetStandbyLPMode()
         assert result_code == "1"
-        assert message == 'Task queued'
+        assert message == "Task queued"
 
 
 @pytest.mark.unit
-# @pytest.mark.forked
+@pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_standby_in_fp(patched_tango, caplog):
     caplog.set_level(logging.DEBUG)
@@ -37,15 +37,4 @@ def test_standby_in_fp(patched_tango, caplog):
     patched_tango.DeviceProxy = MagicMock(return_value=device_proxy)
 
     with DeviceTestContext(DishManager) as dm:
-        assert 0
-
-        # device_server_instance = DishManager.instances[
-        #     dm.name()
-        # ]
-
-        # assert 0, (type(device_server_instance), dm)
-        # setattr(device_server_instance, "dishMode", DishMode.STANDBY_FP)
-        # assert dm.dishMode == DishMode.STANDBY_FP
-        # result_code, message = dm.SetStandbyLPMode()
-        # assert result_code == "1"
-        # assert message == 'Task queued'
+        assert dm.name()

@@ -1,7 +1,10 @@
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
-from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
+from ska_mid_dish_manager.models.dish_mode_model import (
+    CommandNotAllowed,
+    DishModeModel,
+)
 
 
 @pytest.fixture(scope="module")
@@ -29,9 +32,15 @@ def test_node_count(dish_mode_model):
 def test_is_mode_transition_allowed(
     dish_mode_model, current_mode, requested_command, is_allowed
 ):
-    assert (
-        dish_mode_model.is_command_allowed(
-            dish_mode=current_mode, command_name=requested_command
+    if is_allowed:
+        assert (
+            dish_mode_model.is_command_allowed(
+                dish_mode=current_mode, command_name=requested_command
+            )
+            == is_allowed
         )
-        == is_allowed
-    )
+    else:
+        with pytest.raises(CommandNotAllowed):
+            dish_mode_model.is_command_allowed(
+                dish_mode=current_mode, command_name=requested_command
+            )

@@ -116,12 +116,13 @@ class DishModeModel:
 
     def is_command_allowed(self, dish_mode=None, command_name=None):
         allowed_commands = []
-        for from_mode, _, commands in self.dishmode_graph.edges.data(
-            "commands"
-        ):
-            if from_mode == dish_mode:
-                allowed_commands = commands
-                break
+        for from_node, to_node in self.dishmode_graph.edges(dish_mode):
+            commands = self.dishmode_graph.get_edge_data(
+                from_node, to_node
+            ).get("commands", None)
+            if commands:
+                allowed_commands.extend(commands)
+
         if command_name in allowed_commands:
             return True
         raise CommandNotAllowed(
