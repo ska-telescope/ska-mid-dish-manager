@@ -14,7 +14,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 @pytest.mark.unit
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_standby_in_lp(patched_tango, caplog):
+def test_standbylp_cmd_fails_from_standbylp_dish_mode(patched_tango, caplog):
     caplog.set_level(logging.DEBUG)
 
     # Set up mocks
@@ -23,13 +23,17 @@ def test_standby_in_lp(patched_tango, caplog):
 
     with DeviceTestContext(DishManager) as device_proxy:
         assert device_proxy.dishMode == DishMode.STANDBY_LP
-        [[result_code], [unique_id]] = device_proxy.SetStandbyLPMode()
+
+        with pytest.raises(tango.DevFailed):
+            [[result_code], [unique_id]] = device_proxy.SetStandbyLPMode()
 
 
 @pytest.mark.unit
-# @pytest.mark.forked
+@pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_standby_in_fp(patched_tango, caplog):
+def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
+    patched_tango, caplog
+):
     caplog.set_level(logging.DEBUG)
 
     # Set up mocks

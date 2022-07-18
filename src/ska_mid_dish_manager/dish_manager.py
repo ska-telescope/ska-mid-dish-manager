@@ -31,6 +31,7 @@ class DishManager(SKAController):
     The Dish Manager of the Dish LMC subsystem
     """
 
+    # Access instances for debugging
     instances = weakref.WeakValueDictionary()
 
     def create_component_manager(self):
@@ -59,7 +60,7 @@ class DishManager(SKAController):
                     self._command_tracker,
                     self.component_manager,
                     method_name,
-                    callback=self._dish_manager_task_callback,
+                    callback=None,
                     logger=self.logger,
                 ),
             )
@@ -71,11 +72,6 @@ class DishManager(SKAController):
             # pylint: disable=attribute-defined-outside-init
             self._dish_mode = kwargs["dish_mode"]
             self.push_change_event("dishMode", self._dish_mode)
-
-    def _dish_manager_task_callback(self, method_name, *args, **kwargs):
-        self.logger.info(
-            "Callback for [%s] [%s] [%s]", method_name, args, kwargs
-        )
 
     class InitCommand(
         SKAController.InitCommand

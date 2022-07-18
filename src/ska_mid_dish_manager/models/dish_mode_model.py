@@ -127,7 +127,7 @@ class DishModeModel:
             return True
         raise CommandNotAllowed(
             (
-                f"[{command_name}] not allowed in dishMode "
+                f"Command [{command_name}] not allowed in dishMode "
                 f"[{dish_mode}], only allowed to do {allowed_commands}"
             )
         )

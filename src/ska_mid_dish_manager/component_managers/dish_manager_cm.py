@@ -155,6 +155,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
 
+        self._dish_mode_model.is_command_allowed(
+            dish_mode=DishMode(self.component_state["dish_mode"]).name,
+            command_name="SetStandbyLPMode",
+        )
         return self.submit_task(
             self._set_standby_lp_mode,
             task_callback=task_callback,
@@ -164,58 +168,44 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_callback is not None:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
-        try:
-
-            if self._dish_mode_model.is_command_allowed(
-                dish_mode=DishMode(self.component_state["dish_mode"]).name,
-                command_name="SetStandbyLPMode",
-            ):
-                # commands to call
-                # DS -> setstanby-lp
-                # SPF -> setstanby-lp
-                # SPFRx -> setstandby
-                result = self.submit_task(
-                    self._execute_sub_device_command,
-                    args=[
-                        self.component_managers["DS"],
-                        "SetStandbyLPMode",
-                    ],
-                    task_callback=self._cm_task_callback,
-                )
-                self.logger.info(
-                    "Result of SetStandbyLPMode on ds_cm [%s]",
-                    result,
-                )
-                result = self.submit_task(
-                    self._execute_sub_device_command,
-                    args=[
-                        self.logger,
-                        self.component_managers["SPF"],
-                        "SetStandbyLPMode",
-                    ],
-                    task_callback=self._cm_task_callback,
-                )
-                self.logger.info(
-                    "Result of SetStandbyLPMode on spf_cm [%s]",
-                    result,
-                )
-                result = self.submit_task(
-                    self._execute_sub_device_command,
-                    args=[
-                        self.logger,
-                        self.component_managers["SPFRX"],
-                        "SetStandbyLPMode",
-                    ],
-                    task_callback=self._cm_task_callback,
-                )
-                self.logger.info(
-                    "Result of SetStandbyLPMode on spfrx_cm [%s]",
-                    result,
-                )
-
-        # We dont know what exceptions may be raised
-        except Exception as err:  # pylint:disable=broad-except
-            task_callback(status=TaskStatus.FAILED, exception=err)
+            result = self.submit_task(
+                self._execute_sub_device_command,
+                args=[
+                    self.component_managers["DS"],
+                    "SetStandbyLPMode",
+                ],
+                task_callback=self._cm_task_callback,
+            )
+            self.logger.info(
+                "Result of SetStandbyLPMode on ds_cm [%s]",
+                result,
+            )
+            result = self.submit_task(
+                self._execute_sub_device_command,
+                args=[
+                    self.logger,
+                    self.component_managers["SPF"],
+                    "SetStandbyLPMode",
+                ],
+                task_callback=self._cm_task_callback,
+            )
+            self.logger.info(
+                "Result of SetStandbyLPMode on spf_cm [%s]",
+                result,
+            )
+            result = self.submit_task(
+                self._execute_sub_device_command,
+                args=[
+                    self.logger,
+                    self.component_managers["SPFRX"],
+                    "SetStandbyLPMode",
+                ],
+                task_callback=self._cm_task_callback,
+            )
+            self.logger.info(
+                "Result of SetStandbyLPMode on spfrx_cm [%s]",
+                result,
+            )
 
         task_callback(
             status=TaskStatus.COMPLETED,
