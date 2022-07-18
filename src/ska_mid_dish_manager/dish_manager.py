@@ -3,9 +3,9 @@
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
 import weakref
-from functools import partial
 
 from ska_tango_base import SKAController
+from ska_tango_base.commands import SubmittedSlowCommand
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, run
 
@@ -44,6 +44,25 @@ class DishManager(SKAController):
             communication_state_callback=None,
             component_state_callback=self._component_state_changed,
         )
+
+    def init_command_objects(self) -> None:
+        """Initialise the command handlers"""
+        super().init_command_objects()
+
+        for (command_name, method_name) in [
+            ("SetStandbyLPMode", "set_standby_lp_mode"),
+        ]:
+            self.register_command_object(
+                command_name,
+                SubmittedSlowCommand(
+                    command_name,
+                    self._command_tracker,
+                    self.component_manager,
+                    method_name,
+                    callback=self._dish_manager_task_callback,
+                    logger=self.logger,
+                ),
+            )
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
@@ -666,7 +685,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=None,
-        dtype_out="DevVarStringArray",
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def SetStandbyLPMode(self):
@@ -684,14 +703,9 @@ class DishManager(SKAController):
         perform power management (load curtailment), and also to conserve
         energy for non‐operating dishes.
         """
-        return_code, message = self.component_manager.submit_task(
-            self.component_manager.set_standby_lp_mode,
-            args=[],
-            task_callback=partial(
-                self._dish_manager_task_callback, "SetStandbyLPMode"
-            ),
-        )
-        return f"{return_code}", message
+        handler = self.get_command_object("SetStandbyLPMode")
+        result_code, unique_id = handler()
+        return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def SetStandbyFPMode(self):

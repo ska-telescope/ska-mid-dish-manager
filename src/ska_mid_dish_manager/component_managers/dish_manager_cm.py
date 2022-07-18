@@ -4,7 +4,7 @@
 # pylint: disable=missing-function-docstring
 import logging
 from threading import Event, Lock
-from typing import Any, AnyStr, Callable, Optional
+from typing import Any, AnyStr, Callable, Optional, Tuple
 
 import tango
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
@@ -150,12 +150,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 message=f"From {component_manager.tango_device_fqdn}",
             )
 
-    def set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
+    def set_standby_lp_mode(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
 
-        task_callback(
-            status=TaskStatus.IN_PROGRESS,
-            message="SetStandbyLPMode started",
+        return self.submit_task(
+            self._set_standby_lp_mode,
+            task_callback=task_callback,
         )
+
+    def _set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
+        if task_callback is not None:
+            task_callback(status=TaskStatus.IN_PROGRESS)
 
         try:
 
@@ -205,9 +212,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Result of SetStandbyLPMode on spfrx_cm [%s]",
                     result,
                 )
+
         # We dont know what exceptions may be raised
         except Exception as err:  # pylint:disable=broad-except
-            task_callback(status=TaskStatus.FAILED, err=err)
+            task_callback(status=TaskStatus.FAILED, exception=err)
+
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result="SetStandbyLPMode queued on ds, spf and spfrx",
+        )
 
     def stop_communicating(self):
         for com_man in self.component_managers.values():
