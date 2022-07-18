@@ -14,7 +14,7 @@ from ska_tango_base.executor import TaskStatus
 from ska_mid_dish_manager.component_managers.tango_device_cm import (
     TangoDeviceComponentManager,
 )
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import DishMode, OperatingMode
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
 
@@ -64,21 +64,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "mid_d0001/lmc/ds_simulator",
             logger,
             self.tango_guard,
-            component_state_callback=None,
+            operating_mode=None,
+            component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
         self.component_managers["SPFRX"] = TangoDeviceComponentManager(
             "mid_d0001/spfrx/simulator",
             logger,
             self.tango_guard,
-            component_state_callback=None,
+            operating_mode=None,
+            component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
         self.component_managers["SPF"] = TangoDeviceComponentManager(
             "mid_d0001/spf/simulator",
             logger,
             self.tango_guard,
-            component_state_callback=None,
+            operating_mode=None,
+            component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -100,6 +103,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 CommunicationStatus.NOT_ESTABLISHED
             )
             self._update_component_state(health_state=HealthState.FAILED)
+
+    # pylint: disable=unused-argument
+    def _component_state_changed(self, *args, **kwargs):
+        # component state will come from args and kwargs
+        if all(
+            cm.component_state["operating_mode"] == OperatingMode.STANDBY_LP
+            for cm in self.component_managers.values()
+        ):
+            self._update_component_state(dish_mode=DishMode.STANDBY_LP)
+
+        if all(
+            cm.component_state["operating_mode"] == OperatingMode.STANDBY_FP
+            for cm in self.component_managers.values()
+        ):
+            self._update_component_state(dish_mode=DishMode.STANDBY_FP)
 
     def start_communicating(self):
         for com_man in self.component_managers.values():

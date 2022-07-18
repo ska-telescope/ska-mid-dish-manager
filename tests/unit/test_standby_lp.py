@@ -8,7 +8,7 @@ from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.dish_manager import DishManager
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import DishMode, OperatingMode
 
 
 @pytest.mark.unit
@@ -47,6 +47,13 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
         class_instance.component_manager._update_component_state(
             dish_mode=DishMode.STANDBY_FP
         )
+        ds_cm = class_instance.component_manager.component_managers["DS"]
+        spf_cm = class_instance.component_manager.component_managers["SPF"]
+        spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
+
+        for cm in [ds_cm, spf_cm, spfrx_cm]:
+            cm._update_component_state(operating_mode=OperatingMode.STANDBY_FP)
+
         assert device_proxy.dishMode == DishMode.STANDBY_FP
 
         cb = MockTangoEventCallbackGroup("longRunningCommandResult", timeout=5)
@@ -65,3 +72,14 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
             (unique_id, '"SetStandbyLPMode queued on ds, spf and spfrx"'),
         )
         device_proxy.unsubscribe_event(sub_id)
+
+        ds_cm._update_component_state(operating_mode=OperatingMode.STANDBY_LP)
+        assert device_proxy.dishMode == DishMode.STANDBY_FP
+
+        spf_cm._update_component_state(operating_mode=OperatingMode.STANDBY_LP)
+        assert device_proxy.dishMode == DishMode.STANDBY_FP
+
+        spfrx_cm._update_component_state(
+            operating_mode=OperatingMode.STANDBY_LP
+        )
+        assert device_proxy.dishMode == DishMode.STANDBY_LP

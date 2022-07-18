@@ -64,3 +64,8 @@ class TrackProgramMode(enum.IntEnum):
 class TrackTableLoadMode(enum.IntEnum):
     ADD = 0
     NEW = 1
+
+
+class OperatingMode(enum.IntEnum):
+    STANDBY_LP = 0
+    STANDBY_FP = 1
