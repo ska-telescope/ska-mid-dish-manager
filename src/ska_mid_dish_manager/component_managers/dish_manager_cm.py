@@ -15,10 +15,7 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import (
     TangoDeviceComponentManager,
 )
 from ska_mid_dish_manager.models.dish_enums import DishMode
-from ska_mid_dish_manager.models.dish_mode_model import (
-    CommandNotAllowed,
-    DishModeModel,
-)
+from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
 
 class TangoGuard:
@@ -179,7 +176,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     task_callback=self._cm_task_callback,
                 )
                 self.logger.info(
-                    "Result of SetStandbyLPMode on ds_component_manager [%s]",
+                    "Result of SetStandbyLPMode on ds_cm [%s]",
                     result,
                 )
                 result = self.submit_task(
@@ -192,7 +189,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     task_callback=self._cm_task_callback,
                 )
                 self.logger.info(
-                    "Result of SetStandbyLPMode on spf_component_manager [%s]",
+                    "Result of SetStandbyLPMode on spf_cm [%s]",
                     result,
                 )
                 result = self.submit_task(
@@ -205,11 +202,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     task_callback=self._cm_task_callback,
                 )
                 self.logger.info(
-                    "Result of SetStandbyLPMode on spfrx_component_manager [%s]",
+                    "Result of SetStandbyLPMode on spfrx_cm [%s]",
                     result,
                 )
         # We dont know what exceptions may be raised
-        except Exception as err:
+        except Exception as err:  # pylint:disable=broad-except
             task_callback(status=TaskStatus.FAILED, err=err)
 
     def stop_communicating(self):
