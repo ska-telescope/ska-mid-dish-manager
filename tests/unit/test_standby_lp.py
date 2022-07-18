@@ -2,7 +2,9 @@ import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
+import tango
 from ska_tango_base.commands import ResultCode
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.dish_manager import DishManager
@@ -21,12 +23,11 @@ def test_standby_in_lp(patched_tango, caplog):
 
     with DeviceTestContext(DishManager) as device_proxy:
         assert device_proxy.dishMode == DishMode.STANDBY_LP
-        [[result_code], [_]] = device_proxy.SetStandbyLPMode()
-        assert ResultCode(result_code) == ResultCode.QUEUED
+        [[result_code], [unique_id]] = device_proxy.SetStandbyLPMode()
 
 
 @pytest.mark.unit
-@pytest.mark.forked
+# @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_standby_in_fp(patched_tango, caplog):
     caplog.set_level(logging.DEBUG)
@@ -37,10 +38,26 @@ def test_standby_in_fp(patched_tango, caplog):
     patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
 
     with DeviceTestContext(DishManager) as device_proxy:
+        # Force dishMode into STANDBY-FP
         class_instance = DishManager.instances.get(device_proxy.name())
         class_instance.component_manager._update_component_state(
             dish_mode=DishMode.STANDBY_FP
         )
         assert device_proxy.dishMode == DishMode.STANDBY_FP
-        [[result_code], [_]] = device_proxy.SetStandbyLPMode()
+
+        cb = MockTangoEventCallbackGroup("longRunningCommandResult", timeout=5)
+        sub_id = device_proxy.subscribe_event(
+            "longRunningCommandResult",
+            tango.EventType.CHANGE_EVENT,
+            cb["longRunningCommandResult"],
+        )
+
+        [[result_code], [unique_id]] = device_proxy.SetStandbyLPMode()
         assert ResultCode(result_code) == ResultCode.QUEUED
+
+        cb.assert_change_event("longRunningCommandResult", ("", ""))
+        cb.assert_change_event(
+            "longRunningCommandResult",
+            (unique_id, '"SetStandbyLPMode queued on ds, spf and spfrx"'),
+        )
+        device_proxy.unsubscribe_event(sub_id)
