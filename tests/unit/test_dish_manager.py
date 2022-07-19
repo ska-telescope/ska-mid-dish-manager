@@ -1,3 +1,5 @@
+"""Unit tests checking DishManager behaviour."""
+
 import logging
 from unittest.mock import MagicMock, call, patch
 
@@ -6,9 +8,11 @@ import tango
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.dish_manager import DishManager, DishMode
+from ska_mid_dish_manager.dish_manager import DishManager
+from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
+# pylint: disable=invalid-name, missing-function-docstring
 @pytest.fixture()
 def devices_to_test(SimpleDevice):
     """Fixture for devices to test."""
@@ -28,6 +32,7 @@ def devices_to_test(SimpleDevice):
     ]
 
 
+# pylint: disable=invalid-name, missing-function-docstring
 @pytest.mark.xfail(reason="Intermittent Segfaults")
 @pytest.mark.forked
 @pytest.mark.unit
@@ -46,16 +51,17 @@ def test_dish_transitions_to_lp_mode_after_startup(multi_device_tango_context):
     cb.assert_change_event("dishMode", DishMode.STANDBY_LP)
 
 
+# pylint: disable=missing-function-docstring
 @pytest.mark.unit
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_dm_start_up_ok(patched_tango):
+def test_dish_manager_starts_up_successfully(patched_tango):
     # Set up mocks
     device_proxy = MagicMock()
     patched_tango.DeviceProxy = MagicMock(return_value=device_proxy)
 
-    with DeviceTestContext(DishManager) as dm:
-        assert dm.dishMode == DishMode.STANDBY_LP
+    with DeviceTestContext(DishManager) as dish_manager:
+        assert dish_manager.dishMode == DishMode.STANDBY_LP
 
     # Check that we create the DeviceProxy
     assert patched_tango.DeviceProxy.call_count == 3
@@ -70,10 +76,11 @@ def test_dm_start_up_ok(patched_tango):
     assert device_proxy.subscribe_event.call_count == 3
 
 
+# pylint: disable=missing-function-docstring
 @pytest.mark.unit
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_dm_start_up_not_ok(patched_tango, caplog):
+def test_dish_manager_remains_in_startup_on_error(patched_tango, caplog):
     caplog.set_level(logging.DEBUG)
 
     # Set up mocks
@@ -82,6 +89,6 @@ def test_dm_start_up_not_ok(patched_tango, caplog):
     patched_tango.DevFailed = tango.DevFailed
     device_proxy.ping.side_effect = tango.DevFailed("FAIL")
 
-    with DeviceTestContext(DishManager) as dm:
-        assert dm.dishMode == DishMode.STARTUP
-        dm.AbortCommands()
+    with DeviceTestContext(DishManager) as dish_manager:
+        assert dish_manager.dishMode == DishMode.STARTUP
+        dish_manager.AbortCommands()

@@ -1,7 +1,10 @@
-# pylint: disable=abstract-method
-# pylint: disable=missing-module-docstring
-# pylint: disable=missing-class-docstring
-# pylint: disable=missing-function-docstring
+"""
+This module implements the dish manager device for DishLMC.
+
+It exposes the attributes and commands which control the dish
+and the subservient devices
+"""
+
 import weakref
 
 from ska_tango_base import SKAController
@@ -333,208 +336,268 @@ class DishManager(SKAController):
     # Attribute's methods
     # pylint: disable=invalid-name
     def read_achievedPointing(self):
+        """Attribute read handler for DishManager achievedPointing"""
         return self._achieved_pointing
 
     def read_achievedTargetLock(self):
+        """Attribute read handler for DishManager achievedTargetLock"""
         return self._achieved_target_lock
 
     def read_attenuationPolH(self):
+        """Attribute read handler for DishManager attenuationPolH"""
         return self._attenuation_pol_h
 
-    def write_attenuationPolH(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._attenuation_pol_h = value
-
     def read_attenuationPolV(self):
+        """Attribute read handler for DishManager attenuationPolV"""
         return self._attenuation_pol_v
 
-    def write_attenuationPolV(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._attenuation_pol_v = value
-
     def read_azimuthOverWrap(self):
+        """Attribute read handler for DishManager azimuthOverWrap"""
         return self._azimuth_over_wrap
 
     def read_band1PointingModelParams(self):
+        """Attribute read handler for DishManager band1PointingModelParams"""
         return self._band1_pointing_model_params
 
-    def write_band1PointingModelParams(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band1_pointing_model_params = value
-
     def read_band2PointingModelParams(self):
+        """Attribute read handler for DishManager band2PointingModelParams"""
         return self._band2_pointing_model_params
 
-    def write_band2PointingModelParams(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band2_pointing_model_params = value
-
     def read_band3PointingModelParams(self):
+        """Attribute read handler for DishManager band3PointingModelParams"""
         return self._band3_pointing_model_params
 
-    def write_band3PointingModelParams(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band3_pointing_model_params = value
-
     def read_band4PointingModelParams(self):
+        """Attribute read handler for DishManager band4PointingModelParams"""
         return self._band4_pointing_model_params
 
-    def write_band4PointingModelParams(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band4_pointing_model_params = value
-
     def read_band5aPointingModelParams(self):
+        """Attribute read handler for DishManager band5aPointingModelParams"""
         return self._band5a_pointing_model_params
 
-    def write_band5aPointingModelParams(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band5a_pointing_model_params = value
-
     def read_band5bPointingModelParams(self):
+        """Attribute read handler for DishManager band5bPointingModelParams"""
         return self._band5b_pointing_model_params
 
-    def write_band5bPointingModelParams(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band5b_pointing_model_params = value
-
-    def read_band1SamplerFrequency(self):
-        return self._band1_sampler_frequency
-
-    def write_band1SamplerFrequency(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band1_sampler_frequency = value
-
-    def read_band2SamplerFrequency(self):
-        return self._band2_sampler_frequency
-
-    def write_band2SamplerFrequency(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band2_sampler_frequency = value
-
-    def read_band3SamplerFrequency(self):
-        return self._band3_sampler_frequency
-
-    def write_band3SamplerFrequency(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band3_sampler_frequency = value
-
-    def read_band4SamplerFrequency(self):
-        return self._band4_sampler_frequency
-
-    def write_band4SamplerFrequency(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band4_sampler_frequency = value
-
-    def read_band5aSamplerFrequency(self):
-        return self._band5a_sampler_frequency
-
-    def write_band5aSamplerFrequency(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band5a_sampler_frequency = value
-
-    def read_band5bSamplerFrequency(self):
-        return self._band5b_sampler_frequency
-
-    def write_band5bSamplerFrequency(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._band5b_sampler_frequency = value
-
-    def read_capturing(self):
-        return self._capturing
-
-    def read_configuredBand(self):
-        return self._configured_band
-
-    def read_configureTargetLock(self):
-        return self._configure_target_lock
-
-    def write_configureTargetLock(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._configure_target_lock = value
-
-    def read_desiredPointing(self):
-        return self._desired_pointing
-
-    def write_desiredPointing(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._desired_pointing = value
-
-    def read_dishMode(self):
-        return self._dish_mode
-
-    def read_dshMaxShortTermPower(self):
-        return self._dsh_max_short_term_power
-
-    def write_dshMaxShortTermPower(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._dsh_max_short_term_power = value
-
-    def read_dshPowerCurtailment(self):
-        return self._dsh_power_curtailment
-
-    def write_dshPowerCurtailment(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._dsh_power_curtailment = value
-
-    def read_frequencyResponse(self):
-        return self._frequency_response
-
-    def read_noiseDiodeConfig(self):
-        return self._noise_diode_config
-
-    def write_noiseDiodeConfig(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._noise_diode_config = value
-
-    def read_pointingState(self):
-        return self._pointing_state
-
-    def read_pointingBufferSize(self):
-        return self._pointing_buffer_size
-
-    def read_polyTrack(self):
-        return self._poly_track
-
-    def write_polyTrack(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._poly_track = value
-
-    def read_powerState(self):
-        return self._power_state
-
-    def read_programTrackTable(self):
-        return self._program_track_table
-
-    def write_programTrackTable(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._program_track_table = value
-
-    def read_trackInterpolationMode(self):
-        return self._track_interpolation_mode
-
-    def write_trackInterpolationMode(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._track_interpolation_mode = value
-
     def read_trackProgramMode(self):
+        """Attribute read handler for DishManager trackProgramMode"""
         return self._track_program_mode
 
-    def write_trackProgramMode(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._track_program_mode = value
-
     def read_trackTableLoadMode(self):
+        """Attribute read handler for DishManager trackTableLoadMode"""
         return self._track_table_load_mode
 
-    def write_trackTableLoadMode(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        self._track_table_load_mode = value
-
     def read_synchronised(self):
+        """Attribute read handler for DishManager synchronised"""
         return self._synchronised
 
     def read_usageStatus(self):
+        """Attribute read handler for DishManager usageStatus"""
         return self._usage_status
+
+    def read_band1SamplerFrequency(self):
+        """Attribute read handler for DishManager band1SamplerFrequency"""
+        return self._band1_sampler_frequency
+
+    def read_band2SamplerFrequency(self):
+        """Attribute read handler for DishManager band2SamplerFrequency"""
+        return self._band2_sampler_frequency
+
+    def read_band3SamplerFrequency(self):
+        """Attribute read handler for DishManager band3SamplerFrequency"""
+        return self._band3_sampler_frequency
+
+    def read_band4SamplerFrequency(self):
+        """Attribute read handler for DishManager band4SamplerFrequency"""
+        return self._band4_sampler_frequency
+
+    def read_band5aSamplerFrequency(self):
+        """Attribute read handler for DishManager band5aSamplerFrequency"""
+        return self._band5a_sampler_frequency
+
+    def read_band5bSamplerFrequency(self):
+        """Attribute read handler for DishManager band5bSamplerFrequency"""
+        return self._band5b_sampler_frequency
+
+    def read_capturing(self):
+        """Attribute read handler for DishManager capturing"""
+        return self._capturing
+
+    def read_configuredBand(self):
+        """Attribute read handler for DishManager configuredBand"""
+        return self._configured_band
+
+    def read_configureTargetLock(self):
+        """Attribute read handler for DishManager configureTargetLock"""
+        return self._configure_target_lock
+
+    def read_trackInterpolationMode(self):
+        """Attribute read handler for DishManager trackInterpolationMode"""
+        return self._track_interpolation_mode
+
+    def read_desiredPointing(self):
+        """Attribute read handler for DishManager desiredPointing"""
+        return self._desired_pointing
+
+    def read_dishMode(self):
+        """Attribute read handler for DishManager dishMode"""
+        return self._dish_mode
+
+    def read_dshMaxShortTermPower(self):
+        """Attribute read handler for DishManager dshMaxShortTermPower"""
+        return self._dsh_max_short_term_power
+
+    def read_dshPowerCurtailment(self):
+        """Attribute read handler for DishManager dshPowerCurtailment"""
+        return self._dsh_power_curtailment
+
+    def read_frequencyResponse(self):
+        """Attribute read handler for DishManager frequencyResponse"""
+        return self._frequency_response
+
+    def read_noiseDiodeConfig(self):
+        """Attribute read handler for DishManager noiseDiodeConfig"""
+        return self._noise_diode_config
+
+    def read_pointingState(self):
+        """Attribute read handler for DishManager pointingState"""
+        return self._pointing_state
+
+    def read_pointingBufferSize(self):
+        """Attribute read handler for DishManager pointingBufferSize"""
+        return self._pointing_buffer_size
+
+    def read_polyTrack(self):
+        """Attribute read handler for DishManager polyTrack"""
+        return self._poly_track
+
+    def read_powerState(self):
+        """Attribute read handler for DishManager powerState"""
+        return self._power_state
+
+    def read_programTrackTable(self):
+        """Attribute read handler for DishManager programTrackTable"""
+        return self._program_track_table
+
+    def write_trackProgramMode(self, value):
+        """Attribute write handler for DishManager trackProgramMode"""
+        # pylint: disable=attribute-defined-outside-init
+        self._track_program_mode = value
+
+    def write_attenuationPolH(self, value):
+        """Attribute write handler for DishManager attenuationPolH"""
+        # pylint: disable=attribute-defined-outside-init
+        self._attenuation_pol_h = value
+
+    def write_attenuationPolV(self, value):
+        """Attribute write handler for DishManager attenuationPolV("""
+        # pylint: disable=attribute-defined-outside-init
+        self._attenuation_pol_v = value
+
+    def write_band1PointingModelParams(self, value):
+        """Attribute write handler for DishManager band1PointingModelParams"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band1_pointing_model_params = value
+
+    def write_band2PointingModelParams(self, value):
+        """Attribute write handler for DishManager band2PointingModelParams"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band2_pointing_model_params = value
+
+    def write_band3PointingModelParams(self, value):
+        """Attribute write handler for DishManager band3PointingModelParams"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band3_pointing_model_params = value
+
+    def write_band4PointingModelParams(self, value):
+        """Attribute write handler for DishManager band4PointingModelParams"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band4_pointing_model_params = value
+
+    def write_band5aPointingModelParams(self, value):
+        """Attribute write handler for DishManager band5aPointingModelParams"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band5a_pointing_model_params = value
+
+    def write_band5bPointingModelParams(self, value):
+        """Attribute write handler for DishManager band5bPointingModelParams"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band5b_pointing_model_params = value
+
+    def write_band1SamplerFrequency(self, value):
+        """Attribute write handler for DishManager band1SamplerFrequency"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band1_sampler_frequency = value
+
+    def write_band2SamplerFrequency(self, value):
+        """Attribute write handler for DishManager band2SamplerFrequency"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band2_sampler_frequency = value
+
+    def write_band3SamplerFrequency(self, value):
+        """Attribute write handler for DishManager band3SamplerFrequency"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band3_sampler_frequency = value
+
+    def write_band4SamplerFrequency(self, value):
+        """Attribute write handler for DishManager band4SamplerFrequency"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band4_sampler_frequency = value
+
+    def write_band5aSamplerFrequency(self, value):
+        """Attribute write handler for DishManager band5aSamplerFrequency"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band5a_sampler_frequency = value
+
+    def write_band5bSamplerFrequency(self, value):
+        """Attribute write handler for DishManager band5bSamplerFrequency"""
+        # pylint: disable=attribute-defined-outside-init
+        self._band5b_sampler_frequency = value
+
+    def write_configureTargetLock(self, value):
+        """Attribute write handler for DishManager configureTargetLock"""
+        # pylint: disable=attribute-defined-outside-init
+        self._configure_target_lock = value
+
+    def write_desiredPointing(self, value):
+        """Attribute write handler for DishManager desiredPointing"""
+        # pylint: disable=attribute-defined-outside-init
+        self._desired_pointing = value
+
+    def write_dshMaxShortTermPower(self, value):
+        """Attribute write handler for DishManager dshMaxShortTermPower"""
+        # pylint: disable=attribute-defined-outside-init
+        self._dsh_max_short_term_power = value
+
+    def write_noiseDiodeConfig(self, value):
+        """Attribute write handler for DishManager noiseDiodeConfig"""
+        # pylint: disable=attribute-defined-outside-init
+        self._noise_diode_config = value
+
+    def write_dshPowerCurtailment(self, value):
+        """Attribute write handler for DishManager dshPowerCurtailment"""
+        # pylint: disable=attribute-defined-outside-init
+        self._dsh_power_curtailment = value
+
+    def write_polyTrack(self, value):
+        """Attribute write handler for DishManager polyTrack"""
+        # pylint: disable=attribute-defined-outside-init
+        self._poly_track = value
+
+    def write_programTrackTable(self, value):
+        """Attribute write handler for DishManager programTrackTable"""
+        # pylint: disable=attribute-defined-outside-init
+        self._program_track_table = value
+
+    def write_trackInterpolationMode(self, value):
+        """Attribute write handler for DishManager trackInterpolationMode"""
+        # pylint: disable=attribute-defined-outside-init
+        self._track_interpolation_mode = value
+
+    def write_trackTableLoadMode(self, value):
+        """Attribute write handler for DishManager trackTableLoadMode"""
+        # pylint: disable=attribute-defined-outside-init
+        self._track_table_load_mode = value
 
     # Commands
     # pylint: disable=no-self-use
@@ -742,10 +805,12 @@ class DishManager(SKAController):
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StartCapture(self):
+        """Capture data from the CBF"""
         return
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StopCapture(self):
+        """Stop capturing data"""
         return
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
@@ -787,6 +852,7 @@ class DishManager(SKAController):
 
 
 def main(args=None, **kwargs):
+    """Launch an DishManager device."""
     return run((DishManager,), args=args, **kwargs)
 
 

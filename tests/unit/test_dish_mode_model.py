@@ -1,3 +1,5 @@
+"""Unit tests verifying model against dishmode transitions."""
+
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
@@ -7,6 +9,7 @@ from ska_mid_dish_manager.models.dish_mode_model import (
 )
 
 
+# pylint: disable=missing-function-docstring, redefined-outer-name
 @pytest.fixture(scope="module")
 def dish_mode_model():
     return DishModeModel()

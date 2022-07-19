@@ -1,3 +1,5 @@
+"""Unit tests for setstandbylp command."""
+
 import logging
 from unittest.mock import MagicMock, patch
 
@@ -11,6 +13,7 @@ from ska_mid_dish_manager.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import DishMode, OperatingMode
 
 
+# pylint: disable=missing-function-docstring
 @pytest.mark.unit
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
@@ -25,9 +28,10 @@ def test_standbylp_cmd_fails_from_standbylp_dish_mode(patched_tango, caplog):
         assert device_proxy.dishMode == DishMode.STANDBY_LP
 
         with pytest.raises(tango.DevFailed):
-            [[result_code], [unique_id]] = device_proxy.SetStandbyLPMode()
+            _, _ = device_proxy.SetStandbyLPMode()
 
 
+# pylint: disable=missing-function-docstring, protected-access, invalid-name
 @pytest.mark.unit
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
