@@ -701,6 +701,7 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("SetStandbyLPMode")
         result_code, unique_id = handler()
+
         return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)

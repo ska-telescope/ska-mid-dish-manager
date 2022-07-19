@@ -3,10 +3,9 @@
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
 import logging
-from threading import Event, Lock
+from threading import Event
 from typing import Any, AnyStr, Callable, Optional, Tuple
 
-import tango
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
 from ska_tango_base.control_model import CommunicationStatus, HealthState
 from ska_tango_base.executor import TaskStatus
@@ -16,27 +15,6 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import (
 )
 from ska_mid_dish_manager.models.dish_enums import DishMode, OperatingMode
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
-
-
-class TangoGuard:
-    """We have several threads interacting with Tango devices.
-
-    In an effort to prevent Tango segfaults, we found that
-    limiting any interaction helps.
-    """
-
-    def __init__(self, tango_interaction_lock: Lock) -> None:
-        self.tango_interaction_lock = tango_interaction_lock
-
-    def __enter__(self):
-        self.tango_interaction_lock.acquire(timeout=30)
-        with tango.EnsureOmniThread():
-            yield
-
-    def __exit__(self, atype, value, traceback):
-        if self.tango_interaction_lock.locked():
-            self.tango_interaction_lock.release()
-        return False  # Re raise any exception
 
 
 class DishManagerComponentManager(TaskExecutorComponentManager):
@@ -59,11 +37,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._dish_mode_model = DishModeModel()
         self.component_managers = {}
-        self.tango_guard = TangoGuard(Lock())
         self.component_managers["DS"] = TangoDeviceComponentManager(
             "mid_d0001/lmc/ds_simulator",
             logger,
-            self.tango_guard,
             operating_mode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
@@ -71,7 +47,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.component_managers["SPFRX"] = TangoDeviceComponentManager(
             "mid_d0001/spfrx/simulator",
             logger,
-            self.tango_guard,
             operating_mode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
@@ -79,7 +54,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.component_managers["SPF"] = TangoDeviceComponentManager(
             "mid_d0001/spf/simulator",
             logger,
-            self.tango_guard,
             operating_mode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
