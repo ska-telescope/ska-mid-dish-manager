@@ -151,13 +151,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._start_event_handling_thread()
 
-    def _log_message(self, message):
-        self.logger.info(
-            "Tango device component manager [%s] message: [%s]",
-            self._tango_device_fqdn,
-            message,
-        )
-
     def _update_state_from_event(self, event_data: tango.EventData):
         if event_data.err:
             # We lost connection, get the connection bask
@@ -183,7 +176,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     ):
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
-        latest_event_message_timestamp = datetime.utcnow()
+        latest_event_message_timestamp = datetime.utcnow().isoformat()
         while task_abort_event and not task_abort_event.is_set():
             try:
                 event_data = event_queue.get(timeout=1)
@@ -203,11 +196,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def _kill_monitoring_threads(self):
         # Set the abort event
         # Wait for completion
-        self._log_message("Killing mmonitoring threads")
+        self.logger.info("Killing mmonitoring threads")
 
     def _start_monitoring_threads(self):
         # Start the monitroing threads
-        self._log_message("Starting mmonitoring threads")
+        self.logger.info("Starting mmonitoring threads")
         for monitored_attribute in self._monitored_attributes:
             self.submit_task(
                 monitored_attribute.monitor,
@@ -264,9 +257,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 )
 
         if retry_count:
-            self._log_message(
-                f"Connection retry count [{retry_count}] "
-                f"for device [{self._tango_device_fqdn}]"
+            self.logger.info(
+                "Connection retry count [%s] for device [%s]",
+                retry_count,
+                self._tango_device_fqdn,
             )
 
     @classmethod
@@ -359,13 +353,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     def reconnect(self):
         """Reconnect to the device"""
-        self._log_message("Reconnecting")
+        self.logger.info("Reconnecting")
         self.start_communicating()
 
     def start_communicating(self):
         """Establish communication with the device"""
         # pylint: disable=no-member
-        self._log_message("start_communicating")
+        self.logger.info("start_communicating")
         self.to_disconnected()
         self.next_state()  # setting_up_device_proxy
 
@@ -376,14 +370,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     def on_enter_disconnected(self):
         """Disconnect from current communication with the device"""
-        self._log_message("in on_enter_disconnected")
+        self.logger.info("in on_enter_disconnected")
         self._update_component_state(connection_state="disconnected")
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._kill_monitoring_threads()
 
     def on_enter_setting_up_device_proxy(self):
         """Set up a connection to the device through the proxy"""
-        self._log_message("in on_enter_setting_up_device_proxy")
+        self.logger.info("in on_enter_setting_up_device_proxy")
         self._update_component_state(
             connection_state="setting_up_device_proxy"
         )
@@ -400,7 +394,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def on_enter_connected(self):
         """Update component state when connection is established"""
         # pylint: disable=no-member
-        self._log_message("in on_enter_connected")
+        self.logger.info("in on_enter_connected")
         self._update_component_state(connection_state="connected")
         # Just go to next state
         self.next_state()
@@ -408,18 +402,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def on_enter_setting_up_monitoring(self):
         """Set up monitoring after connection"""
         # pylint: disable=no-member
-        self._log_message("in on_enter_setting_up_monitoring")
+        self.logger.info("in on_enter_setting_up_monitoring")
         self._update_component_state(connection_state="setting_up_monitoring")
         self._start_monitoring_threads()
         self.next_state()
 
     def on_enter_monitoring(self):
         """Transition to monitoring after setup is complete"""
-        self._log_message("in on_enter_monitoring")
+        self.logger.info("in on_enter_monitoring")
         self._update_component_state(connection_state="monitoring")
         self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
     def on_exit_monitoring(self):
         """Update communication state after monitoring is closed"""
-        self._log_message("in on_exit_monitoring")
+        self.logger.info("in on_exit_monitoring")
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)

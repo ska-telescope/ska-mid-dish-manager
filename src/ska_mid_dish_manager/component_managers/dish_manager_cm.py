@@ -7,8 +7,10 @@ from ska_tango_base.base.component_manager import TaskExecutorComponentManager
 from ska_tango_base.control_model import CommunicationStatus, HealthState
 from ska_tango_base.executor import TaskStatus
 
-from ska_mid_dish_manager.component_managers.tango_device_cm import (
-    TangoDeviceComponentManager,
+from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
+from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
+from ska_mid_dish_manager.component_managers.spfrx_cm import (
+    SPFRxComponentManager,
 )
 from ska_mid_dish_manager.models.dish_enums import DishMode, OperatingMode
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
@@ -41,21 +43,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._dish_mode_model = DishModeModel()
         self.component_managers = {}
-        self.component_managers["DS"] = TangoDeviceComponentManager(
+        self.component_managers["DS"] = DSComponentManager(
             "mid_d0001/lmc/ds_simulator",
             logger,
             operating_mode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
-        self.component_managers["SPFRX"] = TangoDeviceComponentManager(
+        self.component_managers["SPFRX"] = SPFRxComponentManager(
             "mid_d0001/spfrx/simulator",
             logger,
             operating_mode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
-        self.component_managers["SPF"] = TangoDeviceComponentManager(
+        self.component_managers["SPF"] = SPFComponentManager(
             "mid_d0001/spf/simulator",
             logger,
             operating_mode=None,
@@ -117,7 +119,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     @classmethod
     def _execute_sub_device_command(
         cls,
-        component_manager: TangoDeviceComponentManager,
+        component_manager,
         command_name: AnyStr,
         task_abort_event: Event = None,
         task_callback: Callable = None,

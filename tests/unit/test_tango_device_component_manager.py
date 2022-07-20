@@ -1,6 +1,8 @@
+# pylint: disable=protected-access
 """Unit tests checking generic component manager behaviour."""
 
 import logging
+from datetime import datetime
 from unittest import mock
 
 import pytest
@@ -109,17 +111,96 @@ def test_unhappy_path(patched_tango, caplog):
     )
 
     with mock.patch.object(
-        tc_manager, "_log_message", log_call_group["log_message"]
+        tc_manager.logger, "info", log_call_group["log_message"]
     ):
         assert tc_manager.state == "disconnected"  # pylint: disable=no-member
         tc_manager.start_communicating()
 
         log_call_group.assert_call(
             "log_message",
-            "Connection retry count [3] for device [a/b/c]",
+            'Connection retry count [%s] for device [%s]', 4, 'a/b/c',
             lookahead=10,
         )
 
         assert tc_manager.state == "setting_up_device_proxy"
 
         tc_manager.abort_tasks()
+
+
+@pytest.mark.unit
+@mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
+def test_device_goes_away(patched_tango, caplog):
+    """Start up the component_manager.
+    Signal a lost connection via a event
+    Check for reconnect
+    """
+    caplog.set_level(logging.DEBUG)
+
+    call_group = MockCallableGroup("comm_state", "comp_state", timeout=3)
+
+    # Set up mocks
+    patched_dp = mock.MagicMock()
+    patched_dp.command_inout = mock.MagicMock()
+    patched_tango.DeviceProxy = mock.MagicMock(return_value=patched_dp)
+
+    tc_manager = TangoDeviceComponentManager(
+        "a/b/c",
+        LOGGER,
+        communication_state_callback=call_group["comm_state"],
+        component_state_callback=call_group["comp_state"],
+    )
+
+    assert tc_manager.state == "disconnected"  # pylint:disable=no-member
+
+    tc_manager.start_communicating()
+    call_group.assert_call("comm_state", CommunicationStatus.NOT_ESTABLISHED)
+    call_group.assert_call(
+        "comp_state", connection_state="setting_up_device_proxy"
+    )
+    call_group.assert_call("comp_state", connection_state="connected")
+    call_group.assert_call(
+        "comp_state", connection_state="setting_up_monitoring"
+    )
+
+    call_group.assert_call("comp_state", connection_state="monitoring")
+    call_group.assert_call("comm_state", CommunicationStatus.ESTABLISHED)
+
+    # Set up mock error event
+    mock_error = mock.MagicMock()
+    mock_error.err = True
+
+    # Trigger the failure
+    tc_manager._events_queue.put(mock_error)
+
+    # Make sure we lost connection
+    call_group.assert_call("comm_state", CommunicationStatus.NOT_ESTABLISHED)
+
+    # Make sure we got connection back
+    call_group.assert_call("comp_state", connection_state="disconnected")
+
+    call_group.assert_call(
+        "comp_state", connection_state="setting_up_device_proxy"
+    )
+    call_group.assert_call("comp_state", connection_state="connected")
+    call_group.assert_call(
+        "comp_state", connection_state="setting_up_monitoring"
+    )
+
+    call_group.assert_call("comp_state", connection_state="monitoring")
+    call_group.assert_call("comm_state", CommunicationStatus.ESTABLISHED)
+
+    # Make sure we can handle new events
+    # Set up mock error event
+    mock_event = mock.MagicMock()
+    mock_event.err = False
+    mock_event.attr_value = mock.MagicMock()
+    mock_event.attr_value.time = datetime.now()
+    mock_event.attr_value.name = "some_new_event_name"
+    mock_event.attr_value.value = "some_new_event_value"
+
+    # Push event
+    tc_manager._events_queue.put(mock_event)
+    call_group.assert_call(
+        "comp_state", some_new_event_name="some_new_event_value"
+    )
+    tc_manager.abort_tasks()
