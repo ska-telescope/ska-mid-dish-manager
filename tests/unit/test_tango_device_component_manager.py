@@ -2,7 +2,6 @@
 """Unit tests checking generic component manager behaviour."""
 
 import logging
-from datetime import datetime
 from unittest import mock
 
 import pytest
@@ -71,7 +70,6 @@ def test_happy_path(patched_tango, caplog):
     comm_call_group.assert_call(
         "comp_state", connection_state="setting_up_device_proxy"
     )
-    comm_call_group.assert_call("comp_state", connection_state="connected")
     comm_call_group.assert_call(
         "comp_state", connection_state="setting_up_monitoring"
     )
@@ -138,7 +136,7 @@ def test_device_goes_away(patched_tango, caplog):
     """
     caplog.set_level(logging.DEBUG)
 
-    call_group = MockCallableGroup("comm_state", "comp_state", timeout=3)
+    call_group = MockCallableGroup("comm_state", "comp_state", timeout=5)
 
     # Set up mocks
     patched_dp = mock.MagicMock()
@@ -159,11 +157,9 @@ def test_device_goes_away(patched_tango, caplog):
     call_group.assert_call(
         "comp_state", connection_state="setting_up_device_proxy"
     )
-    call_group.assert_call("comp_state", connection_state="connected")
     call_group.assert_call(
         "comp_state", connection_state="setting_up_monitoring"
     )
-
     call_group.assert_call("comp_state", connection_state="monitoring")
     call_group.assert_call("comm_state", CommunicationStatus.ESTABLISHED)
 
@@ -176,33 +172,14 @@ def test_device_goes_away(patched_tango, caplog):
 
     # Make sure we lost connection
     call_group.assert_call("comm_state", CommunicationStatus.NOT_ESTABLISHED)
-
-    # Make sure we got connection back
-    call_group.assert_call("comp_state", connection_state="disconnected")
-
+    # Make sure we get it back
+    call_group.assert_call("comp_state", connection_state="reconnecting")
     call_group.assert_call(
         "comp_state", connection_state="setting_up_device_proxy"
     )
-    call_group.assert_call("comp_state", connection_state="connected")
     call_group.assert_call(
         "comp_state", connection_state="setting_up_monitoring"
     )
-
     call_group.assert_call("comp_state", connection_state="monitoring")
     call_group.assert_call("comm_state", CommunicationStatus.ESTABLISHED)
-
-    # Make sure we can handle new events
-    # Set up mock error event
-    mock_event = mock.MagicMock()
-    mock_event.err = False
-    mock_event.attr_value = mock.MagicMock()
-    mock_event.attr_value.time = datetime.now()
-    mock_event.attr_value.name = "some_new_event_name"
-    mock_event.attr_value.value = "some_new_event_value"
-
-    # Push event
-    tc_manager._events_queue.put(mock_event)
-    call_group.assert_call(
-        "comp_state", some_new_event_name="some_new_event_value"
-    )
     tc_manager.abort_tasks()

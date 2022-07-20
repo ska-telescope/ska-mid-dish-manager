@@ -80,7 +80,7 @@ class MonitoredAttribute:
             device_proxy.unsubscribe_event(self.subscription_id)
 
 
-# pylint: disable=abstract-method, too-many-instance-attributes
+# pylint: disable=abstract-method, too-many-instance-attributes, no-member
 class TangoDeviceComponentManager(TaskExecutorComponentManager):
     """A component manager for a Tango device
 
@@ -126,9 +126,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         states = [
             "disconnected",
             "setting_up_device_proxy",
-            "connected",
             "setting_up_monitoring",
             "monitoring",
+            "reconnecting",
         ]
 
         self._state_machine = Machine(
@@ -149,7 +149,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
 
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-        self._start_event_handling_thread()
 
     def _update_state_from_event(self, event_data: tango.EventData):
         if event_data.err:
@@ -192,11 +191,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 pass
         if task_callback:
             task_callback(status=TaskStatus.ABORTED)
-
-    def _kill_monitoring_threads(self):
-        # Set the abort event
-        # Wait for completion
-        self.logger.info("Killing mmonitoring threads")
 
     def _start_monitoring_threads(self):
         # Start the monitroing threads
@@ -243,7 +237,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if status == TaskStatus.COMPLETED:
             if not self._device_proxy:
                 self._device_proxy = result
-            self.to_connected()
+            # Device proxy created, set up monitoring
+            self.to_setting_up_monitoring()
 
         if status == TaskStatus.ABORTED:
             self.logger.info("Device Proxy creation task aborted")
@@ -351,29 +346,69 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             task_callback=None,
         )
 
-    def reconnect(self):
-        """Reconnect to the device"""
-        self.logger.info("Reconnecting")
-        self.start_communicating()
-
     def start_communicating(self):
         """Establish communication with the device"""
         # pylint: disable=no-member
+        if self.state != "disconnected":
+            raise RuntimeError(
+                "You can only start communicating "
+                "when you have stopped doing so"
+            )
         self.logger.info("start_communicating")
-        self.to_disconnected()
-        self.next_state()  # setting_up_device_proxy
+        self.to_setting_up_device_proxy()
 
     def stop_communicating(self):
         """Stop communication with the device"""
         # pylint: disable=no-member
-        self.to_disconnected()
+        self.abort_tasks(task_callback=self._aborting_tasks_cb)
+
+    def reconnect(self):
+        """Redo the connection to the Tango device"""
+        self.to_reconnecting()
+
+    # Transition states:
+    # disconnected
+    # setting_up_device_proxy
+    # setting_up_monitoring
+    # monitoring
+    # reconnecting
+
+    # Start Communicating
+    #  -> to_setting_up_device_proxy
+    #  -> _device_proxy_creation_cb
+    #  -> to_setting_up_monitoring
+    #  -> to_monitoring
+
+    # Stop Communicating
+    #  -> abort_tasks
+    #  -> _aborting_tasks_cb
+    #  -> to_disconnected
+
+    # Reconnecting
+    #  -> to_reconnecting
+    #  -> abort_tasks
+    #  -> _aborting_tasks_cb
+    #  -> to_setting_up_device_proxy
+    #  -> setting_up_monitoring
+    #  -> monitoring
+
+    def _aborting_tasks_cb(self, status: TaskStatus):
+        """A callback that is called during and after the aborting of tasks
+
+        :param status: the status of the work
+        :type status: TaskStatus
+        """
+        self.logger.info("Waiting for aborting of tasks [%s]", status)
+        if status == TaskStatus.COMPLETED:
+            if self.state == "reconnecting":
+                self.to_setting_up_device_proxy()
+            else:
+                self.to_disconnected()
 
     def on_enter_disconnected(self):
-        """Disconnect from current communication with the device"""
-        self.logger.info("in on_enter_disconnected")
+        """Disconnecting from the Tango device"""
         self._update_component_state(connection_state="disconnected")
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-        self._kill_monitoring_threads()
 
     def on_enter_setting_up_device_proxy(self):
         """Set up a connection to the device through the proxy"""
@@ -391,21 +426,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             task_callback=self._device_proxy_creation_cb,
         )
 
-    def on_enter_connected(self):
-        """Update component state when connection is established"""
-        # pylint: disable=no-member
-        self.logger.info("in on_enter_connected")
-        self._update_component_state(connection_state="connected")
-        # Just go to next state
-        self.next_state()
-
     def on_enter_setting_up_monitoring(self):
         """Set up monitoring after connection"""
         # pylint: disable=no-member
         self.logger.info("in on_enter_setting_up_monitoring")
         self._update_component_state(connection_state="setting_up_monitoring")
+        self._start_event_handling_thread()
         self._start_monitoring_threads()
-        self.next_state()
+        self.to_monitoring()
 
     def on_enter_monitoring(self):
         """Transition to monitoring after setup is complete"""
@@ -417,3 +445,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Update communication state after monitoring is closed"""
         self.logger.info("in on_exit_monitoring")
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
+    def on_enter_reconnecting(self):
+        """Handle reconnecting to the Tango device"""
+        self._update_component_state(connection_state="reconnecting")
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        self.abort_tasks(task_callback=self._aborting_tasks_cb)
