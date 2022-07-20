@@ -11,6 +11,8 @@ from tango.test_context import DeviceTestContext
 from ska_mid_dish_manager.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
+LOGGER = logging.getLogger(__name__)
+
 
 # pylint: disable=invalid-name, missing-function-docstring
 @pytest.fixture()
@@ -58,13 +60,20 @@ def test_dish_manager_transitions_to_lp_mode_after_startup_no_mocks(
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_dish_manager_transitions_to_lp_mode_after_startup_with_mocks(
-    patched_tango,
+    patched_tango, caplog  # pylint: disable=unused-argument
 ):
     # Set up mocks
     device_proxy = MagicMock()
     patched_tango.DeviceProxy = MagicMock(return_value=device_proxy)
 
     with DeviceTestContext(DishManager) as dish_manager:
+        # Transition happens almost instantly on a fast machine,
+        # even before we can complete event subscription or a MockCallable.
+        # Give it a few tries for a slower machine
+        for i in range(20):
+            LOGGER.info("waiting for STANDBY_LP [%s]", i)
+            if dish_manager.dishMode == DishMode.STANDBY_LP:
+                break
         assert dish_manager.dishMode == DishMode.STANDBY_LP
 
     # Check that we create the DeviceProxy
