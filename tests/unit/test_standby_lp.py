@@ -1,18 +1,39 @@
 """Unit tests for setstandbylp command."""
 
 import logging
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
 from ska_tango_base.commands import ResultCode
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import DishMode, OperatingMode
 
 LOGGER = logging.getLogger(__name__)
+
+
+def assert_change_events(dev_proxy, attr_name, expected_value, timeout=3):
+    """Check the events for expected value"""
+    event_cb = tango.utils.EventCallback()
+    with tango.EnsureOmniThread():
+        sub_id = dev_proxy.subscribe_event(
+            attr_name,
+            tango.EventType.CHANGE_EVENT,
+            event_cb,
+        )
+        future = time.time() + timeout
+        now = time.time()
+        evts = []
+        while now < future or expected_value not in evts:
+            evts = [
+                evt_data.attr_value.value for evt_data in event_cb.get_events()
+            ]
+            now = time.time()
+        dev_proxy.unsubscribe_event(sub_id)
+    assert dev_proxy.read_attribute(attr_name).value == expected_value
 
 
 # pylint: disable=missing-function-docstring
@@ -54,44 +75,33 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     patched_dp.command_inout = MagicMock()
     patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
 
-    call_group = MockTangoEventCallbackGroup(
-        "dishMode", "longRunningCommandResult", timeout=5
-    )
     with DeviceTestContext(DishManager) as device_proxy:
-        device_proxy.subscribe_event(
-            "dishMode",
-            tango.EventType.CHANGE_EVENT,
-            call_group["dishMode"],
-        )
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
         spf_cm = class_instance.component_manager.component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
-        # Force DishManager dishMode into STANDBY_FP
-        # using the underlying devices
+        # Update the operatingMode of the underlying devices
+        # This will force dishManager dishMode to go to STANDBY-FP
         for cm in [ds_cm, spf_cm, spfrx_cm]:
             cm._update_component_state(operating_mode=OperatingMode.STANDBY_FP)
-        # And confirm DishManager transitioned to STANDBY_FP
-        call_group.assert_change_event("dishMode", DishMode.STANDBY_LP)
-        call_group.assert_change_event("dishMode", DishMode.STANDBY_FP)
+
+        assert_change_events(
+            device_proxy, "dishMode", DishMode.STANDBY_FP.value
+        )
 
         # Transition DishManager to STANDBY_LP issuing a command
-        sub_id = device_proxy.subscribe_event(
-            "longRunningCommandResult",
-            tango.EventType.CHANGE_EVENT,
-            call_group["longRunningCommandResult"],
-        )
-
         [[result_code], [unique_id]] = device_proxy.SetStandbyLPMode()
         assert ResultCode(result_code) == ResultCode.QUEUED
+
         # wait for the SetStandbyLPMode to be queued, i.e. the cmd
         # has been submitted to the subservient devices
-        call_group.assert_change_event("longRunningCommandResult", ("", ""))
-        call_group.assert_change_event(
-            "longRunningCommandResult",
-            (unique_id, '"SetStandbyLPMode queued on ds, spf and spfrx"'),
+        lrc_result = (
+            unique_id,
+            '"SetStandbyLPMode queued on ds, spf and spfrx"',
         )
-        device_proxy.unsubscribe_event(sub_id)
+        assert_change_events(
+            device_proxy, "longRunningCommandResult", lrc_result
+        )
 
         # transition subservient devices to LP mode and observe that
         # DishManager transitions dishMode to LP mode after all
