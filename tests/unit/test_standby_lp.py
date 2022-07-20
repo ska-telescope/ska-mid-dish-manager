@@ -50,7 +50,8 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
         ds_cm = class_instance.component_manager.component_managers["DS"]
         spf_cm = class_instance.component_manager.component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
-        # Force DishManager dishMode into STANDBY_FP using the underlying devices
+        # Force DishManager dishMode into STANDBY_FP
+        # using the underlying devices
         for cm in [ds_cm, spf_cm, spfrx_cm]:
             cm._update_component_state(operating_mode=OperatingMode.STANDBY_FP)
         # And confirm DishManager transitioned to STANDBY_FP
@@ -75,8 +76,9 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
         )
         device_proxy.unsubscribe_event(sub_id)
 
-        # transition subservient devices to LP mode and observe that DishManager
-        # transitions dishMode to LP mode after all subservient devices are in LP
+        # transition subservient devices to LP mode and observe that
+        # DishManager transitions dishMode to LP mode after all
+        # subservient devices are in LP
         ds_cm._update_component_state(operating_mode=OperatingMode.STANDBY_LP)
         assert device_proxy.dishMode == DishMode.STANDBY_FP
 

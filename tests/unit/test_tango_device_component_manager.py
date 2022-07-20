@@ -38,9 +38,10 @@ def test_component_manager_continues_reconnecting_when_device_is_unreachable(
 @mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_happy_path(patched_tango, caplog):
     """Tango device is reachable and communicates with component manager
-    
-    Tango layer is mocked and checks are made on the mock for expected calls
-    made when communication is established and component is updated accordingly
+
+    Tango layer is mocked and checks are made on the mock for expected
+    calls made when communication is established and component is
+    updated accordingly
     """
     # pylint: disable=no-member
     caplog.set_level(logging.DEBUG)
@@ -83,10 +84,11 @@ def test_happy_path(patched_tango, caplog):
 @mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_unhappy_path(patched_tango, caplog):
     """Tango device is unreachable and cant communicate with component manager
-    
-    Similar to `test_component_manager_continues_reconnecting_when_device_is_unreachable`
-    except Tango layer is mocked here. Checks are made on the mock for expected calls
-    and logs when communication is atttempted by component manager on mocked device
+
+    Similar to `test_component_manager_continues_reconnecting_...` except
+    Tango layer is mocked here. Checks are made on the mock for expected
+    calls and logs when communication is atttempted by component manager
+    on mocked device
     """
     # pylint: disable=no-member
     patched_tango.DevFailed = tango.DevFailed
