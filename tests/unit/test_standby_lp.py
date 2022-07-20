@@ -54,7 +54,15 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     patched_dp.command_inout = MagicMock()
     patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
 
+    call_group = MockTangoEventCallbackGroup(
+        "dishMode", "longRunningCommandResult", timeout=5
+    )
     with DeviceTestContext(DishManager) as device_proxy:
+        device_proxy.subscribe_event(
+            "dishMode",
+            tango.EventType.CHANGE_EVENT,
+            call_group["dishMode"],
+        )
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
         spf_cm = class_instance.component_manager.component_managers["SPF"]
@@ -64,22 +72,22 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
         for cm in [ds_cm, spf_cm, spfrx_cm]:
             cm._update_component_state(operating_mode=OperatingMode.STANDBY_FP)
         # And confirm DishManager transitioned to STANDBY_FP
-        assert device_proxy.dishMode == DishMode.STANDBY_FP
+        call_group.assert_change_event("dishMode", DishMode.STANDBY_LP)
+        call_group.assert_change_event("dishMode", DishMode.STANDBY_FP)
 
         # Transition DishManager to STANDBY_LP issuing a command
-        cb = MockTangoEventCallbackGroup("longRunningCommandResult", timeout=5)
         sub_id = device_proxy.subscribe_event(
             "longRunningCommandResult",
             tango.EventType.CHANGE_EVENT,
-            cb["longRunningCommandResult"],
+            call_group["longRunningCommandResult"],
         )
 
         [[result_code], [unique_id]] = device_proxy.SetStandbyLPMode()
         assert ResultCode(result_code) == ResultCode.QUEUED
         # wait for the SetStandbyLPMode to be queued, i.e. the cmd
         # has been submitted to the subservient devices
-        cb.assert_change_event("longRunningCommandResult", ("", ""))
-        cb.assert_change_event(
+        call_group.assert_change_event("longRunningCommandResult", ("", ""))
+        call_group.assert_change_event(
             "longRunningCommandResult",
             (unique_id, '"SetStandbyLPMode queued on ds, spf and spfrx"'),
         )
