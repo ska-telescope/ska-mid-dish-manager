@@ -15,10 +15,10 @@ def dish_mode_model():
     return DishModeModel()
 
 
-def test_node_count(dish_mode_model):
+def test_model_node_matches_dish_mode_enums(dish_mode_model):
     assert dish_mode_model.dishmode_graph.number_of_nodes() == len(
         DishMode
-    ), "Mode model nodes number not equal to DishMode enums"
+    ), "Nodes on DishMode model are not equal to DishMode enums"
 
     for dish_mode_enum in DishMode:
         assert dish_mode_enum.name in dish_mode_model.dishmode_graph.nodes
@@ -32,7 +32,7 @@ def test_node_count(dish_mode_model):
         ("MAINTENANCE", "SetStandbyLPMode", True),
     ],
 )
-def test_is_mode_transition_allowed(
+def test_model_dish_mode_transition_accuracy(
     dish_mode_model, current_mode, requested_command, is_allowed
 ):
     if is_allowed:

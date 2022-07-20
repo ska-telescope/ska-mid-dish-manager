@@ -36,7 +36,9 @@ def devices_to_test(SimpleDevice):
 @pytest.mark.xfail(reason="Intermittent Segfaults")
 @pytest.mark.forked
 @pytest.mark.unit
-def test_dish_transitions_to_lp_mode_after_startup(multi_device_tango_context):
+def test_dish_manager_transitions_to_lp_mode_after_startup_no_mocks(
+    multi_device_tango_context,
+):
     dish_manager = multi_device_tango_context.get_device(
         "mid_d0005/elt/master"
     )
@@ -55,7 +57,9 @@ def test_dish_transitions_to_lp_mode_after_startup(multi_device_tango_context):
 @pytest.mark.unit
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_dish_manager_starts_up_successfully(patched_tango):
+def test_dish_manager_transitions_to_lp_mode_after_startup_with_mocks(
+    patched_tango,
+):
     # Set up mocks
     device_proxy = MagicMock()
     patched_tango.DeviceProxy = MagicMock(return_value=device_proxy)

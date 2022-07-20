@@ -46,20 +46,17 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
 
     with DeviceTestContext(DishManager) as device_proxy:
-        # Force dishMode into STANDBY-FP
         class_instance = DishManager.instances.get(device_proxy.name())
-        class_instance.component_manager._update_component_state(
-            dish_mode=DishMode.STANDBY_FP
-        )
         ds_cm = class_instance.component_manager.component_managers["DS"]
         spf_cm = class_instance.component_manager.component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
-
+        # Force DishManager dishMode into STANDBY_FP using the underlying devices
         for cm in [ds_cm, spf_cm, spfrx_cm]:
             cm._update_component_state(operating_mode=OperatingMode.STANDBY_FP)
-
+        # And confirm DishManager transitioned to STANDBY_FP
         assert device_proxy.dishMode == DishMode.STANDBY_FP
 
+        # Transition DishManager to STANDBY_LP issuing a command
         cb = MockTangoEventCallbackGroup("longRunningCommandResult", timeout=5)
         sub_id = device_proxy.subscribe_event(
             "longRunningCommandResult",
@@ -69,7 +66,8 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
 
         [[result_code], [unique_id]] = device_proxy.SetStandbyLPMode()
         assert ResultCode(result_code) == ResultCode.QUEUED
-
+        # wait for the SetStandbyLPMode to be queued, i.e. the cmd
+        # has been submitted to the subservient devices
         cb.assert_change_event("longRunningCommandResult", ("", ""))
         cb.assert_change_event(
             "longRunningCommandResult",
@@ -77,6 +75,8 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
         )
         device_proxy.unsubscribe_event(sub_id)
 
+        # transition subservient devices to LP mode and observe that DishManager
+        # transitions dishMode to LP mode after all subservient devices are in LP
         ds_cm._update_component_state(operating_mode=OperatingMode.STANDBY_LP)
         assert device_proxy.dishMode == DishMode.STANDBY_FP
 
