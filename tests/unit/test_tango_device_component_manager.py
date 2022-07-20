@@ -118,7 +118,9 @@ def test_unhappy_path(patched_tango, caplog):
 
         log_call_group.assert_call(
             "log_message",
-            'Connection retry count [%s] for device [%s]', 4, 'a/b/c',
+            "Connection retry count [%s] for device [%s]",
+            4,
+            "a/b/c",
             lookahead=10,
         )
 
