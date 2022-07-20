@@ -12,6 +12,8 @@ from tango.test_context import DeviceTestContext
 from ska_mid_dish_manager.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import DishMode, OperatingMode
 
+LOGGER = logging.getLogger(__name__)
+
 
 # pylint: disable=missing-function-docstring
 @pytest.mark.unit
@@ -25,6 +27,13 @@ def test_standbylp_cmd_fails_from_standbylp_dish_mode(patched_tango, caplog):
     patched_tango.DeviceProxy = MagicMock(return_value=mocked_device_proxy)
 
     with DeviceTestContext(DishManager) as device_proxy:
+        # Transition happens almost instantly on a fast machine,
+        # even before we can complete event subscription or a MockCallable.
+        # Give it a few tries for a slower machine
+        for i in range(20):
+            LOGGER.info("waiting for STANDBY_LP [%s]", i)
+            if device_proxy.dishMode == DishMode.STANDBY_LP:
+                break
         assert device_proxy.dishMode == DishMode.STANDBY_LP
 
         with pytest.raises(tango.DevFailed):
