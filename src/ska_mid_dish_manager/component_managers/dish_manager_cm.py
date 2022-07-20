@@ -76,6 +76,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for cm in self.component_managers.values()
         ):
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
+            # TODO: The component state transition will be determined by the
+            # operatingMode of the subservient devices. That will be based on
+            # the builtin rules for determining the dishMode based on the
+            # aggregation of the operatingModes. Builtin rules yet to be added
             self._update_component_state(dish_mode=DishMode.STANDBY_LP)
             self._update_component_state(health_state=HealthState.OK)
         else:
@@ -87,6 +91,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
         # component state will come from args and kwargs
+        # TODO: same as TODO comment in _communication_state_changed
         if all(
             cm.component_state["operating_mode"] == OperatingMode.STANDBY_LP
             for cm in self.component_managers.values()

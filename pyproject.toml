@@ -38,7 +38,7 @@ networkx = "2.6.3"
 transitions = "^0.8.11"
 
 [tool.pylint.messages_control]
-disable = ["duplicate-code"]
+disable = ["duplicate-code", "fixme"]
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
