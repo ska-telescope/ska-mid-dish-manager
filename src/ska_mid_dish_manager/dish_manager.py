@@ -23,7 +23,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackInterpolationMode,
     TrackProgramMode,
     TrackTableLoadMode,
-    UsageStatus,
 )
 
 
@@ -124,7 +123,6 @@ class DishManager(SKAController):
             device._track_interpolation_mode = TrackInterpolationMode.NEWTON
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.ADD
-            device._usage_status = UsageStatus.IDLE
             device.op_state_model.perform_action("component_standby")
 
             # push change events for dishMode: needed to use testing library
@@ -331,7 +329,6 @@ class DishManager(SKAController):
         dtype=bool,
         doc="Indicates whether the configured band is synchronised or not.",
     )
-    usageStatus = attribute(dtype=UsageStatus)
 
     # Attribute's methods
     # pylint: disable=invalid-name

@@ -15,7 +15,6 @@ CONFIG_COMMANDS = (
 )
 
 DISH_MODE_NODES = (
-    "OFF",
     "STARTUP",
     "SHUTDOWN",
     "STANDBY_LP",
@@ -41,17 +40,13 @@ class DishModeModel:
         for node in DISH_MODE_NODES:
             dishmode_graph.add_node(node)
 
-        # For Shutdown mode
+        # From Shutdown mode
         dishmode_graph.add_edge("SHUTDOWN", "STARTUP")
-        dishmode_graph.add_edge("SHUTDOWN", "OFF")
 
-        # For Off mode
-        dishmode_graph.add_edge("OFF", "STARTUP")
-
-        # For Startup to other modes
+        # From Startup to other modes
         dishmode_graph.add_edge("STARTUP", "STANDBY_LP")
 
-        # For Standby_LP to other modes
+        # From Standby_LP to other modes
         dishmode_graph.add_edge(
             "STANDBY_LP", "STANDBY_FP", commands=["SetStandbyFPMode"]
         )
@@ -59,7 +54,7 @@ class DishModeModel:
             "STANDBY_LP", "MAINTENANCE", commands=["SetMaintenanceMode"]
         )
 
-        # For Standby_FP to other modes
+        # From Standby_FP to other modes
         dishmode_graph.add_edge(
             "STANDBY_FP", "STANDBY_LP", commands=["SetStandbyLPMode"]
         )
@@ -73,22 +68,17 @@ class DishModeModel:
             "STANDBY_FP", "MAINTENANCE", commands=["SetMaintenanceMode"]
         )
 
-        # For Operate to other modes
+        # From Operate to other modes
         dishmode_graph.add_edge(
             "OPERATE", "STANDBY_FP", commands=["SetStandbyFPMode"]
         )
         dishmode_graph.add_edge("OPERATE", "CONFIG", commands=CONFIG_COMMANDS)
 
-        # For Config to other modes
-        dishmode_graph.add_edge("CONFIG", "STOW", commands=["SetStowMode"])
-        dishmode_graph.add_edge(
-            "CONFIG", "STANDBY_FP", commands=["SetStandbyFPMode"]
-        )
-        dishmode_graph.add_edge(
-            "CONFIG", "OPERATE", commands=["SetOperateMode"]
-        )
+        # From Config to other modes
+        dishmode_graph.add_edge("CONFIG", "STANDBY_FP")
+        dishmode_graph.add_edge("CONFIG", "OPERATE")
 
-        # For Stow to other modes
+        # From Stow to other modes
         dishmode_graph.add_edge(
             "STOW", "STANDBY_FP", commands=["SetStandbyFPMode"]
         )
@@ -101,6 +91,12 @@ class DishModeModel:
             if node == "STOW":
                 continue
             dishmode_graph.add_edge(node, "STOW", commands=["SetStowMode"])
+
+        # From any mode to Shutdown
+        for node in DISH_MODE_NODES:
+            if node == "SHUTDOWN":
+                continue
+            dishmode_graph.add_edge(node, "SHUTDOWN")
 
         # From Maintenance to other modes
         dishmode_graph.add_edge(

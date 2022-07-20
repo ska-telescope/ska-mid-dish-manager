@@ -6,15 +6,14 @@ import enum
 
 
 class DishMode(enum.IntEnum):
-    OFF = 0
-    STARTUP = 1
-    SHUTDOWN = 2
-    STANDBY_LP = 3
-    STANDBY_FP = 4
-    MAINTENANCE = 5
-    STOW = 6
-    CONFIG = 7
-    OPERATE = 8
+    STARTUP = 0
+    SHUTDOWN = 1
+    STANDBY_LP = 2
+    STANDBY_FP = 3
+    MAINTENANCE = 4
+    STOW = 5
+    CONFIG = 6
+    OPERATE = 7
 
 
 class PointingState(enum.IntEnum):
@@ -36,18 +35,10 @@ class Band(enum.IntEnum):
     B5b = 6
 
 
-class UsageStatus(enum.IntEnum):
-    BUSY = 0
-    ANY = 1
-    IDLE = 2
-    ACTIVE = 3
-
-
 class PowerState(enum.IntEnum):
-    OFF = 0
-    UPS = 1
-    LOW = 2
-    FULL = 3
+    UPS = 0
+    LOW = 1
+    FULL = 2
 
 
 class TrackInterpolationMode(enum.IntEnum):
