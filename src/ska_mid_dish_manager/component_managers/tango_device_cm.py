@@ -193,8 +193,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.ABORTED)
 
     def _start_monitoring_threads(self):
-        # Start the monitroing threads
-        self.logger.info("Starting mmonitoring threads")
+        # Start the monitoring threads
+        self.logger.info("Starting monitoring threads")
         for monitored_attribute in self._monitored_attributes:
             self.submit_task(
                 monitored_attribute.monitor,
@@ -313,7 +313,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         If the connection failed
             - Mark `communication_state` as NOT_ESTABLISHED
-            - Kick off the reconnect attempts
+            - Kick off reconnection attempts
 
         :param: command_name: The Tango command to run
         :type: command_name: AnyStr

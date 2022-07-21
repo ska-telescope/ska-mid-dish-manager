@@ -1,4 +1,4 @@
-"""Testware for running ska-mid-dish-manager tests"""
+"""Tests for running ska-mid-dish-manager tests"""
 
 import socket
 
@@ -71,7 +71,7 @@ def simple_device_test_context(SimpleDevice, mock_tango_device_proxy_instance):
 def devices_to_test(request):
     """Fixture for devices to test."""
     raise NotImplementedError(
-        "You have to specify the devices totest by "
+        "You have to specify the devices to test by "
         " overriding the 'devices_to_test' fixture."
     )
 

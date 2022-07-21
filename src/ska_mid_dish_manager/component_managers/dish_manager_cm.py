@@ -21,7 +21,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     """A component manager for DishManager
 
     It watches the component managers of the subservient devices
-    (DS, SPF, SPFRX) to refect the state of the Dish LMC.
+    (DS, SPF, SPFRX) to reflect the state of the Dish LMC.
     """
 
     def __init__(

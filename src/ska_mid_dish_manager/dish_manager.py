@@ -228,7 +228,7 @@ class DishManager(SKAController):
     )
     capturing = attribute(
         dtype=bool,
-        doc="Indicates whether Dish is capturing data inthe configured band "
+        doc="Indicates whether Dish is capturing data in the configured band "
         "or not.",
     )
     configuredBand = attribute(
@@ -749,7 +749,7 @@ class DishManager(SKAController):
         This command triggers the Dish to transition to the STANDBY‐LP Dish
         Element Mode, and returns to the caller. Standby_LP is the default
         mode when the Dish is configured for low power consumption, and is
-        the mode wherein Dish ends after a start up procedure.
+        the mode wherein Dish ends after a start-up procedure.
         All subsystems go into a low power state to power only the essential
         equipment. Specifically the Helium compressor will be set to a low
         power consumption, and the drives will be disabled. When issued a
@@ -780,7 +780,7 @@ class DishManager(SKAController):
         This command triggers the Dish to transition to the STOW Dish Element
         Mode, and returns to the caller. To point the dish in a direction that
         minimises the wind loads on the structure, for survival in strong wind
-        conditions. The Dish is able to observe in the stow position, for the
+        conditions. The Dish is able to observe in the STOW position, for the
         purpose of transient detection.
         """
         return
@@ -828,7 +828,7 @@ class DishManager(SKAController):
         onto a target and is still not within the specified pointing accuracy.
         As soon as the pointing accuracy is within specifications, the
         pointingState attribute will report TRACK.
-        Track data source (TABLEA, TABLEB, POLY) used for tracking is pre‐
+        Track data source (TABLE-A, TABLE-B, POLY) used for tracking is pre‐
         configured using trackProgramMode attribute.
         Tracking using program table (A, B) is pre‐configured using the
         following attributes:

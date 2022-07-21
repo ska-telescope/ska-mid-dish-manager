@@ -1,4 +1,4 @@
-"""Unit tests verifying model against dishmode transitions."""
+"""Unit tests verifying model against dishMode transitions."""
 
 import pytest
 

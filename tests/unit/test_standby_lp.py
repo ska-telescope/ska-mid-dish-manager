@@ -1,4 +1,4 @@
-"""Unit tests for setstandbylp command."""
+"""Unit tests for setstandby_lp command."""
 
 import logging
 import time
@@ -25,9 +25,9 @@ def assert_change_events(dev_proxy, attr_name, expected_value, timeout=2):
     )
     future = time.time() + timeout
     now = time.time()
-    evts = []
-    while now < future or expected_value not in evts:
-        evts = [
+    events = []
+    while now < future or expected_value not in events:
+        events = [
             evt_data.attr_value.value for evt_data in event_cb.get_events()
         ]
         now = time.time()
@@ -39,7 +39,7 @@ def assert_change_events(dev_proxy, attr_name, expected_value, timeout=2):
 @pytest.mark.unit
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_standbylp_cmd_fails_from_standbylp_dish_mode(patched_tango, caplog):
+def test_standby_lp_cmd_fails_from_standby_lp_dish_mode(patched_tango, caplog):
     caplog.set_level(logging.DEBUG)
 
     # Set up mocks
@@ -65,7 +65,7 @@ def test_standbylp_cmd_fails_from_standbylp_dish_mode(patched_tango, caplog):
 @pytest.mark.unit
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
+def test_standby_lp_cmd_succeeds_from_standby_fp_dish_mode(
     patched_tango, caplog
 ):
     caplog.set_level(logging.DEBUG)
