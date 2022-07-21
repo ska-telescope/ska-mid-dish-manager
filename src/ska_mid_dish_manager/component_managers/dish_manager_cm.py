@@ -12,7 +12,12 @@ from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import (
     SPFRxComponentManager,
 )
-from ska_mid_dish_manager.models.dish_enums import DishMode, OperatingMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
 
@@ -92,17 +97,39 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _component_state_changed(self, *args, **kwargs):
         # component state will come from args and kwargs
         # TODO: same as TODO comment in _communication_state_changed
-        if all(
-            cm.component_state["operating_mode"] == OperatingMode.STANDBY_LP
-            for cm in self.component_managers.values()
+        ds_op_mode = self.component_managers["DS"].component_state[
+            "operating_mode"
+        ]
+        spf_op_mode = self.component_managers["SPF"].component_state[
+            "operating_mode"
+        ]
+        spfrx_op_mode = self.component_managers["SPFRX"].component_state[
+            "operating_mode"
+        ]
+
+        # STANDBY_LP rules
+        if (
+            ds_op_mode == DSOperatingMode.STANDBY_LP
+            and spf_op_mode == SPFOperatingMode.STANDBY_LP
+            and spfrx_op_mode == SPFRxOperatingMode.STANDBY
         ):
             self._update_component_state(dish_mode=DishMode.STANDBY_LP)
 
-        if all(
-            cm.component_state["operating_mode"] == OperatingMode.STANDBY_FP
-            for cm in self.component_managers.values()
+        # STANDBY_FP rules
+        if (
+            ds_op_mode == DSOperatingMode.STANDBY_FP
+            and spf_op_mode == SPFOperatingMode.OPERATE
+            and spfrx_op_mode == SPFRxOperatingMode.STANDBY
         ):
             self._update_component_state(dish_mode=DishMode.STANDBY_FP)
+
+        # OPERATE rules
+        if (
+            ds_op_mode == DSOperatingMode.POINT
+            and spf_op_mode == SPFOperatingMode.OPERATE
+            and spfrx_op_mode == SPFRxOperatingMode.DATA_CAPTURE
+        ):
+            self._update_component_state(dish_mode=DishMode.OPERATE)
 
     def start_communicating(self):
         for com_man in self.component_managers.values():
@@ -214,6 +241,69 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback(
             status=TaskStatus.COMPLETED,
             result="SetStandbyLPMode queued on ds, spf and spfrx",
+        )
+
+    def set_operate_mode(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Transition the dish to OPERATE mode"""
+
+        self._dish_mode_model.is_command_allowed(
+            dish_mode=DishMode(self.component_state["dish_mode"]).name,
+            command_name="SetOperateMode",
+        )
+        return self.submit_task(
+            self._set_operate_mode,
+            task_callback=task_callback,
+        )
+
+    def _set_operate_mode(self, task_callback=None, task_abort_event=None):
+        if task_callback is not None:
+            task_callback(status=TaskStatus.IN_PROGRESS)
+
+            result = self.submit_task(
+                self._execute_sub_device_command,
+                args=[
+                    self.component_managers["DS"],
+                    "SetOperateMode",
+                ],
+                task_callback=self._cm_task_callback,
+            )
+            self.logger.info(
+                "Result of SetOperateMode on ds_cm [%s]",
+                result,
+            )
+            result = self.submit_task(
+                self._execute_sub_device_command,
+                args=[
+                    self.logger,
+                    self.component_managers["SPF"],
+                    "SetOperateMode",
+                ],
+                task_callback=self._cm_task_callback,
+            )
+            self.logger.info(
+                "Result of SetOperateMode on spf_cm [%s]",
+                result,
+            )
+            result = self.submit_task(
+                self._execute_sub_device_command,
+                args=[
+                    self.logger,
+                    self.component_managers["SPFRX"],
+                    "SetOperateMode",
+                ],
+                task_callback=self._cm_task_callback,
+            )
+            self.logger.info(
+                "Result of SetOperateMode on spfrx_cm [%s]",
+                result,
+            )
+
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            result="SetOperateMode queued on ds, spf and spfrx",
         )
 
     def stop_communicating(self):
