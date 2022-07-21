@@ -13,13 +13,11 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 LOGGER = logging.getLogger(__name__)
 
 
+# pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
 @pytest.mark.forked
 class TestStandByFPMode:
     """Tests for TestStandByFPMode"""
-
-    def __init__(self):
-        self.tango_context = None
 
     def setup_method(self):
         """Set up context"""

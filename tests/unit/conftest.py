@@ -115,7 +115,7 @@ def event_store():
             self._queue.put(event)
 
         def wait_for_value(  # pylint:disable=inconsistent-return-statements
-            self, value: Any, timeout: int = 3, fetches: int = 3
+            self, value: Any, timeout: int = 3
         ):
             """Wait for a value to arrive
 
@@ -133,9 +133,11 @@ def event_store():
             :rtype: bool
             """
             try:
-                for _ in range(fetches):
+                while True:
                     event = self._queue.get(timeout=timeout)
                     if not event.attr_value:
+                        continue
+                    if event.attr_value.value != value:
                         continue
                     if event.attr_value.value == value:
                         return True
