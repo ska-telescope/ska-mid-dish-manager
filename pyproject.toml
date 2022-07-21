@@ -31,9 +31,14 @@ url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 python = "^3.7"
 pytango = "9.3.3"
 ska-ser-logging = "^0.4.1"
-ska-tango-base = "^0.13.1"
+ska-tango-base = "^0.13.2"
 ska-tango-testing = "0.2.0"
 pytest-timeout = "^2.1.0"
+networkx = "2.6.3"
+transitions = "^0.8.11"
+
+[tool.pylint.messages_control]
+disable = ["duplicate-code", "fixme"]
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
