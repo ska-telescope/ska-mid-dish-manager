@@ -54,6 +54,7 @@ class DishManager(SKAController):
 
         for (command_name, method_name) in [
             ("SetStandbyLPMode", "set_standby_lp_mode"),
+            ("SetStandbyFPMode", "set_standby_fp_mode"),
         ]:
             self.register_command_object(
                 command_name,
@@ -764,7 +765,11 @@ class DishManager(SKAController):
 
         return ([result_code], [unique_id])
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
     def SetStandbyFPMode(self):
         """
         This command triggers the Dish to transition to the STANDBY‐FP Dish
@@ -772,7 +777,10 @@ class DishManager(SKAController):
         To prepare all subsystems for active observation, once a command is
         received by TM to go to the FULL_POWER mode.
         """
-        return
+        handler = self.get_command_object("SetStandbyFPMode")
+        result_code, unique_id = handler()
+
+        return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def SetStowMode(self):

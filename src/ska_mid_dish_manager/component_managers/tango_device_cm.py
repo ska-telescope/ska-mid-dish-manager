@@ -141,7 +141,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         super().__init__(
             logger,
             *args,
-            max_workers=100,
+            max_workers=20,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
             connection_state="disconnected",
@@ -320,6 +320,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param: command_arg: The Tango command parameter
         :type: command_arg: Optional Any
         """
+        if self.state != "monitoring":
+            raise RuntimeError(
+                f"Tango device component manager is not ready for commands"
+                f" in state [{self.state}]"
+            )
         result = self._device_proxy.command_inout(command_name, command_arg)
         self.logger.info(
             "Result of [%s] on [%s] is [%s]",
@@ -336,6 +341,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param: attribute_name: Attribute to keep track of
         :type: attribute_name: str
         """
+        if self.state != "monitoring":
+            raise RuntimeError(
+                f"Tango device component manager is not ready for monitoring"
+                f" in state [{self.state}]"
+            )
         monitored_attribute = MonitoredAttribute(
             attribute_name, self._events_queue
         )

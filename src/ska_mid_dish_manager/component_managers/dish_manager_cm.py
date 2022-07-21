@@ -113,44 +113,57 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status: TaskStatus,
         result: Optional[Any] = None,
         message: Optional[Any] = None,
+        exception: Optional[Any] = None,
     ):
-        self.logger.info(
-            "Command execution task callback [%s, %s, %s]",
-            status,
-            result,
-            message,
-        )
+        if exception:
+            self.logger.info(
+                "Command execution task callback [%s, %s, %s]",
+                status,
+                result,
+                message,
+                exception,
+            )
+        else:
+            self.logger.info(
+                "Command execution task callback [%s, %s, %s]",
+                status,
+                result,
+                message,
+            )
 
+    # pylint:disable=protected-access
     @classmethod
-    def _execute_sub_device_command(
+    def _execute_sub_device_command(  # pylint:disable=too-many-arguments
         cls,
+        logger,
         component_manager,
         command_name: AnyStr,
         task_abort_event: Event = None,
         task_callback: Callable = None,
     ):
+        logger.info("About to execute command [%s]", command_name)
         if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
-                message=f"From {component_manager.tango_device_fqdn}",
+                message=f"From {component_manager._tango_device_fqdn}",
             )
             return
         try:
             task_callback(
                 status=TaskStatus.IN_PROGRESS,
-                message=f"From {component_manager.tango_device_fqdn}",
+                message=f"From {component_manager._tango_device_fqdn}",
             )
             command_result = component_manager.run_device_command(command_name)
             task_callback(
                 status=TaskStatus.COMPLETED,
                 result=command_result,
-                message=f"From {component_manager.tango_device_fqdn}",
+                message=f"From {component_manager._tango_device_fqdn}",
             )
         except Exception as err:  # pylint: disable=W0703
             task_callback(
                 status=TaskStatus.FAILED,
                 result=err,
-                message=f"From {component_manager.tango_device_fqdn}",
+                message=f"From {component_manager._tango_device_fqdn}",
             )
 
     def set_standby_lp_mode(
@@ -172,56 +185,123 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_callback is not None:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
-            result = self.submit_task(
-                self._execute_sub_device_command,
-                args=[
-                    self.component_managers["DS"],
-                    "SetStandbyLPMode",
-                ],
-                task_callback=self._cm_task_callback,
-            )
-            self.logger.info(
-                "Result of SetStandbyLPMode on ds_cm [%s]",
-                result,
-            )
-            result = self.submit_task(
-                self._execute_sub_device_command,
-                args=[
-                    self.logger,
-                    self.component_managers["SPF"],
-                    "SetStandbyLPMode",
-                ],
-                task_callback=self._cm_task_callback,
-            )
-            self.logger.info(
-                "Result of SetStandbyLPMode on spf_cm [%s]",
-                result,
-            )
-            result = self.submit_task(
-                self._execute_sub_device_command,
-                args=[
-                    self.logger,
-                    self.component_managers["SPFRX"],
-                    "SetStandbyLPMode",
-                ],
-                task_callback=self._cm_task_callback,
-            )
-            self.logger.info(
-                "Result of SetStandbyLPMode on spfrx_cm [%s]",
-                result,
+        result = self.submit_task(
+            self._execute_sub_device_command,
+            args=[
+                self.logger,
+                self.component_managers["DS"],
+                "SetStandbyLPMode",
+            ],
+            task_callback=self._cm_task_callback,
+        )
+        self.logger.info(
+            "Result of SetStandbyLPMode on ds_cm [%s]",
+            result,
+        )
+        result = self.submit_task(
+            self._execute_sub_device_command,
+            args=[
+                self.logger,
+                self.component_managers["SPF"],
+                "SetStandbyLPMode",
+            ],
+            task_callback=self._cm_task_callback,
+        )
+        self.logger.info(
+            "Result of SetStandbyLPMode on spf_cm [%s]",
+            result,
+        )
+        result = self.submit_task(
+            self._execute_sub_device_command,
+            args=[
+                self.logger,
+                self.component_managers["SPFRX"],
+                "SetStandbyLPMode",
+            ],
+            task_callback=self._cm_task_callback,
+        )
+        self.logger.info(
+            "Result of SetStandbyLPMode on spfrx_cm [%s]",
+            result,
+        )
+
+        if task_callback is not None:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result="SetStandbyLPMode queued on ds, spf and spfrx",
             )
 
-        task_callback(
-            status=TaskStatus.COMPLETED,
-            result="SetStandbyLPMode queued on ds, spf and spfrx",
+    def set_standby_fp_mode(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Transition the dish to STANDBY_LP mode"""
+
+        self._dish_mode_model.is_command_allowed(
+            dish_mode=DishMode(self.component_state["dish_mode"]).name,
+            command_name="SetStandbyFPMode",
         )
+
+        return self.submit_task(
+            self._set_standby_fp_mode,
+            task_callback=task_callback,
+        )
+
+    def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
+        if task_callback is not None:
+            task_callback(status=TaskStatus.IN_PROGRESS)
+
+        result = self.submit_task(
+            self._execute_sub_device_command,
+            args=[
+                self.logger,
+                self.component_managers["DS"],
+                "SetStandbyFPMode",
+            ],
+            task_callback=self._cm_task_callback,
+        )
+        self.logger.info(
+            "Result of SetStandbyFPMode on ds_cm [%s]",
+            result,
+        )
+        result = self.submit_task(
+            self._execute_sub_device_command,
+            args=[
+                self.logger,
+                self.component_managers["SPF"],
+                "SetStandbyFPMode",
+            ],
+            task_callback=self._cm_task_callback,
+        )
+        self.logger.info(
+            "Result of SetStandbyFPMode on spf_cm [%s]",
+            result,
+        )
+        result = self.submit_task(
+            self._execute_sub_device_command,
+            args=[
+                self.logger,
+                self.component_managers["SPFRX"],
+                "SetStandbyFPMode",
+            ],
+            task_callback=self._cm_task_callback,
+        )
+        self.logger.info(
+            "Result of SetStandbyFPMode on spfrx_cm [%s]",
+            result,
+        )
+
+        if task_callback is not None:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result="SetStandbyFPMode queued on ds, spf and spfrx",
+            )
 
     def stop_communicating(self):
         for com_man in self.component_managers.values():
             com_man.stop_communicating()
 
     def abort_tasks(self, task_callback: Optional[Callable] = None):
-        self.stop_communicating()
         for com_man in self.component_managers.values():
-            com_man.abort_tasks(task_callback)
+            com_man.stop_communicating()
         return super().abort_tasks(task_callback)

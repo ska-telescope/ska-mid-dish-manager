@@ -1,6 +1,8 @@
 """Tests for running ska-mid-dish-manager tests"""
 
+import queue
 import socket
+from typing import Any
 
 import pytest
 import tango
@@ -92,3 +94,90 @@ def multi_device_tango_context(
         devices_to_test, host=HOST, port=PORT, process=True
     ) as context:
         yield context
+
+
+@pytest.fixture(scope="function")
+def event_store():
+    """Fixture for storing events"""
+
+    class EventStore:
+        """Store events with useful functionality"""
+
+        def __init__(self) -> None:
+            self._queue = queue.Queue()
+
+        def push_event(self, event: tango.EventData):
+            """Store the event
+
+            :param event: Tango event
+            :type event: tango.EventData
+            """
+            self._queue.put(event)
+
+        def wait_for_value(  # pylint:disable=inconsistent-return-statements
+            self, value: Any, timeout: int = 3, fetches: int = 3
+        ):
+            """Wait for a value to arrive
+
+            Wait `timeout` seconds for each fetch.
+            Attemp this many `fetches` from the queue.
+
+            :param value: The value to check for
+            :type value: Any
+            :param timeout: the get timeout, defaults to 3
+            :type timeout: int, optional
+            :param fetches: Number of attempted fetches, defaults to 3
+            :type fetches: int, optional
+            :raises RuntimeError: If None are found
+            :return: True if found
+            :rtype: bool
+            """
+            try:
+                for _ in range(fetches):
+                    event = self._queue.get(timeout=timeout)
+                    if not event.attr_value:
+                        continue
+                    if event.attr_value.value == value:
+                        return True
+            except queue.Empty as err:
+                raise RuntimeError(
+                    f"Never got an event with value [{value}]"
+                ) from err
+
+        # pylint:disable=inconsistent-return-statements
+        def wait_for_command_result(
+            self, command_id: str, timeout: int = 5, fetches: int = 5
+        ):
+            """Wait for a long running command result
+
+            Wait `timeout` seconds for each fetch.
+            Attemp this many `fetches` from the queue.
+
+            :param command_id: The long running command ID
+            :type command_id: str
+            :param timeout: the get timeout, defaults to 3
+            :type timeout: int, optional
+            :param fetches: Number of attempted fetches, defaults to 3
+            :type fetches: int, optional
+            :raises RuntimeError: If none are found
+            :return: The result of the long running command
+            :rtype: str
+            """
+            try:
+                for _ in range(fetches):
+                    event = self._queue.get(timeout=timeout)
+                    if not event.attr_value:
+                        continue
+                    if not isinstance(event.attr_value.value, tuple):
+                        continue
+                    if len(event.attr_value.value) != 2:
+                        continue
+                    (lrc_id, lrc_result) = event.attr_value.value
+                    if command_id == lrc_id:
+                        return lrc_result
+            except queue.Empty as err:
+                raise RuntimeError(
+                    f"Never got an LRC result from command [{command_id}]"
+                ) from err
+
+    return EventStore()
