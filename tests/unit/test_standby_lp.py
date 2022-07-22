@@ -23,8 +23,8 @@ LOGGER = logging.getLogger(__name__)
 # pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-class TestStandByLPModePermissionFail:
-    """Tests for TestStandByFPMode failure"""
+class TestSetStandByLPModeFails:
+    """Tests for SetStandByLPMode failure"""
 
     def setup_method(self):
         """Set up context"""
@@ -60,8 +60,8 @@ class TestStandByLPModePermissionFail:
 # pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-class TestStandByLPModeTest:
-    """Tests for TestStandByFPMode"""
+class TestSetStandByLPModeSucceeds:
+    """Tests for SetStandByLPMode success"""
 
     def setup_method(self):
         """Set up context"""
@@ -74,7 +74,9 @@ class TestStandByLPModeTest:
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 
-    def test_standb_by_lp(self, event_store):
+    def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
+        self, event_store
+    ):
         """Execute tests"""
         device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(device_proxy.name())

@@ -55,6 +55,7 @@ class DishManager(SKAController):
         for (command_name, method_name) in [
             ("SetStandbyLPMode", "set_standby_lp_mode"),
             ("SetOperateMode", "set_operate_mode"),
+            ("SetStandbyFPMode", "set_standby_fp_mode"),
         ]:
             self.register_command_object(
                 command_name,
