@@ -38,6 +38,11 @@ dishmanager:
     tag: 0.0.1
     pullPolicy: IfNotPresent
 
+dummy_device:
+  replicaCount: 1
+  enabled: true
+  tangoDeviceName: "test/dummy/1"
+
 resources:
   limits:
     cpu: 300m

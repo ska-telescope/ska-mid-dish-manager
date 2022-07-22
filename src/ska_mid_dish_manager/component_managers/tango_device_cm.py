@@ -151,11 +151,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     def _update_state_from_event(self, event_data: tango.EventData):
+        self.logger.debug("Got event [%s]", event_data)
         if event_data.err:
             # We lost connection, get the connection bask
             self.reconnect()
         else:
-            attr_name = event_data.attr_value.name
+            # I get lowercase and uppercase "State" from events
+            # for some reason, stick to lowercase to avoid duplicates
+            attr_name = event_data.attr_value.name.lower()
 
             # Add it so component state if not there
             if attr_name not in self._component_state:
@@ -371,6 +374,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Stop communication with the device"""
         # pylint: disable=no-member
         self.abort_tasks(task_callback=self._aborting_tasks_cb)
+        for attr_name in self.component_state:
+            if attr_name == "connection_state":
+                continue
+            self._update_component_state(**{attr_name: None})
 
     def reconnect(self):
         """Redo the connection to the Tango device"""
