@@ -126,8 +126,6 @@ def event_store():
             :type value: Any
             :param timeout: the get timeout, defaults to 3
             :type timeout: int, optional
-            :param fetches: Number of attempted fetches, defaults to 3
-            :type fetches: int, optional
             :raises RuntimeError: If None are found
             :return: True if found
             :rtype: bool
@@ -148,7 +146,7 @@ def event_store():
 
         # pylint:disable=inconsistent-return-statements
         def wait_for_command_result(
-            self, command_id: str, timeout: int = 5, fetches: int = 5
+            self, command_id: str, command_result: Any, timeout: int = 5
         ):
             """Wait for a long running command result
 
@@ -166,7 +164,7 @@ def event_store():
             :rtype: str
             """
             try:
-                for _ in range(fetches):
+                while True:
                     event = self._queue.get(timeout=timeout)
                     if not event.attr_value:
                         continue
@@ -175,8 +173,8 @@ def event_store():
                     if len(event.attr_value.value) != 2:
                         continue
                     (lrc_id, lrc_result) = event.attr_value.value
-                    if command_id == lrc_id:
-                        return lrc_result
+                    if command_id == lrc_id and command_result == lrc_result:
+                        return True
             except queue.Empty as err:
                 raise RuntimeError(
                     f"Never got an LRC result from command [{command_id}]"

@@ -101,9 +101,8 @@ class TestStandByLPModeTest:
         [[result_code], [unique_id]] = device_proxy.SetStandbyLPMode()
         assert ResultCode(result_code) == ResultCode.QUEUED
 
-        command_result = event_store.wait_for_command_result(unique_id)
-        assert (
-            command_result == '"SetStandbyLPMode queued on ds, spf and spfrx"'
+        assert event_store.wait_for_command_result(
+            unique_id, '"SetStandbyLPMode queued on ds, spf and spfrx"'
         )
 
         # transition subservient devices to LP mode and observe that
@@ -118,7 +117,7 @@ class TestStandByLPModeTest:
         spfrx_cm._update_component_state(
             operating_mode=OperatingMode.STANDBY_LP
         )
-        assert device_proxy.dishMode == DishMode.STANDBY_LP
+        assert event_store.wait_for_value(DishMode.STANDBY_LP)
 
     def teardown_method(self):
         """Tear down context"""

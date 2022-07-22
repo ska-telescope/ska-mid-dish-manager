@@ -46,9 +46,8 @@ class TestStandByFPMode:
         )
         assert event_store.wait_for_value(DishMode.STANDBY_LP)
         [[_], [command_id]] = device_proxy.SetStandbyFPMode()
-        command_result = event_store.wait_for_command_result(command_id)
-        assert (
-            command_result == '"SetStandbyFPMode queued on ds, spf and spfrx"'
+        assert event_store.wait_for_command_result(
+            command_id, '"SetStandbyFPMode queued on ds, spf and spfrx"'
         )
 
     def teardown_method(self):
