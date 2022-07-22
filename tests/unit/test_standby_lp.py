@@ -105,6 +105,9 @@ class TestStandByLPModeTest:
             unique_id, '"SetStandbyLPMode queued on ds, spf and spfrx"'
         )
 
+        # Clear out the queue to make sure we don't catch old events
+        event_store.clear_queue()
+
         # transition subservient devices to LP mode and observe that
         # DishManager transitions dishMode to LP mode after all
         # subservient devices are in LP
