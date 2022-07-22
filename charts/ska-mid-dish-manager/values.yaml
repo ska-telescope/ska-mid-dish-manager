@@ -54,3 +54,5 @@ resources:
 deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
+  dummydevice:
+    file: "data/dummy_device.yaml"

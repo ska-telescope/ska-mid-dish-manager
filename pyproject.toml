@@ -22,6 +22,7 @@ include = [
 
 [tool.poetry.scripts]
 DishManagerDS = 'ska_mid_dish_manager.dish_manager:main'
+DummyDevice = 'ska_mid_dish_manager.DummyDevice:main'
 
 [[tool.poetry.source]]
 name = 'ska-nexus'

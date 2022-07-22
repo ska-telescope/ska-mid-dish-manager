@@ -218,7 +218,11 @@ class DummyDevice(Device):
 
 
 def main():
-    """Script entry_point"""
+    """Script entrypoint"""
+    DummyDevice.run_server()
+
+
+if __name__ == "__main__":
     db = Database()
     test_device = DbDevInfo()
     if "DEVICE_NAME" in os.environ:
@@ -230,8 +234,4 @@ def main():
     test_device._class = "DummyDevice"
     test_device.server = "DummyDevice/test"
     db.add_server(test_device.server, test_device, with_dserver=True)
-    DummyDevice.run_server()
-
-
-if __name__ == "__main__":
     main()

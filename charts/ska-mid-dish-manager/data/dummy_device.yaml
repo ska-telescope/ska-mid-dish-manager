@@ -1,0 +1,21 @@
+name: "dummydevice-{{.Release.Name}}"
+function: test-device
+domain: testing
+command: "/usr/local/bin/DummyDevice "
+instances: ["01"]
+server:
+  name: "DummyDevice"
+  instances:
+    - name: "01"
+      classes:
+        - name: "DummyDevice"
+          devices:
+            - name: "test/dummy/1"
+depends_on:
+  - device: sys/database/2
+image:
+  registry: "{{.Values.dishmanager.image.registry}}"
+  image: "{{.Values.dishmanager.image.image}}"
+  tag: "{{.Values.dishmanager.image.tag}}"
+  pullPolicy: "{{.Values.dishmanager.image.pullPolicy}}"
+
