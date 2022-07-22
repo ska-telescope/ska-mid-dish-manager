@@ -83,11 +83,11 @@ def test_happy_path(patched_tango, caplog):
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_unhappy_path(patched_tango, caplog):
-    """Tango device is unreachable and cant communicate with component manager
+    """Tango device is unreachable and can't communicate with component manager
 
     Similar to `test_component_manager_continues_reconnecting_...` except
     Tango layer is mocked here. Checks are made on the mock for expected
-    calls and logs when communication is atttempted by component manager
+    calls and logs when communication is attempted by component manager
     on mocked device
     """
     # pylint: disable=no-member
@@ -131,7 +131,7 @@ def test_unhappy_path(patched_tango, caplog):
 @mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_device_goes_away(patched_tango, caplog):
     """Start up the component_manager.
-    Signal a lost connection via a event
+    Signal a lost connection via an event
     Check for reconnect
     """
     caplog.set_level(logging.DEBUG)

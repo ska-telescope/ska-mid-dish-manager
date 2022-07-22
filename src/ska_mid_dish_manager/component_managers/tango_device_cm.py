@@ -141,7 +141,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         super().__init__(
             logger,
             *args,
-            max_workers=100,
+            max_workers=20,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
             connection_state="disconnected",
@@ -193,8 +193,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.ABORTED)
 
     def _start_monitoring_threads(self):
-        # Start the monitroing threads
-        self.logger.info("Starting mmonitoring threads")
+        # Start the monitoring threads
+        self.logger.info("Starting monitoring threads")
         for monitored_attribute in self._monitored_attributes:
             self.submit_task(
                 monitored_attribute.monitor,
@@ -313,13 +313,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         If the connection failed
             - Mark `communication_state` as NOT_ESTABLISHED
-            - Kick off the reconnect attempts
+            - Kick off reconnection attempts
 
         :param: command_name: The Tango command to run
         :type: command_name: AnyStr
         :param: command_arg: The Tango command parameter
         :type: command_arg: Optional Any
         """
+        if self.state != "monitoring":
+            raise RuntimeError(
+                f"Tango device component manager is not ready for commands"
+                f" in state [{self.state}]"
+            )
         result = self._device_proxy.command_inout(command_name, command_arg)
         self.logger.info(
             "Result of [%s] on [%s] is [%s]",
@@ -336,6 +341,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param: attribute_name: Attribute to keep track of
         :type: attribute_name: str
         """
+        if self.state != "monitoring":
+            raise RuntimeError(
+                f"Tango device component manager is not ready for monitoring"
+                f" in state [{self.state}]"
+            )
         monitored_attribute = MonitoredAttribute(
             attribute_name, self._events_queue
         )

@@ -121,6 +121,7 @@ class DishModeModel:
 
         if command_name in allowed_commands:
             return True
+
         raise CommandNotAllowed(
             (
                 f"Command [{command_name}] not allowed in dishMode "
