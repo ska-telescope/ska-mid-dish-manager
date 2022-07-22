@@ -60,7 +60,7 @@ def test_dish_manager_transitions_to_lp_mode_after_startup_no_mocks(
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_dish_manager_transitions_to_lp_mode_after_startup_with_mocks(
-    patched_tango, caplog  # pylint: disable=unused-argument
+    patched_tango,
 ):
     # Set up mocks
     device_proxy = MagicMock()

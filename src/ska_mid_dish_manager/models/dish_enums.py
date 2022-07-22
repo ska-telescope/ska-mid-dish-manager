@@ -57,6 +57,32 @@ class TrackTableLoadMode(enum.IntEnum):
     NEW = 1
 
 
-class OperatingMode(enum.IntEnum):
-    STANDBY_LP = 0
-    STANDBY_FP = 1
+class DSOperatingMode(enum.IntEnum):
+    # enums are from dish lmc
+    UNKNOWN = 0
+    STARTUP = 1
+    STANDBY_LP = 2
+    STANDBY_FP = 3
+    MAINTENANCE = 4
+    STOW = 5
+    ESTOP = 6
+    POINT = 7
+
+
+class SPFOperatingMode(enum.IntEnum):
+    # enums are from ICD
+    STARTUP = 0
+    STANDBY_LP = 1
+    OPERATE = 2
+    MAINTENANCE = 3
+    ERROR = 4
+
+
+class SPFRxOperatingMode(enum.IntEnum):
+    # enums are from ICD
+    UNKNOWN = 0
+    STARTUP = 1
+    STANDBY = 2
+    DATA_CAPTURE = 3
+    CONFIGURE = 4
+    MAINTENANCE = 5

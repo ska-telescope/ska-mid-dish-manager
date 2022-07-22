@@ -1,11 +1,10 @@
-"""Unit tests for setstandby_lp command."""
+"""Unit tests for setstandbylp command."""
 
 import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
-from ska_tango_base.commands import ResultCode
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.dish_manager import DishManager
@@ -20,11 +19,10 @@ LOGGER = logging.getLogger(__name__)
 
 
 # pylint:disable=attribute-defined-outside-init
-# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-class TestSetStandByLPMode:
-    """Tests for SetStandByLPMode"""
+class TestSetOperateMode:
+    """Tests for SetOperateMode"""
 
     def setup_method(self):
         """Set up context"""
@@ -41,8 +39,11 @@ class TestSetStandByLPMode:
         """Tear down context"""
         self.tango_context.stop()
 
-    def test_standbylp_cmd_fails_from_standbylp_dish_mode(self, event_store):
-        """Execute tests"""
+    # pylint: disable=missing-function-docstring, protected-access
+    def test_set_operate_mode_fails_when_already_in_operate_dish_mode(
+        self,
+        event_store,
+    ):
         device_proxy = self.tango_context.device
         device_proxy.subscribe_event(
             "dishMode",
@@ -50,21 +51,27 @@ class TestSetStandByLPMode:
             event_store,
         )
 
-        assert event_store.wait_for_value(DishMode.STANDBY_LP)
-
-        with pytest.raises(tango.DevFailed):
-            _, _ = device_proxy.SetStandbyLPMode()
-
-    def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
-        self, event_store
-    ):
-        """Execute tests"""
-        device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
         spf_cm = class_instance.component_manager.component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
+        # Force dishManager dishMode to go to OPERATE
+        ds_cm._update_component_state(operating_mode=DSOperatingMode.POINT)
+        spf_cm._update_component_state(operating_mode=SPFOperatingMode.OPERATE)
+        spfrx_cm._update_component_state(
+            operating_mode=SPFRxOperatingMode.DATA_CAPTURE
+        )
+        event_store.wait_for_value(DishMode.OPERATE)
 
+        with pytest.raises(tango.DevFailed):
+            # Transition DishManager to OPERATE issuing a command
+            _, _ = device_proxy.SetOperateMode()
+
+    def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
+        self,
+        event_store,
+    ):
+        device_proxy = self.tango_context.device
         device_proxy.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,
@@ -76,7 +83,11 @@ class TestSetStandByLPMode:
             event_store,
         )
 
-        # Force dishManager dishMode to go to STANDBY-FP
+        class_instance = DishManager.instances.get(device_proxy.name())
+        ds_cm = class_instance.component_manager.component_managers["DS"]
+        spf_cm = class_instance.component_manager.component_managers["SPF"]
+        spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
+        # Force dishManager dishMode to go to STANDBY_FP
         ds_cm._update_component_state(
             operating_mode=DSOperatingMode.STANDBY_FP
         )
@@ -84,29 +95,25 @@ class TestSetStandByLPMode:
         spfrx_cm._update_component_state(
             operating_mode=SPFRxOperatingMode.STANDBY
         )
-        assert event_store.wait_for_value(DishMode.STANDBY_FP)
+        event_store.wait_for_value(DishMode.STANDBY_FP)
 
-        # Transition DishManager to STANDBY_LP issuing a command
-        [[result_code], [unique_id]] = device_proxy.SetStandbyLPMode()
-        assert ResultCode(result_code) == ResultCode.QUEUED
-
-        assert event_store.wait_for_command_result(
-            unique_id, '"SetStandbyLPMode queued on ds, spf and spfrx"'
-        )
         # Clear out the queue to make sure we don't catch old events
         event_store.clear_queue()
 
-        # transition subservient devices to their respective operatingMode
-        # and observe that DishManager transitions dishMode to LP mode. No
-        # need to change the component state of SPFRX since it's in the
-        # expected operating mode
-        ds_cm._update_component_state(
-            operating_mode=DSOperatingMode.STANDBY_LP
+        # Transition DishManager to OPERATE mode
+        [[_], [unique_id]] = device_proxy.SetOperateMode()
+        assert event_store.wait_for_command_result(
+            unique_id, '"SetOperateMode queued on ds, spf and spfrx"'
         )
+
+        # transition subservient devices to their respective operatingMode
+        # and observe that DishManager transitions dishMode to OPERATE mode
+        # SPF are already in the expected operatingMode
+        ds_cm._update_component_state(operating_mode=DSOperatingMode.POINT)
         assert device_proxy.dishMode == DishMode.STANDBY_FP
 
-        spf_cm._update_component_state(
-            operating_mode=SPFOperatingMode.STANDBY_LP
+        spfrx_cm._update_component_state(
+            operating_mode=SPFRxOperatingMode.DATA_CAPTURE
         )
-        # we can now expect dishMode to transition to STANDBY_LP
-        assert event_store.wait_for_value(DishMode.STANDBY_LP)
+        # we can now expect dishMode to transition to OPERATE
+        event_store.wait_for_value(DishMode.OPERATE)
