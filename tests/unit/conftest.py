@@ -180,4 +180,8 @@ def event_store():
                     f"Never got an LRC result from command [{command_id}]"
                 ) from err
 
+        def clear_queue(self):
+            while not self._queue.empty():
+                self._queue.get()
+
     return EventStore()

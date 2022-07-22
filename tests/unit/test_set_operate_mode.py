@@ -101,12 +101,11 @@ class TestSetOperateMode:
         )
         event_store.wait_for_value(DishMode.STANDBY_FP)
 
-        # Transition DishManager to OPERATE issuing a command
-        [[result_code], [unique_id]] = device_proxy.SetOperateMode()
-        assert ResultCode(result_code) == ResultCode.QUEUED
+        # Clear out the queue to make sure we don't catch old events
+        event_store.clear_queue()
 
-        # wait for the SetOperateMode to be queued, i.e. the cmd
-        # has been submitted to the subservient devices
+        # Transition DishManager to OPERATE mode
+        [[_], [unique_id]] = device_proxy.SetOperateMode()
         assert event_store.wait_for_command_result(
             unique_id, '"SetOperateMode queued on ds, spf and spfrx"'
         )

@@ -23,8 +23,8 @@ LOGGER = logging.getLogger(__name__)
 # pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-class TestSetStandByLPModeFails:
-    """Tests for SetStandByLPMode failure"""
+class TestSetStandByLPMode:
+    """Tests for SetStandByLPMode"""
 
     def setup_method(self):
         """Set up context"""
@@ -37,7 +37,11 @@ class TestSetStandByLPModeFails:
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 
-    def test_standb_by_lp(self, event_store):
+    def teardown_method(self):
+        """Tear down context"""
+        self.tango_context.stop()
+
+    def test_standbylp_cmd_fails_from_standbylp_dish_mode(self, event_store):
         """Execute tests"""
         device_proxy = self.tango_context.device
         device_proxy.subscribe_event(
@@ -50,29 +54,6 @@ class TestSetStandByLPModeFails:
 
         with pytest.raises(tango.DevFailed):
             _, _ = device_proxy.SetStandbyLPMode()
-
-    def teardown_method(self):
-        """Tear down context"""
-        self.tango_context.stop()
-
-
-# pylint:disable=attribute-defined-outside-init
-# pylint:disable=protected-access
-@pytest.mark.unit
-@pytest.mark.forked
-class TestSetStandByLPModeSucceeds:
-    """Tests for SetStandByLPMode success"""
-
-    def setup_method(self):
-        """Set up context"""
-        with patch(
-            "ska_mid_dish_manager.component_managers.tango_device_cm.tango"
-        ) as patched_tango:
-            patched_dp = MagicMock()
-            patched_dp.command_inout = MagicMock()
-            patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
-            self.tango_context = DeviceTestContext(DishManager)
-            self.tango_context.start()
 
     def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
         self, event_store
@@ -112,9 +93,13 @@ class TestSetStandByLPModeSucceeds:
         assert event_store.wait_for_command_result(
             unique_id, '"SetStandbyLPMode queued on ds, spf and spfrx"'
         )
+        # Clear out the queue to make sure we don't catch old events
+        event_store.clear_queue()
 
         # transition subservient devices to their respective operatingMode
-        # and observe that DishManager transitions dishMode to LP mode
+        # and observe that DishManager transitions dishMode to LP mode. No
+        # need to change the component state of SPFRX since it's in the 
+        # expected operating mode
         ds_cm._update_component_state(
             operating_mode=DSOperatingMode.STANDBY_LP
         )
@@ -123,10 +108,5 @@ class TestSetStandByLPModeSucceeds:
         spf_cm._update_component_state(
             operating_mode=SPFOperatingMode.STANDBY_LP
         )
-        # no need to change the component state of SPFRX
-        # since it's in the expected operating mode
+        # we can now expect dishMode to transition to STANDBY_LP
         assert event_store.wait_for_value(DishMode.STANDBY_LP)
-
-    def teardown_method(self):
-        """Tear down context"""
-        self.tango_context.stop()
