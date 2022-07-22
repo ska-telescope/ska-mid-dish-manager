@@ -14,29 +14,41 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, OperatingMode
 LOGGER = logging.getLogger(__name__)
 
 
-# pylint: disable=missing-function-docstring
+# pylint:disable=attribute-defined-outside-init
+# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-@patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_standby_lp_cmd_fails_from_standby_lp_dish_mode(patched_tango, caplog):
-    caplog.set_level(logging.DEBUG)
+class TestStandByLPModePermissionFail:
+    """Tests for TestStandByFPMode failure"""
 
-    # Set up mocks
-    mocked_device_proxy = MagicMock()
-    patched_tango.DeviceProxy = MagicMock(return_value=mocked_device_proxy)
+    def setup_method(self):
+        """Set up context"""
+        with patch(
+            "ska_mid_dish_manager.component_managers.tango_device_cm.tango"
+        ) as patched_tango:
+            patched_dp = MagicMock()
+            patched_dp.command_inout = MagicMock()
+            patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
+            self.tango_context = DeviceTestContext(DishManager)
+            self.tango_context.start()
 
-    with DeviceTestContext(DishManager) as device_proxy:
-        # Transition happens almost instantly on a fast machine,
-        # even before we can complete event subscription or a MockCallable.
-        # Give it a few tries for a slower machine
-        for i in range(20):
-            LOGGER.info("waiting for STANDBY_LP [%s]", i)
-            if device_proxy.dishMode == DishMode.STANDBY_LP:
-                break
-        assert device_proxy.dishMode == DishMode.STANDBY_LP
+    def test_standb_by_lp(self, event_store):
+        """Execute tests"""
+        device_proxy = self.tango_context.device
+        device_proxy.subscribe_event(
+            "dishMode",
+            tango.EventType.CHANGE_EVENT,
+            event_store,
+        )
+
+        assert event_store.wait_for_value(DishMode.STANDBY_LP)
 
         with pytest.raises(tango.DevFailed):
             _, _ = device_proxy.SetStandbyLPMode()
+
+    def teardown_method(self):
+        """Tear down context"""
+        self.tango_context.stop()
 
 
 # pylint:disable=attribute-defined-outside-init
