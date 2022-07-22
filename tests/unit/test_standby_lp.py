@@ -98,7 +98,7 @@ class TestSetStandByLPMode:
 
         # transition subservient devices to their respective operatingMode
         # and observe that DishManager transitions dishMode to LP mode. No
-        # need to change the component state of SPFRX since it's in the 
+        # need to change the component state of SPFRX since it's in the
         # expected operating mode
         ds_cm._update_component_state(
             operating_mode=DSOperatingMode.STANDBY_LP

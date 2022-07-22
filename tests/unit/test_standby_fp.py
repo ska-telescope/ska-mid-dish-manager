@@ -74,9 +74,7 @@ class TestSetStandByFPMode:
         )
         assert device_proxy.dishMode == DishMode.STANDBY_LP
 
-        spf_cm._update_component_state(
-            operating_mode=SPFOperatingMode.OPERATE
-        )
+        spf_cm._update_component_state(operating_mode=SPFOperatingMode.OPERATE)
         assert device_proxy.dishMode == DishMode.STANDBY_LP
 
         spfrx_cm._update_component_state(

@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
-from ska_tango_base.commands import ResultCode
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.dish_manager import DishManager
@@ -19,6 +18,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 LOGGER = logging.getLogger(__name__)
 
 
+# pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
 @pytest.mark.forked
 class TestSetOperateMode:
@@ -86,16 +86,12 @@ class TestSetOperateMode:
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
         spf_cm = class_instance.component_manager.component_managers["SPF"]
-        spfrx_cm = class_instance.component_manager.component_managers[
-            "SPFRX"
-        ]
+        spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         # Force dishManager dishMode to go to STANDBY_FP
         ds_cm._update_component_state(
             operating_mode=DSOperatingMode.STANDBY_FP
         )
-        spf_cm._update_component_state(
-            operating_mode=SPFOperatingMode.OPERATE
-        )
+        spf_cm._update_component_state(operating_mode=SPFOperatingMode.OPERATE)
         spfrx_cm._update_component_state(
             operating_mode=SPFRxOperatingMode.STANDBY
         )
@@ -113,9 +109,7 @@ class TestSetOperateMode:
         # transition subservient devices to their respective operatingMode
         # and observe that DishManager transitions dishMode to OPERATE mode
         # SPF are already in the expected operatingMode
-        ds_cm._update_component_state(
-            operating_mode=DSOperatingMode.POINT
-        )
+        ds_cm._update_component_state(operating_mode=DSOperatingMode.POINT)
         assert device_proxy.dishMode == DishMode.STANDBY_FP
 
         spfrx_cm._update_component_state(
