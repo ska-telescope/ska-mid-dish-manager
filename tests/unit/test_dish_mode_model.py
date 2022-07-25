@@ -59,7 +59,7 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
         ("CONFIG", "SetStandbyFPMode", False),
         ("STARTUP", "SetStandbyFPMode", False),
         ("SHUTDOWN", "SetStandbyFPMode", False),
-        ("STOW", "SetStowMode", True),  
+        ("STOW", "SetStowMode", True),
     ],
 )
 def test_model_dish_mode_transition_accuracy(
