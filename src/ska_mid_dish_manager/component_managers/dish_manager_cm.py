@@ -19,7 +19,10 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
-from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
+from ska_mid_dish_manager.models.dish_mode_model import (
+    CommandNotAllowed,
+    DishModeModel,
+)
 
 
 # pylint: disable=abstract-method
@@ -46,6 +49,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dish_mode=None,
             health_state=None,
             pointing_state=None,
+            achieved_target_lock=None,
             **kwargs,
         )
         self._dish_mode_model = DishModeModel()
@@ -54,6 +58,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "mid_d0001/lmc/ds_simulator",
             logger,
             operating_mode=None,
+            pointing_state=None,
+            achieved_target_lock=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
@@ -73,7 +79,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._update_component_state(dish_mode=DishMode.STARTUP)
-        self._update_component_state(pointing_state=PointingState.NONE)
         self._update_component_state(health_state=HealthState.UNKNOWN)
 
     # pylint: disable=unused-argument
@@ -100,40 +105,51 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _component_state_changed(self, *args, **kwargs):
         # component state will come from args and kwargs
         # TODO: same as TODO comment in _communication_state_changed
-        ds_op_mode = self.component_managers["DS"].component_state[
-            "operating_mode"
-        ]
-        spf_op_mode = self.component_managers["SPF"].component_state[
-            "operating_mode"
-        ]
-        spfrx_op_mode = self.component_managers["SPFRX"].component_state[
-            "operating_mode"
-        ]
+        ds_comp_state = self.component_managers["DS"].component_state
+        spf_comp_state = self.component_managers["SPF"].component_state
+        spfrx_comp_state = self.component_managers["SPFRX"].component_state
 
         # STANDBY_LP rules
         if (
-            ds_op_mode == DSOperatingMode.STANDBY_LP
-            and spf_op_mode == SPFOperatingMode.STANDBY_LP
-            and spfrx_op_mode == SPFRxOperatingMode.STANDBY
+            ds_comp_state["operating_mode"] == DSOperatingMode.STANDBY_LP
+            and spf_comp_state["operating_mode"] == SPFOperatingMode.STANDBY_LP
+            and spfrx_comp_state["operating_mode"]
+            == SPFRxOperatingMode.STANDBY
         ):
             self._update_component_state(dish_mode=DishMode.STANDBY_LP)
 
         # STANDBY_FP rules
         if (
-            ds_op_mode == DSOperatingMode.STANDBY_FP
-            and spf_op_mode == SPFOperatingMode.OPERATE
-            and spfrx_op_mode == SPFRxOperatingMode.STANDBY
+            ds_comp_state["operating_mode"] == DSOperatingMode.STANDBY_FP
+            and spf_comp_state["operating_mode"] == SPFOperatingMode.OPERATE
+            and spfrx_comp_state["operating_mode"]
+            == SPFRxOperatingMode.STANDBY
         ):
             self._update_component_state(dish_mode=DishMode.STANDBY_FP)
 
         # OPERATE rules
         if (
-            ds_op_mode == DSOperatingMode.POINT
-            and spf_op_mode == SPFOperatingMode.OPERATE
-            and spfrx_op_mode == SPFRxOperatingMode.DATA_CAPTURE
+            ds_comp_state["operating_mode"] == DSOperatingMode.POINT
+            and spf_comp_state["operating_mode"] == SPFOperatingMode.OPERATE
+            and spfrx_comp_state["operating_mode"]
+            == SPFRxOperatingMode.DATA_CAPTURE
         ):
             self._update_component_state(dish_mode=DishMode.OPERATE)
             self._update_component_state(pointing_state=PointingState.READY)
+
+        # TRACK rules
+        # several things will have to be considered for the track command:
+        # * dish movemement until it settles on the target
+        # * update of the achievedPointing attribute on target
+        if ds_comp_state["pointing_state"]:
+            self._update_component_state(
+                pointing_state=ds_comp_state["pointing_state"]
+            )
+
+            if ds_comp_state["pointing_state"] == PointingState.SLEW:
+                self._update_component_state(achieved_target_lock=False)
+            elif ds_comp_state["pointing_state"] == PointingState.TRACK:
+                self._update_component_state(achieved_target_lock=True)
 
     def start_communicating(self):
         for com_man in self.component_managers.values():
@@ -347,50 +363,92 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_callback is not None:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
-            result = self.submit_task(
-                self._execute_sub_device_command,
-                args=[
-                    self.logger,
-                    self.component_managers["DS"],
-                    "SetOperateMode",
-                ],
-                task_callback=self._cm_task_callback,
-            )
-            self.logger.info(
-                "Result of SetOperateMode on ds_cm [%s]",
-                result,
-            )
-            result = self.submit_task(
-                self._execute_sub_device_command,
-                args=[
-                    self.logger,
-                    self.component_managers["SPF"],
-                    "SetOperateMode",
-                ],
-                task_callback=self._cm_task_callback,
-            )
-            self.logger.info(
-                "Result of SetOperateMode on spf_cm [%s]",
-                result,
-            )
-            result = self.submit_task(
-                self._execute_sub_device_command,
-                args=[
-                    self.logger,
-                    self.component_managers["SPFRX"],
-                    "SetOperateMode",
-                ],
-                task_callback=self._cm_task_callback,
-            )
-            self.logger.info(
-                "Result of SetOperateMode on spfrx_cm [%s]",
-                result,
+        result = self.submit_task(
+            self._execute_sub_device_command,
+            args=[
+                self.logger,
+                self.component_managers["DS"],
+                "SetOperateMode",
+            ],
+            task_callback=self._cm_task_callback,
+        )
+        self.logger.info(
+            "Result of SetOperateMode on ds_cm [%s]",
+            result,
+        )
+        result = self.submit_task(
+            self._execute_sub_device_command,
+            args=[
+                self.logger,
+                self.component_managers["SPF"],
+                "SetOperateMode",
+            ],
+            task_callback=self._cm_task_callback,
+        )
+        self.logger.info(
+            "Result of SetOperateMode on spf_cm [%s]",
+            result,
+        )
+        result = self.submit_task(
+            self._execute_sub_device_command,
+            args=[
+                self.logger,
+                self.component_managers["SPFRX"],
+                "SetOperateMode",
+            ],
+            task_callback=self._cm_task_callback,
+        )
+        self.logger.info(
+            "Result of SetOperateMode on spfrx_cm [%s]",
+            result,
+        )
+
+        if task_callback is not None:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result="SetOperateMode queued on ds, spf and spfrx",
             )
 
-        task_callback(
-            status=TaskStatus.COMPLETED,
-            result="SetOperateMode queued on ds, spf and spfrx",
+    def track_cmd(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Transition the dish to OPERATE mode"""
+        dish_mode = self.component_state["dish_mode"].name
+        if dish_mode != "OPERATE":
+            raise CommandNotAllowed(
+                "Track command only allowed in `OPERATE`"
+                f"mode. Current dishMode: {dish_mode}."
+            )
+
+        return self.submit_task(
+            self._track_cmd,
+            task_callback=task_callback,
         )
+
+    def _track_cmd(self, task_callback=None, task_abort_event=None):
+        if task_callback is not None:
+            task_callback(status=TaskStatus.IN_PROGRESS)
+
+        result = self.submit_task(
+            self._execute_sub_device_command,
+            args=[
+                self.logger,
+                self.component_managers["DS"],
+                "Track",
+            ],
+            task_callback=self._cm_task_callback,
+        )
+        self.logger.info(
+            "Result of Track on ds_cm [%s]",
+            result,
+        )
+
+        if task_callback is not None:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result="Track command queued on ds",
+            )
 
     def stop_communicating(self):
         for com_man in self.component_managers.values():

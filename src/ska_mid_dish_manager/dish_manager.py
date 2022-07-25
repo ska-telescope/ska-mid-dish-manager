@@ -5,8 +5,8 @@ It exposes the attributes and commands which control the dish
 and the subservient devices
 """
 
-import weakref
 import re
+import weakref
 
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
@@ -57,6 +57,7 @@ class DishManager(SKAController):
             ("SetStandbyLPMode", "set_standby_lp_mode"),
             ("SetOperateMode", "set_operate_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
+            ("Track", "track_cmd"),
         ]:
             self.register_command_object(
                 command_name,
@@ -72,12 +73,14 @@ class DishManager(SKAController):
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
-        for dish_attr in kwargs:
+        for attr, attr_val in kwargs.items():
             # pylint: disable=attribute-defined-outside-init
-            setattr(self, f"_{dish_attr}", kwargs[dish_attr])
+            setattr(self, f"_{attr}", attr_val)
             # convert variable to attribute: e.g. dish_mode > dishMode
-            attr = re.sub(r'(?!^)_([a-zA-Z])', lambda m: m.group(1).upper(), dish_attr)
-            self.push_change_event(attr, kwargs[dish_attr])
+            attr = re.sub(
+                r"(?!^)_([a-zA-Z])", lambda m: m.group(1).upper(), attr
+            )
+            self.push_change_event(attr, attr_val)
 
     class InitCommand(
         SKAController.InitCommand
@@ -838,7 +841,11 @@ class DishManager(SKAController):
         """
         return
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
     def Track(self):
         """
         When the Track command is received the Dish will start tracking the
@@ -857,7 +864,10 @@ class DishManager(SKAController):
                 (Az,El,timestamp sets) on selected ACU table
             3. trackTableLoadMode: to add/append new track table data
         """
-        return
+        handler = self.get_command_object("Track")
+        result_code, unique_id = handler()
+
+        return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def TrackStop(self):
