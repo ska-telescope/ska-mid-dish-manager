@@ -14,6 +14,12 @@ import random
 from tango import Database, DbDevInfo, DevState, ErrSeverity, Except, GreenMode
 from tango.server import Device, attribute, command
 
+from ska_mid_dish_manager.models.dish_enums import (
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
+
 
 class DummyDevice(Device):
     """Test device for use to test component manager"""
@@ -24,19 +30,11 @@ class DummyDevice(Device):
         super().init_device()
         # double scalars
         self.__non_polled_attr_1 = random.uniform(0, 150)
-        self.__non_polled_attr_2 = random.uniform(0, 150)
-        self.__non_polled_attr_3 = random.uniform(0, 150)
-        self.__non_polled_attr_4 = random.uniform(0, 150)
-        self.__non_polled_attr_5 = random.uniform(0, 150)
         # long scalars
         self.__polled_attr_1 = random.randint(0, 150)
-        self.__polled_attr_2 = random.randint(0, 150)
-        self.__polled_attr_3 = random.randint(0, 150)
-        self.__polled_attr_4 = random.randint(0, 150)
-        self.__polled_attr_5 = random.randint(0, 150)
         # set manual change event for double scalars
-        for idx in range(1, 6):
-            self.set_change_event(f"non_polled_attr_{idx}", True, False)
+        self.set_change_event("non_polled_attr_1", True, False)
+        self._operating_mode = 0
 
     # ---------------------
     # Non polled attributes
@@ -46,30 +44,6 @@ class DummyDevice(Device):
     )
     async def non_polled_attr_1(self):
         return self.__non_polled_attr_1
-
-    @attribute(
-        dtype="double",
-    )
-    async def non_polled_attr_2(self):
-        return self.__non_polled_attr_2
-
-    @attribute(
-        dtype="double",
-    )
-    async def non_polled_attr_3(self):
-        return self.__non_polled_attr_3
-
-    @attribute(
-        dtype="double",
-    )
-    async def non_polled_attr_4(self):
-        return self.__non_polled_attr_4
-
-    @attribute(
-        dtype="double",
-    )
-    async def non_polled_attr_5(self):
-        return self.__non_polled_attr_5
 
     # -----------------
     # Polled attributes
@@ -89,35 +63,8 @@ class DummyDevice(Device):
         rel_change="1",
         abs_change="1",
     )
-    async def polled_attr_2(self):
-        return int(self.__polled_attr_2)
-
-    @attribute(
-        dtype="int",
-        polling_period=500,
-        rel_change="1.5",
-        abs_change="1",
-    )
-    async def polled_attr_3(self):
-        return int(self.__polled_attr_3)
-
-    @attribute(
-        dtype="int",
-        polling_period=1000,
-        rel_change="1.7",
-        abs_change="1",
-    )
-    async def polled_attr_4(self):
-        return int(self.__polled_attr_4)
-
-    @attribute(
-        dtype="int",
-        polling_period=1000,
-        rel_change="1.7",
-        abs_change="1",
-    )
-    async def polled_attr_5(self):
-        return int(self.__polled_attr_5)
+    async def operatingMode(self):
+        return int(self._operating_mode)
 
     # -------
     # Command
@@ -130,16 +77,6 @@ class DummyDevice(Device):
             "Do something else",
             ErrSeverity.ERR,
         )
-
-    @command(
-        dtype_in=float,
-        doc_in="A floating number representing the command execution latency",
-        dtype_out="str",
-        doc_out="Some dummy message.",
-    )
-    async def ExecuteWithADelay(self, latency):
-        await asyncio.sleep(latency)
-        return f"ExecuteWithADelay command finished executing after {latency} seconds."  # noqa E501
 
     @command(
         dtype_in="str",
@@ -176,38 +113,6 @@ class DummyDevice(Device):
         self.__non_polled_attr_1 = next_value
         self.push_change_event("non_polled_attr_1", next_value)
 
-    @command(
-        dtype_in=None, doc_in="Update and push change event", dtype_out=None
-    )
-    async def IncrementNonPolled2(self):
-        next_value = self.__non_polled_attr_2 + 1
-        self.__non_polled_attr_2 = next_value
-        self.push_change_event("non_polled_attr_2", next_value)
-
-    @command(
-        dtype_in=None, doc_in="Update and push change event", dtype_out=None
-    )
-    async def IncrementNonPolled3(self):
-        next_value = self.__non_polled_attr_3 + 1
-        self.__non_polled_attr_3 = next_value
-        self.push_change_event("non_polled_attr_3", next_value)
-
-    @command(
-        dtype_in=None, doc_in="Update and push change event", dtype_out=None
-    )
-    async def IncrementNonPolled4(self):
-        next_value = self.__non_polled_attr_4 + 1
-        self.__non_polled_attr_4 = next_value
-        self.push_change_event("non_polled_attr_4", next_value)
-
-    @command(
-        dtype_in=None, doc_in="Update and push change event", dtype_out=None
-    )
-    async def IncrementNonPolled5(self):
-        next_value = self.__non_polled_attr_5 + 1
-        self.__non_polled_attr_5 = next_value
-        self.push_change_event("non_polled_attr_5", next_value)
-
     @command(dtype_in=None, doc_in="Switch On", dtype_out=None)
     async def On(self):
         self.set_state(DevState.ON)
@@ -215,6 +120,18 @@ class DummyDevice(Device):
     @command(dtype_in=None, doc_in="Switch Off", dtype_out=None)
     async def Off(self):
         self.set_state(DevState.OFF)
+
+    @command(dtype_in=int, doc_in="Set DS OperatingMode", dtype_out=None)
+    async def SetDSOperatingMode(self, new_value):
+        self._operating_mode = DSOperatingMode(new_value)
+
+    @command(dtype_in=int, doc_in="Set SPF OperatingMode", dtype_out=None)
+    async def SetSPFOperatingMode(self, new_value):
+        self._operating_mode = SPFOperatingMode(new_value)
+
+    @command(dtype_in=int, doc_in="Set SPFRX OperatingMode", dtype_out=None)
+    async def SetSPFRxOperatingMode(self, new_value):
+        self._operating_mode = SPFRxOperatingMode(new_value)
 
 
 def main():
