@@ -1,5 +1,6 @@
 """Generic component manager for a subservient tango device"""
 import logging
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from queue import Empty, Queue
