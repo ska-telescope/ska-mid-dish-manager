@@ -1,6 +1,5 @@
 """Generic component manager for a subservient tango device"""
 import logging
-import time
 from dataclasses import dataclass
 from datetime import datetime
 from queue import Empty, Queue
@@ -75,8 +74,8 @@ class MonitoredAttribute:
                 tango.EventType.CHANGE_EVENT,
                 self._subscription_callback,
             )
-            while not task_abort_event.is_set():
-                time.sleep(1)
+            while not task_abort_event.wait(1):
+                pass
             device_proxy.unsubscribe_event(self.subscription_id)
 
 
@@ -160,7 +159,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             # for some reason, stick to lowercase to avoid duplicates
             attr_name = event_data.attr_value.name.lower()
 
-            # Add it so component state if not there
+            # Add it to component state if not there
             if attr_name not in self._component_state:
                 self._component_state[attr_name] = None
 
@@ -265,6 +264,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def _create_device_proxy(  # pylint: disable=too-many-arguments
         cls,
         tango_device_fqdn: AnyStr,
+        logger: logging.Logger,
         device_proxy: Optional[tango.DeviceProxy] = None,
         task_abort_event: Event = None,
         task_callback: Callable = None,
@@ -301,7 +301,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 task_callback(status=TaskStatus.COMPLETED, result=device_proxy)
                 return
 
-            except tango.DevFailed:
+            except tango.DevFailed as err:
+                logger.exception(err)
                 task_callback(
                     status=TaskStatus.IN_PROGRESS,
                     retry_count=retry_count,
@@ -349,15 +350,21 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 f"Tango device component manager is not ready for monitoring"
                 f" in state [{self.state}]"
             )
-        monitored_attribute = MonitoredAttribute(
-            attribute_name, self._events_queue
-        )
-        self._monitored_attributes.append(monitored_attribute)
-        self.submit_task(
-            monitored_attribute.monitor,
-            args=[self._device_proxy],
-            task_callback=None,
-        )
+        # Make we don't monitor the same thing several times
+        if attribute_name not in [
+            monitored_attribute.attr_name
+            for monitored_attribute in self._monitored_attributes
+        ]:
+            monitored_attribute = MonitoredAttribute(
+                attribute_name, self._events_queue
+            )
+
+            self._monitored_attributes.append(monitored_attribute)
+            self.submit_task(
+                monitored_attribute.monitor,
+                args=[self._device_proxy],
+                task_callback=None,
+            )
 
     def start_communicating(self):
         """Establish communication with the device"""
@@ -436,10 +443,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # Start the device proxy creation
         self.submit_task(
             self._create_device_proxy,
-            args=[
-                self._tango_device_fqdn,
-                self._device_proxy,
-            ],
+            args=[self._tango_device_fqdn, self.logger, self._device_proxy],
             task_callback=self._device_proxy_creation_cb,
         )
 
