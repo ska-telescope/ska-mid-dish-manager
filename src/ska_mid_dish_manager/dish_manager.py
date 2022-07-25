@@ -6,6 +6,7 @@ and the subservient devices
 """
 
 import weakref
+import re
 
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
@@ -71,11 +72,12 @@ class DishManager(SKAController):
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
-        if "dish_mode" in kwargs:
-            # rules might be here
+        for dish_attr in kwargs:
             # pylint: disable=attribute-defined-outside-init
-            self._dish_mode = kwargs["dish_mode"]
-            self.push_change_event("dishMode", self._dish_mode)
+            setattr(self, f"_{dish_attr}", kwargs[dish_attr])
+            # convert variable to attribute: e.g. dish_mode > dishMode
+            attr = re.sub(r'(?!^)_([a-zA-Z])', lambda m: m.group(1).upper(), dish_attr)
+            self.push_change_event(attr, kwargs[dish_attr])
 
     class InitCommand(
         SKAController.InitCommand
@@ -129,6 +131,7 @@ class DishManager(SKAController):
 
             # push change events for dishMode: needed to use testing library
             device.set_change_event("dishMode", True, False)
+            device.set_change_event("pointingState", True, False)
             device.instances[device.get_name()] = device
             device.component_manager.start_communicating()
             super().do()

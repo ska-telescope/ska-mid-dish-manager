@@ -15,6 +15,7 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import (
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
+    PointingState,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -44,6 +45,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             max_workers=max_workers,
             dish_mode=None,
             health_state=None,
+            pointing_state=None,
             **kwargs,
         )
         self._dish_mode_model = DishModeModel()
@@ -71,6 +73,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._update_component_state(dish_mode=DishMode.STARTUP)
+        self._update_component_state(pointing_state=PointingState.NONE)
         self._update_component_state(health_state=HealthState.UNKNOWN)
 
     # pylint: disable=unused-argument
@@ -130,6 +133,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             and spfrx_op_mode == SPFRxOperatingMode.DATA_CAPTURE
         ):
             self._update_component_state(dish_mode=DishMode.OPERATE)
+            self._update_component_state(pointing_state=PointingState.READY)
 
     def start_communicating(self):
         for com_man in self.component_managers.values():

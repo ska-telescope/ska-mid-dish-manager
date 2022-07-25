@@ -21,7 +21,8 @@ class PointingState(enum.IntEnum):
     SLEW = 1
     TRACK = 2
     SCAN = 3
-    UNKNOWN = 4
+    NONE = 4
+    UNKNOWN = 5
 
 
 class Band(enum.IntEnum):
