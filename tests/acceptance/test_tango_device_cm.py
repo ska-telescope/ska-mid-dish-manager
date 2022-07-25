@@ -36,15 +36,15 @@ def test_tango_device_component_manager_state(component_state_store):
     com_man.run_device_command("On")
     assert component_state_store.wait_for_value("state", "ON")
 
-    com_man.monitor_attribute("polled_attr_5")
+    com_man.monitor_attribute("polled_attr_1")
     assert component_state_store.wait_for_value(
-        "polled_attr_5", str(device_proxy.polled_attr_5)
+        "polled_attr_1", str(device_proxy.polled_attr_1)
     )
 
-    com_man.monitor_attribute("non_polled_attr_5")
+    com_man.monitor_attribute("non_polled_attr_1")
     com_man.run_device_command("IncrementNonPolled5")
     assert component_state_store.wait_for_value(
-        "non_polled_attr_5", str(device_proxy.non_polled_attr_5)
+        "non_polled_attr_1", str(device_proxy.non_polled_attr_1)
     )
 
     com_man.stop_communicating()
@@ -97,9 +97,9 @@ def test_stress_component_monitor(component_state_store):
     assert component_state_store.wait_for_value(
         "connection_state", "monitoring"
     )
-    com_man.monitor_attribute("non_polled_attr_5")
+    com_man.monitor_attribute("non_polled_attr_1")
     for _ in range(10):
         com_man.run_device_command("IncrementNonPolled5")
         assert component_state_store.wait_for_value(
-            "non_polled_attr_5", str(device_proxy.non_polled_attr_5)
+            "non_polled_attr_1", str(device_proxy.non_polled_attr_1)
         )
