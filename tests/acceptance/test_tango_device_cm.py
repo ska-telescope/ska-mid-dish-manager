@@ -42,7 +42,7 @@ def test_tango_device_component_manager_state(component_state_store):
     )
 
     com_man.monitor_attribute("non_polled_attr_1")
-    com_man.run_device_command("IncrementNonPolled5")
+    com_man.run_device_command("IncrementNonPolled1")
     assert component_state_store.wait_for_value(
         "non_polled_attr_1", str(device_proxy.non_polled_attr_1)
     )
