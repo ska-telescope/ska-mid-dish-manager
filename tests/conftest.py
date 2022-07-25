@@ -180,6 +180,15 @@ def event_store():
             while not self._queue.empty():
                 self._queue.get()
 
+        #  pylint: disable=unused-argument
+        def get_queue_items(self, timeout: int = 3):
+            items = []
+            try:
+                while True:
+                    items.append(self._queue.get(timeout=3))
+            except queue.Empty:
+                return items
+
     return EventStore()
 
 

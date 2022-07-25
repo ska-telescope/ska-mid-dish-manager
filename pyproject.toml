@@ -21,7 +21,7 @@ include = [
 ]
 
 [tool.poetry.scripts]
-DishManagerDS = 'ska_mid_dish_manager.dish_manager:main'
+DishManagerDS = 'ska_mid_dish_manager.devices.dish_manager:main'
 DummyDevice = 'ska_mid_dish_manager.DummyDevice:main'
 
 [[tool.poetry.source]]
