@@ -35,12 +35,16 @@ class TestTrack:
             patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
-    
+
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
         self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
-        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
+        self.spf_cm = class_instance.component_manager.component_managers[
+            "SPF"
+        ]
+        self.spfrx_cm = class_instance.component_manager.component_managers[
+            "SPFRX"
+        ]
 
     def teardown_method(self):
         """Tear down context"""
@@ -65,7 +69,11 @@ class TestTrack:
         self,
         event_store,
     ):
-        attributes_to_subscribe_to = ("dishMode", "longRunningCommnadResult", "pointingState")
+        attributes_to_subscribe_to = (
+            "dishMode",
+            "longRunningCommnadResult",
+            "pointingState",
+        )
         for attribute_name in attributes_to_subscribe_to:
             self.device_proxy.subscribe_event(
                 attribute_name,
@@ -74,8 +82,12 @@ class TestTrack:
             )
 
         # Force dishManager dishMode to go to OPERATE
-        self.ds_cm._update_component_state(operating_mode=DSOperatingMode.POINT)
-        self.spf_cm._update_component_state(operating_mode=SPFOperatingMode.OPERATE)
+        self.ds_cm._update_component_state(
+            operating_mode=DSOperatingMode.POINT
+        )
+        self.spf_cm._update_component_state(
+            operating_mode=SPFOperatingMode.OPERATE
+        )
         self.spfrx_cm._update_component_state(
             operating_mode=SPFRxOperatingMode.DATA_CAPTURE
         )
