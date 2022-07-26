@@ -194,10 +194,10 @@ def event_store():
 
 @pytest.fixture(scope="function")
 def component_state_store():
-    """Fixture for storing events"""
+    """Fixture for storing component state changes over time"""
 
     class ComponentStateStore:
-        """Store events with useful functionality"""
+        """Store componen state changes with useful functionality"""
 
         def __init__(self) -> None:
             self._queue = queue.Queue()
