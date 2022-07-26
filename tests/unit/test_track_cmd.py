@@ -109,6 +109,8 @@ class TestTrack:
             operating_mode=SPFRxOperatingMode.DATA_CAPTURE
         )
         event_store.wait_for_value(DishMode.OPERATE)
+        self.ds_cm._update_component_state(pointing_state=PointingState.READY)
+        event_store.wait_for_value(PointingState.READY)
 
         # Clear out the queue to make sure we don't catch old events
         event_store.clear_queue()

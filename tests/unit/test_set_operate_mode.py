@@ -124,4 +124,5 @@ class TestSetOperateMode:
         )
         # we can now expect dishMode to transition to OPERATE
         event_store.wait_for_value(DishMode.OPERATE)
+        ds_cm._update_component_state(pointing_state=PointingState.READY)
         event_store.wait_for_value(PointingState.READY)

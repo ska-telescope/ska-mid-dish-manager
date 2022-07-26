@@ -109,6 +109,23 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spf_comp_state = self.component_managers["SPF"].component_state
         spfrx_comp_state = self.component_managers["SPFRX"].component_state
 
+        # PointingState rules for TRACK, SCAN, SLEW & SetOperateMode
+        def _update_pointing_state():
+            if ds_comp_state["pointing_state"] is not None:
+                self._update_component_state(
+                    pointing_state=ds_comp_state["pointing_state"]
+                )
+
+                if ds_comp_state["pointing_state"] in [
+                    PointingState.SLEW,
+                    PointingState.READY,
+                ]:
+                    self._update_component_state(achieved_target_lock=False)
+                elif ds_comp_state["pointing_state"] == PointingState.TRACK:
+                    self._update_component_state(achieved_target_lock=True)
+
+        _update_pointing_state()
+
         # STANDBY_LP rules
         if (
             ds_comp_state["operating_mode"] == DSOperatingMode.STANDBY_LP
@@ -123,7 +140,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ds_comp_state["operating_mode"] == DSOperatingMode.STANDBY_FP
             and spf_comp_state["operating_mode"] == SPFOperatingMode.OPERATE
             and spfrx_comp_state["operating_mode"]
-            == SPFRxOperatingMode.STANDBY
+            in (SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.DATA_CAPTURE)
         ):
             self._update_component_state(dish_mode=DishMode.STANDBY_FP)
 
@@ -135,21 +152,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             == SPFRxOperatingMode.DATA_CAPTURE
         ):
             self._update_component_state(dish_mode=DishMode.OPERATE)
-            self._update_component_state(pointing_state=PointingState.READY)
-
-        # TRACK rules
-        # several things will have to be considered for the track command:
-        # * dish movemement until it settles on the target
-        # * update of the achievedPointing attribute on target
-        if ds_comp_state["pointing_state"]:
-            self._update_component_state(
-                pointing_state=ds_comp_state["pointing_state"]
-            )
-
-            if ds_comp_state["pointing_state"] == PointingState.SLEW:
-                self._update_component_state(achieved_target_lock=False)
-            elif ds_comp_state["pointing_state"] == PointingState.TRACK:
-                self._update_component_state(achieved_target_lock=True)
+            # pointingState should come from DS
+            _update_pointing_state()
 
     def start_communicating(self):
         for com_man in self.component_managers.values():
