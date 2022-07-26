@@ -1,16 +1,16 @@
-name: "dummydevice-{{.Release.Name}}"
+name: "spfrx-device-{{.Release.Name}}"
 function: test-device
 domain: testing
-command: "/usr/local/bin/DummyDevice "
+command: "/usr/local/bin/SPFRxDevice "
 instances: ["01"]
 server:
-  name: "DummyDevice"
+  name: "SPFRxDevice"
   instances:
     - name: "01"
       classes:
-        - name: "DummyDevice"
+        - name: "SPFRxDevice"
           devices:
-            - name: "test/dummy/1"
+            - name: "test/spfrx/1"
 depends_on:
   - device: sys/database/2
 image:

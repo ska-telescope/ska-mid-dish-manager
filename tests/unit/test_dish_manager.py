@@ -8,7 +8,7 @@ import tango
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.dish_manager import DishManager
-from ska_mid_dish_manager.devices.DummyDevice import DummyDevice
+from ska_mid_dish_manager.devices.test_device.DSDevice import DSDevice
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 LOGGER = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ def devices_to_test():
             "devices": [{"name": "mid_d0005/elt/master"}],
         },
         {
-            "class": DummyDevice,
+            "class": DSDevice,
             "devices": [
                 {"name": "mid_d0001/lmc/ds_simulator"},
                 {"name": "mid_d0001/spfrx/simulator"},

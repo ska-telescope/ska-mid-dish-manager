@@ -41,7 +41,7 @@ dishmanager:
 dummy_device:
   replicaCount: 1
   enabled: true
-  tangoDeviceName: "test/dummy/1"
+  tangoDeviceName: "test/lmc/1"
 
 resources:
   limits:
@@ -54,5 +54,9 @@ resources:
 deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
-  dummydevice:
-    file: "data/dummy_device.yaml"
+  dsdevice:
+    file: "data/ds_device.yaml"
+  spfdevice:
+    file: "data/spf_device.yaml"
+  spfrxevice:
+    file: "data/spfrx_device.yaml"

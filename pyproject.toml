@@ -22,7 +22,9 @@ include = [
 
 [tool.poetry.scripts]
 DishManagerDS = 'ska_mid_dish_manager.devices.dish_manager:main'
-DummyDevice = 'ska_mid_dish_manager.devices.DummyDevice:main'
+DSDevice = 'ska_mid_dish_manager.devices.test_devices.DSDevice:main'
+SPFDevice = 'ska_mid_dish_manager.devices.test_devices.SPFDevice:main'
+SPFRxDevice = 'ska_mid_dish_manager.devices.test_devices.SPFRxDevice:main'
 
 [[tool.poetry.source]]
 name = 'ska-nexus'

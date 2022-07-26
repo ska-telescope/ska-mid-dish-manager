@@ -21,7 +21,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-class DummyDevice(Device):
+class LMCDevice(Device):
     """Test device for use to test component manager"""
 
     green_mode = GreenMode.Asyncio
@@ -121,22 +121,10 @@ class DummyDevice(Device):
     async def Off(self):
         self.set_state(DevState.OFF)
 
-    @command(dtype_in=int, doc_in="Set DS OperatingMode", dtype_out=None)
-    async def SetDSOperatingMode(self, new_value):
-        self._operating_mode = DSOperatingMode(new_value)
-
-    @command(dtype_in=int, doc_in="Set SPF OperatingMode", dtype_out=None)
-    async def SetSPFOperatingMode(self, new_value):
-        self._operating_mode = SPFOperatingMode(new_value)
-
-    @command(dtype_in=int, doc_in="Set SPFRX OperatingMode", dtype_out=None)
-    async def SetSPFRxOperatingMode(self, new_value):
-        self._operating_mode = SPFRxOperatingMode(new_value)
-
 
 def main():
     """Script entrypoint"""
-    DummyDevice.run_server()
+    LMCDevice.run_server()
 
 
 if __name__ == "__main__":
@@ -147,8 +135,8 @@ if __name__ == "__main__":
         test_device.name = os.environ["DEVICE_NAME"]
     else:
         # fall back to default name
-        test_device.name = "test/dummy/1"
-    test_device._class = "DummyDevice"
-    test_device.server = "DummyDevice/test"
+        test_device.name = "test/lmc/1"
+    test_device._class = "LMCDevice"
+    test_device.server = "LMCDevice/test"
     db.add_server(test_device.server, test_device, with_dserver=True)
     main()
