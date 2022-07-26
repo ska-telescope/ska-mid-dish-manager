@@ -35,6 +35,12 @@ class TestTrack:
             patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
+    
+        self.device_proxy = self.tango_context.device
+        class_instance = DishManager.instances.get(self.device_proxy.name())
+        self.ds_cm = class_instance.component_manager.component_managers["DS"]
+        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
 
     def teardown_method(self):
         """Tear down context"""
@@ -45,8 +51,7 @@ class TestTrack:
         self,
         event_store,
     ):
-        device_proxy = self.tango_context.device
-        device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -54,37 +59,24 @@ class TestTrack:
 
         event_store.wait_for_value(DishMode.STANDBY_LP)
         with pytest.raises(tango.DevFailed):
-            _, _ = device_proxy.Track()
+            _, _ = self.device_proxy.Track()
 
     def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
         self,
         event_store,
     ):
-        device_proxy = self.tango_context.device
-        device_proxy.subscribe_event(
-            "dishMode",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-        device_proxy.subscribe_event(
-            "longRunningCommandResult",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-        device_proxy.subscribe_event(
-            "pointingState",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
+        attributes_to_subscribe_to = ("dishMode", "longRunningCommnadResult", "pointingState")
+        for attribute_name in attributes_to_subscribe_to:
+            self.device_proxy.subscribe_event(
+                attribute_name,
+                tango.EventType.CHANGE_EVENT,
+                event_store,
+            )
 
-        class_instance = DishManager.instances.get(device_proxy.name())
-        ds_cm = class_instance.component_manager.component_managers["DS"]
-        spf_cm = class_instance.component_manager.component_managers["SPF"]
-        spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         # Force dishManager dishMode to go to OPERATE
-        ds_cm._update_component_state(operating_mode=DSOperatingMode.POINT)
-        spf_cm._update_component_state(operating_mode=SPFOperatingMode.OPERATE)
-        spfrx_cm._update_component_state(
+        self.ds_cm._update_component_state(operating_mode=DSOperatingMode.POINT)
+        self.spf_cm._update_component_state(operating_mode=SPFOperatingMode.OPERATE)
+        self.spfrx_cm._update_component_state(
             operating_mode=SPFRxOperatingMode.DATA_CAPTURE
         )
         event_store.wait_for_value(DishMode.OPERATE)
@@ -93,16 +85,16 @@ class TestTrack:
         event_store.clear_queue()
 
         # Request Track on Dish
-        [[_], [unique_id]] = device_proxy.Track()
+        [[_], [unique_id]] = self.device_proxy.Track()
         assert event_store.wait_for_command_result(
             unique_id, '"Track command queued on ds"'
         )
 
         # transition DS pointingState to TRACK
-        ds_cm._update_component_state(pointing_state=PointingState.SLEW)
+        self.ds_cm._update_component_state(pointing_state=PointingState.SLEW)
         event_store.wait_for_value(PointingState.SLEW)
-        assert not device_proxy.achievedTargetLock
+        assert not self.device_proxy.achievedTargetLock
 
-        ds_cm._update_component_state(pointing_state=PointingState.TRACK)
+        self.ds_cm._update_component_state(pointing_state=PointingState.TRACK)
         event_store.wait_for_value(PointingState.TRACK)
-        assert device_proxy.achievedTargetLock
+        assert self.device_proxy.achievedTargetLock
