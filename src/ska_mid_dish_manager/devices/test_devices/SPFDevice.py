@@ -6,32 +6,18 @@
 # pylint: disable=protected-access
 # pylint: disable=too-many-public-methods
 # pylint: disable=attribute-defined-outside-init
-import asyncio
-import json
 import os
-import random
 
-from tango import (
-    AttrWriteType,
-    Database,
-    DbDevInfo,
-    DevState,
-    ErrSeverity,
-    Except,
-    GreenMode,
-)
+from tango import AttrWriteType, Database, DbDevInfo, GreenMode
 from tango.server import Device, attribute, command
 
-from ska_mid_dish_manager.devices.test_devices.LMCDevice import LMCDevice
-from ska_mid_dish_manager.models.dish_enums import (
-    DSOperatingMode,
-    SPFOperatingMode,
-    SPFRxOperatingMode,
-)
+from ska_mid_dish_manager.models.dish_enums import SPFOperatingMode
 
 
-class SPFDevice(LMCDevice):
-    """Test device for use to test component manager"""
+class SPFDevice(Device):
+    """Test device for LMC"""
+
+    green_mode = GreenMode.Asyncio
 
     def init_device(self):
         super().init_device()
@@ -42,7 +28,7 @@ class SPFDevice(LMCDevice):
         access=AttrWriteType.READ_WRITE,
         polling_period=1000,
     )
-    def operatingMode(self):
+    async def operatingMode(self):
         return self._operating_mode
 
     def write_operatingMode(self, new_value):
@@ -51,10 +37,6 @@ class SPFDevice(LMCDevice):
     @command(dtype_in=None, doc_in="Set SPFOperatingMode", dtype_out=None)
     async def SetStandbyLPMode(self):
         self._operating_mode = SPFOperatingMode.STANDBY_LP
-
-    @command(dtype_in=None, doc_in="Set SPFOperatingMode", dtype_out=None)
-    async def SetStandbyFPMode(self):
-        self._operating_mode = SPFOperatingMode.STANDBY_FP
 
 
 def main():

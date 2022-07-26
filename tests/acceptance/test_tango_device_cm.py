@@ -16,11 +16,11 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.forked
 def test_tango_device_component_manager_state(component_state_store):
     """Test commands and monitoring"""
-    device_proxy = tango.DeviceProxy("test/spf/1")
+    device_proxy = tango.DeviceProxy("test/ds/1")
     assert device_proxy.ping()
 
     com_man = TangoDeviceComponentManager(
-        "test/spf/1", LOGGER, component_state_callback=component_state_store
+        "test/ds/1", LOGGER, component_state_callback=component_state_store
     )
 
     assert com_man.component_state["connection_state"] == "disconnected"
@@ -58,11 +58,11 @@ def test_tango_device_component_manager_state(component_state_store):
 @pytest.mark.forked
 def test_stress_connect_disconnect(component_state_store):
     """Test connect and disconnect"""
-    device_proxy = tango.DeviceProxy("test/spf/1")
+    device_proxy = tango.DeviceProxy("test/ds/1")
     assert device_proxy.ping()
 
     com_man = TangoDeviceComponentManager(
-        "test/spf/1", LOGGER, component_state_callback=component_state_store
+        "test/ds/1", LOGGER, component_state_callback=component_state_store
     )
     assert com_man.component_state["connection_state"] == "disconnected"
     for _ in range(10):
@@ -89,9 +89,9 @@ def test_stress_connect_disconnect(component_state_store):
 @pytest.mark.forked
 def test_stress_component_monitor(component_state_store):
     """Stress test component updates"""
-    device_proxy = tango.DeviceProxy("test/spf/1")
+    device_proxy = tango.DeviceProxy("test/ds/1")
     com_man = TangoDeviceComponentManager(
-        "test/spf/1", LOGGER, component_state_callback=component_state_store
+        "test/ds/1", LOGGER, component_state_callback=component_state_store
     )
     com_man.start_communicating()
     assert component_state_store.wait_for_value(
