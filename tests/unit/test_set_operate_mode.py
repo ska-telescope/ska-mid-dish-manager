@@ -11,6 +11,7 @@ from ska_mid_dish_manager.devices.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
+    PointingState,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -66,6 +67,7 @@ class TestSetOperateMode:
         with pytest.raises(tango.DevFailed):
             # Transition DishManager to OPERATE issuing a command
             _, _ = device_proxy.SetOperateMode()
+            assert device_proxy.pointingState == PointingState.UNKNOWN
 
     def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
         self,
@@ -79,6 +81,11 @@ class TestSetOperateMode:
         )
         device_proxy.subscribe_event(
             "longRunningCommandResult",
+            tango.EventType.CHANGE_EVENT,
+            event_store,
+        )
+        device_proxy.subscribe_event(
+            "pointingState",
             tango.EventType.CHANGE_EVENT,
             event_store,
         )
@@ -117,3 +124,5 @@ class TestSetOperateMode:
         )
         # we can now expect dishMode to transition to OPERATE
         event_store.wait_for_value(DishMode.OPERATE)
+        ds_cm._update_component_state(pointing_state=PointingState.READY)
+        event_store.wait_for_value(PointingState.READY)
