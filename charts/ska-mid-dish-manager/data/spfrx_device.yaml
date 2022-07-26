@@ -1,0 +1,21 @@
+name: "spfrx-device-{{.Release.Name}}"
+function: test-device
+domain: testing
+command: "/usr/local/bin/SPFRxDevice "
+instances: ["01"]
+server:
+  name: "SPFRxDevice"
+  instances:
+    - name: "01"
+      classes:
+        - name: "SPFRxDevice"
+          devices:
+            - name: "test/spfrx/1"
+depends_on:
+  - device: sys/database/2
+image:
+  registry: "{{.Values.dishmanager.image.registry}}"
+  image: "{{.Values.dishmanager.image.image}}"
+  tag: "{{.Values.dishmanager.image.tag}}"
+  pullPolicy: "{{.Values.dishmanager.image.pullPolicy}}"
+

@@ -120,7 +120,6 @@ def event_store():
             """Wait for a value to arrive
 
             Wait `timeout` seconds for each fetch.
-            Attempt this many `fetches` from the queue.
 
             :param value: The value to check for
             :type value: Any
@@ -151,14 +150,11 @@ def event_store():
             """Wait for a long running command result
 
             Wait `timeout` seconds for each fetch.
-            Attempt this many `fetches` from the queue.
 
             :param command_id: The long running command ID
             :type command_id: str
             :param timeout: the get timeout, defaults to 3
             :type timeout: int, optional
-            :param fetches: Number of attempted fetches, defaults to 3
-            :type fetches: int, optional
             :raises RuntimeError: If none are found
             :return: The result of the long running command
             :rtype: str
@@ -184,4 +180,67 @@ def event_store():
             while not self._queue.empty():
                 self._queue.get()
 
+        #  pylint: disable=unused-argument
+        def get_queue_items(self, timeout: int = 3):
+            items = []
+            try:
+                while True:
+                    items.append(self._queue.get(timeout=3))
+            except queue.Empty:
+                return items
+
     return EventStore()
+
+
+@pytest.fixture(scope="function")
+def component_state_store():
+    """Fixture for storing component state changes over time"""
+
+    class ComponentStateStore:
+        """Store componen state changes with useful functionality"""
+
+        def __init__(self) -> None:
+            self._queue = queue.Queue()
+
+        def __call__(self, *args, **kwargs):
+            """Store the update component_state
+
+            :param event: latest_state
+            :type event: dict
+            """
+            self._queue.put(kwargs)
+
+        def wait_for_value(  # pylint:disable=inconsistent-return-statements
+            self, key: str, value: Any, timeout: int = 3
+        ):
+            """Wait for a value to arrive
+
+            Wait `timeout` seconds for each fetch.
+
+            :param key: The value key
+            :type value: str
+            :param value: The value to check for
+            :type value: Any
+            :param timeout: the get timeout, defaults to 3
+            :type timeout: int, optional
+            :raises RuntimeError: If None are found
+            :return: True if found
+            :rtype: bool
+            """
+            try:
+                while True:
+                    state = self._queue.get(timeout=timeout)
+                    if key in state:
+                        if state[key] == value:
+                            return True
+                    continue
+            except queue.Empty as err:
+                raise RuntimeError(
+                    f"Never got a state with key [{key}], value [{value}]"
+                ) from err
+
+        def clear_queue(self):
+            while not self._queue.empty():
+                self._queue.get()
+
+    return ComponentStateStore()

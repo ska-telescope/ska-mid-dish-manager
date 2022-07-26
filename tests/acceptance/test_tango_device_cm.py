@@ -1,0 +1,105 @@
+"""Tango device component manager tests"""
+import logging
+
+import pytest
+import tango
+
+from ska_mid_dish_manager.component_managers.tango_device_cm import (
+    TangoDeviceComponentManager,
+)
+
+LOGGER = logging.getLogger(__name__)
+
+
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
+@pytest.mark.forked
+def test_tango_device_component_manager_state(component_state_store):
+    """Test commands and monitoring"""
+    device_proxy = tango.DeviceProxy("test/ds/1")
+    assert device_proxy.ping()
+
+    com_man = TangoDeviceComponentManager(
+        "test/ds/1", LOGGER, component_state_callback=component_state_store
+    )
+
+    assert com_man.component_state["connection_state"] == "disconnected"
+
+    com_man.start_communicating()
+    assert component_state_store.wait_for_value(
+        "connection_state", "setting_up_monitoring"
+    )
+    assert component_state_store.wait_for_value(
+        "connection_state", "monitoring"
+    )
+
+    com_man.run_device_command("On")
+    assert component_state_store.wait_for_value("state", "ON")
+
+    com_man.monitor_attribute("polled_attr_1")
+    assert component_state_store.wait_for_value(
+        "polled_attr_1", str(device_proxy.polled_attr_1)
+    )
+
+    com_man.monitor_attribute("non_polled_attr_1")
+    com_man.run_device_command("IncrementNonPolled1")
+    assert component_state_store.wait_for_value(
+        "non_polled_attr_1", str(device_proxy.non_polled_attr_1)
+    )
+
+    com_man.stop_communicating()
+    assert component_state_store.wait_for_value(
+        "connection_state", "disconnected"
+    )
+
+
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
+@pytest.mark.forked
+def test_stress_connect_disconnect(component_state_store):
+    """Test connect and disconnect"""
+    device_proxy = tango.DeviceProxy("test/ds/1")
+    assert device_proxy.ping()
+
+    com_man = TangoDeviceComponentManager(
+        "test/ds/1", LOGGER, component_state_callback=component_state_store
+    )
+    assert com_man.component_state["connection_state"] == "disconnected"
+    for _ in range(10):
+        com_man.start_communicating()
+        assert component_state_store.wait_for_value(
+            "connection_state", "setting_up_device_proxy"
+        )
+        assert component_state_store.wait_for_value(
+            "connection_state", "setting_up_monitoring"
+        )
+        assert component_state_store.wait_for_value(
+            "connection_state", "monitoring"
+        )
+        assert component_state_store.wait_for_value("state", "ON")
+        com_man.stop_communicating()
+        assert component_state_store.wait_for_value("state", None)
+        assert component_state_store.wait_for_value(
+            "connection_state", "disconnected"
+        )
+
+
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
+@pytest.mark.forked
+def test_stress_component_monitor(component_state_store):
+    """Stress test component updates"""
+    device_proxy = tango.DeviceProxy("test/ds/1")
+    com_man = TangoDeviceComponentManager(
+        "test/ds/1", LOGGER, component_state_callback=component_state_store
+    )
+    com_man.start_communicating()
+    assert component_state_store.wait_for_value(
+        "connection_state", "monitoring"
+    )
+    com_man.monitor_attribute("non_polled_attr_1")
+    for _ in range(10):
+        com_man.run_device_command("IncrementNonPolled1")
+        assert component_state_store.wait_for_value(
+            "non_polled_attr_1", str(device_proxy.non_polled_attr_1)
+        )

@@ -49,3 +49,11 @@ resources:
 deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
+  dsdevice:
+    file: "data/ds_device.yaml"
+  spfdevice:
+    file: "data/spf_device.yaml"
+  spfrxdevice:
+    file: "data/spfrx_device.yaml"
+  testdishmanager:
+    file: "data/test_dish_manager.yaml"

@@ -5,10 +5,10 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 import tango
-from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.dish_manager import DishManager
+from ska_mid_dish_manager.devices.dish_manager import DishManager
+from ska_mid_dish_manager.devices.test_devices.DSDevice import DSDevice
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 LOGGER = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 
 # pylint: disable=invalid-name, missing-function-docstring
 @pytest.fixture()
-def devices_to_test(SimpleDevice):
+def devices_to_test():
     """Fixture for devices to test."""
     return [
         {
@@ -24,7 +24,7 @@ def devices_to_test(SimpleDevice):
             "devices": [{"name": "mid_d0005/elt/master"}],
         },
         {
-            "class": SimpleDevice,
+            "class": DSDevice,
             "devices": [
                 {"name": "mid_d0001/lmc/ds_simulator"},
                 {"name": "mid_d0001/spfrx/simulator"},
@@ -35,24 +35,23 @@ def devices_to_test(SimpleDevice):
 
 
 # pylint: disable=invalid-name, missing-function-docstring
-@pytest.mark.xfail(reason="Intermittent Segfaults")
 @pytest.mark.forked
 @pytest.mark.unit
 def test_dish_manager_transitions_to_lp_mode_after_startup_no_mocks(
-    multi_device_tango_context,
+    multi_device_tango_context, event_store
 ):
     dish_manager = multi_device_tango_context.get_device(
         "mid_d0005/elt/master"
     )
+
     assert dish_manager.dishMode.name == "STARTUP"
 
-    cb = MockTangoEventCallbackGroup("dishMode", timeout=3)
     dish_manager.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
-        cb["dishMode"],
+        event_store,
     )
-    cb.assert_change_event("dishMode", DishMode.STANDBY_LP)
+    event_store.wait_for_value(DishMode.STARTUP)
 
 
 # pylint: disable=missing-function-docstring

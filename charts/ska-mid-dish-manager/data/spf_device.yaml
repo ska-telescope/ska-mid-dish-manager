@@ -1,0 +1,21 @@
+name: "spf-device-{{.Release.Name}}"
+function: test-device
+domain: testing
+command: "/usr/local/bin/SPFDevice "
+instances: ["01"]
+server:
+  name: "SPFDevice"
+  instances:
+    - name: "01"
+      classes:
+        - name: "SPFDevice"
+          devices:
+            - name: "test/spf/1"
+depends_on:
+  - device: sys/database/2
+image:
+  registry: "{{.Values.dishmanager.image.registry}}"
+  image: "{{.Values.dishmanager.image.image}}"
+  tag: "{{.Values.dishmanager.image.tag}}"
+  pullPolicy: "{{.Values.dishmanager.image.pullPolicy}}"
+

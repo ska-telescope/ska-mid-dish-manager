@@ -1,20 +1,19 @@
-name: "dishmanager-{{.Release.Name}}"
+name: "test-dishmanager-{{.Release.Name}}"
 function: telescope-monitoring
 domain: general-monitoring
-command: "/usr/local/bin/DishManagerDS "
+command: "/usr/local/bin/DishManagerTestDevice "
 server:
-  name: "DishManagerDS"
+  name: "DishManagerTestDevice"
   instances:
-  {{- range  .Values.coalesced_dishes }}
-    - name: "{{ . }}"
+    - name: "01"
       classes:
-        - name: "DishManager"
+        - name: "DishManagerTestDevice"
           devices:
-            - name: "mid_d{{ printf "%04s" . }}/elt/master"
+            - name: "test/dishmanager/1"
               properties:
                 - name: "ReceptorNumber"
                   values:
-                    - "{{ printf "%04s" . }}"
+                    - "0"
                 - name: "SkaLevel"
                   values:
                     - "1"
@@ -32,14 +31,14 @@ server:
                     - ""
                 - name: "ds_device_fqdn"
                   values:
-                    - "mid_d{{ printf "%04s" . }}/lmc/ds_simulator"
+                    - "test/ds/1"
                 - name: "spf_device_fqdn"
                   values:
-                    - "mid_d{{ printf "%04s" . }}/spf/simulator"
+                    - "test/spf/1"
                 - name: "spfrx_device_fqdn"
                   values:
-                    - "mid_d{{ printf "%04s" . }}/spfrx/simulator"
-  {{- end }}
+                    - "test/spfrx/1"
+
 depends_on:
   - device: sys/database/2
 image:

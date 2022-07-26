@@ -7,7 +7,7 @@ import pytest
 import tango
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.dish_manager import DishManager
+from ska_mid_dish_manager.devices.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
