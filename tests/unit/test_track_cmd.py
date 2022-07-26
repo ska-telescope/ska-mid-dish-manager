@@ -45,15 +45,29 @@ class TestTrack:
         self.spfrx_cm = class_instance.component_manager.component_managers[
             "SPFRX"
         ]
+        self.dish_manager_cm = class_instance.component_manager
 
     def teardown_method(self):
         """Tear down context"""
         self.tango_context.stop()
 
     # pylint: disable=missing-function-docstring, protected-access
+    @pytest.mark.parametrize(
+        "current_dish_mode",
+        [
+            DishMode.STANDBY_LP,
+            DishMode.STANDBY_FP,
+            DishMode.STARTUP,
+            DishMode.SHUTDOWN,
+            DishMode.MAINTENANCE,
+            DishMode.STOW,
+            DishMode.CONFIG,
+        ],
+    )
     def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
         self,
         event_store,
+        current_dish_mode,
     ):
         self.device_proxy.subscribe_event(
             "dishMode",
@@ -61,7 +75,10 @@ class TestTrack:
             event_store,
         )
 
-        event_store.wait_for_value(DishMode.STANDBY_LP)
+        self.dish_manager_cm._update_component_state(
+            dish_mode=current_dish_mode
+        )
+        event_store.wait_for_value(current_dish_mode)
         with pytest.raises(tango.DevFailed):
             _, _ = self.device_proxy.Track()
 
