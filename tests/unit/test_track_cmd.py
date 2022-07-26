@@ -1,4 +1,4 @@
-"""Unit tests for setstandbylp command."""
+"""Unit tests for the Track command."""
 
 import logging
 from unittest.mock import MagicMock, patch

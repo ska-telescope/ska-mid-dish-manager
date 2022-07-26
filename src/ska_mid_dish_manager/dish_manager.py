@@ -844,7 +844,6 @@ class DishManager(SKAController):
     @command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
-        display_level=DispLevel.OPERATOR,
     )
     def Track(self):
         """
