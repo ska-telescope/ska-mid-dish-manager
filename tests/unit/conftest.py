@@ -120,7 +120,7 @@ def event_store():
             """Wait for a value to arrive
 
             Wait `timeout` seconds for each fetch.
-            Attemp this many `fetches` from the queue.
+            Attempt this many `fetches` from the queue.
 
             :param value: The value to check for
             :type value: Any
@@ -151,7 +151,7 @@ def event_store():
             """Wait for a long running command result
 
             Wait `timeout` seconds for each fetch.
-            Attemp this many `fetches` from the queue.
+            Attempt this many `fetches` from the queue.
 
             :param command_id: The long running command ID
             :type command_id: str
