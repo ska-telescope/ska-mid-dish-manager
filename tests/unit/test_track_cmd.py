@@ -71,7 +71,7 @@ class TestTrack:
     ):
         attributes_to_subscribe_to = (
             "dishMode",
-            "longRunningCommnadResult",
+            "longRunningCommandResult",
             "pointingState",
         )
         for attribute_name in attributes_to_subscribe_to:
