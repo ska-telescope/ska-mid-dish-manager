@@ -33,6 +33,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         logger: logging.Logger,
         *args,
+        ds_device_fqdn: str = "mid_d0001/lmc/ds_simulator",
+        spf_device_fqdn: str = "mid_d0001/spf/simulator",
+        spfrx_device_fqdn: str = "mid_d0001/spfrx/simulator",
         max_workers: int = 3,
         **kwargs,
     ):
@@ -49,21 +52,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model = DishModeModel()
         self.component_managers = {}
         self.component_managers["DS"] = DSComponentManager(
-            "mid_d0001/lmc/ds_simulator",
+            ds_device_fqdn,
             logger,
             operating_mode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
         self.component_managers["SPFRX"] = SPFRxComponentManager(
-            "mid_d0001/spfrx/simulator",
+            spfrx_device_fqdn,
             logger,
             operating_mode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
         self.component_managers["SPF"] = SPFComponentManager(
-            "mid_d0001/spf/simulator",
+            spf_device_fqdn,
             logger,
             operating_mode=None,
             component_state_callback=self._component_state_changed,

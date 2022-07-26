@@ -38,11 +38,6 @@ dishmanager:
     tag: 0.0.1
     pullPolicy: IfNotPresent
 
-dummy_device:
-  replicaCount: 1
-  enabled: true
-  tangoDeviceName: "test/lmc/1"
-
 resources:
   limits:
     cpu: 300m
@@ -58,5 +53,7 @@ deviceServers:
     file: "data/ds_device.yaml"
   spfdevice:
     file: "data/spf_device.yaml"
-  spfrxevice:
+  spfrxdevice:
     file: "data/spfrx_device.yaml"
+  testdishmanager:
+    file: "data/test_dish_manager.yaml"

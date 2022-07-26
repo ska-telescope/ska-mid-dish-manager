@@ -10,7 +10,7 @@ import weakref
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
-from tango.server import attribute, command, run
+from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,
@@ -36,6 +36,16 @@ class DishManager(SKAController):
     # Access instances for debugging
     instances = weakref.WeakValueDictionary()
 
+    ds_device_fqdn = device_property(
+        str, default_value="mid_d0001/lmc/ds_simulator"
+    )
+    spf_device_fqdn = device_property(
+        str, default_value="mid_d0001/spf/simulator"
+    )
+    spfrx_device_fqdn = device_property(
+        str, default_value="mid_d0001/spfrx/simulator"
+    )
+
     def create_component_manager(self):
         """Create the component manager for DishManager
 
@@ -44,6 +54,9 @@ class DishManager(SKAController):
         """
         return DishManagerComponentManager(
             self.logger,
+            ds_device_fqdn=self.ds_device_fqdn,
+            spf_device_fqdn=self.spf_device_fqdn,
+            spfrx_device_fqdn=self.spfrx_device_fqdn,
             communication_state_callback=None,
             component_state_callback=self._component_state_changed,
         )
