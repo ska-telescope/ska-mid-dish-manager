@@ -41,6 +41,7 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
         ("OPERATE", "SetStowMode", True),
         ("STARTUP", "SetStowMode", True),
         ("CONFIG", "SetStowMode", True),
+        ("SHUTDOWN", "SetStowMode", True),
         ("STANDBY_FP", "SetOperateMode", True),
         ("OPERATE", "SetOperateMode", False),
         ("STANDBY_LP", "SetOperateMode", False),
