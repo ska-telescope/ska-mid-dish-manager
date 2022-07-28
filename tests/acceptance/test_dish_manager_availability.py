@@ -9,7 +9,7 @@ from tango import DeviceProxy, DevState
 )
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
-@pytest.mark.parametrize("dish_number", ["0001", "0002", "0003", "0004"])
+@pytest.mark.parametrize("dish_number", ["0001"])
 def test_dishes_are_available(dish_number):
     """Test that the 4 dishes we expect are available"""
     dish_manager_proxy = DeviceProxy(f"mid_d{dish_number}/elt/master")
