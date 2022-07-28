@@ -36,6 +36,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def __init__(
         self,
         logger: logging.Logger,
+        command_tracker,
         *args,
         ds_device_fqdn: str = "mid_d0001/lmc/ds_simulator",
         spf_device_fqdn: str = "mid_d0001/spf/simulator",
@@ -56,6 +57,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
         self._dish_mode_model = DishModeModel()
+        self._command_tracker = command_tracker
         self.component_managers = {}
         self.component_managers["DS"] = DSComponentManager(
             ds_device_fqdn,

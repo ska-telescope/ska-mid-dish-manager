@@ -55,6 +55,7 @@ class DishManager(SKAController):
         """
         return DishManagerComponentManager(
             self.logger,
+            self._command_tracker,
             ds_device_fqdn=self.ds_device_fqdn,
             spf_device_fqdn=self.spf_device_fqdn,
             spfrx_device_fqdn=self.spfrx_device_fqdn,

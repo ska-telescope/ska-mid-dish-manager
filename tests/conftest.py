@@ -181,11 +181,22 @@ def event_store():
                 self._queue.get()
 
         #  pylint: disable=unused-argument
-        def get_queue_items(self, timeout: int = 3):
+        def get_queue_events(self, timeout: int = 3):
             items = []
             try:
                 while True:
-                    items.append(self._queue.get(timeout=3))
+                    items.append(self._queue.get(timeout=timeout))
+            except queue.Empty:
+                return items
+
+        def get_queue_values(self, timeout: int = 3):
+            items = []
+            try:
+                while True:
+                    event = self._queue.get(timeout=timeout)
+                    items.append(
+                        (event.attr_value.name, event.attr_value.value)
+                    )
             except queue.Empty:
                 return items
 

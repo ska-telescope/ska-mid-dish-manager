@@ -339,28 +339,27 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         return result
 
-    @_check_connection
     def monitor_attribute(self, attribute_name: str):
         """Update the component state with the Attribute value as it changes
 
         :param: attribute_name: Attribute to keep track of
         :type: attribute_name: str
         """
-        if self.state != "monitoring":
-            raise RuntimeError(
-                f"Tango device component manager is not ready for monitoring"
-                f" in state [{self.state}]"
-            )
-        # Make we don't monitor the same thing several times
-        if attribute_name not in [
+        attribute_names = [
             monitored_attribute.attr_name
             for monitored_attribute in self._monitored_attributes
-        ]:
-            monitored_attribute = MonitoredAttribute(
-                attribute_name, self._events_queue
-            )
+        ]
+        if attribute_name in attribute_names:
+            # Already monitoring this attribute
+            return
 
-            self._monitored_attributes.append(monitored_attribute)
+        monitored_attribute = MonitoredAttribute(
+            attribute_name, self._events_queue
+        )
+        self._monitored_attributes.append(monitored_attribute)
+
+        if self.state == "monitoring":
+            # Already monitoring, so start the thread for this attr
             self.submit_task(
                 monitored_attribute.monitor,
                 args=[self._device_proxy],
