@@ -295,7 +295,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         device_command_ids = {}
         command = NestedSubmittedSlowCommand(
-            "DS_SetStandbyLPMode",
+            "DS_Track",
             self._command_tracker,
             self.component_managers["DS"],
             "run_device_command",
