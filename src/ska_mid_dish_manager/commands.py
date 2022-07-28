@@ -12,13 +12,13 @@ class NestedSubmittedSlowCommand(SubmittedSlowCommand):
         """
         Updated stateless hook for command functionality.
 
-        Returns ResultCode, command_id and result
+        Returns ResultCode, command_id
 
         :param args: positional args to the component manager method
         :param kwargs: keyword args to the component manager method
 
-        :return: A tuple containing (ResultCode, command_id and result)
-        :rtype: (ResultCode, str, str)
+        :return: A tuple containing (ResultCode, command_id)
+        :rtype: (ResultCode, str)
         """
         command_id = self._command_tracker.new_command(
             self._command_name, completed_callback=self._completed

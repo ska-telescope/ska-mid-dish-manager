@@ -1,5 +1,6 @@
 """Unit tests checking DishManager behaviour."""
 
+import json
 import logging
 from unittest.mock import MagicMock, call, patch
 
@@ -112,7 +113,7 @@ def test_dish_manager_remains_in_startup_on_error(patched_tango, caplog):
 @patch(
     "ska_mid_dish_manager.component_managers.tango_device_cm.tango.DeviceProxy"
 )
-def test_device(patched_dp, event_store):
+def test_device_reports_long_running_results(patched_dp, event_store):
     patched_device_proxy = MagicMock()
     patched_dp.return_value = patched_device_proxy
     patched_dp.command_inout = MagicMock()
@@ -128,3 +129,55 @@ def test_device(patched_dp, event_store):
         dish_manager.SetStandbyFPMode()
         events = event_store.get_queue_values(timeout=3)
         assert len(events) == 5
+
+        # Sample events:
+        # ('longRunningCommandResult', ('', ''))
+
+        # ('longrunningcommandresult',
+        # ('1659015778.0797186_172264627776495_DS_SetStandbyFPMode',
+        #  '"result"'))
+
+        # ('longrunningcommandresult',
+        # ('1659015778.0823436_222123736715640_SPF_SetStandbyFPMode',
+        # '"result"'))
+
+        # ('longrunningcommandresult',
+        # ('1659015778.0741146_217952885485963_SetStandbyFPMode',
+        # '"{\\"DS\\": \\"16598.0786_1795_DS_SetStandbyFPMode\\",
+        # \\"SPF\\": \\"1659778.0826_2215640_SPF_SetStandbyFPMode\\",
+        # \\"SPFRX\\": \\"16578.0925_1954609_SPFRX_SetStandbyFPMode\\"}"'))
+
+        # ('longrunningcommandresult',
+        # ('16590178.0985_1954609_SPFRX_SetStandbyFPMode', '"result"'))
+
+        event_values = [event[1] for event in events]
+        event_value_dict = {}
+        for event_value in event_values:
+            event_value_dict[event_value[0]] = event_value[1]
+
+        sub_device_task_ids = [
+            task_id
+            for task_id in event_value_dict
+            if len(task_id.split("_")) == 4
+        ]
+        assert (
+            len(sub_device_task_ids) == 3
+        ), f"Did not find 3 sub task IDs in {event_value_dict.keys()}"
+
+        main_device_task_ids = [
+            task_id
+            for task_id in event_value_dict
+            if len(task_id.split("_")) == 3
+        ]
+        assert (
+            len(main_device_task_ids) == 1
+        ), f"Did not find main task ID in {event_value_dict}"
+
+        main_device_task_id = main_device_task_ids[0]
+        main_command_result_dict = json.loads(
+            event_value_dict[main_device_task_id]
+        )
+        main_command_result_dict = json.loads(main_command_result_dict)
+        assert main_command_result_dict["DS"] in sub_device_task_ids
+        assert main_command_result_dict["SPF"] in sub_device_task_ids
+        assert main_command_result_dict["SPFRX"] in sub_device_task_ids

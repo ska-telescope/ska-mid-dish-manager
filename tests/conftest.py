@@ -177,7 +177,7 @@ def event_store():
                 ) from err
 
         def wait_for_command_id(self, command_id: str, timeout: int = 5):
-            """Wait for a long running command result
+            """Wait for a long running command to complete
 
             Wait `timeout` seconds for each fetch.
 
