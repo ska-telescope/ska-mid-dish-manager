@@ -310,34 +310,61 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 )
                 time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
 
-    @_check_connection
     def run_device_command(
-        self, command_name: AnyStr, command_arg: Optional[Any] = None
-    ) -> Any:
-        """Attempt to run `command_name` on the Tango device.
+        self, command_name, command_arg, task_callback: Callable = None
+    ):
+        """Execute the command in a thread"""
+        task_status, response = self.submit_task(
+            self._run_device_command,
+            args=[command_name, command_arg],
+            task_callback=task_callback,
+        )
+        return task_status, response
 
-        If the connection failed
-            - Mark `communication_state` as NOT_ESTABLISHED
-            - Kick off reconnection attempts
+    def _run_device_command(
+        self,
+        command_name: str,
+        command_arg: Any,
+        task_callback: Callable = None,
+        task_abort_event: Event = None,
+    ):
+        task_callback(TaskStatus.IN_PROGRESS)
+        if task_abort_event.is_set():
+            task_callback(TaskStatus.ABORTED)
+            return
 
-        :param: command_name: The Tango command to run
-        :type: command_name: AnyStr
-        :param: command_arg: The Tango command parameter
-        :type: command_arg: Optional Any
-        """
         if self.state != "monitoring":
-            raise RuntimeError(
-                f"Tango device component manager is not ready for commands"
-                f" in state [{self.state}]"
+            task_callback(
+                TaskStatus.FAILED,
+                exception=RuntimeError(
+                    f"Tango device component manager is not ready for commands"
+                    f" in state [{self.state}]"
+                ),
             )
-        result = self._device_proxy.command_inout(command_name, command_arg)
+            return
+
+        result = None
+        try:
+            result = self.execute_command(
+                self._device_proxy, command_name, command_arg
+            )
+        except (LostConnection, tango.DevFailed) as err:
+            task_callback(TaskStatus.COMPLETED, exception=err)
+            return
+
         self.logger.info(
             "Result of [%s] on [%s] is [%s]",
             command_name,
             self._tango_device_fqdn,
             result,
         )
-        return result
+        task_callback(TaskStatus.COMPLETED, result=str(result))
+
+    # pylint: disable=no-self-use
+    @_check_connection
+    def execute_command(self, device_proxy, command_name, command_arg):
+        """Check the connection and execute the command on the Tango device"""
+        return device_proxy.command_inout(command_name, command_arg)
 
     def monitor_attribute(self, attribute_name: str):
         """Update the component state with the Attribute value as it changes

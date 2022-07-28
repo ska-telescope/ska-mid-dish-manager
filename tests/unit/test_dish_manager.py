@@ -127,4 +127,4 @@ def test_device(patched_dp, event_store):
         )
         dish_manager.SetStandbyFPMode()
         events = event_store.get_queue_values(timeout=3)
-        assert len(events) == 2
+        assert len(events) == 5

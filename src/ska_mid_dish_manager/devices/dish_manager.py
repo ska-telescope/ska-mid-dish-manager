@@ -9,10 +9,10 @@ import re
 import weakref
 
 from ska_tango_base import SKAController
-from ska_tango_base.commands import SubmittedSlowCommand
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
+from ska_mid_dish_manager.commands import NestedSubmittedSlowCommand
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,
 )
@@ -75,7 +75,7 @@ class DishManager(SKAController):
         ]:
             self.register_command_object(
                 command_name,
-                SubmittedSlowCommand(
+                NestedSubmittedSlowCommand(
                     command_name,
                     self._command_tracker,
                     self.component_manager,

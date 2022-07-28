@@ -176,6 +176,36 @@ def event_store():
                     f"Never got an LRC result from command [{command_id}]"
                 ) from err
 
+        def wait_for_command_id(self, command_id: str, timeout: int = 5):
+            """Wait for a long running command result
+
+            Wait `timeout` seconds for each fetch.
+
+            :param command_id: The long running command ID
+            :type command_id: str
+            :param timeout: the get timeout, defaults to 3
+            :type timeout: int, optional
+            :raises RuntimeError: If none are found
+            :return: The result of the long running command
+            :rtype: str
+            """
+            try:
+                while True:
+                    event = self._queue.get(timeout=timeout)
+                    if not event.attr_value:
+                        continue
+                    if not isinstance(event.attr_value.value, tuple):
+                        continue
+                    if len(event.attr_value.value) != 2:
+                        continue
+                    (lrc_id, _) = event.attr_value.value
+                    if command_id == lrc_id:
+                        return True
+            except queue.Empty as err:
+                raise RuntimeError(
+                    f"Never got an LRC result from command [{command_id}]"
+                ) from err
+
         def clear_queue(self):
             while not self._queue.empty():
                 self._queue.get()
