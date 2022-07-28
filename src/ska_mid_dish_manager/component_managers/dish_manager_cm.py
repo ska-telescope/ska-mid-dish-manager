@@ -1,8 +1,7 @@
 """Component manager for a DishManager tango device"""
 import json
 import logging
-from threading import Event
-from typing import Any, AnyStr, Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
 from ska_tango_base.control_model import CommunicationStatus, HealthState
@@ -296,7 +295,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         device_command_ids = {}
         command = NestedSubmittedSlowCommand(
-            f"DS_SetStandbyLPMode",
+            "DS_SetStandbyLPMode",
             self._command_tracker,
             self.component_managers["DS"],
             "run_device_command",
