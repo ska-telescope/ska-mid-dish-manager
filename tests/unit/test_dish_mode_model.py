@@ -73,8 +73,7 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
         ("STANDBY_FP", "ConfigureBand5b", True),
         ("OPERATE", "ConfigureBand1", True),
         ("OPERATE", "ConfigureBand2", True),
-        ("OPERATE", "ConfigureBand3", True)
-        ("OPERATE", "ConfigureBand4", True),
+        ("OPERATE", "ConfigureBand3", True)("OPERATE", "ConfigureBand4", True),
         ("OPERATE", "ConfigureBand5a", True),
         ("OPERATE", "ConfigureBand5b", True),
     ],
