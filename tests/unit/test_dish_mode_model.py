@@ -66,7 +66,17 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
         ("STARTUP", "SetMaintenanceMode", False),
         ("SHUTDOWN", "SetMaintenanceMode", False),
         ("STANDBY_FP", "ConfigureBand1", True),
+        ("STANDBY_FP", "ConfigureBand2", True),
+        ("STANDBY_FP", "ConfigureBand3", True),
+        ("STANDBY_FP", "ConfigureBand4", True),
+        ("STANDBY_FP", "ConfigureBand5a", True),
+        ("STANDBY_FP", "ConfigureBand5b", True),
         ("OPERATE", "ConfigureBand1", True),
+        ("OPERATE", "ConfigureBand2", True),
+        ("OPERATE", "ConfigureBand3", True)
+        ("OPERATE", "ConfigureBand4", True),
+        ("OPERATE", "ConfigureBand5a", True),
+        ("OPERATE", "ConfigureBand5b", True),
     ],
 )
 def test_model_dish_mode_transition_accuracy(
