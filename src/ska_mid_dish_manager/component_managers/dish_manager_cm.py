@@ -293,16 +293,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        command = NestedSubmittedSlowCommand(
-            "DS_Track",
-            self._command_tracker,
-            self.component_managers["DS"],
-            "run_device_command",
-            callback=None,
-            logger=self.logger,
-        )
-        _, command_id = command("Track", None)
-        device_command_ids["DS"] = command_id
+        for device in ["DS", "SPF", "SPFRX"]:
+            command = NestedSubmittedSlowCommand(
+                f"{device}_Track",
+                self._command_tracker,
+                self.component_managers[device],
+                "run_device_command",
+                callback=None,
+                logger=self.logger,
+            )
+            _, command_id = command("Track", None)
+            device_command_ids[device] = command_id
 
         task_callback(
             status=TaskStatus.COMPLETED, result=json.dumps(device_command_ids)
