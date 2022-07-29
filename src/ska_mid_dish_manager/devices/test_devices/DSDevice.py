@@ -8,8 +8,10 @@
 # pylint: disable=attribute-defined-outside-init
 import asyncio
 import json
+import logging
 import os
 import random
+import sys
 
 from tango import (
     AttrWriteType,
@@ -23,6 +25,9 @@ from tango import (
 from tango.server import Device, attribute, command
 
 from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+LOGGER = logging.getLogger()
 
 
 class DSDevice(Device):
@@ -38,7 +43,7 @@ class DSDevice(Device):
         self.__polled_attr_1 = random.randint(0, 150)
         # set manual change event for double scalars
         self.set_change_event("non_polled_attr_1", True, False)
-        self._operating_mode = DSOperatingMode.UNKNOWN
+        self._operatingmode = DSOperatingMode.UNKNOWN
 
     # ---------------------
     # Non polled attributes
@@ -119,21 +124,22 @@ class DSDevice(Device):
     @attribute(
         dtype=DSOperatingMode,
         access=AttrWriteType.READ_WRITE,
-        polling_period=1000,
+        polling_period=100,
     )
     async def operatingMode(self):
-        return self._operating_mode
+        return self._operatingmode
 
     def write_operatingMode(self, new_value):
-        self._operating_mode = new_value
+        self._operatingmode = new_value
 
     @command(dtype_in=None, doc_in="Set StandbyLPMode", dtype_out=None)
     async def SetStandbyLPMode(self):
-        self._operating_mode = DSOperatingMode.STANDBY_LP
+        self._operatingmode = DSOperatingMode.STANDBY_LP
 
     @command(dtype_in=None, doc_in="Set StandbyFPMode", dtype_out=None)
     async def SetStandbyFPMode(self):
-        self._operating_mode = DSOperatingMode.STANDBY_FP
+        LOGGER.info("Called SetStandbyMode")
+        self._operatingmode = DSOperatingMode.STANDBY_FP
 
 
 def main():

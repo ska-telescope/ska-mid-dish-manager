@@ -6,12 +6,17 @@
 # pylint: disable=protected-access
 # pylint: disable=too-many-public-methods
 # pylint: disable=attribute-defined-outside-init
+import logging
 import os
+import sys
 
 from tango import AttrWriteType, Database, DbDevInfo, GreenMode
 from tango.server import Device, attribute, command
 
 from ska_mid_dish_manager.models.dish_enums import SPFRxOperatingMode
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+LOGGER = logging.getLogger()
 
 
 class SPFRxDevice(Device):
@@ -21,22 +26,23 @@ class SPFRxDevice(Device):
 
     def init_device(self):
         super().init_device()
-        self._operating_mode = SPFRxOperatingMode.STARTUP
+        self._operatingmode = SPFRxOperatingMode.STARTUP
 
     @attribute(
         dtype=SPFRxOperatingMode,
         access=AttrWriteType.READ_WRITE,
-        polling_period=1000,
+        polling_period=100,
     )
     async def operatingMode(self):
-        return self._operating_mode
+        return self._operatingmode
 
     def write_operatingMode(self, new_value):
-        self._operating_mode = new_value
+        self._operatingmode = new_value
 
     @command(dtype_in=None, doc_in="Set SPFRXOperatingMode", dtype_out=None)
     async def SetStandbyMode(self):
-        self._operating_mode = SPFRxOperatingMode.STANDBY
+        LOGGER.info("Called SetStandbyMode")
+        self._operatingmode = SPFRxOperatingMode.STANDBY
 
 
 def main():

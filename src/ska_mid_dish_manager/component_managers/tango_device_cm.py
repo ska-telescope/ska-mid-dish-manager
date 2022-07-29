@@ -349,22 +349,29 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._device_proxy, command_name, command_arg
             )
         except (LostConnection, tango.DevFailed) as err:
-            task_callback(TaskStatus.COMPLETED, exception=err)
+            self.logger.exception(err)
+            task_callback(TaskStatus.FAILED, exception=err)
             return
 
-        self.logger.info(
-            "Result of [%s] on [%s] is [%s]",
-            command_name,
-            self._tango_device_fqdn,
-            result,
-        )
         task_callback(TaskStatus.COMPLETED, result=str(result))
 
     # pylint: disable=no-self-use
     @_check_connection
     def execute_command(self, device_proxy, command_name, command_arg):
         """Check the connection and execute the command on the Tango device"""
-        return device_proxy.command_inout(command_name, command_arg)
+        self.logger.info(
+            "About to execute command [%s] on device [%s]",
+            command_name,
+            self._tango_device_fqdn,
+        )
+        result = device_proxy.command_inout(command_name, command_arg)
+        self.logger.info(
+            "Result of [%s] on [%s] is [%s]",
+            command_name,
+            self._tango_device_fqdn,
+            result,
+        )
+        return result
 
     def monitor_attribute(self, attribute_name: str):
         """Update the component state with the Attribute value as it changes

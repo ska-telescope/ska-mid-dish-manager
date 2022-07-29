@@ -63,7 +63,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.component_managers["DS"] = DSComponentManager(
             ds_device_fqdn,
             logger,
-            operating_mode=None,
+            operatingmode=None,
             pointing_state=None,
             achieved_target_lock=None,
             component_state_callback=self._component_state_changed,
@@ -72,14 +72,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.component_managers["SPFRX"] = SPFRxComponentManager(
             spfrx_device_fqdn,
             logger,
-            operating_mode=None,
+            operatingmode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
         self.component_managers["SPF"] = SPFComponentManager(
             spf_device_fqdn,
             logger,
-            operating_mode=None,
+            operatingmode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
@@ -134,27 +134,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # STANDBY_LP rules
         if (
-            ds_comp_state["operating_mode"] == DSOperatingMode.STANDBY_LP
-            and spf_comp_state["operating_mode"] == SPFOperatingMode.STANDBY_LP
-            and spfrx_comp_state["operating_mode"]
-            == SPFRxOperatingMode.STANDBY
+            ds_comp_state["operatingmode"] == DSOperatingMode.STANDBY_LP
+            and spf_comp_state["operatingmode"] == SPFOperatingMode.STANDBY_LP
+            and spfrx_comp_state["operatingmode"] == SPFRxOperatingMode.STANDBY
         ):
             self._update_component_state(dish_mode=DishMode.STANDBY_LP)
 
         # STANDBY_FP rules
         if (
-            ds_comp_state["operating_mode"] == DSOperatingMode.STANDBY_FP
-            and spf_comp_state["operating_mode"] == SPFOperatingMode.OPERATE
-            and spfrx_comp_state["operating_mode"]
+            ds_comp_state["operatingmode"] == DSOperatingMode.STANDBY_FP
+            and spf_comp_state["operatingmode"] == SPFOperatingMode.OPERATE
+            and spfrx_comp_state["operatingmode"]
             in (SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.DATA_CAPTURE)
         ):
             self._update_component_state(dish_mode=DishMode.STANDBY_FP)
 
         # OPERATE rules
         if (
-            ds_comp_state["operating_mode"] == DSOperatingMode.POINT
-            and spf_comp_state["operating_mode"] == SPFOperatingMode.OPERATE
-            and spfrx_comp_state["operating_mode"]
+            ds_comp_state["operatingmode"] == DSOperatingMode.POINT
+            and spf_comp_state["operatingmode"] == SPFOperatingMode.OPERATE
+            and spfrx_comp_state["operatingmode"]
             == SPFRxOperatingMode.DATA_CAPTURE
         ):
             self._update_component_state(dish_mode=DishMode.OPERATE)
