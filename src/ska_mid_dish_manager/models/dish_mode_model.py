@@ -166,6 +166,13 @@ def compute_dish_mode(sub_devices_states):
     return ""
 
 
+def compute_dish_health_state(sub_devices_health_states):
+    for mode, rule in HEALTH_STATE_RULES.items():
+        if rule.matches(sub_devices_health_states):
+            return mode
+    return ""
+
+
 class CommandNotAllowed(Exception):
     pass
 
