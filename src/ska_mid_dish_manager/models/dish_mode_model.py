@@ -128,3 +128,6 @@ class DishModeModel:
                 f"[{dish_mode}], only allowed to do {allowed_commands}"
             )
         )
+
+    def compute_dish_mode(self, sub_devices_states):
+        return ""

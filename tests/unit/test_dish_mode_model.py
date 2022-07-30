@@ -94,3 +94,61 @@ def test_model_dish_mode_transition_accuracy(
             dish_mode_model.is_command_allowed(
                 dish_mode=current_mode, command_name=requested_command
             )
+
+
+@pytest.mark.parametrize(
+    "subservient_devices_state,expected_dish_mode",
+    [
+        (
+            {
+                "ds_op_mode": "STANDBY_LP",
+                "spf_op_mode": "STANDBY_LP",
+                "spfrx_op_mode": "STANDBY",
+                "ds_pow_state": "LOW_POWER",
+                "spf_pow_state": "LOW_POWER",
+                "spfrx_pow_state": "LOW_POWER",
+            },
+            "STANDBY_LP",
+        ),
+        (
+            {
+                "ds_op_mode": "STANDBY_FP",
+                "spf_op_mode": "OPERATE",
+                "spfrx_op_mode": "STANDBY",
+                "ds_pow_state": "FULL_POWER",
+                "spf_pow_state": "FULL_POWER",
+                "spfrx_pow_state": "FULL_POWER",
+            },
+            "STANDBY_FP",
+        ),
+        (
+            {
+                "ds_op_mode": "STANDBY_FP",
+                "spf_op_mode": "OPERATE",
+                "spfrx_op_mode": "DATA_CAPTURE",
+                "ds_pow_state": "FULL_POWER",
+                "spf_pow_state": "FULL_POWER",
+                "spfrx_pow_state": "FULL_POWER",
+            },
+            "STANDBY_FP",
+        ),
+        (
+            {
+                "ds_op_mode": "POINT",
+                "spf_op_mode": "OPERATE",
+                "spfrx_op_mode": "DATA_CAPTURE",
+                "ds_pow_state": "FULL_POWER",
+                "spf_pow_state": "FULL_POWER",
+                "spfrx_pow_state": "FULL_POWER",
+            },
+            "OPERATE",
+        ),
+    ],
+)
+def test_compute_dish_mode(
+    dish_mode_model, subservient_devices_state, expected_dish_mode
+):
+    actual_dish_mode = dish_mode_model.compute_dish_mode(
+        subservient_devices_state
+    )
+    assert expected_dish_mode == actual_dish_mode
