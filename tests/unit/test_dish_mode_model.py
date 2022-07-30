@@ -6,6 +6,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
     DishModeModel,
+    compute_dish_mode,
 )
 
 
@@ -145,10 +146,6 @@ def test_model_dish_mode_transition_accuracy(
         ),
     ],
 )
-def test_compute_dish_mode(
-    dish_mode_model, subservient_devices_state, expected_dish_mode
-):
-    actual_dish_mode = dish_mode_model.compute_dish_mode(
-        subservient_devices_state
-    )
+def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
+    actual_dish_mode = compute_dish_mode(subservient_devices_state)
     assert expected_dish_mode == actual_dish_mode

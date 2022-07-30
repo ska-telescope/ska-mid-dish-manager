@@ -93,6 +93,13 @@ DISH_MODE_RULES = {
 }
 
 
+def compute_dish_mode(sub_devices_states):
+    for mode, rule in DISH_MODE_RULES.items():
+        if rule.matches(sub_devices_states):
+            return mode
+    return ""
+
+
 class CommandNotAllowed(Exception):
     pass
 
@@ -195,6 +202,3 @@ class DishModeModel:
                 f"[{dish_mode}], only allowed to do {allowed_commands}"
             )
         )
-
-    def compute_dish_mode(self, sub_devices_states):
-        return ""
