@@ -93,6 +93,72 @@ DISH_MODE_RULES = {
 }
 
 
+HEALTH_STATE_RULES = {
+    "DEGRADED": rule_engine.Rule(
+        "("
+        "    ds_health_state == 'DEGRADED' and "
+        "    spf_health_state in ['OK', 'DEGRADED', 'UNKNOWN'] and "
+        "    spfrx_health_state in ['OK', 'DEGRADED', 'UNKNOWN']"
+        ") "
+        "or "
+        "("
+        "    ds_health_state in ['OK', 'DEGRADED', 'UNKNOWN'] and "
+        "    spf_health_state == 'DEGRADED' and "
+        "    spfrx_health_state in ['OK', 'DEGRADED', 'UNKNOWN']"
+        ") "
+        "or "
+        "("
+        "    ds_health_state in ['OK', 'DEGRADED', 'UNKNOWN'] and "
+        "    spf_health_state in ['OK', 'DEGRADED', 'UNKNOWN'] and "
+        "    spfrx_health_state == 'DEGRADED'"
+        ")"
+    ),
+    "FAILED": rule_engine.Rule(
+        "("
+        "    ds_health_state == 'FAILED' and "
+        "    spf_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN'] and "
+        "    spfrx_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN']"
+        ") "
+        "or "
+        "("
+        "    ds_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN'] and "
+        "    spf_health_state == 'FAILED' and "
+        "    spfrx_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN']"
+        ") "
+        "or "
+        "("
+        "    ds_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN'] and "
+        "    spf_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN'] and "
+        "    spfrx_health_state == 'FAILED'"
+        ")"
+    ),
+    "OK": rule_engine.Rule(
+        "ds_health_state == 'OK' and "
+        "spf_health_state == 'OK' and "
+        "spfrx_health_state == 'OK'"
+    ),
+    "UNKNOWN": rule_engine.Rule(
+        "("
+        "    ds_health_state == 'UNKNOWN' and "
+        "    spf_health_state in ['OK', 'UNKNOWN'] and "
+        "    spfrx_health_state in ['OK', 'UNKNOWN']"
+        ") "
+        "or "
+        "("
+        "    ds_health_state in ['OK', 'UNKNOWN'] and "
+        "    spf_health_state == 'UNKNOWN' and "
+        "    spfrx_health_state in ['OK', 'UNKNOWN']"
+        ") "
+        "or "
+        "("
+        "    ds_health_state in ['OK', 'UNKNOWN'] and "
+        "    spf_health_state in ['OK', 'UNKNOWN'] and "
+        "    spfrx_health_state == 'UNKNOWN'"
+        ")"
+    ),
+}
+
+
 def compute_dish_mode(sub_devices_states):
     for mode, rule in DISH_MODE_RULES.items():
         if rule.matches(sub_devices_states):
