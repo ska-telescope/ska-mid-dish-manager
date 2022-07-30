@@ -7,6 +7,7 @@ from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
     DishModeModel,
     compute_dish_mode,
+    compute_dish_health_state,
 )
 
 
@@ -149,3 +150,529 @@ def test_model_dish_mode_transition_accuracy(
 def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
     actual_dish_mode = compute_dish_mode(subservient_devices_state)
     assert expected_dish_mode == actual_dish_mode
+
+
+@pytest.mark.parametrize(
+    "subservient_health_states,expected_dish_health_state",
+    [
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "OK",
+            },
+            "OK",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "UNKNOWN",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "OK",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "OK",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "OK",
+            },
+            "UNKNOWN",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "OK",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "OK",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "OK",
+            },
+            "UNKNOWN",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "UNKNOWN",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "OK",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "UNKNOWN",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "UNKNOWN",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "OK",
+            },
+            "UNKNOWN",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "OK",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "OK",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "OK",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "OK",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "OK",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "OK",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "OK",
+            },
+            "DEGRADED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "OK",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "OK",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "DEGRADED",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "UNKNOWN",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "DEGRADED",
+                "spfrx_health_state": "FAILED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "FAILED",
+                "spf_health_state": "UNKNOWN",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "FAILED",
+        ),
+        (
+            {
+                "ds_health_state": "UNKNOWN",
+                "spf_health_state": "FAILED",
+                "spfrx_health_state": "DEGRADED",
+            },
+            "FAILED",
+        ),
+    ],
+)
+def test_compute_dish_health_state(
+    subservient_health_states, expected_dish_health_state
+):
+    actual_dish_health_state = compute_dish_health_state(
+        subservient_health_states
+    )
+    assert expected_dish_health_state == actual_dish_health_state
