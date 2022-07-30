@@ -28,26 +28,65 @@ DISH_MODE_NODES = (
 
 DISH_MODE_RULES = {
     "CONFIG": rule_engine.Rule(
-        "(ds_op_mode  == 'POINT' or ds_op_mode  == 'STOW' or ds_op_mode  == 'STANDBY_LP' or ds_op_mode  == 'STANDBY_FP') and spf_op_mode  == 'OPERATE' and spfrx_op_mode  == 'CONFIGURE'"
+        "ds_op_mode  in ['POINT', 'STOW', 'STANDBY_LP', 'STANDBY_FP'] and "
+        "spf_op_mode  == 'OPERATE' and spfrx_op_mode  == 'CONFIGURE'"
     ),
     "MAINTENANCE": rule_engine.Rule(
-        "ds_op_mode  == 'STOW' and spf_op_mode  == 'MAINT' and spfrx_op_mode  == 'MAINT'"
+        "ds_op_mode  == 'STOW' and "
+        "spf_op_mode  == 'MAINT' and "
+        "spfrx_op_mode  == 'MAINT'"
     ),
     "OPERATE": rule_engine.Rule(
-        "(ds_op_mode  == 'POINT' and spf_op_mode  == 'OPERATE' and spfrx_op_mode  == 'DATA_CAPTURE') and "
-        "(ds_pow_state == 'FULL_POWER' and spf_pow_state == 'FULL_POWER' and spfrx_pow_state == 'FULL_POWER')"
+        "("
+        "    ds_op_mode  == 'POINT' and "
+        "    spf_op_mode  == 'OPERATE' and "
+        "    spfrx_op_mode  == 'DATA_CAPTURE'"
+        ") "
+        "and "
+        "("
+        "    ds_pow_state == 'FULL_POWER' and "
+        "    spf_pow_state == 'FULL_POWER' and "
+        "    spfrx_pow_state == 'FULL_POWER'"
+        ")"
     ),
     "STANDBY_FP": rule_engine.Rule(
-        "ds_op_mode  == 'STANDBY_FP' and spf_op_mode  == 'OPERATE' and (spfrx_op_mode  == 'STANDBY' or spfrx_op_mode  == 'DATA_CAPTURE') and "
-        "(ds_pow_state == 'FULL_POWER' and spf_pow_state == 'FULL_POWER' and spfrx_pow_state == 'FULL_POWER')"
+        "("
+        "    ds_op_mode  == 'STANDBY_FP' and "
+        "    spf_op_mode  == 'OPERATE' and "
+        "    spfrx_op_mode  in ['STANDBY', 'DATA_CAPTURE']"
+        ") "
+        "and "
+        "("
+        "    ds_pow_state == 'FULL_POWER' and "
+        "    spf_pow_state == 'FULL_POWER' and "
+        "    spfrx_pow_state == 'FULL_POWER'"
+        ")"
     ),
     "STANDBY_LP": rule_engine.Rule(
-        "(ds_op_mode == 'STANDBY_LP' and spf_op_mode  == 'STANDBY_LP' and spfrx_op_mode  == 'STANDBY') and "
-        "(ds_pow_state == 'LOW_POWER' and spf_pow_state == 'LOW_POWER' and spfrx_pow_state == 'LOW_POWER')"
+        "("
+        "    ds_op_mode == 'STANDBY_LP' and "
+        "    spf_op_mode  == 'STANDBY_LP' and "
+        "    spfrx_op_mode  == 'STANDBY'"
+        ") "
+        "and "
+        "("
+        "    ds_pow_state == 'LOW_POWER' and "
+        "    spf_pow_state == 'LOW_POWER' and "
+        "    spfrx_pow_state == 'LOW_POWER'"
+        ")"
     ),
     "STOW": rule_engine.Rule(
-        "ds_op_mode  == 'STOW' and (spf_op_mode  == 'STANDBY_LP' or spf_op_mode  == 'OPERATE') and (spfrx_op_mode  =='STANDBY_LP' or spfrx_op_mode  == 'STANDBY_FP' or spfrx_op_mode  == 'DATA_CAPTURE') and "
-        "(ds_pow_state == 'LOW_POWER' and spf_pow_state == 'LOW_POWER' and spfrx_pow_state == 'LOW_POWER')"
+        "("
+        "    ds_op_mode  == 'STOW' and "
+        "    spf_op_mode in ['STANDBY_LP', 'OPERATE'] and "
+        "    spfrx_op_mode in ['STANDBY_LP', 'STANDBY_FP', 'DATA_CAPTURE']"
+        ") "
+        "and "
+        "("
+        "    ds_pow_state == 'LOW_POWER' and "
+        "    spf_pow_state == 'LOW_POWER' and "
+        "    spfrx_pow_state == 'LOW_POWER'"
+        ")"
     ),
     # "SHUTDOWN": "",
     # "STARTUP": "",
