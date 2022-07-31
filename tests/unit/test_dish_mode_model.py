@@ -6,8 +6,8 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
     DishModeModel,
-    compute_dish_mode,
     compute_dish_health_state,
+    compute_dish_mode,
 )
 
 
