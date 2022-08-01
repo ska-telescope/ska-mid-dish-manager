@@ -27,6 +27,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             component_state_callback=component_state_callback,
             **kwargs
         )
+        self.monitor_attribute("operatingMode")
 
     def on(self, task_callback: Callable):
         raise NotImplementedError
