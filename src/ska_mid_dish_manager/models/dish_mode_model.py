@@ -28,8 +28,8 @@ DISH_MODE_NODES = (
 
 DISH_MODE_RULES = {
     "CONFIG": rule_engine.Rule(
-        "ds_operating_mode  in ['POINT', 'STOW', 'STANDBY_LP', 'STANDBY_FP'] and "
-        "spf_operating_mode  == 'OPERATE' and spfrx_operating_mode  == 'CONFIGURE'"
+        "ds_operating_mode  in ['POINT', 'STOW', 'STANDBY_LP', 'STANDBY_FP'] and "  # noqa: E501
+        "spf_operating_mode  == 'OPERATE' and spfrx_operating_mode  == 'CONFIGURE'"  # noqa: E501
     ),
     "MAINTENANCE": rule_engine.Rule(
         "ds_operating_mode  == 'STOW' and "
@@ -79,7 +79,7 @@ DISH_MODE_RULES = {
         "("
         "    ds_operating_mode  == 'STOW' and "
         "    spf_operating_mode in ['STANDBY_LP', 'OPERATE'] and "
-        "    spfrx_operating_mode in ['STANDBY_LP', 'STANDBY_FP', 'DATA_CAPTURE']"
+        "    spfrx_operating_mode in ['STANDBY_LP', 'STANDBY_FP', 'DATA_CAPTURE']"  # noqa: E501
         ") "
         "and "
         "("
