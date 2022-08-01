@@ -24,7 +24,11 @@ from tango import (
 )
 from tango.server import Device, attribute, command
 
-from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DSHealthState,
+    DSOperatingMode,
+    DSPowerState,
+)
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 LOGGER = logging.getLogger()
@@ -44,6 +48,8 @@ class DSDevice(Device):
         # set manual change event for double scalars
         self.set_change_event("non_polled_attr_1", True, False)
         self._operatingmode = DSOperatingMode.UNKNOWN
+        self._powerstate = DSPowerState.OFF
+        self._healthstate = DSHealthState.UNKNOWN
 
     # ---------------------
     # Non polled attributes
@@ -131,6 +137,28 @@ class DSDevice(Device):
 
     def write_operatingMode(self, new_value):
         self._operatingmode = new_value
+
+    @attribute(
+        dtype=DSHealthState,
+        access=AttrWriteType.READ_WRITE,
+        polling_period=100,
+    )
+    async def healthState(self):
+        return self._healthstate
+
+    def write_healthState(self, new_value):
+        self._healthstate = new_value
+
+    @attribute(
+        dtype=DSPowerState,
+        access=AttrWriteType.READ_WRITE,
+        polling_period=100,
+    )
+    async def powerState(self):
+        return self._powerstate
+
+    def write_powerState(self, new_value):
+        self._powerstate = new_value
 
     @command(dtype_in=None, doc_in="Set StandbyLPMode", dtype_out=None)
     async def SetStandbyLPMode(self):

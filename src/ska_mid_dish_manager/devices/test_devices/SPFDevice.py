@@ -13,7 +13,11 @@ import sys
 from tango import AttrWriteType, Database, DbDevInfo, GreenMode
 from tango.server import Device, attribute, command
 
-from ska_mid_dish_manager.models.dish_enums import SPFOperatingMode
+from ska_mid_dish_manager.models.dish_enums import (
+    SPFHealthState,
+    SPFOperatingMode,
+    SPFPowerState,
+)
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 LOGGER = logging.getLogger()
@@ -27,6 +31,8 @@ class SPFDevice(Device):
     def init_device(self):
         super().init_device()
         self._operatingmode = SPFOperatingMode.STARTUP
+        self._powerstate = SPFPowerState.UNKNOWN
+        self._healthstate = SPFHealthState.UNKNOWN
 
     @attribute(
         dtype=SPFOperatingMode,
@@ -38,6 +44,28 @@ class SPFDevice(Device):
 
     def write_operatingMode(self, new_value):
         self._operatingmode = new_value
+
+    @attribute(
+        dtype=SPFHealthState,
+        access=AttrWriteType.READ_WRITE,
+        polling_period=100,
+    )
+    async def healthState(self):
+        return self._healthstate
+
+    def write_healthState(self, new_value):
+        self._healthstate = new_value
+
+    @attribute(
+        dtype=SPFPowerState,
+        access=AttrWriteType.READ_WRITE,
+        polling_period=100,
+    )
+    async def powerState(self):
+        return self._powerstate
+
+    def write_powerState(self, new_value):
+        self._powerstate = new_value
 
     @command(dtype_in=None, doc_in="Set SPFOperatingMode", dtype_out=None)
     async def SetStandbyLPMode(self):
