@@ -110,23 +110,9 @@ HEALTH_STATE_RULES = {
         "spfrx_health_state == 'OK'"
     ),
     "UNKNOWN": rule_engine.Rule(
-        "("
-        "    ds_health_state == 'UNKNOWN' and "
-        "    spf_health_state in ['OK', 'UNKNOWN'] and "
-        "    spfrx_health_state in ['OK', 'UNKNOWN']"
-        ") "
-        "or "
-        "("
-        "    ds_health_state in ['OK', 'UNKNOWN'] and "
-        "    spf_health_state == 'UNKNOWN' and "
-        "    spfrx_health_state in ['OK', 'UNKNOWN']"
-        ") "
-        "or "
-        "("
-        "    ds_health_state in ['OK', 'UNKNOWN'] and "
-        "    spf_health_state in ['OK', 'UNKNOWN'] and "
-        "    spfrx_health_state == 'UNKNOWN'"
-        ")"
+        "ds_health_state == 'UNKNOWN' or "
+        "spf_health_state == 'UNKNOWN' or "
+        "spfrx_health_state == 'UNKNOWN'"
     ),
 }
 
