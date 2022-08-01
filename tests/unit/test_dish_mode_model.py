@@ -111,7 +111,7 @@ def test_model_dish_mode_transition_accuracy(
                 "spf_power_state": "LOW_POWER",
                 "spfrx_power_state": "LOW_POWER",
             },
-            "STANDBY_LP",
+            DishMode.STANDBY_LP,
         ),
         (
             {
@@ -122,7 +122,7 @@ def test_model_dish_mode_transition_accuracy(
                 "spf_power_state": "FULL_POWER",
                 "spfrx_power_state": "FULL_POWER",
             },
-            "STANDBY_FP",
+            DishMode.STANDBY_FP,
         ),
         (
             {
@@ -133,7 +133,7 @@ def test_model_dish_mode_transition_accuracy(
                 "spf_power_state": "FULL_POWER",
                 "spfrx_power_state": "FULL_POWER",
             },
-            "STANDBY_FP",
+            DishMode.STANDBY_FP,
         ),
         (
             {
@@ -144,7 +144,7 @@ def test_model_dish_mode_transition_accuracy(
                 "spf_power_state": "FULL_POWER",
                 "spfrx_power_state": "FULL_POWER",
             },
-            "OPERATE",
+            DishMode.OPERATE,
         ),
     ],
 )

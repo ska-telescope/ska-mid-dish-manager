@@ -7,6 +7,8 @@ import networkx as nx
 import rule_engine
 from ska_tango_base.control_model import HealthState
 
+from ska_mid_dish_manager.models.dish_enums import DishMode
+
 CONFIG_COMMANDS = (
     "ConfigureBand1",
     "ConfigureBand2",
@@ -25,6 +27,7 @@ DISH_MODE_NODES = (
     "STOW",
     "CONFIG",
     "OPERATE",
+    "UNKNOWN",
 )
 
 DISH_MODE_RULES = {
@@ -161,21 +164,37 @@ HEALTH_STATE_RULES = {
 
 
 def compute_dish_mode(sub_devices_states):
+    """Computes the dish mode based the state of the sub-devices. That is
+        their operatingMode and powerState.
+
+        E.g. sub-devices_states
+            {
+                'sub_device_operating_mode': DeviceOperatingMode(value).name
+                'sub_device_power_state': DevicePowerState(value).name
+                ...
+            }
+
+    :param: sub_devices_states: State of the sub-devices
+    :type: sub_devices_states: dict
+    :return: The DishMode value computed
+    :rtype: DishMode
+    """
     for mode, rule in DISH_MODE_RULES.items():
         if rule.matches(sub_devices_states):
-            return mode
-    return ""
+            return DishMode[mode]
+    return DishMode.UNKNOWN
 
 
 def compute_dish_health_state(sub_devices_health_states):
-    """Computes the overall dish health states based on the
-       given health states of the sub-devices
+    """Computes the overall dish health state based on the
+        given health states of the sub-devices
 
-       E.g. sub_devices_health_states
+        E.g. sub_devices_health_states
             {
                 'sub_device_1' : HealthState(value).name,
+                ...
             }
-    
+
     :param: sub_devices_health_states: Health states from the sub-devices
     :type: sub_devices_health_states: dict
     :return: The HealthState value computed
