@@ -22,7 +22,7 @@ from tango import (
 )
 from tango.server import Device, attribute, command
 
-from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
+from ska_mid_dish_manager.models.dish_enums import DSOperatingMode, Band
 
 
 class DSDevice(Device):
@@ -39,6 +39,7 @@ class DSDevice(Device):
         # set manual change event for double scalars
         self.set_change_event("non_polled_attr_1", True, False)
         self._operating_mode = DSOperatingMode.UNKNOWN
+        self._configured_band = Band.NONE
 
     # ---------------------
     # Non polled attributes
@@ -134,6 +135,21 @@ class DSDevice(Device):
     @command(dtype_in=None, doc_in="Set StandbyFPMode", dtype_out=None)
     async def SetStandbyFPMode(self):
         self._operating_mode = DSOperatingMode.STANDBY_FP
+
+    @attribute(
+        dtype=Band,
+        access=AttrWriteType.READ_WRITE,
+        polling_period=1000,
+    )
+    async def configuredBand(self):
+        return self._configured_band
+
+    def write_configuredBand(self, new_value):
+        self._configured_band = new_value
+
+    @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
+    async def ConfigureBand2(self):
+        self._configured_band = Band.B2
 
 
 def main():
