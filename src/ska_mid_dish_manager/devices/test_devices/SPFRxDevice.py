@@ -30,7 +30,6 @@ class SPFRxDevice(Device):
     def init_device(self):
         super().init_device()
         self._operatingmode = SPFRxOperatingMode.STARTUP
-        self._powerstate = SPFRxPowerState.UNKNOWN
         self._healthstate = SPFRxHealthState.UNKNOWN
 
     @attribute(
