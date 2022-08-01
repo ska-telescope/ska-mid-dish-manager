@@ -308,6 +308,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback(
             status=TaskStatus.COMPLETED, result=json.dumps(device_command_ids)
         )
+
     def set_configureband2_cmd(
         self,
         task_callback: Optional[Callable] = None,
@@ -323,7 +324,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    def _set_configureband2_cmd(self, task_callback=None, task_abort_event=None):
+    def _set_configureband2_cmd(
+        self, task_callback=None, task_abort_event=None
+    ):
         """Call configureBand on DS, SPF, SPFRX"""
         if task_callback is not None:
             task_callback(status=TaskStatus.IN_PROGRESS)
@@ -343,8 +346,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         task_callback(
             status=TaskStatus.COMPLETED, result=json.dumps(device_command_ids)
-
-    )
+        )
 
     def stop_communicating(self):
         for com_man in self.component_managers.values():
