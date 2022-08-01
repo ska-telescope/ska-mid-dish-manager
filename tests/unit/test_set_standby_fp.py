@@ -74,7 +74,7 @@ class TestSetStandByFPMode:
         assert device_proxy.dishMode == DishMode.STANDBY_LP
 
         spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.STANDBY
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
         #  we can now expect dishMode to transition to STANDBY_FP
         assert event_store.wait_for_value(DishMode.STANDBY_FP)
