@@ -72,6 +72,7 @@ class DishManager(SKAController):
             ("SetOperateMode", "set_operate_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
+            ("ConfigureBand2", "set_configureband2_cmd"),
         ]:
             self.register_command_object(
                 command_name,
@@ -652,7 +653,10 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        return
+        handler = self.get_command_object("ConfigureBand2")
+        result_code, unique_id = handler()
+
+        return ([result_code], [unique_id])
 
     @command(
         dtype_in=str,
