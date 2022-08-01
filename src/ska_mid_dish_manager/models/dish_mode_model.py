@@ -58,7 +58,7 @@ DISH_MODE_RULES = {
     "STOW": rule_engine.Rule(
         "ds_operating_mode  == 'STOW' and "
         "spf_operating_mode in ['STANDBY_LP', 'OPERATE'] and "
-        "spfrx_operating_mode in ['STANDBY_LP', 'STANDBY_FP', 'DATA_CAPTURE']"
+        "spfrx_operating_mode in ['STANDBY', 'DATA_CAPTURE']"
     ),
     # "SHUTDOWN": "",
     # "STARTUP": "",
