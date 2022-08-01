@@ -635,7 +635,7 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        return
+        raise Exception("No functionality yet")
 
     @command(
         dtype_in=str,
@@ -669,7 +669,7 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        return
+        raise Exception("No functionality yet")
 
     @command(
         dtype_in=str,
@@ -686,7 +686,7 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        return
+        raise Exception("No functionality yet")
 
     @command(
         dtype_in=str,
@@ -703,7 +703,7 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        return
+        raise Exception("No functionality yet")
 
     @command(
         dtype_in=str,
@@ -720,12 +720,12 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        return
+        raise Exception("No functionality yet")
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def FlushCommandQueue(self):
         """Flushes the queue of time stamped commands."""
-        return
+        raise Exception("No functionality yet")
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def Scan(self):
@@ -735,7 +735,7 @@ class DishManager(SKAController):
         NOTE: This pointing state is currently proposed and there are
         currently no requirements for this functionality.
         """
-        return
+        raise Exception("No functionality yet")
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def SetMaintenanceMode(self):
@@ -748,7 +748,7 @@ class DishManager(SKAController):
         engineers and maintainers to upgrade SW and FW. Dish also enters this
         mode when an emergency stop button is pressed.
         """
-        return
+        raise Exception("No functionality yet")
 
     @command(
         dtype_in=None,
@@ -819,7 +819,7 @@ class DishManager(SKAController):
         conditions. The Dish is able to observe in the STOW position, for the
         purpose of transient detection.
         """
-        return
+        raise Exception("No functionality yet")
 
     @command(
         dtype_in=DevVarDoubleArray,
@@ -835,17 +835,17 @@ class DishManager(SKAController):
         applicable in this state, and the pointingState attribute will report
         SLEW.
         """
-        return
+        raise Exception("No functionality yet")
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StartCapture(self):
         """Capture data from the CBF"""
-        return
+        raise Exception("No functionality yet")
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StopCapture(self):
         """Stop capturing data"""
-        return
+        raise Exception("No functionality yet")
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def Synchronise(self):
@@ -853,7 +853,7 @@ class DishManager(SKAController):
         Reset configured band sample counters. Command only valid in
         SPFRx Data_Capture mode.
         """
-        return
+        raise Exception("No functionality yet")
 
     @command(
         dtype_in=None,
@@ -888,7 +888,7 @@ class DishManager(SKAController):
         When the TrackStop command Is received the Dish will stop tracking
         but will not apply brakes.
         """
-        return
+        raise Exception("No functionality yet")
 
 
 def main(args=None, **kwargs):
