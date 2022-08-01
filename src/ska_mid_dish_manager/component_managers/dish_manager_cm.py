@@ -308,6 +308,43 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback(
             status=TaskStatus.COMPLETED, result=json.dumps(device_command_ids)
         )
+    def set_configureband2_cmd(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Configure frequency band to band 2"""
+
+        self._dish_mode_model.is_command_allowed(
+            dish_mode=DishMode(self.component_state["dish_mode"]).name,
+            command_name="ConfigureBand2",
+        )
+        status, response = self.submit_task(
+            self._set_configureband2_cmd, args=[], task_callback=task_callback
+        )
+        return status, response
+
+    def _set_configureband2_cmd(self, task_callback=None, task_abort_event=None):
+        """Call configureBand on DS, SPF, SPFRX"""
+        if task_callback is not None:
+            task_callback(status=TaskStatus.IN_PROGRESS)
+
+        device_command_ids = {}
+        for device in ["DS", "SPF", "SPFRX"]:
+            command = NestedSubmittedSlowCommand(
+                f"{device}ConfigureBand2",
+                self._command_tracker,
+                self.component_managers[device],
+                "run_device_command",
+                callback=None,
+                logger=self.logger,
+            )
+            _, command_id = command("ConfigureBand2", None)
+            device_command_ids[device] = command_id
+
+        task_callback(
+            status=TaskStatus.COMPLETED, result=json.dumps(device_command_ids)
+
+    )
 
     def stop_communicating(self):
         for com_man in self.component_managers.values():
