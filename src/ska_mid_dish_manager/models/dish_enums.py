@@ -69,7 +69,7 @@ class DSOperatingMode(enum.IntEnum):
     POINT = 7
 
 
-class DSHealthState(enum.IntEnum):
+class HealthState(enum.IntEnum):
     UNKNOWN = 0
     NORMAL = 1
     DEGRADED = 2
@@ -93,13 +93,6 @@ class SPFOperatingMode(enum.IntEnum):
     ERROR = 4
 
 
-class SPFHealthState(enum.IntEnum):
-    UNKNOWN = 0
-    NORMAL = 1
-    DEGRADED = 2
-    FAILED = 3
-
-
 class SPFPowerState(enum.IntEnum):
     # enums are from ICD
     UNKNOWN = 0
@@ -115,10 +108,3 @@ class SPFRxOperatingMode(enum.IntEnum):
     DATA_CAPTURE = 3
     CONFIGURE = 4
     MAINTENANCE = 5
-
-
-class SPFRxHealthState(enum.IntEnum):
-    UNKNOWN = 0
-    NORMAL = 1
-    DEGRADED = 2
-    FAILED = 3

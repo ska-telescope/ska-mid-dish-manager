@@ -14,7 +14,7 @@ from tango import AttrWriteType, Database, DbDevInfo, GreenMode
 from tango.server import Device, attribute, command
 
 from ska_mid_dish_manager.models.dish_enums import (
-    SPFRxHealthState,
+    HealthState,
     SPFRxOperatingMode,
 )
 
@@ -29,8 +29,8 @@ class SPFRxDevice(Device):
 
     def init_device(self):
         super().init_device()
-        self._operatingmode = SPFRxOperatingMode.STARTUP
-        self._healthstate = SPFRxHealthState.UNKNOWN
+        self._operating_mode = SPFRxOperatingMode.STARTUP
+        self._health_state = HealthState.UNKNOWN
 
     @attribute(
         dtype=SPFRxOperatingMode,
@@ -38,26 +38,26 @@ class SPFRxDevice(Device):
         polling_period=100,
     )
     async def operatingMode(self):
-        return self._operatingmode
+        return self._operating_mode
 
     def write_operatingMode(self, new_value):
-        self._operatingmode = new_value
+        self._operating_mode = new_value
 
     @attribute(
-        dtype=SPFRxHealthState,
+        dtype=HealthState,
         access=AttrWriteType.READ_WRITE,
         polling_period=100,
     )
     async def healthState(self):
-        return self._healthstate
+        return self._health_state
 
     def write_healthState(self, new_value):
-        self._healthstate = new_value
+        self._health_state = new_value
 
     @command(dtype_in=None, doc_in="Set SPFRXOperatingMode", dtype_out=None)
     async def SetStandbyMode(self):
         LOGGER.info("Called SetStandbyMode")
-        self._operatingmode = SPFRxOperatingMode.STANDBY
+        self._operating_mode = SPFRxOperatingMode.STANDBY
 
 
 def main():

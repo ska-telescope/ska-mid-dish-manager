@@ -25,9 +25,9 @@ from tango import (
 from tango.server import Device, attribute, command
 
 from ska_mid_dish_manager.models.dish_enums import (
-    DSHealthState,
     DSOperatingMode,
     DSPowerState,
+    HealthState,
 )
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -47,9 +47,9 @@ class DSDevice(Device):
         self.__polled_attr_1 = random.randint(0, 150)
         # set manual change event for double scalars
         self.set_change_event("non_polled_attr_1", True, False)
-        self._operatingmode = DSOperatingMode.UNKNOWN
-        self._powerstate = DSPowerState.OFF
-        self._healthstate = DSHealthState.UNKNOWN
+        self._operating_mode = DSOperatingMode.UNKNOWN
+        self._power_state = DSPowerState.OFF
+        self._health_state = HealthState.UNKNOWN
 
     # ---------------------
     # Non polled attributes
@@ -133,21 +133,21 @@ class DSDevice(Device):
         polling_period=100,
     )
     async def operatingMode(self):
-        return self._operatingmode
+        return self._operating_mode
 
     def write_operatingMode(self, new_value):
-        self._operatingmode = new_value
+        self._operating_mode = new_value
 
     @attribute(
-        dtype=DSHealthState,
+        dtype=HealthState,
         access=AttrWriteType.READ_WRITE,
         polling_period=100,
     )
     async def healthState(self):
-        return self._healthstate
+        return self._health_state
 
     def write_healthState(self, new_value):
-        self._healthstate = new_value
+        self._health_state = new_value
 
     @attribute(
         dtype=DSPowerState,
@@ -155,19 +155,19 @@ class DSDevice(Device):
         polling_period=100,
     )
     async def powerState(self):
-        return self._powerstate
+        return self._power_state
 
     def write_powerState(self, new_value):
-        self._powerstate = new_value
+        self._power_state = new_value
 
     @command(dtype_in=None, doc_in="Set StandbyLPMode", dtype_out=None)
     async def SetStandbyLPMode(self):
-        self._operatingmode = DSOperatingMode.STANDBY_LP
+        self._operating_mode = DSOperatingMode.STANDBY_LP
 
     @command(dtype_in=None, doc_in="Set StandbyFPMode", dtype_out=None)
     async def SetStandbyFPMode(self):
         LOGGER.info("Called SetStandbyMode")
-        self._operatingmode = DSOperatingMode.STANDBY_FP
+        self._operating_mode = DSOperatingMode.STANDBY_FP
 
 
 def main():
