@@ -122,9 +122,3 @@ class SPFRxHealthState(enum.IntEnum):
     NORMAL = 1
     DEGRADED = 2
     FAILED = 3
-
-
-class SPFRxPowerState(enum.IntEnum):
-    UNKNOWN = 0
-    LOW_POWER = 1
-    FULL_POWER = 2
