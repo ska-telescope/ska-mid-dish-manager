@@ -5,6 +5,7 @@
 # pylint: disable=too-few-public-methods
 import networkx as nx
 import rule_engine
+from ska_tango_base.control_model import HealthState
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -167,10 +168,23 @@ def compute_dish_mode(sub_devices_states):
 
 
 def compute_dish_health_state(sub_devices_health_states):
-    for mode, rule in HEALTH_STATE_RULES.items():
+    """Computes the overall dish health states based on the
+       given health states of the sub-devices
+
+       E.g. sub_devices_health_states
+            {
+                'sub_device_1' : HealthState(value).name,
+            }
+    
+    :param: sub_devices_health_states: Health states from the sub-devices
+    :type: sub_devices_health_states: dict
+    :return: The HealthState value computed
+    :rtype: HealthState
+    """
+    for health_state, rule in HEALTH_STATE_RULES.items():
         if rule.matches(sub_devices_health_states):
-            return mode
-    return ""
+            return HealthState[health_state]
+    return HealthState.UNKNOWN
 
 
 class CommandNotAllowed(Exception):

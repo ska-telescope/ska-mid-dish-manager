@@ -1,6 +1,7 @@
 """Unit tests verifying model against dishMode transitions."""
 
 import pytest
+from ska_tango_base.control_model import HealthState
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from ska_mid_dish_manager.models.dish_mode_model import (
@@ -161,7 +162,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "OK",
             },
-            "OK",
+            HealthState.OK,
         ),
         (
             {
@@ -169,7 +170,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "DEGRADED",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -177,7 +178,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -185,7 +186,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "UNKNOWN",
+            HealthState.UNKNOWN,
         ),
         (
             {
@@ -193,7 +194,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "OK",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -201,7 +202,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "OK",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -209,7 +210,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "OK",
             },
-            "UNKNOWN",
+            HealthState.UNKNOWN,
         ),
         (
             {
@@ -217,7 +218,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "OK",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -225,7 +226,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "OK",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -233,7 +234,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "OK",
             },
-            "UNKNOWN",
+            HealthState.UNKNOWN,
         ),
         (
             {
@@ -241,7 +242,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "DEGRADED",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -249,7 +250,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -257,7 +258,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "UNKNOWN",
+            HealthState.UNKNOWN,
         ),
         (
             {
@@ -265,7 +266,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "DEGRADED",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -273,7 +274,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "DEGRADED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -281,7 +282,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "DEGRADED",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -289,7 +290,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "DEGRADED",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -297,7 +298,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "DEGRADED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -305,7 +306,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "DEGRADED",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -313,7 +314,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "OK",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -321,7 +322,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -329,7 +330,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -337,7 +338,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "UNKNOWN",
+            HealthState.UNKNOWN,
         ),
         (
             {
@@ -345,7 +346,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -353,7 +354,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -361,7 +362,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "UNKNOWN",
+            HealthState.UNKNOWN,
         ),
         (
             {
@@ -369,7 +370,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -377,7 +378,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -385,7 +386,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "OK",
             },
-            "UNKNOWN",
+            HealthState.UNKNOWN,
         ),
         (
             {
@@ -393,7 +394,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -401,7 +402,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "DEGRADED",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -409,7 +410,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -417,7 +418,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -425,7 +426,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -433,7 +434,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -441,7 +442,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -449,7 +450,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -457,7 +458,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "OK",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -465,7 +466,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "DEGRADED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -473,7 +474,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -481,7 +482,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -489,7 +490,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -497,7 +498,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "DEGRADED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -505,7 +506,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "DEGRADED",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -513,7 +514,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -521,7 +522,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -529,7 +530,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -537,7 +538,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -545,7 +546,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "DEGRADED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -553,7 +554,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "DEGRADED",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -561,7 +562,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -569,7 +570,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "OK",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -577,7 +578,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "OK",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -585,7 +586,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "OK",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -593,7 +594,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "OK",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -601,7 +602,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "OK",
             },
-            "DEGRADED",
+            HealthState.DEGRADED,
         ),
         (
             {
@@ -609,7 +610,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "OK",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -617,7 +618,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "OK",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -625,7 +626,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -633,7 +634,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -641,7 +642,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "UNKNOWN",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -649,7 +650,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "DEGRADED",
                 "spfrx_health_state": "FAILED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -657,7 +658,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "UNKNOWN",
                 "spfrx_health_state": "DEGRADED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
         (
             {
@@ -665,7 +666,7 @@ def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
                 "spf_health_state": "FAILED",
                 "spfrx_health_state": "DEGRADED",
             },
-            "FAILED",
+            HealthState.FAILED,
         ),
     ],
 )
