@@ -22,7 +22,7 @@ from tango import (
 )
 from tango.server import Device, attribute, command
 
-from ska_mid_dish_manager.models.dish_enums import DSOperatingMode, Band
+from ska_mid_dish_manager.models.dish_enums import Band, DSOperatingMode
 
 
 class DSDevice(Device):

@@ -11,7 +11,7 @@ import os
 from tango import AttrWriteType, Database, DbDevInfo, GreenMode
 from tango.server import Device, attribute, command
 
-from ska_mid_dish_manager.models.dish_enums import SPFRxOperatingMode, Band
+from ska_mid_dish_manager.models.dish_enums import Band, SPFRxOperatingMode
 
 
 class SPFRxDevice(Device):
