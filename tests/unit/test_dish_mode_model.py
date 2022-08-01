@@ -146,6 +146,17 @@ def test_model_dish_mode_transition_accuracy(
             },
             DishMode.OPERATE,
         ),
+        (
+            {
+                "ds_operating_mode": "POINT",
+                "spf_operating_mode": "OPERATE",
+                "spfrx_operating_mode": "DATA_CAPTURE",
+                "ds_power_state": "LOW_POWER",
+                "spf_power_state": "FULL_POWER",
+                "spfrx_power_state": "FULL_POWER",
+            },
+            DishMode.UNKNOWN,
+        ),
     ],
 )
 def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
