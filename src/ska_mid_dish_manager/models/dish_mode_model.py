@@ -86,23 +86,9 @@ HEALTH_STATE_RULES = {
         ")"
     ),
     "FAILED": rule_engine.Rule(
-        "("
-        "    ds_health_state == 'FAILED' and "
-        "    spf_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN'] and "
-        "    spfrx_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN']"
-        ") "
-        "or "
-        "("
-        "    ds_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN'] and "
-        "    spf_health_state == 'FAILED' and "
-        "    spfrx_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN']"
-        ") "
-        "or "
-        "("
-        "    ds_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN'] and "
-        "    spf_health_state in ['OK', 'DEGRADED', 'FAILED', 'UNKNOWN'] and "
-        "    spfrx_health_state == 'FAILED'"
-        ")"
+        "ds_health_state == 'FAILED' or "
+        "spf_health_state == 'FAILED' or "
+        "spfrx_health_state == 'FAILED'"
     ),
     "OK": rule_engine.Rule(
         "ds_health_state == 'OK' and "
