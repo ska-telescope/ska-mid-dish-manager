@@ -180,7 +180,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def _set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
-        if task_callback is not None:
+        if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
@@ -196,9 +196,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             _, command_id = command("SetStandbyLPMode", None)
             device_command_ids[device] = command_id
 
-        task_callback(
-            status=TaskStatus.COMPLETED, result=json.dumps(device_command_ids)
-        )
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result=json.dumps(device_command_ids),
+            )
 
     def set_standby_fp_mode(
         self,
@@ -216,7 +218,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
         """Set StandbyFP mode on sub devices as long running commands"""
-        task_callback(status=TaskStatus.IN_PROGRESS)
+        if task_callback:
+            task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
         for device in ["DS", "SPF", "SPFRX"]:
@@ -231,9 +234,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             _, command_id = command("SetStandbyFPMode", None)
             device_command_ids[device] = command_id
 
-        task_callback(
-            status=TaskStatus.COMPLETED, result=json.dumps(device_command_ids)
-        )
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result=json.dumps(device_command_ids),
+            )
 
     def set_operate_mode(
         self,
@@ -251,7 +256,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def _set_operate_mode(self, task_callback=None, task_abort_event=None):
-        if task_callback is not None:
+        if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
@@ -267,9 +272,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             _, command_id = command("SetOperateMode", None)
             device_command_ids[device] = command_id
 
-        task_callback(
-            status=TaskStatus.COMPLETED, result=json.dumps(device_command_ids)
-        )
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result=json.dumps(device_command_ids),
+            )
 
     def track_cmd(
         self,
@@ -289,7 +296,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def _track_cmd(self, task_callback=None, task_abort_event=None):
-        if task_callback is not None:
+        if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
@@ -305,9 +312,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             _, command_id = command("Track", None)
             device_command_ids[device] = command_id
 
-        task_callback(
-            status=TaskStatus.COMPLETED, result=json.dumps(device_command_ids)
-        )
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result=json.dumps(device_command_ids),
+            )
 
     def stop_communicating(self):
         for com_man in self.component_managers.values():

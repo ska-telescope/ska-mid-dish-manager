@@ -286,7 +286,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param: task_callback: Callback to report status
         :type: task_callback: Callable, optional
         """
-        task_callback(status=TaskStatus.IN_PROGRESS)
+        if task_callback:
+            task_callback(status=TaskStatus.IN_PROGRESS)
         retry_count = 0
         while True:
             # Leave thread if aborted
@@ -328,7 +329,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         task_callback: Callable = None,
         task_abort_event: Event = None,
     ):
-        task_callback(TaskStatus.IN_PROGRESS)
+        if task_callback:
+            task_callback(TaskStatus.IN_PROGRESS)
         if task_abort_event.is_set():
             task_callback(TaskStatus.ABORTED)
             return
@@ -350,10 +352,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             )
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception(err)
-            task_callback(TaskStatus.FAILED, exception=err)
+            if task_callback:
+                task_callback(TaskStatus.FAILED, exception=err)
             return
 
-        task_callback(TaskStatus.COMPLETED, result=str(result))
+        if task_callback:
+            task_callback(TaskStatus.COMPLETED, result=str(result))
 
     # pylint: disable=no-self-use
     @_check_connection
