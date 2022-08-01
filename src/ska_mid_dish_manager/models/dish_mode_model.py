@@ -41,56 +41,24 @@ DISH_MODE_RULES = {
         "spfrx_operating_mode  == 'MAINT'"
     ),
     "OPERATE": rule_engine.Rule(
-        "("
-        "    ds_operating_mode  == 'POINT' and "
-        "    spf_operating_mode  == 'OPERATE' and "
-        "    spfrx_operating_mode  == 'DATA_CAPTURE'"
-        ") "
-        "and "
-        "("
-        "    ds_power_state == 'FULL_POWER' and "
-        "    spf_power_state == 'FULL_POWER' and "
-        "    spfrx_power_state == 'FULL_POWER'"
-        ")"
+        "ds_operating_mode  == 'POINT' and "
+        "spf_operating_mode  == 'OPERATE' and "
+        "spfrx_operating_mode  == 'DATA_CAPTURE'"
     ),
     "STANDBY_FP": rule_engine.Rule(
-        "("
-        "    ds_operating_mode  == 'STANDBY_FP' and "
-        "    spf_operating_mode  == 'OPERATE' and "
-        "    spfrx_operating_mode  in ['STANDBY', 'DATA_CAPTURE']"
-        ") "
-        "and "
-        "("
-        "    ds_power_state == 'FULL_POWER' and "
-        "    spf_power_state == 'FULL_POWER' and "
-        "    spfrx_power_state == 'FULL_POWER'"
-        ")"
+        "ds_operating_mode  == 'STANDBY_FP' and "
+        "spf_operating_mode  == 'OPERATE' and "
+        "spfrx_operating_mode  in ['STANDBY', 'DATA_CAPTURE']"
     ),
     "STANDBY_LP": rule_engine.Rule(
-        "("
-        "    ds_operating_mode == 'STANDBY_LP' and "
-        "    spf_operating_mode  == 'STANDBY_LP' and "
-        "    spfrx_operating_mode  == 'STANDBY'"
-        ") "
-        "and "
-        "("
-        "    ds_power_state == 'LOW_POWER' and "
-        "    spf_power_state == 'LOW_POWER' and "
-        "    spfrx_power_state == 'LOW_POWER'"
-        ")"
+        "ds_operating_mode == 'STANDBY_LP' and "
+        "spf_operating_mode  == 'STANDBY_LP' and "
+        "spfrx_operating_mode  == 'STANDBY'"
     ),
     "STOW": rule_engine.Rule(
-        "("
-        "    ds_operating_mode  == 'STOW' and "
-        "    spf_operating_mode in ['STANDBY_LP', 'OPERATE'] and "
-        "    spfrx_operating_mode in ['STANDBY_LP', 'STANDBY_FP', 'DATA_CAPTURE']"  # noqa: E501
-        ") "
-        "and "
-        "("
-        "    ds_power_state == 'LOW_POWER' and "
-        "    spf_power_state == 'LOW_POWER' and "
-        "    spfrx_power_state == 'LOW_POWER'"
-        ")"
+        "ds_operating_mode  == 'STOW' and "
+        "spf_operating_mode in ['STANDBY_LP', 'OPERATE'] and "
+        "spfrx_operating_mode in ['STANDBY_LP', 'STANDBY_FP', 'DATA_CAPTURE']"
     ),
     # "SHUTDOWN": "",
     # "STARTUP": "",
@@ -170,7 +138,6 @@ def compute_dish_mode(sub_devices_states):
         E.g. sub-devices_states
             {
                 'sub_device_operating_mode': DeviceOperatingMode(value).name
-                'sub_device_power_state': DevicePowerState(value).name
                 ...
             }
 
