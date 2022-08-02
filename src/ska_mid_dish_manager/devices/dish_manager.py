@@ -871,11 +871,11 @@ class DishManager(SKAController):
         configured using trackProgramMode attribute.
         Tracking using program table (A, B) is pre‐configured using the
         following attributes:
-            1. trackInterpolationMode: to select type of interpolation,
-                Newton (default) or Spline.
-            2. programTrackTable: to load program table data
-                (Az,El,timestamp sets) on selected ACU table
-            3. trackTableLoadMode: to add/append new track table data
+        1. trackInterpolationMode: to select type of
+        interpolation, Newton (default) or Spline.
+        2. programTrackTable: to load program table data
+        (Az,El,timestamp sets) on selected ACU table
+        3. trackTableLoadMode: to add/append new track table data
         """
         handler = self.get_command_object("Track")
         result_code, unique_id = handler()
