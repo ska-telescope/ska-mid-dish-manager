@@ -112,13 +112,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # component state will come from args and kwargs
         # TODO: same as TODO comment in _communication_state_changed
         # Aggregate sub-devices component states
-        # {'connection_state': 'monitoring',
-        #  'operating_mode': <DSOperatingMode.STANDBY_FP: 3>,
-        #  'pointing_state': None, 'achieved_target_lock': None}
-        # {'connection_state': 'monitoring',
-        #  'operating_mode': <SPFOperatingMode.OPERATE: 2>}
-        # {'connection_state': 'monitoring',
-        #  'operating_mode': <SPFRxOperatingMode.STANDBY: 2>}
+        # {'ds_connection_state': 'monitoring',
+        #  'ds_operating_mode': <DSOperatingMode.STANDBY_FP: 3>,
+        #  'ds_pointing_state': None, 'ds_achieved_target_lock': None}
+        # {'spf_connection_state': 'monitoring',
+        #  'spf_operating_mode': <SPFOperatingMode.OPERATE: 2>}
+        # {'spfrx_connection_state': 'monitoring',
+        #  'spfrx_operating_mode': <SPFRxOperatingMode.STANDBY: 2>}
         # combined_state = {
         #     **ds_comp_state, **spf_comp_state, **spfrx_comp_state
         # }
