@@ -9,13 +9,11 @@ from ska_mid_dish_manager.devices.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
-    DSOperatingMode,
-    PointingState,
-    SPFOperatingMode,
     SPFRxOperatingMode,
 )
 
 LOGGER = logging.getLogger(__name__)
+
 
 # pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
