@@ -108,6 +108,23 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _component_state_changed(self, *args, **kwargs):
         # component state will come from args and kwargs
         # TODO: same as TODO comment in _communication_state_changed
+        # Aggregate sub-devices component states
+        # {'connection_state': 'monitoring',
+        #  'operating_mode': <DSOperatingMode.STANDBY_FP: 3>,
+        #  'pointing_state': None, 'achieved_target_lock': None}
+        # {'connection_state': 'monitoring',
+        #  'operating_mode': <SPFOperatingMode.OPERATE: 2>}
+        # {'connection_state': 'monitoring',
+        #  'operating_mode': <SPFRxOperatingMode.STANDBY: 2>}
+        # combined_state = {
+        #     **ds_comp_state, **spf_comp_state, **spfrx_comp_state
+        # }
+        # dish_mode = compute_dish_mode(combined_state)
+        # dish_health_state = compute_dish_health_state(combined_state)
+        # self._update_component_state(dish_mode=aggregate_dish_mode)
+        # self._update_component_state(
+        #     health_state=aggregate_dish_health_state
+        # )
         ds_comp_state = self.component_managers["DS"].component_state
         spf_comp_state = self.component_managers["SPF"].component_state
         spfrx_comp_state = self.component_managers["SPFRX"].component_state
