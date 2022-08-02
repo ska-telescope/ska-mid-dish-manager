@@ -134,6 +134,38 @@ def test_model_dish_mode_transition_accuracy(
             },
             DishMode.OPERATE,
         ),
+        (
+            {
+                "ds_operating_mode": "STANDBY_FP",
+                "spf_operating_mode": "STANDBY_LP",
+                "spfrx_operating_mode": "STANDBY",
+            },
+            DishMode.UNKNOWN,
+        ),
+        (
+            {
+                "ds_operating_mode": "STANDBY_LP",
+                "spf_operating_mode": "STANDBY_FP",
+                "spfrx_operating_mode": "STANDBY",
+            },
+            DishMode.UNKNOWN,
+        ),
+        (
+            {
+                "ds_operating_mode": "STOW",
+                "spf_operating_mode": "STANDBY_FP",
+                "spfrx_operating_mode": "STANDBY",
+            },
+            DishMode.UNKNOWN,
+        ),
+        (
+            {
+                "ds_operating_mode": "STOW",
+                "spf_operating_mode": "MAINT",
+                "spfrx_operating_mode": "STANDBY",
+            },
+            DishMode.UNKNOWN,
+        ),
     ],
 )
 def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):

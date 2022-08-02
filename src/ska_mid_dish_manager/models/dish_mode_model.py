@@ -60,8 +60,6 @@ DISH_MODE_RULES = {
         "spf_operating_mode in ['STANDBY_LP', 'OPERATE'] and "
         "spfrx_operating_mode in ['STANDBY', 'DATA_CAPTURE']"
     ),
-    # "SHUTDOWN": "",
-    # "STARTUP": "",
 }
 
 
