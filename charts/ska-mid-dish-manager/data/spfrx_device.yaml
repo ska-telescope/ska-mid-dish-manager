@@ -2,15 +2,16 @@ name: "spfrx-device-{{.Release.Name}}"
 function: test-device
 domain: testing
 command: "/usr/local/bin/SPFRxDevice "
-instances: ["01"]
 server:
   name: "SPFRxDevice"
   instances:
-    - name: "01"
+  {{- range  .Values.coalesced_dishes }}
+    - name: "{{ . }}"
       classes:
         - name: "SPFRxDevice"
           devices:
-            - name: "test/spfrx/1"
+            - name: "mid_d{{ printf "%04s" . }}/spfrx/simulator"
+  {{- end }}
 depends_on:
   - device: sys/database/2
 image:

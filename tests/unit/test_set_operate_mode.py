@@ -57,10 +57,10 @@ class TestSetOperateMode:
         spf_cm = class_instance.component_manager.component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         # Force dishManager dishMode to go to OPERATE
-        ds_cm._update_component_state(operating_mode=DSOperatingMode.POINT)
-        spf_cm._update_component_state(operating_mode=SPFOperatingMode.OPERATE)
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+        spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         spfrx_cm._update_component_state(
-            operating_mode=SPFRxOperatingMode.DATA_CAPTURE
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
         event_store.wait_for_value(DishMode.OPERATE)
 
@@ -95,12 +95,10 @@ class TestSetOperateMode:
         spf_cm = class_instance.component_manager.component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         # Force dishManager dishMode to go to STANDBY_FP
-        ds_cm._update_component_state(
-            operating_mode=DSOperatingMode.STANDBY_FP
-        )
-        spf_cm._update_component_state(operating_mode=SPFOperatingMode.OPERATE)
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+        spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         spfrx_cm._update_component_state(
-            operating_mode=SPFRxOperatingMode.STANDBY
+            operatingmode=SPFRxOperatingMode.STANDBY
         )
         event_store.wait_for_value(DishMode.STANDBY_FP)
 
@@ -114,11 +112,11 @@ class TestSetOperateMode:
         # transition subservient devices to their respective operatingMode
         # and observe that DishManager transitions dishMode to OPERATE mode
         # SPF are already in the expected operatingMode
-        ds_cm._update_component_state(operating_mode=DSOperatingMode.POINT)
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
         assert device_proxy.dishMode == DishMode.STANDBY_FP
 
         spfrx_cm._update_component_state(
-            operating_mode=SPFRxOperatingMode.DATA_CAPTURE
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
         # we can now expect dishMode to transition to OPERATE
         event_store.wait_for_value(DishMode.OPERATE)

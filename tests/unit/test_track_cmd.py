@@ -99,14 +99,12 @@ class TestTrack:
             )
 
         # Force dishManager dishMode to go to OPERATE
-        self.ds_cm._update_component_state(
-            operating_mode=DSOperatingMode.POINT
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
         self.spf_cm._update_component_state(
-            operating_mode=SPFOperatingMode.OPERATE
+            operatingmode=SPFOperatingMode.OPERATE
         )
         self.spfrx_cm._update_component_state(
-            operating_mode=SPFRxOperatingMode.DATA_CAPTURE
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
         event_store.wait_for_value(DishMode.OPERATE)
         self.ds_cm._update_component_state(pointing_state=PointingState.READY)
