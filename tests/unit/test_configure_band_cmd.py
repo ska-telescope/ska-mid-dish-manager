@@ -19,8 +19,8 @@ LOGGER = logging.getLogger(__name__)
 # pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
 @pytest.mark.forked
-class TestTrack:
-    """Tests for Track"""
+class ConfigureBand2:
+    """Tests for ConfigureBand2"""
 
     def setup_method(self):
         """Set up context"""
