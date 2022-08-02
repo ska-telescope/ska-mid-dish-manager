@@ -50,6 +50,9 @@ class DSDevice(Device):
         self._operating_mode = DSOperatingMode.UNKNOWN
         self._power_state = DSPowerState.OFF
         self._health_state = HealthState.UNKNOWN
+        self.set_change_event("operatingMode", True)
+        self.set_change_event("healthState", True)
+        self.set_change_event("powerState", True)
 
     # ---------------------
     # Non polled attributes
@@ -130,44 +133,46 @@ class DSDevice(Device):
     @attribute(
         dtype=DSOperatingMode,
         access=AttrWriteType.READ_WRITE,
-        polling_period=100,
     )
     async def operatingMode(self):
         return self._operating_mode
 
     def write_operatingMode(self, new_value):
         self._operating_mode = new_value
+        self.push_change_event("operatingMode", self._operating_mode)
 
     @attribute(
         dtype=HealthState,
         access=AttrWriteType.READ_WRITE,
-        polling_period=100,
     )
     async def healthState(self):
         return self._health_state
 
     def write_healthState(self, new_value):
         self._health_state = new_value
+        self.push_change_event("healthState", self._health_state)
 
     @attribute(
         dtype=DSPowerState,
         access=AttrWriteType.READ_WRITE,
-        polling_period=100,
     )
     async def powerState(self):
         return self._power_state
 
     def write_powerState(self, new_value):
         self._power_state = new_value
+        self.push_change_event("powerState", self._power_state)
 
     @command(dtype_in=None, doc_in="Set StandbyLPMode", dtype_out=None)
     async def SetStandbyLPMode(self):
         self._operating_mode = DSOperatingMode.STANDBY_LP
+        self.push_change_event("operatingMode", self._operating_mode)
 
     @command(dtype_in=None, doc_in="Set StandbyFPMode", dtype_out=None)
     async def SetStandbyFPMode(self):
         LOGGER.info("Called SetStandbyMode")
         self._operating_mode = DSOperatingMode.STANDBY_FP
+        self.push_change_event("operatingMode", self._operating_mode)
 
 
 def main():
