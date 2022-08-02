@@ -12,10 +12,18 @@ This device provides master control and rolled-up monitoring of dish. When comma
   :alt: Dish LMC diagram
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Modules
+   :maxdepth: 1
+   :caption: DishManager Guide
 
-   modules/modules.rst
+   guide/dish_manager_design
+   guide/component_managers
+   guide/dish_manager_models
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API
+
+   api/index
 
 Indices and tables
 ==================
