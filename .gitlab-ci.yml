@@ -36,7 +36,7 @@ include:
 
   # Docs pages
   - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/docs-pages.gitlab-ci.yml'
+    file: 'gitlab-ci/includes/docs.gitlab-ci.yml'
 
   # Create Gitlab CI badges from CI metrics
   - project: 'ska-telescope/templates-repository'
