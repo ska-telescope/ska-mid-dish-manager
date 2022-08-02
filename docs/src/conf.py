@@ -45,6 +45,7 @@ sys.path.insert(0, os.path.abspath("../../src"))
 # adapted from ska-low-mccs conf.py
 # pylint: disable=invalid-name
 autodoc_mock_imports = [
+    "transitions",
     "networkx",
     "ska_tango_base",
     "tango",
