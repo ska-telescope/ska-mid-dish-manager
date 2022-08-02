@@ -285,3 +285,8 @@ def component_state_store():
                 self._queue.get()
 
     return ComponentStateStore()
+
+
+@pytest.fixture
+def ds_device_fqdn():
+    return "mid_d0001/lmc/ds_simulator"

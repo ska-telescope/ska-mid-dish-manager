@@ -77,12 +77,10 @@ class TestSetStandByLPMode:
         )
 
         # Force dishManager dishMode to go to STANDBY-FP
-        ds_cm._update_component_state(
-            operating_mode=DSOperatingMode.STANDBY_FP
-        )
-        spf_cm._update_component_state(operating_mode=SPFOperatingMode.OPERATE)
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+        spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         spfrx_cm._update_component_state(
-            operating_mode=SPFRxOperatingMode.STANDBY
+            operatingmode=SPFRxOperatingMode.STANDBY
         )
         assert event_store.wait_for_value(DishMode.STANDBY_FP)
 
@@ -98,13 +96,11 @@ class TestSetStandByLPMode:
         # and observe that DishManager transitions dishMode to LP mode. No
         # need to change the component state of SPFRX since it's in the
         # expected operating mode
-        ds_cm._update_component_state(
-            operating_mode=DSOperatingMode.STANDBY_LP
-        )
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
         assert device_proxy.dishMode == DishMode.STANDBY_FP
 
         spf_cm._update_component_state(
-            operating_mode=SPFOperatingMode.STANDBY_LP
+            operatingmode=SPFOperatingMode.STANDBY_LP
         )
         # we can now expect dishMode to transition to STANDBY_LP
         assert event_store.wait_for_value(DishMode.STANDBY_LP)
