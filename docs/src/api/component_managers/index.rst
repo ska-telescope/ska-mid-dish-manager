@@ -1,6 +1,6 @@
-==========================
-Package Component Managers
-==========================
+==================
+Component Managers
+==================
 
 .. automodule:: ska_mid_dish_manager.component_managers
 
