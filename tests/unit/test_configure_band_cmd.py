@@ -1,3 +1,4 @@
+"""Unit tests for the ConfigureBand2 command on dish manager."""
 import logging
 from unittest.mock import MagicMock, patch
 
@@ -86,6 +87,6 @@ class TestTrack:
         # Clear out the queue to make sure we don't catch old events
         event_store.clear_queue()
 
-        # Request ConfigureBand2 on SPFRx
+        # Request ConfigureBand2 on Dish manager
         [[_], [unique_id]] = self.device_proxy.ConfigureBand2()
         assert event_store.wait_for_command_id(unique_id)
