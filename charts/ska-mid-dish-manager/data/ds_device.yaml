@@ -6,11 +6,13 @@ instances: ["01"]
 server:
   name: "DSDevice"
   instances:
-    - name: "01"
+  {{- range  .Values.coalesced_dishes }}
+    - name: "{{ . }}"
       classes:
         - name: "DSDevice"
           devices:
-            - name: "test/ds/1"
+            - name: "mid_d{{ printf "%04s" . }}/lmc/ds_simulator"
+  {{- end }}
 depends_on:
   - device: sys/database/2
 image:

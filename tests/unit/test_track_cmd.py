@@ -99,14 +99,12 @@ class TestTrack:
             )
 
         # Force dishManager dishMode to go to OPERATE
-        self.ds_cm._update_component_state(
-            operating_mode=DSOperatingMode.POINT
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
         self.spf_cm._update_component_state(
-            operating_mode=SPFOperatingMode.OPERATE
+            operatingmode=SPFOperatingMode.OPERATE
         )
         self.spfrx_cm._update_component_state(
-            operating_mode=SPFRxOperatingMode.DATA_CAPTURE
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
         event_store.wait_for_value(DishMode.OPERATE)
         self.ds_cm._update_component_state(pointing_state=PointingState.READY)
@@ -117,9 +115,7 @@ class TestTrack:
 
         # Request Track on Dish
         [[_], [unique_id]] = self.device_proxy.Track()
-        assert event_store.wait_for_command_result(
-            unique_id, '"Track command queued on ds"'
-        )
+        assert event_store.wait_for_command_id(unique_id)
 
         # transition DS pointingState to TRACK
         self.ds_cm._update_component_state(pointing_state=PointingState.SLEW)

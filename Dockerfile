@@ -7,6 +7,7 @@ FROM $BASE_IMAGE
 # install poetry
 USER root
 RUN pip3 install poetry
+RUN apt-get update && apt-get install -y git
 
 COPY pyproject.toml poetry.lock* ./
 

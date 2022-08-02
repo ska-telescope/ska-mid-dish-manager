@@ -70,13 +70,35 @@ class DSOperatingMode(enum.IntEnum):
     POINT = 7
 
 
-class SPFOperatingMode(enum.IntEnum):
+class HealthState(enum.IntEnum):
+    UNKNOWN = 0
+    NORMAL = 1
+    DEGRADED = 2
+    FAILED = 3
+
+
+class DSPowerState(enum.IntEnum):
     # enums are from ICD
+    OFF = 0
+    UPS = 1
+    FULL_POWER = 2
+    LOW_POWER = 3
+    UNKNOWN = 4
+
+
+class SPFOperatingMode(enum.IntEnum):
     STARTUP = 0
     STANDBY_LP = 1
     OPERATE = 2
     MAINTENANCE = 3
     ERROR = 4
+
+
+class SPFPowerState(enum.IntEnum):
+    # enums are from ICD
+    UNKNOWN = 0
+    LOW_POWER = 1
+    FULL_POWER = 2
 
 
 class SPFRxOperatingMode(enum.IntEnum):

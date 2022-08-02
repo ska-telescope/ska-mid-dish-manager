@@ -1,12 +1,13 @@
 """Component manager for a DishManager tango device"""
+import json
 import logging
-from threading import Event
-from typing import Any, AnyStr, Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
 from ska_tango_base.control_model import CommunicationStatus, HealthState
 from ska_tango_base.executor import TaskStatus
 
+from ska_mid_dish_manager.commands import NestedSubmittedSlowCommand
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import (
@@ -36,6 +37,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def __init__(
         self,
         logger: logging.Logger,
+        command_tracker,
         *args,
         ds_device_fqdn: str = "mid_d0001/lmc/ds_simulator",
         spf_device_fqdn: str = "mid_d0001/spf/simulator",
@@ -56,11 +58,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
         self._dish_mode_model = DishModeModel()
+        self._command_tracker = command_tracker
         self.component_managers = {}
         self.component_managers["DS"] = DSComponentManager(
             ds_device_fqdn,
             logger,
-            operating_mode=None,
+            operatingmode=None,
             pointing_state=None,
             achieved_target_lock=None,
             component_state_callback=self._component_state_changed,
@@ -69,14 +72,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.component_managers["SPFRX"] = SPFRxComponentManager(
             spfrx_device_fqdn,
             logger,
-            operating_mode=None,
+            operatingmode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
         self.component_managers["SPF"] = SPFComponentManager(
             spf_device_fqdn,
             logger,
-            operating_mode=None,
+            operatingmode=None,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
@@ -148,27 +151,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # STANDBY_LP rules
         if (
-            ds_comp_state["operating_mode"] == DSOperatingMode.STANDBY_LP
-            and spf_comp_state["operating_mode"] == SPFOperatingMode.STANDBY_LP
-            and spfrx_comp_state["operating_mode"]
-            == SPFRxOperatingMode.STANDBY
+            ds_comp_state["operatingmode"] == DSOperatingMode.STANDBY_LP
+            and spf_comp_state["operatingmode"] == SPFOperatingMode.STANDBY_LP
+            and spfrx_comp_state["operatingmode"] == SPFRxOperatingMode.STANDBY
         ):
             self._update_component_state(dish_mode=DishMode.STANDBY_LP)
 
         # STANDBY_FP rules
         if (
-            ds_comp_state["operating_mode"] == DSOperatingMode.STANDBY_FP
-            and spf_comp_state["operating_mode"] == SPFOperatingMode.OPERATE
-            and spfrx_comp_state["operating_mode"]
+            ds_comp_state["operatingmode"] == DSOperatingMode.STANDBY_FP
+            and spf_comp_state["operatingmode"] == SPFOperatingMode.OPERATE
+            and spfrx_comp_state["operatingmode"]
             in (SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.DATA_CAPTURE)
         ):
             self._update_component_state(dish_mode=DishMode.STANDBY_FP)
 
         # OPERATE rules
         if (
-            ds_comp_state["operating_mode"] == DSOperatingMode.POINT
-            and spf_comp_state["operating_mode"] == SPFOperatingMode.OPERATE
-            and spfrx_comp_state["operating_mode"]
+            ds_comp_state["operatingmode"] == DSOperatingMode.POINT
+            and spf_comp_state["operatingmode"] == SPFOperatingMode.OPERATE
+            and spfrx_comp_state["operatingmode"]
             == SPFRxOperatingMode.DATA_CAPTURE
         ):
             self._update_component_state(dish_mode=DishMode.OPERATE)
@@ -178,64 +180,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def start_communicating(self):
         for com_man in self.component_managers.values():
             com_man.start_communicating()
-
-    def _cm_task_callback(
-        self,
-        status: TaskStatus,
-        result: Optional[Any] = None,
-        message: Optional[Any] = None,
-        exception: Optional[Any] = None,
-    ):
-        if exception:
-            self.logger.info(
-                "Command execution task callback [%s, %s, %s]",
-                status,
-                result,
-                message,
-                exception,
-            )
-        else:
-            self.logger.info(
-                "Command execution task callback [%s, %s, %s]",
-                status,
-                result,
-                message,
-            )
-
-    # pylint:disable=protected-access
-    @classmethod
-    def _execute_sub_device_command(  # pylint:disable=too-many-arguments
-        cls,
-        logger,
-        component_manager,
-        command_name: AnyStr,
-        task_abort_event: Event = None,
-        task_callback: Callable = None,
-    ):
-        logger.info("About to execute command [%s]", command_name)
-        if task_abort_event.is_set():
-            task_callback(
-                status=TaskStatus.ABORTED,
-                message=f"From {component_manager._tango_device_fqdn}",
-            )
-            return
-        try:
-            task_callback(
-                status=TaskStatus.IN_PROGRESS,
-                message=f"From {component_manager._tango_device_fqdn}",
-            )
-            command_result = component_manager.run_device_command(command_name)
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=command_result,
-                message=f"From {component_manager._tango_device_fqdn}",
-            )
-        except Exception as err:  # pylint: disable=W0703
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=err,
-                message=f"From {component_manager._tango_device_fqdn}",
-            )
 
     def set_standby_lp_mode(
         self,
@@ -247,59 +191,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dish_mode=DishMode(self.component_state["dish_mode"]).name,
             command_name="SetStandbyLPMode",
         )
-        return self.submit_task(
-            self._set_standby_lp_mode,
-            task_callback=task_callback,
+        status, response = self.submit_task(
+            self._set_standby_lp_mode, args=[], task_callback=task_callback
         )
+        return status, response
 
     def _set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
-        if task_callback is not None:
+        if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
-        result = self.submit_task(
-            self._execute_sub_device_command,
-            args=[
-                self.logger,
-                self.component_managers["DS"],
-                "SetStandbyLPMode",
-            ],
-            task_callback=self._cm_task_callback,
-        )
-        self.logger.info(
-            "Result of SetStandbyLPMode on ds_cm [%s]",
-            result,
-        )
-        result = self.submit_task(
-            self._execute_sub_device_command,
-            args=[
-                self.logger,
-                self.component_managers["SPF"],
-                "SetStandbyLPMode",
-            ],
-            task_callback=self._cm_task_callback,
-        )
-        self.logger.info(
-            "Result of SetStandbyLPMode on spf_cm [%s]",
-            result,
-        )
-        result = self.submit_task(
-            self._execute_sub_device_command,
-            args=[
-                self.logger,
-                self.component_managers["SPFRX"],
-                "SetStandbyLPMode",
-            ],
-            task_callback=self._cm_task_callback,
-        )
-        self.logger.info(
-            "Result of SetStandbyLPMode on spfrx_cm [%s]",
-            result,
-        )
+        device_command_ids = {}
+        for device in ["DS", "SPF", "SPFRX"]:
+            command = NestedSubmittedSlowCommand(
+                f"{device}_SetStandbyLPMode",
+                self._command_tracker,
+                self.component_managers[device],
+                "run_device_command",
+                callback=None,
+                logger=self.logger,
+            )
+            _, command_id = command("SetStandbyLPMode", None)
+            device_command_ids[device] = command_id
 
-        if task_callback is not None:
+        if task_callback:
             task_callback(
                 status=TaskStatus.COMPLETED,
-                result="SetStandbyLPMode queued on ds, spf and spfrx",
+                result=json.dumps(device_command_ids),
             )
 
     def set_standby_fp_mode(
@@ -307,65 +224,37 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STANDBY_LP mode"""
-
         self._dish_mode_model.is_command_allowed(
             dish_mode=DishMode(self.component_state["dish_mode"]).name,
             command_name="SetStandbyFPMode",
         )
-
-        return self.submit_task(
-            self._set_standby_fp_mode,
-            task_callback=task_callback,
+        status, response = self.submit_task(
+            self._set_standby_fp_mode, args=[], task_callback=task_callback
         )
+        return status, response
 
     def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
-        if task_callback is not None:
+        """Set StandbyFP mode on sub devices as long running commands"""
+        if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
-        result = self.submit_task(
-            self._execute_sub_device_command,
-            args=[
-                self.logger,
-                self.component_managers["DS"],
-                "SetStandbyFPMode",
-            ],
-            task_callback=self._cm_task_callback,
-        )
-        self.logger.info(
-            "Result of SetStandbyFPMode on ds_cm [%s]",
-            result,
-        )
-        result = self.submit_task(
-            self._execute_sub_device_command,
-            args=[
-                self.logger,
-                self.component_managers["SPF"],
-                "SetStandbyFPMode",
-            ],
-            task_callback=self._cm_task_callback,
-        )
-        self.logger.info(
-            "Result of SetStandbyFPMode on spf_cm [%s]",
-            result,
-        )
-        result = self.submit_task(
-            self._execute_sub_device_command,
-            args=[
-                self.logger,
-                self.component_managers["SPFRX"],
-                "SetStandbyFPMode",
-            ],
-            task_callback=self._cm_task_callback,
-        )
-        self.logger.info(
-            "Result of SetStandbyFPMode on spfrx_cm [%s]",
-            result,
-        )
+        device_command_ids = {}
+        for device in ["DS", "SPF", "SPFRX"]:
+            command = NestedSubmittedSlowCommand(
+                f"{device}_SetStandbyFPMode",
+                self._command_tracker,
+                self.component_managers[device],
+                "run_device_command",
+                callback=None,
+                logger=self.logger,
+            )
+            _, command_id = command("SetStandbyFPMode", None)
+            device_command_ids[device] = command_id
 
-        if task_callback is not None:
+        if task_callback:
             task_callback(
                 status=TaskStatus.COMPLETED,
-                result="SetStandbyFPMode queued on ds, spf and spfrx",
+                result=json.dumps(device_command_ids),
             )
 
     def set_operate_mode(
@@ -378,59 +267,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dish_mode=DishMode(self.component_state["dish_mode"]).name,
             command_name="SetOperateMode",
         )
-        return self.submit_task(
-            self._set_operate_mode,
-            task_callback=task_callback,
+        status, response = self.submit_task(
+            self._set_operate_mode, args=[], task_callback=task_callback
         )
+        return status, response
 
     def _set_operate_mode(self, task_callback=None, task_abort_event=None):
-        if task_callback is not None:
+        if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
-        result = self.submit_task(
-            self._execute_sub_device_command,
-            args=[
-                self.logger,
-                self.component_managers["DS"],
-                "SetOperateMode",
-            ],
-            task_callback=self._cm_task_callback,
-        )
-        self.logger.info(
-            "Result of SetOperateMode on ds_cm [%s]",
-            result,
-        )
-        result = self.submit_task(
-            self._execute_sub_device_command,
-            args=[
-                self.logger,
-                self.component_managers["SPF"],
-                "SetOperateMode",
-            ],
-            task_callback=self._cm_task_callback,
-        )
-        self.logger.info(
-            "Result of SetOperateMode on spf_cm [%s]",
-            result,
-        )
-        result = self.submit_task(
-            self._execute_sub_device_command,
-            args=[
-                self.logger,
-                self.component_managers["SPFRX"],
-                "SetOperateMode",
-            ],
-            task_callback=self._cm_task_callback,
-        )
-        self.logger.info(
-            "Result of SetOperateMode on spfrx_cm [%s]",
-            result,
-        )
+        device_command_ids = {}
+        for device in ["DS", "SPF", "SPFRX"]:
+            command = NestedSubmittedSlowCommand(
+                f"{device}_SetOperateMode",
+                self._command_tracker,
+                self.component_managers[device],
+                "run_device_command",
+                callback=None,
+                logger=self.logger,
+            )
+            _, command_id = command("SetOperateMode", None)
+            device_command_ids[device] = command_id
 
-        if task_callback is not None:
+        if task_callback:
             task_callback(
                 status=TaskStatus.COMPLETED,
-                result="SetOperateMode queued on ds, spf and spfrx",
+                result=json.dumps(device_command_ids),
             )
 
     def track_cmd(
@@ -445,33 +307,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"mode. Current dishMode: {dish_mode}."
             )
 
-        return self.submit_task(
-            self._track_cmd,
-            task_callback=task_callback,
+        status, response = self.submit_task(
+            self._track_cmd, args=[], task_callback=task_callback
         )
+        return status, response
 
     def _track_cmd(self, task_callback=None, task_abort_event=None):
-        if task_callback is not None:
+        if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
-        result = self.submit_task(
-            self._execute_sub_device_command,
-            args=[
-                self.logger,
-                self.component_managers["DS"],
-                "Track",
-            ],
-            task_callback=self._cm_task_callback,
-        )
-        self.logger.info(
-            "Result of Track on ds_cm [%s]",
-            result,
-        )
+        device_command_ids = {}
+        for device in ["DS", "SPF", "SPFRX"]:
+            command = NestedSubmittedSlowCommand(
+                f"{device}_Track",
+                self._command_tracker,
+                self.component_managers[device],
+                "run_device_command",
+                callback=None,
+                logger=self.logger,
+            )
+            _, command_id = command("Track", None)
+            device_command_ids[device] = command_id
 
-        if task_callback is not None:
+        if task_callback:
             task_callback(
                 status=TaskStatus.COMPLETED,
-                result="Track command queued on ds",
+                result=json.dumps(device_command_ids),
             )
 
     def stop_communicating(self):

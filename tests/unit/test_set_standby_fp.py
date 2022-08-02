@@ -62,23 +62,19 @@ class TestSetStandByFPMode:
 
         # Transition DishManager to STANDBY_FP mode
         [[_], [unique_id]] = device_proxy.SetStandbyFPMode()
-        assert event_store.wait_for_command_result(
-            unique_id, '"SetStandbyFPMode queued on ds, spf and spfrx"'
-        )
+        assert event_store.wait_for_command_id(unique_id)
 
         # transition subservient devices to FP mode and observe that
         # DishManager transitions dishMode to FP mode after all
         # subservient devices are in FP
-        ds_cm._update_component_state(
-            operating_mode=DSOperatingMode.STANDBY_FP
-        )
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         assert device_proxy.dishMode == DishMode.STANDBY_LP
 
-        spf_cm._update_component_state(operating_mode=SPFOperatingMode.OPERATE)
+        spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         assert device_proxy.dishMode == DishMode.STANDBY_LP
 
         spfrx_cm._update_component_state(
-            operating_mode=SPFRxOperatingMode.STANDBY
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
         #  we can now expect dishMode to transition to STANDBY_FP
         assert event_store.wait_for_value(DishMode.STANDBY_FP)
