@@ -38,13 +38,13 @@ class DishManager(SKAController):
     instances = weakref.WeakValueDictionary()
 
     ds_device_fqdn = device_property(
-        str, default_value="mid_d0001/lmc/ds_simulator"
+        dtype=str, default_value="mid_d0001/lmc/ds_simulator"
     )
     spf_device_fqdn = device_property(
-        str, default_value="mid_d0001/spf/simulator"
+        dtype=str, default_value="mid_d0001/spf/simulator"
     )
     spfrx_device_fqdn = device_property(
-        str, default_value="mid_d0001/spfrx/simulator"
+        dtype=str, default_value="mid_d0001/spfrx/simulator"
     )
 
     def create_component_manager(self):
