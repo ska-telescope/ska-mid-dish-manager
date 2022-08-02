@@ -33,7 +33,7 @@ dsconfig:
 
 dishmanager:
   image:
-    registry: registry.gitlab.com/ska-telescope/ska-mid-dish-manager
+    registry: artefact.skao.int
     image: ska-mid-dish-manager
     tag: 0.0.1
     pullPolicy: IfNotPresent
@@ -55,5 +55,3 @@ deviceServers:
     file: "data/spf_device.yaml"
   spfrxdevice:
     file: "data/spfrx_device.yaml"
-  testdishmanager:
-    file: "data/test_dish_manager.yaml"
