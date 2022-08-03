@@ -84,7 +84,6 @@ def test_stress_connect_disconnect(component_state_store, ds_device_fqdn):
         )
         assert component_state_store.wait_for_value("state", "ON")
         com_man.stop_communicating()
-        assert component_state_store.wait_for_value("state", None)
         assert component_state_store.wait_for_value(
             "connection_state", "disconnected"
         )
