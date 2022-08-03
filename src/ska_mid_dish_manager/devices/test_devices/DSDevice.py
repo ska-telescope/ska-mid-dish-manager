@@ -186,13 +186,13 @@ class DSDevice(Device):
 
     def write_configuredBand(self, new_value):
         self._configured_band = new_value
-        self.push_change_event("configuredBand", self._power_state)
+        self.push_change_event("configuredBand", self._configured_band)
 
     @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
     async def ConfigureBand2(self):
         LOGGER.info("Called ConfigureBand2")
         self._configured_band = Band.B2
-        self.push_change_event("configuredBand", self._power_state)
+        self.push_change_event("configuredBand", self._configured_band)
 
 
 def main():
