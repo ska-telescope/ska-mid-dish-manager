@@ -68,11 +68,7 @@ class TestSetStandByFPMode:
         # DishManager transitions dishMode to FP mode after all
         # subservient devices are in FP
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
-        assert device_proxy.dishMode == DishMode.STANDBY_LP
-
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-        assert device_proxy.dishMode == DishMode.STANDBY_LP
-
         spfrx_cm._update_component_state(
             operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )

@@ -1,14 +1,17 @@
 """Unit tests verifying model against dishMode transitions."""
 
 import pytest
-from ska_tango_base.control_model import HealthState
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    HealthState,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
     DishModeModel,
-    compute_dish_health_state,
-    compute_dish_mode,
 )
 
 
@@ -99,601 +102,138 @@ def test_model_dish_mode_transition_accuracy(
             )
 
 
+# Order DS, SPF, SPFRX
 @pytest.mark.parametrize(
-    "subservient_devices_state,expected_dish_mode",
+    ("ds_comp_state, spf_comp_state, spfrx_comp_state" ", expected_dish_mode"),
     [
         (
-            {
-                "ds_operating_mode": "STANDBY_LP",
-                "spf_operating_mode": "STANDBY_LP",
-                "spfrx_operating_mode": "STANDBY",
-            },
+            dict(operatingmode=DSOperatingMode.STANDBY_LP),
+            dict(operatingmode=SPFOperatingMode.STANDBY_LP),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STANDBY_LP,
         ),
         (
-            {
-                "ds_operating_mode": "STANDBY_FP",
-                "spf_operating_mode": "OPERATE",
-                "spfrx_operating_mode": "STANDBY",
-            },
+            dict(operatingmode=DSOperatingMode.STANDBY_FP),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STANDBY_FP,
         ),
         (
-            {
-                "ds_operating_mode": "STANDBY_FP",
-                "spf_operating_mode": "OPERATE",
-                "spfrx_operating_mode": "DATA_CAPTURE",
-            },
+            dict(operatingmode=DSOperatingMode.STANDBY_FP),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
             DishMode.STANDBY_FP,
         ),
         (
-            {
-                "ds_operating_mode": "POINT",
-                "spf_operating_mode": "OPERATE",
-                "spfrx_operating_mode": "DATA_CAPTURE",
-            },
+            dict(operatingmode=DSOperatingMode.POINT),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
             DishMode.OPERATE,
         ),
+        # Any other random combo goes to UNKNOWN
         (
-            {
-                "ds_operating_mode": "STANDBY_FP",
-                "spf_operating_mode": "STANDBY_LP",
-                "spfrx_operating_mode": "STANDBY",
-            },
-            DishMode.UNKNOWN,
-        ),
-        (
-            {
-                "ds_operating_mode": "STANDBY_LP",
-                "spf_operating_mode": "STANDBY_FP",
-                "spfrx_operating_mode": "STANDBY",
-            },
-            DishMode.UNKNOWN,
-        ),
-        (
-            {
-                "ds_operating_mode": "STOW",
-                "spf_operating_mode": "STANDBY_FP",
-                "spfrx_operating_mode": "STANDBY",
-            },
-            DishMode.UNKNOWN,
-        ),
-        (
-            {
-                "ds_operating_mode": "STOW",
-                "spf_operating_mode": "MAINT",
-                "spfrx_operating_mode": "STANDBY",
-            },
+            dict(operatingmode=DSOperatingMode.UNKNOWN),
+            dict(operatingmode=SPFOperatingMode.ERROR),
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
             DishMode.UNKNOWN,
         ),
     ],
 )
-def test_compute_dish_mode(subservient_devices_state, expected_dish_mode):
-    actual_dish_mode = compute_dish_mode(subservient_devices_state)
+def test_compute_dish_mode(
+    ds_comp_state,
+    spf_comp_state,
+    spfrx_comp_state,
+    expected_dish_mode,
+    dish_mode_model,
+):
+    actual_dish_mode = dish_mode_model.compute_dish_mode(
+        ds_comp_state, spf_comp_state, spfrx_comp_state
+    )
     assert expected_dish_mode == actual_dish_mode
 
 
 @pytest.mark.parametrize(
-    "subservient_health_states,expected_dish_health_state",
+    (
+        "ds_comp_state, spf_comp_state, spfrx_comp_state"
+        ", expected_dish_healthstate"
+    ),
     [
         (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "OK",
-            },
-            HealthState.OK,
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.NORMAL),
+            HealthState.NORMAL,
         ),
         (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "DEGRADED",
-            },
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.DEGRADED),
             HealthState.DEGRADED,
         ),
         (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "FAILED",
-            },
+            dict(healthstate=HealthState.FAILED),
+            dict(healthstate=HealthState.FAILED),
+            dict(healthstate=HealthState.FAILED),
             HealthState.FAILED,
         ),
         (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "UNKNOWN",
-            },
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.UNKNOWN),
             HealthState.UNKNOWN,
         ),
         (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "OK",
-            },
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.NORMAL),
             HealthState.DEGRADED,
         ),
         (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "OK",
-            },
+            dict(healthstate=HealthState.FAILED),
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.NORMAL),
             HealthState.FAILED,
         ),
         (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "OK",
-            },
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.NORMAL),
             HealthState.UNKNOWN,
         ),
         (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "OK",
-            },
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.NORMAL),
             HealthState.DEGRADED,
         ),
         (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "OK",
-            },
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.FAILED),
+            dict(healthstate=HealthState.NORMAL),
             HealthState.FAILED,
         ),
         (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "OK",
-            },
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.NORMAL),
             HealthState.UNKNOWN,
         ),
         (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "DEGRADED",
-            },
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.DEGRADED),
             HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.UNKNOWN,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "OK",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.UNKNOWN,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.UNKNOWN,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "OK",
-            },
-            HealthState.UNKNOWN,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "OK",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "OK",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "OK",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "OK",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "OK",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "OK",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "OK",
-            },
-            HealthState.DEGRADED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "OK",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "OK",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "DEGRADED",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "UNKNOWN",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "DEGRADED",
-                "spfrx_health_state": "FAILED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "FAILED",
-                "spf_health_state": "UNKNOWN",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.FAILED,
-        ),
-        (
-            {
-                "ds_health_state": "UNKNOWN",
-                "spf_health_state": "FAILED",
-                "spfrx_health_state": "DEGRADED",
-            },
-            HealthState.FAILED,
         ),
     ],
 )
-def test_compute_dish_health_state(
-    subservient_health_states, expected_dish_health_state
+def test_compute_dish_healthstate(
+    ds_comp_state,
+    spf_comp_state,
+    spfrx_comp_state,
+    expected_dish_healthstate,
+    dish_mode_model,
 ):
-    actual_dish_health_state = compute_dish_health_state(
-        subservient_health_states
+    actual_dish_healthstate = dish_mode_model.compute_dish_health_state(
+        ds_comp_state, spf_comp_state, spfrx_comp_state
     )
-    assert expected_dish_health_state == actual_dish_health_state
+    assert expected_dish_healthstate == actual_dish_healthstate

@@ -97,7 +97,6 @@ class TestSetStandByLPMode:
         # need to change the component state of SPFRX since it's in the
         # expected operating mode
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
-        assert device_proxy.dishMode == DishMode.STANDBY_FP
 
         spf_cm._update_component_state(
             operatingmode=SPFOperatingMode.STANDBY_LP

@@ -113,8 +113,6 @@ class TestSetOperateMode:
         # and observe that DishManager transitions dishMode to OPERATE mode
         # SPF are already in the expected operatingMode
         ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-        assert device_proxy.dishMode == DishMode.STANDBY_FP
-
         spfrx_cm._update_component_state(
             operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
