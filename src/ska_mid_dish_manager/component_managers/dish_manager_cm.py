@@ -318,7 +318,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 result=json.dumps(device_command_ids),
             )
 
-    def set_configureband2_cmd(
+    def set_configure_band_2_cmd(
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
@@ -329,11 +329,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command_name="ConfigureBand2",
         )
         status, response = self.submit_task(
-            self._set_configureband2_cmd, args=[], task_callback=task_callback
+            self._set_configure_band_2_cmd, args=[], task_callback=task_callback
         )
         return status, response
 
-    def _set_configureband2_cmd(
+    def _set_configure_band_2_cmd(
         self, task_callback=None, task_abort_event=None
     ):
         """Call configureBand on DS, SPF, SPFRX"""
@@ -353,9 +353,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             _, command_id = command("ConfigureBand2", None)
             device_command_ids[device] = command_id
 
-        task_callback(
-            status=TaskStatus.COMPLETED, result=json.dumps(device_command_ids)
-        )
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result=json.dumps(device_command_ids),
+            )
+
 
     def stop_communicating(self):
         for com_man in self.component_managers.values():

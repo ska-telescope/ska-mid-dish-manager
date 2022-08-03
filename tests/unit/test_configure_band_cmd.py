@@ -10,6 +10,8 @@ from ska_mid_dish_manager.devices.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
     SPFRxOperatingMode,
 )
 
@@ -19,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 # pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
 @pytest.mark.forked
-class ConfigureBand2:
+class TestConfigureBand2:
     """Tests for ConfigureBand2"""
 
     def setup_method(self):
@@ -48,19 +50,6 @@ class ConfigureBand2:
         """Tear down context"""
         self.tango_context.stop()
 
-    # pylint: disable=missing-function-docstring, protected-access
-    @pytest.mark.parametrize(
-        "current_dish_mode",
-        [
-            DishMode.STANDBY_LP,
-            DishMode.STANDBY_FP,
-            DishMode.STARTUP,
-            DishMode.SHUTDOWN,
-            DishMode.MAINTENANCE,
-            DishMode.STOW,
-            DishMode.CONFIG,
-        ],
-    )
     def test_configure_band_cmd_succeeds_when_dish_mode_is_config(
         self,
         event_store,
@@ -68,7 +57,6 @@ class ConfigureBand2:
         attributes_to_subscribe_to = (
             "dishMode",
             "longRunningCommandResult",
-            "pointingState",
         )
         for attribute_name in attributes_to_subscribe_to:
             self.device_proxy.subscribe_event(
@@ -76,17 +64,31 @@ class ConfigureBand2:
                 tango.EventType.CHANGE_EVENT,
                 event_store,
             )
-
-        self.spfrx_cm._update_component_state(
-            operating_mode=SPFRxOperatingMode.CONFIGURE
-        )
-        event_store.wait_for_value(DishMode.CONFIG)
-        self.ds_cm._update_component_state(configured_band=Band.B2)
-        event_store.wait_for_value(Band.B2)
+        assert event_store.wait_for_value(DishMode.STANDBY_LP)
 
         # Clear out the queue to make sure we don't catch old events
         event_store.clear_queue()
 
-        # Request ConfigureBand2 on Dish manager
-        [[_], [unique_id]] = self.device_proxy.ConfigureBand2()
+        [[_], [unique_id]] = self.device_proxy.SetStandbyFPMode()
         assert event_store.wait_for_command_id(unique_id)
+
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+        assert self.device_proxy.dishMode == DishMode.STANDBY_LP
+
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        assert self.device_proxy.dishMode == DishMode.STANDBY_LP
+
+        self.spfrx_cm._update_component_state(
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
+        )
+        #  we can now expect dishMode to transition to STANDBY_FP
+        assert event_store.wait_for_value(DishMode.STANDBY_FP)
+
+        # Request ConfigureBand2 on Dish manager
+        [[_], [unique_id]] = self.device_proxy.ConfigureBand2("")
+        assert event_store.wait_for_command_id(unique_id)
+
+        self.ds_cm._update_component_state(configured_band=Band.B2)
+        event_store.wait_for_value(Band.B2)
+
+        assert self.device_proxy.configuredBand == Band.B2

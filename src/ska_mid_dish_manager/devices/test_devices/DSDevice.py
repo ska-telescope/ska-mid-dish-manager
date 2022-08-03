@@ -55,6 +55,7 @@ class DSDevice(Device):
         self.set_change_event("operatingMode", True)
         self.set_change_event("healthState", True)
         self.set_change_event("powerState", True)
+        self.set_change_event("configuredBand", True)
 
     # ---------------------
     # Non polled attributes
@@ -179,17 +180,19 @@ class DSDevice(Device):
     @attribute(
         dtype=Band,
         access=AttrWriteType.READ_WRITE,
-        polling_period=1000,
     )
     async def configuredBand(self):
         return self._configured_band
 
     def write_configuredBand(self, new_value):
         self._configured_band = new_value
+        self.push_change_event("configuredBand", self._power_state)
 
     @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
     async def ConfigureBand2(self):
+        LOGGER.info("Called ConfigureBand2")
         self._configured_band = Band.B2
+        self.push_change_event("configuredBand", self._power_state)
 
 
 def main():

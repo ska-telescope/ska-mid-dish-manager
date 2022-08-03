@@ -72,7 +72,7 @@ class DishManager(SKAController):
             ("SetOperateMode", "set_operate_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
-            ("ConfigureBand2", "set_configureband2_cmd"),
+            ("ConfigureBand2", "set_configure_band_2_cmd"),
         ]:
             self.register_command_object(
                 command_name,
@@ -645,7 +645,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand2(self, timestamp):  # pylint: disable=unused-argument
+    def ConfigureBand2(self, activation_timestamp):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
