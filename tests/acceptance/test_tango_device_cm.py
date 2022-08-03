@@ -71,7 +71,7 @@ def test_stress_connect_disconnect(component_state_store, ds_device_fqdn):
         component_state_callback=component_state_store,
     )
     assert com_man.component_state["connection_state"] == "disconnected"
-    for _ in range(10):
+    for i in range(10):
         com_man.start_communicating()
         assert component_state_store.wait_for_value(
             "connection_state", "setting_up_device_proxy"
@@ -82,7 +82,9 @@ def test_stress_connect_disconnect(component_state_store, ds_device_fqdn):
         assert component_state_store.wait_for_value(
             "connection_state", "monitoring"
         )
-        assert component_state_store.wait_for_value("state", "ON")
+        # This only updated once, from that point it doesn't change
+        if i == 0:
+            assert component_state_store.wait_for_value("state", "ON")
         com_man.stop_communicating()
         assert component_state_store.wait_for_value(
             "connection_state", "disconnected"
