@@ -88,6 +88,7 @@ class DishManager(SKAController):
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
+
         for attr, attr_val in kwargs.items():
             # pylint: disable=attribute-defined-outside-init
             setattr(self, f"_{attr}", attr_val)
@@ -150,6 +151,7 @@ class DishManager(SKAController):
             # push change events for dishMode: needed to use testing library
             device.set_change_event("dishMode", True, False)
             device.set_change_event("pointingState", True, False)
+            device.set_change_event("configuredBand", True, False)
             device.instances[device.get_name()] = device
             device.component_manager.start_communicating()
             super().do()
@@ -640,12 +642,16 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution "
-        "should start.",
-        dtype_out=None,
+        doc_in=(
+            "Indicates the time, in UTC (ISO 8601), at which command"
+            " execution should start."
+        ),
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand2(self, activation_timestamp):  # pylint: disable=unused-argument
+    def ConfigureBand2(
+        self, activation_timestamp
+    ):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
@@ -654,7 +660,10 @@ class DishManager(SKAController):
         mode (OPERATE or STANDBY‐FP).
         """
         handler = self.get_command_object("ConfigureBand2")
-        result_code, unique_id = handler()
+
+        result_code, unique_id = handler(
+            activation_timestamp, self._configured_band
+        )
 
         return ([result_code], [unique_id])
 

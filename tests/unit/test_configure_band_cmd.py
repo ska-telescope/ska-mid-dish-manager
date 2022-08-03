@@ -1,5 +1,6 @@
 """Unit tests for the ConfigureBand2 command on dish manager."""
 import logging
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,6 +20,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 # pylint:disable=attribute-defined-outside-init
+# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 class TestConfigureBand2:
@@ -54,9 +56,11 @@ class TestConfigureBand2:
         self,
         event_store,
     ):
+        """Test ConfigureBand"""
         attributes_to_subscribe_to = (
             "dishMode",
             "longRunningCommandResult",
+            "configuredBand",
         )
         for attribute_name in attributes_to_subscribe_to:
             self.device_proxy.subscribe_event(
@@ -72,10 +76,14 @@ class TestConfigureBand2:
         [[_], [unique_id]] = self.device_proxy.SetStandbyFPMode()
         assert event_store.wait_for_command_id(unique_id)
 
-        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+        self.ds_cm._update_component_state(
+            operatingmode=DSOperatingMode.STANDBY_FP
+        )
         assert self.device_proxy.dishMode == DishMode.STANDBY_LP
 
-        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        self.spf_cm._update_component_state(
+            operatingmode=SPFOperatingMode.OPERATE
+        )
         assert self.device_proxy.dishMode == DishMode.STANDBY_LP
 
         self.spfrx_cm._update_component_state(
@@ -85,10 +93,13 @@ class TestConfigureBand2:
         assert event_store.wait_for_value(DishMode.STANDBY_FP)
 
         # Request ConfigureBand2 on Dish manager
-        [[_], [unique_id]] = self.device_proxy.ConfigureBand2("")
+        future_time = datetime.utcnow() + timedelta(days=1)
+        [[_], [unique_id]] = self.device_proxy.ConfigureBand2(
+            future_time.isoformat()
+        )
         assert event_store.wait_for_command_id(unique_id)
 
-        self.ds_cm._update_component_state(configured_band=Band.B2)
+        self.spfrx_cm._update_component_state(configuredband=Band.B2)
         event_store.wait_for_value(Band.B2)
 
         assert self.device_proxy.configuredBand == Band.B2
