@@ -17,10 +17,7 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import (
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
-    DSOperatingMode,
     PointingState,
-    SPFOperatingMode,
-    SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
