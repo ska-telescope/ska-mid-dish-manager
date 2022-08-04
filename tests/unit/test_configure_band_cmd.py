@@ -52,7 +52,7 @@ class TestConfigureBand2:
         """Tear down context"""
         self.tango_context.stop()
 
-    def test_configure_band_cmd_succeeds_when_dish_mode_is_config(
+    def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         self,
         event_store,
     ):

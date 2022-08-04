@@ -72,7 +72,7 @@ class DishManager(SKAController):
             ("SetOperateMode", "set_operate_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
-            ("ConfigureBand2", "set_configure_band_2_cmd"),
+            ("ConfigureBand2", "configure_band2_cmd"),
         ]:
             self.register_command_object(
                 command_name,
@@ -905,7 +905,7 @@ class DishManager(SKAController):
 
 
 def main(args=None, **kwargs):
-    """Launch an DishManager device."""
+    """Launch a DishManager device."""
     return run((DishManager,), args=args, **kwargs)
 
 

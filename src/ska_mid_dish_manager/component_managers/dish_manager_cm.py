@@ -328,7 +328,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 result=json.dumps(device_command_ids),
             )
 
-    def set_configure_band_2_cmd(
+    def configure_band2_cmd(
         self,
         activation_timestamp,
         current_configured_band,
@@ -361,15 +361,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return TaskStatus.FAILED, str(err)
 
         status, response = self.submit_task(
-            self._set_configure_band_2_cmd,
+            self._configure_band2_cmd,
             args=[],
             task_callback=task_callback,
         )
         return status, response
 
-    def _set_configure_band_2_cmd(
-        self, task_callback=None, task_abort_event=None
-    ):
+    def _configure_band2_cmd(self, task_callback=None, task_abort_event=None):
         """Call configureBand on DS, SPF, SPFRX"""
         if task_callback is not None:
             task_callback(status=TaskStatus.IN_PROGRESS)
