@@ -19,41 +19,6 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.unit
 @pytest.mark.forked
 @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_dish_manager_transitions_to_lp_mode_after_startup_with_mocks(
-    patched_tango,
-    event_store,
-):
-    # Set up mocks
-    device_proxy = MagicMock()
-    patched_tango.DeviceProxy = MagicMock(return_value=device_proxy)
-
-    with DeviceTestContext(DishManager) as dish_manager:
-        dish_manager.subscribe_event(
-            "dishMode",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-        event_store.wait_for_value(DishMode.STANDBY_LP)
-
-    # Check that we create the DeviceProxy
-    assert patched_tango.DeviceProxy.call_count == 3
-    for device_name in [
-        "mid_d0001/lmc/ds_simulator",
-        "mid_d0001/spfrx/simulator",
-        "mid_d0001/spf/simulator",
-    ]:
-        assert call(device_name) in patched_tango.DeviceProxy.call_args_list
-
-    # Check that we subscribe
-    # DS/SPF 4 per device; State, healthState, powerState, operatingMode
-    # SPFRx 4 per device; State, healthState, operatingMode, configuredBand
-    assert device_proxy.subscribe_event.call_count == 12
-
-
-# pylint: disable=missing-function-docstring
-@pytest.mark.unit
-@pytest.mark.forked
-@patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_dish_manager_remains_in_startup_on_error(patched_tango, caplog):
     caplog.set_level(logging.DEBUG)
 
