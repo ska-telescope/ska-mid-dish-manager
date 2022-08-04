@@ -422,7 +422,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         for attr_name in self.component_state:
             if attr_name == "connection_state":
                 continue
-            self._update_component_state(**{attr_name: None})
+            # TODO reset component state attr to default values
+            # Just setting them to None will cause problems
+            # when push_event requires something else like an Enum
 
     def reconnect(self):
         """Redo the connection to the Tango device"""

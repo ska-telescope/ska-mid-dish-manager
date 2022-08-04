@@ -88,8 +88,8 @@ def test_dish_manager_transitions_to_lp_mode_after_startup_with_mocks(
 
     # Check that we subscribe
     # DS/SPF 4 per device; State, healthState, powerState, operatingMode
-    # SPFRx 3 per device; State, healthState, operatingMode
-    assert device_proxy.subscribe_event.call_count == 11
+    # SPFRx 4 per device; State, healthState, operatingMode, configuredBand
+    assert device_proxy.subscribe_event.call_count == 12
 
 
 # pylint: disable=missing-function-docstring

@@ -14,6 +14,7 @@ from tango import AttrWriteType, Database, DbDevInfo, GreenMode
 from tango.server import Device, attribute, command
 
 from ska_mid_dish_manager.models.dish_enums import (
+    Band,
     HealthState,
     SPFRxOperatingMode,
 )
@@ -30,9 +31,11 @@ class SPFRxDevice(Device):
     def init_device(self):
         super().init_device()
         self._operating_mode = SPFRxOperatingMode.STARTUP
+        self._configured_band = Band.NONE
         self._health_state = HealthState.UNKNOWN
         self.set_change_event("operatingMode", True)
         self.set_change_event("healthState", True)
+        self.set_change_event("configuredBand", True)
 
     @attribute(
         dtype=SPFRxOperatingMode,
@@ -61,6 +64,21 @@ class SPFRxDevice(Device):
         LOGGER.info("Called SetStandbyMode")
         self._operating_mode = SPFRxOperatingMode.STANDBY
         self.push_change_event("operatingMode", self._operating_mode)
+
+    @attribute(
+        dtype=Band,
+        access=AttrWriteType.READ_WRITE,
+    )
+    async def configuredBand(self):
+        return self._configured_band
+
+    def write_configuredBand(self, new_value):
+        self._configured_band = new_value
+        self.push_change_event("configuredBand", self._configured_band)
+
+    @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
+    async def ConfigureBand2(self):
+        self._configured_band = Band.B2
 
 
 def main():
