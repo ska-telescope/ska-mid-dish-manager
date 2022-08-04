@@ -50,8 +50,10 @@ def simple_device():
     :return: the Tango event callback group under test.
     """
 
-    # pylint: disable=missing-class-docstring, bad-super-call
+    # pylint: disable=bad-super-call, too-few-public-methods
     class SimpleDev(Device):
+        """A basic device which pushes change events on State"""
+
         def init_device(self):
             super(Device, self).init_device()
             self.set_state(DevState.ON)

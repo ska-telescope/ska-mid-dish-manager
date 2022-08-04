@@ -7,6 +7,7 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import (
 )
 
 
+# pylint: disable=invalid-name, missing-function-docstring
 class DSComponentManager(TangoDeviceComponentManager):
     """Specialization for DS functionality"""
 

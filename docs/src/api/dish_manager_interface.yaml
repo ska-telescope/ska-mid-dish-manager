@@ -18,37 +18,37 @@
       doc_in: Indicates the time, in UTC, at which command execution should start.
       doc_out: Uninitialised
       dtype_in: DevString
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand2
       disp_level: OPERATOR
       doc_in: Indicates the time, in UTC, at which command execution should start.
       doc_out: Uninitialised
       dtype_in: DevString
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand3
       disp_level: OPERATOR
       doc_in: Indicates the time, in UTC, at which command execution should start.
       doc_out: Uninitialised
       dtype_in: DevString
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand4
       disp_level: OPERATOR
       doc_in: Indicates the time, in UTC, at which command execution should start.
       doc_out: Uninitialised
       dtype_in: DevString
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand5a
       disp_level: OPERATOR
       doc_in: Indicates the time, in UTC, at which command execution should start.
       doc_out: Uninitialised
       dtype_in: DevString
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand5b
       disp_level: OPERATOR
       doc_in: Indicates the time, in UTC, at which command execution should start.
       doc_out: Uninitialised
       dtype_in: DevString
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: DebugDevice
       disp_level: OPERATOR
       doc_in: Uninitialised

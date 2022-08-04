@@ -7,12 +7,16 @@ and the subservient devices
 
 import re
 import weakref
+from typing import List, Optional, Tuple
 
 from ska_tango_base import SKAController
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
-from ska_mid_dish_manager.commands import NestedSubmittedSlowCommand
+from ska_mid_dish_manager.commands import (
+    NestedSubmittedSlowCommand,
+    ResultCode,
+)
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,
 )
@@ -25,6 +29,8 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackProgramMode,
     TrackTableLoadMode,
 )
+
+DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 
 
 # pylint: disable=too-many-instance-attributes
@@ -763,13 +769,18 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def SetOperateMode(self):
+    def SetOperateMode(self) -> DevVarLongStringArrayType:
         """
+        Implemented as a Long Running Command
+
         This command triggers the Dish to transition to the OPERATE Dish
         Element Mode, and returns to the caller. This mode fulfils the main
         purpose of the Dish, which is to point to designated directions while
         capturing data and transmitting it to CSP. The Dish will automatically
         start capturing data after entering OPERATE mode.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
         handler = self.get_command_object("SetOperateMode")
         result_code, unique_id = handler()
@@ -781,8 +792,10 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def SetStandbyLPMode(self):
+    def SetStandbyLPMode(self) -> DevVarLongStringArrayType:
         """
+        Implemented as a Long Running Command
+
         This command triggers the Dish to transition to the STANDBY‐LP Dish
         Element Mode, and returns to the caller. Standby_LP is the default
         mode when the Dish is configured for low power consumption, and is
@@ -795,6 +808,9 @@ class DishManager(SKAController):
         again. The purpose of this mode is to enable the observatory to
         perform power management (load curtailment), and also to conserve
         energy for non‐operating dishes.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
         handler = self.get_command_object("SetStandbyLPMode")
         result_code, unique_id = handler()
@@ -806,12 +822,17 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def SetStandbyFPMode(self):
+    def SetStandbyFPMode(self) -> DevVarLongStringArrayType:
         """
+        Implemented as a Long Running Command
+
         This command triggers the Dish to transition to the STANDBY‐FP Dish
         Element Mode, and returns to the caller.
         To prepare all subsystems for active observation, once a command is
         received by TM to go to the FULL_POWER mode.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
         handler = self.get_command_object("SetStandbyFPMode")
         result_code, unique_id = handler()
@@ -867,8 +888,10 @@ class DishManager(SKAController):
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
     )
-    def Track(self):
+    def Track(self) -> DevVarLongStringArrayType:
         """
+        Implemented as a Long Running Command
+
         When the Track command is received the Dish will start tracking the
         commanded positions.
         The pointingState attribute will report SLEW while the Dish is settling
@@ -884,6 +907,9 @@ class DishManager(SKAController):
         2. programTrackTable: to load program table data
         (Az,El,timestamp sets) on selected ACU table
         3. trackTableLoadMode: to add/append new track table data
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
         handler = self.get_command_object("Track")
         result_code, unique_id = handler()

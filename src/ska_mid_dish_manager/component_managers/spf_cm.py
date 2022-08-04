@@ -7,6 +7,7 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import (
 )
 
 
+#  pylint: disable=missing-function-docstring, invalid-name
 class SPFComponentManager(TangoDeviceComponentManager):
     """Specialization for SPF functionality"""
 

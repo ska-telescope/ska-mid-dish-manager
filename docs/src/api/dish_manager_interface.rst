@@ -10,11 +10,11 @@ to the notice of TMC and any subsystem going to interface with DishManager.
 The current implementation also has the complete API according to the ICD but not all the commands shown
 here have been fleshed out fully. Only the following commands have been fleshed out:
 
-* SetStandbyLPMode
-* SetStandbyFPMode
-* SetOperateMode
-* ConfigureBand2
-* Track
+* `SetStandbyLPMode`
+* `SetStandbyFPMode`
+* `SetOperateMode`
+* `ConfigureBand2`
+* `Track`
 
 .. literalinclude:: dish_manager_interface.yaml
    :language: yaml
