@@ -47,7 +47,7 @@ devices_to_test = [
 # Mark as XFAIL as we have intermittent failures, 4 devices and
 # 12 event subs may be too much to ask
 # pylint: disable=invalid-name, missing-function-docstring
-@pytest.mark.xfail("Intermittent failures")
+@pytest.mark.xfail(reason="Intermittent failures")
 @pytest.mark.forked
 @pytest.mark.unit
 def test_dish_manager_transitions_to_lp_mode_after_startup_no_mocks(
@@ -56,13 +56,28 @@ def test_dish_manager_transitions_to_lp_mode_after_startup_no_mocks(
     dish_manager = multi_device_tango_context.get_device(
         "mid_d0005/elt/master"
     )
+    ds_device = multi_device_tango_context.get_device(
+        "mid_d0001/lmc/ds_simulator"
+    )
+    spf_device = multi_device_tango_context.get_device(
+        "mid_d0001/spf/simulator"
+    )
+    sfprx_device = multi_device_tango_context.get_device(
+        "mid_d0001/spfrx/simulator"
+    )
 
     dish_manager.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    event_store.wait_for_value(DishMode.STANDBY_LP, timeout=8)
+
+    # DishManager will only go to STANDBY_LP after the updates below
+    sfprx_device.SetStandbyMode()
+    for device in [ds_device, spf_device]:
+        device.SetStandbyLPMode()
+
+    event_store.wait_for_value(DishMode.STANDBY_LP, timeout=5)
 
 
 # pylint: disable=missing-function-docstring
