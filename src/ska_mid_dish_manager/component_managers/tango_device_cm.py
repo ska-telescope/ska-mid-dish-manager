@@ -60,6 +60,7 @@ class MonitoredAttribute:
     def monitor(
         self,
         device_proxy,
+        logger,
         task_abort_event: Optional[Event] = None,
         task_callback: Optional[Callable] = None,  # pylint: disable=W0613
     ):
@@ -75,9 +76,17 @@ class MonitoredAttribute:
                 tango.EventType.CHANGE_EVENT,
                 self._subscription_callback,
             )
+            logger.info(
+                "Subscribed to [%s] with [%s]", self.attr_name, device_proxy
+            )
             while not task_abort_event.wait(1):
                 pass
             device_proxy.unsubscribe_event(self.subscription_id)
+            logger.info(
+                "Unsubscribed from [%s] with [%s]",
+                self.attr_name,
+                device_proxy,
+            )
 
 
 # pylint: disable=abstract-method, too-many-instance-attributes, no-member
@@ -201,7 +210,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         for monitored_attribute in self._monitored_attributes:
             self.submit_task(
                 monitored_attribute.monitor,
-                args=[self._device_proxy],
+                args=[self._device_proxy, self.logger],
                 task_callback=None,
             )
 
@@ -400,7 +409,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             # Already monitoring, so start the thread for this attr
             self.submit_task(
                 monitored_attribute.monitor,
-                args=[self._device_proxy],
+                args=[self._device_proxy, self.logger],
                 task_callback=None,
             )
 
