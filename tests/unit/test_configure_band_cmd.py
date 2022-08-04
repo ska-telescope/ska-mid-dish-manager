@@ -79,13 +79,9 @@ class TestConfigureBand2:
         self.ds_cm._update_component_state(
             operatingmode=DSOperatingMode.STANDBY_FP
         )
-        assert self.device_proxy.dishMode == DishMode.STANDBY_LP
-
         self.spf_cm._update_component_state(
             operatingmode=SPFOperatingMode.OPERATE
         )
-        assert self.device_proxy.dishMode == DishMode.STANDBY_LP
-
         self.spfrx_cm._update_component_state(
             operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )

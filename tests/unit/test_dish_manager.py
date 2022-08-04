@@ -46,14 +46,12 @@ def test_dish_manager_transitions_to_lp_mode_after_startup_no_mocks(
         "mid_d0005/elt/master"
     )
 
-    assert dish_manager.dishMode.name == "STARTUP"
-
     dish_manager.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    event_store.wait_for_value(DishMode.STARTUP)
+    event_store.wait_for_value(DishMode.STANDBY_LP)
 
 
 # pylint: disable=missing-function-docstring
