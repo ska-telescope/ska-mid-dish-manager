@@ -69,27 +69,40 @@ def simple_device_test_context(SimpleDevice, mock_tango_device_proxy_instance):
         yield proxy
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module")  # noqa: F811
 def devices_to_test(request):
-    """Fixture for devices to test."""
-    raise NotImplementedError(
-        "You have to specify the devices to test by "
-        " overriding the 'devices_to_test' fixture."
-    )
+    yield getattr(request.module, "devices_to_test")
 
 
 # pylint: disable=invalid-name, redefined-outer-name
 @pytest.fixture(scope="function")
 def multi_device_tango_context(
-    mock_tango_device_proxy_instance,
-    devices_to_test,
+    mocker, devices_to_test  # pylint: disable=redefined-outer-name
 ):
     """
-    Create and return a TANGO MultiDeviceTestContext object.
-
+    Creates and returns a TANGO MultiDeviceTestContext object, with
     tango.DeviceProxy patched to work around a name-resolving issue.
     """
-    HOST, PORT = mock_tango_device_proxy_instance
+
+    def _get_open_port():
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(("", 0))
+        s.listen(1)
+        port = s.getsockname()[1]
+        s.close()
+        return port
+
+    HOST = get_host_ip()
+    PORT = _get_open_port()
+    _DeviceProxy = tango.DeviceProxy
+    mocker.patch(
+        "tango.DeviceProxy",
+        wraps=lambda fqdn, *args, **kwargs: _DeviceProxy(
+            f"tango://{HOST}:{PORT}/{fqdn}#dbase=no",
+            *args,
+            **kwargs,
+        ),
+    )
     with MultiDeviceTestContext(
         devices_to_test, host=HOST, port=PORT, process=True
     ) as context:

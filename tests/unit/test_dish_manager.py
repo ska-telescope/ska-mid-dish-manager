@@ -11,29 +11,37 @@ from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.dish_manager import DishManager
 from ska_mid_dish_manager.devices.test_devices.DSDevice import DSDevice
+from ska_mid_dish_manager.devices.test_devices.SPFDevice import SPFDevice
+from ska_mid_dish_manager.devices.test_devices.SPFRxDevice import SPFRxDevice
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 LOGGER = logging.getLogger(__name__)
 
 
-# pylint: disable=invalid-name, missing-function-docstring
-@pytest.fixture()
-def devices_to_test():
-    """Fixture for devices to test."""
-    return [
-        {
-            "class": DishManager,
-            "devices": [{"name": "mid_d0005/elt/master"}],
-        },
-        {
-            "class": DSDevice,
-            "devices": [
-                {"name": "mid_d0001/lmc/ds_simulator"},
-                {"name": "mid_d0001/spfrx/simulator"},
-                {"name": "mid_d0001/spf/simulator"},
-            ],
-        },
-    ]
+devices_to_test = [
+    {
+        "class": DishManager,
+        "devices": [{"name": "mid_d0005/elt/master"}],
+    },
+    {
+        "class": DSDevice,
+        "devices": [
+            {"name": "mid_d0001/lmc/ds_simulator"},
+        ],
+    },
+    {
+        "class": SPFDevice,
+        "devices": [
+            {"name": "mid_d0001/spf/simulator"},
+        ],
+    },
+    {
+        "class": SPFRxDevice,
+        "devices": [
+            {"name": "mid_d0001/spfrx/simulator"},
+        ],
+    },
+]
 
 
 # pylint: disable=invalid-name, missing-function-docstring
@@ -51,7 +59,7 @@ def test_dish_manager_transitions_to_lp_mode_after_startup_no_mocks(
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    event_store.wait_for_value(DishMode.STANDBY_LP)
+    event_store.wait_for_value(DishMode.STANDBY_LP, timeout=6)
 
 
 # pylint: disable=missing-function-docstring
