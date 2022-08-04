@@ -122,6 +122,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for comp_state in [ds_comp_state, spf_comp_state, spfrx_comp_state]
         ]
         if any(operating_modes):
+            self.logger.info(
+                (
+                    "Updating dishMode with operatingModes DS"
+                    " [%s], SPF [%s], SPFRX [%s]"
+                ),
+                str(ds_comp_state["operatingmode"]),
+                str(spf_comp_state["operatingmode"]),
+                str(spfrx_comp_state["operatingmode"]),
+            )
             new_dish_mode = self._dish_mode_model.compute_dish_mode(
                 ds_comp_state, spf_comp_state, spfrx_comp_state
             )

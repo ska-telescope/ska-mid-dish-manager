@@ -62,7 +62,7 @@ tango-simlib = "^0.9.4"
 
 [tool.pytest.ini_options]
 testpaths = "tests"
-addopts = "--json-report --json-report-file=build/reports/report.json --cov-report html:build/htmlcov --cov-report xml:build/reports/code-coverage.xml --cov-report term:skip-covered --cov=ska_mid_dish_manager --junitxml=build/reports/unit-tests.xml --verbose"
+addopts = "--forked --json-report --json-report-file=build/reports/report.json --cov-report html:build/htmlcov --cov-report xml:build/reports/code-coverage.xml --cov-report term:skip-covered --cov=ska_mid_dish_manager --junitxml=build/reports/unit-tests.xml --verbose"
 console_output_style = "progress"
 junit_family = "legacy"
 markers = [

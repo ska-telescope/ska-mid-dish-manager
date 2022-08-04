@@ -77,8 +77,12 @@ class TestSetStandByLPMode:
         )
 
         # Force dishManager dishMode to go to STANDBY-FP
-        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
-        spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        ds_cm._update_component_state(
+            operatingmode=int(DSOperatingMode.STANDBY_FP)
+        )
+        spf_cm._update_component_state(
+            operatingmode=int(SPFOperatingMode.OPERATE)
+        )
         spfrx_cm._update_component_state(
             operatingmode=SPFRxOperatingMode.STANDBY
         )

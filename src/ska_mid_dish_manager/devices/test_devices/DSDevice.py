@@ -177,6 +177,12 @@ class DSDevice(Device):
         self._operating_mode = DSOperatingMode.STANDBY_FP
         self.push_change_event("operatingMode", self._operating_mode)
 
+    @command(dtype_in=None, doc_in="Set SetStartupMode", dtype_out=None)
+    async def SetStartupMode(self):
+        LOGGER.info("Called SetStartupMode")
+        self._operating_mode = DSOperatingMode.STARTUP
+        self.push_change_event("operatingMode", self._operating_mode)
+
     @attribute(
         dtype=Band,
         access=AttrWriteType.READ_WRITE,

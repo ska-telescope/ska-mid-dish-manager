@@ -77,13 +77,13 @@ class TestConfigureBand2:
         assert event_store.wait_for_command_id(unique_id)
 
         self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_FP
+            operatingmode=int(DSOperatingMode.STANDBY_FP)
         )
         self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
+            operatingmode=int(SPFOperatingMode.OPERATE)
         )
         self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
+            operatingmode=int(SPFRxOperatingMode.DATA_CAPTURE)
         )
         #  we can now expect dishMode to transition to STANDBY_FP
         assert event_store.wait_for_value(DishMode.STANDBY_FP)
@@ -95,7 +95,7 @@ class TestConfigureBand2:
         )
         assert event_store.wait_for_command_id(unique_id)
 
-        self.spfrx_cm._update_component_state(configuredband=Band.B2)
+        self.spfrx_cm._update_component_state(configuredband=int(Band.B2))
         event_store.wait_for_value(Band.B2)
 
         assert self.device_proxy.configuredBand == Band.B2
