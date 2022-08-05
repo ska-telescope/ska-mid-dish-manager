@@ -168,12 +168,13 @@ class DSDevice(Device):
 
     @command(dtype_in=None, doc_in="Set StandbyLPMode", dtype_out=None)
     async def SetStandbyLPMode(self):
+        LOGGER.info("Called SetStandbyLPMode")
         self._operating_mode = DSOperatingMode.STANDBY_LP
         self.push_change_event("operatingMode", self._operating_mode)
 
     @command(dtype_in=None, doc_in="Set StandbyFPMode", dtype_out=None)
     async def SetStandbyFPMode(self):
-        LOGGER.info("Called SetStandbyMode")
+        LOGGER.info("Called SetStandbyFPMode")
         self._operating_mode = DSOperatingMode.STANDBY_FP
         self.push_change_event("operatingMode", self._operating_mode)
 
