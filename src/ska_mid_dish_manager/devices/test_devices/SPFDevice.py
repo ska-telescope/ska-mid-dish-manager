@@ -10,7 +10,7 @@ import logging
 import os
 import sys
 
-from tango import AttrWriteType, Database, DbDevInfo
+from tango import AttrWriteType, Database, DbDevInfo, GreenMode
 from tango.server import Device, attribute, command
 
 from ska_mid_dish_manager.models.dish_enums import (
@@ -26,6 +26,8 @@ LOGGER = logging.getLogger()
 
 class SPFDevice(Device):
     """Test device for LMC"""
+
+    green_mode = GreenMode.Asyncio
 
     def init_device(self):
         super().init_device()

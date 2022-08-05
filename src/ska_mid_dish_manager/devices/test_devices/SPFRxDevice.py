@@ -10,7 +10,7 @@ import logging
 import os
 import sys
 
-from tango import AttrWriteType, Database, DbDevInfo, DevBoolean
+from tango import AttrWriteType, Database, DbDevInfo, DevBoolean, GreenMode
 from tango.server import Device, attribute, command
 
 from ska_mid_dish_manager.models.dish_enums import (
@@ -24,7 +24,9 @@ LOGGER = logging.getLogger()
 
 
 class SPFRxDevice(Device):
-    """Test device for use to test component manager"""
+    """Test device for LMC"""
+
+    green_mode = GreenMode.Asyncio
 
     def init_device(self):
         super().init_device()
@@ -80,26 +82,26 @@ class SPFRxDevice(Device):
     # --------
 
     @command(dtype_in=None, doc_in="Set SPFRXOperatingMode", dtype_out=None)
-    def SetStandbyMode(self):
+    async def SetStandbyMode(self):
         LOGGER.info("Called SetStandbyMode")
         self._operating_mode = SPFRxOperatingMode.STANDBY
         self.push_change_event("operatingMode", self._operating_mode)
 
     @command(dtype_in=None, doc_in="Set SetStartupMode", dtype_out=None)
-    def SetStartupMode(self):
+    async def SetStartupMode(self):
         LOGGER.info("Called SetStartupMode")
         self._operating_mode = SPFRxOperatingMode.STARTUP
         self.push_change_event("operatingMode", self._operating_mode)
 
     @command(dtype_in=DevBoolean, doc_in="CaptureData", dtype_out=None)
     # pylint: disable=unused-argument
-    def CaptureData(self, boolean_value):
+    async def CaptureData(self, boolean_value):
         LOGGER.info("Called SetStartupMode")
         self._operating_mode = SPFRxOperatingMode.DATA_CAPTURE
         self.push_change_event("operatingMode", self._operating_mode)
 
     @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
-    def ConfigureBand2(self):
+    async def ConfigureBand2(self):
         self._configured_band = Band.B2
 
 
