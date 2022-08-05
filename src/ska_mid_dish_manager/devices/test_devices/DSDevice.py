@@ -44,6 +44,21 @@ class DSDevice(Device):
     # Attributes
     # -----------
     @attribute(
+        dtype="double",
+    )
+    def non_polled_attr_1(self):
+        return self.__non_polled_attr_1
+
+    @attribute(
+        dtype="int",
+        polling_period=2000,
+        rel_change="0.5",
+        abs_change="1",
+    )
+    def polled_attr_1(self):
+        return int(self.__polled_attr_1)
+
+    @attribute(
         dtype=DSOperatingMode,
         access=AttrWriteType.READ_WRITE,
     )
@@ -106,6 +121,14 @@ class DSDevice(Device):
     # --------
     # Commands
     # --------
+
+    @command(
+        dtype_in=None, doc_in="Update and push change event", dtype_out=None
+    )
+    def IncrementNonPolled1(self):
+        next_value = self.__non_polled_attr_1 + 1
+        self.__non_polled_attr_1 = next_value
+        self.push_change_event("non_polled_attr_1", next_value)
 
     @command(dtype_in=None, doc_in="Switch On", dtype_out=None)
     def On(self):
