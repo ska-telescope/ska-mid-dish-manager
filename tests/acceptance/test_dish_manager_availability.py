@@ -3,10 +3,6 @@ import pytest
 from tango import DeviceProxy, DevState
 
 
-@pytest.mark.xfail(
-    reason="DishManager transitions to LP mode after a while."
-    " Test is checking too quickly"
-)
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.parametrize("dish_number", ["0001"])

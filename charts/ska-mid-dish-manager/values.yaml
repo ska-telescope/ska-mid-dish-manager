@@ -33,7 +33,7 @@ dsconfig:
 
 dishmanager:
   image:
-    registry: artefact.skao.int
+    registry: registry.gitlab.com/ska-telescope/ska-mid-dish-manager
     image: ska-mid-dish-manager
     tag: 0.0.1
     pullPolicy: IfNotPresent

@@ -665,7 +665,7 @@ class DishManager(SKAController):
     )
     def ConfigureBand2(
         self, activation_timestamp
-    ):  # pylint: disable=unused-argument
+    ) -> DevVarLongStringArrayType:  # pylint: disable=unused-argument
         """
         Implemented as a Long Running Command
 
@@ -674,6 +674,9 @@ class DishManager(SKAController):
         operate in frequency band 2. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
         handler = self.get_command_object("ConfigureBand2")
 
