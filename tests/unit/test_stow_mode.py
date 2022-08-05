@@ -1,4 +1,4 @@
-"""Unit tests for setstandbylp command."""
+"""Unit tests verifying model against DS_SetStowMode transition."""
 
 import logging
 from unittest.mock import MagicMock, patch
@@ -17,7 +17,7 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.unit
 @pytest.mark.forked
 class TestStowMode:
-    """Tests for SetOperateMode"""
+    """Tests for SetStowMode"""
 
     def setup_method(self):
         """Set up context"""
