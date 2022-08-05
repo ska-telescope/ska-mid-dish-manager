@@ -10,7 +10,12 @@ from ska_tango_base.executor import TaskStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.dish_manager import DishManager
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -29,22 +34,72 @@ def test_dish_manager_remains_in_startup_on_error(patched_tango, caplog):
     device_proxy.ping.side_effect = tango.DevFailed("FAIL")
 
     with DeviceTestContext(DishManager) as dish_manager:
+        # check subservient devices are continously pinged whilst in error
+        while device_proxy.ping.call_count < 5:
+            continue
+        assert device_proxy.ping.call_count >= 5
+        # check that dishmanager remained in startup
         assert dish_manager.dishMode == DishMode.STARTUP
         dish_manager.AbortCommands()
 
 
-@pytest.mark.unit
-@pytest.mark.forked
-@patch(
-    "ska_mid_dish_manager.component_managers.tango_device_cm.tango.DeviceProxy"
-)
-def test_device_reports_long_running_results(patched_dp, event_store):
-    patched_device_proxy = MagicMock()
-    patched_dp.return_value = patched_device_proxy
-    patched_dp.command_inout = MagicMock()
-    patched_dp.command_inout.return_value = (TaskStatus.COMPLETED, "Task Done")
+class TestDishManagerBehaviour:
+    """Tests DishManager"""
 
-    with DeviceTestContext(DishManager, process=True) as dish_manager:
+    def setup_method(self):
+        """Set up context"""
+        with patch(
+            "ska_mid_dish_manager.component_managers.tango_device_cm.tango.DeviceProxy"
+        ) as patched_dp:
+            patched_dp.return_value = MagicMock()
+            patched_dp.command_inout = MagicMock()
+            patched_dp.command_inout.return_value = (
+                TaskStatus.COMPLETED,
+                "Task Done",
+            )
+            self.tango_context = DeviceTestContext(DishManager)
+            self.tango_context.start()
+
+        self.device_proxy = self.tango_context.device
+        class_instance = DishManager.instances.get(self.device_proxy.name())
+        self.ds_cm = class_instance.component_manager.component_managers["DS"]
+        self.spf_cm = class_instance.component_manager.component_managers[
+            "SPF"
+        ]
+        self.spfrx_cm = class_instance.component_manager.component_managers[
+            "SPFRX"
+        ]
+        self.dish_manager_cm = class_instance.component_manager
+        # trigger transition to StandbyLP mode to
+        # mimic automatic transition after startup
+        self.ds_cm._update_component_state(
+            operatingmode=DSOperatingMode.STANDBY_LP
+        )
+        self.spfrx_cm._update_component_state(
+            operatingmode=SPFRxOperatingMode.STANDBY
+        )
+        self.spf_cm._update_component_state(
+            operatingmode=SPFOperatingMode.STANDBY_LP
+        )
+
+    def teardown_method(self):
+        """Tear down context"""
+        self.tango_context.stop()
+
+    @pytest.mark.unit
+    @pytest.mark.forked
+    def test_device_reports_long_running_results(self, event_store):
+        dish_manager = self.device_proxy
+        sub_id = dish_manager.subscribe_event(
+            "dishMode",
+            tango.EventType.CHANGE_EVENT,
+            event_store,
+        )
+        assert event_store.wait_for_value(DishMode.STANDBY_LP)
+        # unsubscribe to stop listening for dishMode events
+        dish_manager.unsubscribe_event(sub_id)
+        # Clear out the queue to make sure we dont keep previous events
+        event_store.clear_queue()
 
         dish_manager.subscribe_event(
             "longRunningCommandResult",

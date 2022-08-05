@@ -47,6 +47,17 @@ class TestConfigureBand2:
             "SPFRX"
         ]
         self.dish_manager_cm = class_instance.component_manager
+        # trigger transition to StandbyLP mode to
+        # mimic automatic transition after startup
+        self.ds_cm._update_component_state(
+            operatingmode=DSOperatingMode.STANDBY_LP
+        )
+        self.spfrx_cm._update_component_state(
+            operatingmode=SPFRxOperatingMode.STANDBY
+        )
+        self.spf_cm._update_component_state(
+            operatingmode=SPFOperatingMode.STANDBY_LP
+        )
 
     def teardown_method(self):
         """Tear down context"""

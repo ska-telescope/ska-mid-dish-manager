@@ -92,22 +92,27 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
         # communication state will come from args and kwargs
-        if all(
-            cm.communication_state == CommunicationStatus.ESTABLISHED
-            for cm in self.component_managers.values()
-        ):
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
-            # TODO: The component state transition will be determined by the
-            # operatingMode of the subservient devices. That will be based on
-            # the builtin rules for determining the dishMode based on the
-            # aggregation of the operatingModes. Builtin rules yet to be added
-            self._update_component_state(dish_mode=DishMode.STANDBY_LP)
-            self._update_component_state(health_state=HealthState.OK)
-        else:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self._update_component_state(health_state=HealthState.FAILED)
+
+        # an empty dict will make all condition always pass. check
+        # that the dict is not empty before continuing with trigger
+        if self.component_managers:
+            if all(
+                cm.communication_state == CommunicationStatus.ESTABLISHED
+                for cm in self.component_managers.values()
+            ):
+                self._update_communication_state(
+                    CommunicationStatus.ESTABLISHED
+                )
+                # Automatic transition to LP mode on startup should come from
+                # operating modes ofsubservient devices. Likewise, any
+                # reconnection gained should be accompanied with fresh
+                # attribute updates
+                self._component_state_changed()
+            else:
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+                self._update_component_state(health_state=HealthState.FAILED)
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
