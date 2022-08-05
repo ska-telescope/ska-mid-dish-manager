@@ -101,10 +101,10 @@ class TestTrack:
         # Force dishManager dishMode to go to OPERATE
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
         self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
+            operatingmode=int(SPFOperatingMode.OPERATE)
         )
         self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
+            operatingmode=int(SPFRxOperatingMode.DATA_CAPTURE)
         )
         event_store.wait_for_value(DishMode.OPERATE)
         self.ds_cm._update_component_state(pointing_state=PointingState.READY)
@@ -118,10 +118,14 @@ class TestTrack:
         assert event_store.wait_for_command_id(unique_id)
 
         # transition DS pointingState to TRACK
-        self.ds_cm._update_component_state(pointing_state=PointingState.SLEW)
+        self.ds_cm._update_component_state(
+            pointing_state=int(PointingState.SLEW)
+        )
         event_store.wait_for_value(PointingState.SLEW)
         assert not self.device_proxy.achievedTargetLock
 
-        self.ds_cm._update_component_state(pointing_state=PointingState.TRACK)
+        self.ds_cm._update_component_state(
+            pointing_state=int(PointingState.TRACK)
+        )
         event_store.wait_for_value(PointingState.TRACK)
         assert self.device_proxy.achievedTargetLock

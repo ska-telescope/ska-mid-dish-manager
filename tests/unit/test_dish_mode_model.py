@@ -2,7 +2,13 @@
 
 import pytest
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    HealthState,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
     DishModeModel,
@@ -94,3 +100,140 @@ def test_model_dish_mode_transition_accuracy(
             dish_mode_model.is_command_allowed(
                 dish_mode=current_mode, command_name=requested_command
             )
+
+
+# Order DS, SPF, SPFRX
+@pytest.mark.parametrize(
+    ("ds_comp_state, spf_comp_state, spfrx_comp_state" ", expected_dish_mode"),
+    [
+        (
+            dict(operatingmode=DSOperatingMode.STANDBY_LP),
+            dict(operatingmode=SPFOperatingMode.STANDBY_LP),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.STANDBY_LP,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STANDBY_FP),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.STANDBY_FP,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STANDBY_FP),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            DishMode.STANDBY_FP,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.POINT),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            DishMode.OPERATE,
+        ),
+        # Any other random combo goes to UNKNOWN
+        (
+            dict(operatingmode=DSOperatingMode.UNKNOWN),
+            dict(operatingmode=SPFOperatingMode.ERROR),
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
+            DishMode.UNKNOWN,
+        ),
+    ],
+)
+def test_compute_dish_mode(
+    ds_comp_state,
+    spf_comp_state,
+    spfrx_comp_state,
+    expected_dish_mode,
+    dish_mode_model,
+):
+    actual_dish_mode = dish_mode_model.compute_dish_mode(
+        ds_comp_state, spf_comp_state, spfrx_comp_state
+    )
+    assert expected_dish_mode == actual_dish_mode
+
+
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state, spf_comp_state, spfrx_comp_state"
+        ", expected_dish_healthstate"
+    ),
+    [
+        (
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.NORMAL),
+            HealthState.NORMAL,
+        ),
+        (
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.DEGRADED),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED),
+            dict(healthstate=HealthState.FAILED),
+            dict(healthstate=HealthState.FAILED),
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.UNKNOWN),
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.NORMAL),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED),
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.NORMAL),
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.NORMAL),
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.NORMAL),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.FAILED),
+            dict(healthstate=HealthState.NORMAL),
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.NORMAL),
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.DEGRADED),
+            HealthState.DEGRADED,
+        ),
+    ],
+)
+def test_compute_dish_healthstate(
+    ds_comp_state,
+    spf_comp_state,
+    spfrx_comp_state,
+    expected_dish_healthstate,
+    dish_mode_model,
+):
+    actual_dish_healthstate = dish_mode_model.compute_dish_health_state(
+        ds_comp_state, spf_comp_state, spfrx_comp_state
+    )
+    assert expected_dish_healthstate == actual_dish_healthstate
