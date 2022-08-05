@@ -4,7 +4,7 @@ import functools
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 
 
-#  pylint: disable=too-few-public-methods
+#  pylint: disable=too-few-public-methods, invalid-name
 class NestedSubmittedSlowCommand(SubmittedSlowCommand):
     """Adapted `do` method"""
 

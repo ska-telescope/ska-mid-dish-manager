@@ -169,6 +169,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             configured_band=spfrx_comp_state["configuredband"]
         )
 
+    # pylint: disable=missing-function-docstring
     def start_communicating(self):
         for com_man in self.component_managers.values():
             com_man.start_communicating()
@@ -390,10 +391,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 result=json.dumps(device_command_ids),
             )
 
+    # pylint: disable=missing-function-docstring
     def stop_communicating(self):
         for com_man in self.component_managers.values():
             com_man.stop_communicating()
 
+    # pylint: disable=missing-function-docstring
     def abort_tasks(self, task_callback: Optional[Callable] = None):
         for com_man in self.component_managers.values():
             com_man.stop_communicating()

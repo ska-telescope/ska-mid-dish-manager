@@ -279,7 +279,7 @@ class DishModeModel:
         spfrx_component_state: dict,
     ) -> dict:
         """Collapse multiple state dicts into one"""
-        dish_manager_states = {"DS": dict(), "SPF": dict(), "SPFRX": dict()}
+        dish_manager_states = {"DS": {}, "SPF": {}, "SPFRX": {}}
 
         for key, val in ds_component_state.items():
             dish_manager_states["DS"][key] = str(val)

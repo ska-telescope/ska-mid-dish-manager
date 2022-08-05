@@ -105,6 +105,7 @@ class DishManager(SKAController):
         A class for the Dish Manager's init_device() method
         """
 
+        # pylint: disable=invalid-name
         def do(self):
             """
             Initializes the attributes and properties of the DishManager
