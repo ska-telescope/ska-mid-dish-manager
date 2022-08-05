@@ -3,11 +3,11 @@ DishManager Model
 =================
 
 Every transition is managed by DishManager's component manager through the model.
-The model is a mode transition network specifying:
+The model has a mode transition network and rules engine working together to specify:
 
 * the allowed modes Dish has to be in to execute a command.
 * the respective values the attributes in the underlying devices should report to
-  reflect a particular value and the aggregated attributes on Dish.
+  reflect a particular value on the aggregated attributes on Dish.
 
 The image below is a dishMode transition diagram showing **ALL** possible mode
 transitions generated from the DishModeModel.
