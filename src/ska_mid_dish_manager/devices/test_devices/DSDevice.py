@@ -8,6 +8,7 @@
 # pylint: disable=attribute-defined-outside-init
 import logging
 import os
+import random
 import sys
 
 from tango import AttrWriteType, Database, DbDevInfo, DevShort, DevState
@@ -29,11 +30,15 @@ class DSDevice(Device):
 
     def init_device(self):
         super().init_device()
+        self.__non_polled_attr_1 = random.uniform(0, 150)
+        self.__polled_attr_1 = random.randint(0, 150)
         self._operating_mode = DSOperatingMode.STANDBY_LP
         self._configured_band = Band.NONE
         self._power_state = DSPowerState.OFF
         self._health_state = HealthState.UNKNOWN
         self._indexer_position = Band.NONE
+        # set manual change event for double scalars
+        self.set_change_event("non_polled_attr_1", True, False)
         self.set_change_event("operatingMode", True, False)
         self.set_change_event("healthState", True, False)
         self.set_change_event("powerState", True, False)

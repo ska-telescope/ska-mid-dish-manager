@@ -34,3 +34,5 @@ def test_ds_cm(component_state_store, ds_device_fqdn):
     component_state_store.wait_for_value(
         "operatingmode", DSOperatingMode.STANDBY_FP
     )
+    com_man.stop_communicating()
+    component_state_store.wait_for_value("connection_state", "disconnected")

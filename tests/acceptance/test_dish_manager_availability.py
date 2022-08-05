@@ -5,6 +5,7 @@ from tango import DeviceProxy, DevState
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
+
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.parametrize("dish_number", ["0001"])
