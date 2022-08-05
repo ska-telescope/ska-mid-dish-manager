@@ -200,6 +200,12 @@ class DSDevice(Device):
         self._configured_band = Band.B2
         self.push_change_event("configuredBand", self._configured_band)
 
+    @command(dtype_in=None, doc_in="Set STOW", dtype_out=None)
+    async def Stow(self):
+        LOGGER.info("Called Stow")
+        self._operating_mode = DSOperatingMode.STOW
+        self.push_change_event("operatingMode", self._operating_mode)
+
 
 def main():
     """Script entrypoint"""
