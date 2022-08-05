@@ -660,7 +660,7 @@ class DishManager(SKAController):
             "Indicates the time, in UTC (ISO 8601), at which command"
             " execution should start."
         ),
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def ConfigureBand2(
