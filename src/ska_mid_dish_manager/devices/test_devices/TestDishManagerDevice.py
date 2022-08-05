@@ -1,5 +1,5 @@
 """A DishManager test device to connect to the test SPFRX etc."""
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name, abstract-method
 import os
 
 from tango import Database, DbDevInfo

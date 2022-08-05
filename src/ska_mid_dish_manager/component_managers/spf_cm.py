@@ -12,6 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
+#  pylint: disable=missing-function-docstring, invalid-name
 class SPFComponentManager(TangoDeviceComponentManager):
     """Specialization for SPF functionality"""
 

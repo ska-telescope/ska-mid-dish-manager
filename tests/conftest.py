@@ -52,7 +52,7 @@ def simple_device():
 
     # pylint: disable=bad-super-call, too-few-public-methods
     class SimpleDev(Device):
-        """Simple device"""
+        """A basic device which pushes change events on State"""
 
         def init_device(self):
             super(Device, self).init_device()

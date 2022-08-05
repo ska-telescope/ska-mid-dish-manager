@@ -12,6 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
+# pylint: disable=invalid-name, missing-function-docstring
 class DSComponentManager(TangoDeviceComponentManager):
     """Specialization for DS functionality"""
 
