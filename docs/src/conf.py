@@ -49,6 +49,7 @@ autodoc_mock_imports = [
     "networkx",
     "ska_tango_base",
     "tango",
+    "rule_engine"
 ]
 
 autodoc_default_options = {
