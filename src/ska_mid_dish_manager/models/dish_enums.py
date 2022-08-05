@@ -14,6 +14,7 @@ class DishMode(enum.IntEnum):
     STOW = 5
     CONFIG = 6
     OPERATE = 7
+    UNKNOWN = 8
 
 
 class PointingState(enum.IntEnum):

@@ -76,6 +76,12 @@ class SPFDevice(Device):
         self._operating_mode = SPFOperatingMode.STANDBY_LP
         self.push_change_event("operatingMode", self._operating_mode)
 
+    @command(dtype_in=None, doc_in="Set SetStartupMode", dtype_out=None)
+    async def SetStartupMode(self):
+        LOGGER.info("Called SetStartupMode")
+        self._operating_mode = SPFOperatingMode.STARTUP
+        self.push_change_event("operatingMode", self._operating_mode)
+
 
 def main():
     """Script entrypoint"""

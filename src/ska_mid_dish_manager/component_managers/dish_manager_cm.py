@@ -17,10 +17,7 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import (
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
-    DSOperatingMode,
     PointingState,
-    SPFOperatingMode,
-    SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
@@ -95,81 +92,84 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
         # communication state will come from args and kwargs
-        if all(
-            cm.communication_state == CommunicationStatus.ESTABLISHED
-            for cm in self.component_managers.values()
-        ):
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
-            # TODO: The component state transition will be determined by the
-            # operatingMode of the subservient devices. That will be based on
-            # the builtin rules for determining the dishMode based on the
-            # aggregation of the operatingModes. Builtin rules yet to be added
-            self._update_component_state(dish_mode=DishMode.STANDBY_LP)
-            self._update_component_state(health_state=HealthState.OK)
-        else:
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
-            self._update_component_state(health_state=HealthState.FAILED)
+
+        # an empty dict will make all condition always pass. check
+        # that the dict is not empty before continuing with trigger
+        if self.component_managers:
+            if all(
+                cm.communication_state == CommunicationStatus.ESTABLISHED
+                for cm in self.component_managers.values()
+            ):
+                self._update_communication_state(
+                    CommunicationStatus.ESTABLISHED
+                )
+                # Automatic transition to LP mode on startup should come from
+                # operating modes ofsubservient devices. Likewise, any
+                # reconnection gained should be accompanied with fresh
+                # attribute updates
+                self._component_state_changed()
+            else:
+                self._update_communication_state(
+                    CommunicationStatus.NOT_ESTABLISHED
+                )
+                self._update_component_state(health_state=HealthState.FAILED)
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
-        # component state will come from args and kwargs
-        # TODO: same as TODO comment in _communication_state_changed
+
         ds_comp_state = self.component_managers["DS"].component_state
         spf_comp_state = self.component_managers["SPF"].component_state
         spfrx_comp_state = self.component_managers["SPFRX"].component_state
 
-        # PointingState rules for TRACK, SCAN, SLEW & SetOperateMode
-        def _update_pointing_state():
-            if ds_comp_state["pointing_state"] is not None:
-                self._update_component_state(
-                    pointing_state=ds_comp_state["pointing_state"]
-                )
+        # Only update dishMode if there are operatingmode changes
+        operating_modes = [
+            comp_state.get("operatingmode", None)
+            for comp_state in [ds_comp_state, spf_comp_state, spfrx_comp_state]
+        ]
+        if any(operating_modes):
+            self.logger.info(
+                (
+                    "Updating dishMode with operatingModes DS"
+                    " [%s], SPF [%s], SPFRX [%s]"
+                ),
+                str(ds_comp_state["operatingmode"]),
+                str(spf_comp_state["operatingmode"]),
+                str(spfrx_comp_state["operatingmode"]),
+            )
+            new_dish_mode = self._dish_mode_model.compute_dish_mode(
+                ds_comp_state, spf_comp_state, spfrx_comp_state
+            )
+            self._update_component_state(dish_mode=new_dish_mode)
 
-                if ds_comp_state["pointing_state"] in [
-                    PointingState.SLEW,
-                    PointingState.READY,
-                ]:
-                    self._update_component_state(achieved_target_lock=False)
-                elif ds_comp_state["pointing_state"] == PointingState.TRACK:
-                    self._update_component_state(achieved_target_lock=True)
-
-        _update_pointing_state()
-
-        # STANDBY_LP rules
         if (
-            ds_comp_state["operatingmode"] == DSOperatingMode.STANDBY_LP
-            and spf_comp_state["operatingmode"] == SPFOperatingMode.STANDBY_LP
-            and spfrx_comp_state["operatingmode"] == SPFRxOperatingMode.STANDBY
+            "healthstate" in ds_comp_state
+            and "healthstate" in spf_comp_state
+            and "healthstate" in spfrx_comp_state
         ):
-            self._update_component_state(dish_mode=DishMode.STANDBY_LP)
+            new_health_state = self._dish_mode_model.compute_dish_health_state(
+                ds_comp_state, spf_comp_state, spfrx_comp_state
+            )
+            self._update_component_state(health_state=new_health_state)
 
-        # STANDBY_FP rules
-        if (
-            ds_comp_state["operatingmode"] == DSOperatingMode.STANDBY_FP
-            and spf_comp_state["operatingmode"] == SPFOperatingMode.OPERATE
-            and spfrx_comp_state["operatingmode"]
-            in (SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.DATA_CAPTURE)
-        ):
-            self._update_component_state(dish_mode=DishMode.STANDBY_FP)
+        if ds_comp_state["pointing_state"] is not None:
+            self._update_component_state(
+                pointing_state=ds_comp_state["pointing_state"]
+            )
 
-        # OPERATE rules
-        if (
-            ds_comp_state["operatingmode"] == DSOperatingMode.POINT
-            and spf_comp_state["operatingmode"] == SPFOperatingMode.OPERATE
-            and spfrx_comp_state["operatingmode"]
-            == SPFRxOperatingMode.DATA_CAPTURE
-        ):
-            self._update_component_state(dish_mode=DishMode.OPERATE)
-            # pointingState should come from DS
-            _update_pointing_state()
+        if ds_comp_state["pointing_state"] in [
+            PointingState.SLEW,
+            PointingState.READY,
+        ]:
+            self._update_component_state(achieved_target_lock=False)
+        elif ds_comp_state["pointing_state"] == PointingState.TRACK:
+            self._update_component_state(achieved_target_lock=True)
 
         # configuredBand
         self._update_component_state(
             configured_band=spfrx_comp_state["configuredband"]
         )
 
+    # pylint: disable=missing-function-docstring
     def start_communicating(self):
         for com_man in self.component_managers.values():
             com_man.start_communicating()
@@ -391,10 +391,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 result=json.dumps(device_command_ids),
             )
 
+    # pylint: disable=missing-function-docstring
     def stop_communicating(self):
         for com_man in self.component_managers.values():
             com_man.stop_communicating()
 
+    # pylint: disable=missing-function-docstring
     def abort_tasks(self, task_callback: Optional[Callable] = None):
         for com_man in self.component_managers.values():
             com_man.stop_communicating()

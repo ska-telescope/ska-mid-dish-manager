@@ -3,7 +3,12 @@
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
 # pylint: disable=too-few-public-methods
+# pylint: disable=C0301
+# flake8: noqa: E501
 import networkx as nx
+import rule_engine
+
+from ska_mid_dish_manager.models.dish_enums import DishMode, HealthState
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -23,7 +28,92 @@ DISH_MODE_NODES = (
     "STOW",
     "CONFIG",
     "OPERATE",
+    "UNKNOWN",
 )
+
+DISH_MODE_RULES = {
+    "CONFIG": rule_engine.Rule(
+        "DS.operatingmode  in ['DSOperatingMode.POINT', 'DSOperatingMode.STOW', 'DSOperatingMode.STANDBY_LP', 'DSOperatingMode.STANDBY_FP'] and "  # noqa: E501
+        "SPF.operatingmode  == 'SPFOperatingMode.OPERATE' and SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE'"  # noqa: E501
+    ),
+    "MAINTENANCE": rule_engine.Rule(
+        "DS.operatingmode  == 'DSOperatingMode.STOW' and "
+        "SPF.operatingmode  == 'SPFOperatingMode.MAINTENANCE' and "
+        "SPFRX.operatingmode  == 'SPFRxOperatingMode.MAINTENANCE'"
+    ),
+    "OPERATE": rule_engine.Rule(
+        "DS.operatingmode  == 'DSOperatingMode.POINT' and "
+        "SPF.operatingmode  == 'SPFOperatingMode.OPERATE' and "
+        "SPFRX.operatingmode  == 'SPFRxOperatingMode.DATA_CAPTURE'"
+    ),
+    "STANDBY_FP": rule_engine.Rule(
+        "DS.operatingmode  == 'DSOperatingMode.STANDBY_FP' and "
+        "SPF.operatingmode  == 'SPFOperatingMode.OPERATE' and "
+        "SPFRX.operatingmode  in ['SPFRxOperatingMode.STANDBY', 'SPFRxOperatingMode.DATA_CAPTURE']"
+    ),
+    "STANDBY_LP": rule_engine.Rule(
+        "DS.operatingmode == 'DSOperatingMode.STANDBY_LP' and "
+        "SPF.operatingmode  == 'SPFOperatingMode.STANDBY_LP' and "
+        "SPFRX.operatingmode  == 'SPFRxOperatingMode.STANDBY'"
+    ),
+    "STOW": rule_engine.Rule(
+        "DS.operatingmode  == 'DSOperatingMode.STOW' and "
+        "SPF.operatingmode in ['SPFOperatingMode.STANDBY_LP', 'SPFOperatingMode.OPERATE'] and "
+        "SPFRX.operatingmode in ['SPFRxOperatingMode.STANDBY', 'SPFRxOperatingMode.DATA_CAPTURE']"
+    ),
+}
+
+
+HEALTH_STATE_RULES = {
+    "DEGRADED": rule_engine.Rule(
+        "("
+        "    DS.healthstate == 'HealthState.DEGRADED' and "
+        "    SPF.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN'] and "
+        "    SPFRX.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN']"
+        ") "
+        "or "
+        "("
+        "    DS.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN'] and "
+        "    SPF.healthstate == 'HealthState.DEGRADED' and "
+        "    SPFRX.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN']"
+        ") "
+        "or "
+        "("
+        "    DS.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN'] and "
+        "    SPF.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN'] and "
+        "    SPFRX.healthstate == 'HealthState.DEGRADED'"
+        ")"
+    ),
+    "FAILED": rule_engine.Rule(
+        "DS.healthstate == 'HealthState.FAILED' or "
+        "SPF.healthstate == 'HealthState.FAILED' or "
+        "SPFRX.healthstate == 'HealthState.FAILED'"
+    ),
+    "NORMAL": rule_engine.Rule(
+        "DS.healthstate == 'HealthState.NORMAL' and "
+        "SPF.healthstate == 'HealthState.NORMAL' and "
+        "SPFRX.healthstate == 'HealthState.NORMAL'"
+    ),
+    "UNKNOWN": rule_engine.Rule(
+        "("
+        "    DS.healthstate == 'HealthState.UNKNOWN' and "
+        "    SPF.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN'] and "
+        "    SPFRX.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN']"
+        ") "
+        "or "
+        "("
+        "    DS.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN'] and "
+        "    SPF.healthstate == 'HealthState.UNKNOWN' and "
+        "    SPFRX.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN']"
+        ") "
+        "or "
+        "("
+        "    DS.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN'] and "
+        "    SPF.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN'] and "
+        "    SPFRX.healthstate == 'HealthState.UNKNOWN'"
+        ")"
+    ),
+}
 
 
 class CommandNotAllowed(Exception):
@@ -128,3 +218,76 @@ class DishModeModel:
                 f"[{dish_mode}], only allowed to do {allowed_commands}"
             )
         )
+
+    def compute_dish_mode(
+        self,
+        ds_component_state: dict,
+        spf_component_state: dict,
+        spfrx_component_state: dict,
+    ) -> DishMode:
+        """Compute the dishMode based off component_states
+
+        :param ds_component_state: DS device component state
+        :type ds_component_state: dict
+        :param spf_component_state: SPF device component state
+        :type spf_component_state: dict
+        :param spfrx_component_state: SPFRX device component state
+        :type spfrx_component_state: dict
+        :return: the calculated dishMode
+        :rtype: DishMode
+        """
+        dish_manager_states = self._collapse(
+            ds_component_state, spf_component_state, spfrx_component_state
+        )
+
+        for mode, rule in DISH_MODE_RULES.items():
+            if rule.matches(dish_manager_states):
+                return DishMode[mode]
+        return DishMode.UNKNOWN
+
+    def compute_dish_health_state(
+        self,
+        ds_component_state: dict,
+        spf_component_state: dict,
+        spfrx_component_state: dict,
+    ) -> HealthState:
+        """Compute the HealthState based off component_states
+
+        :param ds_component_state: DS device component state
+        :type ds_component_state: dict
+        :param spf_component_state: SPF device component state
+        :type spf_component_state: dict
+        :param spfrx_component_state: SPFRX device component state
+        :type spfrx_component_state: dict
+        :return: the calculated HealthState
+        :rtype: HealthState
+        """
+        dish_manager_states = self._collapse(
+            ds_component_state, spf_component_state, spfrx_component_state
+        )
+
+        for healthstate, rule in HEALTH_STATE_RULES.items():
+            if rule.matches(dish_manager_states):
+                return HealthState[healthstate]
+        return HealthState.UNKNOWN
+
+    @classmethod
+    def _collapse(
+        cls,
+        ds_component_state: dict,
+        spf_component_state: dict,
+        spfrx_component_state: dict,
+    ) -> dict:
+        """Collapse multiple state dicts into one"""
+        dish_manager_states = {"DS": {}, "SPF": {}, "SPFRX": {}}
+
+        for key, val in ds_component_state.items():
+            dish_manager_states["DS"][key] = str(val)
+
+        for key, val in spf_component_state.items():
+            dish_manager_states["SPF"][key] = str(val)
+
+        for key, val in spfrx_component_state.items():
+            dish_manager_states["SPFRX"][key] = str(val)
+
+        return dish_manager_states
