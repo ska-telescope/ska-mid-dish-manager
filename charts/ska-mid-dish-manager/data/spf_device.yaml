@@ -2,15 +2,16 @@ name: "spf-device-{{.Release.Name}}"
 function: test-device
 domain: testing
 command: "/usr/local/bin/SPFDevice "
-instances: ["01"]
 server:
   name: "SPFDevice"
   instances:
-    - name: "01"
+  {{- range  .Values.coalesced_dishes }}
+    - name: "{{ . }}"
       classes:
         - name: "SPFDevice"
           devices:
-            - name: "test/spf/1"
+            - name: "mid_d{{ printf "%04s" . }}/spf/simulator"
+  {{- end }}
 depends_on:
   - device: sys/database/2
 image:

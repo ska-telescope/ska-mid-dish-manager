@@ -78,6 +78,7 @@ class DishManager(SKAController):
             ("SetOperateMode", "set_operate_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
+            ("ConfigureBand2", "configure_band2_cmd"),
         ]:
             self.register_command_object(
                 command_name,
@@ -155,6 +156,7 @@ class DishManager(SKAController):
             # push change events for dishMode: needed to use testing library
             device.set_change_event("dishMode", True, False)
             device.set_change_event("pointingState", True, False)
+            device.set_change_event("configuredBand", True, False)
             device.instances[device.get_name()] = device
             device.component_manager.start_communicating()
             super().do()
@@ -653,20 +655,31 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution "
-        "should start.",
+        doc_in=(
+            "Indicates the time, in UTC (ISO 8601), at which command"
+            " execution should start."
+        ),
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand2(self, timestamp):  # pylint: disable=unused-argument
+    def ConfigureBand2(
+        self, activation_timestamp
+    ):  # pylint: disable=unused-argument
         """
+        Implemented as a Long Running Command
+
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 2. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        return
+        handler = self.get_command_object("ConfigureBand2")
+
+        result_code, unique_id = handler(
+            activation_timestamp, self._configured_band
+        )
+        return ([result_code], [unique_id])
 
     @command(
         dtype_in=str,
@@ -926,7 +939,7 @@ class DishManager(SKAController):
 
 
 def main(args=None, **kwargs):
-    """Launch an DishManager device."""
+    """Launch a DishManager device."""
     return run((DishManager,), args=args, **kwargs)
 
 

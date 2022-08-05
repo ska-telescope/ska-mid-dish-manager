@@ -29,6 +29,8 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             **kwargs
         )
         self.monitor_attribute("operatingMode")
+        self.monitor_attribute("healthState")
+        self.monitor_attribute("configuredBand")
 
     def on(self, task_callback: Callable):
         raise NotImplementedError

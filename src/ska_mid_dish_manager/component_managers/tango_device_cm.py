@@ -286,7 +286,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param: task_callback: Callback to report status
         :type: task_callback: Callable, optional
         """
-        task_callback(status=TaskStatus.IN_PROGRESS)
+        if task_callback:
+            task_callback(status=TaskStatus.IN_PROGRESS)
         retry_count = 0
         while True:
             # Leave thread if aborted
@@ -328,7 +329,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         task_callback: Callable = None,
         task_abort_event: Event = None,
     ):
-        task_callback(TaskStatus.IN_PROGRESS)
+        if task_callback:
+            task_callback(TaskStatus.IN_PROGRESS)
         if task_abort_event.is_set():
             task_callback(TaskStatus.ABORTED)
             return
@@ -349,22 +351,31 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._device_proxy, command_name, command_arg
             )
         except (LostConnection, tango.DevFailed) as err:
-            task_callback(TaskStatus.COMPLETED, exception=err)
+            self.logger.exception(err)
+            if task_callback:
+                task_callback(TaskStatus.FAILED, exception=err)
             return
 
+        if task_callback:
+            task_callback(TaskStatus.COMPLETED, result=str(result))
+
+    # pylint: disable=no-self-use
+    @_check_connection
+    def execute_command(self, device_proxy, command_name, command_arg):
+        """Check the connection and execute the command on the Tango device"""
+        self.logger.info(
+            "About to execute command [%s] on device [%s]",
+            command_name,
+            self._tango_device_fqdn,
+        )
+        result = device_proxy.command_inout(command_name, command_arg)
         self.logger.info(
             "Result of [%s] on [%s] is [%s]",
             command_name,
             self._tango_device_fqdn,
             result,
         )
-        task_callback(TaskStatus.COMPLETED, result=str(result))
-
-    # pylint: disable=no-self-use
-    @_check_connection
-    def execute_command(self, device_proxy, command_name, command_arg):
-        """Check the connection and execute the command on the Tango device"""
-        return device_proxy.command_inout(command_name, command_arg)
+        return result
 
     def monitor_attribute(self, attribute_name: str):
         """Update the component state with the Attribute value as it changes
@@ -411,7 +422,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         for attr_name in self.component_state:
             if attr_name == "connection_state":
                 continue
-            self._update_component_state(**{attr_name: None})
+            # TODO reset component state attr to default values
+            # Just setting them to None will cause problems
+            # when push_event requires something else like an Enum
 
     def reconnect(self):
         """Redo the connection to the Tango device"""

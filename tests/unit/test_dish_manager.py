@@ -87,7 +87,9 @@ def test_dish_manager_transitions_to_lp_mode_after_startup_with_mocks(
         assert call(device_name) in patched_tango.DeviceProxy.call_args_list
 
     # Check that we subscribe
-    assert device_proxy.subscribe_event.call_count == 6
+    # DS/SPF 4 per device; State, healthState, powerState, operatingMode
+    # SPFRx 4 per device; State, healthState, operatingMode, configuredBand
+    assert device_proxy.subscribe_event.call_count == 12
 
 
 # pylint: disable=missing-function-docstring

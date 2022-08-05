@@ -8,8 +8,10 @@
 # pylint: disable=attribute-defined-outside-init
 import asyncio
 import json
+import logging
 import os
 import random
+import sys
 
 from tango import (
     AttrWriteType,
@@ -22,7 +24,15 @@ from tango import (
 )
 from tango.server import Device, attribute, command
 
-from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
+from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    DSOperatingMode,
+    DSPowerState,
+    HealthState,
+)
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+LOGGER = logging.getLogger()
 
 
 class DSDevice(Device):
@@ -39,6 +49,13 @@ class DSDevice(Device):
         # set manual change event for double scalars
         self.set_change_event("non_polled_attr_1", True, False)
         self._operating_mode = DSOperatingMode.UNKNOWN
+        self._configured_band = Band.NONE
+        self._power_state = DSPowerState.OFF
+        self._health_state = HealthState.UNKNOWN
+        self.set_change_event("operatingMode", True)
+        self.set_change_event("healthState", True)
+        self.set_change_event("powerState", True)
+        self.set_change_event("configuredBand", True)
 
     # ---------------------
     # Non polled attributes
@@ -119,21 +136,63 @@ class DSDevice(Device):
     @attribute(
         dtype=DSOperatingMode,
         access=AttrWriteType.READ_WRITE,
-        polling_period=1000,
     )
     async def operatingMode(self):
         return self._operating_mode
 
     def write_operatingMode(self, new_value):
         self._operating_mode = new_value
+        self.push_change_event("operatingMode", self._operating_mode)
+
+    @attribute(
+        dtype=HealthState,
+        access=AttrWriteType.READ_WRITE,
+    )
+    async def healthState(self):
+        return self._health_state
+
+    def write_healthState(self, new_value):
+        self._health_state = new_value
+        self.push_change_event("healthState", self._health_state)
+
+    @attribute(
+        dtype=DSPowerState,
+        access=AttrWriteType.READ_WRITE,
+    )
+    async def powerState(self):
+        return self._power_state
+
+    def write_powerState(self, new_value):
+        self._power_state = new_value
+        self.push_change_event("powerState", self._power_state)
 
     @command(dtype_in=None, doc_in="Set StandbyLPMode", dtype_out=None)
     async def SetStandbyLPMode(self):
         self._operating_mode = DSOperatingMode.STANDBY_LP
+        self.push_change_event("operatingMode", self._operating_mode)
 
     @command(dtype_in=None, doc_in="Set StandbyFPMode", dtype_out=None)
     async def SetStandbyFPMode(self):
+        LOGGER.info("Called SetStandbyMode")
         self._operating_mode = DSOperatingMode.STANDBY_FP
+        self.push_change_event("operatingMode", self._operating_mode)
+
+    @attribute(
+        dtype=Band,
+        access=AttrWriteType.READ_WRITE,
+    )
+    async def configuredBand(self):
+        return self._configured_band
+
+    def write_configuredBand(self, new_value):
+        self._configured_band = new_value
+        self.push_change_event("configuredBand", self._configured_band)
+
+    @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
+    async def ConfigureBand2(self):
+        LOGGER.info("Called ConfigureBand2")
+        self._configured_band = Band.B2
+        self.push_change_event("configuredBand", self._configured_band)
 
 
 def main():
