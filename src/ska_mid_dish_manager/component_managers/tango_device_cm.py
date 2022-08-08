@@ -162,7 +162,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def _update_state_from_event(self, event_data: tango.EventData):
         self.logger.debug("Got event [%s]", event_data)
         if event_data.err:
-            # We lost connection, get the connection bask
+            # We lost connection, get the connection back
             self.reconnect()
         else:
             # I get lowercase and uppercase "State" from events
@@ -174,7 +174,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._component_state[attr_name] = None
 
             self._update_component_state(
-                **{attr_name: str(event_data.attr_value.value)}
+                **{attr_name: event_data.attr_value.value}
             )
 
     @classmethod

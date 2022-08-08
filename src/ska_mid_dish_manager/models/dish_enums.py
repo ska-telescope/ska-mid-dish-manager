@@ -34,6 +34,27 @@ class Band(enum.IntEnum):
     # pylint: disable=invalid-name
     B5a = 5
     B5b = 6
+    UNKNOWN = 7
+
+
+class IndexerPosition(enum.IntEnum):
+    UNKNOWN = 0
+    B1 = 1
+    B2 = 2
+    B3 = 3
+    B4 = 4
+    B5 = 5
+    MOVING = 6
+    ERROR = 7
+
+
+class BandInFocus(enum.IntEnum):
+    UNKNOWN = 0
+    B1 = 1
+    B2 = 2
+    B3 = 3
+    B4 = 4
+    B5 = 5
 
 
 class PowerState(enum.IntEnum):

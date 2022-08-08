@@ -3,9 +3,12 @@
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    BandInFocus,
     DishMode,
     DSOperatingMode,
     HealthState,
+    IndexerPosition,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -147,7 +150,7 @@ def test_compute_dish_mode(
     dish_mode_model,
 ):
     actual_dish_mode = dish_mode_model.compute_dish_mode(
-        ds_comp_state, spf_comp_state, spfrx_comp_state
+        ds_comp_state, spfrx_comp_state, spf_comp_state
     )
     assert expected_dish_mode == actual_dish_mode
 
@@ -234,6 +237,139 @@ def test_compute_dish_healthstate(
     dish_mode_model,
 ):
     actual_dish_healthstate = dish_mode_model.compute_dish_health_state(
-        ds_comp_state, spf_comp_state, spfrx_comp_state
+        ds_comp_state, spfrx_comp_state, spf_comp_state
     )
     assert expected_dish_healthstate == actual_dish_healthstate
+
+
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state, spf_comp_state, spfrx_comp_state"
+        ", expected_band_number"
+    ),
+    [
+        (
+            dict(something="nothing"),
+            dict(anything="something"),
+            dict(configuredband=Band.NONE),
+            Band.NONE,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B1),
+            dict(bandinfocus=BandInFocus.B1),
+            dict(configuredband=Band.B1),
+            Band.B1,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B2),
+            dict(bandinfocus=BandInFocus.B2),
+            dict(configuredband=Band.B2),
+            Band.B2,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B3),
+            dict(bandinfocus=BandInFocus.B3),
+            dict(configuredband=Band.B3),
+            Band.B3,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B4),
+            dict(bandinfocus=BandInFocus.B4),
+            dict(configuredband=Band.B4),
+            Band.B4,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B5),
+            dict(bandinfocus=BandInFocus.B5),
+            dict(configuredband=Band.B5a),
+            Band.B5a,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B5),
+            dict(bandinfocus=BandInFocus.B5),
+            dict(configuredband=Band.B5b),
+            Band.B5b,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B1),
+            dict(bandinfocus=BandInFocus.B2),
+            dict(configuredband=Band.B3),
+            Band.UNKNOWN,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B1),
+            dict(bandinfocus=BandInFocus.B5),
+            dict(configuredband=Band.B5a),
+            Band.UNKNOWN,
+        ),
+    ],
+)
+def test_compute_configured_band(
+    ds_comp_state,
+    spf_comp_state,
+    spfrx_comp_state,
+    expected_band_number,
+    dish_mode_model,
+):
+    actual_band_number = dish_mode_model.compute_configured_band(
+        ds_comp_state, spfrx_comp_state, spf_comp_state
+    )
+    assert expected_band_number == actual_band_number
+
+
+@pytest.mark.parametrize(
+    ("ds_comp_state, spfrx_comp_state" ", expected_band_number"),
+    [
+        (
+            dict(indexerposition=IndexerPosition.B1),
+            dict(configuredband=Band.B1),
+            BandInFocus.B1,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B2),
+            dict(configuredband=Band.B2),
+            BandInFocus.B2,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B3),
+            dict(configuredband=Band.B3),
+            BandInFocus.B3,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B4),
+            dict(configuredband=Band.B4),
+            BandInFocus.B4,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B5),
+            dict(configuredband=Band.B5a),
+            BandInFocus.B5,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B5),
+            dict(configuredband=Band.B5b),
+            BandInFocus.B5,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B1),
+            dict(configuredband=Band.B3),
+            BandInFocus.UNKNOWN,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B1),
+            dict(configuredband=Band.B5a),
+            BandInFocus.UNKNOWN,
+        ),
+    ],
+)
+def test_compute_spf_band_in_focus(
+    ds_comp_state,
+    spfrx_comp_state,
+    expected_band_number,
+    dish_mode_model,
+):
+    actual_band_number = dish_mode_model.compute_spf_band_in_focus(
+        ds_comp_state,
+        spfrx_comp_state,
+    )
+    assert expected_band_number == actual_band_number

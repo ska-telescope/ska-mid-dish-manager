@@ -16,7 +16,9 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import (
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
+    BandInFocus,
     DishMode,
+    IndexerPosition,
     PointingState,
 )
 from ska_mid_dish_manager.models.dish_mode_model import (
@@ -64,8 +66,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ds_device_fqdn,
             logger,
             operatingmode=None,
-            pointing_state=None,
-            achieved_target_lock=None,
+            pointingstate=None,
+            achievedtargetlock=None,
+            indexerposition=IndexerPosition.UNKNOWN,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
@@ -81,6 +84,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spf_device_fqdn,
             logger,
             operatingmode=None,
+            bandinfocus=BandInFocus.UNKNOWN,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
@@ -124,7 +128,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Only update dishMode if there are operatingmode changes
         operating_modes = [
             comp_state.get("operatingmode", None)
-            for comp_state in [ds_comp_state, spf_comp_state, spfrx_comp_state]
+            for comp_state in [ds_comp_state, spfrx_comp_state, spf_comp_state]
         ]
         if any(operating_modes):
             self.logger.info(
@@ -137,7 +141,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 str(spfrx_comp_state["operatingmode"]),
             )
             new_dish_mode = self._dish_mode_model.compute_dish_mode(
-                ds_comp_state, spf_comp_state, spfrx_comp_state
+                ds_comp_state,
+                spfrx_comp_state,
+                spf_comp_state,
             )
             self._update_component_state(dish_mode=new_dish_mode)
 
@@ -147,27 +153,54 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             and "healthstate" in spfrx_comp_state
         ):
             new_health_state = self._dish_mode_model.compute_dish_health_state(
-                ds_comp_state, spf_comp_state, spfrx_comp_state
+                ds_comp_state,
+                spfrx_comp_state,
+                spf_comp_state,
             )
             self._update_component_state(health_state=new_health_state)
 
-        if ds_comp_state["pointing_state"] is not None:
+        if ds_comp_state["pointingstate"] is not None:
             self._update_component_state(
-                pointing_state=ds_comp_state["pointing_state"]
+                pointing_state=ds_comp_state["pointingstate"]
             )
 
-        if ds_comp_state["pointing_state"] in [
+        if ds_comp_state["pointingstate"] in [
             PointingState.SLEW,
             PointingState.READY,
         ]:
             self._update_component_state(achieved_target_lock=False)
-        elif ds_comp_state["pointing_state"] == PointingState.TRACK:
+        elif ds_comp_state["pointingstate"] == PointingState.TRACK:
             self._update_component_state(achieved_target_lock=True)
 
+        # spf bandInFocus
+        if (
+            "indexerposition" in ds_comp_state
+            and "configuredband" in spfrx_comp_state
+        ):
+            band_in_focus = self._dish_mode_model.compute_spf_band_in_focus(
+                ds_comp_state, spfrx_comp_state
+            )
+            # pylint: disable=protected-access
+            # update the bandInFocus of SPF before configuredBand
+            spf_proxy = self.component_managers["SPF"]._device_proxy
+            # component state changed for DS and SPFRx may be triggered while
+            # SPF device proxy is not initialised. Write to the bandInFocus
+            # only when you have the device proxy
+            if spf_proxy:
+                spf_proxy.write_attribute("bandInFocus", band_in_focus)
+
         # configuredBand
-        self._update_component_state(
-            configured_band=spfrx_comp_state["configuredband"]
-        )
+        if (
+            "indexerposition" in ds_comp_state
+            and "bandinfocus" in spf_comp_state
+            and "configuredband" in spfrx_comp_state
+        ):
+            configured_band = self._dish_mode_model.compute_configured_band(
+                ds_comp_state,
+                spfrx_comp_state,
+                spf_comp_state,
+            )
+            self._update_component_state(configured_band=configured_band)
 
     # pylint: disable=missing-function-docstring
     def start_communicating(self):

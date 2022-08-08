@@ -8,7 +8,12 @@
 import networkx as nx
 import rule_engine
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, HealthState
+from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    BandInFocus,
+    DishMode,
+    HealthState,
+)
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -63,7 +68,6 @@ DISH_MODE_RULES = {
     ),
 }
 
-
 HEALTH_STATE_RULES = {
     "DEGRADED": rule_engine.Rule(
         "("
@@ -112,6 +116,63 @@ HEALTH_STATE_RULES = {
         "    SPF.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN'] and "
         "    SPFRX.healthstate == 'HealthState.UNKNOWN'"
         ")"
+    ),
+}
+
+CONFIGURED_BAND_RULES = {
+    "NONE": rule_engine.Rule("SPFRX.configuredband  == 'Band.NONE'"),
+    "B1": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B1' and "
+        "SPFRX.configuredband  == 'Band.B1' and "
+        "SPF.bandinfocus == 'BandInFocus.B1'"
+    ),
+    "B2": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B2' and "
+        "SPFRX.configuredband  == 'Band.B2' and "
+        "SPF.bandinfocus == 'BandInFocus.B2'"
+    ),
+    "B3": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B3' and "
+        "SPFRX.configuredband  == 'Band.B3' and "
+        "SPF.bandinfocus == 'BandInFocus.B3'"
+    ),
+    "B4": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B4' and "
+        "SPFRX.configuredband  == 'Band.B4' and "
+        "SPF.bandinfocus == 'BandInFocus.B4'"
+    ),
+    "B5a": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B5' and "
+        "SPFRX.configuredband  == 'Band.B5a' and "
+        "SPF.bandinfocus == 'BandInFocus.B5'"
+    ),
+    "B5b": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B5' and "
+        "SPFRX.configuredband  == 'Band.B5b' and "
+        "SPF.bandinfocus == 'BandInFocus.B5'"
+    ),
+}
+
+SPF_BAND_IN_FOCUS_RULES = {
+    "B1": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B1' and "
+        "SPFRX.configuredband  == 'Band.B1'"
+    ),
+    "B2": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B2' and "
+        "SPFRX.configuredband  == 'Band.B2'"
+    ),
+    "B3": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B3' and "
+        "SPFRX.configuredband  == 'Band.B3'"
+    ),
+    "B4": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B4' and "
+        "SPFRX.configuredband  == 'Band.B4'"
+    ),
+    "B5": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B5' and "
+        "SPFRX.configuredband  in ['Band.B5a', 'Band.B5b']"
     ),
 }
 
@@ -223,22 +284,22 @@ class DishModeModel:
     def compute_dish_mode(
         self,
         ds_component_state: dict,
-        spf_component_state: dict,
         spfrx_component_state: dict,
+        spf_component_state: dict,
     ) -> DishMode:
         """Compute the dishMode based off component_states
 
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
-        :param spf_component_state: SPF device component state
-        :type spf_component_state: dict
         :param spfrx_component_state: SPFRX device component state
         :type spfrx_component_state: dict
+        :param spf_component_state: SPF device component state
+        :type spf_component_state: dict
         :return: the calculated dishMode
         :rtype: DishMode
         """
         dish_manager_states = self._collapse(
-            ds_component_state, spf_component_state, spfrx_component_state
+            ds_component_state, spfrx_component_state, spf_component_state
         )
 
         for mode, rule in DISH_MODE_RULES.items():
@@ -249,22 +310,22 @@ class DishModeModel:
     def compute_dish_health_state(
         self,
         ds_component_state: dict,
-        spf_component_state: dict,
         spfrx_component_state: dict,
+        spf_component_state: dict,
     ) -> HealthState:
         """Compute the HealthState based off component_states
 
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
-        :param spf_component_state: SPF device component state
-        :type spf_component_state: dict
         :param spfrx_component_state: SPFRX device component state
         :type spfrx_component_state: dict
+        :param spf_component_state: SPF device component state
+        :type spf_component_state: dict
         :return: the calculated HealthState
         :rtype: HealthState
         """
         dish_manager_states = self._collapse(
-            ds_component_state, spf_component_state, spfrx_component_state
+            ds_component_state, spfrx_component_state, spf_component_state
         )
 
         for healthstate, rule in HEALTH_STATE_RULES.items():
@@ -272,12 +333,61 @@ class DishModeModel:
                 return HealthState[healthstate]
         return HealthState.UNKNOWN
 
+    def compute_configured_band(
+        self,
+        ds_component_state: dict,
+        spfrx_component_state: dict,
+        spf_component_state: dict,
+    ) -> Band:
+        """Compute the configuredband based off component_states
+
+        :param ds_component_state: DS device component state
+        :type ds_component_state: dict
+        :param spfrx_component_state: SPFRX device component state
+        :type spfrx_component_state: dict
+        :param spf_component_state: SPF device component state
+        :type spf_component_state: dict
+        :return: the calculated configuredband
+        :rtype: Band
+        """
+        dish_manager_states = self._collapse(
+            ds_component_state, spfrx_component_state, spf_component_state
+        )
+
+        for band_number, rule in CONFIGURED_BAND_RULES.items():
+            if rule.matches(dish_manager_states):
+                return Band[band_number]
+        return Band.UNKNOWN
+
+    def compute_spf_band_in_focus(
+        self,
+        ds_component_state: dict,
+        spfrx_component_state: dict,
+    ) -> BandInFocus:
+        """Compute the bandinfocus based off component_states
+
+        :param ds_component_state: DS device component state
+        :type ds_component_state: dict
+        :param spfrx_component_state: SPFRX device component state
+        :type spfrx_component_state: dict
+        :return: the calculated bandinfocus
+        :rtype: BandInFocus
+        """
+        dish_manager_states = self._collapse(
+            ds_component_state, spfrx_component_state
+        )
+
+        for band_number, rule in SPF_BAND_IN_FOCUS_RULES.items():
+            if rule.matches(dish_manager_states):
+                return BandInFocus[band_number]
+        return BandInFocus.UNKNOWN
+
     @classmethod
     def _collapse(
         cls,
         ds_component_state: dict,
-        spf_component_state: dict,
-        spfrx_component_state: dict,
+        spfrx_component_state,
+        spf_component_state: dict = None,
     ) -> dict:
         """Collapse multiple state dicts into one"""
         dish_manager_states = {"DS": {}, "SPF": {}, "SPFRX": {}}
@@ -285,10 +395,13 @@ class DishModeModel:
         for key, val in ds_component_state.items():
             dish_manager_states["DS"][key] = str(val)
 
-        for key, val in spf_component_state.items():
-            dish_manager_states["SPF"][key] = str(val)
-
         for key, val in spfrx_component_state.items():
             dish_manager_states["SPFRX"][key] = str(val)
+
+        if spf_component_state:
+            for key, val in spf_component_state.items():
+                dish_manager_states["SPF"][key] = str(val)
+        else:
+            dish_manager_states.pop("SPF")
 
         return dish_manager_states

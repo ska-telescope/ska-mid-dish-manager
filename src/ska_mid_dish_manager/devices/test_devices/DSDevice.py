@@ -70,7 +70,7 @@ class DSDevice(Device):
         abs_change="1",
     )
     def polled_attr_1(self):
-        return int(self.__polled_attr_1)
+        return self.__polled_attr_1
 
     @attribute(
         dtype=DSOperatingMode,

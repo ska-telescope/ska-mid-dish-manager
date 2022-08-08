@@ -6,6 +6,7 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import (
     TangoDeviceComponentManager,
 )
 from ska_mid_dish_manager.models.dish_enums import (
+    BandInFocus,
     HealthState,
     SPFOperatingMode,
     SPFPowerState,
@@ -37,33 +38,23 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "operatingMode",
             "powerState",
             "healthState",
+            "bandInFocus",
         ]
         for mon_attr in self._monitored_attr_names:
             self.monitor_attribute(mon_attr)
 
     def _update_component_state(self, **kwargs):
         """Update the int we get from the event to the Enum"""
-        if "operatingmode" in kwargs:
-            if (
-                isinstance(kwargs["operatingmode"], str)
-                and kwargs["operatingmode"].isdigit()
-            ):
-                kwargs["operatingmode"] = int(kwargs["operatingmode"])
-            kwargs["operatingmode"] = SPFOperatingMode(kwargs["operatingmode"])
-        if "powerstate" in kwargs:
-            if (
-                isinstance(kwargs["powerstate"], str)
-                and kwargs["powerstate"].isdigit()
-            ):
-                kwargs["powerstate"] = int(kwargs["powerstate"])
-            kwargs["powerstate"] = SPFPowerState(kwargs["powerstate"])
-        if "healthstate" in kwargs:
-            if (
-                isinstance(kwargs["healthstate"], str)
-                and kwargs["healthstate"].isdigit()
-            ):
-                kwargs["healthstate"] = int(kwargs["healthstate"])
-            kwargs["healthstate"] = HealthState(kwargs["healthstate"])
+        enum_conversion = {
+            "operatingmode": SPFOperatingMode,
+            "powerstate": SPFPowerState,
+            "healthstate": HealthState,
+            "bandinfocus": BandInFocus,
+        }
+        for attr, enum_ in enum_conversion.items():
+            if attr in kwargs:
+                kwargs[attr] = enum_(kwargs[attr])
+
         super()._update_component_state(**kwargs)
 
     # pylint: disable=missing-function-docstring, invalid-name

@@ -57,12 +57,10 @@ class TestSetOperateMode:
         spf_cm = class_instance.component_manager.component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         # Force dishManager dishMode to go to OPERATE
-        ds_cm._update_component_state(operatingmode=int(DSOperatingMode.POINT))
-        spf_cm._update_component_state(
-            operatingmode=int(SPFOperatingMode.OPERATE)
-        )
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+        spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         spfrx_cm._update_component_state(
-            operatingmode=int(SPFRxOperatingMode.DATA_CAPTURE)
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
         event_store.wait_for_value(DishMode.OPERATE)
 
@@ -97,14 +95,10 @@ class TestSetOperateMode:
         spf_cm = class_instance.component_manager.component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         # Force dishManager dishMode to go to STANDBY_FP
-        ds_cm._update_component_state(
-            operatingmode=int(DSOperatingMode.STANDBY_FP)
-        )
-        spf_cm._update_component_state(
-            operatingmode=int(SPFOperatingMode.OPERATE)
-        )
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+        spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         spfrx_cm._update_component_state(
-            operatingmode=int(SPFRxOperatingMode.STANDBY)
+            operatingmode=SPFRxOperatingMode.STANDBY
         )
         event_store.wait_for_value(DishMode.STANDBY_FP)
 
@@ -118,11 +112,11 @@ class TestSetOperateMode:
         # transition subservient devices to their respective operatingMode
         # and observe that DishManager transitions dishMode to OPERATE mode
         # SPF are already in the expected operatingMode
-        ds_cm._update_component_state(operatingmode=int(DSOperatingMode.POINT))
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
         spfrx_cm._update_component_state(
-            operatingmode=int(SPFRxOperatingMode.DATA_CAPTURE)
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
         # we can now expect dishMode to transition to OPERATE
         event_store.wait_for_value(DishMode.OPERATE)
-        ds_cm._update_component_state(pointing_state=int(PointingState.READY))
+        ds_cm._update_component_state(pointingstate=PointingState.READY)
         event_store.wait_for_value(PointingState.READY)

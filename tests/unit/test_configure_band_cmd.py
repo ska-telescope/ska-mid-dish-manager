@@ -10,8 +10,10 @@ from tango.test_context import DeviceTestContext
 from ska_mid_dish_manager.devices.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
+    BandInFocus,
     DishMode,
     DSOperatingMode,
+    IndexerPosition,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -88,13 +90,13 @@ class TestConfigureBand2:
         assert event_store.wait_for_command_id(unique_id)
 
         self.ds_cm._update_component_state(
-            operatingmode=int(DSOperatingMode.STANDBY_FP)
+            operatingmode=DSOperatingMode.STANDBY_FP
         )
         self.spf_cm._update_component_state(
-            operatingmode=int(SPFOperatingMode.OPERATE)
+            operatingmode=SPFOperatingMode.OPERATE
         )
         self.spfrx_cm._update_component_state(
-            operatingmode=int(SPFRxOperatingMode.DATA_CAPTURE)
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
         #  we can now expect dishMode to transition to STANDBY_FP
         assert event_store.wait_for_value(DishMode.STANDBY_FP)
@@ -106,7 +108,8 @@ class TestConfigureBand2:
         )
         assert event_store.wait_for_command_id(unique_id)
 
-        self.spfrx_cm._update_component_state(configuredband=int(Band.B2))
-        event_store.wait_for_value(Band.B2)
+        self.spfrx_cm._update_component_state(configuredband=Band.B2)
+        self.ds_cm._update_component_state(indexerposition=IndexerPosition.B2)
+        self.spf_cm._update_component_state(bandinfocus=BandInFocus.B2)
 
-        assert self.device_proxy.configuredBand == Band.B2
+        event_store.wait_for_value(Band.B2)

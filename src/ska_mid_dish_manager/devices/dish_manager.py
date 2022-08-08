@@ -162,7 +162,10 @@ class DishManager(SKAController):
             device.component_manager.start_communicating()
             super().do()
 
-    # Attribute's methods
+    # ----------
+    # Attributes
+    # ----------
+
     # pylint: disable=invalid-name
 
     @attribute(
@@ -635,7 +638,10 @@ class DishManager(SKAController):
         """Returns the synchronised"""
         return self._synchronised
 
+    # --------
     # Commands
+    # --------
+
     # pylint: disable=no-self-use
     @command(
         dtype_in=str,
