@@ -15,6 +15,7 @@ here have been fleshed out fully. Only the following commands have been fleshed 
 * `SetOperateMode`
 * `ConfigureBand2`
 * `Track`
+* `SetStowMode`
 
 .. literalinclude:: dish_manager_interface.yaml
    :language: yaml

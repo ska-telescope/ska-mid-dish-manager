@@ -17,7 +17,7 @@ def test_ds_cm(component_state_store, ds_device_fqdn):
     """Stress test component updates"""
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
     # Get into a known state
-    device_proxy.SetStandbyFPMode()
+    device_proxy.Stow()
 
     com_man = DSComponentManager(
         ds_device_fqdn,
@@ -26,11 +26,13 @@ def test_ds_cm(component_state_store, ds_device_fqdn):
     )
     com_man.start_communicating()
     component_state_store.wait_for_value("connection_state", "monitoring")
-    device_proxy.SetStandbyLPMode()
+    device_proxy.SetStartupMode()
     component_state_store.wait_for_value(
-        "operatingmode", DSOperatingMode.STANDBY_LP
+        "operatingmode", DSOperatingMode.STARTUP
     )
     device_proxy.SetStandbyFPMode()
     component_state_store.wait_for_value(
         "operatingmode", DSOperatingMode.STANDBY_FP
     )
+    com_man.stop_communicating()
+    component_state_store.wait_for_value("connection_state", "disconnected")
