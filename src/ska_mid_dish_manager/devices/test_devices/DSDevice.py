@@ -154,12 +154,13 @@ class DSDevice(Device):
 
     @command(dtype_in=None, doc_in="Set StandbyLPMode", dtype_out=None)
     async def SetStandbyLPMode(self):
+        LOGGER.info("Called SetStandbyLPMode")
         self._operating_mode = DSOperatingMode.STANDBY_LP
         self.push_change_event("operatingMode", self._operating_mode)
 
     @command(dtype_in=None, doc_in="Set StandbyFPMode", dtype_out=None)
     async def SetStandbyFPMode(self):
-        LOGGER.info("Called SetStandbyMode")
+        LOGGER.info("Called SetStandbyFPMode")
         self._operating_mode = DSOperatingMode.STANDBY_FP
         self.push_change_event("operatingMode", self._operating_mode)
 
@@ -194,6 +195,12 @@ class DSDevice(Device):
         LOGGER.info("Called ConfigureBand2")
         self._configured_band = Band.B2
         self.push_change_event("configuredBand", self._configured_band)
+
+    @command(dtype_in=None, doc_in="Set STOW", dtype_out=None)
+    async def Stow(self):
+        LOGGER.info("Called Stow")
+        self._operating_mode = DSOperatingMode.STOW
+        self.push_change_event("operatingMode", self._operating_mode)
 
 
 def main():

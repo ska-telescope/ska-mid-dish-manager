@@ -459,6 +459,42 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 result=json.dumps(device_command_ids),
             )
 
+    def stow(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Transition the dish to STOW mode"""
+
+        self._dish_mode_model.is_command_allowed(
+            dish_mode=DishMode(self.component_state["dish_mode"]).name,
+            command_name="SetStowMode",
+        )
+        status, response = self.submit_task(
+            self._set_stow_mode, args=[], task_callback=task_callback
+        )
+        return status, response
+
+    def _set_stow_mode(self, task_callback=None, task_abort_event=None):
+        """Call Stow on DS"""
+        if task_callback:
+            task_callback(status=TaskStatus.IN_PROGRESS)
+
+        command = NestedSubmittedSlowCommand(
+            "DS_SetStowMode",
+            self._command_tracker,
+            self.component_managers["DS"],
+            "run_device_command",
+            callback=None,
+            logger=self.logger,
+        )
+        _, command_id = command("Stow", None)
+
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                result=f"Scheduled Stow on DS command_id {command_id}",
+            )
+
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
         for com_man in self.component_managers.values():

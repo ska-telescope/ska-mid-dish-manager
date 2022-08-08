@@ -140,6 +140,12 @@ def test_model_dish_mode_transition_accuracy(
             dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
             DishMode.UNKNOWN,
         ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW),
+            dict(operatingmode=SPFOperatingMode.ERROR),
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
+            DishMode.STOW,
+        ),
     ],
 )
 def test_compute_dish_mode(

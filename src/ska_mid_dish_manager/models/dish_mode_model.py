@@ -37,9 +37,16 @@ DISH_MODE_NODES = (
 )
 
 DISH_MODE_RULES = {
+    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "CONFIG": rule_engine.Rule(
-        "DS.operatingmode  in ['DSOperatingMode.POINT', 'DSOperatingMode.STOW', 'DSOperatingMode.STANDBY_LP', 'DSOperatingMode.STANDBY_FP'] and "  # noqa: E501
-        "SPF.operatingmode  == 'SPFOperatingMode.OPERATE' and SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE'"  # noqa: E501
+        "DS.operatingmode in "
+        "   ['DSOperatingMode.POINT', "
+        "    'DSOperatingMode.STOW', "
+        "    'DSOperatingMode.STANDBY_LP', "
+        "    'DSOperatingMode.STANDBY_FP'] "
+        " and "
+        "SPF.operatingmode  == 'SPFOperatingMode.OPERATE' and "
+        "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE'"
     ),
     "MAINTENANCE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.STOW' and "
@@ -54,17 +61,14 @@ DISH_MODE_RULES = {
     "STANDBY_FP": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.STANDBY_FP' and "
         "SPF.operatingmode  == 'SPFOperatingMode.OPERATE' and "
-        "SPFRX.operatingmode  in ['SPFRxOperatingMode.STANDBY', 'SPFRxOperatingMode.DATA_CAPTURE']"
+        "SPFRX.operatingmode  in "
+        " ['SPFRxOperatingMode.STANDBY', "
+        "  'SPFRxOperatingMode.DATA_CAPTURE']"
     ),
     "STANDBY_LP": rule_engine.Rule(
         "DS.operatingmode == 'DSOperatingMode.STANDBY_LP' and "
         "SPF.operatingmode  == 'SPFOperatingMode.STANDBY_LP' and "
         "SPFRX.operatingmode  == 'SPFRxOperatingMode.STANDBY'"
-    ),
-    "STOW": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STOW' and "
-        "SPF.operatingmode in ['SPFOperatingMode.STANDBY_LP', 'SPFOperatingMode.OPERATE'] and "
-        "SPFRX.operatingmode in ['SPFRxOperatingMode.STANDBY', 'SPFRxOperatingMode.DATA_CAPTURE']"
     ),
 }
 
@@ -72,19 +76,42 @@ HEALTH_STATE_RULES = {
     "DEGRADED": rule_engine.Rule(
         "("
         "    DS.healthstate == 'HealthState.DEGRADED' and "
-        "    SPF.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN'] and "
-        "    SPFRX.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN']"
+        "    SPF.healthstate in "
+        "       ['HealthState.NORMAL', "
+        "        'HealthState.DEGRADED', "
+        "        'HealthState.UNKNOWN'] "
+        "    and "
+        "    SPFRX.healthstate in "
+        "      ['HealthState.NORMAL', "
+        "       'HealthState.DEGRADED', "
+        "       'HealthState.UNKNOWN']"
+        ") "
+        " or "
+        "("
+        "    DS.healthstate in "
+        "       ['HealthState.NORMAL', "
+        "        'HealthState.DEGRADED', "
+        "        'HealthState.UNKNOWN'] "
+        "    and "
+        "    SPF.healthstate == 'HealthState.DEGRADED' "
+        "    and "
+        "    SPFRX.healthstate in "
+        "       ['HealthState.NORMAL', "
+        "        'HealthState.DEGRADED', "
+        "        'HealthState.UNKNOWN']"
         ") "
         "or "
         "("
-        "    DS.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN'] and "
-        "    SPF.healthstate == 'HealthState.DEGRADED' and "
-        "    SPFRX.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN']"
-        ") "
-        "or "
-        "("
-        "    DS.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN'] and "
-        "    SPF.healthstate in ['HealthState.NORMAL', 'HealthState.DEGRADED', 'HealthState.UNKNOWN'] and "
+        "    DS.healthstate in "
+        "       ['HealthState.NORMAL', "
+        "        'HealthState.DEGRADED', "
+        "        'HealthState.UNKNOWN'] "
+        "    and "
+        "    SPF.healthstate in "
+        "        ['HealthState.NORMAL', "
+        "         'HealthState.DEGRADED', "
+        "         'HealthState.UNKNOWN'] "
+        "    and "
         "    SPFRX.healthstate == 'HealthState.DEGRADED'"
         ")"
     ),

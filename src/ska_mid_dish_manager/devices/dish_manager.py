@@ -79,6 +79,7 @@ class DishManager(SKAController):
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("ConfigureBand2", "configure_band2_cmd"),
+            ("SetStowMode", "stow"),
         ]:
             self.register_command_object(
                 command_name,
@@ -862,7 +863,11 @@ class DishManager(SKAController):
 
         return ([result_code], [unique_id])
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
     def SetStowMode(self):
         """
         This command triggers the Dish to transition to the STOW Dish Element
@@ -871,7 +876,10 @@ class DishManager(SKAController):
         conditions. The Dish is able to observe in the STOW position, for the
         purpose of transient detection.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("SetStowMode")
+        result_code, unique_id = handler()
+
+        return ([result_code], [unique_id])
 
     @command(
         dtype_in=DevVarDoubleArray,
