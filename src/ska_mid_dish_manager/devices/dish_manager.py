@@ -868,13 +868,18 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def SetStowMode(self):
+    def SetStowMode(self) -> DevVarLongStringArrayType:
         """
+        Implemented as a Long Running Command
+
         This command triggers the Dish to transition to the STOW Dish Element
         Mode, and returns to the caller. To point the dish in a direction that
         minimises the wind loads on the structure, for survival in strong wind
         conditions. The Dish is able to observe in the STOW position, for the
         purpose of transient detection.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
         handler = self.get_command_object("SetStowMode")
         result_code, unique_id = handler()

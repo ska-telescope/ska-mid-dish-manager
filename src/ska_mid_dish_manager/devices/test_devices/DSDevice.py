@@ -39,7 +39,7 @@ class DSDevice(Device):
 
     def init_device(self):
         super().init_device()
-        self.__non_polled_attr_1 = random.uniform(0, 150)
+        self.__non_polled_attr_1 = random.randint(0, 150)
         self.__polled_attr_1 = random.randint(0, 150)
         self._operating_mode = DSOperatingMode.STANDBY_LP
         self._configured_band = Band.NONE

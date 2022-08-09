@@ -253,7 +253,7 @@ def component_state_store():
     """Fixture for storing component state changes over time"""
 
     class ComponentStateStore:
-        """Store componen state changes with useful functionality"""
+        """Store component state changes with useful functionality"""
 
         def __init__(self) -> None:
             self._queue = queue.Queue()
