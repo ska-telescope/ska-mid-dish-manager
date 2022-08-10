@@ -79,7 +79,7 @@ class DishManager(SKAController):
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("ConfigureBand2", "configure_band2_cmd"),
-            ("SetStowMode", "stow"),
+            ("SetStowMode", "set_stow_mode"),
         ]:
             self.register_command_object(
                 command_name,

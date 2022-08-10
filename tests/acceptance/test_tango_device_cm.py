@@ -11,6 +11,7 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import (
 LOGGER = logging.getLogger(__name__)
 
 
+# pylint:disable=protected-access
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
@@ -38,7 +39,9 @@ def test_tango_device_component_manager_state(
     )
 
     com_man.execute_command(device_proxy, "On", None)
-    assert component_state_store.wait_for_value("state", "ON")
+    assert component_state_store.wait_for_value(
+        "state", tango._tango.DevState.ON, timeout=5
+    )
 
     com_man.monitor_attribute("polled_attr_1")
     assert component_state_store.wait_for_value(
@@ -82,9 +85,11 @@ def test_stress_connect_disconnect(component_state_store, ds_device_fqdn):
         assert component_state_store.wait_for_value(
             "connection_state", "monitoring"
         )
-        # This only updated once, from that point it doesn't change
+        # This is only updated once, from that point it doesn't change
         if i == 0:
-            assert component_state_store.wait_for_value("state", "ON")
+            assert component_state_store.wait_for_value(
+                "state", tango._tango.DevState.ON
+            )
         com_man.stop_communicating()
         assert component_state_store.wait_for_value(
             "connection_state", "disconnected"

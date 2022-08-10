@@ -459,7 +459,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 result=json.dumps(device_command_ids),
             )
 
-    def stow(
+    def set_stow_mode(
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
