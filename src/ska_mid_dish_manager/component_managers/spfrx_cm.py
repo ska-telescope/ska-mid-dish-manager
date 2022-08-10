@@ -43,29 +43,15 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
 
     def _update_component_state(self, **kwargs):
         """Update the int we get from the event to the Enum"""
-        if "operatingmode" in kwargs:
-            if (
-                isinstance(kwargs["operatingmode"], str)
-                and kwargs["operatingmode"].isdigit()
-            ):
-                kwargs["operatingmode"] = int(kwargs["operatingmode"])
-            kwargs["operatingmode"] = SPFRxOperatingMode(
-                kwargs["operatingmode"]
-            )
-        if "healthstate" in kwargs:
-            if (
-                isinstance(kwargs["healthstate"], str)
-                and kwargs["healthstate"].isdigit()
-            ):
-                kwargs["healthstate"] = int(kwargs["healthstate"])
-            kwargs["healthstate"] = HealthState(kwargs["healthstate"])
-        if "configuredband" in kwargs:
-            if (
-                isinstance(kwargs["configuredband"], str)
-                and kwargs["configuredband"].isdigit()
-            ):
-                kwargs["configuredband"] = int(kwargs["configuredband"])
-            kwargs["configuredband"] = Band(kwargs["configuredband"])
+        enum_conversion = {
+            "operatingmode": SPFRxOperatingMode,
+            "healthstate": HealthState,
+            "configuredband": Band,
+        }
+        for attr, enum_ in enum_conversion.items():
+            if attr in kwargs:
+                kwargs[attr] = enum_(kwargs[attr])
+
         super()._update_component_state(**kwargs)
 
     # pylint: disable=missing-function-docstring, invalid-name

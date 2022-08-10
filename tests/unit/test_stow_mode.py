@@ -50,5 +50,5 @@ class TestStowMode:
         ds_cm = class_instance.component_manager.component_managers["DS"]
 
         # Pretend DS goes into STOW
-        ds_cm._update_component_state(operatingmode=int(DSOperatingMode.STOW))
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
         event_store.wait_for_value(DishMode.STOW)

@@ -23,7 +23,7 @@ LOGGER = logging.getLogger(__name__)
 def test_component_manager_continues_reconnecting_when_device_is_unreachable(
     caplog, mock_tango_device_proxy_instance
 ):
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.DEBUG)
     _, _ = mock_tango_device_proxy_instance
     tc_manager = TangoDeviceComponentManager("fake/fqdn/1", LOGGER)
     tc_manager.start_communicating()

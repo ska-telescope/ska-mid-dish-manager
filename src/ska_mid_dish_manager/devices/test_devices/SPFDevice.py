@@ -14,6 +14,7 @@ from tango import AttrWriteType, Database, DbDevInfo, GreenMode
 from tango.server import Device, attribute, command
 
 from ska_mid_dish_manager.models.dish_enums import (
+    Band,
     HealthState,
     SPFOperatingMode,
     SPFPowerState,
@@ -30,12 +31,18 @@ class SPFDevice(Device):
 
     def init_device(self):
         super().init_device()
-        self._operating_mode = SPFOperatingMode.STARTUP
+        self._operating_mode = SPFOperatingMode.STANDBY_LP
         self._power_state = SPFPowerState.UNKNOWN
         self._health_state = HealthState.UNKNOWN
-        self.set_change_event("operatingMode", True)
-        self.set_change_event("healthState", True)
-        self.set_change_event("powerState", True)
+        self._band_in_focus = Band.NONE
+        self.set_change_event("operatingMode", True, False)
+        self.set_change_event("healthState", True, False)
+        self.set_change_event("powerState", True, False)
+        self.set_change_event("bandInFocus", True, False)
+
+    # -----------
+    # Attributes
+    # -----------
 
     @attribute(
         dtype=SPFOperatingMode,
@@ -44,9 +51,21 @@ class SPFDevice(Device):
     async def operatingMode(self):
         return self._operating_mode
 
-    def write_operatingMode(self, new_value):
-        self._operating_mode = new_value
+    @operatingMode.write
+    async def write_operatingMode(self, op_mode: SPFOperatingMode):
+        self._operating_mode = op_mode
         self.push_change_event("operatingMode", self._operating_mode)
+
+    @attribute(
+        dtype=Band,
+        access=AttrWriteType.READ_WRITE,
+    )
+    async def bandInFocus(self):
+        return self._band_in_focus
+
+    @bandInFocus.write
+    async def bandInFocus(self, band_number: Band):
+        self._band_in_focus = band_number
 
     @attribute(
         dtype=HealthState,
@@ -55,8 +74,9 @@ class SPFDevice(Device):
     async def healthState(self):
         return self._health_state
 
-    def write_healthState(self, new_value):
-        self._health_state = new_value
+    @healthState.write
+    async def healthState(self, h_state: HealthState):
+        self._health_state = h_state
         self.push_change_event("healthState", self._health_state)
 
     @attribute(
@@ -66,14 +86,25 @@ class SPFDevice(Device):
     async def powerState(self):
         return self._power_state
 
-    def write_powerState(self, new_value):
-        self._power_state = new_value
+    @powerState.write
+    async def powerState(self, pwr_state: SPFPowerState):
+        self._power_state = pwr_state
         self.push_change_event("powerState", self._power_state)
+
+    # --------
+    # Commands
+    # --------
 
     @command(dtype_in=None, doc_in="Set SPFOperatingMode", dtype_out=None)
     async def SetStandbyLPMode(self):
         LOGGER.info("Called SetStandbyMode")
         self._operating_mode = SPFOperatingMode.STANDBY_LP
+        self.push_change_event("operatingMode", self._operating_mode)
+
+    @command(dtype_in=None, doc_in="Set SPFOperatingMode", dtype_out=None)
+    async def SetOperateMode(self):
+        LOGGER.info("Called SetOperateMode")
+        self._operating_mode = SPFOperatingMode.OPERATE
         self.push_change_event("operatingMode", self._operating_mode)
 
     @command(dtype_in=None, doc_in="Set SetStartupMode", dtype_out=None)

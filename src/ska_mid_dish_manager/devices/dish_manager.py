@@ -79,7 +79,7 @@ class DishManager(SKAController):
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("ConfigureBand2", "configure_band2_cmd"),
-            ("SetStowMode", "stow"),
+            ("SetStowMode", "set_stow_mode"),
         ]:
             self.register_command_object(
                 command_name,
@@ -163,7 +163,10 @@ class DishManager(SKAController):
             device.component_manager.start_communicating()
             super().do()
 
-    # Attribute's methods
+    # ----------
+    # Attributes
+    # ----------
+
     # pylint: disable=invalid-name
 
     @attribute(
@@ -636,7 +639,10 @@ class DishManager(SKAController):
         """Returns the synchronised"""
         return self._synchronised
 
+    # --------
     # Commands
+    # --------
+
     # pylint: disable=no-self-use
     @command(
         dtype_in=str,
@@ -666,7 +672,7 @@ class DishManager(SKAController):
     )
     def ConfigureBand2(
         self, activation_timestamp
-    ):  # pylint: disable=unused-argument
+    ) -> DevVarLongStringArrayType:  # pylint: disable=unused-argument
         """
         Implemented as a Long Running Command
 
@@ -675,6 +681,9 @@ class DishManager(SKAController):
         operate in frequency band 2. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
         handler = self.get_command_object("ConfigureBand2")
 
@@ -859,13 +868,18 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def SetStowMode(self):
+    def SetStowMode(self) -> DevVarLongStringArrayType:
         """
+        Implemented as a Long Running Command
+
         This command triggers the Dish to transition to the STOW Dish Element
         Mode, and returns to the caller. To point the dish in a direction that
         minimises the wind loads on the structure, for survival in strong wind
         conditions. The Dish is able to observe in the STOW position, for the
         purpose of transient detection.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
         handler = self.get_command_object("SetStowMode")
         result_code, unique_id = handler()

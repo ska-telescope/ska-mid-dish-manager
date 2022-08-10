@@ -92,7 +92,8 @@ class TestDishManagerBehaviour:
 
     @pytest.mark.unit
     @pytest.mark.forked
-    def test_device_reports_long_running_results(self, event_store):
+    def test_device_reports_long_running_results(self, caplog, event_store):
+        caplog.set_level(logging.DEBUG)
         dish_manager = self.device_proxy
         sub_id = dish_manager.subscribe_event(
             "dishMode",

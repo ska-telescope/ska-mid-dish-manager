@@ -16,7 +16,9 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import (
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
+    BandInFocus,
     DishMode,
+    IndexerPosition,
     PointingState,
 )
 from ska_mid_dish_manager.models.dish_mode_model import (
@@ -64,8 +66,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ds_device_fqdn,
             logger,
             operatingmode=None,
-            pointing_state=None,
-            achieved_target_lock=None,
+            pointingstate=None,
+            achievedtargetlock=None,
+            indexerposition=IndexerPosition.UNKNOWN,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
@@ -81,6 +84,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spf_device_fqdn,
             logger,
             operatingmode=None,
+            bandinfocus=BandInFocus.UNKNOWN,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
@@ -124,7 +128,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Only update dishMode if there are operatingmode changes
         operating_modes = [
             comp_state.get("operatingmode", None)
-            for comp_state in [ds_comp_state, spf_comp_state, spfrx_comp_state]
+            for comp_state in [ds_comp_state, spfrx_comp_state, spf_comp_state]
         ]
         if any(operating_modes):
             self.logger.info(
@@ -137,7 +141,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 str(spfrx_comp_state["operatingmode"]),
             )
             new_dish_mode = self._dish_mode_model.compute_dish_mode(
-                ds_comp_state, spf_comp_state, spfrx_comp_state
+                ds_comp_state,
+                spfrx_comp_state,
+                spf_comp_state,
             )
             self._update_component_state(dish_mode=new_dish_mode)
 
@@ -147,27 +153,54 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             and "healthstate" in spfrx_comp_state
         ):
             new_health_state = self._dish_mode_model.compute_dish_health_state(
-                ds_comp_state, spf_comp_state, spfrx_comp_state
+                ds_comp_state,
+                spfrx_comp_state,
+                spf_comp_state,
             )
             self._update_component_state(health_state=new_health_state)
 
-        if ds_comp_state["pointing_state"] is not None:
+        if ds_comp_state["pointingstate"] is not None:
             self._update_component_state(
-                pointing_state=ds_comp_state["pointing_state"]
+                pointing_state=ds_comp_state["pointingstate"]
             )
 
-        if ds_comp_state["pointing_state"] in [
+        if ds_comp_state["pointingstate"] in [
             PointingState.SLEW,
             PointingState.READY,
         ]:
             self._update_component_state(achieved_target_lock=False)
-        elif ds_comp_state["pointing_state"] == PointingState.TRACK:
+        elif ds_comp_state["pointingstate"] == PointingState.TRACK:
             self._update_component_state(achieved_target_lock=True)
 
+        # spf bandInFocus
+        if (
+            "indexerposition" in ds_comp_state
+            and "configuredband" in spfrx_comp_state
+        ):
+            band_in_focus = self._dish_mode_model.compute_spf_band_in_focus(
+                ds_comp_state, spfrx_comp_state
+            )
+            # pylint: disable=protected-access
+            # update the bandInFocus of SPF before configuredBand
+            spf_proxy = self.component_managers["SPF"]._device_proxy
+            # component state changed for DS and SPFRx may be triggered while
+            # SPF device proxy is not initialised. Write to the bandInFocus
+            # only when you have the device proxy
+            if spf_proxy:
+                spf_proxy.write_attribute("bandInFocus", band_in_focus)
+
         # configuredBand
-        self._update_component_state(
-            configured_band=spfrx_comp_state["configuredband"]
-        )
+        if (
+            "indexerposition" in ds_comp_state
+            and "bandinfocus" in spf_comp_state
+            and "configuredband" in spfrx_comp_state
+        ):
+            configured_band = self._dish_mode_model.compute_configured_band(
+                ds_comp_state,
+                spfrx_comp_state,
+                spf_comp_state,
+            )
+            self._update_component_state(configured_band=configured_band)
 
     # pylint: disable=missing-function-docstring
     def start_communicating(self):
@@ -194,7 +227,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        for device in ["DS", "SPF", "SPFRX"]:
+        if self.component_state["dish_mode"].name == "STANDBY_FP":
+            subservient_devices = ["DS", "SPF"]
+        if self.component_state["dish_mode"].name in ["MAINTENANCE", "STOW"]:
+            subservient_devices = ["DS", "SPF", "SPFRX"]
+
+        for device in subservient_devices:
             command = NestedSubmittedSlowCommand(
                 f"{device}_SetStandbyLPMode",
                 self._command_tracker,
@@ -203,7 +241,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 callback=None,
                 logger=self.logger,
             )
-            _, command_id = command("SetStandbyLPMode", None)
+            if device == "SPFRX":
+                _, command_id = command("SetStandbyMode", None)
+            else:
+                _, command_id = command("SetStandbyLPMode", None)
+
             device_command_ids[device] = command_id
 
         if task_callback:
@@ -232,7 +274,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        for device in ["DS", "SPF", "SPFRX"]:
+        if self.component_state["dish_mode"].name == "STANDBY_LP":
+            subservient_devices = ["DS", "SPF", "SPFRX"]
+        elif self.component_state["dish_mode"].name == "OPERATE":
+            subservient_devices = ["DS"]
+
+        for device in subservient_devices:
             command = NestedSubmittedSlowCommand(
                 f"{device}_SetStandbyFPMode",
                 self._command_tracker,
@@ -241,7 +288,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 callback=None,
                 logger=self.logger,
             )
-            _, command_id = command("SetStandbyFPMode", None)
+            if device == "DS":
+                _, command_id = command("SetStandbyFPMode", None)
+            elif device == "SPF":
+                _, command_id = command("SetOperateMode", None)
+            else:
+                _, command_id = command("CaptureData", True)
+
             device_command_ids[device] = command_id
 
         if task_callback:
@@ -279,7 +332,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 callback=None,
                 logger=self.logger,
             )
-            _, command_id = command("SetOperateMode", None)
+            if device == "DS":
+                _, command_id = command("SetPointMode", None)
+            elif device == "SPF":
+                _, command_id = command("SetOperateMode", None)
+            else:
+                _, command_id = command("CaptureData", True)
+
             device_command_ids[device] = command_id
 
         if task_callback:
@@ -310,17 +369,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        for device in ["DS", "SPF", "SPFRX"]:
-            command = NestedSubmittedSlowCommand(
-                f"{device}_Track",
-                self._command_tracker,
-                self.component_managers[device],
-                "run_device_command",
-                callback=None,
-                logger=self.logger,
-            )
-            _, command_id = command("Track", None)
-            device_command_ids[device] = command_id
+        command = NestedSubmittedSlowCommand(
+            "DS_Track",
+            self._command_tracker,
+            self.component_managers["DS"],
+            "run_device_command",
+            callback=None,
+            logger=self.logger,
+        )
+        _, command_id = command("Track", None)
+        device_command_ids["DS"] = command_id
 
         if task_callback:
             task_callback(
@@ -368,12 +426,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def _configure_band2_cmd(self, task_callback=None, task_abort_event=None):
-        """Call configureBand on DS, SPF, SPFRX"""
+        """configureBand on DS, SPF, SPFRX"""
         if task_callback is not None:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        for device in ["DS", "SPF", "SPFRX"]:
+        for device in ["DS", "SPFRX"]:
             command = NestedSubmittedSlowCommand(
                 f"{device}ConfigureBand2",
                 self._command_tracker,
@@ -382,8 +440,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 callback=None,
                 logger=self.logger,
             )
-            _, command_id = command("ConfigureBand2", None)
+            if device == "DS":
+                _, command_id = command("SetIndexPosition", 2)
+            else:
+                _, command_id = command("ConfigureBand2", None)
+
             device_command_ids[device] = command_id
+
+        # SPF updates the bandInFocus
+        # TODO: provide a function to perform attribute writes
+        spf = self.component_managers["SPF"]
+        # pylint: disable=protected-access
+        spf._device_proxy.bandInFocus = Band.B2
 
         if task_callback:
             task_callback(
@@ -391,7 +459,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 result=json.dumps(device_command_ids),
             )
 
-    def stow(
+    def set_stow_mode(
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
