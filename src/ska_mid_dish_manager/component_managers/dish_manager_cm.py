@@ -230,7 +230,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if self.component_state["dish_mode"].name == "STANDBY_FP":
             subservient_devices = ["DS", "SPF"]
         if self.component_state["dish_mode"].name in ["MAINTENANCE", "STOW"]:
-            subservient_devices.append("SPFRX")
+            subservient_devices = ["DS", "SPF", "SPFRX"]
 
         for device in subservient_devices:
             command = NestedSubmittedSlowCommand(
