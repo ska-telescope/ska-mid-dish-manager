@@ -48,11 +48,11 @@ class SPFDevice(Device):
         dtype=SPFOperatingMode,
         access=AttrWriteType.READ_WRITE,
     )
-    def operatingMode(self):
+    async def operatingMode(self):
         return self._operating_mode
 
     @operatingMode.write
-    def write_operatingMode(self, op_mode: SPFOperatingMode):
+    async def write_operatingMode(self, op_mode: SPFOperatingMode):
         self._operating_mode = op_mode
         self.push_change_event("operatingMode", self._operating_mode)
 
@@ -60,22 +60,22 @@ class SPFDevice(Device):
         dtype=Band,
         access=AttrWriteType.READ_WRITE,
     )
-    def bandInFocus(self):
+    async def bandInFocus(self):
         return self._band_in_focus
 
     @bandInFocus.write
-    def bandInFocus(self, band_number: Band):
+    async def bandInFocus(self, band_number: Band):
         self._band_in_focus = band_number
 
     @attribute(
         dtype=HealthState,
         access=AttrWriteType.READ_WRITE,
     )
-    def healthState(self):
+    async def healthState(self):
         return self._health_state
 
     @healthState.write
-    def healthState(self, h_state: HealthState):
+    async def healthState(self, h_state: HealthState):
         self._health_state = h_state
         self.push_change_event("healthState", self._health_state)
 
@@ -83,11 +83,11 @@ class SPFDevice(Device):
         dtype=SPFPowerState,
         access=AttrWriteType.READ_WRITE,
     )
-    def powerState(self):
+    async def powerState(self):
         return self._power_state
 
     @powerState.write
-    def powerState(self, pwr_state: SPFPowerState):
+    async def powerState(self, pwr_state: SPFPowerState):
         self._power_state = pwr_state
         self.push_change_event("powerState", self._power_state)
 

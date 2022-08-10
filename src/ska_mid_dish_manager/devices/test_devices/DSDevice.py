@@ -60,7 +60,7 @@ class DSDevice(Device):
     @attribute(
         dtype="double",
     )
-    def non_polled_attr_1(self):
+    async def non_polled_attr_1(self):
         return self.__non_polled_attr_1
 
     @attribute(
@@ -69,18 +69,18 @@ class DSDevice(Device):
         rel_change="0.5",
         abs_change="1",
     )
-    def polled_attr_1(self):
+    async def polled_attr_1(self):
         return self.__polled_attr_1
 
     @attribute(
         dtype=DSOperatingMode,
         access=AttrWriteType.READ_WRITE,
     )
-    def operatingMode(self):
+    async def operatingMode(self):
         return self._operating_mode
 
     @operatingMode.write
-    def operatingMode(self, op_mode: DSOperatingMode):
+    async def operatingMode(self, op_mode: DSOperatingMode):
         self._operating_mode = op_mode
         self.push_change_event("operatingMode", self._operating_mode)
 
@@ -88,11 +88,11 @@ class DSDevice(Device):
         dtype=HealthState,
         access=AttrWriteType.READ_WRITE,
     )
-    def healthState(self):
+    async def healthState(self):
         return self._health_state
 
     @healthState.write
-    def healthState(self, h_state: HealthState):
+    async def healthState(self, h_state: HealthState):
         self._health_state = h_state
         self.push_change_event("healthState", self._health_state)
 
@@ -100,11 +100,11 @@ class DSDevice(Device):
         dtype=DSPowerState,
         access=AttrWriteType.READ_WRITE,
     )
-    def powerState(self):
+    async def powerState(self):
         return self._power_state
 
     @powerState.write
-    def powerState(self, pwr_state: DSPowerState):
+    async def powerState(self, pwr_state: DSPowerState):
         self._power_state = pwr_state
         self.push_change_event("powerState", self._power_state)
 
@@ -112,11 +112,11 @@ class DSDevice(Device):
         dtype=Band,
         access=AttrWriteType.READ_WRITE,
     )
-    def indexerPosition(self):
+    async def indexerPosition(self):
         return self._power_state
 
     @indexerPosition.write
-    def indexerPosition(self, band_number: Band):
+    async def indexerPosition(self, band_number: Band):
         self._indexer_position = band_number
         self.push_change_event("indexerPosition", self._indexer_position)
 
@@ -124,11 +124,11 @@ class DSDevice(Device):
         dtype=Band,
         access=AttrWriteType.READ_WRITE,
     )
-    def configuredBand(self):
+    async def configuredBand(self):
         return self._configured_band
 
     @configuredBand.write
-    def configuredBand(self, band_number: Band):
+    async def configuredBand(self, band_number: Band):
         self._configured_band = band_number
         self.push_change_event("configuredBand", self._configured_band)
 

@@ -45,11 +45,11 @@ class SPFRxDevice(Device):
         dtype=SPFRxOperatingMode,
         access=AttrWriteType.READ_WRITE,
     )
-    def operatingMode(self):
+    async def operatingMode(self):
         return self._operating_mode
 
     @operatingMode.write
-    def operatingMode(self, op_mode: SPFRxOperatingMode):
+    async def operatingMode(self, op_mode: SPFRxOperatingMode):
         self._operating_mode = op_mode
         self.push_change_event("operatingMode", self._operating_mode)
 
@@ -57,11 +57,11 @@ class SPFRxDevice(Device):
         dtype=HealthState,
         access=AttrWriteType.READ_WRITE,
     )
-    def healthState(self):
+    async def healthState(self):
         return self._health_state
 
     @healthState.write
-    def healthState(self, h_state: HealthState):
+    async def healthState(self, h_state: HealthState):
         self._health_state = h_state
         self.push_change_event("healthState", self._health_state)
 
@@ -69,11 +69,11 @@ class SPFRxDevice(Device):
         dtype=Band,
         access=AttrWriteType.READ_WRITE,
     )
-    def configuredBand(self):
+    async def configuredBand(self):
         return self._configured_band
 
     @configuredBand.write
-    def configuredBand(self, band_number: Band):
+    async def configuredBand(self, band_number: Band):
         self._configured_band = band_number
         self.push_change_event("configuredBand", self._configured_band)
 
