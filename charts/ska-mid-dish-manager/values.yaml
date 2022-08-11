@@ -35,7 +35,7 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 0.0.1
+    tag: 1.0.0
     pullPolicy: IfNotPresent
 
 resources:
