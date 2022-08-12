@@ -204,9 +204,11 @@ def event_store():
             :return: The result of the long running command
             :rtype: str
             """
+            events = []
             try:
                 while True:
                     event = self._queue.get(timeout=timeout)
+                    events.append(event)
                     if not event.attr_value:
                         continue
                     if not isinstance(event.attr_value.value, tuple):
@@ -217,8 +219,12 @@ def event_store():
                     if command_id == lrc_id:
                         return True
             except queue.Empty as err:
+                event_info = [
+                    (event.attr_value.name, event.attr_value.value)
+                    for event in events
+                ]
                 raise RuntimeError(
-                    f"Never got an LRC result from command [{command_id}]"
+                    f"Never got an LRC result from command [{command_id}], but got [{event_info}]"
                 ) from err
 
         def clear_queue(self):

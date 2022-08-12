@@ -2,6 +2,7 @@
 import json
 import logging
 from datetime import datetime
+from threading import Condition
 from typing import Callable, Optional, Tuple
 
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
@@ -93,6 +94,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._update_component_state(health_state=HealthState.UNKNOWN)
         self._update_component_state(configured_band=Band.NONE)
 
+        self._dish_mode_changed_condition = Condition()
+
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
         # communication state will come from args and kwargs
@@ -146,6 +149,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_comp_state,
             )
             self._update_component_state(dish_mode=new_dish_mode)
+            self.logger.info("Updating threads with dishMode change [%s]", new_dish_mode)
+            with self._dish_mode_changed_condition:
+                self._dish_mode_changed_condition.notify_all()
 
         if (
             "healthstate" in ds_comp_state
@@ -270,8 +276,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
         """Set StandbyFP mode on sub devices as long running commands"""
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
         if self.component_state["dish_mode"].name == "STANDBY_LP":
@@ -290,18 +296,38 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             if device == "DS":
                 _, command_id = command("SetStandbyFPMode", None)
+                device_command_ids[device] = command_id
+                task_callback(
+                    progress=f"SetStandbyFPMode called on DS, ID {command_id}"
+                )
             elif device == "SPF":
                 _, command_id = command("SetOperateMode", None)
+                device_command_ids[device] = command_id
+                task_callback(
+                    progress=f"SetOperateMode called on SPF, ID {command_id}"
+                )
             else:
                 _, command_id = command("CaptureData", True)
+                device_command_ids[device] = command_id
+                task_callback(
+                    progress=f"CaptureData called on SPFRx, ID {command_id}"
+                )
 
-            device_command_ids[device] = command_id
+        task_callback(progress="Waiting for dishMode change")
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=json.dumps(device_command_ids),
-            )
+        with self._dish_mode_changed_condition:
+            self.logger.info("standby_fp waiting for dishmode STANDBY_FP")
+            while True:
+                current_dish_mode = self.component_state["dish_mode"]
+                if current_dish_mode != DishMode.STANDBY_FP:
+                    # Wait for a dishMode change
+                    self._dish_mode_changed_condition.wait()
+                else:
+                    task_callback(
+                        status=TaskStatus.COMPLETED,
+                        result=json.dumps(device_command_ids),
+                    )
+                    break
 
     def set_operate_mode(
         self,
