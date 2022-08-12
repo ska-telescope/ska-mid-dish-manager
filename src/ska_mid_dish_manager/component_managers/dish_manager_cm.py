@@ -95,6 +95,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._update_component_state(configured_band=Band.NONE)
 
         self._dish_mode_changed_condition = Condition()
+        self._band_changed_condition = Condition()
+        self._target_lock_changed_condition = Condition()
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
@@ -149,7 +151,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_comp_state,
             )
             self._update_component_state(dish_mode=new_dish_mode)
-            self.logger.info("Updating threads with dishMode change [%s]", new_dish_mode)
+            self.logger.info(
+                "Updating threads with dishMode change [%s]", new_dish_mode
+            )
             with self._dish_mode_changed_condition:
                 self._dish_mode_changed_condition.notify_all()
 
@@ -175,8 +179,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             PointingState.READY,
         ]:
             self._update_component_state(achieved_target_lock=False)
+            with self._target_lock_changed_condition:
+                self._target_lock_changed_condition.notify_all()
         elif ds_comp_state["pointingstate"] == PointingState.TRACK:
             self._update_component_state(achieved_target_lock=True)
+            with self._target_lock_changed_condition:
+                self._target_lock_changed_condition.notify_all()
 
         # spf bandInFocus
         if (
@@ -207,6 +215,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_comp_state,
             )
             self._update_component_state(configured_band=configured_band)
+            with self._band_changed_condition:
+                self._band_changed_condition.notify_all()
 
     # pylint: disable=missing-function-docstring
     def start_communicating(self):
@@ -229,8 +239,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def _set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
         if self.component_state["dish_mode"].name == "STANDBY_FP":
@@ -249,16 +259,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             if device == "SPFRX":
                 _, command_id = command("SetStandbyMode", None)
+                task_callback(
+                    progress=f"SetStandbyMode called on SPFRX, ID {command_id}"
+                )
             else:
                 _, command_id = command("SetStandbyLPMode", None)
+                task_callback(
+                    progress=f"SetStandbyLPMode called, ID {command_id}"
+                )
 
             device_command_ids[device] = command_id
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=json.dumps(device_command_ids),
-            )
+        task_callback(progress="Waiting for dishMode change")
+
+        with self._dish_mode_changed_condition:
+            self.logger.info("standby_lp waiting for dishmode STANDBY_LP")
+            while True:
+                current_dish_mode = self.component_state["dish_mode"]
+                if current_dish_mode != DishMode.STANDBY_LP:
+                    # Wait for a dishMode change
+                    self._dish_mode_changed_condition.wait()
+                else:
+                    task_callback(
+                        status=TaskStatus.COMPLETED,
+                        result=json.dumps(device_command_ids),
+                    )
+                    break
 
     def set_standby_fp_mode(
         self,
@@ -345,8 +371,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def _set_operate_mode(self, task_callback=None, task_abort_event=None):
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
         for device in ["DS", "SPF", "SPFRX"]:
@@ -360,18 +386,37 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             if device == "DS":
                 _, command_id = command("SetPointMode", None)
+                task_callback(
+                    progress=f"SetPointMode called on DS, ID {command_id}"
+                )
             elif device == "SPF":
                 _, command_id = command("SetOperateMode", None)
+                task_callback(
+                    progress=f"SetPointMode called on SPF, ID {command_id}"
+                )
             else:
                 _, command_id = command("CaptureData", True)
+                task_callback(
+                    progress=f"CaptureData called on SPFRx, ID {command_id}"
+                )
 
             device_command_ids[device] = command_id
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=json.dumps(device_command_ids),
-            )
+        task_callback(progress="Waiting for dishMode change")
+
+        with self._dish_mode_changed_condition:
+            self.logger.info("set_operate_mode waiting for dishmode OPERATE")
+            while True:
+                current_dish_mode = self.component_state["dish_mode"]
+                if current_dish_mode != DishMode.OPERATE:
+                    # Wait for a dishMode change
+                    self._dish_mode_changed_condition.wait()
+                else:
+                    task_callback(
+                        status=TaskStatus.COMPLETED,
+                        result=json.dumps(device_command_ids),
+                    )
+                    break
 
     def track_cmd(
         self,
@@ -391,8 +436,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def _track_cmd(self, task_callback=None, task_abort_event=None):
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
         command = NestedSubmittedSlowCommand(
@@ -406,11 +451,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         _, command_id = command("Track", None)
         device_command_ids["DS"] = command_id
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=json.dumps(device_command_ids),
-            )
+        task_callback(progress=f"Track called on DS, ID {command_id}")
+        task_callback(progress="Waiting on target lock change")
+
+        with self._target_lock_changed_condition:
+            self.logger.info("Track waiting for achieved_target_lock True")
+            while True:
+                achieved_target_lock = self.component_state[
+                    "achieved_target_lock"
+                ]
+                if not achieved_target_lock:
+                    # Wait for achieved_target_lock change
+                    self._target_lock_changed_condition.wait()
+                else:
+                    task_callback(
+                        status=TaskStatus.COMPLETED,
+                        result=json.dumps(device_command_ids),
+                    )
+                    break
 
     def configure_band2_cmd(
         self,
@@ -453,8 +511,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _configure_band2_cmd(self, task_callback=None, task_abort_event=None):
         """configureBand on DS, SPF, SPFRX"""
-        if task_callback is not None:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
         for device in ["DS", "SPFRX"]:
@@ -468,8 +526,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             if device == "DS":
                 _, command_id = command("SetIndexPosition", 2)
+                task_callback(
+                    progress=f"SetIndexPosition called on DS, ID {command_id}"
+                )
             else:
                 _, command_id = command("ConfigureBand2", None)
+                task_callback(
+                    progress=f"ConfigureBand2 called on SPFRx, ID {command_id}"
+                )
 
             device_command_ids[device] = command_id
 
@@ -479,11 +543,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # pylint: disable=protected-access
         spf._device_proxy.bandInFocus = Band.B2
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=json.dumps(device_command_ids),
-            )
+        task_callback(progress="Waiting for band change")
+
+        with self._band_changed_condition:
+            self.logger.info("configure_band2 waiting for configured_band B2")
+            while True:
+                current_band = self.component_state["configured_band"]
+                if current_band != Band.B2:
+                    # Wait for a band change
+                    self._band_changed_condition.wait()
+                else:
+                    task_callback(
+                        status=TaskStatus.COMPLETED,
+                        result=json.dumps(device_command_ids),
+                    )
+                    break
 
     def set_stow_mode(
         self,
@@ -502,8 +576,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _set_stow_mode(self, task_callback=None, task_abort_event=None):
         """Call Stow on DS"""
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         command = NestedSubmittedSlowCommand(
             "DS_SetStowMode",
@@ -515,11 +589,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         _, command_id = command("Stow", None)
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=f"Scheduled Stow on DS command_id {command_id}",
-            )
+        task_callback(progress=f"Stow called on DS, ID {command_id}")
+        task_callback(progress="Waiting for dishMode change")
+
+        with self._dish_mode_changed_condition:
+            self.logger.info("stow waiting for dishmode STOW")
+            while True:
+                current_dish_mode = self.component_state["dish_mode"]
+                if current_dish_mode != DishMode.OPERATE:
+                    # Wait for a dishMode change
+                    self._dish_mode_changed_condition.wait()
+                else:
+                    task_callback(
+                        status=TaskStatus.COMPLETED,
+                        result=f"Scheduled Stow on DS command_id {command_id}",
+                    )
+                    break
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):

@@ -40,7 +40,7 @@ def test_tango_device_component_manager_state(
 
     com_man.execute_command(device_proxy, "On", None)
     assert component_state_store.wait_for_value(
-        "state", tango._tango.DevState.ON, timeout=5
+        "state", tango.DevState.ON, timeout=5
     )
 
     com_man.monitor_attribute("polled_attr_1")

@@ -78,8 +78,7 @@ class TestSetStandByFPMode:
         event_store.clear_queue()
 
         # Transition DishManager to STANDBY_FP mode
-        [[_], [unique_id]] = self.device_proxy.SetStandbyFPMode()
-        assert event_store.wait_for_command_id(unique_id)
+        self.device_proxy.SetStandbyFPMode()
 
         # transition subservient devices to FP mode and observe that
         # DishManager transitions dishMode to FP mode after all

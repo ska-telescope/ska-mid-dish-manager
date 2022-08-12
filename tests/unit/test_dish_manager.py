@@ -3,8 +3,8 @@
 # pylint: disable=attribute-defined-outside-init
 
 
-import json
 import logging
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -91,7 +91,7 @@ class TestDishManagerBehaviour:
         self.tango_context.stop()
 
     @pytest.mark.unit
-    @pytest.mark.forked
+    # @pytest.mark.forked
     def test_device_reports_long_running_results(self, caplog, event_store):
         caplog.set_level(logging.DEBUG)
         dish_manager = self.device_proxy
@@ -100,7 +100,7 @@ class TestDishManagerBehaviour:
             tango.EventType.CHANGE_EVENT,
             event_store,
         )
-        assert event_store.wait_for_value(DishMode.STANDBY_LP)
+        assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=6)
         # unsubscribe to stop listening for dishMode events
         dish_manager.unsubscribe_event(sub_id)
         # Clear out the queue to make sure we dont keep previous events
@@ -111,9 +111,17 @@ class TestDishManagerBehaviour:
             tango.EventType.CHANGE_EVENT,
             event_store,
         )
-        dish_manager.SetStandbyFPMode()
-        events = event_store.get_queue_values(timeout=3)
-        assert len(events) == 5
+        self.device_proxy.SetStandbyFPMode()
+
+        self.ds_cm._update_component_state(
+            operatingmode=DSOperatingMode.STANDBY_FP
+        )
+        self.spf_cm._update_component_state(
+            operatingmode=SPFOperatingMode.OPERATE
+        )
+        self.spfrx_cm._update_component_state(
+            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
+        )
 
         # Sample events:
         # ('longRunningCommandResult', ('', ''))
@@ -135,34 +143,18 @@ class TestDishManagerBehaviour:
         # ('longrunningcommandresult',
         # ('16590178.0985_1954609_SPFRX_SetStandbyFPMode', '"result"'))
 
-        event_values = [event[1] for event in events]
-        event_value_dict = {}
-        for event_value in event_values:
-            event_value_dict[event_value[0]] = event_value[1]
-
-        sub_device_task_ids = [
-            task_id
-            for task_id in event_value_dict
-            if len(task_id.split("_")) == 4
+        events = event_store.wait_for_n_events(5, timeout=6)
+        event_values = event_store.get_data_from_events(events)
+        event_ids = [
+            event_value[1][0]
+            for event_value in event_values
+            if event_value[1] and event_value[1][0]
         ]
-        assert (
-            len(sub_device_task_ids) == 3
-        ), f"Did not find 3 sub task IDs in {event_value_dict.keys()}"
-
-        main_device_task_ids = [
-            task_id
-            for task_id in event_value_dict
-            if len(task_id.split("_")) == 3
-        ]
-        assert (
-            len(main_device_task_ids) == 1
-        ), f"Did not find main task ID in {event_value_dict}"
-
-        main_device_task_id = main_device_task_ids[0]
-        main_command_result_dict = json.loads(
-            event_value_dict[main_device_task_id]
+        # Sort via command creation timestamp
+        event_ids.sort(
+            key=lambda x: datetime.fromtimestamp((float(x.split("_")[0])))
         )
-        main_command_result_dict = json.loads(main_command_result_dict)
-        assert main_command_result_dict["DS"] in sub_device_task_ids
-        assert main_command_result_dict["SPF"] in sub_device_task_ids
-        assert main_command_result_dict["SPFRX"] in sub_device_task_ids
+        assert "_SetStandbyFPMode" in event_ids[0]
+        assert "_DS_SetStandbyFPMode" in event_ids[1]
+        assert "_SPF_SetStandbyFPMode" in event_ids[2]
+        assert "_SPFRX_SetStandbyFPMode" in event_ids[3]
