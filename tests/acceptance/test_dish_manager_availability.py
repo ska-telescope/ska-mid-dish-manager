@@ -15,11 +15,3 @@ def test_dishes_are_available(dish_number, event_store):
     assert isinstance(dish_manager_proxy.ping(), int)
     assert dish_manager_proxy.State() == DevState.STANDBY
     assert dish_manager_proxy.pointingState.name == "UNKNOWN"
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
-    assert dish_manager_proxy.dishMode.name == "STANDBY_LP"
