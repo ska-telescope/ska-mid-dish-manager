@@ -146,9 +146,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_comp_state,
             )
             self._update_component_state(dish_mode=new_dish_mode)
-            self.logger.info(
-                "Updating threads with dishMode change [%s]", new_dish_mode
-            )
 
         if (
             "healthstate" in ds_comp_state
@@ -387,7 +384,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             elif device == "SPF":
                 _, command_id = command("SetOperateMode", None)
                 task_callback(
-                    progress=f"SetPointMode called on SPF, ID {command_id}"
+                    progress=f"SetOperateMode called on SPF, ID {command_id}"
                 )
             else:
                 _, command_id = command("CaptureData", True)
@@ -601,7 +598,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
-                    result="Track Aborted",
+                    result="Stow Aborted",
                 )
             else:
                 current_dish_mode = self.component_state["dish_mode"]
