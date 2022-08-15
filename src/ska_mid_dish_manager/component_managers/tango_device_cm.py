@@ -160,13 +160,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     def _update_state_from_event(self, event_data: tango.EventData):
-        self.logger.debug("Got event [%s]", event_data)
         if event_data.err:
+            self.logger.debug("Got event [%s]", event_data)
             # We lost connection, get the connection back
             self.reconnect()
         else:
             # I get lowercase and uppercase "State" from events
             # for some reason, stick to lowercase to avoid duplicates
+            self.logger.debug(
+                "Got event with name [%s] and value [%s]",
+                event_data.attr_value.name,
+                event_data.attr_value.value,
+            )
             attr_name = event_data.attr_value.name.lower()
 
             # Add it to component state if not there

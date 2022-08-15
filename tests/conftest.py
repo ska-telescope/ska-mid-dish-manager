@@ -216,8 +216,11 @@ def event_store():  # pylint: disable=too-many-statements
                     if len(event.attr_value.value) != 2:
                         continue
                     (lrc_id, _) = event.attr_value.value
-                    if command_id == lrc_id:
-                        return True
+                    if (
+                        command_id == lrc_id
+                        and event.attr_value.name == "longrunningcommandresult"
+                    ):
+                        return events
             except queue.Empty as err:
                 event_info = [
                     (event.attr_value.name, event.attr_value.value)
@@ -227,6 +230,25 @@ def event_store():  # pylint: disable=too-many-statements
                     f"Never got an LRC result from command [{command_id}],",
                     f" but got [{event_info}]",
                 ) from err
+
+        @classmethod
+        def filter_id_events(
+            cls, events: List[tango.EventData], unique_id: str
+        ) -> List[tango.EventData]:
+            """Filter out only events from unique_id
+
+            :param events: Events
+            :type events: List[tango.EventData]
+            :param unique_id: command ID
+            :type unique_id: str
+            :return: Filtered list of events
+            :rtype: List[tango.EventData]
+            """
+            return [
+                event
+                for event in events
+                if unique_id in str(event.attr_value.value)
+            ]
 
         def wait_for_n_events(self, event_count: int, timeout: int = 5):
             """Wait for N number of events
@@ -265,6 +287,23 @@ def event_store():  # pylint: disable=too-many-statements
                     items.append(self._queue.get(timeout=timeout))
             except queue.Empty:
                 return items
+
+        @classmethod
+        def extract_event_values(
+            cls, events: List[tango.EventData]
+        ) -> List[Tuple]:
+            """Get the values out of events
+
+            :param events: List of events
+            :type events: List[tango.EventData]
+            :return: List of value tuples
+            :rtype: List[Tuple]
+            """
+            event_info = [
+                (event.attr_value.name, event.attr_value.value)
+                for event in events
+            ]
+            return event_info
 
         def get_queue_values(self, timeout: int = 3):
             items = []
