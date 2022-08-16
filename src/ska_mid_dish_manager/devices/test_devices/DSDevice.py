@@ -211,12 +211,6 @@ class DSDevice(Device):
         self._operating_mode = DSOperatingMode.STOW
         self.push_change_event("operatingMode", self._operating_mode)
 
-    @command(dtype_in=int, doc_in="Set operatingMode", dtype_out=None)
-    async def SetOperatingMode(self, mode):
-        LOGGER.info("Called SetOperatingMode with [%s]", mode)
-        self._operating_mode = DSOperatingMode(mode)
-        self.push_change_event("operatingMode", self._operating_mode)
-
 
 def main():
     """Script entrypoint"""
