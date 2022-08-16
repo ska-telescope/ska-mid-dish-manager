@@ -249,7 +249,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 _, command_id = command("SetStandbyLPMode", None)
                 task_callback(
-                    progress=f"SetStandbyLPMode called, ID {command_id}"
+                    progress=f"SetStandbyLPMode called on {device}, ID {command_id}"
                 )
 
             device_command_ids[device] = command_id
