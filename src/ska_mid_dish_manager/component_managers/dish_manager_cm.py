@@ -227,10 +227,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
+        subservient_devices = ["DS", "SPF", "SPFRX"]
+
         if self.component_state["dish_mode"].name == "STANDBY_FP":
             subservient_devices = ["DS", "SPF"]
-        if self.component_state["dish_mode"].name in ["MAINTENANCE", "STOW"]:
-            subservient_devices = ["DS", "SPF", "SPFRX"]
 
         for device in subservient_devices:
             command = SubmittedSlowCommand(
@@ -305,9 +305,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        if self.component_state["dish_mode"].name == "STANDBY_LP":
-            subservient_devices = ["DS", "SPF", "SPFRX"]
-        elif self.component_state["dish_mode"].name == "OPERATE":
+        subservient_devices = ["DS", "SPF", "SPFRX"]
+
+        if self.component_state["dish_mode"].name == "OPERATE":
             subservient_devices = ["DS"]
 
         for device in subservient_devices:
@@ -578,12 +578,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
             device_command_ids[device] = command_id
-
-        # SPF updates the bandInFocus
-        # TODO: provide a function to perform attribute writes
-        spf = self.component_managers["SPF"]
-        # pylint: disable=protected-access
-        spf._device_proxy.bandInFocus = Band.B2
 
         task_callback(progress="Waiting for band change to B2")
 
