@@ -121,4 +121,4 @@ class TestSetStandByLPMode:
             operatingmode=SPFOperatingMode.STANDBY_LP
         )
         # we can now expect dishMode to transition to STANDBY_LP
-        assert event_store.wait_for_value(DishMode.STANDBY_LP)
+        assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=6)
