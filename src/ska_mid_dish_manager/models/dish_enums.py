@@ -131,3 +131,12 @@ class SPFRxOperatingMode(enum.IntEnum):
     DATA_CAPTURE = 3
     CONFIGURE = 4
     MAINTENANCE = 5
+
+
+class CapabilityStates(enum.IntEnum):
+    UNAVAILABLE = 0
+    STANDBY = 1
+    CONFIGURING = 2
+    OPERATE_DEGRADED = 3
+    OPERATE_FULL = 4
+    UNKNOWN = 5

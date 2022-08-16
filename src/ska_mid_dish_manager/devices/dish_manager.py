@@ -19,6 +19,7 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import (
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
+    CapabilityStates,
     DishMode,
     PointingState,
     PowerState,
@@ -150,6 +151,14 @@ class DishManager(SKAController):
             device._track_interpolation_mode = TrackInterpolationMode.NEWTON
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.ADD
+
+            device._b1_capability_state = CapabilityStates.UNKNOWN
+            device._b2_capability_state = CapabilityStates.UNKNOWN
+            device._b3_capability_state = CapabilityStates.UNKNOWN
+            device._b4_capability_state = CapabilityStates.UNKNOWN
+            device._b5a_capability_state = CapabilityStates.UNKNOWN
+            device._b5b_capability_state = CapabilityStates.UNKNOWN
+
             device.op_state_model.perform_action("component_standby")
 
             # push change events for dishMode: needed to use testing library
@@ -635,6 +644,96 @@ class DishManager(SKAController):
     def synchronised(self):
         """Returns the synchronised"""
         return self._synchronised
+
+    @attribute(
+        dtype=CapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b1CapabilityState",
+    )
+    def b1CapabilityState(self):
+        """Returns the b1CapabilityState"""
+        return self._b1_capability_state
+
+    @b1CapabilityState.write
+    def b1CapabilityState(self, value):
+        """Set the b1CapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b1_capability_state = CapabilityStates(value)
+
+    @attribute(
+        dtype=CapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b2CapabilityState",
+    )
+    def b2CapabilityState(self):
+        """Returns the b2CapabilityState"""
+        return self._b2_capability_state
+
+    @b2CapabilityState.write
+    def b2CapabilityState(self, value):
+        """Set the b2CapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b2_capability_state = CapabilityStates(value)
+
+    @attribute(
+        dtype=CapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b3CapabilityState",
+    )
+    def b3CapabilityState(self):
+        """Returns the b3CapabilityState"""
+        return self._b3_capability_state
+
+    @b3CapabilityState.write
+    def b3CapabilityState(self, value):
+        """Set the b3CapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b3_capability_state = CapabilityStates(value)
+
+    @attribute(
+        dtype=CapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b4CapabilityState",
+    )
+    def b4CapabilityState(self):
+        """Returns the b4CapabilityState"""
+        return self._b4_capability_state
+
+    @b4CapabilityState.write
+    def b4CapabilityState(self, value):
+        """Set the b4CapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b4_capability_state = CapabilityStates(value)
+
+    @attribute(
+        dtype=CapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b5aCapabilityState",
+    )
+    def b5aCapabilityState(self):
+        """Returns the b5aCapabilityState"""
+        return self._b5a_capability_state
+
+    @b5aCapabilityState.write
+    def b5aCapabilityState(self, value):
+        """Set the b5aCapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b5a_capability_state = CapabilityStates(value)
+
+    @attribute(
+        dtype=CapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b5bCapabilityState",
+    )
+    def b5bCapabilityState(self):
+        """Returns the b5aCapabilityState"""
+        return self._b5b_capability_state
+
+    @b5bCapabilityState.write
+    def b5bCapabilityState(self, value):
+        """Set the b5bCapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b5b_capability_state = CapabilityStates(value)
 
     # --------
     # Commands
