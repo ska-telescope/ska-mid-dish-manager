@@ -114,7 +114,7 @@ class DSDevice(Device):
         access=AttrWriteType.READ_WRITE,
     )
     async def indexerPosition(self):
-        return self._power_state
+        return self._indexer_position
 
     @indexerPosition.write
     async def indexerPosition(self, band_number: Band):
