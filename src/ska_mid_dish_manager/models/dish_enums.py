@@ -108,11 +108,12 @@ class DSPowerState(enum.IntEnum):
 
 
 class SPFOperatingMode(enum.IntEnum):
-    STARTUP = 0
-    STANDBY_LP = 1
-    OPERATE = 2
-    MAINTENANCE = 3
-    ERROR = 4
+    UNKNOWN = 0
+    STARTUP = 1
+    STANDBY_LP = 2
+    OPERATE = 3
+    MAINTENANCE = 4
+    ERROR = 5
 
 
 class SPFPowerState(enum.IntEnum):
