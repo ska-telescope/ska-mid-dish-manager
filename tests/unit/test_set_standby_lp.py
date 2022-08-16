@@ -103,10 +103,9 @@ class TestSetStandByLPMode:
         assert event_store.wait_for_value(DishMode.STANDBY_FP)
 
         # Transition DishManager to STANDBY_LP issuing a command
-        [[result_code], [unique_id]] = self.device_proxy.SetStandbyLPMode()
-        assert ResultCode(result_code) == ResultCode.OK
+        [[result_code], [_]] = self.device_proxy.SetStandbyLPMode()
+        assert ResultCode(result_code) == ResultCode.QUEUED
 
-        assert event_store.wait_for_command_id(unique_id)
         # Clear out the queue to make sure we don't catch old events
         event_store.clear_queue()
 

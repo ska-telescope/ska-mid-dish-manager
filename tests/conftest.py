@@ -2,7 +2,7 @@
 
 import queue
 import socket
-from typing import Any
+from typing import Any, List, Tuple
 
 import pytest
 import tango
@@ -112,7 +112,7 @@ def multi_device_tango_context(
 
 
 @pytest.fixture(scope="function")
-def event_store():
+def event_store():  # pylint: disable=too-many-statements
     """Fixture for storing events"""
 
     class EventStore:
@@ -204,9 +204,11 @@ def event_store():
             :return: The result of the long running command
             :rtype: str
             """
+            events = []
             try:
                 while True:
                     event = self._queue.get(timeout=timeout)
+                    events.append(event)
                     if not event.attr_value:
                         continue
                     if not isinstance(event.attr_value.value, tuple):
@@ -214,11 +216,63 @@ def event_store():
                     if len(event.attr_value.value) != 2:
                         continue
                     (lrc_id, _) = event.attr_value.value
-                    if command_id == lrc_id:
-                        return True
+                    if (
+                        command_id == lrc_id
+                        and event.attr_value.name == "longrunningcommandresult"
+                    ):
+                        return events
+            except queue.Empty as err:
+                event_info = [
+                    (event.attr_value.name, event.attr_value.value)
+                    for event in events
+                ]
+                raise RuntimeError(
+                    f"Never got an LRC result from command [{command_id}],",
+                    f" but got [{event_info}]",
+                ) from err
+
+        @classmethod
+        def filter_id_events(
+            cls, events: List[tango.EventData], unique_id: str
+        ) -> List[tango.EventData]:
+            """Filter out only events from unique_id
+
+            :param events: Events
+            :type events: List[tango.EventData]
+            :param unique_id: command ID
+            :type unique_id: str
+            :return: Filtered list of events
+            :rtype: List[tango.EventData]
+            """
+            return [
+                event
+                for event in events
+                if unique_id in str(event.attr_value.value)
+            ]
+
+        def wait_for_n_events(self, event_count: int, timeout: int = 5):
+            """Wait for N number of events
+
+            Wait `timeout` seconds for each fetch.
+
+            :param event_count: The number of events to wait for
+            :type command_id: int
+            :param timeout: the get timeout, defaults to 3
+            :type timeout: int, optional
+            :raises RuntimeError: If none are found
+            :return: The result of the long running command
+            :rtype: str
+            """
+            events = []
+            try:
+                while len(events) != event_count:
+                    event = self._queue.get(timeout=timeout)
+                    events.append(event)
+                return events
             except queue.Empty as err:
                 raise RuntimeError(
-                    f"Never got an LRC result from command [{command_id}]"
+                    f"Did not get {event_count} events, ",
+                    f"got {len(events)} events",
                 ) from err
 
         def clear_queue(self):
@@ -234,6 +288,23 @@ def event_store():
             except queue.Empty:
                 return items
 
+        @classmethod
+        def extract_event_values(
+            cls, events: List[tango.EventData]
+        ) -> List[Tuple]:
+            """Get the values out of events
+
+            :param events: List of events
+            :type events: List[tango.EventData]
+            :return: List of value tuples
+            :rtype: List[Tuple]
+            """
+            event_info = [
+                (event.attr_value.name, event.attr_value.value)
+                for event in events
+            ]
+            return event_info
+
         def get_queue_values(self, timeout: int = 3):
             items = []
             try:
@@ -244,6 +315,20 @@ def event_store():
                     )
             except queue.Empty:
                 return items
+
+        @classmethod
+        def get_data_from_events(
+            cls, events: List[tango.EventData]
+        ) -> List[Tuple]:
+            """Retrieve the event info from the events
+
+            :param events: list of
+            :type events: List[tango.EventData]
+            """
+            return [
+                (event.attr_value.name, event.attr_value.value)
+                for event in events
+            ]
 
     return EventStore()
 

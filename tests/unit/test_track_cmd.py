@@ -114,8 +114,7 @@ class TestTrack:
         event_store.clear_queue()
 
         # Request Track on Dish
-        [[_], [unique_id]] = self.device_proxy.Track()
-        assert event_store.wait_for_command_id(unique_id)
+        self.device_proxy.Track()
 
         # transition DS pointingState to TRACK
         self.ds_cm._update_component_state(pointingstate=PointingState.SLEW)

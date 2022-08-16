@@ -10,6 +10,7 @@ import logging
 import os
 import random
 import sys
+import time
 
 from tango import (
     AttrWriteType,
@@ -146,10 +147,12 @@ class DSDevice(Device):
 
     @command(dtype_in=None, doc_in="Switch On", dtype_out=None)
     async def On(self):
+        time.sleep(1.5)
         self.set_state(DevState.ON)
 
     @command(dtype_in=None, doc_in="Switch Off", dtype_out=None)
     async def Off(self):
+        time.sleep(1.5)
         self.set_state(DevState.OFF)
 
     @command(dtype_in=None, doc_in="Set StandbyLPMode", dtype_out=None)
@@ -167,18 +170,21 @@ class DSDevice(Device):
     @command(dtype_in=None, doc_in="Set Point op mode", dtype_out=None)
     async def SetPointMode(self):
         LOGGER.info("Called SetPointMode")
+        time.sleep(1.5)
         self._operating_mode = DSOperatingMode.POINT
         self.push_change_event("operatingMode", self._operating_mode)
 
     @command(dtype_in=None, doc_in="Set SetStartupMode", dtype_out=None)
     async def SetStartupMode(self):
         LOGGER.info("Called SetStartupMode")
+        time.sleep(1.5)
         self._operating_mode = DSOperatingMode.STARTUP
         self.push_change_event("operatingMode", self._operating_mode)
 
     @command(dtype_in=None, doc_in="Track", dtype_out=None)
     async def Track(self):
         LOGGER.info("Called Track")
+        time.sleep(1.5)
         self._operating_mode = DSOperatingMode.POINT
         self.push_change_event("operatingMode", self._operating_mode)
 
@@ -187,18 +193,21 @@ class DSDevice(Device):
     )
     async def SetIndexPosition(self, band_number):
         LOGGER.info("Called SetIndexPosition")
+        time.sleep(1.5)
         self._indexer_position = Band(band_number)
         self.push_change_event("indexerPostion", self._indexer_position)
 
     @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
     async def ConfigureBand2(self):
         LOGGER.info("Called ConfigureBand2")
+        time.sleep(1.5)
         self._configured_band = Band.B2
         self.push_change_event("configuredBand", self._configured_band)
 
     @command(dtype_in=None, doc_in="Set STOW", dtype_out=None)
     async def Stow(self):
         LOGGER.info("Called Stow")
+        time.sleep(1.5)
         self._operating_mode = DSOperatingMode.STOW
         self.push_change_event("operatingMode", self._operating_mode)
 

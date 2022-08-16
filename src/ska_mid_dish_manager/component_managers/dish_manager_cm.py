@@ -5,10 +5,10 @@ from datetime import datetime
 from typing import Callable, Optional, Tuple
 
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
+from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.control_model import CommunicationStatus, HealthState
 from ska_tango_base.executor import TaskStatus
 
-from ska_mid_dish_manager.commands import NestedSubmittedSlowCommand
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import (
@@ -223,8 +223,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def _set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
         if self.component_state["dish_mode"].name == "STANDBY_FP":
@@ -233,7 +233,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             subservient_devices = ["DS", "SPF", "SPFRX"]
 
         for device in subservient_devices:
-            command = NestedSubmittedSlowCommand(
+            command = SubmittedSlowCommand(
                 f"{device}_SetStandbyLPMode",
                 self._command_tracker,
                 self.component_managers[device],
@@ -243,16 +243,47 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             if device == "SPFRX":
                 _, command_id = command("SetStandbyMode", None)
+                task_callback(
+                    progress=f"SetStandbyMode called on SPFRX, ID {command_id}"
+                )
             else:
                 _, command_id = command("SetStandbyLPMode", None)
+                task_callback(
+                    progress=(
+                        f"SetStandbyLPMode called on {device},"
+                        f" ID {command_id}"
+                    )
+                )
 
             device_command_ids[device] = command_id
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=json.dumps(device_command_ids),
-            )
+        task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
+        task_callback(progress="Awaiting dishMode change to STANDBY_LP")
+
+        while True:
+            if task_abort_event.is_set():
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="SetStandbyLPMode Aborted",
+                )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            current_dish_mode = self.component_state["dish_mode"]
+            if current_dish_mode != DishMode.STANDBY_LP:
+                task_abort_event.wait(timeout=1)
+            else:
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="SetStandbyLPMode completed",
+                )
+                return
 
     def set_standby_fp_mode(
         self,
@@ -270,8 +301,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
         """Set StandbyFP mode on sub devices as long running commands"""
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
         if self.component_state["dish_mode"].name == "STANDBY_LP":
@@ -280,7 +311,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             subservient_devices = ["DS"]
 
         for device in subservient_devices:
-            command = NestedSubmittedSlowCommand(
+            command = SubmittedSlowCommand(
                 f"{device}_SetStandbyFPMode",
                 self._command_tracker,
                 self.component_managers[device],
@@ -290,18 +321,50 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             if device == "DS":
                 _, command_id = command("SetStandbyFPMode", None)
+                device_command_ids[device] = command_id
+                task_callback(
+                    progress=f"SetStandbyFPMode called on DS, ID {command_id}"
+                )
             elif device == "SPF":
                 _, command_id = command("SetOperateMode", None)
+                device_command_ids[device] = command_id
+                task_callback(
+                    progress=f"SetOperateMode called on SPF, ID {command_id}"
+                )
             else:
                 _, command_id = command("CaptureData", True)
+                device_command_ids[device] = command_id
+                task_callback(
+                    progress=f"CaptureData called on SPFRx, ID {command_id}"
+                )
 
-            device_command_ids[device] = command_id
+        task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
+        task_callback(progress="Awaiting dishMode change to STANDBY_FP")
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=json.dumps(device_command_ids),
-            )
+        while True:
+            if task_abort_event.is_set():
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="SetStandbyFPMode Aborted",
+                )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            current_dish_mode = self.component_state["dish_mode"]
+            if current_dish_mode != DishMode.STANDBY_FP:
+                task_abort_event.wait(timeout=1)
+            else:
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="SetStandbyFPMode completed",
+                )
+                return
 
     def set_operate_mode(
         self,
@@ -319,12 +382,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def _set_operate_mode(self, task_callback=None, task_abort_event=None):
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
         for device in ["DS", "SPF", "SPFRX"]:
-            command = NestedSubmittedSlowCommand(
+            command = SubmittedSlowCommand(
                 f"{device}_SetOperateMode",
                 self._command_tracker,
                 self.component_managers[device],
@@ -334,18 +397,49 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             if device == "DS":
                 _, command_id = command("SetPointMode", None)
+                task_callback(
+                    progress=f"SetPointMode called on DS, ID {command_id}"
+                )
             elif device == "SPF":
                 _, command_id = command("SetOperateMode", None)
+                task_callback(
+                    progress=f"SetOperateMode called on SPF, ID {command_id}"
+                )
             else:
                 _, command_id = command("CaptureData", True)
+                task_callback(
+                    progress=f"CaptureData called on SPFRx, ID {command_id}"
+                )
 
             device_command_ids[device] = command_id
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=json.dumps(device_command_ids),
-            )
+        task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
+        task_callback(progress="Awaiting dishMode change to OPERATE")
+
+        while True:
+            if task_abort_event.is_set():
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="SetOperateMode Aborted",
+                )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            current_dish_mode = self.component_state["dish_mode"]
+            if current_dish_mode != DishMode.OPERATE:
+                task_abort_event.wait(timeout=1)
+            else:
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="SetOperateMode completed",
+                )
+                return
 
     def track_cmd(
         self,
@@ -365,11 +459,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def _track_cmd(self, task_callback=None, task_abort_event=None):
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        command = NestedSubmittedSlowCommand(
+        command = SubmittedSlowCommand(
             "DS_Track",
             self._command_tracker,
             self.component_managers["DS"],
@@ -380,11 +474,33 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         _, command_id = command("Track", None)
         device_command_ids["DS"] = command_id
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=json.dumps(device_command_ids),
-            )
+        task_callback(progress=f"Track called on DS, ID {command_id}")
+        task_callback(progress="Awaiting target lock change")
+
+        while True:
+            if task_abort_event.is_set():
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Track Aborted",
+                )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            achieved_target_lock = self.component_state["achieved_target_lock"]
+            if not achieved_target_lock:
+                task_abort_event.wait(timeout=1)
+            else:
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="Track completed",
+                )
+                return
 
     def configure_band2_cmd(
         self,
@@ -427,12 +543,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _configure_band2_cmd(self, task_callback=None, task_abort_event=None):
         """configureBand on DS, SPF, SPFRX"""
-        if task_callback is not None:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
         for device in ["DS", "SPFRX"]:
-            command = NestedSubmittedSlowCommand(
+            command = SubmittedSlowCommand(
                 f"{device}ConfigureBand2",
                 self._command_tracker,
                 self.component_managers[device],
@@ -442,8 +558,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             if device == "DS":
                 _, command_id = command("SetIndexPosition", 2)
+                task_callback(
+                    progress=f"SetIndexPosition called on DS, ID {command_id}"
+                )
             else:
                 _, command_id = command("ConfigureBand2", None)
+                task_callback(
+                    progress=f"ConfigureBand2 called on SPFRx, ID {command_id}"
+                )
 
             device_command_ids[device] = command_id
 
@@ -453,11 +575,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # pylint: disable=protected-access
         spf._device_proxy.bandInFocus = Band.B2
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=json.dumps(device_command_ids),
-            )
+        task_callback(progress="Waiting for band change to B2")
+
+        while True:
+            if task_abort_event.is_set():
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Track Aborted",
+                )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            current_band = self.component_state["configured_band"]
+            if current_band != Band.B2:
+                task_abort_event.wait(timeout=1)
+            else:
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="ConfigureBand2 completed",
+                )
+                return
 
     def set_stow_mode(
         self,
@@ -476,10 +619,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _set_stow_mode(self, task_callback=None, task_abort_event=None):
         """Call Stow on DS"""
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        assert task_callback, "task_callback has to be defined"
+        task_callback(status=TaskStatus.IN_PROGRESS)
 
-        command = NestedSubmittedSlowCommand(
+        command = SubmittedSlowCommand(
             "DS_SetStowMode",
             self._command_tracker,
             self.component_managers["DS"],
@@ -489,11 +632,33 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         _, command_id = command("Stow", None)
 
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                result=f"Scheduled Stow on DS command_id {command_id}",
-            )
+        task_callback(progress=f"Stow called on DS, ID {command_id}")
+        task_callback(progress="Waiting for dishMode change to STOW")
+
+        while True:
+            if task_abort_event.is_set():
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Stow Aborted",
+                )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            current_dish_mode = self.component_state["dish_mode"]
+            if current_dish_mode != DishMode.STOW:
+                task_abort_event.wait(timeout=1)
+            else:
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="Stow completed",
+                )
+                return
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):

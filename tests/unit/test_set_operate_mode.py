@@ -106,8 +106,7 @@ class TestSetOperateMode:
         event_store.clear_queue()
 
         # Transition DishManager to OPERATE mode
-        [[_], [unique_id]] = device_proxy.SetOperateMode()
-        assert event_store.wait_for_command_id(unique_id)
+        device_proxy.SetOperateMode()
 
         # transition subservient devices to their respective operatingMode
         # and observe that DishManager transitions dishMode to OPERATE mode
