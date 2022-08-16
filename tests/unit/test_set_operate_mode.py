@@ -9,8 +9,11 @@ from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    BandInFocus,
     DishMode,
     DSOperatingMode,
+    IndexerPosition,
     PointingState,
     SPFOperatingMode,
     SPFRxOperatingMode,
@@ -74,21 +77,17 @@ class TestSetOperateMode:
         event_store,
     ):
         device_proxy = self.tango_context.device
-        device_proxy.subscribe_event(
+        for attr in [
             "dishMode",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-        device_proxy.subscribe_event(
             "longRunningCommandResult",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-        device_proxy.subscribe_event(
             "pointingState",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
+            "configuredBand",
+        ]:
+            device_proxy.subscribe_event(
+                attr,
+                tango.EventType.CHANGE_EVENT,
+                event_store,
+            )
 
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
@@ -106,6 +105,16 @@ class TestSetOperateMode:
         event_store.clear_queue()
 
         # Transition DishManager to OPERATE mode
+        # configuredBand not set
+        with pytest.raises(tango.DevFailed):
+            device_proxy.SetOperateMode()
+
+        # Set configuredBand and try again
+        ds_cm._update_component_state(indexerposition=IndexerPosition.B1)
+        spf_cm._update_component_state(bandinfocus=BandInFocus.B1)
+        spfrx_cm._update_component_state(configuredband=Band.B1)
+        event_store.wait_for_value(Band.B1)
+
         device_proxy.SetOperateMode()
 
         # transition subservient devices to their respective operatingMode

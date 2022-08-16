@@ -88,7 +88,7 @@ def test_stress_connect_disconnect(component_state_store, ds_device_fqdn):
         # This is only updated once, from that point it doesn't change
         if i == 0:
             assert component_state_store.wait_for_value(
-                "state", tango._tango.DevState.ON
+                "state", tango.DevState.ON
             )
         com_man.stop_communicating()
         assert component_state_store.wait_for_value(

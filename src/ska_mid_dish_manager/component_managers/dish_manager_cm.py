@@ -376,6 +376,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dish_mode=DishMode(self.component_state["dish_mode"]).name,
             command_name="SetOperateMode",
         )
+
+        if self.component_state["configured_band"] in [
+            Band.NONE,
+            Band.UNKNOWN,
+        ]:
+            raise CommandNotAllowed(
+                "configuredBand can not be in "
+                f"{Band.NONE.name} or {Band.UNKNOWN.name}",
+            )
+
         status, response = self.submit_task(
             self._set_operate_mode, args=[], task_callback=task_callback
         )
