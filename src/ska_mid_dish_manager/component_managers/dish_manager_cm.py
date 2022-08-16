@@ -249,7 +249,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 _, command_id = command("SetStandbyLPMode", None)
                 task_callback(
-                    progress=f"SetStandbyLPMode called on {device}, ID {command_id}"
+                    progress=(
+                        f"SetStandbyLPMode called on {device},"
+                        f" ID {command_id}"
+                    )
                 )
 
             device_command_ids[device] = command_id
@@ -263,16 +266,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     status=TaskStatus.ABORTED,
                     result="SetStandbyLPMode Aborted",
                 )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            current_dish_mode = self.component_state["dish_mode"]
+            if current_dish_mode != DishMode.STANDBY_LP:
+                task_abort_event.wait(timeout=1)
             else:
-                current_dish_mode = self.component_state["dish_mode"]
-                if current_dish_mode != DishMode.STANDBY_LP:
-                    task_abort_event.wait(timeout=1)
-                else:
-                    task_callback(
-                        status=TaskStatus.COMPLETED,
-                        result="SetStandbyLPMode completed",
-                    )
-                    return
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="SetStandbyLPMode completed",
+                )
+                return
 
     def set_standby_fp_mode(
         self,
@@ -336,16 +347,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     status=TaskStatus.ABORTED,
                     result="SetStandbyFPMode Aborted",
                 )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            current_dish_mode = self.component_state["dish_mode"]
+            if current_dish_mode != DishMode.STANDBY_FP:
+                task_abort_event.wait(timeout=1)
             else:
-                current_dish_mode = self.component_state["dish_mode"]
-                if current_dish_mode != DishMode.STANDBY_FP:
-                    task_abort_event.wait(timeout=1)
-                else:
-                    task_callback(
-                        status=TaskStatus.COMPLETED,
-                        result="SetStandbyFPMode completed",
-                    )
-                    return
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="SetStandbyFPMode completed",
+                )
+                return
 
     def set_operate_mode(
         self,
@@ -403,16 +422,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     status=TaskStatus.ABORTED,
                     result="SetOperateMode Aborted",
                 )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            current_dish_mode = self.component_state["dish_mode"]
+            if current_dish_mode != DishMode.OPERATE:
+                task_abort_event.wait(timeout=1)
             else:
-                current_dish_mode = self.component_state["dish_mode"]
-                if current_dish_mode != DishMode.OPERATE:
-                    task_abort_event.wait(timeout=1)
-                else:
-                    task_callback(
-                        status=TaskStatus.COMPLETED,
-                        result="SetOperateMode completed",
-                    )
-                    return
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="SetOperateMode completed",
+                )
+                return
 
     def track_cmd(
         self,
@@ -456,18 +483,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     status=TaskStatus.ABORTED,
                     result="Track Aborted",
                 )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            achieved_target_lock = self.component_state["achieved_target_lock"]
+            if not achieved_target_lock:
+                task_abort_event.wait(timeout=1)
             else:
-                achieved_target_lock = self.component_state[
-                    "achieved_target_lock"
-                ]
-                if not achieved_target_lock:
-                    task_abort_event.wait(timeout=1)
-                else:
-                    task_callback(
-                        status=TaskStatus.COMPLETED,
-                        result="Track completed",
-                    )
-                    return
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="Track completed",
+                )
+                return
 
     def configure_band2_cmd(
         self,
@@ -550,16 +583,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     status=TaskStatus.ABORTED,
                     result="Track Aborted",
                 )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            current_band = self.component_state["configured_band"]
+            if current_band != Band.B2:
+                task_abort_event.wait(timeout=1)
             else:
-                current_band = self.component_state["configured_band"]
-                if current_band != Band.B2:
-                    task_abort_event.wait(timeout=1)
-                else:
-                    task_callback(
-                        status=TaskStatus.COMPLETED,
-                        result="ConfigureBand2 completed",
-                    )
-                    return
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="ConfigureBand2 completed",
+                )
+                return
 
     def set_stow_mode(
         self,
@@ -600,16 +641,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     status=TaskStatus.ABORTED,
                     result="Stow Aborted",
                 )
+                return
+
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+
+            current_dish_mode = self.component_state["dish_mode"]
+            if current_dish_mode != DishMode.STOW:
+                task_abort_event.wait(timeout=1)
             else:
-                current_dish_mode = self.component_state["dish_mode"]
-                if current_dish_mode != DishMode.STOW:
-                    task_abort_event.wait(timeout=1)
-                else:
-                    task_callback(
-                        status=TaskStatus.COMPLETED,
-                        result="Stow completed",
-                    )
-                    return
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result="Stow completed",
+                )
+                return
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
