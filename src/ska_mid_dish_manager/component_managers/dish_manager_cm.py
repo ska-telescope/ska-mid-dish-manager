@@ -8,7 +8,7 @@ from ska_tango_base.base.component_manager import TaskExecutorComponentManager
 from ska_tango_base.control_model import CommunicationStatus, HealthState
 from ska_tango_base.executor import TaskStatus
 
-from ska_mid_dish_manager.commands import NestedSubmittedSlowCommand
+from ska_tango_base.commands import SubmittedSlowCommand
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import (
@@ -233,7 +233,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             subservient_devices = ["DS", "SPF", "SPFRX"]
 
         for device in subservient_devices:
-            command = NestedSubmittedSlowCommand(
+            command = SubmittedSlowCommand(
                 f"{device}_SetStandbyLPMode",
                 self._command_tracker,
                 self.component_managers[device],
@@ -300,7 +300,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             subservient_devices = ["DS"]
 
         for device in subservient_devices:
-            command = NestedSubmittedSlowCommand(
+            command = SubmittedSlowCommand(
                 f"{device}_SetStandbyFPMode",
                 self._command_tracker,
                 self.component_managers[device],
@@ -368,7 +368,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         device_command_ids = {}
         for device in ["DS", "SPF", "SPFRX"]:
-            command = NestedSubmittedSlowCommand(
+            command = SubmittedSlowCommand(
                 f"{device}_SetOperateMode",
                 self._command_tracker,
                 self.component_managers[device],
@@ -436,7 +436,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        command = NestedSubmittedSlowCommand(
+        command = SubmittedSlowCommand(
             "DS_Track",
             self._command_tracker,
             self.component_managers["DS"],
@@ -515,7 +515,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         device_command_ids = {}
         for device in ["DS", "SPFRX"]:
-            command = NestedSubmittedSlowCommand(
+            command = SubmittedSlowCommand(
                 f"{device}ConfigureBand2",
                 self._command_tracker,
                 self.component_managers[device],
@@ -581,7 +581,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         assert task_callback, "task_callback has to be defined"
         task_callback(status=TaskStatus.IN_PROGRESS)
 
-        command = NestedSubmittedSlowCommand(
+        command = SubmittedSlowCommand(
             "DS_SetStowMode",
             self._command_tracker,
             self.component_managers["DS"],

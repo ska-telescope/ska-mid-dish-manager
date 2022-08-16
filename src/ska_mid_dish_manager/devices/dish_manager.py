@@ -14,7 +14,7 @@ from ska_tango_base.commands import SubmittedSlowCommand
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
-from ska_mid_dish_manager.commands import ResultCode
+from ska_tango_base.commands import ResultCode
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,
 )
