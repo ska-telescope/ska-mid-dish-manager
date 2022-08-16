@@ -10,11 +10,10 @@ import weakref
 from typing import List, Optional, Tuple
 
 from ska_tango_base import SKAController
-from ska_tango_base.commands import SubmittedSlowCommand
+from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
-from ska_tango_base.commands import ResultCode
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,
 )

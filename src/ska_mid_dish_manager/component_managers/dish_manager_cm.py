@@ -5,10 +5,10 @@ from datetime import datetime
 from typing import Callable, Optional, Tuple
 
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
+from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.control_model import CommunicationStatus, HealthState
 from ska_tango_base.executor import TaskStatus
 
-from ska_tango_base.commands import SubmittedSlowCommand
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import (
