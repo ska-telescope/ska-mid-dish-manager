@@ -16,6 +16,7 @@ from tango.server import Device, attribute, command
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     HealthState,
+    SPFRxCapabilityStates,
     SPFRxOperatingMode,
 )
 
@@ -33,13 +34,115 @@ class SPFRxDevice(Device):
         self._operating_mode = SPFRxOperatingMode.STANDBY
         self._configured_band = Band.NONE
         self._health_state = HealthState.UNKNOWN
+        self._b1_capability_state = SPFRxCapabilityStates.UNKNOWN
+        self._b2_capability_state = SPFRxCapabilityStates.UNKNOWN
+        self._b3_capability_state = SPFRxCapabilityStates.UNKNOWN
+        self._b4_capability_state = SPFRxCapabilityStates.UNKNOWN
+        self._b5a_capability_state = SPFRxCapabilityStates.UNKNOWN
+        self._b5b_capability_state = SPFRxCapabilityStates.UNKNOWN
         self.set_change_event("operatingMode", True, False)
         self.set_change_event("healthState", True, False)
         self.set_change_event("configuredBand", True, False)
+        self.set_change_event("b1CapabilityState", True, False)
+        self.set_change_event("b2CapabilityState", True, False)
+        self.set_change_event("b3CapabilityState", True, False)
+        self.set_change_event("b4CapabilityState", True, False)
+        self.set_change_event("b5aCapabilityState", True, False)
+        self.set_change_event("b5bCapabilityState", True, False)
 
     # -----------
     # Attributes
     # -----------
+
+    @attribute(
+        dtype=SPFRxCapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b1CapabilityState",
+    )
+    async def b1CapabilityState(self):
+        """Returns the b1CapabilityState"""
+        return self._b1_capability_state
+
+    @b1CapabilityState.write
+    async def b1CapabilityState(self, value):
+        """Set the b1CapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b1_capability_state = SPFRxCapabilityStates(value)
+
+    @attribute(
+        dtype=SPFRxCapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b2CapabilityState",
+    )
+    async def b2CapabilityState(self):
+        """Returns the b2CapabilityState"""
+        return self._b2_capability_state
+
+    @b2CapabilityState.write
+    async def b2CapabilityState(self, value):
+        """Set the b2CapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b2_capability_state = SPFRxCapabilityStates(value)
+
+    @attribute(
+        dtype=SPFRxCapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b3CapabilityState",
+    )
+    async def b3CapabilityState(self):
+        """Returns the b3CapabilityState"""
+        return self._b3_capability_state
+
+    @b3CapabilityState.write
+    async def b3CapabilityState(self, value):
+        """Set the b3CapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b3_capability_state = SPFRxCapabilityStates(value)
+
+    @attribute(
+        dtype=SPFRxCapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b4CapabilityState",
+    )
+    async def b4CapabilityState(self):
+        """Returns the b4CapabilityState"""
+        return self._b4_capability_state
+
+    @b4CapabilityState.write
+    async def b4CapabilityState(self, value):
+        """Set the b4CapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b4_capability_state = SPFRxCapabilityStates(value)
+
+    @attribute(
+        dtype=SPFRxCapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b5CapabilityState",
+    )
+    async def b5aCapabilityState(self):
+        """Returns the b5aCapabilityState"""
+        return self._b5a_capability_state
+
+    @b5aCapabilityState.write
+    async def b5aCapabilityState(self, value):
+        """Set the b5aCapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b5a_capability_state = SPFRxCapabilityStates(value)
+
+    @attribute(
+        dtype=SPFRxCapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b5bCapabilityState",
+    )
+    async def b5bCapabilityState(self):
+        """Returns the b5bCapabilityState"""
+        return self._b5b_capability_state
+
+    @b5bCapabilityState.write
+    async def b5bCapabilityState(self, value):
+        """Set the b5bCapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b5b_capability_state = SPFRxCapabilityStates(value)
 
     @attribute(
         dtype=SPFRxOperatingMode,

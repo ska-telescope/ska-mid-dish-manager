@@ -140,3 +140,19 @@ class CapabilityStates(enum.IntEnum):
     OPERATE_DEGRADED = 3
     OPERATE_FULL = 4
     UNKNOWN = 5
+
+
+class SPFCapabilityStates(enum.IntEnum):
+    UNKNOWN = 0
+    UNAVAILABLE = 1
+    STANDBY = 2
+    OPERATE_DEGRADED = 3
+    OPERATE_FULL = 4
+
+
+class SPFRxCapabilityStates(enum.IntEnum):
+    UNKNOWN = 0
+    UNAVAILABLE = 1
+    STANDBY = 2
+    CONFIGURE = 3
+    OPERATE = 4
