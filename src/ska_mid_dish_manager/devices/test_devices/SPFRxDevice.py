@@ -13,6 +13,9 @@ import sys
 from tango import AttrWriteType, Database, DbDevInfo, DevBoolean, GreenMode
 from tango.server import Device, attribute, command
 
+from ska_mid_dish_manager.devices.test_devices.utils import (
+    random_delay_execution,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     HealthState,
@@ -199,18 +202,21 @@ class SPFRxDevice(Device):
     # Commands
     # --------
 
+    @random_delay_execution
     @command(dtype_in=None, doc_in="Set SPFRXOperatingMode", dtype_out=None)
     async def SetStandbyMode(self):
         LOGGER.info("Called SetStandbyMode")
         self._operating_mode = SPFRxOperatingMode.STANDBY
         self.push_change_event("operatingMode", self._operating_mode)
 
+    @random_delay_execution
     @command(dtype_in=None, doc_in="Set SetStartupMode", dtype_out=None)
     async def SetStartupMode(self):
         LOGGER.info("Called SetStartupMode")
         self._operating_mode = SPFRxOperatingMode.STARTUP
         self.push_change_event("operatingMode", self._operating_mode)
 
+    @random_delay_execution
     @command(dtype_in=DevBoolean, doc_in="CaptureData", dtype_out=None)
     # pylint: disable=unused-argument
     async def CaptureData(self, boolean_value):
@@ -218,6 +224,7 @@ class SPFRxDevice(Device):
         self._operating_mode = SPFRxOperatingMode.DATA_CAPTURE
         self.push_change_event("operatingMode", self._operating_mode)
 
+    @random_delay_execution
     @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
     async def ConfigureBand2(self):
         self._configured_band = Band.B2

@@ -1032,6 +1032,16 @@ class DishManager(SKAController):
         """
         raise NotImplementedError
 
+    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    def StopCommunication(self):
+        """Stop communicating with monitored devices"""
+        self.component_manager.stop_communicating()
+
+    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    def StartCommunication(self):
+        """Start communicating with monitored devices"""
+        self.component_manager.start_communicating()
+
 
 def main(args=None, **kwargs):
     """Launch a DishManager device."""

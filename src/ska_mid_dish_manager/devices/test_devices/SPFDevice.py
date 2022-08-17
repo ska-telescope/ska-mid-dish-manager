@@ -13,6 +13,9 @@ import sys
 from tango import AttrWriteType, Database, DbDevInfo, GreenMode
 from tango.server import Device, attribute, command
 
+from ska_mid_dish_manager.devices.test_devices.utils import (
+    random_delay_execution,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     HealthState,
@@ -213,18 +216,21 @@ class SPFDevice(Device):
     # Commands
     # --------
 
+    @random_delay_execution
     @command(dtype_in=None, doc_in="Set SPFOperatingMode", dtype_out=None)
     async def SetStandbyLPMode(self):
         LOGGER.info("Called SetStandbyMode")
         self._operating_mode = SPFOperatingMode.STANDBY_LP
         self.push_change_event("operatingMode", self._operating_mode)
 
+    @random_delay_execution
     @command(dtype_in=None, doc_in="Set SPFOperatingMode", dtype_out=None)
     async def SetOperateMode(self):
         LOGGER.info("Called SetOperateMode")
         self._operating_mode = SPFOperatingMode.OPERATE
         self.push_change_event("operatingMode", self._operating_mode)
 
+    @random_delay_execution
     @command(dtype_in=None, doc_in="Set SetStartupMode", dtype_out=None)
     async def SetStartupMode(self):
         LOGGER.info("Called SetStartupMode")
