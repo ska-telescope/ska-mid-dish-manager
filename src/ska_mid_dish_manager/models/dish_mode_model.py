@@ -261,7 +261,6 @@ CAPABILITY_STATE_RULES = {
         " and "
         "SPFRX.capabilitystate == 'SPFRxCapabilityStates.STANDBY' "
     ),
-    # OPERATE_FULL before CONFIGURING as its stricter
     "OPERATE_FULL": rule_engine.Rule(
         "( "
         "   DS.indexerposition  == 'IndexerPosition.MOVING' "
@@ -513,6 +512,7 @@ class DishModeModel:
 
     def compute_capability_state(
         self,
+        band,  # Literal["b1", "b2", "b3", "b4", "b5a", "b5b"],
         ds_component_state: dict,
         spfrx_component_state: dict,
         spf_component_state: dict,
@@ -520,6 +520,12 @@ class DishModeModel:
     ) -> CapabilityStates:
         """Compute the capabilityState based off component_states
 
+        The same rules are used regardless of band.
+        This method renames b5aCapabilityState to capabilitystate to
+        apply the generic rules.
+
+        :param band: The band to calculate for
+        :type band: str
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
         :param spfrx_component_state: SPFRX device component state
@@ -531,6 +537,11 @@ class DishModeModel:
         :return: the calculated capabilityState
         :rtype: CapabilityStates
         """
+        # Add the generic name so the rules can be applied
+        for state_dict in [spfrx_component_state, spf_component_state]:
+            cap_state = state_dict.get(f"{band}capabilitystate", None)
+            state_dict["capabilitystate"] = cap_state
+
         dish_manager_states = self._collapse(
             ds_component_state,
             spfrx_component_state,
@@ -538,12 +549,20 @@ class DishModeModel:
             dish_manager_component_state,
         )
 
+        new_cap_state = CapabilityStates.UNKNOWN
         for capability_state, rule in CAPABILITY_STATE_RULES.items():
             if rule.matches(dish_manager_states):
                 if capability_state.startswith("STANDBY"):
-                    return CapabilityStates["STANDBY"]
-                return CapabilityStates[capability_state]
-        return CapabilityStates.UNKNOWN
+                    new_cap_state = CapabilityStates["STANDBY"]
+                else:
+                    new_cap_state = CapabilityStates[capability_state]
+                break
+
+        # Clean up state dicts
+        for state_dict in [spfrx_component_state, spf_component_state]:
+            del state_dict["capabilitystate"]
+
+        return new_cap_state
 
     @classmethod
     def _collapse(
