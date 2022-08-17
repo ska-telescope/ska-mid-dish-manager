@@ -73,6 +73,7 @@ class SPFRxDevice(Device):
         """Set the b1CapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b1_capability_state = SPFRxCapabilityStates(value)
+        self.push_change_event("b1CapabilityState", self._b1_capability_state)
 
     @attribute(
         dtype=SPFRxCapabilityStates,
@@ -88,6 +89,7 @@ class SPFRxDevice(Device):
         """Set the b2CapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b2_capability_state = SPFRxCapabilityStates(value)
+        self.push_change_event("b2CapabilityState", self._b2_capability_state)
 
     @attribute(
         dtype=SPFRxCapabilityStates,
@@ -103,6 +105,7 @@ class SPFRxDevice(Device):
         """Set the b3CapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b3_capability_state = SPFRxCapabilityStates(value)
+        self.push_change_event("b3CapabilityState", self._b3_capability_state)
 
     @attribute(
         dtype=SPFRxCapabilityStates,
@@ -118,6 +121,7 @@ class SPFRxDevice(Device):
         """Set the b4CapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b4_capability_state = SPFRxCapabilityStates(value)
+        self.push_change_event("b4CapabilityState", self._b4_capability_state)
 
     @attribute(
         dtype=SPFRxCapabilityStates,
@@ -133,6 +137,9 @@ class SPFRxDevice(Device):
         """Set the b5aCapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b5a_capability_state = SPFRxCapabilityStates(value)
+        self.push_change_event(
+            "b5aCapabilityState", self._b5a_capability_state
+        )
 
     @attribute(
         dtype=SPFRxCapabilityStates,
@@ -148,6 +155,9 @@ class SPFRxDevice(Device):
         """Set the b5bCapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b5b_capability_state = SPFRxCapabilityStates(value)
+        self.push_change_event(
+            "b5bCapabilityState", self._b5b_capability_state
+        )
 
     @attribute(
         dtype=SPFRxOperatingMode,

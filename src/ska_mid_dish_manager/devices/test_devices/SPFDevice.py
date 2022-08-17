@@ -40,7 +40,8 @@ class SPFDevice(Device):
         self._b2_capability_state = SPFCapabilityStates.UNKNOWN
         self._b3_capability_state = SPFCapabilityStates.UNKNOWN
         self._b4_capability_state = SPFCapabilityStates.UNKNOWN
-        self._b5_capability_state = SPFCapabilityStates.UNKNOWN
+        self._b5a_capability_state = SPFCapabilityStates.UNKNOWN
+        self._b5b_capability_state = SPFCapabilityStates.UNKNOWN
 
         change_event_attributes = (
             "operatingMode",
@@ -51,7 +52,8 @@ class SPFDevice(Device):
             "b2CapabilityState",
             "b3CapabilityState",
             "b4CapabilityState",
-            "b5CapabilityState",
+            "b5aCapabilityState",
+            "b5bCapabilityState",
         )
         for attr in change_event_attributes:
             self.set_change_event(attr, True, False)
@@ -74,6 +76,7 @@ class SPFDevice(Device):
         """Set the b1CapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b1_capability_state = SPFCapabilityStates(value)
+        self.push_change_event("b1CapabilityState", self._b1_capability_state)
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -89,6 +92,7 @@ class SPFDevice(Device):
         """Set the b2CapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b2_capability_state = SPFCapabilityStates(value)
+        self.push_change_event("b2CapabilityState", self._b2_capability_state)
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -104,6 +108,7 @@ class SPFDevice(Device):
         """Set the b3CapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b3_capability_state = SPFCapabilityStates(value)
+        self.push_change_event("b3CapabilityState", self._b3_capability_state)
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -119,21 +124,43 @@ class SPFDevice(Device):
         """Set the b4CapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b4_capability_state = SPFCapabilityStates(value)
+        self.push_change_event("b4CapabilityState", self._b4_capability_state)
 
     @attribute(
         dtype=SPFCapabilityStates,
         access=AttrWriteType.READ_WRITE,
-        doc="Report the device b5CapabilityState",
+        doc="Report the device b5aCapabilityState",
     )
-    async def b5CapabilityState(self):
-        """Returns the b5CapabilityState"""
-        return self._b5_capability_state
+    async def b5aCapabilityState(self):
+        """Returns the b5aCapabilityState"""
+        return self._b5a_capability_state
 
-    @b5CapabilityState.write
-    async def b5CapabilityState(self, value):
-        """Set the b5CapabilityState"""
+    @b5aCapabilityState.write
+    async def b5aCapabilityState(self, value):
+        """Set the b5aCapabilityState"""
         # pylint: disable=attribute-defined-outside-init
         self._b5_capability_state = SPFCapabilityStates(value)
+        self.push_change_event(
+            "b5aCapabilityState", self._b5a_capability_state
+        )
+
+    @attribute(
+        dtype=SPFCapabilityStates,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the device b5bCapabilityState",
+    )
+    async def b5bCapabilityState(self):
+        """Returns the b5bCapabilityState"""
+        return self._b5b_capability_state
+
+    @b5bCapabilityState.write
+    async def b5bCapabilityState(self, value):
+        """Set the b5CapabilityState"""
+        # pylint: disable=attribute-defined-outside-init
+        self._b5b_capability_state = SPFCapabilityStates(value)
+        self.push_change_event(
+            "b5bCapabilityState", self._b5b_capability_state
+        )
 
     @attribute(
         dtype=SPFOperatingMode,
