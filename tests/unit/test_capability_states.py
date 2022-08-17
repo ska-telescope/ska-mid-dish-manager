@@ -109,7 +109,9 @@ def test_capability_state_rule_configuring(dish_mode_model):
     ds_component_state["operatingmode"] = None
     ds_component_state["indexerposition"] = None
     spf_component_state = {}
-    spf_component_state["capabilitystate"] = SPFCapabilityStates.OPERATE_DEGRADED
+    spf_component_state[
+        "capabilitystate"
+    ] = SPFCapabilityStates.OPERATE_DEGRADED
     spfrx_component_state = {}
     spfrx_component_state["capabilitystate"] = SPFRxCapabilityStates.CONFIGURE
     dish_manager_component_state = {}

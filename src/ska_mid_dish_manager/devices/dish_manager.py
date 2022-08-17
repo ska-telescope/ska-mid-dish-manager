@@ -648,7 +648,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=CapabilityStates,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Report the device b1CapabilityState",
     )
     def b1CapabilityState(self):
@@ -663,7 +663,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=CapabilityStates,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Report the device b2CapabilityState",
     )
     def b2CapabilityState(self):
@@ -678,7 +678,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=CapabilityStates,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Report the device b3CapabilityState",
     )
     def b3CapabilityState(self):
@@ -693,7 +693,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=CapabilityStates,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Report the device b4CapabilityState",
     )
     def b4CapabilityState(self):
@@ -708,7 +708,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=CapabilityStates,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Report the device b5aCapabilityState",
     )
     def b5aCapabilityState(self):
@@ -723,7 +723,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=CapabilityStates,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Report the device b5bCapabilityState",
     )
     def b5bCapabilityState(self):

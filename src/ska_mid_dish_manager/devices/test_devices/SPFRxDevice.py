@@ -40,15 +40,20 @@ class SPFRxDevice(Device):
         self._b4_capability_state = SPFRxCapabilityStates.UNKNOWN
         self._b5a_capability_state = SPFRxCapabilityStates.UNKNOWN
         self._b5b_capability_state = SPFRxCapabilityStates.UNKNOWN
-        self.set_change_event("operatingMode", True, False)
-        self.set_change_event("healthState", True, False)
-        self.set_change_event("configuredBand", True, False)
-        self.set_change_event("b1CapabilityState", True, False)
-        self.set_change_event("b2CapabilityState", True, False)
-        self.set_change_event("b3CapabilityState", True, False)
-        self.set_change_event("b4CapabilityState", True, False)
-        self.set_change_event("b5aCapabilityState", True, False)
-        self.set_change_event("b5bCapabilityState", True, False)
+
+        change_event_attributes = (
+            "operatingMode",
+            "healthState",
+            "configuredBand",
+            "b1CapabilityState",
+            "b2CapabilityState",
+            "b3CapabilityState",
+            "b4CapabilityState",
+            "b5aCapabilityState",
+            "b5bCapabilityState",
+        )
+        for attr in change_event_attributes:
+            self.set_change_event(attr, True, False)
 
     # -----------
     # Attributes
