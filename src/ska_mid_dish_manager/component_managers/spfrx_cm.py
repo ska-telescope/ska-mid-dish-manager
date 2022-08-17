@@ -8,6 +8,7 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import (
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     HealthState,
+    SPFRxCapabilityStates,
     SPFRxOperatingMode,
 )
 
@@ -37,6 +38,12 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "operatingMode",
             "configuredBand",
             "healthState",
+            "b1CapabilityState",
+            "b2CapabilityState",
+            "b3CapabilityState",
+            "b4CapabilityState",
+            "b5aCapabilityState",
+            "b5bCapabilityState",
         ]
         for mon_attr in self._monitored_attr_names:
             self.monitor_attribute(mon_attr)
@@ -47,6 +54,12 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "operatingmode": SPFRxOperatingMode,
             "healthstate": HealthState,
             "configuredband": Band,
+            "b1capabilitystate": SPFRxCapabilityStates,
+            "b2capabilitystate": SPFRxCapabilityStates,
+            "b3capabilitystate": SPFRxCapabilityStates,
+            "b4capabilitystate": SPFRxCapabilityStates,
+            "b5acapabilitystate": SPFRxCapabilityStates,
+            "b5bcapabilitystate": SPFRxCapabilityStates,
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:

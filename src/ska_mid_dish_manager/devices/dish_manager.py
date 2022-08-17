@@ -655,12 +655,6 @@ class DishManager(SKAController):
         """Returns the b1CapabilityState"""
         return self._b1_capability_state
 
-    @b1CapabilityState.write
-    def b1CapabilityState(self, value):
-        """Set the b1CapabilityState"""
-        # pylint: disable=attribute-defined-outside-init
-        self._b1_capability_state = CapabilityStates(value)
-
     @attribute(
         dtype=CapabilityStates,
         access=AttrWriteType.READ,
@@ -669,12 +663,6 @@ class DishManager(SKAController):
     def b2CapabilityState(self):
         """Returns the b2CapabilityState"""
         return self._b2_capability_state
-
-    @b2CapabilityState.write
-    def b2CapabilityState(self, value):
-        """Set the b2CapabilityState"""
-        # pylint: disable=attribute-defined-outside-init
-        self._b2_capability_state = CapabilityStates(value)
 
     @attribute(
         dtype=CapabilityStates,
@@ -685,12 +673,6 @@ class DishManager(SKAController):
         """Returns the b3CapabilityState"""
         return self._b3_capability_state
 
-    @b3CapabilityState.write
-    def b3CapabilityState(self, value):
-        """Set the b3CapabilityState"""
-        # pylint: disable=attribute-defined-outside-init
-        self._b3_capability_state = CapabilityStates(value)
-
     @attribute(
         dtype=CapabilityStates,
         access=AttrWriteType.READ,
@@ -699,12 +681,6 @@ class DishManager(SKAController):
     def b4CapabilityState(self):
         """Returns the b4CapabilityState"""
         return self._b4_capability_state
-
-    @b4CapabilityState.write
-    def b4CapabilityState(self, value):
-        """Set the b4CapabilityState"""
-        # pylint: disable=attribute-defined-outside-init
-        self._b4_capability_state = CapabilityStates(value)
 
     @attribute(
         dtype=CapabilityStates,
@@ -715,12 +691,6 @@ class DishManager(SKAController):
         """Returns the b5aCapabilityState"""
         return self._b5a_capability_state
 
-    @b5aCapabilityState.write
-    def b5aCapabilityState(self, value):
-        """Set the b5aCapabilityState"""
-        # pylint: disable=attribute-defined-outside-init
-        self._b5a_capability_state = CapabilityStates(value)
-
     @attribute(
         dtype=CapabilityStates,
         access=AttrWriteType.READ,
@@ -729,12 +699,6 @@ class DishManager(SKAController):
     def b5bCapabilityState(self):
         """Returns the b5aCapabilityState"""
         return self._b5b_capability_state
-
-    @b5bCapabilityState.write
-    def b5bCapabilityState(self, value):
-        """Set the b5bCapabilityState"""
-        # pylint: disable=attribute-defined-outside-init
-        self._b5b_capability_state = CapabilityStates(value)
 
     # --------
     # Commands

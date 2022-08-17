@@ -35,20 +35,6 @@ def test_capability_states_available():
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_capability_states_settings():
-    """Test capability state settings"""
-    with DeviceTestContext(DishManager) as proxy:
-        for capability in ("b1", "b2", "b3", "b4", "b5a", "b5b"):
-            state_name = f"{capability}CapabilityState"
-            setattr(proxy, state_name, CapabilityStates.OPERATE_FULL)
-            assert (
-                getattr(proxy, state_name, None)
-                == CapabilityStates.OPERATE_FULL
-            )
-
-
-@pytest.mark.unit
-@pytest.mark.forked
 def test_capability_state_rule_unavailable(dish_mode_model):
     """Test the capabilityState rules"""
 
