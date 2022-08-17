@@ -108,8 +108,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b2capabilitystate=SPFCapabilityStates.UNKNOWN,
             b3capabilitystate=SPFCapabilityStates.UNKNOWN,
             b4capabilitystate=SPFCapabilityStates.UNKNOWN,
-            b5acapabilitystate=SPFCapabilityStates.UNKNOWN,
-            b5bcapabilitystate=SPFCapabilityStates.UNKNOWN,
+            b5capabilitystate=SPFCapabilityStates.UNKNOWN,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
