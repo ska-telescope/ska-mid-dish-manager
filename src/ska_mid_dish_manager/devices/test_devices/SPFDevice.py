@@ -41,15 +41,20 @@ class SPFDevice(Device):
         self._b3_capability_state = SPFCapabilityStates.UNKNOWN
         self._b4_capability_state = SPFCapabilityStates.UNKNOWN
         self._b5_capability_state = SPFCapabilityStates.UNKNOWN
-        self.set_change_event("operatingMode", True, False)
-        self.set_change_event("healthState", True, False)
-        self.set_change_event("powerState", True, False)
-        self.set_change_event("bandInFocus", True, False)
-        self.set_change_event("b1CapabilityState", True, False)
-        self.set_change_event("b2CapabilityState", True, False)
-        self.set_change_event("b3CapabilityState", True, False)
-        self.set_change_event("b4CapabilityState", True, False)
-        self.set_change_event("b5CapabilityState", True, False)
+
+        change_event_attributes = (
+            "operatingMode",
+            "powerState",
+            "healthState",
+            "bandInFocus",
+            "b1CapabilityState",
+            "b2CapabilityState",
+            "b3CapabilityState",
+            "b4CapabilityState",
+            "b5CapabilityState",
+        )
+        for attr in change_event_attributes:
+            self.set_change_event(attr, True, False)
 
     # -----------
     # Attributes
