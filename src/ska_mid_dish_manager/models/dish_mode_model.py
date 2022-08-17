@@ -214,7 +214,7 @@ CAPABILITY_STATE_RULES = {
         "SPFRX.capabilitystate  == 'SPFRxCapabilityStates.UNAVAILABLE'"
     ),
     "STANDBY_1": rule_engine.Rule(
-        "DM.dishmode in "
+        "DM.dish_mode in "
         "    ['DishMode.STANDBY_LP', "
         "      'DishMode.STANDBY_FP']"
         " and "
@@ -228,7 +228,7 @@ CAPABILITY_STATE_RULES = {
         "     'SPFRxCapabilityStates.OPERATE']"
     ),
     "STANDBY_2": rule_engine.Rule(
-        "DM.dishmode == 'DishMode.OPERATE'"
+        "DM.dish_mode == 'DishMode.OPERATE'"
         " and "
         "SPF.capabilitystate in "
         "    ['SPFCapabilityStates.STANDBY', "
@@ -239,7 +239,7 @@ CAPABILITY_STATE_RULES = {
     ),
     "STANDBY_3": rule_engine.Rule(
         "( "
-        "  DM.dishmode == 'DishMode.STOW'"
+        "  DM.dish_mode == 'DishMode.STOW'"
         "  and "
         # Added line below otherwise matches OPERATE_DEGRADED
         "  DS.indexerposition  != 'IndexerPosition.MOVING' "
@@ -252,7 +252,7 @@ CAPABILITY_STATE_RULES = {
         "     'SPFRxCapabilityStates.OPERATE']"
     ),
     "STANDBY_4": rule_engine.Rule(
-        "DM.dishmode == 'DishMode.MAINTENANCE'"
+        "DM.dish_mode == 'DishMode.MAINTENANCE'"
         " and "
         "SPF.capabilitystate in "
         "    ['SPFCapabilityStates.STANDBY', "
@@ -265,7 +265,7 @@ CAPABILITY_STATE_RULES = {
         "( "
         "   DS.indexerposition  == 'IndexerPosition.MOVING' "
         "   and  "
-        "   DM.dishmode == 'DishMode.STOW'"
+        "   DM.dish_mode == 'DishMode.STOW'"
         ") "
         " and "
         " SPF.capabilitystate == 'SPFCapabilityStates.OPERATE_FULL' "
@@ -274,7 +274,7 @@ CAPABILITY_STATE_RULES = {
     ),
     "CONFIGURING": rule_engine.Rule(
         "( "
-        "   DM.dishmode == 'DishMode.CONFIG' "
+        "   DM.dish_mode == 'DishMode.CONFIG' "
         "   or "
         "   DS.indexerposition == 'IndexerPosition.MOVING' "
         ")  "
@@ -291,7 +291,7 @@ CAPABILITY_STATE_RULES = {
         "( "
         "   DS.indexerposition  == 'IndexerPosition.MOVING' "
         "   and  "
-        "   DM.dishmode in "
+        "   DM.dish_mode in "
         "       ['DishMode.STOW', "
         "        'DishMode.STANDBY_FP']"
         ") "

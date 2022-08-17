@@ -145,8 +145,10 @@ def event_store():  # pylint: disable=too-many-statements
             :rtype: bool
             """
             try:
+                events = []
                 while True:
                     event = self._queue.get(timeout=timeout)
+                    events.append(event)
                     if not event.attr_value:
                         continue
                     if event.attr_value.value != value:
@@ -154,8 +156,9 @@ def event_store():  # pylint: disable=too-many-statements
                     if event.attr_value.value == value:
                         return True
             except queue.Empty as err:
+                ev_vals = self.extract_event_values(events)
                 raise RuntimeError(
-                    f"Never got an event with value [{value}]"
+                    f"Never got an event with value [{value} got {ev_vals}]"
                 ) from err
 
         # pylint:disable=inconsistent-return-statements

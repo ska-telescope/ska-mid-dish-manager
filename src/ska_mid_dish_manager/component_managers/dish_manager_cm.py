@@ -17,6 +17,7 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import (
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
+    CapabilityStates,
     DishMode,
     IndexerPosition,
     PointingState,
@@ -58,6 +59,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dish_mode=None,
             health_state=None,
             pointing_state=None,
+            b1capabilitystate=None,
+            b2capabilitystate=None,
+            b3capabilitystate=None,
+            b4capabilitystate=None,
+            b5acapabilitystate=None,
+            b5bcapabilitystate=None,
             achieved_target_lock=None,
             configured_band=Band.NONE,
             **kwargs,
@@ -110,6 +117,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._update_component_state(dish_mode=DishMode.STARTUP)
         self._update_component_state(health_state=HealthState.UNKNOWN)
         self._update_component_state(configured_band=Band.NONE)
+        self._update_component_state(
+            b1capabilitystate=CapabilityStates.UNKNOWN
+        )
+        self._update_component_state(
+            b2capabilitystate=CapabilityStates.UNKNOWN
+        )
+        self._update_component_state(
+            b3capabilitystate=CapabilityStates.UNKNOWN
+        )
+        self._update_component_state(
+            b4capabilitystate=CapabilityStates.UNKNOWN
+        )
+        self._update_component_state(
+            b5acapabilitystate=CapabilityStates.UNKNOWN
+        )
+        self._update_component_state(
+            b5bcapabilitystate=CapabilityStates.UNKNOWN
+        )
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
@@ -219,6 +244,38 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_comp_state,
             )
             self._update_component_state(configured_band=configured_band)
+
+        # CapabilityStates
+        # Update all CapabilityStates when indexerposition, dish_mode
+        # or operatingmode changes
+        if (
+            "indexerposition" in kwargs
+            or "dish_mode" in kwargs
+            or "operatingmode" in kwargs
+        ):
+            for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
+                cap_state_name = f"{band}capabilitystate"
+                new_state = self._dish_mode_model.compute_capability_state(
+                    band,
+                    ds_comp_state,
+                    spfrx_comp_state,
+                    spf_comp_state,
+                    self.component_state,
+                )
+                self._update_component_state(**{cap_state_name: new_state})
+
+        # Update individual CapabilityStates if it changes
+        for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
+            cap_state_name = f"{band}capabilitystate"
+            if cap_state_name in kwargs:
+                new_state = self._dish_mode_model.compute_capability_state(
+                    band,
+                    ds_comp_state,
+                    spfrx_comp_state,
+                    spf_comp_state,
+                    self.component_state,
+                )
+                self._update_component_state(**{cap_state_name: new_state})
 
     # pylint: disable=missing-function-docstring
     def start_communicating(self):

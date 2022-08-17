@@ -162,10 +162,21 @@ class DishManager(SKAController):
 
             device.op_state_model.perform_action("component_standby")
 
-            # push change events for dishMode: needed to use testing library
-            device.set_change_event("dishMode", True, False)
-            device.set_change_event("pointingState", True, False)
-            device.set_change_event("configuredBand", True, False)
+            # push change events, needed to use testing library
+            change_event_attributes = (
+                "dishMode",
+                "pointingState",
+                "configuredBand",
+                "b1CapabilityState",
+                "b2CapabilityState",
+                "b3CapabilityState",
+                "b4CapabilityState",
+                "b5aCapabilityState",
+                "b5bCapabilityState",
+            )
+            for attr in change_event_attributes:
+                device.set_change_event(attr, True, False)
+
             device.instances[device.get_name()] = device
             device.component_manager.start_communicating()
             super().do()
