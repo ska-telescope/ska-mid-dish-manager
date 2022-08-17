@@ -510,6 +510,7 @@ class DishModeModel:
                 return BandInFocus[band_number]
         return BandInFocus.UNKNOWN
 
+    # pylint: disable=too-many-arguments
     def compute_capability_state(
         self,
         band,  # Literal["b1", "b2", "b3", "b4", "b5a", "b5b"],
