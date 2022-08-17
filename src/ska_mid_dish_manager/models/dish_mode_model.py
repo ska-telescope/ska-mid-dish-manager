@@ -539,9 +539,16 @@ class DishModeModel:
         :rtype: CapabilityStates
         """
         # Add the generic name so the rules can be applied
-        for state_dict in [spfrx_component_state, spf_component_state]:
-            cap_state = state_dict.get(f"{band}capabilitystate", None)
-            state_dict["capabilitystate"] = cap_state
+        # SPF
+        cap_state = spf_component_state.get(f"{band}capabilitystate", None)
+        if band in ["b5a", "b5b"]:
+            cap_state = spf_component_state.get(
+                f"{band[:-1]}capabilitystate", None
+            )
+        spf_component_state["capabilitystate"] = cap_state
+        # SPFRX
+        cap_state = spfrx_component_state.get(f"{band}capabilitystate", None)
+        spfrx_component_state["capabilitystate"] = cap_state
 
         dish_manager_states = self._collapse(
             ds_component_state,
