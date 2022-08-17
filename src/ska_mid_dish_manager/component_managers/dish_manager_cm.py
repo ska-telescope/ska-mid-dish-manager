@@ -151,8 +151,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     CommunicationStatus.ESTABLISHED
                 )
                 # Automatic transition to LP mode on startup should come from
-                # operating modes ofsubservient devices. Likewise, any
-                # reconnection gained should be accompanied with fresh
+                # operating modes of subservient devices. Likewise, any
+                # reconnection gained should be accompanied by fresh
                 # attribute updates
                 self._component_state_changed()
             else:
