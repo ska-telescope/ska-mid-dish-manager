@@ -113,27 +113,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             communication_state_callback=self._communication_state_changed,
         )
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-        self._update_component_state(dish_mode=DishMode.STARTUP)
-        self._update_component_state(health_state=HealthState.UNKNOWN)
-        self._update_component_state(configured_band=Band.NONE)
-        self._update_component_state(
-            b1capabilitystate=CapabilityStates.UNKNOWN
-        )
-        self._update_component_state(
-            b2capabilitystate=CapabilityStates.UNKNOWN
-        )
-        self._update_component_state(
-            b3capabilitystate=CapabilityStates.UNKNOWN
-        )
-        self._update_component_state(
-            b4capabilitystate=CapabilityStates.UNKNOWN
-        )
-        self._update_component_state(
-            b5acapabilitystate=CapabilityStates.UNKNOWN
-        )
-        self._update_component_state(
-            b5bcapabilitystate=CapabilityStates.UNKNOWN
-        )
+        initial_component_states = {
+            "dish_mode": DishMode.STARTUP,
+            "health_state": HealthState.UNKNOWN,
+            "configured_band": Band.NONE,
+            "b1capabilitystate": CapabilityStates.UNKNOWN,
+            "b2capabilitystate": CapabilityStates.UNKNOWN,
+            "b3capabilitystate": CapabilityStates.UNKNOWN,
+            "b4capabilitystate": CapabilityStates.UNKNOWN,
+            "b5acapabilitystate": CapabilityStates.UNKNOWN,
+            "b5bcapabilitystate": CapabilityStates.UNKNOWN,
+        }
+        self._update_component_state(**initial_component_states)
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
