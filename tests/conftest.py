@@ -391,5 +391,40 @@ def component_state_store():
 
 
 @pytest.fixture
+def dish_manager_device_fqdn():
+    return "mid_d0001/elt/master"
+
+
+@pytest.fixture
 def ds_device_fqdn():
     return "mid_d0001/lmc/ds_simulator"
+
+
+@pytest.fixture
+def spf_device_fqdn():
+    return "mid_d0001/spf/simulator"
+
+
+@pytest.fixture
+def spfrx_device_fqdn():
+    return "mid_d0001/spfrx/simulator"
+
+
+@pytest.fixture
+def dish_manager_proxy(dish_manager_device_fqdn):
+    return tango.DeviceProxy(dish_manager_device_fqdn)
+
+
+@pytest.fixture
+def ds_device_proxy(ds_device_fqdn):
+    return tango.DeviceProxy(ds_device_fqdn)
+
+
+@pytest.fixture
+def spf_device_proxy(spf_device_fqdn):
+    return tango.DeviceProxy(spf_device_fqdn)
+
+
+@pytest.fixture
+def spfrx_device_proxy(spfrx_device_fqdn):
+    return tango.DeviceProxy(spfrx_device_fqdn)

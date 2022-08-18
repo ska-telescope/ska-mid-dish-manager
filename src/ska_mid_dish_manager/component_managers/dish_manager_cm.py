@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 """Component manager for a DishManager tango device"""
 import json
 import logging
@@ -293,6 +294,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 self._update_component_state(**{cap_state_name: new_state})
 
+    def _update_dishmode_component_states(self):
+        """Update the component state required for dishMode changes"""
+        for comp_man in self.component_managers.values():
+            op_mode = comp_man.read_attribute("operatingMode")
+            comp_man._update_component_state(operatingmode=op_mode)
+
     def start_communicating(self):
         """Connect from monitored devices"""
         for com_man in self.component_managers.values():
@@ -374,6 +381,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dish_mode"]
             if current_dish_mode != DishMode.STANDBY_LP:
                 task_abort_event.wait(timeout=1)
+                self._update_dishmode_component_states()
+
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -455,6 +464,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dish_mode"]
             if current_dish_mode != DishMode.STANDBY_FP:
                 task_abort_event.wait(timeout=1)
+                self._update_dishmode_component_states()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -540,6 +550,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dish_mode"]
             if current_dish_mode != DishMode.OPERATE:
                 task_abort_event.wait(timeout=1)
+                self._update_dishmode_component_states()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -601,6 +612,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achieved_target_lock = self.component_state["achieved_target_lock"]
             if not achieved_target_lock:
                 task_abort_event.wait(timeout=1)
+
+                # Read pointingState on DS and update state
+                comp_man = self.component_managers["DS"]
+                pointing_state = comp_man.read_attribute("pointingState")
+                comp_man._update_component_state(pointingstate=pointing_state)
+
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -695,6 +712,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_band = self.component_state["configured_band"]
             if current_band != Band.B2:
                 task_abort_event.wait(timeout=1)
+
+                # Read the appropriate attrs and update states.
+                # DS indexerposition
+                # SPFRx configuredband
+                # SPF bandinfocus
+                for device, attr in zip(
+                    ["DS", "SPFRX", "SPF"],
+                    ["indexerPosition", "configuredBand", "bandInFocus"],
+                ):
+                    comp_man = self.component_managers[device]
+                    attr_value = comp_man.read_attribute(attr)
+                    attr_name = attr.lower()
+                    comp_man._update_component_state(**{attr_name: attr_value})
+
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -753,6 +784,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dish_mode"]
             if current_dish_mode != DishMode.STOW:
                 task_abort_event.wait(timeout=1)
+                self._update_dishmode_component_states()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,

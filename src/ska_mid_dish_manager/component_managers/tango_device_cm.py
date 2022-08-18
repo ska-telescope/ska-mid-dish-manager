@@ -377,15 +377,32 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @_check_connection
     def execute_command(self, device_proxy, command_name, command_arg):
         """Check the connection and execute the command on the Tango device"""
-        self.logger.info(
+        self.logger.debug(
             "About to execute command [%s] on device [%s]",
             command_name,
             self._tango_device_fqdn,
         )
         result = device_proxy.command_inout(command_name, command_arg)
-        self.logger.info(
+        self.logger.debug(
             "Result of [%s] on [%s] is [%s]",
             command_name,
+            self._tango_device_fqdn,
+            result,
+        )
+        return result
+
+    @_check_connection
+    def read_attribute(self, attribute_name):
+        """Check the connection and read an attribute"""
+        self.logger.debug(
+            "About to read attribute [%s] on device [%s]",
+            attribute_name,
+            self._tango_device_fqdn,
+        )
+        result = getattr(self._device_proxy, attribute_name)
+        self.logger.debug(
+            "Result of reading [%s] on [%s] is [%s]",
+            attribute_name,
             self._tango_device_fqdn,
             result,
         )

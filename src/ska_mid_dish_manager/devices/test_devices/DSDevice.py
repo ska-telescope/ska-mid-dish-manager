@@ -10,7 +10,6 @@ import logging
 import os
 import random
 import sys
-import time
 
 from tango import (
     AttrWriteType,
@@ -30,6 +29,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
     HealthState,
+    PointingState,
 )
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -50,6 +50,7 @@ class DSDevice(Device):
         self._power_state = DSPowerState.OFF
         self._health_state = HealthState.UNKNOWN
         self._indexer_position = Band.NONE
+        self._pointing_state = PointingState.UNKNOWN
         # set manual change event for double scalars
         self.set_change_event("non_polled_attr_1", True, False)
         self.set_change_event("operatingMode", True, False)
@@ -57,6 +58,7 @@ class DSDevice(Device):
         self.set_change_event("powerState", True, False)
         self.set_change_event("configuredBand", True, False)
         self.set_change_event("indexerPosition", True, False)
+        self.set_change_event("pointingState", True, False)
 
     # -----------
     # Attributes
@@ -87,6 +89,18 @@ class DSDevice(Device):
     async def operatingMode(self, op_mode: DSOperatingMode):
         self._operating_mode = op_mode
         self.push_change_event("operatingMode", self._operating_mode)
+
+    @attribute(
+        dtype=PointingState,
+        access=AttrWriteType.READ_WRITE,
+    )
+    async def pointingState(self):
+        return self._pointing_state
+
+    @pointingState.write
+    async def pointingState(self, point_state: PointingState):
+        self._pointing_state = point_state
+        self.push_change_event("pointingState", self._pointing_state)
 
     @attribute(
         dtype=HealthState,
@@ -188,7 +202,6 @@ class DSDevice(Device):
     @command(dtype_in=None, doc_in="Track", dtype_out=None)
     async def Track(self):
         LOGGER.info("Called Track")
-        time.sleep(1.5)
         self._operating_mode = DSOperatingMode.POINT
         self.push_change_event("operatingMode", self._operating_mode)
 
