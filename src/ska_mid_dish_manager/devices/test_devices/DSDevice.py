@@ -166,6 +166,8 @@ class DSDevice(Device):
         LOGGER.info("Called SetStandbyFPMode")
         self._operating_mode = DSOperatingMode.STANDBY_FP
         self.push_change_event("operatingMode", self._operating_mode)
+        self._power_state = DSPowerState.FULL_POWER
+        self.push_change_event("powerState", self._power_state)
 
     @command(dtype_in=None, doc_in="Set Point op mode", dtype_out=None)
     async def SetPointMode(self):

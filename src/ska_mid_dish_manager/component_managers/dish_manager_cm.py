@@ -18,8 +18,10 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
     DishMode,
+    DSPowerState,
     IndexerPosition,
     PointingState,
+    SPFPowerState,
 )
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
@@ -69,6 +71,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             pointingstate=None,
             achievedtargetlock=None,
             indexerposition=IndexerPosition.UNKNOWN,
+            powerstate=DSPowerState.UNKNOWN,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
@@ -84,6 +87,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spf_device_fqdn,
             logger,
             operatingmode=None,
+            powerstate=SPFPowerState.UNKNOWN,
             bandinfocus=BandInFocus.UNKNOWN,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,

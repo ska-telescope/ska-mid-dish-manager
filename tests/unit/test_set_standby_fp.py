@@ -1,6 +1,7 @@
 """Unit tests for setstandby_fp command."""
 
 import logging
+from mmap import PROT_WRITE
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -11,7 +12,9 @@ from ska_mid_dish_manager.devices.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     SPFOperatingMode,
+    SPFPowerState,
     SPFRxOperatingMode,
 )
 
@@ -86,8 +89,12 @@ class TestSetStandByFPMode:
         self.ds_cm._update_component_state(
             operatingmode=DSOperatingMode.STANDBY_FP
         )
+        self.ds_cm._update_component_state(powerstate=DSPowerState.FULL_POWER)
         self.spf_cm._update_component_state(
             operatingmode=SPFOperatingMode.OPERATE
+        )
+        self.spf_cm._update_component_state(
+            powerstate=SPFPowerState.FULL_POWER
         )
         self.spfrx_cm._update_component_state(
             operatingmode=SPFRxOperatingMode.DATA_CAPTURE
