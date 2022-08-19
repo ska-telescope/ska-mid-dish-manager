@@ -29,6 +29,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
     HealthState,
+    IndexerPosition,
     PointingState,
 )
 
@@ -49,7 +50,7 @@ class DSDevice(Device):
         self._configured_band = Band.NONE
         self._power_state = DSPowerState.OFF
         self._health_state = HealthState.UNKNOWN
-        self._indexer_position = Band.NONE
+        self._indexer_position = IndexerPosition.UNKNOWN
         self._pointing_state = PointingState.UNKNOWN
         # set manual change event for double scalars
         self.set_change_event("non_polled_attr_1", True, False)
@@ -127,14 +128,14 @@ class DSDevice(Device):
         self.push_change_event("powerState", self._power_state)
 
     @attribute(
-        dtype=Band,
+        dtype=IndexerPosition,
         access=AttrWriteType.READ_WRITE,
     )
     async def indexerPosition(self):
         return self._indexer_position
 
     @indexerPosition.write
-    async def indexerPosition(self, band_number: Band):
+    async def indexerPosition(self, band_number: IndexerPosition):
         self._indexer_position = band_number
         self.push_change_event("indexerPosition", self._indexer_position)
 
@@ -211,7 +212,7 @@ class DSDevice(Device):
     )
     async def SetIndexPosition(self, band_number):
         LOGGER.info("Called SetIndexPosition")
-        self._indexer_position = Band(band_number)
+        self._indexer_position = IndexerPosition(band_number)
         self.push_change_event("indexerPostion", self._indexer_position)
 
     @random_delay_execution

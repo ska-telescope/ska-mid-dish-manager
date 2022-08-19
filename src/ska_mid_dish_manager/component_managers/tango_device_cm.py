@@ -188,9 +188,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             if attr_name not in self._component_state:
                 self._component_state[attr_name] = None
 
-            self._update_component_state(
-                **{attr_name: event_data.attr_value.value}
-            )
+            try:
+                self._update_component_state(
+                    **{attr_name: event_data.attr_value.value}
+                )
+            # Catch any errors and log it otherwise it remains hidden
+            except Exception:  # pylint:disable=broad-except
+                self.logger.exception("Error updating component state")
 
     @classmethod
     def _event_handler(

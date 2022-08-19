@@ -567,8 +567,13 @@ class DishModeModel:
                 break
 
         # Clean up state dicts
-        for state_dict in [spfrx_component_state, spf_component_state]:
-            del state_dict["capabilitystate"]
+        for state_dict in [
+            spfrx_component_state,
+            spf_component_state,
+            dish_manager_component_state,
+        ]:
+            if "capabilitystate" in state_dict:
+                del state_dict["capabilitystate"]
 
         return new_cap_state
 
