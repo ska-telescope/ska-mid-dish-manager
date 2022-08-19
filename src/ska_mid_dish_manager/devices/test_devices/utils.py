@@ -213,6 +213,7 @@ class EventStore:
         return event_info
 
     def get_queue_values(self, timeout: int = 3):
+        """Get the values from the queue"""
         items = []
         try:
             while True:
