@@ -70,6 +70,7 @@ class SPFDevice(Device):
     )
     async def b1CapabilityState(self):
         """Returns the b1CapabilityState"""
+        LOGGER.debug("Read b1CapabilityState")
         return self._b1_capability_state
 
     @b1CapabilityState.write
@@ -78,6 +79,7 @@ class SPFDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b1_capability_state = SPFCapabilityStates(value)
         self.push_change_event("b1CapabilityState", self._b1_capability_state)
+        LOGGER.debug("Wrote b1CapabilityState")
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -86,6 +88,7 @@ class SPFDevice(Device):
     )
     async def b2CapabilityState(self):
         """Returns the b2CapabilityState"""
+        LOGGER.debug("Read b2CapabilityState")
         return self._b2_capability_state
 
     @b2CapabilityState.write
@@ -94,6 +97,7 @@ class SPFDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b2_capability_state = SPFCapabilityStates(value)
         self.push_change_event("b2CapabilityState", self._b2_capability_state)
+        LOGGER.debug("Wrote b2CapabilityState")
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -102,6 +106,7 @@ class SPFDevice(Device):
     )
     async def b3CapabilityState(self):
         """Returns the b3CapabilityState"""
+        LOGGER.debug("Read b3CapabilityState")
         return self._b3_capability_state
 
     @b3CapabilityState.write
@@ -110,6 +115,7 @@ class SPFDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b3_capability_state = SPFCapabilityStates(value)
         self.push_change_event("b3CapabilityState", self._b3_capability_state)
+        LOGGER.debug("Wrote b3CapabilityState")
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -118,6 +124,7 @@ class SPFDevice(Device):
     )
     async def b4CapabilityState(self):
         """Returns the b4CapabilityState"""
+        LOGGER.debug("Read b4CapabilityState")
         return self._b4_capability_state
 
     @b4CapabilityState.write
@@ -126,6 +133,7 @@ class SPFDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b4_capability_state = SPFCapabilityStates(value)
         self.push_change_event("b4CapabilityState", self._b4_capability_state)
+        LOGGER.debug("Wrote b4CapabilityState")
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -134,6 +142,7 @@ class SPFDevice(Device):
     )
     async def b5CapabilityState(self):
         """Returns the b5CapabilityState"""
+        LOGGER.debug("Read b5CapabilityState")
         return self._b5_capability_state
 
     @b5CapabilityState.write
@@ -142,54 +151,63 @@ class SPFDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b5_capability_state = SPFCapabilityStates(value)
         self.push_change_event("b5CapabilityState", self._b5_capability_state)
+        LOGGER.debug("Wrote b5CapabilityState")
 
     @attribute(
         dtype=SPFOperatingMode,
         access=AttrWriteType.READ_WRITE,
     )
     async def operatingMode(self):
+        LOGGER.debug("Read operatingMode")
         return self._operating_mode
 
     @operatingMode.write
     async def write_operatingMode(self, op_mode: SPFOperatingMode):
         self._operating_mode = op_mode
         self.push_change_event("operatingMode", self._operating_mode)
+        LOGGER.debug("Wrote operatingMode")
 
     @attribute(
         dtype=BandInFocus,
         access=AttrWriteType.READ_WRITE,
     )
     async def bandInFocus(self):
+        LOGGER.debug("Read bandInFocus")
         return self._band_in_focus
 
     @bandInFocus.write
     async def bandInFocus(self, band_number: BandInFocus):
         self._band_in_focus = band_number
         self.push_change_event("bandInFocus", self._band_in_focus)
+        LOGGER.debug("Wrote bandInFocus")
 
     @attribute(
         dtype=HealthState,
         access=AttrWriteType.READ_WRITE,
     )
     async def healthState(self):
+        LOGGER.debug("Read healthState")
         return self._health_state
 
     @healthState.write
     async def healthState(self, h_state: HealthState):
         self._health_state = h_state
         self.push_change_event("healthState", self._health_state)
+        LOGGER.debug("Wrote healthState")
 
     @attribute(
         dtype=SPFPowerState,
         access=AttrWriteType.READ_WRITE,
     )
     async def powerState(self):
+        LOGGER.debug("Read powerState")
         return self._power_state
 
     @powerState.write
     async def powerState(self, pwr_state: SPFPowerState):
         self._power_state = pwr_state
         self.push_change_event("powerState", self._power_state)
+        LOGGER.debug("Wrote powerState")
 
     # --------
     # Commands
