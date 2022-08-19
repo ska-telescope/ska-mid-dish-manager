@@ -213,7 +213,7 @@ class DSDevice(Device):
     async def SetIndexPosition(self, band_number):
         LOGGER.info("Called SetIndexPosition")
         self._indexer_position = IndexerPosition(band_number)
-        self.push_change_event("indexerPostion", self._indexer_position)
+        self.push_change_event("indexerPosition", self._indexer_position)
 
     @random_delay_execution
     @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)

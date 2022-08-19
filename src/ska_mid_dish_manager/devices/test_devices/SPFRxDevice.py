@@ -246,6 +246,8 @@ class SPFRxDevice(Device):
     @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
     async def ConfigureBand2(self):
         self._configured_band = Band.B2
+        self.push_change_event("configuredBand", self._configured_band)
+        LOGGER.debug("Wrote configuredBand")
 
 
 def main():
