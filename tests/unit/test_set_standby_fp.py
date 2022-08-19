@@ -1,7 +1,6 @@
 """Unit tests for setstandby_fp command."""
 
 import logging
-from mmap import PROT_WRITE
 from unittest.mock import MagicMock, patch
 
 import pytest
