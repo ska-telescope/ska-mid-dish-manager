@@ -25,7 +25,7 @@ CONFIG_COMMANDS = (
     "ConfigureBand5b",
 )
 
-DISH_MODE_NODES = (
+dishmode_NODES = (
     "STARTUP",
     "SHUTDOWN",
     "STANDBY_LP",
@@ -37,7 +37,7 @@ DISH_MODE_NODES = (
     "UNKNOWN",
 )
 
-DISH_MODE_RULES = {
+dishmode_RULES = {
     "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "CONFIG": rule_engine.Rule(
         "DS.operatingmode in "
@@ -214,7 +214,7 @@ CAPABILITY_STATE_RULES = {
         "SPFRX.capabilitystate  == 'SPFRxCapabilityStates.UNAVAILABLE'"
     ),
     "STANDBY_1": rule_engine.Rule(
-        "DM.dish_mode in "
+        "DM.dishmode in "
         "    ['DishMode.STANDBY_LP', "
         "      'DishMode.STANDBY_FP']"
         " and "
@@ -228,7 +228,7 @@ CAPABILITY_STATE_RULES = {
         "     'SPFRxCapabilityStates.OPERATE']"
     ),
     "STANDBY_2": rule_engine.Rule(
-        "DM.dish_mode == 'DishMode.OPERATE'"
+        "DM.dishmode == 'DishMode.OPERATE'"
         " and "
         "SPF.capabilitystate in "
         "    ['SPFCapabilityStates.STANDBY', "
@@ -239,7 +239,7 @@ CAPABILITY_STATE_RULES = {
     ),
     "STANDBY_3": rule_engine.Rule(
         "( "
-        "  DM.dish_mode == 'DishMode.STOW'"
+        "  DM.dishmode == 'DishMode.STOW'"
         "  and "
         # Added line below otherwise matches OPERATE_DEGRADED
         "  DS.indexerposition  != 'IndexerPosition.MOVING' "
@@ -252,7 +252,7 @@ CAPABILITY_STATE_RULES = {
         "     'SPFRxCapabilityStates.OPERATE']"
     ),
     "STANDBY_4": rule_engine.Rule(
-        "DM.dish_mode == 'DishMode.MAINTENANCE'"
+        "DM.dishmode == 'DishMode.MAINTENANCE'"
         " and "
         "SPF.capabilitystate in "
         "    ['SPFCapabilityStates.STANDBY', "
@@ -265,7 +265,7 @@ CAPABILITY_STATE_RULES = {
         "( "
         "   DS.indexerposition  == 'IndexerPosition.MOVING' "
         "   and  "
-        "   DM.dish_mode == 'DishMode.STOW'"
+        "   DM.dishmode == 'DishMode.STOW'"
         ") "
         " and "
         " SPF.capabilitystate == 'SPFCapabilityStates.OPERATE_FULL' "
@@ -274,7 +274,7 @@ CAPABILITY_STATE_RULES = {
     ),
     "CONFIGURING": rule_engine.Rule(
         "( "
-        "   DM.dish_mode == 'DishMode.CONFIG' "
+        "   DM.dishmode == 'DishMode.CONFIG' "
         "   or "
         "   DS.indexerposition == 'IndexerPosition.MOVING' "
         ")  "
@@ -291,7 +291,7 @@ CAPABILITY_STATE_RULES = {
         "( "
         "   DS.indexerposition  == 'IndexerPosition.MOVING' "
         "   and  "
-        "   DM.dish_mode in "
+        "   DM.dishmode in "
         "       ['DishMode.STOW', "
         "        'DishMode.STANDBY_FP']"
         ") "
@@ -316,7 +316,7 @@ class DishModeModel:
     @classmethod
     def _build_model(cls):
         dishmode_graph = nx.DiGraph()
-        for node in DISH_MODE_NODES:
+        for node in dishmode_NODES:
             dishmode_graph.add_node(node)
 
         # From Shutdown mode
@@ -367,13 +367,13 @@ class DishModeModel:
         dishmode_graph.add_edge("STOW", "CONFIG")
 
         # From any mode to Stow
-        for node in DISH_MODE_NODES:
+        for node in dishmode_NODES:
             if node == "STOW":
                 continue
             dishmode_graph.add_edge(node, "STOW", commands=["SetStowMode"])
 
         # From any mode to Shutdown
-        for node in DISH_MODE_NODES:
+        for node in dishmode_NODES:
             if node == "SHUTDOWN":
                 continue
             dishmode_graph.add_edge(node, "SHUTDOWN")
@@ -390,9 +390,9 @@ class DishModeModel:
 
         return dishmode_graph
 
-    def is_command_allowed(self, dish_mode=None, command_name=None):
+    def is_command_allowed(self, dishmode=None, command_name=None):
         allowed_commands = []
-        for from_node, to_node in self.dishmode_graph.edges(dish_mode):
+        for from_node, to_node in self.dishmode_graph.edges(dishmode):
             commands = self.dishmode_graph.get_edge_data(
                 from_node, to_node
             ).get("commands", None)
@@ -405,7 +405,7 @@ class DishModeModel:
         raise CommandNotAllowed(
             (
                 f"Command [{command_name}] not allowed in dishMode "
-                f"[{dish_mode}], only allowed to do {allowed_commands}"
+                f"[{dishmode}], only allowed to do {allowed_commands}"
             )
         )
 
@@ -430,7 +430,7 @@ class DishModeModel:
             ds_component_state, spfrx_component_state, spf_component_state
         )
 
-        for mode, rule in DISH_MODE_RULES.items():
+        for mode, rule in dishmode_RULES.items():
             if rule.matches(dish_manager_states):
                 return DishMode[mode]
         return DishMode.UNKNOWN

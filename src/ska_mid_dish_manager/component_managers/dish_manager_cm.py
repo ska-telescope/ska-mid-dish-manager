@@ -57,17 +57,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             logger,
             *args,
             max_workers=max_workers,
-            dish_mode=None,
-            health_state=None,
-            pointing_state=None,
+            dishmode=None,
+            healthstate=None,
+            pointingstate=None,
             b1capabilitystate=None,
             b2capabilitystate=None,
             b3capabilitystate=None,
             b4capabilitystate=None,
             b5acapabilitystate=None,
             b5bcapabilitystate=None,
-            achieved_target_lock=None,
-            configured_band=Band.NONE,
+            achievedtargetlock=None,
+            configuredband=Band.NONE,
             **kwargs,
         )
         self._dish_mode_model = DishModeModel()
@@ -115,9 +115,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         initial_component_states = {
-            "dish_mode": DishMode.STARTUP,
-            "health_state": HealthState.UNKNOWN,
-            "configured_band": Band.NONE,
+            "dishmode": DishMode.STARTUP,
+            "healthstate": HealthState.UNKNOWN,
+            "configuredband": Band.NONE,
             "b1capabilitystate": CapabilityStates.UNKNOWN,
             "b2capabilitystate": CapabilityStates.UNKNOWN,
             "b3capabilitystate": CapabilityStates.UNKNOWN,
@@ -150,7 +150,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_communication_state(
                     CommunicationStatus.NOT_ESTABLISHED
                 )
-                self._update_component_state(health_state=HealthState.FAILED)
+                self._update_component_state(healthstate=HealthState.FAILED)
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
@@ -162,12 +162,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug(
             (
                 "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
-                ", SPFRx [%s]"
+                ", SPFRx [%s], DM [%s]"
             ),
             kwargs,
             ds_comp_state,
             spf_comp_state,
             spfrx_comp_state,
+            self.component_state,
         )
 
         # Only update dishMode if there are operatingmode changes
@@ -186,7 +187,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_comp_state,
                 spf_comp_state,
             )
-            self._update_component_state(dish_mode=new_dish_mode)
+            self._update_component_state(dishmode=new_dish_mode)
 
         if "healthstate" in kwargs:
             self.logger.info(
@@ -203,24 +204,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_comp_state,
                 spf_comp_state,
             )
-            self._update_component_state(health_state=new_health_state)
+            self._update_component_state(healthstate=new_health_state)
 
         if "pointingstate" in kwargs:
-            self.logger.info(
-                ("Updating pointingstate with pointingstate DS" " [%s]"),
-                str(ds_comp_state["pointingstate"]),
+            self.logger.debug(
+                ("Newly calculated component state [pointing_state] [%s]"),
+                ds_comp_state["pointingstate"],
             )
             self._update_component_state(
-                pointing_state=ds_comp_state["pointingstate"]
+                pointingstate=ds_comp_state["pointingstate"]
             )
 
             if ds_comp_state["pointingstate"] in [
                 PointingState.SLEW,
                 PointingState.READY,
             ]:
-                self._update_component_state(achieved_target_lock=False)
+                self._update_component_state(achievedtargetlock=False)
             elif ds_comp_state["pointingstate"] == PointingState.TRACK:
-                self._update_component_state(achieved_target_lock=True)
+                self._update_component_state(achievedtargetlock=True)
 
         # spf bandInFocus
         if (
@@ -260,7 +261,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_comp_state,
                 spf_comp_state,
             )
-            self._update_component_state(configured_band=configured_band)
+            self._update_component_state(configuredband=configured_band)
 
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode
@@ -282,6 +283,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(**{cap_state_name: new_state})
 
         # Update individual CapabilityStates if it changes
+        # b5 for SPF
         for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
             cap_state_name = f"{band}capabilitystate"
             if cap_state_name in kwargs:
@@ -293,6 +295,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self.component_state,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
+
+    def _update_component_state(self, *args, **kwargs):
+        """Log the new component state"""
+        self.logger.debug(
+            "Updating component dish manager component state with [%s]", kwargs
+        )
+        super()._update_component_state(*args, **kwargs)
 
     def _update_dishmode_component_states(self):
         """Update the component state required for dishMode changes"""
@@ -312,7 +321,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to STANDBY_LP mode"""
 
         self._dish_mode_model.is_command_allowed(
-            dish_mode=DishMode(self.component_state["dish_mode"]).name,
+            dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetStandbyLPMode",
         )
         status, response = self.submit_task(
@@ -332,7 +341,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # execute setstandby on it. So going from LP to FP never completes
         # since dishMode does not update.
         #
-        # if self.component_state["dish_mode"].name == "STANDBY_FP":
+        # if self.component_state["dishmode"].name == "STANDBY_FP":
         #     subservient_devices = ["DS", "SPF"]
 
         for device in subservient_devices:
@@ -378,7 +387,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
 
-            current_dish_mode = self.component_state["dish_mode"]
+            current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STANDBY_LP:
                 task_abort_event.wait(timeout=1)
                 self._update_dishmode_component_states()
@@ -396,7 +405,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STANDBY_LP mode"""
         self._dish_mode_model.is_command_allowed(
-            dish_mode=DishMode(self.component_state["dish_mode"]).name,
+            dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetStandbyFPMode",
         )
         status, response = self.submit_task(
@@ -412,7 +421,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         device_command_ids = {}
         subservient_devices = ["DS", "SPF", "SPFRX"]
 
-        if self.component_state["dish_mode"].name == "OPERATE":
+        if self.component_state["dishmode"].name == "OPERATE":
             subservient_devices = ["DS"]
 
         for device in subservient_devices:
@@ -461,7 +470,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
 
-            current_dish_mode = self.component_state["dish_mode"]
+            current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STANDBY_FP:
                 task_abort_event.wait(timeout=1)
                 self._update_dishmode_component_states()
@@ -479,11 +488,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to OPERATE mode"""
 
         self._dish_mode_model.is_command_allowed(
-            dish_mode=DishMode(self.component_state["dish_mode"]).name,
+            dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetOperateMode",
         )
 
-        if self.component_state["configured_band"] in [
+        if self.component_state["configuredband"] in [
             Band.NONE,
             Band.UNKNOWN,
         ]:
@@ -547,7 +556,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
 
-            current_dish_mode = self.component_state["dish_mode"]
+            current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.OPERATE:
                 task_abort_event.wait(timeout=1)
                 self._update_dishmode_component_states()
@@ -563,7 +572,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to OPERATE mode"""
-        dish_mode = self.component_state["dish_mode"].name
+        dish_mode = self.component_state["dishmode"].name
         if dish_mode != "OPERATE":
             raise CommandNotAllowed(
                 "Track command only allowed in `OPERATE`"
@@ -609,7 +618,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
 
-            achieved_target_lock = self.component_state["achieved_target_lock"]
+            achieved_target_lock = self.component_state["achievedtargetlock"]
             if not achieved_target_lock:
                 task_abort_event.wait(timeout=1)
 
@@ -634,7 +643,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Configure frequency band to band 2"""
 
         self._dish_mode_model.is_command_allowed(
-            dish_mode=DishMode(self.component_state["dish_mode"]).name,
+            dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="ConfigureBand2",
         )
 
@@ -709,7 +718,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
 
-            current_band = self.component_state["configured_band"]
+            current_band = self.component_state["configuredband"]
             if current_band != Band.B2:
                 task_abort_event.wait(timeout=1)
 
@@ -740,7 +749,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to STOW mode"""
 
         self._dish_mode_model.is_command_allowed(
-            dish_mode=DishMode(self.component_state["dish_mode"]).name,
+            dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetStowMode",
         )
         status, response = self.submit_task(
@@ -781,7 +790,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
 
-            current_dish_mode = self.component_state["dish_mode"]
+            current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STOW:
                 task_abort_event.wait(timeout=1)
                 self._update_dishmode_component_states()

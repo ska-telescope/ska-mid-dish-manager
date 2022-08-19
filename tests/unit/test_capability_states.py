@@ -41,7 +41,7 @@ def test_capability_state_rule_unavailable(dish_mode_model):
     spfrx_component_state = {
         "b5bcapabilitystate": SPFRxCapabilityStates.UNAVAILABLE
     }
-    dish_manager_component_state = {"dish_mode": None}
+    dish_manager_component_state = {"dishmode": None}
 
     assert (
         dish_mode_model.compute_capability_state(
@@ -65,7 +65,7 @@ def test_capability_state_rule_standby(dish_mode_model):
     spfrx_component_state = {
         "b5acapabilitystate": SPFRxCapabilityStates.STANDBY
     }
-    dish_manager_component_state = {"dish_mode": DishMode.STANDBY_LP}
+    dish_manager_component_state = {"dishmode": DishMode.STANDBY_LP}
 
     assert (
         dish_mode_model.compute_capability_state(
@@ -91,7 +91,7 @@ def test_capability_state_rule_configuring(dish_mode_model):
     spfrx_component_state = {
         "b4capabilitystate": SPFRxCapabilityStates.CONFIGURE
     }
-    dish_manager_component_state = {"dish_mode": DishMode.CONFIG}
+    dish_manager_component_state = {"dishmode": DishMode.CONFIG}
 
     assert (
         dish_mode_model.compute_capability_state(
@@ -118,7 +118,7 @@ def test_capability_state_rule_degraded(dish_mode_model):
     spfrx_component_state = {
         "b3capabilitystate": SPFRxCapabilityStates.OPERATE
     }
-    dish_manager_component_state = {"dish_mode": DishMode.STOW}
+    dish_manager_component_state = {"dishmode": DishMode.STOW}
 
     assert (
         dish_mode_model.compute_capability_state(
@@ -147,7 +147,7 @@ def test_capability_state_rule_operate(dish_mode_model):
     spfrx_component_state = {
         "b1capabilitystate": SPFRxCapabilityStates.OPERATE
     }
-    dish_manager_component_state = {"dish_mode": DishMode.STOW}
+    dish_manager_component_state = {"dishmode": DishMode.STOW}
 
     assert (
         dish_mode_model.compute_capability_state(
@@ -169,7 +169,7 @@ def test_capability_state_rule_unknown(dish_mode_model):
     ds_component_state = {"operatingmode": None, "indexerposition": None}
     spf_component_state = {"b2capabilitystate": None}
     spfrx_component_state = {"b2capabilitystate": None}
-    dish_manager_component_state = {"dish_mode": None}
+    dish_manager_component_state = {"dishmode": None}
 
     assert (
         dish_mode_model.compute_capability_state(
@@ -241,7 +241,7 @@ class TestCapabilityStates:
 
         # Mimic capabilitystatechanges on sub devices
         self.dish_manager_cm._update_component_state(
-            dish_mode=DishMode.STANDBY_LP
+            dishmode=DishMode.STANDBY_LP
         )
         self.spf_cm._update_component_state(
             b1capabilitystate=SPFCapabilityStates.STANDBY
@@ -296,7 +296,7 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.dish_manager_cm._update_component_state(dish_mode=DishMode.STOW)
+        self.dish_manager_cm._update_component_state(dishmode=DishMode.STOW)
         self.ds_cm._update_component_state(
             indexerposition=IndexerPosition.MOVING
         )
@@ -325,7 +325,7 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.dish_manager_cm._update_component_state(dish_mode=DishMode.CONFIG)
+        self.dish_manager_cm._update_component_state(dishmode=DishMode.CONFIG)
         self.ds_cm._update_component_state(
             indexerposition=IndexerPosition.MOVING
         )
@@ -354,7 +354,7 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.dish_manager_cm._update_component_state(dish_mode=DishMode.STOW)
+        self.dish_manager_cm._update_component_state(dishmode=DishMode.STOW)
         self.ds_cm._update_component_state(
             indexerposition=IndexerPosition.MOVING
         )

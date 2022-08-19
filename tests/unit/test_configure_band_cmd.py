@@ -24,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=protected-access
 @pytest.mark.unit
-@pytest.mark.forked
+# @pytest.mark.forked
 class TestConfigureBand2:
     """Tests for ConfigureBand2"""
 
@@ -66,10 +66,10 @@ class TestConfigureBand2:
         self.tango_context.stop()
 
     def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
-        self,
-        event_store,
+        self, event_store, caplog
     ):
         """Test ConfigureBand"""
+        caplog.set_level(logging.DEBUG)
         attributes_to_subscribe_to = (
             "dishMode",
             "longRunningCommandResult",

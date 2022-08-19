@@ -6,7 +6,6 @@ It exposes the attributes and commands which control the dish
 and the subservient devices
 """
 
-import re
 import weakref
 from typing import List, Optional, Tuple
 
@@ -94,14 +93,16 @@ class DishManager(SKAController):
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
-        for attr, attr_val in kwargs.items():
-            # pylint: disable=attribute-defined-outside-init
-            setattr(self, f"_{attr}", attr_val)
-            # convert variable to attribute: e.g. dish_mode > dishMode
-            attr = re.sub(
-                r"(?!^)_([a-zA-Z])", lambda m: m.group(1).upper(), attr
+        if not hasattr(self, "_component_state_attr_map"):
+            self.logger.warning(
+                "Init not completed, but state is being updated [%s]", kwargs
             )
-            self.push_change_event(attr, attr_val)
+            return
+        for comp_state_name, comp_state_value in kwargs.items():
+            dm_attr_name = self._component_state_attr_map[comp_state_name]
+            dm_attr_var_name = self._dish_manager_attr_var_map[dm_attr_name]
+            setattr(self, dm_attr_var_name, comp_state_value)
+            self.push_change_event(dm_attr_name, comp_state_value)
 
     class InitCommand(
         SKAController.InitCommand
@@ -163,23 +164,39 @@ class DishManager(SKAController):
             device.op_state_model.perform_action("component_standby")
 
             # push change events, needed to use testing library
-            change_event_attributes = (
-                "dishMode",
-                "pointingState",
-                "configuredBand",
-                "b1CapabilityState",
-                "b2CapabilityState",
-                "b3CapabilityState",
-                "b4CapabilityState",
-                "b5aCapabilityState",
-                "b5bCapabilityState",
-            )
-            for attr in change_event_attributes:
+
+            device._dish_manager_attr_var_map = {
+                "dishMode": "_dish_mode",
+                "pointingState": "_pointing_state",
+                "configuredBand": "_configured_band",
+                "achievedTargetLock": "_achieved_target_lock",
+                "b1CapabilityState": "_b1_capability_state",
+                "b2CapabilityState": "_b2_capability_state",
+                "b3CapabilityState": "_b3_capability_state",
+                "b4CapabilityState": "_b4_capability_state",
+                "b5aCapabilityState": "_b5a_capability_state",
+                "b5bCapabilityState": "_b5b_capability_state",
+            }
+
+            device._component_state_attr_map = {
+                "dishmode": "dishMode",
+                "pointingstate": "pointingState",
+                "configuredband": "configuredBand",
+                "achievedtargetlock": "achievedTargetLock",
+                "b1capabilitystate": "b1CapabilityState",
+                "b2capabilitystate": "b2CapabilityState",
+                "b3capabilitystate": "b3CapabilityState",
+                "b4capabilitystate": "b4CapabilityState",
+                "b5acapabilitystate": "b5aCapabilityState",
+                "b5bcapabilitystate": "b5bCapabilityState",
+            }
+            for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
 
             device.instances[device.get_name()] = device
+            (result_code, message) = super().do()
             device.component_manager.start_communicating()
-            super().do()
+            return (ResultCode(result_code), message)
 
     # ----------
     # Attributes

@@ -76,7 +76,7 @@ class TestTrack:
         )
 
         self.dish_manager_cm._update_component_state(
-            dish_mode=current_dish_mode
+            dishmode=current_dish_mode
         )
         event_store.wait_for_value(current_dish_mode, timeout=5)
         with pytest.raises(tango.DevFailed):

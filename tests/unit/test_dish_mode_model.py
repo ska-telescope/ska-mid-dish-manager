@@ -94,14 +94,14 @@ def test_model_dish_mode_transition_accuracy(
     if is_allowed:
         assert (
             dish_mode_model.is_command_allowed(
-                dish_mode=current_mode, command_name=requested_command
+                dishmode=current_mode, command_name=requested_command
             )
             == is_allowed
         )
     else:
         with pytest.raises(CommandNotAllowed):
             dish_mode_model.is_command_allowed(
-                dish_mode=current_mode, command_name=requested_command
+                dishmode=current_mode, command_name=requested_command
             )
 
 
