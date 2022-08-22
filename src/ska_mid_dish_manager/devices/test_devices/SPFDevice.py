@@ -106,6 +106,8 @@ class SPFDevice(Device):
         LOGGER.info("Called SetOperateMode")
         self._operating_mode = SPFOperatingMode.OPERATE
         self.push_change_event("operatingMode", self._operating_mode)
+        self._power_state = SPFPowerState.FULL_POWER
+        self.push_change_event("powerState", self._power_state)
 
     @command(dtype_in=None, doc_in="Set SetStartupMode", dtype_out=None)
     async def SetStartupMode(self):
