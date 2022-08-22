@@ -6,8 +6,8 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import (
     TangoDeviceComponentManager,
 )
 from ska_mid_dish_manager.models.dish_enums import (
-    BandInFocus,
     HealthState,
+    SPFBandInFocus,
     SPFCapabilityStates,
     SPFOperatingMode,
     SPFPowerState,
@@ -55,7 +55,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "operatingmode": SPFOperatingMode,
             "powerstate": SPFPowerState,
             "healthstate": HealthState,
-            "bandinfocus": BandInFocus,
+            "bandinfocus": SPFBandInFocus,
             "b1capabilitystate": SPFCapabilityStates,
             "b2capabilitystate": SPFCapabilityStates,
             "b3capabilitystate": SPFCapabilityStates,

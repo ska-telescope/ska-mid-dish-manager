@@ -17,8 +17,8 @@ from ska_mid_dish_manager.devices.test_devices.utils import (
     random_delay_execution,
 )
 from ska_mid_dish_manager.models.dish_enums import (
-    BandInFocus,
     HealthState,
+    SPFBandInFocus,
     SPFCapabilityStates,
     SPFOperatingMode,
     SPFPowerState,
@@ -38,12 +38,12 @@ class SPFDevice(Device):
         self._operating_mode = SPFOperatingMode.STANDBY_LP
         self._power_state = SPFPowerState.UNKNOWN
         self._health_state = HealthState.UNKNOWN
-        self._band_in_focus = BandInFocus.UNKNOWN
-        self._b1_capability_state = SPFCapabilityStates.UNAVAILABLE
-        self._b2_capability_state = SPFCapabilityStates.UNAVAILABLE
-        self._b3_capability_state = SPFCapabilityStates.UNAVAILABLE
-        self._b4_capability_state = SPFCapabilityStates.UNAVAILABLE
-        self._b5_capability_state = SPFCapabilityStates.UNAVAILABLE
+        self._band_in_focus = SPFBandInFocus.UNKNOWN
+        self._b1_capability_state = SPFCapabilityStates.UNKNOWN
+        self._b2_capability_state = SPFCapabilityStates.UNKNOWN
+        self._b3_capability_state = SPFCapabilityStates.UNKNOWN
+        self._b4_capability_state = SPFCapabilityStates.UNKNOWN
+        self._b5_capability_state = SPFCapabilityStates.UNKNOWN
 
         change_event_attributes = (
             "operatingMode",
@@ -168,7 +168,7 @@ class SPFDevice(Device):
         LOGGER.debug("Wrote operatingMode")
 
     @attribute(
-        dtype=BandInFocus,
+        dtype=SPFBandInFocus,
         access=AttrWriteType.READ_WRITE,
     )
     async def bandInFocus(self):
@@ -176,7 +176,7 @@ class SPFDevice(Device):
         return self._band_in_focus
 
     @bandInFocus.write
-    async def bandInFocus(self, band_number: BandInFocus):
+    async def bandInFocus(self, band_number: SPFBandInFocus):
         self._band_in_focus = band_number
         self.push_change_event("bandInFocus", self._band_in_focus)
         LOGGER.debug("Wrote bandInFocus")

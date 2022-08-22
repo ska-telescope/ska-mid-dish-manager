@@ -10,10 +10,10 @@ import rule_engine
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
-    BandInFocus,
     CapabilityStates,
     DishMode,
     HealthState,
+    SPFBandInFocus,
 )
 
 CONFIG_COMMANDS = (
@@ -152,32 +152,32 @@ CONFIGURED_BAND_RULES = {
     "B1": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B1' and "
         "SPFRX.configuredband  == 'Band.B1' and "
-        "SPF.bandinfocus == 'BandInFocus.B1'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B1'"
     ),
     "B2": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B2' and "
         "SPFRX.configuredband  == 'Band.B2' and "
-        "SPF.bandinfocus == 'BandInFocus.B2'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B2'"
     ),
     "B3": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B3' and "
         "SPFRX.configuredband  == 'Band.B3' and "
-        "SPF.bandinfocus == 'BandInFocus.B3'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B3'"
     ),
     "B4": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B4' and "
         "SPFRX.configuredband  == 'Band.B4' and "
-        "SPF.bandinfocus == 'BandInFocus.B4'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B4'"
     ),
     "B5a": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B5' and "
         "SPFRX.configuredband  == 'Band.B5a' and "
-        "SPF.bandinfocus == 'BandInFocus.B5'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B5a'"
     ),
     "B5b": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B5' and "
         "SPFRX.configuredband  == 'Band.B5b' and "
-        "SPF.bandinfocus == 'BandInFocus.B5'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B5b'"
     ),
 }
 
@@ -198,9 +198,13 @@ SPF_BAND_IN_FOCUS_RULES = {
         "DS.indexerposition  == 'IndexerPosition.B4' and "
         "SPFRX.configuredband  == 'Band.B4'"
     ),
-    "B5": rule_engine.Rule(
+    "B5a": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B5' and "
-        "SPFRX.configuredband  in ['Band.B5a', 'Band.B5b']"
+        "SPFRX.configuredband == 'Band.B5a'"
+    ),
+    "B5b": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B5' and "
+        "SPFRX.configuredband == 'Band.B5b'"
     ),
 }
 
@@ -491,7 +495,7 @@ class DishModeModel:
         self,
         ds_component_state: dict,
         spfrx_component_state: dict,
-    ) -> BandInFocus:
+    ) -> SPFBandInFocus:
         """Compute the bandinfocus based off component_states
 
         :param ds_component_state: DS device component state
@@ -499,7 +503,7 @@ class DishModeModel:
         :param spfrx_component_state: SPFRX device component state
         :type spfrx_component_state: dict
         :return: the calculated bandinfocus
-        :rtype: BandInFocus
+        :rtype: SPFBandInFocus
         """
         dish_manager_states = self._collapse(
             ds_component_state, spfrx_component_state
@@ -507,8 +511,8 @@ class DishModeModel:
 
         for band_number, rule in SPF_BAND_IN_FOCUS_RULES.items():
             if rule.matches(dish_manager_states):
-                return BandInFocus[band_number]
-        return BandInFocus.UNKNOWN
+                return SPFBandInFocus[band_number]
+        return SPFBandInFocus.UNKNOWN
 
     # pylint: disable=too-many-arguments
     def compute_capability_state(

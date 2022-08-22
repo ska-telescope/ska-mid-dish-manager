@@ -107,6 +107,16 @@ class DSPowerState(enum.IntEnum):
     UNKNOWN = 4
 
 
+class SPFBandInFocus(enum.IntEnum):
+    UNKNOWN = 0
+    B1 = 1
+    B2 = 2
+    B3 = 3
+    B4 = 4
+    B5a = 5
+    B5b = 6
+
+
 class SPFOperatingMode(enum.IntEnum):
     UNKNOWN = 0
     STARTUP = 1
