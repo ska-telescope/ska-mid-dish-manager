@@ -107,6 +107,7 @@ class DSPowerState(enum.IntEnum):
     UNKNOWN = 4
 
 
+# pylint: disable=invalid-name
 class SPFBandInFocus(enum.IntEnum):
     UNKNOWN = 0
     B1 = 1

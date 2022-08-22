@@ -293,18 +293,16 @@ CAPABILITY_STATE_RULES = {
     ),
     "OPERATE_DEGRADED": rule_engine.Rule(
         "( "
-        "   DS.indexerposition  == 'IndexerPosition.MOVING' "
+        "   DS.indexerposition  != 'IndexerPosition.MOVING' "
         "   and  "
-        "   DM.dishmode in "
-        "       ['DishMode.STOW', "
-        "        'DishMode.STANDBY_FP']"
+        "   DS.operatingmode in "
+        "       ['DSOperatingMode.STOW', "
+        "        'DSOperatingMode.POINT']"
         ") "
         " and "
-        " SPF.capabilitystate == 'SPFCapabilityStates.STANDBY' "
+        " SPF.capabilitystate == 'SPFCapabilityStates.OPERATE_DEGRADED' "
         " and "
-        " SPFRX.capabilitystate in "
-        "     ['SPFRxCapabilityStates.STANDBY', "
-        "      'SPFRxCapabilityStates.OPERATE']"
+        " SPFRX.capabilitystate == 'SPFRxCapabilityStates.OPERATE'"
     ),
 }
 

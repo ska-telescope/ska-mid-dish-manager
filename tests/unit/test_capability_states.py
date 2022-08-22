@@ -111,14 +111,16 @@ def test_capability_state_rule_degraded(dish_mode_model):
     """Test the capabilityState rules"""
 
     ds_component_state = {
-        "indexerposition": IndexerPosition.MOVING,
-        "operatingmode": None,
+        "indexerposition": IndexerPosition.B1,
+        "operatingmode": DSOperatingMode.STOW,
     }
-    spf_component_state = {"b3capabilitystate": SPFCapabilityStates.STANDBY}
+    spf_component_state = {
+        "b3capabilitystate": SPFCapabilityStates.OPERATE_DEGRADED
+    }
     spfrx_component_state = {
         "b3capabilitystate": SPFRxCapabilityStates.OPERATE
     }
-    dish_manager_component_state = {"dishmode": DishMode.STOW}
+    dish_manager_component_state = {"dishmode": None}
 
     assert (
         dish_mode_model.compute_capability_state(
@@ -354,12 +356,12 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.dish_manager_cm._update_component_state(dishmode=DishMode.STOW)
         self.ds_cm._update_component_state(
-            indexerposition=IndexerPosition.MOVING
+            indexerposition=IndexerPosition.B1,
+            operatingmode=DSOperatingMode.STOW,
         )
         self.spf_cm._update_component_state(
-            b5capabilitystate=SPFCapabilityStates.STANDBY
+            b5capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED
         )
         self.spfrx_cm._update_component_state(
             b5acapabilitystate=SPFRxCapabilityStates.OPERATE

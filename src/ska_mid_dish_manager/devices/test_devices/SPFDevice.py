@@ -39,11 +39,11 @@ class SPFDevice(Device):
         self._power_state = SPFPowerState.UNKNOWN
         self._health_state = HealthState.UNKNOWN
         self._band_in_focus = SPFBandInFocus.UNKNOWN
-        self._b1_capability_state = SPFCapabilityStates.UNKNOWN
-        self._b2_capability_state = SPFCapabilityStates.UNKNOWN
-        self._b3_capability_state = SPFCapabilityStates.UNKNOWN
-        self._b4_capability_state = SPFCapabilityStates.UNKNOWN
-        self._b5_capability_state = SPFCapabilityStates.UNKNOWN
+        self._b1_capability_state = SPFCapabilityStates.UNAVAILABLE
+        self._b2_capability_state = SPFCapabilityStates.UNAVAILABLE
+        self._b3_capability_state = SPFCapabilityStates.UNAVAILABLE
+        self._b4_capability_state = SPFCapabilityStates.UNAVAILABLE
+        self._b5_capability_state = SPFCapabilityStates.UNAVAILABLE
 
         change_event_attributes = (
             "operatingMode",

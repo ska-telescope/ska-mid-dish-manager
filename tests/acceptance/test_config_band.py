@@ -18,7 +18,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
-# @pytest.mark.forked
+@pytest.mark.forked
 def test_configure_band_2(
     event_store,
     dish_manager_proxy,
