@@ -212,9 +212,9 @@ CAPABILITY_STATE_RULES = {
     "UNAVAILABLE": rule_engine.Rule(
         "(DS.operatingmode  == 'DSOperatingMode.STARTUP' or "
         "DS.operatingmode  == 'DSOperatingMode.ESTOP') "
-        " or "
+        " and "
         "SPF.capabilitystate  == 'SPFCapabilityStates.UNAVAILABLE'"
-        " or "
+        " and "
         "SPFRX.capabilitystate  == 'SPFRxCapabilityStates.UNAVAILABLE'"
     ),
     "STANDBY_1": rule_engine.Rule(
