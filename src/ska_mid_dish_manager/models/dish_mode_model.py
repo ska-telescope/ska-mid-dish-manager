@@ -232,16 +232,6 @@ CAPABILITY_STATE_RULES = {
         "     'SPFRxCapabilityStates.OPERATE']"
     ),
     "STANDBY_2": rule_engine.Rule(
-        "DM.dishmode == 'DishMode.OPERATE'"
-        " and "
-        "SPF.capabilitystate in "
-        "    ['SPFCapabilityStates.STANDBY', "
-        "     'SPFCapabilityStates.OPERATE_DEGRADED', "
-        "     'SPFCapabilityStates.OPERATE_FULL']"
-        " and "
-        "SPFRX.capabilitystate == 'SPFRxCapabilityStates.STANDBY' "
-    ),
-    "STANDBY_3": rule_engine.Rule(
         "( "
         "  DM.dishmode == 'DishMode.STOW'"
         "  and "
@@ -255,7 +245,7 @@ CAPABILITY_STATE_RULES = {
         "    ['SPFRxCapabilityStates.STANDBY', "
         "     'SPFRxCapabilityStates.OPERATE']"
     ),
-    "STANDBY_4": rule_engine.Rule(
+    "STANDBY_3": rule_engine.Rule(
         "DM.dishmode == 'DishMode.MAINTENANCE'"
         " and "
         "SPF.capabilitystate in "
@@ -266,11 +256,7 @@ CAPABILITY_STATE_RULES = {
         "SPFRX.capabilitystate == 'SPFRxCapabilityStates.STANDBY' "
     ),
     "OPERATE_FULL": rule_engine.Rule(
-        "( "
-        "   DS.indexerposition  == 'IndexerPosition.MOVING' "
-        "   and  "
-        "   DM.dishmode == 'DishMode.STOW'"
-        ") "
+        " DM.dishmode in ['DishMode.STOW', 'DishMode.OPERATE'] "
         " and "
         " SPF.capabilitystate == 'SPFCapabilityStates.OPERATE_FULL' "
         " and "
