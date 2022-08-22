@@ -143,7 +143,6 @@ class CapabilityStates(enum.IntEnum):
 
 
 class SPFCapabilityStates(enum.IntEnum):
-    UNKNOWN = 0
     UNAVAILABLE = 1
     STANDBY = 2
     OPERATE_DEGRADED = 3
