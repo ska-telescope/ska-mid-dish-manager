@@ -648,7 +648,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
         if current_configured_band == Band.B2:
-            return TaskStatus.COMPLETED, f"Already in band {Band.B2}"
+            return TaskStatus.REJECTED, f"Already in band {Band.B2.name}"
 
         # TODO Check if ConfigureBand2 is already running
 
@@ -659,12 +659,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 <= datetime.utcnow()
             ):
                 return (
-                    TaskStatus.FAILED,
+                    TaskStatus.REJECTED,
                     f"{activation_timestamp} is not in the future",
                 )
         except ValueError as err:
             self.logger.exception(err)
-            return TaskStatus.FAILED, str(err)
+            return TaskStatus.REJECTED, str(err)
 
         status, response = self.submit_task(
             self._configure_band2_cmd,
