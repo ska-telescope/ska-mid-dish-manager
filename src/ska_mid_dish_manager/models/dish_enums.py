@@ -154,10 +154,10 @@ class CapabilityStates(enum.IntEnum):
 
 
 class SPFCapabilityStates(enum.IntEnum):
-    UNAVAILABLE = 1
-    STANDBY = 2
-    OPERATE_DEGRADED = 3
-    OPERATE_FULL = 4
+    UNAVAILABLE = 0
+    STANDBY = 1
+    OPERATE_DEGRADED = 2
+    OPERATE_FULL = 3
 
 
 class SPFRxCapabilityStates(enum.IntEnum):
