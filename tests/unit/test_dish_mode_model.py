@@ -4,7 +4,6 @@ import pytest
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
-    BandInFocus,
     DishMode,
     DSOperatingMode,
     HealthState,
