@@ -23,21 +23,14 @@ def test_configure_band_2(event_store, dish_manager_proxy):
     # make sure configureBand is not B2
     set_configuredBand_b1()
 
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "longrunningcommandresult",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
+    attributes = ["dishMode", "longrunningcommandresult", "configuredBand"]
+    for attribute_name in attributes:
+        dish_manager_proxy.subscribe_event(
+            attribute_name,
+            tango.EventType.CHANGE_EVENT,
+            event_store,
+        )
+
     event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
