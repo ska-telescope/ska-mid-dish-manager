@@ -25,7 +25,7 @@ CONFIG_COMMANDS = (
     "ConfigureBand5b",
 )
 
-dishmode_NODES = (
+DISH_MODE_NODES = (
     "STARTUP",
     "SHUTDOWN",
     "STANDBY_LP",
@@ -37,7 +37,7 @@ dishmode_NODES = (
     "UNKNOWN",
 )
 
-dishmode_RULES = {
+DISH_MODE_RULES = {
     "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "CONFIG": rule_engine.Rule(
         "DS.operatingmode in "
@@ -304,7 +304,7 @@ class DishModeModel:
     @classmethod
     def _build_model(cls):
         dishmode_graph = nx.DiGraph()
-        for node in dishmode_NODES:
+        for node in DISH_MODE_NODES:
             dishmode_graph.add_node(node)
 
         # From Shutdown mode
@@ -355,13 +355,13 @@ class DishModeModel:
         dishmode_graph.add_edge("STOW", "CONFIG")
 
         # From any mode to Stow
-        for node in dishmode_NODES:
+        for node in DISH_MODE_NODES:
             if node == "STOW":
                 continue
             dishmode_graph.add_edge(node, "STOW", commands=["SetStowMode"])
 
         # From any mode to Shutdown
-        for node in dishmode_NODES:
+        for node in DISH_MODE_NODES:
             if node == "SHUTDOWN":
                 continue
             dishmode_graph.add_edge(node, "SHUTDOWN")
@@ -418,7 +418,7 @@ class DishModeModel:
             ds_component_state, spfrx_component_state, spf_component_state
         )
 
-        for mode, rule in dishmode_RULES.items():
+        for mode, rule in DISH_MODE_RULES.items():
             if rule.matches(dish_manager_states):
                 return DishMode[mode]
         return DishMode.UNKNOWN
