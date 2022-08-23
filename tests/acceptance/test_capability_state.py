@@ -1,4 +1,4 @@
-"""Test StandbyLP"""
+"""Test CapabilityState"""
 import pytest
 import tango
 
