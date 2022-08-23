@@ -238,7 +238,7 @@ class SPFRxDevice(Device):
     @command(dtype_in=DevBoolean, doc_in="CaptureData", dtype_out=None)
     # pylint: disable=unused-argument
     async def CaptureData(self, boolean_value):
-        LOGGER.info("Called SetStartupMode")
+        LOGGER.info("Called CaptureData")
         self._operating_mode = SPFRxOperatingMode.DATA_CAPTURE
         self.push_change_event("operatingMode", self._operating_mode)
 
