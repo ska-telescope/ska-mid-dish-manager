@@ -246,8 +246,14 @@ class SPFRxDevice(Device):
     @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
     async def ConfigureBand2(self):
         LOGGER.info("Called ConfigureBand2")
+        current_operating_mode = self._operating_mode
+        self._operating_mode = SPFRxOperatingMode.CONFIGURE
+        self.push_change_event("operatingMode", self._operating_mode)
         self._configured_band = Band.B2
         self.push_change_event("configuredBand", self._configured_band)
+        self._operating_mode = current_operating_mode
+        self.push_change_event("operatingMode", self._operating_mode)
+
 
 
 def main():
