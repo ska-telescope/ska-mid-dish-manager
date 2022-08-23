@@ -6,34 +6,22 @@ import tango
 from ska_tango_base.commands import TaskStatus
 
 from ska_mid_dish_manager.devices.test_devices.utils import (
+    set_configuredBand_b1,
     set_dish_manager_to_standby_lp,
 )
-from ska_mid_dish_manager.models.dish_enums import (
-    Band,
-    BandInFocus,
-    DishMode,
-    IndexerPosition,
-)
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_configure_band_2(
-    event_store,
-    dish_manager_proxy,
-    ds_device_proxy,
-    spf_device_proxy,
-    spfrx_device_proxy,
-):
+def test_configure_band_2(event_store, dish_manager_proxy):
     """Test ConfigureBand2"""
     set_dish_manager_to_standby_lp(event_store, dish_manager_proxy)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_LP
 
     # make sure configureBand is not B2
-    ds_device_proxy.indexerPosition = IndexerPosition.B1
-    spfrx_device_proxy.configuredband = Band.B1
-    spf_device_proxy.bandinfocus = BandInFocus.B1
+    set_configuredBand_b1()
 
     dish_manager_proxy.subscribe_event(
         "dishMode",
