@@ -308,7 +308,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _update_dishmode_component_states(self):
         """Update the component state required for dishMode changes"""
         for comp_man in self.component_managers.values():
-            op_mode = comp_man.read_attribute("operatingMode")
+            op_mode = comp_man.read_attribute_value("operatingMode")
             comp_man._update_component_state(operatingmode=op_mode)
 
     def start_communicating(self):
@@ -626,7 +626,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 # Read pointingState on DS and update state
                 comp_man = self.component_managers["DS"]
-                pointing_state = comp_man.read_attribute("pointingState")
+                pointing_state = comp_man.read_attribute_value("pointingState")
                 comp_man._update_component_state(pointingstate=pointing_state)
 
             else:
@@ -733,7 +733,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ["indexerPosition", "configuredBand", "bandInFocus"],
                 ):
                     comp_man = self.component_managers[device]
-                    attr_value = comp_man.read_attribute(attr)
+                    attr_value = comp_man.read_attribute_value(attr)
                     attr_name = attr.lower()
                     comp_man._update_component_state(**{attr_name: attr_value})
 

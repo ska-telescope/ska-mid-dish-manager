@@ -407,7 +407,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         return result
 
     @_check_connection
-    def read_attribute(self, attribute_name):
+    def read_attribute_value(self, attribute_name):
         """Check the connection and read an attribute"""
         self.logger.debug(
             "About to read attribute [%s] on device [%s]",
