@@ -20,6 +20,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     BandInFocus,
     CapabilityStates,
     DishMode,
+    DSPowerState,
     IndexerPosition,
     PointingState,
     SPFCapabilityStates,
@@ -80,6 +81,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             pointingstate=None,
             achievedtargetlock=None,
             indexerposition=IndexerPosition.UNKNOWN,
+            powerstate=DSPowerState.UNKNOWN,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
