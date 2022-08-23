@@ -24,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=protected-access
 @pytest.mark.unit
-# @pytest.mark.forked
+@pytest.mark.forked
 class TestConfigureBand2:
     """Tests for ConfigureBand2"""
 
