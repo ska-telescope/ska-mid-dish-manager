@@ -63,7 +63,7 @@ class TestSetStandByFPMode:
         """Tear down context"""
         self.tango_context.stop()
 
-    def test_standb_by_fp(self, event_store):
+    def test_standby_fp(self, event_store):
         """Execute tests"""
         self.device_proxy.subscribe_event(
             "dishMode",

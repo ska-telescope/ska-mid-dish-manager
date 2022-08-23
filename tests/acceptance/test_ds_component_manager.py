@@ -21,6 +21,7 @@ def test_ds_cm(component_state_store, ds_device_fqdn):
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
     # Get into a known state
     device_proxy.Stow()
+    device_proxy.powerState = DSPowerState.OFF
 
     com_man = DSComponentManager(
         ds_device_fqdn,

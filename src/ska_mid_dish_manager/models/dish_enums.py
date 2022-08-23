@@ -107,6 +107,17 @@ class DSPowerState(enum.IntEnum):
     UNKNOWN = 4
 
 
+# pylint: disable=invalid-name
+class SPFBandInFocus(enum.IntEnum):
+    UNKNOWN = 0
+    B1 = 1
+    B2 = 2
+    B3 = 3
+    B4 = 4
+    B5a = 5
+    B5b = 6
+
+
 class SPFOperatingMode(enum.IntEnum):
     UNKNOWN = 0
     STARTUP = 1
@@ -131,3 +142,27 @@ class SPFRxOperatingMode(enum.IntEnum):
     DATA_CAPTURE = 3
     CONFIGURE = 4
     MAINTENANCE = 5
+
+
+class CapabilityStates(enum.IntEnum):
+    UNAVAILABLE = 0
+    STANDBY = 1
+    CONFIGURING = 2
+    OPERATE_DEGRADED = 3
+    OPERATE_FULL = 4
+    UNKNOWN = 5
+
+
+class SPFCapabilityStates(enum.IntEnum):
+    UNAVAILABLE = 0
+    STANDBY = 1
+    OPERATE_DEGRADED = 2
+    OPERATE_FULL = 3
+
+
+class SPFRxCapabilityStates(enum.IntEnum):
+    UNKNOWN = 0
+    UNAVAILABLE = 1
+    STANDBY = 2
+    CONFIGURE = 3
+    OPERATE = 4

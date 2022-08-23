@@ -9,7 +9,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_standby_lp_transition(event_store):
-    """Test transisiotn to Standby_LP"""
+    """Test transition to Standby_LP"""
     dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
     ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
     # Get at least one device into a known state

@@ -4,11 +4,11 @@ import pytest
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
-    BandInFocus,
     DishMode,
     DSOperatingMode,
     HealthState,
     IndexerPosition,
+    SPFBandInFocus,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -94,14 +94,14 @@ def test_model_dish_mode_transition_accuracy(
     if is_allowed:
         assert (
             dish_mode_model.is_command_allowed(
-                dish_mode=current_mode, command_name=requested_command
+                dishmode=current_mode, command_name=requested_command
             )
             == is_allowed
         )
     else:
         with pytest.raises(CommandNotAllowed):
             dish_mode_model.is_command_allowed(
-                dish_mode=current_mode, command_name=requested_command
+                dishmode=current_mode, command_name=requested_command
             )
 
 
@@ -262,49 +262,49 @@ def test_compute_dish_healthstate(
         ),
         (
             dict(indexerposition=IndexerPosition.B1),
-            dict(bandinfocus=BandInFocus.B1),
+            dict(bandinfocus=SPFBandInFocus.B1),
             dict(configuredband=Band.B1),
             Band.B1,
         ),
         (
             dict(indexerposition=IndexerPosition.B2),
-            dict(bandinfocus=BandInFocus.B2),
+            dict(bandinfocus=SPFBandInFocus.B2),
             dict(configuredband=Band.B2),
             Band.B2,
         ),
         (
             dict(indexerposition=IndexerPosition.B3),
-            dict(bandinfocus=BandInFocus.B3),
+            dict(bandinfocus=SPFBandInFocus.B3),
             dict(configuredband=Band.B3),
             Band.B3,
         ),
         (
             dict(indexerposition=IndexerPosition.B4),
-            dict(bandinfocus=BandInFocus.B4),
+            dict(bandinfocus=SPFBandInFocus.B4),
             dict(configuredband=Band.B4),
             Band.B4,
         ),
         (
             dict(indexerposition=IndexerPosition.B5),
-            dict(bandinfocus=BandInFocus.B5),
+            dict(bandinfocus=SPFBandInFocus.B5a),
             dict(configuredband=Band.B5a),
             Band.B5a,
         ),
         (
             dict(indexerposition=IndexerPosition.B5),
-            dict(bandinfocus=BandInFocus.B5),
+            dict(bandinfocus=SPFBandInFocus.B5b),
             dict(configuredband=Band.B5b),
             Band.B5b,
         ),
         (
             dict(indexerposition=IndexerPosition.B1),
-            dict(bandinfocus=BandInFocus.B2),
+            dict(bandinfocus=SPFBandInFocus.B2),
             dict(configuredband=Band.B3),
             Band.UNKNOWN,
         ),
         (
             dict(indexerposition=IndexerPosition.B1),
-            dict(bandinfocus=BandInFocus.B5),
+            dict(bandinfocus=SPFBandInFocus.B5a),
             dict(configuredband=Band.B5a),
             Band.UNKNOWN,
         ),
@@ -329,42 +329,42 @@ def test_compute_configured_band(
         (
             dict(indexerposition=IndexerPosition.B1),
             dict(configuredband=Band.B1),
-            BandInFocus.B1,
+            SPFBandInFocus.B1,
         ),
         (
             dict(indexerposition=IndexerPosition.B2),
             dict(configuredband=Band.B2),
-            BandInFocus.B2,
+            SPFBandInFocus.B2,
         ),
         (
             dict(indexerposition=IndexerPosition.B3),
             dict(configuredband=Band.B3),
-            BandInFocus.B3,
+            SPFBandInFocus.B3,
         ),
         (
             dict(indexerposition=IndexerPosition.B4),
             dict(configuredband=Band.B4),
-            BandInFocus.B4,
+            SPFBandInFocus.B4,
         ),
         (
             dict(indexerposition=IndexerPosition.B5),
             dict(configuredband=Band.B5a),
-            BandInFocus.B5,
+            SPFBandInFocus.B5a,
         ),
         (
             dict(indexerposition=IndexerPosition.B5),
             dict(configuredband=Band.B5b),
-            BandInFocus.B5,
+            SPFBandInFocus.B5b,
         ),
         (
             dict(indexerposition=IndexerPosition.B1),
             dict(configuredband=Band.B3),
-            BandInFocus.UNKNOWN,
+            SPFBandInFocus.UNKNOWN,
         ),
         (
             dict(indexerposition=IndexerPosition.B1),
             dict(configuredband=Band.B5a),
-            BandInFocus.UNKNOWN,
+            SPFBandInFocus.UNKNOWN,
         ),
     ],
 )

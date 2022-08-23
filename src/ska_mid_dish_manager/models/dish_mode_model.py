@@ -10,9 +10,10 @@ import rule_engine
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
-    BandInFocus,
+    CapabilityStates,
     DishMode,
     HealthState,
+    SPFBandInFocus,
 )
 
 CONFIG_COMMANDS = (
@@ -151,32 +152,32 @@ CONFIGURED_BAND_RULES = {
     "B1": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B1' and "
         "SPFRX.configuredband  == 'Band.B1' and "
-        "SPF.bandinfocus == 'BandInFocus.B1'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B1'"
     ),
     "B2": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B2' and "
         "SPFRX.configuredband  == 'Band.B2' and "
-        "SPF.bandinfocus == 'BandInFocus.B2'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B2'"
     ),
     "B3": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B3' and "
         "SPFRX.configuredband  == 'Band.B3' and "
-        "SPF.bandinfocus == 'BandInFocus.B3'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B3'"
     ),
     "B4": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B4' and "
         "SPFRX.configuredband  == 'Band.B4' and "
-        "SPF.bandinfocus == 'BandInFocus.B4'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B4'"
     ),
     "B5a": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B5' and "
         "SPFRX.configuredband  == 'Band.B5a' and "
-        "SPF.bandinfocus == 'BandInFocus.B5'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B5a'"
     ),
     "B5b": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B5' and "
         "SPFRX.configuredband  == 'Band.B5b' and "
-        "SPF.bandinfocus == 'BandInFocus.B5'"
+        "SPF.bandinfocus == 'SPFBandInFocus.B5b'"
     ),
 }
 
@@ -197,9 +198,97 @@ SPF_BAND_IN_FOCUS_RULES = {
         "DS.indexerposition  == 'IndexerPosition.B4' and "
         "SPFRX.configuredband  == 'Band.B4'"
     ),
-    "B5": rule_engine.Rule(
+    "B5a": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B5' and "
-        "SPFRX.configuredband  in ['Band.B5a', 'Band.B5b']"
+        "SPFRX.configuredband == 'Band.B5a'"
+    ),
+    "B5b": rule_engine.Rule(
+        "DS.indexerposition  == 'IndexerPosition.B5' and "
+        "SPFRX.configuredband == 'Band.B5b'"
+    ),
+}
+
+CAPABILITY_STATE_RULES = {
+    "UNAVAILABLE": rule_engine.Rule(
+        "(DS.operatingmode  == 'DSOperatingMode.STARTUP' or "
+        "DS.operatingmode  == 'DSOperatingMode.ESTOP') "
+        " and "
+        "SPF.capabilitystate  == 'SPFCapabilityStates.UNAVAILABLE'"
+        " and "
+        "SPFRX.capabilitystate  == 'SPFRxCapabilityStates.UNAVAILABLE'"
+    ),
+    "STANDBY_1": rule_engine.Rule(
+        "DM.dishmode in "
+        "    ['DishMode.STANDBY_LP', "
+        "      'DishMode.STANDBY_FP']"
+        " and "
+        "SPF.capabilitystate in "
+        "    ['SPFCapabilityStates.STANDBY', "
+        "     'SPFCapabilityStates.OPERATE_DEGRADED', "
+        "     'SPFCapabilityStates.OPERATE_FULL']"
+        " and "
+        "SPFRX.capabilitystate in "
+        "    ['SPFRxCapabilityStates.STANDBY', "
+        "     'SPFRxCapabilityStates.OPERATE']"
+    ),
+    "STANDBY_2": rule_engine.Rule(
+        "( "
+        "  DM.dishmode == 'DishMode.STOW'"
+        "  and "
+        # Added line below otherwise matches OPERATE_DEGRADED
+        "  DS.indexerposition  != 'IndexerPosition.MOVING' "
+        ") "
+        " and "
+        "SPF.capabilitystate == 'SPFCapabilityStates.STANDBY'"
+        " and "
+        "SPFRX.capabilitystate in "
+        "    ['SPFRxCapabilityStates.STANDBY', "
+        "     'SPFRxCapabilityStates.OPERATE']"
+    ),
+    "STANDBY_3": rule_engine.Rule(
+        "DM.dishmode == 'DishMode.MAINTENANCE'"
+        " and "
+        "SPF.capabilitystate in "
+        "    ['SPFCapabilityStates.STANDBY', "
+        "     'SPFCapabilityStates.OPERATE_DEGRADED', "
+        "     'SPFCapabilityStates.OPERATE_FULL']"
+        " and "
+        "SPFRX.capabilitystate == 'SPFRxCapabilityStates.STANDBY' "
+    ),
+    "OPERATE_FULL": rule_engine.Rule(
+        " DM.dishmode in ['DishMode.STOW', 'DishMode.OPERATE'] "
+        " and "
+        " SPF.capabilitystate == 'SPFCapabilityStates.OPERATE_FULL' "
+        " and "
+        " SPFRX.capabilitystate == 'SPFRxCapabilityStates.OPERATE'"
+    ),
+    "CONFIGURING": rule_engine.Rule(
+        "( "
+        "   DM.dishmode == 'DishMode.CONFIG' "
+        "   or "
+        "   DS.indexerposition == 'IndexerPosition.MOVING' "
+        ")  "
+        " and "
+        "SPF.capabilitystate in "
+        "     ['SPFCapabilityStates.OPERATE_DEGRADED', "
+        "     'SPFCapabilityStates.OPERATE_FULL']"
+        " and "
+        "SPFRX.capabilitystate in "
+        "    ['SPFRxCapabilityStates.CONFIGURE', "
+        "     'SPFRxCapabilityStates.OPERATE']"
+    ),
+    "OPERATE_DEGRADED": rule_engine.Rule(
+        "( "
+        "   DS.indexerposition  != 'IndexerPosition.MOVING' "
+        "   and  "
+        "   DS.operatingmode in "
+        "       ['DSOperatingMode.STOW', "
+        "        'DSOperatingMode.POINT']"
+        ") "
+        " and "
+        " SPF.capabilitystate == 'SPFCapabilityStates.OPERATE_DEGRADED' "
+        " and "
+        " SPFRX.capabilitystate == 'SPFRxCapabilityStates.OPERATE'"
     ),
 }
 
@@ -289,9 +378,9 @@ class DishModeModel:
 
         return dishmode_graph
 
-    def is_command_allowed(self, dish_mode=None, command_name=None):
+    def is_command_allowed(self, dishmode=None, command_name=None):
         allowed_commands = []
-        for from_node, to_node in self.dishmode_graph.edges(dish_mode):
+        for from_node, to_node in self.dishmode_graph.edges(dishmode):
             commands = self.dishmode_graph.get_edge_data(
                 from_node, to_node
             ).get("commands", None)
@@ -304,7 +393,7 @@ class DishModeModel:
         raise CommandNotAllowed(
             (
                 f"Command [{command_name}] not allowed in dishMode "
-                f"[{dish_mode}], only allowed to do {allowed_commands}"
+                f"[{dishmode}], only allowed to do {allowed_commands}"
             )
         )
 
@@ -390,7 +479,7 @@ class DishModeModel:
         self,
         ds_component_state: dict,
         spfrx_component_state: dict,
-    ) -> BandInFocus:
+    ) -> SPFBandInFocus:
         """Compute the bandinfocus based off component_states
 
         :param ds_component_state: DS device component state
@@ -398,7 +487,7 @@ class DishModeModel:
         :param spfrx_component_state: SPFRX device component state
         :type spfrx_component_state: dict
         :return: the calculated bandinfocus
-        :rtype: BandInFocus
+        :rtype: SPFBandInFocus
         """
         dish_manager_states = self._collapse(
             ds_component_state, spfrx_component_state
@@ -406,8 +495,75 @@ class DishModeModel:
 
         for band_number, rule in SPF_BAND_IN_FOCUS_RULES.items():
             if rule.matches(dish_manager_states):
-                return BandInFocus[band_number]
-        return BandInFocus.UNKNOWN
+                return SPFBandInFocus[band_number]
+        return SPFBandInFocus.UNKNOWN
+
+    # pylint: disable=too-many-arguments
+    def compute_capability_state(
+        self,
+        band,  # Literal["b1", "b2", "b3", "b4", "b5a", "b5b"],
+        ds_component_state: dict,
+        spfrx_component_state: dict,
+        spf_component_state: dict,
+        dish_manager_component_state: dict,
+    ) -> CapabilityStates:
+        """Compute the capabilityState based off component_states
+
+        The same rules are used regardless of band.
+        This method renames b5aCapabilityState to capabilitystate to
+        apply the generic rules.
+
+        :param band: The band to calculate for
+        :type band: str
+        :param ds_component_state: DS device component state
+        :type ds_component_state: dict
+        :param spfrx_component_state: SPFRX device component state
+        :type spfrx_component_state: dict
+        :param spf_component_state: SPF device component state
+        :type spf_component_state: dict
+        :param dish_manager_component_state: Dish Manager device component state
+        :type dish_manager_component_state: dict
+        :return: the calculated capabilityState
+        :rtype: CapabilityStates
+        """
+        # Add the generic name so the rules can be applied
+        # SPF
+        cap_state = spf_component_state.get(f"{band}capabilitystate", None)
+        if band in ["b5a", "b5b"]:
+            cap_state = spf_component_state.get(
+                f"{band[:-1]}capabilitystate", None
+            )
+        spf_component_state["capabilitystate"] = cap_state
+        # SPFRX
+        cap_state = spfrx_component_state.get(f"{band}capabilitystate", None)
+        spfrx_component_state["capabilitystate"] = cap_state
+
+        dish_manager_states = self._collapse(
+            ds_component_state,
+            spfrx_component_state,
+            spf_component_state,
+            dish_manager_component_state,
+        )
+
+        new_cap_state = CapabilityStates.UNKNOWN
+        for capability_state, rule in CAPABILITY_STATE_RULES.items():
+            if rule.matches(dish_manager_states):
+                if capability_state.startswith("STANDBY"):
+                    new_cap_state = CapabilityStates["STANDBY"]
+                else:
+                    new_cap_state = CapabilityStates[capability_state]
+                break
+
+        # Clean up state dicts
+        for state_dict in [
+            spfrx_component_state,
+            spf_component_state,
+            dish_manager_component_state,
+        ]:
+            if "capabilitystate" in state_dict:
+                del state_dict["capabilitystate"]
+
+        return new_cap_state
 
     @classmethod
     def _collapse(
@@ -415,9 +571,10 @@ class DishModeModel:
         ds_component_state: dict,
         spfrx_component_state,
         spf_component_state: dict = None,
+        dish_manager_component_state: dict = None,
     ) -> dict:
         """Collapse multiple state dicts into one"""
-        dish_manager_states = {"DS": {}, "SPF": {}, "SPFRX": {}}
+        dish_manager_states = {"DS": {}, "SPF": {}, "SPFRX": {}, "DM": {}}
 
         for key, val in ds_component_state.items():
             dish_manager_states["DS"][key] = str(val)
@@ -428,7 +585,9 @@ class DishModeModel:
         if spf_component_state:
             for key, val in spf_component_state.items():
                 dish_manager_states["SPF"][key] = str(val)
-        else:
-            dish_manager_states.pop("SPF")
+
+        if dish_manager_component_state:
+            for key, val in dish_manager_component_state.items():
+                dish_manager_states["DM"][key] = str(val)
 
         return dish_manager_states

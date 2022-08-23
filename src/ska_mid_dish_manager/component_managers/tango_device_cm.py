@@ -3,6 +3,7 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime
+from functools import partial
 from queue import Empty, Queue
 from threading import Event
 from typing import Any, AnyStr, Callable, List, Optional
@@ -54,7 +55,20 @@ class MonitoredAttribute:
     event_queue: Queue
     subscription_id: Optional[int] = None
 
-    def _subscription_callback(self, event_data: tango.EventData):
+    def _subscription_callback(
+        self, logger: logging.Logger, event_data: tango.EventData
+    ):
+        if event_data.err:
+            logger.error(
+                "Got error from [%s] %s", event_data.device, event_data
+            )
+        else:
+            logger.debug(
+                "Got event with name [%s] and value [%s] from [%s]",
+                event_data.attr_value.name,
+                event_data.attr_value.value,
+                event_data.device,
+            )
         self.event_queue.put(event_data, timeout=10)
 
     def monitor(
@@ -71,10 +85,11 @@ class MonitoredAttribute:
                     device_proxy.poll_attribute(
                         "State", STATE_ATTR_POLL_PERIOD
                     )
+            sub_callback = partial(self._subscription_callback, logger)
             self.subscription_id = device_proxy.subscribe_event(
                 self.attr_name,
                 tango.EventType.CHANGE_EVENT,
-                self._subscription_callback,
+                sub_callback,
             )
             logger.info(
                 "Subscribed to [%s] with [%s]", self.attr_name, device_proxy
@@ -167,20 +182,19 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         else:
             # I get lowercase and uppercase "State" from events
             # for some reason, stick to lowercase to avoid duplicates
-            self.logger.debug(
-                "Got event with name [%s] and value [%s]",
-                event_data.attr_value.name,
-                event_data.attr_value.value,
-            )
             attr_name = event_data.attr_value.name.lower()
 
             # Add it to component state if not there
             if attr_name not in self._component_state:
                 self._component_state[attr_name] = None
 
-            self._update_component_state(
-                **{attr_name: event_data.attr_value.value}
-            )
+            try:
+                self._update_component_state(
+                    **{attr_name: event_data.attr_value.value}
+                )
+            # Catch any errors and log it otherwise it remains hidden
+            except Exception:  # pylint:disable=broad-except
+                self.logger.exception("Error updating component state")
 
     @classmethod
     def _event_handler(
@@ -198,6 +212,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 event_data = event_queue.get(timeout=1)
                 if event_data.attr_value:
                     event_time_stamp = event_data.attr_value.time.isoformat()
+                    latest_event_message_timestamp = event_time_stamp
                 else:
                     event_time_stamp = event_data.reception_date.isoformat()
                     # Sometimes we get late connection lost messages, filter
@@ -377,15 +392,32 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @_check_connection
     def execute_command(self, device_proxy, command_name, command_arg):
         """Check the connection and execute the command on the Tango device"""
-        self.logger.info(
+        self.logger.debug(
             "About to execute command [%s] on device [%s]",
             command_name,
             self._tango_device_fqdn,
         )
         result = device_proxy.command_inout(command_name, command_arg)
-        self.logger.info(
+        self.logger.debug(
             "Result of [%s] on [%s] is [%s]",
             command_name,
+            self._tango_device_fqdn,
+            result,
+        )
+        return result
+
+    @_check_connection
+    def read_attribute_value(self, attribute_name):
+        """Check the connection and read an attribute"""
+        self.logger.debug(
+            "About to read attribute [%s] on device [%s]",
+            attribute_name,
+            self._tango_device_fqdn,
+        )
+        result = getattr(self._device_proxy, attribute_name)
+        self.logger.debug(
+            "Result of reading [%s] on [%s] is [%s]",
+            attribute_name,
             self._tango_device_fqdn,
             result,
         )
