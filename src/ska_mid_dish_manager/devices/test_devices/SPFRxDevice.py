@@ -255,7 +255,6 @@ class SPFRxDevice(Device):
         self.push_change_event("operatingMode", self._operating_mode)
 
 
-
 def main():
     """Script entrypoint"""
     SPFRxDevice.run_server()
