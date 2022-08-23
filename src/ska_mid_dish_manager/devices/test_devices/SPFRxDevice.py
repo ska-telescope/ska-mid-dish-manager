@@ -78,7 +78,7 @@ class SPFRxDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b1_capability_state = SPFRxCapabilityStates(value)
         self.push_change_event("b1CapabilityState", self._b1_capability_state)
-        LOGGER.debug("Wrote b1CapabilityState")
+        LOGGER.debug("Wrote b1CapabilityState %s", self._b1_capability_state)
 
     @attribute(
         dtype=SPFRxCapabilityStates,
@@ -96,7 +96,7 @@ class SPFRxDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b2_capability_state = SPFRxCapabilityStates(value)
         self.push_change_event("b2CapabilityState", self._b2_capability_state)
-        LOGGER.debug("Wrote b2CapabilityState")
+        LOGGER.debug("Wrote b2CapabilityState %s", self._b2_capability_state)
 
     @attribute(
         dtype=SPFRxCapabilityStates,
@@ -114,7 +114,7 @@ class SPFRxDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b3_capability_state = SPFRxCapabilityStates(value)
         self.push_change_event("b3CapabilityState", self._b3_capability_state)
-        LOGGER.debug("Wrote b3CapabilityState")
+        LOGGER.debug("Wrote b3CapabilityState %s", self._b3_capability_state)
 
     @attribute(
         dtype=SPFRxCapabilityStates,
@@ -132,7 +132,7 @@ class SPFRxDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b4_capability_state = SPFRxCapabilityStates(value)
         self.push_change_event("b4CapabilityState", self._b4_capability_state)
-        LOGGER.debug("Wrote b4CapabilityState")
+        LOGGER.debug("Wrote b4CapabilityState %s", self._b4_capability_state)
 
     @attribute(
         dtype=SPFRxCapabilityStates,
@@ -152,7 +152,7 @@ class SPFRxDevice(Device):
         self.push_change_event(
             "b5aCapabilityState", self._b5a_capability_state
         )
-        LOGGER.debug("Wrote b5aCapabilityState")
+        LOGGER.debug("Wrote b5aCapabilityState %s", self._b5a_capability_state)
 
     @attribute(
         dtype=SPFRxCapabilityStates,
@@ -172,7 +172,7 @@ class SPFRxDevice(Device):
         self.push_change_event(
             "b5bCapabilityState", self._b5b_capability_state
         )
-        LOGGER.debug("Wrote b5bCapabilityState")
+        LOGGER.debug("Wrote b5bCapabilityState %s", self._b5b_capability_state)
 
     @attribute(
         dtype=SPFRxOperatingMode,
@@ -186,7 +186,7 @@ class SPFRxDevice(Device):
     async def operatingMode(self, op_mode: SPFRxOperatingMode):
         self._operating_mode = op_mode
         self.push_change_event("operatingMode", self._operating_mode)
-        LOGGER.debug("Wrote operatingMode")
+        LOGGER.debug("Wrote operatingMode %s", self._operating_mode)
 
     @attribute(
         dtype=HealthState,
@@ -200,7 +200,7 @@ class SPFRxDevice(Device):
     async def healthState(self, h_state: HealthState):
         self._health_state = h_state
         self.push_change_event("healthState", self._health_state)
-        LOGGER.debug("Wrote healthState")
+        LOGGER.debug("Wrote healthState %s", self._health_state)
 
     @attribute(
         dtype=Band,
@@ -214,7 +214,7 @@ class SPFRxDevice(Device):
     async def configuredBand(self, band_number: Band):
         self._configured_band = band_number
         self.push_change_event("configuredBand", self._configured_band)
-        LOGGER.debug("Wrote configuredBand")
+        LOGGER.debug("Wrote configuredBand %s", self._configured_band)
 
     # --------
     # Commands
@@ -245,9 +245,9 @@ class SPFRxDevice(Device):
     @random_delay_execution
     @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)
     async def ConfigureBand2(self):
+        LOGGER.info("Called ConfigureBand2")
         self._configured_band = Band.B2
         self.push_change_event("configuredBand", self._configured_band)
-        LOGGER.debug("Wrote configuredBand")
 
 
 def main():

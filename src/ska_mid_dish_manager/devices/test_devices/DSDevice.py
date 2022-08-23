@@ -53,13 +53,17 @@ class DSDevice(Device):
         self._indexer_position = IndexerPosition.UNKNOWN
         self._pointing_state = PointingState.UNKNOWN
         # set manual change event for double scalars
-        self.set_change_event("non_polled_attr_1", True, False)
-        self.set_change_event("operatingMode", True, False)
-        self.set_change_event("healthState", True, False)
-        self.set_change_event("powerState", True, False)
-        self.set_change_event("configuredBand", True, False)
-        self.set_change_event("indexerPosition", True, False)
-        self.set_change_event("pointingState", True, False)
+        attributes = (
+            "non_polled_attr_1",
+            "operatingMode",
+            "healthState",
+            "powerState",
+            "configuredBand",
+            "indexerPosition",
+            "pointingState",
+        )
+        for attribute_name in attributes:
+            self.set_change_event(attribute_name, True, False)
 
     # -----------
     # Attributes

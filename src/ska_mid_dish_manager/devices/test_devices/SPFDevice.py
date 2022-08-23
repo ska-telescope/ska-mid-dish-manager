@@ -79,7 +79,7 @@ class SPFDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b1_capability_state = SPFCapabilityStates(value)
         self.push_change_event("b1CapabilityState", self._b1_capability_state)
-        LOGGER.debug("Wrote b1CapabilityState")
+        LOGGER.debug("Wrote b1CapabilityState %s", self._b1_capability_state)
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -97,7 +97,7 @@ class SPFDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b2_capability_state = SPFCapabilityStates(value)
         self.push_change_event("b2CapabilityState", self._b2_capability_state)
-        LOGGER.debug("Wrote b2CapabilityState")
+        LOGGER.debug("Wrote b2CapabilityState %s", self._b2_capability_state)
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -115,7 +115,7 @@ class SPFDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b3_capability_state = SPFCapabilityStates(value)
         self.push_change_event("b3CapabilityState", self._b3_capability_state)
-        LOGGER.debug("Wrote b3CapabilityState")
+        LOGGER.debug("Wrote b3CapabilityState %s", self._b3_capability_state)
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -133,7 +133,7 @@ class SPFDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b4_capability_state = SPFCapabilityStates(value)
         self.push_change_event("b4CapabilityState", self._b4_capability_state)
-        LOGGER.debug("Wrote b4CapabilityState")
+        LOGGER.debug("Wrote b4CapabilityState %s", self._b4_capability_state)
 
     @attribute(
         dtype=SPFCapabilityStates,
@@ -151,7 +151,7 @@ class SPFDevice(Device):
         # pylint: disable=attribute-defined-outside-init
         self._b5_capability_state = SPFCapabilityStates(value)
         self.push_change_event("b5CapabilityState", self._b5_capability_state)
-        LOGGER.debug("Wrote b5CapabilityState")
+        LOGGER.debug("Wrote b5CapabilityState %s", self._b5_capability_state)
 
     @attribute(
         dtype=SPFOperatingMode,
@@ -165,7 +165,7 @@ class SPFDevice(Device):
     async def write_operatingMode(self, op_mode: SPFOperatingMode):
         self._operating_mode = op_mode
         self.push_change_event("operatingMode", self._operating_mode)
-        LOGGER.debug("Wrote operatingMode")
+        LOGGER.debug("Wrote operatingMode %s", self._operating_mode)
 
     @attribute(
         dtype=SPFBandInFocus,
@@ -179,7 +179,7 @@ class SPFDevice(Device):
     async def bandInFocus(self, band_number: SPFBandInFocus):
         self._band_in_focus = band_number
         self.push_change_event("bandInFocus", self._band_in_focus)
-        LOGGER.debug("Wrote bandInFocus")
+        LOGGER.debug("Wrote bandInFocus %s", self._band_in_focus)
 
     @attribute(
         dtype=HealthState,
@@ -193,7 +193,7 @@ class SPFDevice(Device):
     async def healthState(self, h_state: HealthState):
         self._health_state = h_state
         self.push_change_event("healthState", self._health_state)
-        LOGGER.debug("Wrote healthState")
+        LOGGER.debug("Wrote healthState %s", self._health_state)
 
     @attribute(
         dtype=SPFPowerState,
@@ -207,7 +207,7 @@ class SPFDevice(Device):
     async def powerState(self, pwr_state: SPFPowerState):
         self._power_state = pwr_state
         self.push_change_event("powerState", self._power_state)
-        LOGGER.debug("Wrote powerState")
+        LOGGER.debug("Wrote powerState %s", self._power_state)
 
     # --------
     # Commands
