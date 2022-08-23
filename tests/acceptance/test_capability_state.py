@@ -24,7 +24,6 @@ def test_capability_state_b1(
     """Test transition on CapabilityState b1"""
     set_dish_manager_to_standby_lp(event_store, dish_manager_proxy)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_LP
-    assert dish_manager_proxy.b1CapabilityState != CapabilityStates.STANDBY
 
     dish_manager_proxy.subscribe_event(
         "b1CapabilityState",
@@ -48,8 +47,6 @@ def test_capability_state_b1(
         spfrx_event_store,
     )
     spfrx_event_store.clear_queue()
-
-    assert dish_manager_proxy.b1CapabilityState != CapabilityStates.STANDBY
 
     # Ensure updates
     if spfrx_device_proxy.b1CapabilityState == SPFRxCapabilityStates.OPERATE:
@@ -109,7 +106,6 @@ def test_capability_state_b2(
     )
     spfrx_event_store.clear_queue()
 
-    assert dish_manager_proxy.b2CapabilityState != CapabilityStates.CONFIGURING
     assert ds_device_proxy.indexerPosition == IndexerPosition.MOVING
 
     if spf_device_proxy.b2CapabilityState == SPFCapabilityStates.OPERATE_FULL:
