@@ -19,12 +19,14 @@ from tests.utils_testing import retrieve_attr_value
 LOGGER = logging.getLogger(__name__)
 
 
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
 @pytest.mark.xfail(
     reason="spf CapabilityState has one more enum (UNKNOWN) in simulator than the ICD\n"
 )
 @scenario(
     "../../features/XTP-6269.feature",
-    "LMC Report DSH Capability Standby when dishMode is STANDBY-LP",
+    "LMC Report DSH Capability Standby when dishMode is STANDBY_LP",
 )
 def test_dish_manager_capability_state_reports_standby_in_lp_mode():
     """Test that dish lmc reports STANDBY capability state"""

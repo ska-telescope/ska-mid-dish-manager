@@ -30,6 +30,8 @@ ELEV_DRIVE_MAX_RATE = 1.0
 TOLERANCE = 1e-2  # MeerKAT lock threshold
 
 
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
 @pytest.mark.xfail(
     reason="DishManager does not receive updates from DS for pointing state, desired/achieved pointing"
 )

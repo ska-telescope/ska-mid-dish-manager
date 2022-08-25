@@ -7,9 +7,9 @@ Feature: Dish LMC acceptance tests
         And dish_structure operatingMode reports <operating_mode>
         When I issue ConfigureBand<band_number> on dish_manager
         Then dish_structure indexerPosition should report <band_number>
-        And spf b<band_number>CapabilityState should have reported OPERATE-DEGRADED briefly
+        And spf b<band_number>CapabilityState should have reported OPERATE_DEGRADED briefly
         And spfrx b<band_number>CapabilityState should report OPERATE
-        And dish_manager b<band_number>CapabilityState should have reported OPERATE-DEGRADED briefly
+        And dish_manager b<band_number>CapabilityState should have reported OPERATE_DEGRADED briefly
 
             Examples:
                 | dish_mode | operating_mode | band_number |

@@ -21,6 +21,8 @@ from tests.utils_testing import retrieve_attr_value
 LOGGER = logging.getLogger(__name__)
 
 
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
 @pytest.mark.xfail(
     reason="spf CapabilityState has one more enum (UNKNOWN) in simulator than the ICD\n"
     "L2 requirement expects DishManager CapabilityState to report OPERATE-FULL but ICD wants OPERATE\n"

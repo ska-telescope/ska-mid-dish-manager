@@ -17,6 +17,8 @@ from tests.utils_testing import retrieve_attr_value
 LOGGER = logging.getLogger(__name__)
 
 
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
 @pytest.mark.xfail(
     reason="Dish state reports DISABLE instead of STANDBY in STANDBY_LP-SetStowMode-DISABLE-STOW-LOW-POWER-STANDBY-LP-LOW-POWER-STANDBY\n"
     "Dish state reports STANDBY instead of ON in STANDBY_FP-SetOperateMode-ON-POINT-FULL-POWER-OPERATE-FULL-POWER-DATA-CAPTURE\n"

@@ -12,8 +12,8 @@ Feature: Dish LMC acceptance tests
 
             Examples:
                 | initial_dish_mode | command_name     | dish_state | ds_operating_mode | ds_power_state | spf_operating_mode | spf_power_state | spfrx_operating_mode |
-                | STANDBY-LP        | SetStowMode      | DISABLE    | STOW              | LOW-POWER      | STANDBY-LP         | LOW-POWER       | STANDBY              |
-                | STOW              | SetStandbyLPMode | STANDBY    | STANDBY-LP        | LOW-POWER      | STANDBY-LP         | LOW-POWER       | STANDBY              |
-                | STANDBY-LP        | SetStandbyFPMode | STANDBY    | STANDBY-FP        | FULL-POWER     | OPERATE            | FULL-POWER      | DATA-CAPTURE         |
-                | STANDBY-FP        | SetOperateMode   | ON         | POINT             | FULL-POWER     | OPERATE            | FULL-POWER      | DATA-CAPTURE         |
-                | OPERATE           | SetStandbyFPMode | STANDBY    | STANDBY-FP        | FULL-POWER     | OPERATE            | FULL-POWER      | DATA-CAPTURE         |
+                | STANDBY_LP        | SetStowMode      | DISABLE    | STOW              | LOW_POWER      | STANDBY_LP         | LOW_POWER       | STANDBY              |
+                | STOW              | SetStandbyLPMode | STANDBY    | STANDBY_LP        | LOW_POWER      | STANDBY_LP         | LOW_POWER       | STANDBY              |
+                | STANDBY_LP        | SetStandbyFPMode | STANDBY    | STANDBY_FP        | FULL_POWER     | OPERATE            | FULL_POWER      | DATA_CAPTURE         |
+                | STANDBY_FP        | SetOperateMode   | ON         | POINT             | FULL_POWER     | OPERATE            | FULL_POWER      | DATA_CAPTURE         |
+                | OPERATE           | SetStandbyFPMode | STANDBY    | STANDBY_FP        | FULL_POWER     | OPERATE            | FULL_POWER      | DATA_CAPTURE         |

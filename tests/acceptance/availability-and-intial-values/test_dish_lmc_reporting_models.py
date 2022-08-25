@@ -10,6 +10,8 @@ import pytest
 import tango
 
 
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
 def test_dish_manager_supports_all_reporting_models(
     dish_manager, dish_manager_event_store
 ):
@@ -32,6 +34,8 @@ def test_dish_manager_supports_all_reporting_models(
     assert dish_mode == dish_mode_ch_event_reading
 
 
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
 @pytest.mark.parametrize("domain", ["0001"])
 @pytest.mark.parametrize(
     "family_member", ["lmc/ds_simulator", "spf/simulator", "spfrx/simulator"]
@@ -65,7 +69,7 @@ def test_sub_elements_support_all_reporting_models(domain, family_member):
     cb = tango.utils.EventCallback()
     evt_ids.append(
         tango_device_proxy.subscribe_event(
-            "operatingMode", tango.EventType.PERIODIC_EVENT, cb, []
+            "operatingMode", tango.EventType.CHANGE_EVENT, cb, []
         )
     )
     previous_periodic_events = [

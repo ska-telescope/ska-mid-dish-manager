@@ -27,6 +27,8 @@ def device_event_store():
     return {}
 
 
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
 @pytest.mark.xfail(
     reason="DishManager DishMode never transitions through CONFIG\n"
     "DishManager capabilityState never transitions through CONFIGURING\n"

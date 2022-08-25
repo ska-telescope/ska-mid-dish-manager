@@ -23,6 +23,8 @@ def fixture_initial_dish_mode():
     return {"dishMode": None}
 
 
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
 @pytest.mark.xfail(
     reason="DishManager dishMode never transitions through CONFIG"
 )

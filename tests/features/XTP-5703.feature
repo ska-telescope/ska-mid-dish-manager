@@ -8,13 +8,13 @@ Feature: Dish LMC acceptance tests
         Then dish_manager dishMode should report CONFIG briefly
         And dish_structure indexerPosition should report <band_number>
         And spf bandInFocus should report <band_number>
-        And spfrx operatingMode should report DATA-CAPTURE
+        And spfrx operatingMode should report DATA_CAPTURE
         And spfrx configuredBand should report <band_number>
         And dish_manager configuredBand should report <band_number>
         And dish_manager should report its initial dishMode
 
             Examples:
                 | dish_mode  | band_number |
-                | STANDBY-FP | 2           |
+                | STANDBY_FP | 2           |
                 | OPERATE    | 2           |
                 | STOW       | 2           |

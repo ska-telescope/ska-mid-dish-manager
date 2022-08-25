@@ -30,6 +30,8 @@ def fixture_initial_az():
     return {"az": 0}
 
 
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
 @pytest.mark.xfail(
     reason="DishManager State reports STANDBY instead of DISABLE"
     "DishManager does not receive updates from DS for pointing state, desired/achieved pointing"

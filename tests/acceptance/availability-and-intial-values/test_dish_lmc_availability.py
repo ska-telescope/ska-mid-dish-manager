@@ -19,6 +19,8 @@ def test_lmc_devices_available_in_skampi(domain, family_member):
     assert tango_device_proxy.State() in tango.DevState.values.values()
 
 
+@pytest.mark.acceptance
+@pytest.mark.SKA_mid
 @pytest.mark.parametrize("domain", ["0001"])
 @pytest.mark.parametrize(
     "family_member",
