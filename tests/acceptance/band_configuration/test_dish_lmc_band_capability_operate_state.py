@@ -1,3 +1,4 @@
+# flake8: noqa: E501
 """
 Verify that:
     LMC reports Band X Capability as OPERATE (L2-4699)
@@ -21,13 +22,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.xfail(
-    reason=(
-        "spf CapabilityState has one more enum "
-        "(UNKNOWN) in simulator than the ICD\n"
-    )(
-        "L2 requirement expects DishManager CapabilityState to report "
-        "OPERATE-FULL but ICD wants OPERATE\n"
-    )
+    reason="spf CapabilityState has one more enum (UNKNOWN) in simulator than the ICD\n"
+    "L2 requirement expects DishManager CapabilityState to report OPERATE-FULL but ICD wants OPERATE\n"
 )
 @scenario(
     "../../features/XTP-6271.feature", "LMC Report DSH Capability Operate"
@@ -144,8 +140,7 @@ def check_spfrx_capability_state(
 
 @then(
     parse(
-        "dish_manager b{band_number}CapabilityState"
-        " should report {expected_state}"
+        "dish_manager b{band_number}CapabilityState should report {expected_state}"
     )
 )
 def check_dish_manager_band_capability_state(
