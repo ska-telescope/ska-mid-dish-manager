@@ -55,3 +55,41 @@ deviceServers:
     file: "data/spf_device.yaml"
   spfrxdevice:
     file: "data/spfrx_device.yaml"
+
+ska-taranta:
+  enabled: true
+  ingress:
+    enabled: true
+    nginx: true
+    hostname: k8s.stfc.skao.int
+  tangogql:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 600m # 600m = 0.6 CPU
+        memory: 512Mi # 512Mi = 0.5 GB mem
+      limits:
+        cpu: 1000m # 1000m = 1 CPU
+        memory: 1024Mi # 1024Mi = 1 GB mem
+
+ska-taranta-dashboard:
+  ingress:
+    enabled: true
+    nginx: true
+    hostname: test-taranta.k8s.stfc.skao.int
+
+ska-taranta-auth:
+  ingress:
+    enabled: true
+    nginx: true
+    hostname: test-taranta.k8s.stfc.skao.int
+
+# Below is a workaround for those on arm architectures
+ska-tango-taranta-dashboard:
+  mongodb:
+    image:
+      tag: latest
+  dashboard:
+    resources:
+      limits:
+        memory: 1Gi
