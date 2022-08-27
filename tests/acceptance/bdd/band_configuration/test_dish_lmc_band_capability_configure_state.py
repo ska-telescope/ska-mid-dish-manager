@@ -11,13 +11,13 @@ import tango
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
 
+from ska_mid_dish_manager.devices.test_devices.utils import retrieve_attr_value
 from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     DishMode,
     SPFCapabilityStates,
     SPFRxCapabilityStates,
 )
-from tests.utils_testing import retrieve_attr_value
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,14 +27,15 @@ def device_event_store():
     return {}
 
 
-@pytest.mark.acceptance
+@pytest.mark.bdd
 @pytest.mark.SKA_mid
-@pytest.mark.xfail(
-    reason="DishManager DishMode never transitions through CONFIG\n"
-    "DishManager capabilityState never transitions through CONFIGURING\n"
-    "L2 requirement expects SPF CapabilityState to report OPERATE but ICD wants OPERATE-FULL\n"
-    "L2 requirement expects DishManager CapabilityState to report CONFIGURE but ICD wants CONFIGURING"
-)
+@pytest.mark.acceptance
+# @pytest.mark.xfail(
+#     reason="DishManager DishMode never transitions through CONFIG\n"
+#     "DishManager capabilityState never transitions through CONFIGURING\n"
+#     "L2 requirement expects SPF CapabilityState to report OPERATE but ICD wants OPERATE-FULL\n"
+#     "L2 requirement expects DishManager CapabilityState to report CONFIGURE but ICD wants CONFIGURING"
+# )
 @scenario(
     "../../features/XTP-6270.feature", "LMC Report DSH Capability Configure"
 )
@@ -46,10 +47,6 @@ def test_dish_lmc_capability_state_reports_configure():
 @given(parse("dish_manager dishMode reports {dish_mode}"))
 def check_dish_manager_dish_mode(dish_mode, dish_manager, modes_helper):
     # pylint: disable=missing-function-docstring
-    # convert dish mode to have underscore
-    # for DishMode STANDBY_FP enum in utils
-    dish_mode = dish_mode.replace("-", "_")
-
     modes_helper.ensure_dish_manager_mode(dish_mode)
     current_dish_mode = retrieve_attr_value(dish_manager, "dishMode")
     LOGGER.info(f"{dish_manager} dishMode: {current_dish_mode}")
@@ -98,7 +95,7 @@ def check_dish_mode(
     dish_manager, expected_mode, dish_manager_event_store, device_event_store
 ):
     # pylint: disable=missing-function-docstring
-    dish_evts = dish_manager_event_store.get_queue_values(timeout=60)
+    dish_evts = dish_manager_event_store.get_queue_values(timeout=15)
     # pass on the events for later use
     device_event_store["dish_manager"] = dish_evts
 
@@ -118,12 +115,8 @@ def then_check_spf_capability_state(
     band_number, expected_state, spf, spf_event_store
 ):
     # pylint: disable=missing-function-docstring
-    # convert expected state to have underscore
-    # for SPFCapabilityStates OPERATE_FULL enum
-    expected_state = expected_state.replace("-", "_")
-
     spf_event_store.wait_for_value(
-        SPFCapabilityStates[expected_state], timeout=60
+        SPFCapabilityStates[expected_state], timeout=15
     )
     band_number = 5 if band_number.startswith("5") else band_number
     b_x_capability_state = retrieve_attr_value(
@@ -144,7 +137,7 @@ def check_spfrx_capability_state(
     # pylint: disable=missing-function-docstring
     spfrx_capability_evts = [
         evt_vals[1]
-        for evt_vals in spfrx_event_store.get_queue_values(timeout=60)
+        for evt_vals in spfrx_event_store.get_queue_values(timeout=15)
     ]
 
     assert (
@@ -173,7 +166,7 @@ def check_dish_transient_capability_state(
     device_event_store,
 ):
     # pylint: disable=missing-function-docstring
-    dish_evts = dish_manager_event_store.get_queue_values(timeout=60)
+    dish_evts = dish_manager_event_store.get_queue_values(timeout=15)
     # combine the fresh events and the old one to check for values
     dish_evts = dish_evts + device_event_store["dish_manager"]
 

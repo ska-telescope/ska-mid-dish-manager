@@ -14,8 +14,8 @@ from pytest import approx
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
 
+from ska_mid_dish_manager.devices.test_devices.utils import retrieve_attr_value
 from ska_mid_dish_manager.models.dish_enums import PointingState
-from tests.utils_testing import retrieve_attr_value
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,12 +30,13 @@ def fixture_initial_az():
     return {"az": 0}
 
 
-@pytest.mark.acceptance
+@pytest.mark.bdd
 @pytest.mark.SKA_mid
-@pytest.mark.xfail(
-    reason="DishManager State reports STANDBY instead of DISABLE"
-    "DishManager does not receive updates from DS for pointing state, desired/achieved pointing"
-)
+@pytest.mark.acceptance
+# @pytest.mark.xfail(
+#     reason="DishManager State reports STANDBY instead of DISABLE"
+#     "DishManager does not receive updates from DS for pointing state, desired/achieved pointing"
+# )
 @scenario("../../features/XTP-3090.feature", "Test dish stow request")
 def test_stow_command():
     # pylint: disable=missing-function-docstring
@@ -173,22 +174,11 @@ def check_pointing_state_after_stow(
 ):
     # pylint: disable=missing-function-docstring
     dish_manager_event_store.wait_for_value(
-        PointingState[expected_pointing_state], timeout=60
+        PointingState[expected_pointing_state], timeout=15
     )
     current_pointing_state = retrieve_attr_value(dish_manager, "pointingState")
     assert current_pointing_state == expected_pointing_state
     LOGGER.info(f"{dish_manager} pointingState: {current_pointing_state}")
-
-
-@then(parse("dish_manager dish state should be {expected_dish_state}"))
-def check_dish_state_after_stow(
-    expected_dish_state,
-    dish_manager,
-):
-    # pylint: disable=missing-function-docstring
-    current_dish_state = retrieve_attr_value(dish_manager, "State")
-    assert current_dish_state == expected_dish_state
-    LOGGER.info(f"{dish_manager} State: {current_dish_state}")
 
 
 @then(

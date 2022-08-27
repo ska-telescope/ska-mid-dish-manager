@@ -16,7 +16,7 @@ MARK = unit
 endif
 
 ifeq ($(MAKECMDGOALS),k8s-test)
-MARK = acceptance
+MARK = bdd
 endif
 
 # Set the specific environment variables required for pytest

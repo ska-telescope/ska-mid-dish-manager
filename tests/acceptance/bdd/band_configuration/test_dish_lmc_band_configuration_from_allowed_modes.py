@@ -11,8 +11,8 @@ import tango
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
 
+from ska_mid_dish_manager.devices.test_devices.utils import retrieve_attr_value
 from ska_mid_dish_manager.models.dish_enums import DishMode
-from tests.utils_testing import retrieve_attr_value
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,11 +23,12 @@ def fixture_initial_dish_mode():
     return {"dishMode": None}
 
 
-@pytest.mark.acceptance
+@pytest.mark.bdd
 @pytest.mark.SKA_mid
-@pytest.mark.xfail(
-    reason="DishManager dishMode never transitions through CONFIG"
-)
+@pytest.mark.acceptance
+# @pytest.mark.xfail(
+#     reason="DishManager dishMode never transitions through CONFIG"
+# )
 @scenario("../../features/XTP-5703.feature", "Test dish lmc band selection")
 def test_band_selection():
     # pylint: disable=missing-function-docstring
@@ -39,9 +40,6 @@ def dish_reports_allowed_dish_mode(
     dish_mode, dish_manager, modes_helper, initial_mode
 ):
     # pylint: disable=missing-function-docstring
-    # convert dish mode to have underscore for enums in utils
-    dish_mode = dish_mode.replace("-", "_")
-
     modes_helper.ensure_dish_manager_mode(dish_mode)
     current_dish_mode = retrieve_attr_value(dish_manager, "dishMode")
     LOGGER.info(f"{dish_manager} initial dishMode: {current_dish_mode}")
@@ -69,11 +67,8 @@ def configure_band(
 @then(parse("dish_manager dishMode should report {transient_mode} briefly"))
 def check_dish_mode(transient_mode, dish_manager, dish_manager_event_store):
     # pylint: disable=missing-function-docstring
-    # convert dish mode to have underscore for enums in utils
-    transient_mode = transient_mode.replace("-", "_")
-
     dish_manager_event_store.wait_for_value(
-        DishMode[transient_mode], timeout=60
+        DishMode[transient_mode], timeout=15
     )
     LOGGER.info(f"{dish_manager} dishMode reported: {transient_mode}")
 

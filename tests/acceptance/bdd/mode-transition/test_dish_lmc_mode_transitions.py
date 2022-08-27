@@ -12,18 +12,19 @@ import pytest
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
 
-from tests.utils_testing import retrieve_attr_value
+from ska_mid_dish_manager.devices.test_devices.utils import retrieve_attr_value
 
 LOGGER = logging.getLogger(__name__)
 
 
-@pytest.mark.acceptance
+@pytest.mark.bdd
 @pytest.mark.SKA_mid
-@pytest.mark.xfail(
-    reason="Dish state reports DISABLE instead of STANDBY in STANDBY_LP-SetStowMode-DISABLE-STOW-LOW-POWER-STANDBY-LP-LOW-POWER-STANDBY\n"
-    "Dish state reports STANDBY instead of ON in STANDBY_FP-SetOperateMode-ON-POINT-FULL-POWER-OPERATE-FULL-POWER-DATA-CAPTURE\n"
-    "SPFRx operating mode reports STANDBY instead of DATA-CAPTURE in STANDBY-LP-SetStandbyFPMode-STANDBY-STANDBY-FP-FULL-POWER-OPERATE-FULL-POWER-DATA-CAPTURE"
-)
+@pytest.mark.acceptance
+# @pytest.mark.xfail(
+#     reason="Dish state reports DISABLE instead of STANDBY in STANDBY_LP-SetStowMode-DISABLE-STOW-LOW-POWER-STANDBY-LP-LOW-POWER-STANDBY\n"
+#     "Dish state reports STANDBY instead of ON in STANDBY_FP-SetOperateMode-ON-POINT-FULL-POWER-OPERATE-FULL-POWER-DATA-CAPTURE\n"
+#     "SPFRx operating mode reports STANDBY instead of DATA-CAPTURE in STANDBY-LP-SetStandbyFPMode-STANDBY-STANDBY-FP-FULL-POWER-OPERATE-FULL-POWER-DATA-CAPTURE"
+# )
 @scenario("../../features/XTP-813.feature", "Test dish lmc mode transitions")
 def test_mode_transitions():
     # pylint: disable=missing-function-docstring
@@ -33,10 +34,6 @@ def test_mode_transitions():
 @given(parse("dish_manager dishMode reports {dish_mode}"))
 def check_dish_manager_dish_mode(dish_mode, dish_manager, modes_helper):
     # pylint: disable=missing-function-docstring
-    # convert dish mode to have underscore
-    # for DishMode STANDBY_FP/LP enums in utils
-    dish_mode = dish_mode.replace("-", "_")
-
     modes_helper.ensure_dish_manager_mode(dish_mode)
     current_dish_mode = retrieve_attr_value(dish_manager, "dishMode")
     LOGGER.info(f"{dish_manager} dishMode: {current_dish_mode}")

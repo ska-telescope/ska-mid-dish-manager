@@ -9,22 +9,23 @@ import tango
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
 
+from ska_mid_dish_manager.devices.test_devices.utils import retrieve_attr_value
 from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     SPFCapabilityStates,
     SPFRxCapabilityStates,
 )
-from tests.utils_testing import retrieve_attr_value
 
 LOGGER = logging.getLogger(__name__)
 
 
-@pytest.mark.acceptance
+@pytest.mark.bdd
 @pytest.mark.SKA_mid
-@pytest.mark.xfail(
-    reason="L2 requirement expects SPF CapabilityState to report OPERATE but ICD wants OPERATE-FULL\n"
-    "spf CapabilityState has one more enum (UNKNOWN) in simulator than the ICD"
-)
+@pytest.mark.acceptance
+# @pytest.mark.xfail(
+#     reason="L2 requirement expects SPF CapabilityState to report OPERATE but ICD wants OPERATE-FULL\n"
+#     "spf CapabilityState has one more enum (UNKNOWN) in simulator than the ICD"
+# )
 @scenario(
     "../../features/XTP-6269.feature",
     "LMC Report DSH Capability Standby when dishMode is STANDBY_FP",
@@ -41,10 +42,6 @@ def check_dish_manager_dish_mode(
     modes_helper,
 ):
     # pylint: disable=missing-function-docstring
-    # convert dish mode to have underscore
-    # for DishMode STANDBY_FP enum in utils
-    dish_mode = dish_mode.replace("-", "_")
-
     modes_helper.ensure_dish_manager_mode(dish_mode)
     current_dish_mode = retrieve_attr_value(dish_manager, "dishMode")
     LOGGER.info(f"{dish_manager} dishMode: {current_dish_mode}")
@@ -98,7 +95,7 @@ def check_spfrx_capability_state(
 ):
     # pylint: disable=missing-function-docstring
     spfrx_event_store.wait_for_value(
-        SPFRxCapabilityStates[expected_state], timeout=60
+        SPFRxCapabilityStates[expected_state], timeout=15
     )
     b_x_capability_state = retrieve_attr_value(
         spfrx, f"b{band_number}CapabilityState"
@@ -116,12 +113,8 @@ def check_spf_capability_state(
     band_number, expected_state, spf, spf_event_store
 ):
     # pylint: disable=missing-function-docstring
-    # convert expected state to have underscore
-    # for SPFCapabilityStates OPERATE_FULL enum
-    expected_state = expected_state.replace("-", "_")
-
     spf_event_store.wait_for_value(
-        SPFCapabilityStates[expected_state], timeout=60
+        SPFCapabilityStates[expected_state], timeout=15
     )
     band_number = 5 if band_number.startswith("5") else band_number
     b_x_capability_state = retrieve_attr_value(
@@ -141,7 +134,7 @@ def check_dish_capability_state(
 ):
     # pylint: disable=missing-function-docstring
     dish_manager_event_store.wait_for_value(
-        CapabilityStates[expected_state], timeout=60
+        CapabilityStates[expected_state], timeout=15
     )
     b_x_capability_state = retrieve_attr_value(
         dish_manager, f"b{band_number}CapabilityState"

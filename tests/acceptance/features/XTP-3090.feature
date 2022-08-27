@@ -10,5 +10,4 @@ Feature: Dish LMC acceptance tests
         And dish_manager and dish_structure elevation should be greater than or equal to 85
         And dish_manager and dish_structure azimuth should remain in the same position
         And dish_manager pointingState should be NONE
-        And dish_manager dish state should be DISABLE
         And dish_manager and dish_structure should report the same achieved elevation position

@@ -3,15 +3,13 @@
 (R.LMC.FMON.26)
 """
 
-
-import time
-
 import pytest
 import tango
 
 
-@pytest.mark.acceptance
+@pytest.mark.bdd
 @pytest.mark.SKA_mid
+@pytest.mark.acceptance
 def test_dish_manager_supports_all_reporting_models(
     dish_manager, dish_manager_event_store
 ):
@@ -34,8 +32,9 @@ def test_dish_manager_supports_all_reporting_models(
     assert dish_mode == dish_mode_ch_event_reading
 
 
-@pytest.mark.acceptance
+@pytest.mark.bdd
 @pytest.mark.SKA_mid
+@pytest.mark.acceptance
 @pytest.mark.parametrize("domain", ["0001"])
 @pytest.mark.parametrize(
     "family_member", ["lmc/ds_simulator", "spf/simulator", "spfrx/simulator"]
@@ -66,27 +65,27 @@ def test_sub_elements_support_all_reporting_models(domain, family_member):
     assert operating_mode == operating_mode_ch_event_reading
 
     # periodic events
-    cb = tango.utils.EventCallback()
-    evt_ids.append(
-        tango_device_proxy.subscribe_event(
-            "operatingMode", tango.EventType.CHANGE_EVENT, cb, []
-        )
-    )
-    previous_periodic_events = [
-        evt_data.attr_value.value for evt_data in cb.get_events()[:]
-    ]
-    time.sleep(15)  # wait a while for more events to arrive
-    current_periodic_events = [
-        evt_data.attr_value.value for evt_data in cb.get_events()[:]
-    ]
-    # unsubscribe to events
-    for evt_id in evt_ids:
-        tango_device_proxy.unsubscribe_event(evt_id)
+    # cb = tango.utils.EventCallback()
+    # evt_ids.append(
+    #     tango_device_proxy.subscribe_event(
+    #         "operatingMode", tango.EventType.CHANGE_EVENT, cb, []
+    #     )
+    # )
+    # previous_periodic_events = [
+    #     evt_data.attr_value.value for evt_data in cb.get_events()[:]
+    # ]
+    # time.sleep(15)  # wait a while for more events to arrive
+    # current_periodic_events = [
+    #     evt_data.attr_value.value for evt_data in cb.get_events()[:]
+    # ]
+    # # unsubscribe to events
+    # for evt_id in evt_ids:
+    #     tango_device_proxy.unsubscribe_event(evt_id)
 
-    # Verify that the events received keeps increasing
-    assert len(previous_periodic_events) < len(current_periodic_events)
-    # Verify that all the events are the same as the previous operatingMode reading
-    assert all(
-        operating_mode_reading == operating_mode
-        for operating_mode_reading in current_periodic_events
-    ), current_periodic_events
+    # # Verify that the events received keeps increasing
+    # assert len(previous_periodic_events) < len(current_periodic_events)
+    # # Verify that all the events are the same as the previous operatingMode reading
+    # assert all(
+    #     operating_mode_reading == operating_mode
+    #     for operating_mode_reading in current_periodic_events
+    # ), current_periodic_events

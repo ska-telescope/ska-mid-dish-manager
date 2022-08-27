@@ -4,12 +4,13 @@
 import pytest
 import tango
 
+from ska_mid_dish_manager.devices.test_devices.utils import retrieve_attr_value
 from ska_mid_dish_manager.models.dish_enums import DishMode
-from tests.utils_testing import retrieve_attr_value
 
 
-@pytest.mark.acceptance
+@pytest.mark.bdd
 @pytest.mark.SKA_mid
+@pytest.mark.acceptance
 def test_dish_manager_startups_with_expected_dish_mode(event_store):
     """Test that dish master starts up with the expected dishMode"""
     dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
@@ -18,13 +19,14 @@ def test_dish_manager_startups_with_expected_dish_mode(event_store):
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    event_store.wait_for_value(DishMode.STANDBY_LP, timeout=60)
+    event_store.wait_for_value(DishMode.STANDBY_LP, timeout=15)
     dish_mode = retrieve_attr_value(dish_manager, "dishMode")
     assert dish_mode == DishMode.STANDBY_LP.name
 
 
-@pytest.mark.acceptance
+@pytest.mark.bdd
 @pytest.mark.SKA_mid
+@pytest.mark.acceptance
 @pytest.mark.parametrize("domain", ["0001"])
 @pytest.mark.parametrize(
     "family_member", ["lmc/ds_simulator", "spf/simulator", "spfrx/simulator"]

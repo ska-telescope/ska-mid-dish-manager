@@ -14,8 +14,8 @@ from pytest import approx
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
 
+from ska_mid_dish_manager.devices.test_devices.utils import retrieve_attr_value
 from ska_mid_dish_manager.models.dish_enums import PointingState
-from tests.utils_testing import retrieve_attr_value
 
 # pylint: disable=too-many-locals
 
@@ -30,11 +30,12 @@ ELEV_DRIVE_MAX_RATE = 1.0
 TOLERANCE = 1e-2  # MeerKAT lock threshold
 
 
-@pytest.mark.acceptance
+@pytest.mark.bdd
 @pytest.mark.SKA_mid
-@pytest.mark.xfail(
-    reason="DishManager does not receive updates from DS for pointing state, desired/achieved pointing"
-)
+@pytest.mark.acceptance
+# @pytest.mark.xfail(
+#     reason="DishManager does not receive updates from DS for pointing state, desired/achieved pointing"
+# )
 @scenario("../../features/XTP-5414.feature", "Test dish pointing request")
 def test_dish_pointing():
     # pylint: disable=missing-function-docstring
@@ -60,7 +61,7 @@ def dish_reports_allowed_pointing_state(
         dish_manager_event_store,
     )
     dish_manager_event_store.wait_for_value(
-        PointingState[pointing_state], timeout=60
+        PointingState[pointing_state], timeout=15
     )
     current_pointing_state = retrieve_attr_value(dish_manager, "pointingState")
     assert current_pointing_state == pointing_state
@@ -209,7 +210,7 @@ def check_pointing_state_on_target(
     track, dish_manager, dish_manager_event_store
 ):
     # pylint: disable=missing-function-docstring
-    dish_manager_event_store.wait_for_value(PointingState[track], timeout=60)
+    dish_manager_event_store.wait_for_value(PointingState[track], timeout=15)
 
     pointing_state = dish_manager.PointingState
     LOGGER.info(f"{dish_manager} pointingState: {pointing_state}")
