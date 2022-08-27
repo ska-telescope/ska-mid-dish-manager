@@ -37,12 +37,12 @@ class SPFRxDevice(Device):
         self._operating_mode = SPFRxOperatingMode.STANDBY
         self._configured_band = Band.NONE
         self._health_state = HealthState.UNKNOWN
-        self._b1_capability_state = SPFRxCapabilityStates.UNKNOWN
-        self._b2_capability_state = SPFRxCapabilityStates.UNKNOWN
-        self._b3_capability_state = SPFRxCapabilityStates.UNKNOWN
-        self._b4_capability_state = SPFRxCapabilityStates.UNKNOWN
-        self._b5a_capability_state = SPFRxCapabilityStates.UNKNOWN
-        self._b5b_capability_state = SPFRxCapabilityStates.UNKNOWN
+        self._b1_capability_state = SPFRxCapabilityStates.STANDBY
+        self._b2_capability_state = SPFRxCapabilityStates.STANDBY
+        self._b3_capability_state = SPFRxCapabilityStates.STANDBY
+        self._b4_capability_state = SPFRxCapabilityStates.STANDBY
+        self._b5a_capability_state = SPFRxCapabilityStates.STANDBY
+        self._b5b_capability_state = SPFRxCapabilityStates.STANDBY
 
         change_event_attributes = (
             "operatingMode",
