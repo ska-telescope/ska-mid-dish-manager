@@ -163,26 +163,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         self.logger.debug(
             (
-                "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
-                ", SPFRx [%s], DM [%s]"
-            ),
-            kwargs,
-            ds_comp_state,
-            spf_comp_state,
-            spfrx_comp_state,
-            self.component_state,
+                f"Component state has changed, current states : kwargs {kwargs}, DS {ds_comp_state},"
+                f"SPF {spf_comp_state}, SPFRx {spfrx_comp_state}, DM {self.component_state} "
+            )
         )
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs:
             self.logger.info(
                 (
-                    "Updating dishMode with operatingModes DS"
-                    " [%s], SPF [%s], SPFRX [%s]"
-                ),
-                str(ds_comp_state["operatingmode"]),
-                str(spf_comp_state["operatingmode"]),
-                str(spfrx_comp_state["operatingmode"]),
+                    f"Updating dishMode with operatingModes "
+                    f"DS {ds_comp_state['operatingmode']}, SPF {spf_comp_state['operatingmode']}," 
+                    f" SPFRX {spfrx_comp_state['operatingmode']}"
+                )
             )
             new_dish_mode = self._dish_mode_model.compute_dish_mode(
                 ds_comp_state,
@@ -194,12 +187,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "healthstate" in kwargs:
             self.logger.info(
                 (
-                    "Updating healthState with healthstate DS"
-                    " [%s], SPF [%s], SPFRX [%s]"
-                ),
-                str(ds_comp_state["healthstate"]),
-                str(spf_comp_state["healthstate"]),
-                str(spfrx_comp_state["healthstate"]),
+                    f"Updating healthState with healthstate DS"
+                    f" {ds_comp_state['healthstate']}, SPF {spf_comp_state['healthstate']},"
+                    f"SPFRX {spfrx_comp_state['healthstate']}"
+                )
             )
             new_health_state = self._dish_mode_model.compute_dish_health_state(
                 ds_comp_state,
@@ -210,8 +201,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if "pointingstate" in kwargs:
             self.logger.debug(
-                ("Newly calculated component state [pointing_state] [%s]"),
-                ds_comp_state["pointingstate"],
+                (f"Newly calculated component state [pointing_state] {ds_comp_state['pointingstate']}")
             )
             self._update_component_state(
                 pointingstate=ds_comp_state["pointingstate"]
@@ -249,13 +239,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             or "configuredband" in kwargs
         ):
             self.logger.info(
-                (
-                    "Updating configuredBand with DS"
-                    " [%s] SPF [%s] SPFRX [%s]"
-                ),
-                str(ds_comp_state),
-                str(spf_comp_state),
-                str(spfrx_comp_state),
+                self.logger.info(f"Updating configuredBand with DS"
+            f" {ds_comp_state} SPF {spf_comp_state} SPFRX {spfrx_comp_state}")
             )
 
             configured_band = self._dish_mode_model.compute_configured_band(
@@ -301,7 +286,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
         self.logger.debug(
-            "Updating component dish manager component state with [%s]", kwargs
+            f"Updating component dish manager component state with {kwargs}"
         )
         super()._update_component_state(*args, **kwargs)
 
