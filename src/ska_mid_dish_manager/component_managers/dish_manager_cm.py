@@ -173,7 +173,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.info(
                 (
                     f"Updating dishMode with operatingModes "
-                    f"DS {ds_comp_state['operatingmode']}, SPF {spf_comp_state['operatingmode']}," 
+                    f"DS {ds_comp_state['operatingmode']}, SPF {spf_comp_state['operatingmode']},"
                     f" SPFRX {spfrx_comp_state['operatingmode']}"
                 )
             )
@@ -201,7 +201,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if "pointingstate" in kwargs:
             self.logger.debug(
-                (f"Newly calculated component state [pointing_state] {ds_comp_state['pointingstate']}")
+                (
+                    f"Newly calculated component state [pointing_state] {ds_comp_state['pointingstate']}"
+                )
             )
             self._update_component_state(
                 pointingstate=ds_comp_state["pointingstate"]
@@ -239,8 +241,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             or "configuredband" in kwargs
         ):
             self.logger.info(
-                self.logger.info(f"Updating configuredBand with DS"
-            f" {ds_comp_state} SPF {spf_comp_state} SPFRX {spfrx_comp_state}")
+                self.logger.info(
+                    f"Updating configuredBand with DS"
+                    f" {ds_comp_state} SPF {spf_comp_state} SPFRX {spfrx_comp_state}"
+                )
             )
 
             configured_band = self._dish_mode_model.compute_configured_band(
