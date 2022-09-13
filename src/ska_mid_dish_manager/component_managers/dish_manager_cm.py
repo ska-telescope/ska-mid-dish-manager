@@ -339,6 +339,36 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    def on_dish_mode(self, command_name, task_callback, task_abort_event):
+        while True:
+            if task_abort_event.is_set():
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result=f"{command_name} Aborted",
+                )
+                return
+            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                task_callback(
+                    status=TaskStatus.ABORTED,
+                    result="Lost communication with monitored device",
+                )
+                return
+            current_dish_mode = self.component_state["dishmode"]
+            if (
+                current_dish_mode != DishMode.STANDBY_LP
+                or current_dish_mode != DishMode.STANDBY_FP
+                or current_dish_mode != DishMode.OPERATE
+                or current_dish_mode != DishMode.STOW
+            ):
+                task_abort_event.wait(timeout=1)
+                self._update_dishmode_component_states()
+            else:
+                task_callback(
+                    status=TaskStatus.COMPLETED,
+                    result=f"{command_name} completed",
+                )
+                return
+
     def _set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
         assert task_callback, "task_callback has to be defined"
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -381,33 +411,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
         task_callback(progress="Awaiting dishMode change to STANDBY_LP")
-
-        while True:
-            if task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="SetStandbyLPMode Aborted",
-                )
-                return
-
-            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Lost communication with monitored device",
-                )
-                return
-
-            current_dish_mode = self.component_state["dishmode"]
-            if current_dish_mode != DishMode.STANDBY_LP:
-                task_abort_event.wait(timeout=1)
-                self._update_dishmode_component_states()
-
-            else:
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result="SetStandbyLPMode completed",
-                )
-                return
+        self.on_dish_mode("SetStandbyLPMode", task_callback, task_abort_event)
 
     def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
         """Set StandbyFP mode on sub devices as long running commands"""
@@ -450,32 +454,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
         task_callback(progress="Awaiting dishMode change to STANDBY_FP")
-
-        while True:
-            if task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="SetStandbyFPMode Aborted",
-                )
-                return
-
-            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Lost communication with monitored device",
-                )
-                return
-
-            current_dish_mode = self.component_state["dishmode"]
-            if current_dish_mode != DishMode.STANDBY_FP:
-                task_abort_event.wait(timeout=1)
-                self._update_dishmode_component_states()
-            else:
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result="SetStandbyFPMode completed",
-                )
-                return
+        self.on_dish_mode("SetStandbyFPMode", task_callback, task_abort_event)
 
     def _set_operate_mode(self, task_callback=None, task_abort_event=None):
         assert task_callback, "task_callback has to be defined"
@@ -511,32 +490,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
         task_callback(progress="Awaiting dishMode change to OPERATE")
-
-        while True:
-            if task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="SetOperateMode Aborted",
-                )
-                return
-
-            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Lost communication with monitored device",
-                )
-                return
-
-            current_dish_mode = self.component_state["dishmode"]
-            if current_dish_mode != DishMode.OPERATE:
-                task_abort_event.wait(timeout=1)
-                self._update_dishmode_component_states()
-            else:
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result="SetOperateMode completed",
-                )
-                return
+        self.on_dish_mode("SetOperateMode", task_callback, task_abort_event)
 
     def track_cmd(
         self,
@@ -730,32 +684,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         task_callback(progress=f"Stow called on DS, ID {command_id}")
         task_callback(progress="Waiting for dishMode change to STOW")
-
-        while True:
-            if task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Stow Aborted",
-                )
-                return
-
-            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Lost communication with monitored device",
-                )
-                return
-
-            current_dish_mode = self.component_state["dishmode"]
-            if current_dish_mode != DishMode.STOW:
-                task_abort_event.wait(timeout=1)
-                self._update_dishmode_component_states()
-            else:
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result="Stow completed",
-                )
-                return
+        self.on_dish_mode("Stow", task_callback, task_abort_event)
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
