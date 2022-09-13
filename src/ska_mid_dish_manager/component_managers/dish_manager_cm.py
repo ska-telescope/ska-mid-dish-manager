@@ -305,18 +305,37 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         for com_man in self.component_managers.values():
             com_man.start_communicating()
 
-    def set_standby_lp_mode(
+    def set_dish_mode(
         self,
+        dish_mode_command,
+        #Command is either SetStandbyLPMode,SetStandbyFPMode or StowMode
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STANDBY_LP mode"""
-
+        """Transition the dish to STANDBY_LP,FP or STOW mode."""
+        dish_task=""
+        if dish_mode_command=="SetStandbyLPMode":
+            dish_task=self._set_standby_lp_mode
+        if dish_mode_command=="SetStandbyFPMode":
+            dish_task=self._set_standby_fp_mode
+        if dish_mode_command=="SetStowMode":
+            dish_task=self._set_stow_mode
+        if dish_mode_command=="SetOperateMode":
+            dish_task=self._set_operate_mode
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
-            command_name="SetStandbyLPMode",
+            command_name=dish_mode_command,
         )
+        if dish_mode_command=="SetOperateMode":
+            if self.component_state["configuredband"] in [
+                Band.NONE,
+                Band.UNKNOWN,
+            ]:
+                raise CommandNotAllowed(
+                "configuredBand can not be in "
+                f"{Band.NONE.name} or {Band.UNKNOWN.name}",
+                )
         status, response = self.submit_task(
-            self._set_standby_lp_mode, args=[], task_callback=task_callback
+            dish_task, args=[], task_callback=task_callback
         )
         return status, response
 
@@ -390,20 +409,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
 
-    def set_standby_fp_mode(
-        self,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STANDBY_LP mode"""
-        self._dish_mode_model.is_command_allowed(
-            dishmode=DishMode(self.component_state["dishmode"]).name,
-            command_name="SetStandbyFPMode",
-        )
-        status, response = self.submit_task(
-            self._set_standby_fp_mode, args=[], task_callback=task_callback
-        )
-        return status, response
-
     def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
         """Set StandbyFP mode on sub devices as long running commands"""
         assert task_callback, "task_callback has to be defined"
@@ -471,31 +476,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     result="SetStandbyFPMode completed",
                 )
                 return
-
-    def set_operate_mode(
-        self,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to OPERATE mode"""
-
-        self._dish_mode_model.is_command_allowed(
-            dishmode=DishMode(self.component_state["dishmode"]).name,
-            command_name="SetOperateMode",
-        )
-
-        if self.component_state["configuredband"] in [
-            Band.NONE,
-            Band.UNKNOWN,
-        ]:
-            raise CommandNotAllowed(
-                "configuredBand can not be in "
-                f"{Band.NONE.name} or {Band.UNKNOWN.name}",
-            )
-
-        status, response = self.submit_task(
-            self._set_operate_mode, args=[], task_callback=task_callback
-        )
-        return status, response
 
     def _set_operate_mode(self, task_callback=None, task_abort_event=None):
         assert task_callback, "task_callback has to be defined"
@@ -732,21 +712,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     result="ConfigureBand2 completed",
                 )
                 return
-
-    def set_stow_mode(
-        self,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STOW mode"""
-
-        self._dish_mode_model.is_command_allowed(
-            dishmode=DishMode(self.component_state["dishmode"]).name,
-            command_name="SetStowMode",
-        )
-        status, response = self.submit_task(
-            self._set_stow_mode, args=[], task_callback=task_callback
-        )
-        return status, response
 
     def _set_stow_mode(self, task_callback=None, task_abort_event=None):
         """Call Stow on DS"""
