@@ -340,6 +340,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def on_dish_mode(self, command_name, task_callback, task_abort_event):
+        command_mode_map = {
+            "SetStandbyLPMode": DishMode.STANDBY_LP,
+            "SetStandbyFPMode": DishMode.STANDBY_FP,
+            "SetOperateMode": DishMode.OPERATE,
+            "Stow": DishMode.STOW,
+        }
         while True:
             if task_abort_event.is_set():
                 task_callback(
@@ -354,12 +360,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
             current_dish_mode = self.component_state["dishmode"]
-            if (
-                current_dish_mode != DishMode.STANDBY_LP
-                or current_dish_mode != DishMode.STANDBY_FP
-                or current_dish_mode != DishMode.OPERATE
-                or current_dish_mode != DishMode.STOW
-            ):
+            desired_dish_mode = command_mode_map[command_name]
+
+            if current_dish_mode != desired_dish_mode:
                 task_abort_event.wait(timeout=1)
                 self._update_dishmode_component_states()
             else:
