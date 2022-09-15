@@ -448,11 +448,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     progress=f"SetOperateMode called on SPF, ID {command_id}"
                 )
             else:
-                _, command_id = command("CaptureData", True)
-                device_command_ids[device] = command_id
-                task_callback(
-                    progress=f"CaptureData called on SPFRx, ID {command_id}"
-                )
+                # allow request only when there's a configured band
+                if self.component_state["configuredband"] not in [
+                    Band.NONE,
+                    Band.UNKNOWN,
+                ]:
+                    _, command_id = command("CaptureData", True)
+                    device_command_ids[device] = command_id
+                    task_callback(
+                        progress=f"CaptureData called on SPFRx, ID {command_id}"
+                    )
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
         task_callback(progress="Awaiting dishMode change to STANDBY_FP")
