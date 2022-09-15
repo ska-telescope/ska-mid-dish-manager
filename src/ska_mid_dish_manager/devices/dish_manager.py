@@ -99,8 +99,12 @@ class DishManager(SKAController):
             )
             return
         for comp_state_name, comp_state_value in kwargs.items():
-            dm_attr_name = self._component_state_attr_map[comp_state_name]
-            dm_attr_var_name = self._dish_manager_attr_var_map[dm_attr_name]
+            dm_attr_name = self._component_state_attr_map.get(
+                comp_state_name, comp_state_name
+            )
+            dm_attr_var_name = self._dish_manager_attr_var_map.get(
+                dm_attr_name, dm_attr_name
+            )
             setattr(self, dm_attr_var_name, comp_state_value)
             self.push_change_event(dm_attr_name, comp_state_value)
 
