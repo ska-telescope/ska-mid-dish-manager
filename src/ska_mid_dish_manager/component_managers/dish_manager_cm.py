@@ -59,6 +59,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             *args,
             max_workers=max_workers,
             dishmode=None,
+            capturing=False,
             healthstate=None,
             pointingstate=None,
             b1capabilitystate=None,
@@ -90,6 +91,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             logger,
             operatingmode=None,
             configuredband=Band.NONE,
+            capturingdata=False,
             healthstate=HealthState.UNKNOWN,
             b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
             b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -120,6 +122,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "dishmode": DishMode.STARTUP,
             "healthstate": HealthState.UNKNOWN,
             "configuredband": Band.NONE,
+            "capturing": False,
+            "pointingState": PointingState.NONE,
             "b1capabilitystate": CapabilityStates.UNKNOWN,
             "b2capabilitystate": CapabilityStates.UNKNOWN,
             "b3capabilitystate": CapabilityStates.UNKNOWN,
@@ -226,10 +230,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(achievedtargetlock=True)
 
         # spf bandInFocus
-        if (
-            "indexerposition" in ds_comp_state
-            and "configuredband" in spfrx_comp_state
-        ):
+        if "indexerposition" in kwargs and "configuredband" in kwargs:
             band_in_focus = self._dish_mode_model.compute_spf_band_in_focus(
                 ds_comp_state, spfrx_comp_state
             )
@@ -264,6 +265,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_comp_state,
             )
             self._update_component_state(configuredband=configured_band)
+
+        # update capturing attribute when SPFRx captures data
+        if "capturingdata" in kwargs:
+            self.logger.info(
+                ("Updating capturing with SPFRx [%s]"),
+                str(spfrx_comp_state),
+            )
+            self._update_component_state(
+                capturing=spfrx_comp_state["capturingdata"]
+            )
 
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode
