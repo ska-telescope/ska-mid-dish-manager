@@ -41,7 +41,6 @@ pytest-timeout = "^2.1.0"
 networkx = "2.6.3"
 transitions = "^0.8.11"
 rule-engine = "^3.5.0"
-setuptools = "^65.3.0"
 
 [tool.pylint.messages_control]
 disable = ["duplicate-code", "fixme"]

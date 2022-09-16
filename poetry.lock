@@ -736,7 +736,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "ee0c614d39c56ae376112ab3804ad8b50b4fc764b5a2e859c7966085d87f6c8f"
+content-hash = "d82028fa73b1cc95d336cd5f9d0dcac4571c66fd6f8972bf22803652b700bb70"
 
 [metadata.files]
 argparse = []

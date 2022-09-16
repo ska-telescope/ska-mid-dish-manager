@@ -6,7 +6,7 @@ FROM $BASE_IMAGE
 
 # install poetry
 USER root
-RUN pip3 install poetry
+RUN pip3 install poetry==1.1.13
 
 COPY pyproject.toml poetry.lock* ./
 
