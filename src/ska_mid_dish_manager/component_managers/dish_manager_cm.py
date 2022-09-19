@@ -123,7 +123,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "healthstate": HealthState.UNKNOWN,
             "configuredband": Band.NONE,
             "capturing": False,
-            "pointingState": PointingState.NONE,
+            "pointingState": PointingState.UNKNOWN,
             "b1capabilitystate": CapabilityStates.UNKNOWN,
             "b2capabilitystate": CapabilityStates.UNKNOWN,
             "b3capabilitystate": CapabilityStates.UNKNOWN,
@@ -158,7 +158,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 self._update_component_state(healthstate=HealthState.FAILED)
 
-    # pylint: disable=unused-argument
+    # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):
 
         ds_comp_state = self.component_managers["DS"].component_state
@@ -466,6 +466,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ]:
                     _, command_id = command("CaptureData", True)
                     device_command_ids[device] = command_id
+                    # flake8: noqa: E501
                     task_callback(
                         progress=f"CaptureData called on SPFRx, ID {command_id}"
                     )
@@ -708,11 +709,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             if device == "DS":
                 _, command_id = command("SetIndexPosition", 2)
+                # flake8: noqa: E501
                 task_callback(
                     progress=f"SetIndexPosition called on DS, ID {command_id}"
                 )
             else:
                 _, command_id = command("ConfigureBand2", None)
+                # flake8: noqa: E501
                 task_callback(
                     progress=f"ConfigureBand2 called on SPFRx, ID {command_id}"
                 )
