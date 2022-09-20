@@ -55,6 +55,7 @@ class EventStore:
                 events.append(event)
                 if not event.attr_value:
                     continue
+
                 if isinstance(event.attr_value.value, np.ndarray):
                     if (event.attr_value.value != value).all():
                         continue
