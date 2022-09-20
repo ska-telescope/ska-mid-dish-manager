@@ -191,7 +191,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
             try:
                 value = event_data.attr_value.value
-                value = value if isinstance(value, np.ndarray) else list(value)
+                if isinstance(value, np.ndarray):
+                    value = list(value)
                 self._update_component_state(**{attr_name: value})
             # Catch any errors and log it otherwise it remains hidden
             except Exception:  # pylint:disable=broad-except
