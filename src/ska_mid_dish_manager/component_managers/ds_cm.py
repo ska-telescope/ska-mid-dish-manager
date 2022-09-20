@@ -42,6 +42,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "healthState",
             "pointingState",
             "indexerPosition",
+            "achievedPointing",
         ]
         for mon_attr in self._monitored_attr_names:
             self.monitor_attribute(mon_attr)

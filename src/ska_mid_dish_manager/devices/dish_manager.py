@@ -177,6 +177,7 @@ class DishManager(SKAController):
                 "b4CapabilityState": "_b4_capability_state",
                 "b5aCapabilityState": "_b5a_capability_state",
                 "b5bCapabilityState": "_b5b_capability_state",
+                "achievedPointing": "_achieved_pointing",
             }
 
             device._component_state_attr_map = {
@@ -191,6 +192,7 @@ class DishManager(SKAController):
                 "b4capabilitystate": "b4CapabilityState",
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
+                "achievedpointing": "achievedPointing",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)

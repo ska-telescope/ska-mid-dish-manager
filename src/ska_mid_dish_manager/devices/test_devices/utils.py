@@ -6,6 +6,7 @@ import time
 from functools import wraps
 from typing import Any, List, Tuple
 
+import numpy as np
 import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
@@ -46,6 +47,7 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
+
         try:
             events = []
             while True:
@@ -53,6 +55,12 @@ class EventStore:
                 events.append(event)
                 if not event.attr_value:
                     continue
+                if isinstance(event.attr_value.value, np.ndarray):
+                    if (event.attr_value.value != value).all():
+                        continue
+                    if (event.attr_value.value == value).all():
+                        return True
+
                 if event.attr_value.value != value:
                     continue
                 if event.attr_value.value == value:

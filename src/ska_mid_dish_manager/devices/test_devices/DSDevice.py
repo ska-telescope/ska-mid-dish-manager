@@ -52,6 +52,7 @@ class DSDevice(Device):
         self._health_state = HealthState.UNKNOWN
         self._indexer_position = IndexerPosition.UNKNOWN
         self._pointing_state = PointingState.UNKNOWN
+        self._achieved_pointing = [1.0, 2.0, 3.0]
         # set manual change event for double scalars
         attributes = (
             "non_polled_attr_1",
@@ -61,6 +62,7 @@ class DSDevice(Device):
             "configuredBand",
             "indexerPosition",
             "pointingState",
+            "achievedPointing",
         )
         for attribute_name in attributes:
             self.set_change_event(attribute_name, True, False)
@@ -154,6 +156,19 @@ class DSDevice(Device):
     async def configuredBand(self, band_number: Band):
         self._configured_band = band_number
         self.push_change_event("configuredBand", self._configured_band)
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=3,
+        access=AttrWriteType.READ_WRITE,
+    )
+    async def achievedPointing(self):
+        return self._achieved_pointing
+
+    @achievedPointing.write
+    async def achievedPointing(self, argin):
+        self._achieved_pointing = argin
+        self.push_change_event("achievedPointing", self._achieved_pointing)
 
     # --------
     # Commands

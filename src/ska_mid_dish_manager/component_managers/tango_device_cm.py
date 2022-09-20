@@ -8,6 +8,7 @@ from queue import Empty, Queue
 from threading import Event
 from typing import Any, AnyStr, Callable, List, Optional
 
+import numpy as np
 import tango
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
 from ska_tango_base.control_model import CommunicationStatus
@@ -189,9 +190,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._component_state[attr_name] = None
 
             try:
-                self._update_component_state(
-                    **{attr_name: event_data.attr_value.value}
-                )
+                value = event_data.attr_value.value
+                if isinstance(value, np.ndarray):
+                    value = list(value)
+                self._update_component_state(**{attr_name: value})
             # Catch any errors and log it otherwise it remains hidden
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error updating component state")
