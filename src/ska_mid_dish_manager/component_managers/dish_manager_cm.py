@@ -466,9 +466,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ]:
                     _, command_id = command("CaptureData", True)
                     device_command_ids[device] = command_id
-                    # flake8: noqa: E501
                     task_callback(
-                        progress=f"CaptureData called on SPFRx, ID {command_id}"
+                        progress=f"CaptureData called on SPFRx, ID {command_id}"  # noqa: E501
                     )
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
@@ -709,15 +708,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             if device == "DS":
                 _, command_id = command("SetIndexPosition", 2)
-                # flake8: noqa: E501
                 task_callback(
-                    progress=f"SetIndexPosition called on DS, ID {command_id}"
+                    progress=f"SetIndexPosition called on DS, ID {command_id}"  # noqa: E501
                 )
             else:
                 _, command_id = command("ConfigureBand2", None)
-                # flake8: noqa: E501
                 task_callback(
-                    progress=f"ConfigureBand2 called on SPFRx, ID {command_id}"
+                    progress=f"ConfigureBand2 called on SPFRx, ID {command_id}"  # noqa: E501
                 )
 
             device_command_ids[device] = command_id
