@@ -101,6 +101,7 @@ class DishManager(SKAController):
             return
 
         def change_case(attr_name):
+            # pylint: disable=line-too-long
             return f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
 
         for comp_state_name, comp_state_value in kwargs.items():
