@@ -115,7 +115,7 @@ class TestDishManagerBehaviour:
         # band should be configured to call command on SPFRx device
         # and have it propagated to the long running command result
         self.dish_manager_cm._update_component_state(configuredband=Band.B2)
-    
+
         self.device_proxy.SetStandbyFPMode()
 
         self.ds_cm._update_component_state(
