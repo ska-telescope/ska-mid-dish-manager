@@ -53,6 +53,7 @@ class DSDevice(Device):
         self._indexer_position = IndexerPosition.UNKNOWN
         self._pointing_state = PointingState.UNKNOWN
         self._achieved_pointing = [1.0, 2.0, 3.0]
+        self._desired_pointing = [0.0, 0.0, 0.0]
         # set manual change event for double scalars
         attributes = (
             "non_polled_attr_1",
@@ -63,6 +64,7 @@ class DSDevice(Device):
             "indexerPosition",
             "pointingState",
             "achievedPointing",
+            "desiredPointing",
         )
         for attribute_name in attributes:
             self.set_change_event(attribute_name, True, False)
@@ -169,6 +171,19 @@ class DSDevice(Device):
     async def achievedPointing(self, argin):
         self._achieved_pointing = argin
         self.push_change_event("achievedPointing", self._achieved_pointing)
+    
+    @attribute(
+        dtype=(float,),
+        max_dim_x=3,
+        access=AttrWriteType.READ_WRITE,
+    )
+    async def desiredPointing(self):
+        return self._desired_pointing
+
+    @desiredPointing.write
+    async def desiredPointing(self, argin):
+        self._desired_pointing = argin
+        self.push_change_event("desiredPointing", self._desired_pointing)
 
     # --------
     # Commands
