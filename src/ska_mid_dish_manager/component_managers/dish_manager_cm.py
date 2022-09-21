@@ -123,7 +123,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "healthstate": HealthState.UNKNOWN,
             "configuredband": Band.NONE,
             "capturing": False,
-            "pointingState": PointingState.UNKNOWN,
+            "pointingstate": PointingState.UNKNOWN,
             "b1capabilitystate": CapabilityStates.UNKNOWN,
             "b2capabilitystate": CapabilityStates.UNKNOWN,
             "b3capabilitystate": CapabilityStates.UNKNOWN,
