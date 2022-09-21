@@ -171,7 +171,7 @@ class DSDevice(Device):
     async def achievedPointing(self, argin):
         self._achieved_pointing = argin
         self.push_change_event("achievedPointing", self._achieved_pointing)
-    
+
     @attribute(
         dtype=(float,),
         max_dim_x=3,
