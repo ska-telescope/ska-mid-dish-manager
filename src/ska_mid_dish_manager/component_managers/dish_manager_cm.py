@@ -230,7 +230,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(achievedtargetlock=True)
 
         # spf bandInFocus
-        if "indexerposition" in kwargs and "configuredband" in kwargs:
+        if (
+            "indexerposition" in ds_comp_state
+            and "configuredband" in spfrx_comp_state
+        ):
             band_in_focus = self._dish_mode_model.compute_spf_band_in_focus(
                 ds_comp_state, spfrx_comp_state
             )
