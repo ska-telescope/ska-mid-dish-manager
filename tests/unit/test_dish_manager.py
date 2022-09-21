@@ -14,6 +14,7 @@ from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
+    Band,
     DishMode,
     DSOperatingMode,
     SPFOperatingMode,
@@ -111,6 +112,10 @@ class TestDishManagerBehaviour:
             tango.EventType.CHANGE_EVENT,
             event_store,
         )
+        # band should be configured to call command on SPFRx device
+        # and have it propagated to the long running command result
+        self.dish_manager_cm._update_component_state(configuredband=Band.B2)
+    
         self.device_proxy.SetStandbyFPMode()
 
         self.ds_cm._update_component_state(
