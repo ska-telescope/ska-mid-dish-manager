@@ -270,7 +270,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
-        if "capturingdata" in kwargs:
+        if "capturingdata" in spfrx_comp_state:
             self.logger.info(
                 ("Updating capturing with SPFRx [%s]"),
                 str(spfrx_comp_state),
