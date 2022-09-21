@@ -235,7 +235,9 @@ class SPFRxDevice(Device):
     async def SetStandbyMode(self):
         LOGGER.info("Called SetStandbyMode")
         self._operating_mode = SPFRxOperatingMode.STANDBY
+        self._capturing_data = False
         self.push_change_event("operatingMode", self._operating_mode)
+        self.push_change_event("capturingData", self._capturing_data)
 
     @random_delay_execution
     @command(dtype_in=None, doc_in="Set SetStartupMode", dtype_out=None)
