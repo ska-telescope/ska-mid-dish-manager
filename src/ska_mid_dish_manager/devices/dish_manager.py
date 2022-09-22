@@ -7,6 +7,7 @@ and the subservient devices
 """
 
 import weakref
+from functools import reduce
 from typing import List, Optional, Tuple
 
 from ska_tango_base import SKAController
@@ -98,9 +99,29 @@ class DishManager(SKAController):
                 "Init not completed, but state is being updated [%s]", kwargs
             )
             return
+
+        def change_case(attr_name):
+            """Convert camel case string to snake case
+
+            The snake case output is prefixed by an underscore to
+            match the naming convention of the attribute variables.
+
+            Example:
+            dishMode > _dish_mode
+            capture > _capture
+            b3CapabilityState > _b3_capability_state
+
+            Source: https://www.geeksforgeeks.org/
+            python-program-to-convert-camel-case-string-to-snake-case/
+            """
+            # pylint: disable=line-too-long
+            return f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
+
         for comp_state_name, comp_state_value in kwargs.items():
-            dm_attr_name = self._component_state_attr_map[comp_state_name]
-            dm_attr_var_name = self._dish_manager_attr_var_map[dm_attr_name]
+            dm_attr_name = self._component_state_attr_map.get(
+                comp_state_name, comp_state_name
+            )
+            dm_attr_var_name = change_case(dm_attr_name)
             setattr(self, dm_attr_var_name, comp_state_value)
             self.push_change_event(dm_attr_name, comp_state_value)
 
@@ -164,20 +185,6 @@ class DishManager(SKAController):
             device.op_state_model.perform_action("component_standby")
 
             # push change events, needed to use testing library
-
-            device._dish_manager_attr_var_map = {
-                "dishMode": "_dish_mode",
-                "pointingState": "_pointing_state",
-                "configuredBand": "_configured_band",
-                "healthState": "_health_state",
-                "achievedTargetLock": "_achieved_target_lock",
-                "b1CapabilityState": "_b1_capability_state",
-                "b2CapabilityState": "_b2_capability_state",
-                "b3CapabilityState": "_b3_capability_state",
-                "b4CapabilityState": "_b4_capability_state",
-                "b5aCapabilityState": "_b5a_capability_state",
-                "b5bCapabilityState": "_b5b_capability_state",
-            }
 
             device._component_state_attr_map = {
                 "dishmode": "dishMode",

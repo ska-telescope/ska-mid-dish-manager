@@ -36,6 +36,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         )
         self._monitored_attr_names = [
             "operatingMode",
+            "capturingData",
             "configuredBand",
             "healthState",
             "b1CapabilityState",
