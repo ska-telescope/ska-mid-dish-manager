@@ -68,7 +68,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b5acapabilitystate=None,
             b5bcapabilitystate=None,
             achievedtargetlock=None,
-            achievedpointing=[0, 0, 0],
+            achievedpointing=[0.0, 0.0, 30.0],
             configuredband=Band.NONE,
             **kwargs,
         )
@@ -83,7 +83,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achievedtargetlock=None,
             indexerposition=IndexerPosition.UNKNOWN,
             powerstate=DSPowerState.UNKNOWN,
-            achievedpointing=[0, 0, 0],
+            achievedpointing=[0.0, 0.0, 30.0],
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )

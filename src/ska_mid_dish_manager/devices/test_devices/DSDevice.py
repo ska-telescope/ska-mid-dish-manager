@@ -52,8 +52,8 @@ class DSDevice(Device):
         self._health_state = HealthState.UNKNOWN
         self._indexer_position = IndexerPosition.UNKNOWN
         self._pointing_state = PointingState.UNKNOWN
-        self._achieved_pointing = [1.0, 2.0, 3.0]
-        self._desired_pointing = [0.0, 0.0, 0.0]
+        self._achieved_pointing = [0.0, 0.0, 30.0]
+        self._desired_pointing = [0.0, 0.0, 30.0]
         # set manual change event for double scalars
         attributes = (
             "non_polled_attr_1",
