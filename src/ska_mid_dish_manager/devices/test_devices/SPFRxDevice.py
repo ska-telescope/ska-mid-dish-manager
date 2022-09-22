@@ -251,7 +251,10 @@ class SPFRxDevice(Device):
     # pylint: disable=unused-argument
     async def CaptureData(self, boolean_value):
         LOGGER.info("Called CaptureData")
-        self._operating_mode = SPFRxOperatingMode.DATA_CAPTURE
+        if boolean_value:
+            self._operating_mode = SPFRxOperatingMode.DATA_CAPTURE
+        else:
+            self._operating_mode = SPFRxOperatingMode.STANDBY
         self._capturing_data = boolean_value
         self.push_change_event("operatingMode", self._operating_mode)
         self.push_change_event("capturingData", self._capturing_data)
