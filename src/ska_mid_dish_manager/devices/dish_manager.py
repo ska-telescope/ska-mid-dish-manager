@@ -101,6 +101,19 @@ class DishManager(SKAController):
             return
 
         def change_case(attr_name):
+            """Convert camel case string to snake case
+
+            The snake case output is prefixed by an underscore to
+            match the naming convention of the attribute variables.
+
+            Example:
+            dishMode > _dish_mode
+            capture > _capture
+            b3CapabilityState > _b3_capability_state
+
+            Source: https://www.geeksforgeeks.org/
+            python-program-to-convert-camel-case-string-to-snake-case/
+            """
             # pylint: disable=line-too-long
             return f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
 
