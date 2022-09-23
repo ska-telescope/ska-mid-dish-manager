@@ -35,6 +35,7 @@ class SPFRxDevice(Device):
     def init_device(self):
         super().init_device()
         self._operating_mode = SPFRxOperatingMode.STANDBY
+        self._capturing_data = False
         self._configured_band = Band.NONE
         self._health_state = HealthState.UNKNOWN
         self._b1_capability_state = SPFRxCapabilityStates.UNKNOWN
@@ -47,6 +48,7 @@ class SPFRxDevice(Device):
         change_event_attributes = (
             "operatingMode",
             "healthState",
+            "capturingData",
             "configuredBand",
             "b1CapabilityState",
             "b2CapabilityState",
@@ -216,6 +218,14 @@ class SPFRxDevice(Device):
         self.push_change_event("configuredBand", self._configured_band)
         LOGGER.debug("Wrote configuredBand %s", self._configured_band)
 
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ,
+    )
+    async def capturingData(self):
+        LOGGER.debug("Read capturingData")
+        return self._capturing_data
+
     # --------
     # Commands
     # --------
@@ -225,7 +235,9 @@ class SPFRxDevice(Device):
     async def SetStandbyMode(self):
         LOGGER.info("Called SetStandbyMode")
         self._operating_mode = SPFRxOperatingMode.STANDBY
+        self._capturing_data = False
         self.push_change_event("operatingMode", self._operating_mode)
+        self.push_change_event("capturingData", self._capturing_data)
 
     @random_delay_execution
     @command(dtype_in=None, doc_in="Set SetStartupMode", dtype_out=None)
@@ -239,8 +251,13 @@ class SPFRxDevice(Device):
     # pylint: disable=unused-argument
     async def CaptureData(self, boolean_value):
         LOGGER.info("Called CaptureData")
-        self._operating_mode = SPFRxOperatingMode.DATA_CAPTURE
+        if boolean_value:
+            self._operating_mode = SPFRxOperatingMode.DATA_CAPTURE
+        else:
+            self._operating_mode = SPFRxOperatingMode.STANDBY
+        self._capturing_data = boolean_value
         self.push_change_event("operatingMode", self._operating_mode)
+        self.push_change_event("capturingData", self._capturing_data)
 
     @random_delay_execution
     @command(dtype_in=None, doc_in="Set ConfigureBand2", dtype_out=None)

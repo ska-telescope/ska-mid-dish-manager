@@ -59,6 +59,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             *args,
             max_workers=max_workers,
             dishmode=None,
+            capturing=False,
             healthstate=None,
             pointingstate=None,
             b1capabilitystate=None,
@@ -92,6 +93,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             logger,
             operatingmode=None,
             configuredband=Band.NONE,
+            capturingdata=False,
             healthstate=HealthState.UNKNOWN,
             b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
             b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -122,6 +124,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "dishmode": DishMode.STARTUP,
             "healthstate": HealthState.UNKNOWN,
             "configuredband": Band.NONE,
+            "capturing": False,
+            "pointingstate": PointingState.UNKNOWN,
             "b1capabilitystate": CapabilityStates.UNKNOWN,
             "b2capabilitystate": CapabilityStates.UNKNOWN,
             "b3capabilitystate": CapabilityStates.UNKNOWN,
@@ -274,6 +278,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_comp_state,
             )
             self._update_component_state(configuredband=configured_band)
+
+        # update capturing attribute when SPFRx captures data
+        if "capturingdata" in spfrx_comp_state:
+            self.logger.info(
+                ("Updating capturing with SPFRx [%s]"),
+                str(spfrx_comp_state),
+            )
+            self._update_component_state(
+                capturing=spfrx_comp_state["capturingdata"]
+            )
 
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode
@@ -458,11 +472,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     progress=f"SetOperateMode called on SPF, ID {command_id}"
                 )
             else:
-                _, command_id = command("CaptureData", True)
-                device_command_ids[device] = command_id
-                task_callback(
-                    progress=f"CaptureData called on SPFRx, ID {command_id}"
-                )
+                # allow request only when there's a configured band
+                if self.component_state["configuredband"] not in [
+                    Band.NONE,
+                    Band.UNKNOWN,
+                ]:
+                    _, command_id = command("CaptureData", True)
+                    device_command_ids[device] = command_id
+                    task_callback(
+                        progress=f"CaptureData called on SPFRx, ID {command_id}"  # noqa: E501
+                    )
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
         task_callback(progress="Awaiting dishMode change to STANDBY_FP")
@@ -703,12 +722,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if device == "DS":
                 _, command_id = command("SetIndexPosition", 2)
                 task_callback(
-                    progress=f"SetIndexPosition called on DS, ID {command_id}"
+                    progress=f"SetIndexPosition called on DS, ID {command_id}"  # noqa: E501
                 )
             else:
                 _, command_id = command("ConfigureBand2", None)
                 task_callback(
-                    progress=f"ConfigureBand2 called on SPFRx, ID {command_id}"
+                    progress=f"ConfigureBand2 called on SPFRx, ID {command_id}"  # noqa: E501
                 )
 
             device_command_ids[device] = command_id
