@@ -198,6 +198,7 @@ class DishManager(SKAController):
                 "b4capabilitystate": "b4CapabilityState",
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
+                "achievedpointing": "achievedPointing",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -498,6 +499,10 @@ class DishManager(SKAController):
         """Set the desiredPointing"""
         # pylint: disable=attribute-defined-outside-init
         self._desired_pointing = value
+        ds_cm = self.component_manager.component_managers["DS"]
+        # pylint: disable=protected-access
+        ds_device_proxy = ds_cm._device_proxy
+        ds_device_proxy.desiredPointing = value
 
     @attribute(
         dtype=DishMode,
