@@ -107,7 +107,7 @@ def test_model_dish_mode_transition_accuracy(
 
 # Order DS, SPF, SPFRX
 @pytest.mark.parametrize(
-    ("ds_comp_state, spf_comp_state, spfrx_comp_state" ", expected_dish_mode"),
+    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
             dict(operatingmode=DSOperatingMode.STANDBY_LP),
@@ -324,7 +324,7 @@ def test_compute_configured_band(
 
 
 @pytest.mark.parametrize(
-    ("ds_comp_state, spfrx_comp_state" ", expected_band_number"),
+    ("ds_comp_state, spfrx_comp_state, expected_band_number"),
     [
         (
             dict(indexerposition=IndexerPosition.B1),

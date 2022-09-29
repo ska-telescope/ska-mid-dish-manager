@@ -390,7 +390,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if task_callback:
             task_callback(TaskStatus.COMPLETED, result=str(result))
 
-    # pylint: disable=no-self-use
     @_check_connection
     def execute_command(self, device_proxy, command_name, command_arg):
         """Check the connection and execute the command on the Tango device"""

@@ -746,7 +746,6 @@ class DishManager(SKAController):
     # Commands
     # --------
 
-    # pylint: disable=no-self-use
     @command(
         dtype_in=str,
         doc_in="Indicates the time, in UTC, at which command execution "
