@@ -8,5 +8,3 @@ Tango Devices
 
   DishManager Tango Device<dish_manager>
   DS Test Tango Device<ds>
-  SPF Test Tango Device<spf>
-  SPFRx Test Tango Device<spfrx>

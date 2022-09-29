@@ -5,6 +5,13 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 1.3.0
+*************
+
+- Removed SPF and SPFRx devices from codebase and helm charts
+- Helm chart does not install SPF and SPFRx by default
+  - enable with `--set "ska-mid-dish-simulators.enabled=true"`
+
 Version 1.2.0
 *************
 

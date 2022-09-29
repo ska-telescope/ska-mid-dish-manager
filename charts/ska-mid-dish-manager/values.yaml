@@ -1,5 +1,8 @@
 enabled: true
 
+ska-mid-dish-simulators:
+  enabled: false
+
 system: SW-infrastructure
 subsystem: ska-dish-lmc
 telescope: SKA-mid
@@ -35,7 +38,7 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 1.2.0
+    tag: 1.3.0
     pullPolicy: IfNotPresent
 
 resources:
@@ -51,7 +54,3 @@ deviceServers:
     file: "data/dish_manager.yaml"
   dsdevice:
     file: "data/ds_device.yaml"
-  spfdevice:
-    file: "data/spf_device.yaml"
-  spfrxdevice:
-    file: "data/spfrx_device.yaml"
