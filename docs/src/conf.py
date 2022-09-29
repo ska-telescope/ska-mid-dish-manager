@@ -73,7 +73,7 @@ copyright = '2022, KAROO Team'
 author = 'KAROO Team'
 
 # The full version, including alpha/beta/rc tags
-release = '1.3.0'
+release = '1.2.0'
 
 
 # -- General configuration ---------------------------------------------------
