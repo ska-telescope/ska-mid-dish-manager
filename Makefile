@@ -30,12 +30,17 @@ OCI_TAG = $(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
 CI_REGISTRY ?= registry.gitlab.com
 
 # Use the previously built image when running in the pipeline
+# ifneq ($(CI_JOB_ID),)
+# CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
+# 	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
+# 	--set dishmanager.image.tag=$(OCI_TAG) \
+# 	--set ska-mid-dish-simulators.enabled=true 
+# K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
+# endif
+
 ifneq ($(CI_JOB_ID),)
-CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
-	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
-	--set dishmanager.image.tag=$(OCI_TAG) \
-	--set ska-mid-dish-simulators.enabled=true 
-K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
+CUSTOM_VALUES = --set ska-mid-dish-simulators.enabled=true 
+K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):1.2.0
 endif
 
 K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
