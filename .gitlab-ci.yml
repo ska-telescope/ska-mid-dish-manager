@@ -17,6 +17,9 @@ stages:
 
 # Standardised included jobs
 
+docs-build:
+  image: artefact.skao.int/ska-cicd-k8s-tools-build-deploy:0.7.5
+
 include:
   # Helm Chart linting and Publish
   - project: 'ska-telescope/templates-repository'
