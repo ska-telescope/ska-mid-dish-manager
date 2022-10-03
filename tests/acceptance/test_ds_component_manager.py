@@ -48,7 +48,11 @@ def test_ds_cm(component_state_store, ds_device_fqdn):
 
     device_proxy.powerState = DSPowerState.OFF
     device_proxy.SetStandbyFPMode()
-    component_state_store.wait_for_value("powerstate", DSPowerState.FULL_POWER)
+    component_state_store.wait_for_value(
+        "powerstate", DSPowerState.FULL_POWER, timeout=7
+    )
 
     com_man.stop_communicating()
-    component_state_store.wait_for_value("connection_state", "disconnected")
+    component_state_store.wait_for_value(
+        "connection_state", "disconnected", timeout=7
+    )
