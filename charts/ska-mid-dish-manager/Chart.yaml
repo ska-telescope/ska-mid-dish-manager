@@ -20,6 +20,9 @@ maintainers:
   - name: Phelokazi dube
     email: pdube@sarao.ac.za
 dependencies:
+- name: ska-tango-util
+  version: 0.3.17
+  repository: https://artefact.skao.int/repository/helm-internal
 - name: ska-mid-dish-simulators
   version: 0.0.1
   repository: https://artefact.skao.int/repository/helm-internal
