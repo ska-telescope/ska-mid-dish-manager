@@ -4,7 +4,7 @@
 image: $SKA_K8S_TOOLS_DOCKER_BUILDER_IMAGE
 
 variables:
-  # CHARTS_TO_PUBLISH: ska-mid-dish-manager
+  CHARTS_TO_PUBLISH: ska-mid-dish-manager
   GIT_SUBMODULE_STRATEGY: recursive
 
 stages:
@@ -32,7 +32,7 @@ include:
 
   # k8s test
   - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/k8s.gitlab-ci.yml'
+    file: 'gitlab-ci/includes/k8s-test-runner.gitlab-ci.yml'
 
   # Docs pages
   - project: 'ska-telescope/templates-repository'
