@@ -2,7 +2,6 @@
 # pylint: disable=invalid-name
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=missing-function-docstring
-# pylint: disable=no-self-use
 # pylint: disable=protected-access
 # pylint: disable=too-many-public-methods
 # pylint: disable=attribute-defined-outside-init
