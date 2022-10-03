@@ -8,7 +8,7 @@ IMAGE=$(CAR_OCI_REGISTRY_HOST)/$(NAME)
 DOCKER_BUILD_CONTEXT=.
 DOCKER_FILE_PATH=Dockerfile
 
-MINIKUBE ?= false ## Minikube or not
+MINIKUBE ?= true ## Minikube or not
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 
 ifeq ($(MAKECMDGOALS),python-test)
@@ -34,6 +34,7 @@ ifneq ($(CI_JOB_ID),)
 CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
 	--set dishmanager.image.tag=$(OCI_TAG) \
+	--set global.minikube=false \
 	--set ska-mid-dish-simulators.enabled=true
 K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 endif
