@@ -8,7 +8,7 @@ IMAGE=$(CAR_OCI_REGISTRY_HOST)/$(NAME)
 DOCKER_BUILD_CONTEXT=.
 DOCKER_FILE_PATH=Dockerfile
 
-MINIKUBE ?= true ## Minikube or not
+MINIKUBE ?= false ## Minikube or not
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 
 ifeq ($(MAKECMDGOALS),python-test)
