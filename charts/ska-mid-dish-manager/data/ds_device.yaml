@@ -16,8 +16,8 @@ server:
 depends_on:
   - device: sys/database/2
 image:
-  registry: "{{.Values.dishmanager.image.registry}}"
-  image: "{{.Values.dishmanager.image.image}}"
-  tag: "{{.Values.dishmanager.image.tag}}"
-  pullPolicy: "{{.Values.dishmanager.image.pullPolicy}}"
+  registry: "{{.Values.dsdevice.image.registry}}"
+  image: "{{.Values.dsdevice.image.image}}"
+  tag: "{{.Values.dsdevice.image.tag}}"
+  pullPolicy: "{{.Values.dsdevice.image.pullPolicy}}"
 
