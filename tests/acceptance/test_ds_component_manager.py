@@ -30,14 +30,29 @@ def test_ds_cm(component_state_store, ds_device_fqdn):
     )
     com_man.start_communicating()
     component_state_store.wait_for_value("connection_state", "monitoring")
+
     device_proxy.SetStartupMode()
     component_state_store.wait_for_value(
         "operatingmode", DSOperatingMode.STARTUP
     )
+
     device_proxy.SetStandbyFPMode()
     component_state_store.wait_for_value(
         "operatingmode", DSOperatingMode.STANDBY_FP
     )
-    component_state_store.wait_for_value("powerstate", DSPowerState.FULL_POWER)
+
+    device_proxy.SetStandbyLPMode()
+    component_state_store.wait_for_value(
+        "operatingmode", DSOperatingMode.STANDBY_LP
+    )
+
+    device_proxy.powerState = DSPowerState.OFF
+    device_proxy.SetStandbyFPMode()
+    component_state_store.wait_for_value(
+        "powerstate", DSPowerState.FULL_POWER, timeout=7
+    )
+
     com_man.stop_communicating()
-    component_state_store.wait_for_value("connection_state", "disconnected")
+    component_state_store.wait_for_value(
+        "connection_state", "disconnected", timeout=7
+    )

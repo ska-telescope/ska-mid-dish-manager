@@ -181,7 +181,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if "achievedpointing" in kwargs:
             self.logger.info(
-                ("Updating achievedPointing with DS achievedPointing" " [%s]"),
+                ("Updating achievedPointing with DS achievedPointing [%s]"),
                 str(ds_comp_state["achievedpointing"]),
             )
             new_position = ds_comp_state["achievedpointing"]

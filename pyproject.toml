@@ -11,7 +11,9 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
 ]
 packages = [
     { include = "ska_mid_dish_manager", from = "src" }
@@ -24,15 +26,13 @@ include = [
 DishManagerDS = 'ska_mid_dish_manager.devices.dish_manager:main'
 DishManagerTestDevice = 'ska_mid_dish_manager.devices.test_devices.DishManagerTestDevice:main'
 DSDevice = 'ska_mid_dish_manager.devices.test_devices.DSDevice:main'
-SPFDevice = 'ska_mid_dish_manager.devices.test_devices.SPFDevice:main'
-SPFRxDevice = 'ska_mid_dish_manager.devices.test_devices.SPFRxDevice:main'
 
 [[tool.poetry.source]]
 name = 'ska-nexus'
 url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 pytango = "9.3.3"
 ska-ser-logging = "^0.4.1"
 ska-tango-base = "^0.13.3"
@@ -41,6 +41,7 @@ pytest-timeout = "^2.1.0"
 networkx = "2.6.3"
 transitions = "^0.8.11"
 rule-engine = "^3.5.0"
+numpy = "1.23.0"
 
 [tool.pylint.messages_control]
 disable = ["duplicate-code", "fixme"]
@@ -57,8 +58,12 @@ pytest-cov = "^2.10.1"
 pytest-repeat = "^0.9.1"
 pylint-junit = "^0.3.2"
 pytest-json-report = "^1.4.1"
+pytest-forked = "^1.4.0"
+pytest-mock = "^3.9.0"
 mock = "^4.0.3"
 tango-simlib = "^0.9.4"
+pytest-bdd = "^6.0.1"
+requests = "^2.28.1"
 
 [tool.pytest.ini_options]
 testpaths = "tests"
