@@ -12,22 +12,6 @@ ska\_mid\_dish\_manager.devices.test\_devices.DSDevice module
    :undoc-members:
    :show-inheritance:
 
-ska\_mid\_dish\_manager.devices.test\_devices.SPFDevice module
---------------------------------------------------------------
-
-.. automodule:: ska_mid_dish_manager.devices.test_devices.SPFDevice
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ska\_mid\_dish\_manager.devices.test\_devices.SPFRxDevice module
-----------------------------------------------------------------
-
-.. automodule:: ska_mid_dish_manager.devices.test_devices.SPFRxDevice
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 ska\_mid\_dish\_manager.devices.test\_devices.TestDishManagerDevice module
 --------------------------------------------------------------------------
 
