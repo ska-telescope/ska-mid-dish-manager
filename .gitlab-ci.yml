@@ -23,6 +23,9 @@ docs-build:
 docs-pages:
   image: artefact.skao.int/ska-cicd-k8s-tools-build-deploy:0.7.5
 
+python-build-for-development:
+  image: artefact.skao.int/ska-cicd-k8s-tools-build-deploy:0.7.6
+
 include:
   # Helm Chart linting and Publish
   - project: 'ska-telescope/templates-repository'
