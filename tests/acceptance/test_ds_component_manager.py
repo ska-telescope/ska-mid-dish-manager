@@ -46,11 +46,7 @@ def test_ds_cm(component_state_store, ds_device_fqdn):
         "operatingmode", DSOperatingMode.STANDBY_LP
     )
 
-    device_proxy.powerState = DSPowerState.OFF
-    device_proxy.SetStandbyFPMode()
-    component_state_store.wait_for_value(
-        "powerstate", DSPowerState.FULL_POWER, timeout=7
-    )
+    assert "achievedPointing" in device_proxy.get_attribute_list()
 
     com_man.stop_communicating()
     component_state_store.wait_for_value(
