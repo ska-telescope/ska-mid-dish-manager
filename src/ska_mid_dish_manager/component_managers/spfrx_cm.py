@@ -13,7 +13,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint: disable=invalid-name, missing-function-docstring
+# pylint: disable=invalid-name, missing-function-docstring, signature-differs
 class SPFRxComponentManager(TangoDeviceComponentManager):
     """Specialization for SPFRx functionality"""
 
