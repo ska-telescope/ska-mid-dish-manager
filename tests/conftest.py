@@ -164,7 +164,10 @@ def component_state_store():
                     found_events.append(state)
             except queue.Empty as err:
                 raise RuntimeError(
-                    f"Never got a state with key [{key}], value [{value}], got [{found_events}]"
+                    (
+                        f"Never got a state with key [{key}], value "
+                        f"[{value}], got [{found_events}]"
+                    )
                 ) from err
 
         def clear_queue(self):
