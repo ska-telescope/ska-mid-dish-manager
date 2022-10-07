@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 1.4.0
+*************
+
+- Updated DS device to not be asyncio based
+
 Version 1.3.0
 *************
 
