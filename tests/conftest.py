@@ -155,15 +155,19 @@ def component_state_store():
             :rtype: bool
             """
             try:
+                found_events = []
                 while True:
                     state = self._queue.get(timeout=timeout)
                     if key in state:
                         if state[key] == value:
                             return True
-                    continue
+                    found_events.append(state)
             except queue.Empty as err:
                 raise RuntimeError(
-                    f"Never got a state with key [{key}], value [{value}]"
+                    (
+                        f"Never got a state with key [{key}], value "
+                        f"[{value}], got [{found_events}]"
+                    )
                 ) from err
 
         def clear_queue(self):
