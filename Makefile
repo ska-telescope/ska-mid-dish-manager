@@ -35,7 +35,8 @@ CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
 	--set dishmanager.image.tag=$(OCI_TAG) \
 	--set global.minikube=false \
-	--set ska-mid-dish-simulators.enabled=true
+	--set ska-mid-dish-simulators.enabled=true \
+	--set deviceServers.dsdevice.enabled=true
 K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 endif
 

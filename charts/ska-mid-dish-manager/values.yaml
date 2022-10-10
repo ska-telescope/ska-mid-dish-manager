@@ -52,5 +52,7 @@ resources:
 deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
+    enabled: true
   dsdevice:
     file: "data/ds_device.yaml"
+    enabled: false
