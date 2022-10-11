@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 1.5.0
+*************
+
+- Updated helm to only deploy the DS device when specifically asked for and not by default
+
 Version 1.4.0
 *************
 
