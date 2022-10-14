@@ -115,7 +115,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b2capabilitystate=SPFCapabilityStates.UNAVAILABLE,
             b3capabilitystate=SPFCapabilityStates.UNAVAILABLE,
             b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b5capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+            b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
+            b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
