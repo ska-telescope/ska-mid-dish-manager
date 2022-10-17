@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 1.6.0
+*************
+- Updated to latest ska-mid-dish-simulators chart
+- Updated capabilitystates accordingly
+
 Version 1.5.0
 *************
 
