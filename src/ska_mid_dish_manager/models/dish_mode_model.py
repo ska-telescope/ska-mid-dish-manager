@@ -529,10 +529,6 @@ class DishModeModel:
         # Add the generic name so the rules can be applied
         # SPF
         cap_state = spf_component_state.get(f"{band}capabilitystate", None)
-        if band in ["b5a", "b5b"]:
-            cap_state = spf_component_state.get(
-                f"{band[:-1]}capabilitystate", None
-            )
         spf_component_state["capabilitystate"] = cap_state
         # SPFRX
         cap_state = spfrx_component_state.get(f"{band}capabilitystate", None)

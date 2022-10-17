@@ -36,7 +36,7 @@ def test_capability_state_rule_unavailable(dish_mode_model):
         "indexerposition": None,
     }
     spf_component_state = {
-        "b5capabilitystate": SPFCapabilityStates.UNAVAILABLE
+        "b5bcapabilitystate": SPFCapabilityStates.UNAVAILABLE
     }
     spfrx_component_state = {
         "b5bcapabilitystate": SPFRxCapabilityStates.UNAVAILABLE
@@ -61,7 +61,7 @@ def test_capability_state_rule_standby(dish_mode_model):
     """Test the capabilityState rules"""
 
     ds_component_state = {"operatingmode": None, "indexerposition": None}
-    spf_component_state = {"b5capabilitystate": SPFCapabilityStates.STANDBY}
+    spf_component_state = {"b5acapabilitystate": SPFCapabilityStates.STANDBY}
     spfrx_component_state = {
         "b5acapabilitystate": SPFRxCapabilityStates.STANDBY
     }
@@ -361,7 +361,7 @@ class TestCapabilityStates:
             operatingmode=DSOperatingMode.STOW,
         )
         self.spf_cm._update_component_state(
-            b5capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED
+            b5acapabilitystate=SPFCapabilityStates.OPERATE_DEGRADED
         )
         self.spfrx_cm._update_component_state(
             b5acapabilitystate=SPFRxCapabilityStates.OPERATE

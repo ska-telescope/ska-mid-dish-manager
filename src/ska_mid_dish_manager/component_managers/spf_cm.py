@@ -44,7 +44,8 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b2CapabilityState",
             "b3CapabilityState",
             "b4CapabilityState",
-            "b5CapabilityState",
+            "b5aCapabilityState",
+            "b5bCapabilityState",
         ]
         for mon_attr in self._monitored_attr_names:
             self.monitor_attribute(mon_attr)
@@ -60,7 +61,8 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b2capabilitystate": SPFCapabilityStates,
             "b3capabilitystate": SPFCapabilityStates,
             "b4capabilitystate": SPFCapabilityStates,
-            "b5capabilitystate": SPFCapabilityStates,
+            "b5acapabilitystate": SPFCapabilityStates,
+            "b5bcapabilitystate": SPFCapabilityStates,
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:
