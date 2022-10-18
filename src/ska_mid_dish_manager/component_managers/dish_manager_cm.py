@@ -407,13 +407,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
 
-            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Lost communication with monitored device",
-                )
-                return
-
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STANDBY_LP:
                 task_abort_event.wait(timeout=1)
@@ -492,13 +485,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_callback(
                     status=TaskStatus.ABORTED,
                     result="SetStandbyFPMode Aborted",
-                )
-                return
-
-            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Lost communication with monitored device",
                 )
                 return
 
@@ -581,13 +567,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
 
-            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Lost communication with monitored device",
-                )
-                return
-
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.OPERATE:
                 task_abort_event.wait(timeout=1)
@@ -640,13 +619,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_callback(
                     status=TaskStatus.ABORTED,
                     result="Track Aborted",
-                )
-                return
-
-            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Lost communication with monitored device",
                 )
                 return
 
@@ -743,13 +715,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return
 
-            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Lost communication with monitored device",
-                )
-                return
-
             current_band = self.component_state["configuredband"]
             if current_band != Band.B2:
                 task_abort_event.wait(timeout=1)
@@ -812,13 +777,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_callback(
                     status=TaskStatus.ABORTED,
                     result="Stow Aborted",
-                )
-                return
-
-            if self.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Lost communication with monitored device",
                 )
                 return
 
