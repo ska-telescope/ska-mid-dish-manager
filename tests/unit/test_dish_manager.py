@@ -3,6 +3,7 @@
 # pylint: disable=attribute-defined-outside-init
 
 
+import json
 import logging
 from datetime import datetime
 from unittest.mock import MagicMock, patch
@@ -163,3 +164,8 @@ class TestDishManagerBehaviour:
         assert "_DS_SetStandbyFPMode" in event_ids[1]
         assert "_SPF_SetStandbyFPMode" in event_ids[2]
         assert "_SPFRX_SetStandbyFPMode" in event_ids[3]
+
+    @pytest.mark.unit
+    @pytest.mark.forked
+    def test_get_component_state(self):
+        assert len(json.loads(self.device_proxy.GetComponentStates())) == 3

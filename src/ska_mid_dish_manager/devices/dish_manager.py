@@ -1,4 +1,4 @@
-# pylint: disable=C0302
+# pylint: disable=C0302,W0212
 """
 This module implements the dish manager device for DishLMC.
 
@@ -6,6 +6,7 @@ It exposes the attributes and commands which control the dish
 and the subservient devices
 """
 
+import json
 import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
@@ -1071,6 +1072,27 @@ class DishManager(SKAController):
     def StartCommunication(self):
         """Start communicating with monitored devices"""
         self.component_manager.start_communicating()
+
+    @command(
+        dtype_in=None,
+        dtype_out=str,
+        display_level=DispLevel.OPERATOR,
+        doc_out=(
+            "Retrieve the states of SPF, SPFRx"
+            " and DS as DishManager sees it."
+        ),
+    )
+    def GetComponentStates(self):
+        """
+        Get the current component states of SPF, SPFRx and DS
+        as DishManger sees it.  Used for debugging."""
+        comp_states = {}
+        for (
+            device,
+            comp_state,
+        ) in self.component_manager.component_managers.items():
+            comp_states[device] = comp_state._component_state
+        return json.dumps(comp_states)
 
 
 def main(args=None, **kwargs):
