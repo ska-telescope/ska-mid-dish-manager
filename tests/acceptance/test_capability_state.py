@@ -48,21 +48,8 @@ def test_capability_state_b1(
     )
     spfrx_event_store.clear_queue()
 
-    # Ensure updates
-    if spfrx_device_proxy.b1CapabilityState == SPFRxCapabilityStates.OPERATE:
-        spfrx_device_proxy.b1CapabilityState = (
-            SPFRxCapabilityStates.UNAVAILABLE
-        )
-    spfrx_device_proxy.b1CapabilityState = SPFRxCapabilityStates.OPERATE
-    spfrx_event_store.wait_for_value(SPFRxCapabilityStates.OPERATE)
-
-    if (
-        spf_device_proxy.b1CapabilityState
-        == SPFCapabilityStates.OPERATE_DEGRADED
-    ):
-        spf_device_proxy.b1CapabilityState = SPFCapabilityStates.OPERATE_FULL
-    spf_device_proxy.b1CapabilityState = SPFCapabilityStates.OPERATE_DEGRADED
-    spf_event_store.wait_for_value(SPFCapabilityStates.OPERATE_DEGRADED)
+    spf_device_proxy.ResetToDefault()
+    spfrx_device_proxy.ResetToDefault()
 
     event_store.wait_for_value(CapabilityStates.STANDBY, timeout=8)
 
