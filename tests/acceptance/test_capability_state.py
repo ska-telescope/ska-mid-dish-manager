@@ -48,8 +48,7 @@ def test_capability_state_b1(
     )
     spfrx_event_store.clear_queue()
 
-    spf_device_proxy.ResetToDefault()
-    spfrx_device_proxy.ResetToDefault()
+    dish_manager_proxy.SetStandbyFPMode()
 
     event_store.wait_for_value(CapabilityStates.STANDBY, timeout=8)
 
