@@ -175,7 +175,29 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
+    def read_update_component_state(self):
+        """Update the component state by reading the monitored attributes
+
+        When an attribute on the device does not match the component_state
+        it won't update unless it changes value (changes are updated via
+        events).
+
+        This is a convenience method that can be called to sync up the
+        monitored attributes on the device and the component state.
+        """
+        for monitored_attribute in self._monitored_attributes:
+            attribute_name = monitored_attribute.attr_name
+            value = self._device_proxy.read_attribute(attribute_name).value
+            if isinstance(value, np.ndarray):
+                value = list(value)
+            self._update_component_state(**{attribute_name.lower(): value})
+
     def _update_state_from_event(self, event_data: tango.EventData):
+        """Update component state as the change events come in.
+
+        :param event_data: Tango event
+        :type event_data: tango.EventData
+        """
         if event_data.err:
             self.logger.debug("Got event [%s]", event_data)
             # We lost connection, get the connection back

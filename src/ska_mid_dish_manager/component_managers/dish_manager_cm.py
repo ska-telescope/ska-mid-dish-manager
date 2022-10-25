@@ -410,6 +410,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STANDBY_LP:
                 task_abort_event.wait(timeout=1)
+                for comp_man in self.component_managers.values():
+                    comp_man.read_update_component_state()
                 self._update_dishmode_component_states()
 
             else:
@@ -491,7 +493,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STANDBY_FP:
                 task_abort_event.wait(timeout=1)
-                self._update_dishmode_component_states()
+                for comp_man in self.component_managers.values():
+                    comp_man.read_update_component_state()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -570,7 +573,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.OPERATE:
                 task_abort_event.wait(timeout=1)
-                self._update_dishmode_component_states()
+                for comp_man in self.component_managers.values():
+                    comp_man.read_update_component_state()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -628,8 +632,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 # Read pointingState on DS and update state
                 comp_man = self.component_managers["DS"]
-                pointing_state = comp_man.read_attribute_value("pointingState")
-                comp_man._update_component_state(pointingstate=pointing_state)
+                comp_man.read_update_component_state()
 
             else:
                 task_callback(
@@ -723,14 +726,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 # DS indexerposition
                 # SPFRx configuredband
                 # SPF bandinfocus
-                for device, attr in zip(
-                    ["DS", "SPFRX", "SPF"],
-                    ["indexerPosition", "configuredBand", "bandInFocus"],
-                ):
-                    comp_man = self.component_managers[device]
-                    attr_value = comp_man.read_attribute_value(attr)
-                    attr_name = attr.lower()
-                    comp_man._update_component_state(**{attr_name: attr_value})
+                for comp_man in self.component_managers.values():
+                    comp_man.read_update_component_state()
 
             else:
                 task_callback(
@@ -783,7 +780,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STOW:
                 task_abort_event.wait(timeout=1)
-                self._update_dishmode_component_states()
+                for comp_man in self.component_managers.values():
+                    comp_man.read_update_component_state()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
