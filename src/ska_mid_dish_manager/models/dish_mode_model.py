@@ -352,7 +352,7 @@ class DishModeModel:
         dishmode_graph.add_edge(
             "STOW", "STANDBY_LP", commands=["SetStandbyLPMode"]
         )
-        dishmode_graph.add_edge("STOW", "CONFIG")
+        dishmode_graph.add_edge("STOW", "CONFIG", commands=CONFIG_COMMANDS)
 
         # From any mode to Stow
         for node in DISH_MODE_NODES:
