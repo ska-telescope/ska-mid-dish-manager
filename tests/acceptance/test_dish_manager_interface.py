@@ -7,12 +7,10 @@ SPEC_URLS = {
     "dish_manager": (
         "https://gitlab.com/ska-telescope/ska-telmodel/-/blob/"
         "master/tmdata/software/tango/dsh/DishManager.yaml"
-        
     ),
     "ska_controller": (
         "https://gitlab.com/ska-telescope/ska-telmodel/-/blob/"
         "master/tmdata/software/tango/ska_wide/SKAMaster.yaml"
-        
     ),
     "ska_tango_base": (
         "https://gitlab.com/ska-telescope/ska-telmodel/-/blob/"
@@ -21,7 +19,6 @@ SPEC_URLS = {
     "ska_tango_guide_ska_wide": (
         "https://gitlab.com/ska-telescope/ska-telmodel/-/blob/"
         "master/tmdata/software/tango/ska_wide/Guidelines.yaml"
-   
     ),
 }
 
