@@ -66,7 +66,7 @@ class MonitoredAttribute:
         else:
             logger.debug(
                 "Got event with name [%s] and value [%s] from [%s]",
-                event_data.attr_value.name,
+                event_data.attr_name,
                 event_data.attr_value.value,
                 event_data.device,
             )

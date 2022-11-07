@@ -38,7 +38,6 @@ DISH_MODE_NODES = (
 )
 
 DISH_MODE_RULES = {
-    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "CONFIG": rule_engine.Rule(
         "DS.operatingmode in "
         "   ['DSOperatingMode.POINT', "
@@ -46,7 +45,10 @@ DISH_MODE_RULES = {
         "    'DSOperatingMode.STANDBY_LP', "
         "    'DSOperatingMode.STANDBY_FP'] "
         " and "
-        "SPF.operatingmode  == 'SPFOperatingMode.OPERATE' and "
+        "SPF.operatingmode  in "
+        " ['SPFOperatingMode.OPERATE', "
+        "  'SPFOperatingMode.STANDBY_LP'] "
+        "and "
         "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE'"
     ),
     "MAINTENANCE": rule_engine.Rule(
@@ -71,6 +73,7 @@ DISH_MODE_RULES = {
         "SPF.operatingmode  == 'SPFOperatingMode.STANDBY_LP' and "
         "SPFRX.operatingmode  == 'SPFRxOperatingMode.STANDBY'"
     ),
+    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
 }
 
 HEALTH_STATE_RULES = {
@@ -220,7 +223,7 @@ CAPABILITY_STATE_RULES = {
     "STANDBY_1": rule_engine.Rule(
         "DM.dishmode in "
         "    ['DishMode.STANDBY_LP', "
-        "      'DishMode.STANDBY_FP']"
+        "     'DishMode.STANDBY_FP']"
         " and "
         "SPF.capabilitystate in "
         "    ['SPFCapabilityStates.STANDBY', "
@@ -344,6 +347,10 @@ class DishModeModel:
         # From Config to other modes
         dishmode_graph.add_edge("CONFIG", "STANDBY_FP")
         dishmode_graph.add_edge("CONFIG", "OPERATE")
+        # config to stow is covered in "any mode to stow" but that
+        # transition must be triggered by the SetStowMode cmd
+        # However, CONFIG to STOW can also be an automatic transition
+        dishmode_graph.add_edge("CONFIG", "STOW")
 
         # From Stow to other modes
         dishmode_graph.add_edge(
