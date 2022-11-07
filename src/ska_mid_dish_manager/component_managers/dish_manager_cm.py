@@ -706,7 +706,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     progress=f"ConfigureBand2 called on SPFRx, ID {command_id}"  # noqa: E501
                 )
             else:
-                # TODO to be removed when simulator is replaced with actual implementation
+                # TODO to be removed when simulator is
+                # replaced with actual implementation
                 dish_mode = self.component_state["dishmode"]
                 if dish_mode == DishMode.STOW:
                     _, command_id = command("SetCapStateDegraded", None)
@@ -766,7 +767,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         for device in ["DS", "SPF"]:
             command = SubmittedSlowCommand(
-                f"DS_SetStowMode",
+                f"{device}_SetStowMode",
                 self._command_tracker,
                 self.component_managers[device],
                 "run_device_command",
@@ -776,7 +777,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if device == "DS":
                 _, command_id = command("Stow", None)
             else:
-                # TODO to be removed when simulator is replaced with actual implementation
+                # TODO to be removed when simulator is
+                # replaced with actual implementation
                 configured_band = self.component_state["configuredband"]
                 if configured_band not in [Band.NONE, Band.UNKNOWN]:
                     _, command_id = command("SetCapStateDegraded", None)
