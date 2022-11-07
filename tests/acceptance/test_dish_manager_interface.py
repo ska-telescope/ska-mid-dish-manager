@@ -13,8 +13,8 @@ SPEC_URLS = {
         "master/spec/tango/ska_wide/SKAMaster.yaml"
     ),
     "ska_tango_base": (
-        "https://gitlab.com/ska-telescope/ska-telmodel/-/raw/"
-        "master/spec/tango/ska_wide/SKABaseDevice.yaml"
+        "https://gitlab.com/ska-telescope/ska-telmodel/-/blob/"
+        "master/tmdata/software/tango/ska_wide/SKABaseDevice.yaml"
     ),
     "ska_tango_guide_ska_wide": (
         "https://gitlab.com/ska-telescope/telescope-model/-/raw/"
