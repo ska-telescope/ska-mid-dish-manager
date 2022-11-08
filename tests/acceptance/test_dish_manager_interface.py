@@ -5,19 +5,19 @@ from tango_simlib.utilities.validate_device import validate_device_from_url
 
 SPEC_URLS = {
     "dish_manager": (
-        "https://gitlab.com/ska-telescope/ska-telmodel/-/blob/"
+        "https://gitlab.com/ska-telescope/ska-telmodel/-/raw/"
         "master/tmdata/software/tango/dsh/DishManager.yaml"
     ),
     "ska_controller": (
-        "https://gitlab.com/ska-telescope/ska-telmodel/-/blob/"
+        "https://gitlab.com/ska-telescope/ska-telmodel/-/raw/"
         "master/tmdata/software/tango/ska_wide/SKAMaster.yaml"
     ),
     "ska_tango_base": (
-        "https://gitlab.com/ska-telescope/ska-telmodel/-/blob/"
+        "https://gitlab.com/ska-telescope/ska-telmodel/-/raw/"
         "master/tmdata/software/tango/ska_wide/SKABaseDevice.yaml"
     ),
     "ska_tango_guide_ska_wide": (
-        "https://gitlab.com/ska-telescope/ska-telmodel/-/blob/"
+        "https://gitlab.com/ska-telescope/ska-telmodel/-/raw/"
         "master/tmdata/software/tango/ska_wide/Guidelines.yaml"
     ),
 }
