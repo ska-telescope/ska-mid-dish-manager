@@ -686,7 +686,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        for device in ["DS", "SPFRX", "SPF"]:
+        for device in ["DS", "SPFRX"]:
             command = SubmittedSlowCommand(
                 f"{device}ConfigureBand2",
                 self._command_tracker,
@@ -700,20 +700,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_callback(
                     progress=f"SetIndexPosition called on DS, ID {command_id}"  # noqa: E501
                 )
-            elif device == "SPFRX":
+            else:
                 _, command_id = command("ConfigureBand2", None)
                 task_callback(
                     progress=f"ConfigureBand2 called on SPFRx, ID {command_id}"  # noqa: E501
                 )
-            else:
-                # TODO to be removed when simulator is
-                # replaced with actual implementation
-                dish_mode = self.component_state["dishmode"]
-                if dish_mode == DishMode.STOW:
-                    _, command_id = command("SetCapStateDegraded", None)
-                    task_callback(
-                        progress=f"SetCapStateDegraded called on SPF, ID {command_id}"  # noqa: E501
-                    )
 
             device_command_ids[device] = command_id
 
@@ -765,26 +756,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         assert task_callback, "task_callback has to be defined"
         task_callback(status=TaskStatus.IN_PROGRESS)
 
-        for device in ["DS", "SPF"]:
-            command = SubmittedSlowCommand(
-                f"{device}_SetStowMode",
-                self._command_tracker,
-                self.component_managers[device],
-                "run_device_command",
-                callback=None,
-                logger=self.logger,
-            )
-            if device == "DS":
-                _, command_id = command("Stow", None)
-            else:
-                # TODO to be removed when simulator is
-                # replaced with actual implementation
-                configured_band = self.component_state["configuredband"]
-                if configured_band not in [Band.NONE, Band.UNKNOWN]:
-                    _, command_id = command("SetCapStateDegraded", None)
-                    task_callback(
-                        progress=f"SetCapStateDegraded called on SPF, ID {command_id}"  # noqa: E501
-                    )
+        command = SubmittedSlowCommand(
+            "DS_SetStowMode",
+            self._command_tracker,
+            self.component_managers["DS"],
+            "run_device_command",
+            callback=None,
+            logger=self.logger,
+        )
+        _, command_id = command("Stow", None)
 
         task_callback(progress=f"Stow called on DS, ID {command_id}")
         task_callback(progress="Waiting for dishMode change to STOW")
