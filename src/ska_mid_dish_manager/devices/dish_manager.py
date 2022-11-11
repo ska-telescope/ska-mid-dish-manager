@@ -1085,7 +1085,7 @@ class DishManager(SKAController):
     def GetComponentStates(self):
         """
         Get the current component states of subservient devices.
-        
+
         Subservient devices constiture SPF, SPFRx and DS. Used for debugging.
         """
         comp_states = {}
