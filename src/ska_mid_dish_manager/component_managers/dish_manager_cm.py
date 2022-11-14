@@ -326,7 +326,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
         self.logger.debug(
-            "Updating component dish manager component state with [%s]", kwargs
+            "Updating dish manager component state with [%s]", kwargs
         )
         super()._update_component_state(*args, **kwargs)
 
