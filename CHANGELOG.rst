@@ -5,6 +5,12 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 1.8.1
+*************
+- Use version 0.0.4 simulators
+- Updated DishModeModel to trigger CONFIG when commanded from STOW
+- Updated DishManager API docs reference
+
 Version 1.8.0
 *************
 - Use version 0.0.3 simulators

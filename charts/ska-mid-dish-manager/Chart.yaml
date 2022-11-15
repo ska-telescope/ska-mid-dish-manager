@@ -2,8 +2,8 @@ apiVersion: v2
 name: ska-mid-dish-manager
 description: An application for the SKA Dish Manager TANGO device server(s).
 type: application
-version: 1.8.0
-appVersion: "1.8.0"
+version: 1.8.1
+appVersion: "1.8.1"
 home: https://gitlab.com/ska-telescope/ska-mid-dish-manager/
 icon: http://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
 sources:
@@ -24,6 +24,6 @@ dependencies:
   version: 0.3.17
   repository: https://artefact.skao.int/repository/helm-internal
 - name: ska-mid-dish-simulators
-  version: 0.0.3
+  version: 0.0.4
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-simulators.enabled
