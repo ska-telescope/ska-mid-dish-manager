@@ -235,14 +235,14 @@ class DishManager(SKAController):
         access=AttrWriteType.READ_WRITE
     )
     def spfrxConnectionState(self):
-        return self._spf_connection_state
+        return self._spfrx_connection_state
     
     @attribute(
         dtype=DeviceConnectionState,
         access=AttrWriteType.READ_WRITE
     )
     def dsConnectionState(self):
-        return self._spf_connection_state
+        return self._ds_connection_state
 
     @attribute(
         max_dim_x=3,
