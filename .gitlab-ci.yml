@@ -63,6 +63,7 @@ k8s-test-runner:
   image: $SKA_PYTHON_PYTANGO_BUILDER_IMAGE
   before_script:
     - echo "Install k8s-tools dependencies"
+    - sudo apt-get install wget
     - wget -q https://storage.googleapis.com/kubernetes-release/release/v1.25.2/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl
     - chmod +x /usr/local/bin/kubectl
     - wget -q https://get.helm.sh/helm-v3.10.0-linux-amd64.tar.gz -O - | tar -xzO linux-amd64/helm > /usr/local/bin/helm
