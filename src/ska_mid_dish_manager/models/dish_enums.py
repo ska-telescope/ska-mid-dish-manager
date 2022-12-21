@@ -166,3 +166,8 @@ class SPFRxCapabilityStates(enum.IntEnum):
     STANDBY = 2
     CONFIGURE = 3
     OPERATE = 4
+
+class DeviceConnectionState(enum.IntEnum):
+    UNKNOWN = 0
+    CONNECTED = 1
+    DISCONNECTED = 2

@@ -13,6 +13,7 @@ from typing import List, Optional, Tuple
 
 from ska_tango_base import SKAController
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
@@ -28,6 +29,10 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackInterpolationMode,
     TrackProgramMode,
     TrackTableLoadMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+    SPFRxOperatingMode,
+    DeviceConnectionState,
 )
 
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
@@ -183,6 +188,10 @@ class DishManager(SKAController):
             device._b5a_capability_state = CapabilityStates.UNKNOWN
             device._b5b_capability_state = CapabilityStates.UNKNOWN
 
+            device._spf_connection_state = DeviceConnectionState.UNKNOWN
+            device._spfrx_connection_state = DeviceConnectionState.UNKNOWN
+            device._ds_connection_state = DeviceConnectionState.UNKNOWN
+
             device.op_state_model.perform_action("component_standby")
 
             # push change events, needed to use testing library
@@ -214,6 +223,26 @@ class DishManager(SKAController):
     # ----------
 
     # pylint: disable=invalid-name
+    @attribute(
+        dtype=DeviceConnectionState,
+        access=AttrWriteType.READ_WRITE
+    )
+    def spfConnectionState(self):
+        return self._spf_connection_state
+    
+    @attribute(
+        dtype=DeviceConnectionState,
+        access=AttrWriteType.READ_WRITE
+    )
+    def spfrxConnectionState(self):
+        return self._spf_connection_state
+    
+    @attribute(
+        dtype=DeviceConnectionState,
+        access=AttrWriteType.READ_WRITE
+    )
+    def dsConnectionState(self):
+        return self._spf_connection_state
 
     @attribute(
         max_dim_x=3,

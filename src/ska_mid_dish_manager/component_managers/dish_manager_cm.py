@@ -26,6 +26,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFCapabilityStates,
     SPFPowerState,
     SPFRxCapabilityStates,
+    DeviceConnectionState
 )
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
@@ -138,11 +139,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
-        # communication state will come from args and kwargs
+        # communication state will come from args and kwargs_component_state_changed
 
         # an empty dict will make all condition always pass. check
         # that the dict is not empty before continuing with trigger
         if self.component_managers:
+            # if self.component_manager["DS"].communication_state == CommunicationStatus.ESTABLISHED:
+            #     self._ds_connection_state = # place connected state here
+            # else
+            #     self._ds_connection_state = # place not connected here
+            
+            # if self.component_manager["SPF"].communication_state == CommunicationStatus.ESTABLISHED:
+            #     self._ds_connection_state = # place connected state here
+            # else
+            #     self._ds_connection_state = # place not connected here
+            
+            # if self.component_manager["SPRX"].communication_state == CommunicationStatus.ESTABLISHED:
+            #     self._ds_connection_state = # place connected state here
+            # else
+            #     self._ds_connection_state = # place not connected here
+
             if all(
                 cm.communication_state == CommunicationStatus.ESTABLISHED
                 for cm in self.component_managers.values()
