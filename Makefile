@@ -15,7 +15,7 @@ ifeq ($(MAKECMDGOALS),python-test)
 MARK = unit
 endif
 
-ifeq ($(MAKECMDGOALS),k8s-test)
+ifeq ($(MAKECMDGOALS),k8s-test-runner)
 MARK = acceptance
 endif
 
