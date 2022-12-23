@@ -19,6 +19,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
     CapabilityStates,
+    DeviceConnectionState,
     DishMode,
     DSPowerState,
     IndexerPosition,
@@ -26,7 +27,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFCapabilityStates,
     SPFPowerState,
     SPFRxCapabilityStates,
-    DeviceConnectionState
 )
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
@@ -72,6 +72,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achievedtargetlock=None,
             achievedpointing=[0.0, 0.0, 30.0],
             configuredband=Band.NONE,
+            spfconnectionstate=DeviceConnectionState.UNKNOWN,
+            spfrxconnectionstate=DeviceConnectionState.UNKNOWN,
+            dsconnectionstate=DeviceConnectionState.UNKNOWN,
             **kwargs,
         )
         self._dish_mode_model = DishModeModel()
@@ -134,31 +137,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "b4capabilitystate": CapabilityStates.UNKNOWN,
             "b5acapabilitystate": CapabilityStates.UNKNOWN,
             "b5bcapabilitystate": CapabilityStates.UNKNOWN,
+            "spfconnectionstate": DeviceConnectionState.DISCONNECTED,
+            "spfrxconnectionstate": DeviceConnectionState.DISCONNECTED,
+            "dsconnectionstate": DeviceConnectionState.DISCONNECTED,
         }
         self._update_component_state(**initial_component_states)
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
-        # communication state will come from args and kwargs_component_state_changed
+        # communication state will come from args and kwargs
 
         # an empty dict will make all condition always pass. check
         # that the dict is not empty before continuing with trigger
         if self.component_managers:
-            # if self.component_manager["DS"].communication_state == CommunicationStatus.ESTABLISHED:
-            #     self._ds_connection_state = # place connected state here
-            # else
-            #     self._ds_connection_state = # place not connected here
-            
-            # if self.component_manager["SPF"].communication_state == CommunicationStatus.ESTABLISHED:
-            #     self._ds_connection_state = # place connected state here
-            # else
-            #     self._ds_connection_state = # place not connected here
-            
-            # if self.component_manager["SPRX"].communication_state == CommunicationStatus.ESTABLISHED:
-            #     self._ds_connection_state = # place connected state here
-            # else
-            #     self._ds_connection_state = # place not connected here
-
             if all(
                 cm.communication_state == CommunicationStatus.ESTABLISHED
                 for cm in self.component_managers.values()
@@ -166,6 +157,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_communication_state(
                     CommunicationStatus.ESTABLISHED
                 )
+
+                self._update_component_state(
+                    healthstate=HealthState.FAILED,
+                    spfconnectionstate=DeviceConnectionState.CONNECTED,
+                    spfrxconnectionstate=DeviceConnectionState.CONNECTED,
+                    dsconnectionstate=DeviceConnectionState.CONNECTED,
+                )
+
                 # Automatic transition to LP mode on startup should come from
                 # operating modes of subservient devices. Likewise, any
                 # reconnection gained should be accompanied by fresh
@@ -175,7 +174,35 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_communication_state(
                     CommunicationStatus.NOT_ESTABLISHED
                 )
-                self._update_component_state(healthstate=HealthState.FAILED)
+
+                spf_connected = (
+                    "SPF" in self.component_managers.keys()
+                    and self.component_managers["SPF"].communication_state
+                    == CommunicationStatus.ESTABLISHED
+                )
+                spfrx_connected = (
+                    "SPFRX" in self.component_managers.keys()
+                    and self.component_managers["SPFRX"].communication_state
+                    == CommunicationStatus.ESTABLISHED
+                )
+                ds_connected = (
+                    "DS" in self.component_managers.keys()
+                    and self.component_managers["DS"].communication_state
+                    == CommunicationStatus.ESTABLISHED
+                )
+
+                self._update_component_state(
+                    healthstate=HealthState.FAILED,
+                    spfconnectionstate=DeviceConnectionState.CONNECTED
+                    if spf_connected
+                    else DeviceConnectionState.DISCONNECTED,
+                    spfrxconnectionstate=DeviceConnectionState.CONNECTED
+                    if spfrx_connected
+                    else DeviceConnectionState.DISCONNECTED,
+                    dsconnectionstate=DeviceConnectionState.CONNECTED
+                    if ds_connected
+                    else DeviceConnectionState.DISCONNECTED,
+                )
 
     # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):

@@ -13,7 +13,6 @@ from typing import List, Optional, Tuple
 
 from ska_tango_base import SKAController
 from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
-
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
@@ -23,16 +22,13 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import (
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
+    DeviceConnectionState,
     DishMode,
     PointingState,
     PowerState,
     TrackInterpolationMode,
     TrackProgramMode,
     TrackTableLoadMode,
-    SPFOperatingMode,
-    SPFRxOperatingMode,
-    SPFRxOperatingMode,
-    DeviceConnectionState,
 )
 
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
@@ -188,9 +184,9 @@ class DishManager(SKAController):
             device._b5a_capability_state = CapabilityStates.UNKNOWN
             device._b5b_capability_state = CapabilityStates.UNKNOWN
 
-            device._spf_connection_state = DeviceConnectionState.UNKNOWN
-            device._spfrx_connection_state = DeviceConnectionState.UNKNOWN
-            device._ds_connection_state = DeviceConnectionState.UNKNOWN
+            device._spf_connection_state = DeviceConnectionState.DISCONNECTED
+            device._spfrx_connection_state = DeviceConnectionState.DISCONNECTED
+            device._ds_connection_state = DeviceConnectionState.DISCONNECTED
 
             device.op_state_model.perform_action("component_standby")
 
@@ -209,6 +205,9 @@ class DishManager(SKAController):
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
                 "achievedpointing": "achievedPointing",
+                "spfconnectionstate": "spfConnectionState",
+                "spfrxconnectionstate": "spfrxConnectionState",
+                "dsconnectionstate": "dsConnectionState",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -225,24 +224,42 @@ class DishManager(SKAController):
     # pylint: disable=invalid-name
     @attribute(
         dtype=DeviceConnectionState,
-        access=AttrWriteType.READ_WRITE
+        access=AttrWriteType.READ_WRITE,
+        doc="Displays connection status to SPF device",
     )
     def spfConnectionState(self):
+        """Returns the spf connection state"""
         return self._spf_connection_state
-    
+
+    @spfConnectionState.write
+    def spfConnectionState(self, value):
+        self._spf_connection_state = value
+
     @attribute(
         dtype=DeviceConnectionState,
-        access=AttrWriteType.READ_WRITE
+        access=AttrWriteType.READ_WRITE,
+        doc="Displays connection status to SPFRx device",
     )
     def spfrxConnectionState(self):
-        return self._spf_connection_state
-    
+        """Returns the spfrx connection state"""
+        return self._spfrx_connection_state
+
+    @spfrxConnectionState.write
+    def spfrxConnectionState(self, value):
+        self._spfrx_connection_state = value
+
     @attribute(
         dtype=DeviceConnectionState,
-        access=AttrWriteType.READ_WRITE
+        access=AttrWriteType.READ_WRITE,
+        doc="Displays connection status to DS device",
     )
     def dsConnectionState(self):
-        return self._spf_connection_state
+        """Returns the ds connection state"""
+        return self._ds_connection_state
+
+    @dsConnectionState.write
+    def dsConnectionState(self, value):
+        self._ds_connection_state = value
 
     @attribute(
         max_dim_x=3,
