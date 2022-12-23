@@ -233,6 +233,7 @@ class DishManager(SKAController):
 
     @spfConnectionState.write
     def spfConnectionState(self, value):
+        """Set the  spfconnection state"""
         self._spf_connection_state = value
 
     @attribute(
@@ -246,6 +247,7 @@ class DishManager(SKAController):
 
     @spfrxConnectionState.write
     def spfrxConnectionState(self, value):
+        """Set the  spfrx connection state"""
         self._spfrx_connection_state = value
 
     @attribute(
@@ -259,6 +261,7 @@ class DishManager(SKAController):
 
     @dsConnectionState.write
     def dsConnectionState(self, value):
+        """Set the DS connection state"""
         self._ds_connection_state = value
 
     @attribute(
