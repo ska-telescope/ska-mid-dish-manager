@@ -176,17 +176,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
                 spf_connected = (
-                    "SPF" in self.component_managers.keys()
+                    "SPF" in self.component_managers
                     and self.component_managers["SPF"].communication_state
                     == CommunicationStatus.ESTABLISHED
                 )
                 spfrx_connected = (
-                    "SPFRX" in self.component_managers.keys()
+                    "SPFRX" in self.component_managers
                     and self.component_managers["SPFRX"].communication_state
                     == CommunicationStatus.ESTABLISHED
                 )
                 ds_connected = (
-                    "DS" in self.component_managers.keys()
+                    "DS" in self.component_managers
                     and self.component_managers["DS"].communication_state
                     == CommunicationStatus.ESTABLISHED
                 )

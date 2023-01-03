@@ -135,6 +135,7 @@ class DishManager(SKAController):
         """
 
         # pylint: disable=invalid-name
+        # pylint: disable=too-many-statements
         def do(self):
             """
             Initializes the attributes and properties of the DishManager
@@ -233,6 +234,8 @@ class DishManager(SKAController):
 
     @spfConnectionState.write
     def spfConnectionState(self, value):
+        # Set the spf connection state
+        # pylint: disable=attribute-defined-outside-init
         self._spf_connection_state = value
 
     @attribute(
@@ -246,6 +249,8 @@ class DishManager(SKAController):
 
     @spfrxConnectionState.write
     def spfrxConnectionState(self, value):
+        # Set the spfrx connection state
+        # pylint: disable=attribute-defined-outside-init
         self._spfrx_connection_state = value
 
     @attribute(
@@ -259,6 +264,8 @@ class DishManager(SKAController):
 
     @dsConnectionState.write
     def dsConnectionState(self, value):
+        # Set the DS connection state
+        # pylint: disable=attribute-defined-outside-init
         self._ds_connection_state = value
 
     @attribute(
