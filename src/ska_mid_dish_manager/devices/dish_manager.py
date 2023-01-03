@@ -234,7 +234,7 @@ class DishManager(SKAController):
 
     @spfConnectionState.write
     def spfConnectionState(self, value):
-        # Set the spf connection state
+        """Set the  spfconnection state"""
         # pylint: disable=attribute-defined-outside-init
         self._spf_connection_state = value
 
@@ -249,7 +249,7 @@ class DishManager(SKAController):
 
     @spfrxConnectionState.write
     def spfrxConnectionState(self, value):
-        # Set the spfrx connection state
+        """Set the  spfrx connection state"""
         # pylint: disable=attribute-defined-outside-init
         self._spfrx_connection_state = value
 
@@ -264,8 +264,8 @@ class DishManager(SKAController):
 
     @dsConnectionState.write
     def dsConnectionState(self, value):
-        # Set the DS connection state
         # pylint: disable=attribute-defined-outside-init
+        """Set the DS connection state"""
         self._ds_connection_state = value
 
     @attribute(
