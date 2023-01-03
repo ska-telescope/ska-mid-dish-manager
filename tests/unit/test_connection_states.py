@@ -47,9 +47,7 @@ class TestConnectionStates:
         spf_cm = class_instance.component_manager.component_managers["SPF"]
 
         # We expect the spfConnectionState to be intially be CONNECTED
-        assert (
-            device_proxy.spfConnectionState == DeviceConnectionState.CONNECTED
-        )
+        assert event_store.wait_for_value(DeviceConnectionState.CONNECTED)
 
         # Force spf communication_state to NOT_ESTABLISHED
         spf_cm._update_communication_state(
@@ -75,10 +73,7 @@ class TestConnectionStates:
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
 
         # We expect the spfrxConnectionState to be intially be CONNECTED
-        assert (
-            device_proxy.spfrxConnectionState
-            == DeviceConnectionState.CONNECTED
-        )
+        assert event_store.wait_for_value(DeviceConnectionState.CONNECTED)
 
         # Force spfrx communication_state to NOT_ESTABLISHED
         spfrx_cm._update_communication_state(
@@ -104,9 +99,7 @@ class TestConnectionStates:
         ds_cm = class_instance.component_manager.component_managers["DS"]
 
         # We expect the dsConnectionState to be intially be CONNECTED
-        assert (
-            device_proxy.dsConnectionState == DeviceConnectionState.CONNECTED
-        )
+        assert event_store.wait_for_value(DeviceConnectionState.CONNECTED)
 
         # Force ds communication_state to NOT_ESTABLISHED
         ds_cm._update_communication_state(
