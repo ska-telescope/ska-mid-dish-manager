@@ -9,7 +9,6 @@ from tango.test_context import DeviceTestContext
 from ska_mid_dish_manager.devices.dish_manager import DishManager
 from ska_mid_dish_manager.models.dish_enums import DeviceConnectionState
 
-
 # pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
 @pytest.mark.forked
@@ -46,6 +45,9 @@ class TestConnectionStates:
         class_instance = DishManager.instances.get(device_proxy.name())
         spf_cm = class_instance.component_manager.component_managers["SPF"]
 
+        # We expect the spfConnectionState to be intially be CONNECTED
+        assert (device_proxy.spfConnectionState == DeviceConnectionState.CONNECTED)
+
         # Force spf communication_state to NOT_ESTABLISHED
         spf_cm._update_communication_state(
             communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -69,6 +71,9 @@ class TestConnectionStates:
         class_instance = DishManager.instances.get(device_proxy.name())
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
 
+        # We expect the spfrxConnectionState to be intially be CONNECTED
+        assert (device_proxy.spfrxConnectionState == DeviceConnectionState.CONNECTED)
+
         # Force spfrx communication_state to NOT_ESTABLISHED
         spfrx_cm._update_communication_state(
             communication_state=CommunicationStatus.NOT_ESTABLISHED
@@ -91,6 +96,9 @@ class TestConnectionStates:
 
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
+
+        # We expect the dsConnectionState to be intially be CONNECTED
+        assert (device_proxy.dsConnectionState == DeviceConnectionState.CONNECTED)
 
         # Force ds communication_state to NOT_ESTABLISHED
         ds_cm._update_communication_state(
