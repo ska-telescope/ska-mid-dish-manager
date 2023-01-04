@@ -33,7 +33,7 @@ url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pytango = "9.3.3"
+pytango = "9.3.6"
 ska-ser-logging = "^0.4.1"
 ska-tango-base = "^0.13.3"
 ska-tango-testing = "0.2.0"
