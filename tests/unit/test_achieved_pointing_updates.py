@@ -48,7 +48,7 @@ class TestAchievedPointing:
             tango.EventType.CHANGE_EVENT,
             event_store,
         )
-        test_coordinates = [5000.0, 45, 234]
+        test_coordinates = [5000.0, 45.0, 234.0]
         assert list(device_proxy.achievedPointing) != test_coordinates
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
