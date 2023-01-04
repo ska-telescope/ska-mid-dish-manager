@@ -215,6 +215,26 @@
       dtype_in: DevVoid
       dtype_out: DevVoid
     attributes:
+    - name: dsConnectionState
+      data_format: SCALAR
+      data_type: DevEnum
+      description: "Returns the connection state for the DS device"
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - 'DISCONNECTED'
+      - 'CONNECTED'
+      - 'UNKNOWN'
+      format: '%s'
+      label: dsConnectionState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: State
       data_format: SCALAR
       data_type: DevState
@@ -1309,6 +1329,46 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: simulationMode
+    - name: spfConnectionState
+      data_format: SCALAR
+      data_type: DevEnum
+      description: "Returns the connection state for the SPF device"
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - 'DISCONNECTED'
+      - 'CONNECTED'
+      - 'UNKNOWN'
+      format: '%s'
+      label: spfConnectionState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: spfrxConnectionState
+      data_format: SCALAR
+      data_type: DevEnum
+      description: "Returns the connection state for the SPFRx device"
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - 'DISCONNECTED'
+      - 'CONNECTED'
+      - 'UNKNOWN'
+      format: '%s'
+      label: spfrxConnectionState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: synchronised
       data_format: SCALAR
       data_type: DevBoolean

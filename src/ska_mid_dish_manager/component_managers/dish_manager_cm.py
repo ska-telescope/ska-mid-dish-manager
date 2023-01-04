@@ -174,26 +174,23 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     CommunicationStatus.NOT_ESTABLISHED
                 )
 
-                connection_state = dict.fromkeys(
+                conn_states = dict.fromkeys(
                     ("SPFRX", "SPF", "DS"), DeviceConnectionState.DISCONNECTED
                 )
-                for key in connection_state:
-                    try:
-                        comm_state = getattr(
-                            self.component_managers.get(key),
-                            "communication_state",
-                        )
-                        assert comm_state == CommunicationStatus.ESTABLISHED
-                    except (AttributeError, AssertionError):
-                        continue
-                    else:
-                        connection_state[key] = DeviceConnectionState.CONNECTED
+
+                for key in conn_states:
+                    if key in self.component_managers:
+                        component_manager = self.component_managers[key]
+                        comm_state = component_manager.communication_state
+
+                        if comm_state == CommunicationStatus.ESTABLISHED:
+                            conn_states[key] = DeviceConnectionState.CONNECTED
 
                 self._update_component_state(
                     healthstate=HealthState.FAILED,
-                    spfconnectionstate=connection_state["SPF"],
-                    spfrxconnectionstate=connection_state["SPFRX"],
-                    dsconnectionstate=connection_state["DS"],
+                    spfconnectionstate=conn_states["SPF"],
+                    spfrxconnectionstate=conn_states["SPFRX"],
+                    dsconnectionstate=conn_states["DS"],
                 )
 
     # pylint: disable=unused-argument, too-many-branches
