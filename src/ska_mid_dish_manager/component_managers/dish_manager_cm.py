@@ -177,7 +177,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 connection_state = dict.fromkeys(
                     ("SPFRX", "SPF", "DS"), DeviceConnectionState.DISCONNECTED
                 )
-                for key in connection_state.keys():
+                for key in connection_state:
                     try:
                         comm_state = getattr(
                             self.component_managers.get(key),
