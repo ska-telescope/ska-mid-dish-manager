@@ -14,7 +14,7 @@ from ska_mid_dish_manager.models.dish_enums import DeviceConnectionState
 @pytest.mark.unit
 @pytest.mark.forked
 class TestConnectionStates:
-    """Tests for SetOperateMode"""
+    """Tests for Connection state attribute"""
 
     def setup_method(self):
         """Set up context"""
