@@ -174,33 +174,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     CommunicationStatus.NOT_ESTABLISHED
                 )
 
-                spf_connected = (
-                    "SPF" in self.component_managers
-                    and self.component_managers["SPF"].communication_state
-                    == CommunicationStatus.ESTABLISHED
+                connection_state = dict.fromkeys(
+                    ("SPFRX", "SPF", "DS"), DeviceConnectionState.DISCONNECTED
                 )
-                spfrx_connected = (
-                    "SPFRX" in self.component_managers
-                    and self.component_managers["SPFRX"].communication_state
-                    == CommunicationStatus.ESTABLISHED
-                )
-                ds_connected = (
-                    "DS" in self.component_managers
-                    and self.component_managers["DS"].communication_state
-                    == CommunicationStatus.ESTABLISHED
-                )
+                for key in connection_state.keys():
+                    try:
+                        comm_state = getattr(
+                            self.component_managers.get(key),
+                            "communication_state",
+                        )
+                        assert comm_state == CommunicationStatus.ESTABLISHED
+                    except (AttributeError, AssertionError):
+                        continue
+                    else:
+                        connection_state[key] = DeviceConnectionState.CONNECTED
 
                 self._update_component_state(
                     healthstate=HealthState.FAILED,
-                    spfconnectionstate=DeviceConnectionState.CONNECTED
-                    if spf_connected
-                    else DeviceConnectionState.DISCONNECTED,
-                    spfrxconnectionstate=DeviceConnectionState.CONNECTED
-                    if spfrx_connected
-                    else DeviceConnectionState.DISCONNECTED,
-                    dsconnectionstate=DeviceConnectionState.CONNECTED
-                    if ds_connected
-                    else DeviceConnectionState.DISCONNECTED,
+                    spfconnectionstate=connection_state["SPF"],
+                    spfrxconnectionstate=connection_state["SPFRX"],
+                    dsconnectionstate=connection_state["DS"],
                 )
 
     # pylint: disable=unused-argument, too-many-branches
