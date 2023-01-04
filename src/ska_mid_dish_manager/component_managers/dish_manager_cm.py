@@ -159,7 +159,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
                 self._update_component_state(
-                    healthstate=HealthState.FAILED,
                     spfconnectionstate=DeviceConnectionState.CONNECTED,
                     spfrxconnectionstate=DeviceConnectionState.CONNECTED,
                     dsconnectionstate=DeviceConnectionState.CONNECTED,
