@@ -71,6 +71,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achievedtargetlock=None,
             achievedpointing=[0.0, 0.0, 30.0],
             configuredband=Band.NONE,
+            spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             **kwargs,
         )
         self._dish_mode_model = DishModeModel()
@@ -133,6 +136,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "b4capabilitystate": CapabilityStates.UNKNOWN,
             "b5acapabilitystate": CapabilityStates.UNKNOWN,
             "b5bcapabilitystate": CapabilityStates.UNKNOWN,
+            "spfconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
+            "spfrxconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
+            "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
         }
         self._update_component_state(**initial_component_states)
 
@@ -150,6 +156,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_communication_state(
                     CommunicationStatus.ESTABLISHED
                 )
+
+                self._update_component_state(
+                    spfconnectionstate=CommunicationStatus.ESTABLISHED,
+                    spfrxconnectionstate=CommunicationStatus.ESTABLISHED,
+                    dsconnectionstate=CommunicationStatus.ESTABLISHED,
+                )
+
                 # Automatic transition to LP mode on startup should come from
                 # operating modes of subservient devices. Likewise, any
                 # reconnection gained should be accompanied by fresh
@@ -159,7 +172,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_communication_state(
                     CommunicationStatus.NOT_ESTABLISHED
                 )
-                self._update_component_state(healthstate=HealthState.FAILED)
+
+                conn_states = dict.fromkeys(
+                    ("SPFRX", "SPF", "DS"), CommunicationStatus.NOT_ESTABLISHED
+                )
+
+                for key in conn_states:
+                    if key in self.component_managers:
+                        component_manager = self.component_managers[key]
+                        comm_state = component_manager.communication_state
+
+                        conn_states[key] = comm_state
+
+                self._update_component_state(
+                    healthstate=HealthState.FAILED,
+                    spfconnectionstate=conn_states["SPF"],
+                    spfrxconnectionstate=conn_states["SPFRX"],
+                    dsconnectionstate=conn_states["DS"],
+                )
 
     # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):
