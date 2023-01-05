@@ -44,7 +44,7 @@ include:
 
   # k8s test
   - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/k8s.gitlab-ci.yml'
+    file: 'gitlab-ci/includes/k8s-test-runner.gitlab-ci.yml'
 
   # Docs pages
   - project: 'ska-telescope/templates-repository'
@@ -57,3 +57,18 @@ include:
   # Create a release
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
+
+# use test image with tango installed
+k8s-test-runner:
+  image: $SKA_PYTHON_PYTANGO_BUILDER_IMAGE
+  before_script:
+    - echo "Install k8s-tools dependencies"
+    - sudo apt-get install wget
+    - wget -q https://storage.googleapis.com/kubernetes-release/release/v1.25.2/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl
+    - chmod +x /usr/local/bin/kubectl
+    - wget -q https://get.helm.sh/helm-v3.10.0-linux-amd64.tar.gz -O - | tar -xzO linux-amd64/helm > /usr/local/bin/helm
+    - chmod +x /usr/local/bin/helm
+    - '[ -f .make/k8s.mk ] || (echo "File k8s.mk not included in Makefile; exit 1")'
+    - 'make help | grep k8s-test'
+    - make k8s-install-chart
+    - make k8s-wait
