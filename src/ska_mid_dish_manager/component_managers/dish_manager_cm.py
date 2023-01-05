@@ -19,7 +19,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
     CapabilityStates,
-    DeviceConnectionState,
     DishMode,
     DSPowerState,
     IndexerPosition,
@@ -72,9 +71,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achievedtargetlock=None,
             achievedpointing=[0.0, 0.0, 30.0],
             configuredband=Band.NONE,
-            spfconnectionstate=DeviceConnectionState.UNKNOWN,
-            spfrxconnectionstate=DeviceConnectionState.UNKNOWN,
-            dsconnectionstate=DeviceConnectionState.UNKNOWN,
+            spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             **kwargs,
         )
         self._dish_mode_model = DishModeModel()
@@ -137,9 +136,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "b4capabilitystate": CapabilityStates.UNKNOWN,
             "b5acapabilitystate": CapabilityStates.UNKNOWN,
             "b5bcapabilitystate": CapabilityStates.UNKNOWN,
-            "spfconnectionstate": DeviceConnectionState.DISCONNECTED,
-            "spfrxconnectionstate": DeviceConnectionState.DISCONNECTED,
-            "dsconnectionstate": DeviceConnectionState.DISCONNECTED,
+            "spfconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
+            "spfrxconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
+            "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
         }
         self._update_component_state(**initial_component_states)
 
@@ -159,9 +158,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
                 self._update_component_state(
-                    spfconnectionstate=DeviceConnectionState.CONNECTED,
-                    spfrxconnectionstate=DeviceConnectionState.CONNECTED,
-                    dsconnectionstate=DeviceConnectionState.CONNECTED,
+                    spfconnectionstate=CommunicationStatus.ESTABLISHED,
+                    spfrxconnectionstate=CommunicationStatus.ESTABLISHED,
+                    dsconnectionstate=CommunicationStatus.ESTABLISHED,
                 )
 
                 # Automatic transition to LP mode on startup should come from
@@ -175,7 +174,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
                 conn_states = dict.fromkeys(
-                    ("SPFRX", "SPF", "DS"), DeviceConnectionState.DISCONNECTED
+                    ("SPFRX", "SPF", "DS"), CommunicationStatus.NOT_ESTABLISHED
                 )
 
                 for key in conn_states:
@@ -183,8 +182,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         component_manager = self.component_managers[key]
                         comm_state = component_manager.communication_state
 
-                        if comm_state == CommunicationStatus.ESTABLISHED:
-                            conn_states[key] = DeviceConnectionState.CONNECTED
+                        conn_states[key] = comm_state
 
                 self._update_component_state(
                     healthstate=HealthState.FAILED,

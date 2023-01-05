@@ -215,26 +215,6 @@
       dtype_in: DevVoid
       dtype_out: DevVoid
     attributes:
-    - name: dsConnectionState
-      data_format: SCALAR
-      data_type: DevEnum
-      description: "Returns the connection state for the DS device"
-      disp_level: OPERATOR
-      display_unit: No display unit
-      enum_labels:
-      - 'DISCONNECTED'
-      - 'CONNECTED'
-      - 'UNKNOWN'
-      format: '%s'
-      label: dsConnectionState
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
     - name: State
       data_format: SCALAR
       data_type: DevState
@@ -874,6 +854,27 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: dsConnectionState
+      data_format: SCALAR
+      data_type: DevEnum
+      description: Displays connection status to DS device
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - PLACEHOLDER
+      - DISABLED
+      - NOT_ESTABLISHED
+      - ESTABLISHED
+      format: '%s'
+      label: dsConnectionState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: dsConnectionState
     - name: dshMaxShortTermPower
       data_format: SCALAR
       data_type: DevDouble
@@ -1332,13 +1333,14 @@
     - name: spfConnectionState
       data_format: SCALAR
       data_type: DevEnum
-      description: "Returns the connection state for the SPF device"
+      description: Displays connection status to SPF device
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
-      - 'DISCONNECTED'
-      - 'CONNECTED'
-      - 'UNKNOWN'
+      - PLACEHOLDER
+      - DISABLED
+      - NOT_ESTABLISHED
+      - ESTABLISHED
       format: '%s'
       label: spfConnectionState
       max_alarm: Not specified
@@ -1347,18 +1349,19 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
+      writable: READ_WRITE
+      writable_attr_name: spfConnectionState
     - name: spfrxConnectionState
       data_format: SCALAR
       data_type: DevEnum
-      description: "Returns the connection state for the SPFRx device"
+      description: Displays connection status to SPFRx device
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
-      - 'DISCONNECTED'
-      - 'CONNECTED'
-      - 'UNKNOWN'
+      - PLACEHOLDER
+      - DISABLED
+      - NOT_ESTABLISHED
+      - ESTABLISHED
       format: '%s'
       label: spfrxConnectionState
       max_alarm: Not specified
@@ -1367,8 +1370,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
+      writable: READ_WRITE
+      writable_attr_name: spfrxConnectionState
     - name: synchronised
       data_format: SCALAR
       data_type: DevBoolean

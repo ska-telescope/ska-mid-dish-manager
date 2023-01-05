@@ -22,7 +22,7 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import (
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
-    DeviceConnectionState,
+    CommunicationStatus,
     DishMode,
     PointingState,
     PowerState,
@@ -185,9 +185,11 @@ class DishManager(SKAController):
             device._b5a_capability_state = CapabilityStates.UNKNOWN
             device._b5b_capability_state = CapabilityStates.UNKNOWN
 
-            device._spf_connection_state = DeviceConnectionState.DISCONNECTED
-            device._spfrx_connection_state = DeviceConnectionState.DISCONNECTED
-            device._ds_connection_state = DeviceConnectionState.DISCONNECTED
+            device._spf_connection_state = CommunicationStatus.NOT_ESTABLISHED
+            device._spfrx_connection_state = (
+                CommunicationStatus.NOT_ESTABLISHED
+            )
+            device._ds_connection_state = CommunicationStatus.NOT_ESTABLISHED
 
             device.op_state_model.perform_action("component_standby")
 
@@ -224,7 +226,7 @@ class DishManager(SKAController):
 
     # pylint: disable=invalid-name
     @attribute(
-        dtype=DeviceConnectionState,
+        dtype=CommunicationStatus,
         access=AttrWriteType.READ_WRITE,
         doc="Displays connection status to SPF device",
     )
@@ -239,7 +241,7 @@ class DishManager(SKAController):
         self._spf_connection_state = value
 
     @attribute(
-        dtype=DeviceConnectionState,
+        dtype=CommunicationStatus,
         access=AttrWriteType.READ_WRITE,
         doc="Displays connection status to SPFRx device",
     )
@@ -254,7 +256,7 @@ class DishManager(SKAController):
         self._spfrx_connection_state = value
 
     @attribute(
-        dtype=DeviceConnectionState,
+        dtype=CommunicationStatus,
         access=AttrWriteType.READ_WRITE,
         doc="Displays connection status to DS device",
     )

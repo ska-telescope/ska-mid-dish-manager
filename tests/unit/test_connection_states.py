@@ -7,7 +7,6 @@ from ska_tango_base.control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.dish_manager import DishManager
-from ska_mid_dish_manager.models.dish_enums import DeviceConnectionState
 
 
 # pylint:disable=attribute-defined-outside-init
@@ -46,16 +45,17 @@ class TestConnectionStates:
         class_instance = DishManager.instances.get(device_proxy.name())
         spf_cm = class_instance.component_manager.component_managers["SPF"]
 
-        # We expect the spfConnectionState to be intially be CONNECTED
-        assert event_store.wait_for_value(DeviceConnectionState.CONNECTED)
+        # We expect the spfConnectionState to intially be ESTABLISHED
+        assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
         # Force spf communication_state to NOT_ESTABLISHED
         spf_cm._update_communication_state(
             communication_state=CommunicationStatus.NOT_ESTABLISHED
         )
 
-        # We can now expect spfConnectionState to transition to DISCONNECTED
-        assert event_store.wait_for_value(DeviceConnectionState.DISCONNECTED)
+        # We can now expect spfConnectionState to transition to
+        # NOT_ESTABLISHED
+        assert event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
 
     # pylint: disable=missing-function-docstring, protected-access
     def test_spfrx_connection_state_in_sync_with_spfrx_cm_communication_status(
@@ -72,16 +72,17 @@ class TestConnectionStates:
         class_instance = DishManager.instances.get(device_proxy.name())
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
 
-        # We expect the spfrxConnectionState to be intially be CONNECTED
-        assert event_store.wait_for_value(DeviceConnectionState.CONNECTED)
+        # We expect the spfrxConnectionState to intially be ESTABLISHED
+        assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
         # Force spfrx communication_state to NOT_ESTABLISHED
         spfrx_cm._update_communication_state(
             communication_state=CommunicationStatus.NOT_ESTABLISHED
         )
 
-        # We can now expect spfrxConnectionState to transition to DISCONNECTED
-        assert event_store.wait_for_value(DeviceConnectionState.DISCONNECTED)
+        # We can now expect spfrxConnectionState to transition to
+        # NOT_ESTABLISHED
+        assert event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
 
     # pylint: disable=missing-function-docstring, protected-access
     def test_ds_connection_state_in_sync_with_ds_cm_communication_status(
@@ -98,13 +99,14 @@ class TestConnectionStates:
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
 
-        # We expect the dsConnectionState to be intially be CONNECTED
-        assert event_store.wait_for_value(DeviceConnectionState.CONNECTED)
+        # We expect the dsConnectionState to intially be ESTABLISHED
+        assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
         # Force ds communication_state to NOT_ESTABLISHED
         ds_cm._update_communication_state(
             communication_state=CommunicationStatus.NOT_ESTABLISHED
         )
 
-        # We can now expect dsConnectionState to transition to DISCONNECTED
-        assert event_store.wait_for_value(DeviceConnectionState.DISCONNECTED)
+        # We can now expect dsConnectionState to transition to
+        # NOT_ESTABLISHED
+        assert event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
