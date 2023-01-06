@@ -5,6 +5,12 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.0.0
+*************
+- Updated Python to 3.8
+- Updated PyTango to 3.6.6
+- Added DS, SPF, SPFRx connection state attributes
+
 Version 1.8.1
 *************
 - Use version 0.0.4 simulators
