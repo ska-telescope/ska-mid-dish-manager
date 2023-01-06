@@ -45,6 +45,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         logger: logging.Logger,
         command_tracker,
+        sub_device_comm_state_cb,
         *args,
         ds_device_fqdn: str = "mid_d0001/lmc/ds_simulator",
         spf_device_fqdn: str = "mid_d0001/spf/simulator",
@@ -76,6 +77,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             **kwargs,
         )
+        self.sub_device_comm_state_cb = sub_device_comm_state_cb
         self._dish_mode_model = DishModeModel()
         self._command_tracker = command_tracker
         self.component_managers = {}
@@ -157,12 +159,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     CommunicationStatus.ESTABLISHED
                 )
 
-                self._update_component_state(
-                    spfconnectionstate=CommunicationStatus.ESTABLISHED,
-                    spfrxconnectionstate=CommunicationStatus.ESTABLISHED,
-                    dsconnectionstate=CommunicationStatus.ESTABLISHED,
-                )
-
                 # Automatic transition to LP mode on startup should come from
                 # operating modes of subservient devices. Likewise, any
                 # reconnection gained should be accompanied by fresh
@@ -172,24 +168,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_communication_state(
                     CommunicationStatus.NOT_ESTABLISHED
                 )
+                self._update_component_state(healthstate=HealthState.FAILED)
 
-                conn_states = dict.fromkeys(
-                    ("SPFRX", "SPF", "DS"), CommunicationStatus.NOT_ESTABLISHED
-                )
-
-                for key in conn_states:
-                    if key in self.component_managers:
-                        component_manager = self.component_managers[key]
-                        comm_state = component_manager.communication_state
-
-                        conn_states[key] = comm_state
-
-                self._update_component_state(
-                    healthstate=HealthState.FAILED,
-                    spfconnectionstate=conn_states["SPF"],
-                    spfrxconnectionstate=conn_states["SPFRX"],
-                    dsconnectionstate=conn_states["DS"],
-                )
+            # trigger push events for the connection state attributes
+            self.sub_device_comm_state_cb()
 
     # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):

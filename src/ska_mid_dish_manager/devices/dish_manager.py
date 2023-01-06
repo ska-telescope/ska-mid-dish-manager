@@ -68,6 +68,7 @@ class DishManager(SKAController):
             spfrx_device_fqdn=self.spfrx_device_fqdn,
             communication_state_callback=None,
             component_state_callback=self._component_state_changed,
+            sub_device_comm_state_cb=self._push_subs_comms_evts,
         )
 
     def init_command_objects(self) -> None:
@@ -93,6 +94,35 @@ class DishManager(SKAController):
                     logger=self.logger,
                 ),
             )
+
+    def _push_subs_comms_evts(self):
+        """
+        Push change events for subservient
+        device communication state changes
+        """
+        if not hasattr(self, "component_manager"):
+            self.logger.warning(
+                "Init not completed, but communication state is being updated"
+            )
+            return
+        self.push_change_event(
+            "spfConnectionState",
+            self.component_manager.component_managers[
+                "SPF"
+            ].communication_state,
+        )
+        self.push_change_event(
+            "spfrxConnectionState",
+            self.component_manager.component_managers[
+                "SPFRX"
+            ].communication_state,
+        )
+        self.push_change_event(
+            "dsConnectionState",
+            self.component_manager.component_managers[
+                "DS"
+            ].communication_state,
+        )
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
@@ -208,11 +238,16 @@ class DishManager(SKAController):
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
                 "achievedpointing": "achievedPointing",
-                "spfconnectionstate": "spfConnectionState",
-                "spfrxconnectionstate": "spfrxConnectionState",
-                "dsconnectionstate": "dsConnectionState",
             }
             for attr in device._component_state_attr_map.values():
+                device.set_change_event(attr, True, False)
+
+            # push change events for the communication state attributes also
+            for attr in (
+                "spfConnectionState",
+                "spfrxConnectionState",
+                "dsConnectionState",
+            ):
                 device.set_change_event(attr, True, False)
 
             device.instances[device.get_name()] = device
@@ -227,48 +262,36 @@ class DishManager(SKAController):
     # pylint: disable=invalid-name
     @attribute(
         dtype=CommunicationStatus,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Displays connection status to SPF device",
     )
     def spfConnectionState(self):
         """Returns the spf connection state"""
-        return self._spf_connection_state
-
-    @spfConnectionState.write
-    def spfConnectionState(self, value):
-        """Set the  spfconnection state"""
-        # pylint: disable=attribute-defined-outside-init
-        self._spf_connection_state = value
+        return self.component_manager.component_managers[
+            "SPF"
+        ].communication_state
 
     @attribute(
         dtype=CommunicationStatus,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Displays connection status to SPFRx device",
     )
     def spfrxConnectionState(self):
         """Returns the spfrx connection state"""
-        return self._spfrx_connection_state
-
-    @spfrxConnectionState.write
-    def spfrxConnectionState(self, value):
-        """Set the  spfrx connection state"""
-        # pylint: disable=attribute-defined-outside-init
-        self._spfrx_connection_state = value
+        return self.component_manager.component_managers[
+            "SPFRX"
+        ].communication_state
 
     @attribute(
         dtype=CommunicationStatus,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Displays connection status to DS device",
     )
     def dsConnectionState(self):
         """Returns the ds connection state"""
-        return self._ds_connection_state
-
-    @dsConnectionState.write
-    def dsConnectionState(self, value):
-        # pylint: disable=attribute-defined-outside-init
-        """Set the DS connection state"""
-        self._ds_connection_state = value
+        return self.component_manager.component_managers[
+            "DS"
+        ].communication_state
 
     @attribute(
         max_dim_x=3,
