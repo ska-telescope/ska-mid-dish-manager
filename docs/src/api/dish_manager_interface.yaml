@@ -71,7 +71,7 @@
     - name: GetVersionInfo
       disp_level: OPERATOR
       doc_in: Uninitialised
-      doc_out: Uninitialised
+      doc_out: Version strings
       dtype_in: DevVoid
       dtype_out: DevVarStringArray
     - name: Init
@@ -89,13 +89,13 @@
     - name: 'Off'
       disp_level: OPERATOR
       doc_in: Uninitialised
-      doc_out: Uninitialised
+      doc_out: (ReturnType, 'informational message')
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
     - name: 'On'
       disp_level: OPERATOR
       doc_in: Uninitialised
-      doc_out: Uninitialised
+      doc_out: (ReturnType, 'informational message')
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
     - name: PushChanges
@@ -107,7 +107,7 @@
     - name: Reset
       disp_level: OPERATOR
       doc_in: Uninitialised
-      doc_out: Uninitialised
+      doc_out: (ReturnType, 'informational message')
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
     - name: Scan
@@ -287,10 +287,9 @@
     - name: adminMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Admin Mode of the device.\n\n        It may\
-        \ interpret the current device condition and condition of all managed\n  \
-        \       devices to set this. Most possibly an aggregate attribute.\n\n   \
-        \     :return: Admin Mode of the device\n        "
+      description: The admin mode reported for this device. It may interpret the current
+        device condition and condition of all managed devices to set this. Most possibly
+        an aggregate attribute.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -713,8 +712,7 @@
     - name: buildState
       data_format: SCALAR
       data_type: DevString
-      description: "\n        Read the Build State of the device.\n\n        :return:\
-        \ the build state of the device\n        "
+      description: Build state of this device
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -791,12 +789,10 @@
     - name: controlMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Control Mode of the device.\n\n        The\
-        \ control mode of the device are REMOTE, LOCAL\n        Tango Device accepts\
-        \ only from a \u2018local\u2019 client and ignores commands and\n        queries\
-        \ received from TM or any other \u2018remote\u2019 clients. The Local clients\n\
-        \        has to release LOCAL control before REMOTE clients can take control\
-        \ again.\n\n        :return: Control Mode of the device\n        "
+      description: "The control mode of the device. REMOTE, LOCAL\nTango Device accepts\
+        \ only from a \u2018local\u2019 client and ignores commands and queries received\
+        \ from TM or any other \u2018remote\u2019 clients. The Local clients has to\
+        \ release LOCAL control before REMOTE clients can take control again."
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -873,8 +869,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ_WRITE
-      writable_attr_name: dsConnectionState
+      writable: READ
+      writable_attr_name: None
     - name: dshMaxShortTermPower
       data_format: SCALAR
       data_type: DevDouble
@@ -998,10 +994,9 @@
     - name: healthState
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Health State of the device.\n\n        It interprets\
-        \ the current device condition and condition of\n        all managed devices\
-        \ to set this. Most possibly an aggregate attribute.\n\n        :return: Health\
-        \ State of the device\n        "
+      description: The health state reported for this device. It interprets the current
+        device condition and condition of all managed devices to set this. Most possibly
+        an aggregate attribute.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1022,9 +1017,8 @@
     - name: loggingLevel
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the logging level of the device.\n\n        Initialises\
-        \ to LoggingLevelDefault on startup.\n        See :py:class:`~ska_control_model.logging_level.LoggingLevel`\n\
-        \n        :return:  Logging level of the device.\n        "
+      description: Current logging level for this device - initialises to LoggingLevelDefault
+        on startup
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1047,10 +1041,8 @@
     - name: loggingTargets
       data_format: SPECTRUM
       data_type: DevString
-      description: "\n        Read the additional logging targets of the device.\n\
-        \n        Note that this excludes the handlers provided by the ska_ser_logging\n\
-        \        library defaults - initialises to LoggingTargetsDefault on startup.\n\
-        \n        :return:  Logging level of the device.\n        "
+      description: Logging targets for this device, excluding ska_ser_logging defaults
+        - initialises to LoggingTargetsDefault on startup
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1066,11 +1058,9 @@
     - name: longRunningCommandIDsInQueue
       data_format: SPECTRUM
       data_type: DevString
-      description: "\n        Read the IDs of the long running commands in the queue.\n\
-        \n        Every client that executes a command will receive a command ID as\
-        \ response.\n        Keep track of IDs in the queue. Pop off from front as\
-        \ they complete.\n\n        :return: unique ids for the enqueued commands\n\
-        \        "
+      description: "Every client that executes a command will receive a command ID\
+        \ as response. \nKeep track of IDs in the queue. Pop off from front as they\
+        \ complete."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1086,11 +1076,8 @@
     - name: longRunningCommandProgress
       data_format: SPECTRUM
       data_type: DevString
-      description: "\n        Read the progress of the currently executing long running\
-        \ command.\n\n        ID, progress of the currently executing command.\n \
-        \       Clients can subscribe to on_change event and wait\n        for the\
-        \ ID they are interested in.\n\n        :return: ID, progress of the currently\
-        \ executing command.\n        "
+      description: "ID, progress of the currently executing command. \nClients can\
+        \ subscribe to on_change event and wait for the ID they are interested in.."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1106,10 +1093,8 @@
     - name: longRunningCommandResult
       data_format: SPECTRUM
       data_type: DevString
-      description: "\n        Read the result of the completed long running command.\n\
-        \n        Reports unique_id, json-encoded result.\n        Clients can subscribe\
-        \ to on_change event and wait for\n        the ID they are interested in.\n\
-        \n        :return: ID, result.\n        "
+      description: "unique_id, json-encoded result. \nClients can subscribe to on_change\
+        \ event and wait for the ID they are interested in."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1125,11 +1110,9 @@
     - name: longRunningCommandStatus
       data_format: SPECTRUM
       data_type: DevString
-      description: "\n        Read the status of the currently executing long running\
-        \ commands.\n\n        ID, status pair of the currently executing command.\n\
-        \        Clients can subscribe to on_change event and wait for the\n     \
-        \   ID they are interested in.\n\n        :return: ID, status pairs of the\
-        \ currently executing commands\n        "
+      description: "ID, status pair of the currently executing command. \nClients\
+        \ can subscribe to on_change event and wait for the ID they are interested\
+        \ in."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1145,9 +1128,8 @@
     - name: longRunningCommandsInQueue
       data_format: SPECTRUM
       data_type: DevString
-      description: "\n        Read the long running commands in the queue.\n\n   \
-        \      Keep track of which commands are in the queue.\n         Pop off from\
-        \ front as they complete.\n\n        :return: tasks in the queue\n        "
+      description: "Keep track of which commands are in the queue. \nPop off from\
+        \ front as they complete."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1310,11 +1292,9 @@
     - name: simulationMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Simulation Mode of the device.\n\n        Some\
-        \ devices may implement\n        both modes, while others will have simulators\
-        \ that set simulationMode\n        to True while the real devices always set\
-        \ simulationMode to False.\n\n        :return: Simulation Mode of the device.\n\
-        \        "
+      description: "Reports the simulation mode of the device. \nSome devices may\
+        \ implement both modes, while others will have simulators that set simulationMode\
+        \ to True while the real devices always set simulationMode to False."
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1349,8 +1329,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ_WRITE
-      writable_attr_name: spfConnectionState
+      writable: READ
+      writable_attr_name: None
     - name: spfrxConnectionState
       data_format: SCALAR
       data_type: DevEnum
@@ -1370,8 +1350,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ_WRITE
-      writable_attr_name: spfrxConnectionState
+      writable: READ
+      writable_attr_name: None
     - name: synchronised
       data_format: SCALAR
       data_type: DevBoolean
@@ -1391,9 +1371,8 @@
     - name: testMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Test Mode of the device.\n\n        Either\
-        \ no test mode or an indication of the test mode.\n\n        :return: Test\
-        \ Mode of the device\n        "
+      description: "The test mode of the device. \nEither no test mode or an indication\
+        \ of the test mode."
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1478,8 +1457,7 @@
     - name: versionId
       data_format: SCALAR
       data_type: DevString
-      description: "\n        Read the Version Id of the device.\n\n        :return:\
-        \ the version id of the device\n        "
+      description: Version Id of this device
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
