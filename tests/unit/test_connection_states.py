@@ -49,9 +49,7 @@ class TestConnectionStates:
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
         # Force spf communication_state to NOT_ESTABLISHED
-        spf_cm._update_communication_state(
-            communication_state=CommunicationStatus.NOT_ESTABLISHED
-        )
+        spf_cm._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
 
         # We can now expect spfConnectionState to transition to
         # NOT_ESTABLISHED
@@ -103,9 +101,7 @@ class TestConnectionStates:
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
         # Force ds communication_state to NOT_ESTABLISHED
-        ds_cm._update_communication_state(
-            communication_state=CommunicationStatus.NOT_ESTABLISHED
-        )
+        ds_cm._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
 
         # We can now expect dsConnectionState to transition to
         # NOT_ESTABLISHED

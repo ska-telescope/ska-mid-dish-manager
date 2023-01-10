@@ -39,12 +39,8 @@ class TestTrack:
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
         self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers[
-            "SPF"
-        ]
-        self.spfrx_cm = class_instance.component_manager.component_managers[
-            "SPFRX"
-        ]
+        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
 
     def teardown_method(self):
@@ -75,9 +71,7 @@ class TestTrack:
             event_store,
         )
 
-        self.dish_manager_cm._update_component_state(
-            dishmode=current_dish_mode
-        )
+        self.dish_manager_cm._update_component_state(dishmode=current_dish_mode)
         event_store.wait_for_value(current_dish_mode, timeout=5)
         with pytest.raises(tango.DevFailed):
             _, _ = self.device_proxy.Track()
@@ -100,12 +94,8 @@ class TestTrack:
 
         # Force dishManager dishMode to go to OPERATE
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
-        )
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
         event_store.wait_for_value(DishMode.OPERATE)
         self.ds_cm._update_component_state(pointingstate=PointingState.READY)
         event_store.wait_for_value(PointingState.READY)

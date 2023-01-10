@@ -95,9 +95,7 @@ def test_capability_state_b2(
     assert ds_device_proxy.indexerPosition == IndexerPosition.MOVING
 
     if spf_device_proxy.b2CapabilityState == SPFCapabilityStates.OPERATE_FULL:
-        spf_device_proxy.b2CapabilityState = (
-            SPFCapabilityStates.OPERATE_DEGRADED
-        )
+        spf_device_proxy.b2CapabilityState = SPFCapabilityStates.OPERATE_DEGRADED
         spf_event_store.wait_for_value(SPFCapabilityStates.OPERATE_DEGRADED)
 
     spf_device_proxy.b2CapabilityState = SPFCapabilityStates.OPERATE_FULL
@@ -105,19 +103,13 @@ def test_capability_state_b2(
 
     # Ensure updates
     if spfrx_device_proxy.b2CapabilityState == SPFRxCapabilityStates.CONFIGURE:
-        spfrx_device_proxy.b2CapabilityState = (
-            SPFRxCapabilityStates.UNAVAILABLE
-        )
+        spfrx_device_proxy.b2CapabilityState = SPFRxCapabilityStates.UNAVAILABLE
         spfrx_event_store.wait_for_value(SPFRxCapabilityStates.UNAVAILABLE)
     spfrx_device_proxy.b2CapabilityState = SPFRxCapabilityStates.CONFIGURE
     spfrx_event_store.wait_for_value(SPFRxCapabilityStates.CONFIGURE)
 
     assert ds_device_proxy.indexerPosition == IndexerPosition.MOVING
-    assert (
-        spf_device_proxy.b2CapabilityState == SPFCapabilityStates.OPERATE_FULL
-    )
-    assert (
-        spfrx_device_proxy.b2CapabilityState == SPFRxCapabilityStates.CONFIGURE
-    )
+    assert spf_device_proxy.b2CapabilityState == SPFCapabilityStates.OPERATE_FULL
+    assert spfrx_device_proxy.b2CapabilityState == SPFRxCapabilityStates.CONFIGURE
 
     event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=8)

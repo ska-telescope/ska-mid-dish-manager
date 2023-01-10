@@ -8,11 +8,7 @@ import pytest
 import tango
 from tango import DevState
 from tango.server import Device
-from tango.test_context import (
-    DeviceTestContext,
-    MultiDeviceTestContext,
-    get_host_ip,
-)
+from tango.test_context import DeviceTestContext, MultiDeviceTestContext, get_host_ip
 
 from ska_mid_dish_manager.devices.test_devices.utils import EventStore
 
@@ -80,9 +76,7 @@ def devices_to_test(request):
 
 # pylint: disable=invalid-name, redefined-outer-name
 @pytest.fixture(scope="function")
-def multi_device_tango_context(
-    mocker, devices_to_test  # pylint: disable=redefined-outer-name
-):
+def multi_device_tango_context(mocker, devices_to_test):  # pylint: disable=redefined-outer-name
     """
     Creates and returns a TANGO MultiDeviceTestContext object, with
     tango.DeviceProxy patched to work around a name-resolving issue.
@@ -107,9 +101,7 @@ def multi_device_tango_context(
             **kwargs,
         ),
     )
-    with MultiDeviceTestContext(
-        devices_to_test, host=HOST, port=PORT, process=True
-    ) as context:
+    with MultiDeviceTestContext(devices_to_test, host=HOST, port=PORT, process=True) as context:
         yield context
 
 

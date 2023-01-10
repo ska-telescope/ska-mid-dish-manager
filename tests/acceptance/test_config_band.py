@@ -40,15 +40,11 @@ def test_configure_band_2(event_store, dish_manager_proxy):
     event_store.clear_queue()
 
     future_time = datetime.utcnow() + timedelta(days=1)
-    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(
-        future_time.isoformat()
-    )
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())
     event_store.wait_for_command_id(unique_id)
     assert dish_manager_proxy.configuredBand == Band.B2
 
     # Do it again to check result
-    [[task_status], [result]] = dish_manager_proxy.ConfigureBand2(
-        future_time.isoformat()
-    )
+    [[task_status], [result]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())
     assert task_status == TaskStatus.COMPLETED
     assert result == "Already in band B2"

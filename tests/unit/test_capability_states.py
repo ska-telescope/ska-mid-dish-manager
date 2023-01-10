@@ -35,12 +35,8 @@ def test_capability_state_rule_unavailable(dish_mode_model):
         "operatingmode": DSOperatingMode.STARTUP,
         "indexerposition": None,
     }
-    spf_component_state = {
-        "b5bcapabilitystate": SPFCapabilityStates.UNAVAILABLE
-    }
-    spfrx_component_state = {
-        "b5bcapabilitystate": SPFRxCapabilityStates.UNAVAILABLE
-    }
+    spf_component_state = {"b5bcapabilitystate": SPFCapabilityStates.UNAVAILABLE}
+    spfrx_component_state = {"b5bcapabilitystate": SPFRxCapabilityStates.UNAVAILABLE}
     dish_manager_component_state = {"dishmode": None}
 
     assert (
@@ -62,9 +58,7 @@ def test_capability_state_rule_standby(dish_mode_model):
 
     ds_component_state = {"operatingmode": None, "indexerposition": None}
     spf_component_state = {"b5acapabilitystate": SPFCapabilityStates.STANDBY}
-    spfrx_component_state = {
-        "b5acapabilitystate": SPFRxCapabilityStates.STANDBY
-    }
+    spfrx_component_state = {"b5acapabilitystate": SPFRxCapabilityStates.STANDBY}
     dish_manager_component_state = {"dishmode": DishMode.STANDBY_LP}
 
     assert (
@@ -85,12 +79,8 @@ def test_capability_state_rule_configuring(dish_mode_model):
     """Test the capabilityState rules"""
 
     ds_component_state = {"operatingmode": None, "indexerposition": None}
-    spf_component_state = {
-        "b4capabilitystate": SPFCapabilityStates.OPERATE_DEGRADED
-    }
-    spfrx_component_state = {
-        "b4capabilitystate": SPFRxCapabilityStates.CONFIGURE
-    }
+    spf_component_state = {"b4capabilitystate": SPFCapabilityStates.OPERATE_DEGRADED}
+    spfrx_component_state = {"b4capabilitystate": SPFRxCapabilityStates.CONFIGURE}
     dish_manager_component_state = {"dishmode": DishMode.CONFIG}
 
     assert (
@@ -114,12 +104,8 @@ def test_capability_state_rule_degraded(dish_mode_model):
         "indexerposition": IndexerPosition.B1,
         "operatingmode": DSOperatingMode.STOW,
     }
-    spf_component_state = {
-        "b3capabilitystate": SPFCapabilityStates.OPERATE_DEGRADED
-    }
-    spfrx_component_state = {
-        "b3capabilitystate": SPFRxCapabilityStates.OPERATE
-    }
+    spf_component_state = {"b3capabilitystate": SPFCapabilityStates.OPERATE_DEGRADED}
+    spfrx_component_state = {"b3capabilitystate": SPFRxCapabilityStates.OPERATE}
     dish_manager_component_state = {"dishmode": None}
 
     assert (
@@ -143,12 +129,8 @@ def test_capability_state_rule_operate(dish_mode_model):
         "indexerposition": IndexerPosition.MOVING,
         "operatingmode": None,
     }
-    spf_component_state = {
-        "b1capabilitystate": SPFCapabilityStates.OPERATE_FULL
-    }
-    spfrx_component_state = {
-        "b1capabilitystate": SPFRxCapabilityStates.OPERATE
-    }
+    spf_component_state = {"b1capabilitystate": SPFCapabilityStates.OPERATE_FULL}
+    spfrx_component_state = {"b1capabilitystate": SPFRxCapabilityStates.OPERATE}
     dish_manager_component_state = {"dishmode": DishMode.STOW}
 
     assert (
@@ -204,12 +186,8 @@ class TestCapabilityStates:
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
         self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers[
-            "SPF"
-        ]
-        self.spfrx_cm = class_instance.component_manager.component_managers[
-            "SPFRX"
-        ]
+        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
 
     def teardown_method(self):
@@ -222,10 +200,7 @@ class TestCapabilityStates:
         for capability in ("b1", "b2", "b3", "b4", "b5a", "b5b"):
             state_name = f"{capability}CapabilityState"
             assert state_name in attributes
-            assert (
-                getattr(self.device_proxy, state_name, None)
-                == CapabilityStates.UNKNOWN
-            )
+            assert getattr(self.device_proxy, state_name, None) == CapabilityStates.UNKNOWN
 
     def test_b1capabilitystate_change(
         self,
@@ -242,15 +217,9 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.dish_manager_cm._update_component_state(
-            dishmode=DishMode.STANDBY_LP
-        )
-        self.spf_cm._update_component_state(
-            b1capabilitystate=SPFCapabilityStates.STANDBY
-        )
-        self.spfrx_cm._update_component_state(
-            b1capabilitystate=SPFRxCapabilityStates.STANDBY
-        )
+        self.dish_manager_cm._update_component_state(dishmode=DishMode.STANDBY_LP)
+        self.spf_cm._update_component_state(b1capabilitystate=SPFCapabilityStates.STANDBY)
+        self.spfrx_cm._update_component_state(b1capabilitystate=SPFRxCapabilityStates.STANDBY)
 
         event_store.wait_for_value(CapabilityStates.STANDBY)
         self.device_proxy.unsubscribe_event(sub_id)
@@ -270,15 +239,9 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STARTUP
-        )
-        self.spf_cm._update_component_state(
-            b2capabilitystate=SPFCapabilityStates.UNAVAILABLE
-        )
-        self.spfrx_cm._update_component_state(
-            b2capabilitystate=SPFRxCapabilityStates.UNAVAILABLE
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STARTUP)
+        self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.UNAVAILABLE)
+        self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.UNAVAILABLE)
 
         event_store.wait_for_value(CapabilityStates.UNAVAILABLE)
         self.device_proxy.unsubscribe_event(sub_id)
@@ -299,15 +262,9 @@ class TestCapabilityStates:
 
         # Mimic capabilitystatechanges on sub devices
         self.dish_manager_cm._update_component_state(dishmode=DishMode.STOW)
-        self.ds_cm._update_component_state(
-            indexerposition=IndexerPosition.MOVING
-        )
-        self.spf_cm._update_component_state(
-            b3capabilitystate=SPFCapabilityStates.OPERATE_FULL
-        )
-        self.spfrx_cm._update_component_state(
-            b3capabilitystate=SPFRxCapabilityStates.OPERATE
-        )
+        self.ds_cm._update_component_state(indexerposition=IndexerPosition.MOVING)
+        self.spf_cm._update_component_state(b3capabilitystate=SPFCapabilityStates.OPERATE_FULL)
+        self.spfrx_cm._update_component_state(b3capabilitystate=SPFRxCapabilityStates.OPERATE)
 
         event_store.wait_for_value(CapabilityStates.OPERATE_FULL)
         self.device_proxy.unsubscribe_event(sub_id)
@@ -328,15 +285,9 @@ class TestCapabilityStates:
 
         # Mimic capabilitystatechanges on sub devices
         self.dish_manager_cm._update_component_state(dishmode=DishMode.CONFIG)
-        self.ds_cm._update_component_state(
-            indexerposition=IndexerPosition.MOVING
-        )
-        self.spf_cm._update_component_state(
-            b4capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED
-        )
-        self.spfrx_cm._update_component_state(
-            b4capabilitystate=SPFRxCapabilityStates.CONFIGURE
-        )
+        self.ds_cm._update_component_state(indexerposition=IndexerPosition.MOVING)
+        self.spf_cm._update_component_state(b4capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED)
+        self.spfrx_cm._update_component_state(b4capabilitystate=SPFRxCapabilityStates.CONFIGURE)
 
         event_store.wait_for_value(CapabilityStates.CONFIGURING)
         self.device_proxy.unsubscribe_event(sub_id)
@@ -363,9 +314,7 @@ class TestCapabilityStates:
         self.spf_cm._update_component_state(
             b5acapabilitystate=SPFCapabilityStates.OPERATE_DEGRADED
         )
-        self.spfrx_cm._update_component_state(
-            b5acapabilitystate=SPFRxCapabilityStates.OPERATE
-        )
+        self.spfrx_cm._update_component_state(b5acapabilitystate=SPFRxCapabilityStates.OPERATE)
 
         event_store.wait_for_value(CapabilityStates.OPERATE_DEGRADED)
         self.device_proxy.unsubscribe_event(sub_id)
