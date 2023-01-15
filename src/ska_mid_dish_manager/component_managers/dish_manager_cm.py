@@ -462,6 +462,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             progress=f"Event object on DishManager (DM): {task_abort_event}"
         )
 
+        # If AbortCommands is called after this command is evoked,
+        # it may take a while for the event object to be updated.
+        # Wait a while before continuing.
+        task_abort_event.wait(timeout=1)
+
         # perform an abort event check before executing the command
         # on the subservient devices. if the check fails then it will
         # probably be detected when another event check is done in the
