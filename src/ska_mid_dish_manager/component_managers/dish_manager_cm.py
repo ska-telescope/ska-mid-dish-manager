@@ -458,6 +458,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if self.component_state["dishmode"].name == "OPERATE":
             subservient_devices = ["DS"]
 
+        task_callback(
+            progress=f"Event object on DishManager (DM): {task_abort_event}"
+        )
+
+        # perform an abort event check before executing the command
+        # on the subservient devices. if the check fails then it will
+        # probably be detected when another event check is done in the
+        # respective subservient devices i.e. run_device_command
+        if task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result="SetStandbyFPMode Aborted",
+                progress="SetStandbyFPMode Aborted",
+            )
+            return
+
         for device in subservient_devices:
             command = SubmittedSlowCommand(
                 f"{device}_SetStandbyFPMode",
@@ -466,6 +482,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "run_device_command",
                 callback=None,
                 logger=self.logger,
+            )
+            task_callback(
+                progress=(
+                    f"About to call sub command on {device}. "
+                    f"DM abort event: {task_abort_event.is_set()}"
+                )
             )
             if device == "DS":
                 _, command_id = command("SetStandbyFPMode", None)
@@ -495,10 +517,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback(progress="Awaiting dishMode change to STANDBY_FP")
 
         while True:
+            task_callback(
+                progress=(
+                    "Waiting for dishMode update. "
+                    f"DM abort event: {task_abort_event.is_set()}"
+                )
+            )
             if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
                     result="SetStandbyFPMode Aborted",
+                    progress="SetStandbyFPMode Aborted",
                 )
                 return
 
@@ -511,6 +540,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_callback(
                     status=TaskStatus.COMPLETED,
                     result="SetStandbyFPMode completed",
+                    progress="SetStandbyFPMode completed",
                 )
                 return
 

@@ -382,6 +382,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         task_callback: Callable = None,
         task_abort_event: Event = None,
     ):
+        task_callback(
+            progress=(
+                f"Abort Event object on {self._device_proxy}: "
+                f"{task_abort_event}"
+            )
+        )
+        task_callback(
+            progress=(
+                f"Abort Event before running command on {self._device_proxy}:"
+                f" {task_abort_event.is_set()}"
+            )
+        )
         if task_callback:
             task_callback(TaskStatus.IN_PROGRESS)
         if task_abort_event.is_set():
@@ -398,6 +410,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             )
             return
 
+        task_callback(
+            progress=(
+                f"Abort Event after running command on {self._device_proxy}:"
+                f" {task_abort_event.is_set()}"
+            )
+        )
         result = None
         try:
             result = self.execute_command(
