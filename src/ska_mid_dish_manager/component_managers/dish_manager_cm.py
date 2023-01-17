@@ -20,12 +20,15 @@ from ska_mid_dish_manager.models.dish_enums import (
     BandInFocus,
     CapabilityStates,
     DishMode,
+    DSOperatingMode,
     DSPowerState,
     IndexerPosition,
     PointingState,
     SPFCapabilityStates,
+    SPFOperatingMode,
     SPFPowerState,
     SPFRxCapabilityStates,
+    SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
@@ -383,6 +386,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # if self.component_state["dishmode"].name == "STANDBY_FP":
         #     subservient_devices = ["DS", "SPF"]
 
+        # Idea
+        commands_for_device = {
+            "SPF": {
+                "command": "SetStandbyLPMode",
+                "awaitedValue": SPFOperatingMode.STANDBY_LP,
+            },
+            "SPFRX": {
+                "command": "SetStandbyMode",
+                "awaitedValue": SPFRxOperatingMode.STANDBY,
+            },
+            "DS": {
+                "command": "SetStandbyLPMode",
+                "awaitedValue": DSOperatingMode.STANDBY_LP,
+            },
+        }
+
         for device in subservient_devices:
             command = SubmittedSlowCommand(
                 f"{device}_SetStandbyLPMode",
@@ -392,19 +411,34 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 callback=None,
                 logger=self.logger,
             )
-            if device == "SPFRX":
-                _, command_id = command("SetStandbyMode", None)
-                task_callback(
-                    progress=f"SetStandbyMode called on SPFRX, ID {command_id}"
+
+            _, command_id = command(
+                commands_for_device[device]["command"], None
+            )
+
+            task_callback(
+                progress=(
+                    f"{commands_for_device[device]['command']}"
+                    f"called on {device}, ID {command_id}"
                 )
-            else:
-                _, command_id = command("SetStandbyLPMode", None)
-                task_callback(
-                    progress=(
-                        f"SetStandbyLPMode called on {device},"
-                        f" ID {command_id}"
-                    )
-                )
+            )
+
+            # if device == "SPFRX":
+            #     _, command_id = command("SetStandbyMode", None)
+            #     task_callback(
+            #         progress=(
+            #             f"SetStandbyMode called on SPFRX, "
+            #             f"ID {command_id}"
+            #         )
+            #     )
+            # else:
+            #     _, command_id = command("SetStandbyLPMode", None)
+            #     task_callback(
+            #         progress=(
+            #             f"SetStandbyLPMode called on {device},"
+            #             f" ID {command_id}"
+            #         )
+            #     )
 
             device_command_ids[device] = command_id
 
@@ -416,11 +450,36 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_callback(
                     status=TaskStatus.ABORTED,
                     result="SetStandbyLPMode Aborted",
+                    progress="SetStandbyLPMode Aborted",
                 )
                 return
 
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STANDBY_LP:
+                # Check each devices to see if their operatingmode
+                # attributes are in the correct state
+                for device in subservient_devices:
+                    command_running = commands_for_device[device]["command"]
+                    awaited_value = commands_for_device[device]["awaitedValue"]
+                    operating_mode = self.component_managers[
+                        device
+                    ].component_state["operatingmode"]
+
+                    if operating_mode != awaited_value:
+                        task_callback(
+                            progress=(
+                                f"Awaiting {device} operatingmode"
+                                f" to change to {awaited_value}"
+                            )
+                        )
+                    else:
+                        task_callback(
+                            progress=(
+                                f"{command_running} completed on {device},"
+                                f"ID {device_command_ids[device]}"
+                            )
+                        )
+
                 task_abort_event.wait(timeout=1)
                 for comp_man in self.component_managers.values():
                     comp_man.read_update_component_state()
@@ -430,6 +489,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_callback(
                     status=TaskStatus.COMPLETED,
                     result="SetStandbyLPMode completed",
+                    progress="SetStandbyLPMode completed",
                 )
                 return
 
@@ -798,6 +858,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_callback(
                     status=TaskStatus.COMPLETED,
                     result="Stow completed",
+                    progress="Stow completed",
                 )
                 return
 
