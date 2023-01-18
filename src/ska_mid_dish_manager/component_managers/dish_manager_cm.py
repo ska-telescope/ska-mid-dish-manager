@@ -389,76 +389,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command_name="SetStandbyFPMode",
         )
         status, response = self.submit_task(
-            self._set_standby_fp_mode, args=[], task_callback=task_callback
+            self._command_map._set_standby_fp_mode,
+            args=[],
+            task_callback=task_callback,
         )
         return status, response
-
-    def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
-        """Set StandbyFP mode on sub devices as long running commands"""
-        assert task_callback, "task_callback has to be defined"
-        task_callback(status=TaskStatus.IN_PROGRESS)
-
-        device_command_ids = {}
-        subservient_devices = ["DS", "SPF", "SPFRX"]
-
-        if self.component_state["dishmode"].name == "OPERATE":
-            subservient_devices = ["DS"]
-
-        for device in subservient_devices:
-            command = SubmittedSlowCommand(
-                f"{device}_SetStandbyFPMode",
-                self._command_tracker,
-                self.component_managers[device],
-                "run_device_command",
-                callback=None,
-                logger=self.logger,
-            )
-            if device == "DS":
-                _, command_id = command("SetStandbyFPMode", None)
-                device_command_ids[device] = command_id
-                task_callback(
-                    progress=f"SetStandbyFPMode called on DS, ID {command_id}"
-                )
-            elif device == "SPF":
-                _, command_id = command("SetOperateMode", None)
-                device_command_ids[device] = command_id
-                task_callback(
-                    progress=f"SetOperateMode called on SPF, ID {command_id}"
-                )
-            else:
-                # allow request only when there's a configured band
-                if self.component_state["configuredband"] not in [
-                    Band.NONE,
-                    Band.UNKNOWN,
-                ]:
-                    _, command_id = command("CaptureData", True)
-                    device_command_ids[device] = command_id
-                    task_callback(
-                        progress=f"CaptureData called on SPFRx, ID {command_id}"  # noqa: E501
-                    )
-
-        task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
-        task_callback(progress="Awaiting dishMode change to STANDBY_FP")
-
-        while True:
-            if task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="SetStandbyFPMode Aborted",
-                )
-                return
-
-            current_dish_mode = self.component_state["dishmode"]
-            if current_dish_mode != DishMode.STANDBY_FP:
-                task_abort_event.wait(timeout=1)
-                for comp_man in self.component_managers.values():
-                    comp_man.read_update_component_state()
-            else:
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result="SetStandbyFPMode completed",
-                )
-                return
 
     def set_operate_mode(
         self,

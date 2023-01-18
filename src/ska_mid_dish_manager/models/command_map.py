@@ -1,11 +1,12 @@
 """Module to manage the mapping of commands to subservient devices"""
 import json
-from typing import Callable, Optional
+from typing import Callable, Optional 
 
 from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.executor import TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
+    Band,
     DishMode,
     DSOperatingMode,
     SPFOperatingMode,
@@ -53,17 +54,17 @@ class CommandMap:
             "SPF": {
                 "command": "SetStandbyLPMode",
                 "awaitedAttribute": "operatingmode",
-                "awaitedValue": SPFOperatingMode.STANDBY_LP,
+                "awaitedValuesList": [SPFOperatingMode.STANDBY_LP],
             },
             "SPFRX": {
                 "command": "SetStandbyMode",
                 "awaitedAttribute": "operatingmode",
-                "awaitedValue": SPFRxOperatingMode.STANDBY,
+                "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
             },
             "DS": {
                 "command": "SetStandbyLPMode",
                 "awaitedAttribute": "operatingmode",
-                "awaitedValue": DSOperatingMode.STANDBY_LP,
+                "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
             },
         }
 
@@ -74,6 +75,53 @@ class CommandMap:
             "SetStandbyLPMode",
             "dishmode",
             DishMode.STANDBY_LP,
+        )
+
+    def set_standby_fp_mode(
+        self,
+        task_abort_event=None,
+        task_callback: Optional[Callable] = None,
+    ):
+        """Transition the dish to STANDBY_FP mode"""
+        if self._dish_manager_cm.component_state["dishmode"].name == "OPERATE":
+            commands_for_device = {
+                "DS": {
+                    "command": "SetStandbyFPMode",
+                    "awaitedAttribute": "operatingmode",
+                    "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
+                }
+            }
+        else :
+            commands_for_device = {
+                "SPF": {
+                    "command": "SetOperateMode",
+                    "awaitedAttribute": "operatingmode",
+                    "awaitedValuesList": [SPFOperatingMode.OPERATE],
+                },
+                "DS": {
+                    "command": "SetStandbyFPMode",
+                    "awaitedAttribute": "operatingmode",
+                    "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
+                },
+            }
+
+            if self._dish_manager_cm.component_state["configuredband"] not in [
+                Band.NONE,
+                Band.UNKNOWN,
+            ]:
+                commands_for_device["SPFRX"] = {
+                    "command": "SetStandbyMode",
+                    "awaitedAttribute": "operatingmode",
+                    "awaitedValuesList": [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.DATA_CAPTURE],
+                }
+
+        self._run_long_running_command(
+            task_callback,
+            task_abort_event,
+            commands_for_device,
+            "SetStandbyFPMode",
+            "dishmode",
+            DishMode.STANDBY_FP,
         )
 
     # pylint: disable=too-many-locals
@@ -111,13 +159,13 @@ class CommandMap:
             )
 
             awaited_attribute = commands_for_device[device]["awaitedAttribute"]
-            awaited_value = commands_for_device[device]["awaitedValue"]
+            awaited_values_list = commands_for_device[device]["awaitedValuesList"]
 
             # Report which attribute and value we the device is waiting for
             task_callback(
                 progress=(
                     f"Awaiting {device} {awaited_attribute}"
-                    f" to change to {awaited_value}"
+                    f" to change to {awaited_values_list}"
                 )
             )
 
@@ -154,7 +202,7 @@ class CommandMap:
                 awaited_attribute = commands_for_device[device][
                     "awaitedAttribute"
                 ]
-                awaited_value = commands_for_device[device]["awaitedValue"]
+                awaited_values_list = commands_for_device[device]["awaitedValuesList"]
 
                 awaited_attribute_value = (
                     self._dish_manager_cm.component_managers[
@@ -162,12 +210,12 @@ class CommandMap:
                     ].component_state[awaited_attribute]
                 )
 
-                if awaited_attribute_value == awaited_value:
+                if awaited_attribute_value in awaited_values_list:
                     if not success_reported[device]:
                         task_callback(
                             progress=(
                                 f"{device} {awaited_attribute} changed to, "
-                                f"{awaited_value}"
+                                f"{awaited_values_list}"
                             )
                         )
 
