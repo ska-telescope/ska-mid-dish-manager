@@ -15,20 +15,18 @@ from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import (
     SPFRxComponentManager,
 )
+from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
     CapabilityStates,
     DishMode,
-    DSOperatingMode,
     DSPowerState,
     IndexerPosition,
     PointingState,
     SPFCapabilityStates,
-    SPFOperatingMode,
     SPFPowerState,
     SPFRxCapabilityStates,
-    SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
@@ -146,6 +144,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
         }
         self._update_component_state(**initial_component_states)
+
+        self._command_map = CommandMap(
+            self,
+            self._dish_mode_model,
+            self._command_tracker,
+            logger,
+            self._update_component_state,
+        )
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
@@ -367,131 +373,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command_name="SetStandbyLPMode",
         )
         status, response = self.submit_task(
-            self._set_standby_lp_mode, args=[], task_callback=task_callback
+            self._command_map.set_standby_lp_mode,
+            args=[],
+            task_callback=task_callback,
         )
         return status, response
-
-    def _set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
-        assert task_callback, "task_callback has to be defined"
-        task_callback(status=TaskStatus.IN_PROGRESS)
-
-        device_command_ids = {}
-
-        subservient_devices = ["DS", "SPF", "SPFRX"]
-
-        # TODO clarify code below, SPFRX stays in DATA_CAPTURE when we dont
-        # execute setstandby on it. So going from LP to FP never completes
-        # since dishMode does not update.
-        #
-        # if self.component_state["dishmode"].name == "STANDBY_FP":
-        #     subservient_devices = ["DS", "SPF"]
-
-        # Idea
-        commands_for_device = {
-            "SPF": {
-                "command": "SetStandbyLPMode",
-                "awaitedValue": SPFOperatingMode.STANDBY_LP,
-            },
-            "SPFRX": {
-                "command": "SetStandbyMode",
-                "awaitedValue": SPFRxOperatingMode.STANDBY,
-            },
-            "DS": {
-                "command": "SetStandbyLPMode",
-                "awaitedValue": DSOperatingMode.STANDBY_LP,
-            },
-        }
-
-        for device in subservient_devices:
-            command = SubmittedSlowCommand(
-                f"{device}_SetStandbyLPMode",
-                self._command_tracker,
-                self.component_managers[device],
-                "run_device_command",
-                callback=None,
-                logger=self.logger,
-            )
-
-            _, command_id = command(
-                commands_for_device[device]["command"], None
-            )
-
-            task_callback(
-                progress=(
-                    f"{commands_for_device[device]['command']}"
-                    f"called on {device}, ID {command_id}"
-                )
-            )
-
-            # if device == "SPFRX":
-            #     _, command_id = command("SetStandbyMode", None)
-            #     task_callback(
-            #         progress=(
-            #             f"SetStandbyMode called on SPFRX, "
-            #             f"ID {command_id}"
-            #         )
-            #     )
-            # else:
-            #     _, command_id = command("SetStandbyLPMode", None)
-            #     task_callback(
-            #         progress=(
-            #             f"SetStandbyLPMode called on {device},"
-            #             f" ID {command_id}"
-            #         )
-            #     )
-
-            device_command_ids[device] = command_id
-
-        task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
-        task_callback(progress="Awaiting dishMode change to STANDBY_LP")
-
-        while True:
-            if task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="SetStandbyLPMode Aborted",
-                    progress="SetStandbyLPMode Aborted",
-                )
-                return
-
-            current_dish_mode = self.component_state["dishmode"]
-            if current_dish_mode != DishMode.STANDBY_LP:
-                # Check each devices to see if their operatingmode
-                # attributes are in the correct state
-                for device in subservient_devices:
-                    command_running = commands_for_device[device]["command"]
-                    awaited_value = commands_for_device[device]["awaitedValue"]
-                    operating_mode = self.component_managers[
-                        device
-                    ].component_state["operatingmode"]
-
-                    if operating_mode != awaited_value:
-                        task_callback(
-                            progress=(
-                                f"Awaiting {device} operatingmode"
-                                f" to change to {awaited_value}"
-                            )
-                        )
-                    else:
-                        task_callback(
-                            progress=(
-                                f"{command_running} completed on {device},"
-                                f"ID {device_command_ids[device]}"
-                            )
-                        )
-
-                task_abort_event.wait(timeout=1)
-                for comp_man in self.component_managers.values():
-                    comp_man.read_update_component_state()
-                self._update_dishmode_component_states()
-
-            else:
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result="SetStandbyLPMode completed",
-                    progress="SetStandbyLPMode completed",
-                )
-                return
 
     def set_standby_fp_mode(
         self,
