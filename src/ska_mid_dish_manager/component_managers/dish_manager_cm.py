@@ -389,7 +389,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command_name="SetStandbyFPMode",
         )
         status, response = self.submit_task(
-            self._command_map._set_standby_fp_mode,
+            self._command_map.set_standby_fp_mode,
             args=[],
             task_callback=task_callback,
         )
@@ -416,64 +416,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         status, response = self.submit_task(
-            self._set_operate_mode, args=[], task_callback=task_callback
+            self._command_map.set_operate_mode, args=[], task_callback=task_callback
         )
         return status, response
-
-    def _set_operate_mode(self, task_callback=None, task_abort_event=None):
-        assert task_callback, "task_callback has to be defined"
-        task_callback(status=TaskStatus.IN_PROGRESS)
-
-        device_command_ids = {}
-        for device in ["DS", "SPF", "SPFRX"]:
-            command = SubmittedSlowCommand(
-                f"{device}_SetOperateMode",
-                self._command_tracker,
-                self.component_managers[device],
-                "run_device_command",
-                callback=None,
-                logger=self.logger,
-            )
-            if device == "DS":
-                _, command_id = command("SetPointMode", None)
-                task_callback(
-                    progress=f"SetPointMode called on DS, ID {command_id}"
-                )
-            elif device == "SPF":
-                _, command_id = command("SetOperateMode", None)
-                task_callback(
-                    progress=f"SetOperateMode called on SPF, ID {command_id}"
-                )
-            else:
-                _, command_id = command("CaptureData", True)
-                task_callback(
-                    progress=f"CaptureData called on SPFRx, ID {command_id}"
-                )
-
-            device_command_ids[device] = command_id
-
-        task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
-        task_callback(progress="Awaiting dishMode change to OPERATE")
-
-        while True:
-            if task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="SetOperateMode Aborted",
-                )
-                return
-
-            current_dish_mode = self.component_state["dishmode"]
-            if current_dish_mode != DishMode.OPERATE:
-                task_abort_event.wait(timeout=1)
-                for comp_man in self.component_managers.values():
-                    comp_man.read_update_component_state()
-            else:
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result="SetOperateMode completed",
-                )
-                return
 
     def track_cmd(
         self,
