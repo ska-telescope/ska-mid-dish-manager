@@ -1,6 +1,5 @@
 # pylint: disable=protected-access
 """Component manager for a DishManager tango device"""
-import json
 import logging
 from datetime import datetime
 from typing import Callable, Optional, Tuple
@@ -416,7 +415,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         status, response = self.submit_task(
-            self._command_map.set_operate_mode, args=[], task_callback=task_callback
+            self._command_map.set_operate_mode,
+            args=[],
+            task_callback=task_callback,
         )
         return status, response
 

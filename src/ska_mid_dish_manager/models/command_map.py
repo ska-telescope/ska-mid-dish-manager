@@ -1,6 +1,6 @@
 """Module to manage the mapping of commands to subservient devices"""
 import json
-from typing import Callable, Optional 
+from typing import Callable, Optional
 
 from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.executor import TaskStatus
@@ -91,7 +91,7 @@ class CommandMap:
                     "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
                 }
             }
-        else :
+        else:
             commands_for_device = {
                 "SPF": {
                     "command": "SetOperateMode",
@@ -112,7 +112,10 @@ class CommandMap:
                 commands_for_device["SPFRX"] = {
                     "command": "SetStandbyMode",
                     "awaitedAttribute": "operatingmode",
-                    "awaitedValuesList": [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.DATA_CAPTURE],
+                    "awaitedValuesList": [
+                        SPFRxOperatingMode.STANDBY,
+                        SPFRxOperatingMode.DATA_CAPTURE,
+                    ],
                 }
 
         self._run_long_running_command(
@@ -156,7 +159,7 @@ class CommandMap:
             "dishmode",
             DishMode.OPERATE,
         )
-        
+
     # pylint: disable=too-many-locals
     def _run_long_running_command(
         self,
@@ -192,7 +195,9 @@ class CommandMap:
             )
 
             awaited_attribute = commands_for_device[device]["awaitedAttribute"]
-            awaited_values_list = commands_for_device[device]["awaitedValuesList"]
+            awaited_values_list = commands_for_device[device][
+                "awaitedValuesList"
+            ]
 
             # Report which attribute and value we the device is waiting for
             task_callback(
@@ -235,7 +240,9 @@ class CommandMap:
                 awaited_attribute = commands_for_device[device][
                     "awaitedAttribute"
                 ]
-                awaited_values_list = commands_for_device[device]["awaitedValuesList"]
+                awaited_values_list = commands_for_device[device][
+                    "awaitedValuesList"
+                ]
 
                 awaited_attribute_value = (
                     self._dish_manager_cm.component_managers[
