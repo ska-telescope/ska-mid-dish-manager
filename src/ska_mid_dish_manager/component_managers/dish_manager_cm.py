@@ -425,7 +425,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to OPERATE mode"""
+        """Transition the dish to TRACK mode"""
         dish_mode = self.component_state["dishmode"].name
         if dish_mode != "OPERATE":
             raise CommandNotAllowed(
@@ -434,51 +434,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         status, response = self.submit_task(
-            self._track_cmd, args=[], task_callback=task_callback
+            self._command_map.track_cmd, args=[], task_callback=task_callback
         )
         return status, response
-
-    def _track_cmd(self, task_callback=None, task_abort_event=None):
-        assert task_callback, "task_callback has to be defined"
-        task_callback(status=TaskStatus.IN_PROGRESS)
-
-        device_command_ids = {}
-        command = SubmittedSlowCommand(
-            "DS_Track",
-            self._command_tracker,
-            self.component_managers["DS"],
-            "run_device_command",
-            callback=None,
-            logger=self.logger,
-        )
-        _, command_id = command("Track", None)
-        device_command_ids["DS"] = command_id
-
-        task_callback(progress=f"Track called on DS, ID {command_id}")
-        task_callback(progress="Awaiting target lock change")
-
-        while True:
-            if task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Track Aborted",
-                )
-                return
-
-            achieved_target_lock = self.component_state["achievedtargetlock"]
-            if not achieved_target_lock:
-                task_abort_event.wait(timeout=1)
-
-                # Read pointingState on DS and update state
-                comp_man = self.component_managers["DS"]
-                comp_man.read_update_component_state()
-
-            else:
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result="Track completed",
-                )
-                return
 
     def configure_band2_cmd(
         self,

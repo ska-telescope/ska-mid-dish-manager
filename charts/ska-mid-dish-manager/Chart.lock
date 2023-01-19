@@ -1,0 +1,9 @@
+dependencies:
+- name: ska-tango-util
+  repository: https://artefact.skao.int/repository/helm-internal
+  version: 0.3.17
+- name: ska-mid-dish-simulators
+  repository: https://artefact.skao.int/repository/helm-internal
+  version: 0.0.4
+digest: sha256:ae405d389421d74f9743a19d7d9a76b2ecb03238d42072dc648fbc745e273555
+generated: "2023-01-18T15:03:47.418867+02:00"
