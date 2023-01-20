@@ -9,9 +9,9 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
     DSOperatingMode,
+    IndexerPosition,
     SPFOperatingMode,
     SPFRxOperatingMode,
-    IndexerPosition,
 )
 
 
@@ -41,7 +41,7 @@ class CommandMap:
     def set_standby_lp_mode(
         self,
         task_abort_event=None,
-        task_callback=None,   
+        task_callback=None,
     ):
         """Transition the dish to STANDBY_LP mode"""
 
@@ -192,7 +192,7 @@ class CommandMap:
         task_abort_event=None,
     ):
         """configureBand on DS, SPF, SPFRX"""
-        
+
         commands_for_device = {
             "SPFRX": {
                 "command": "ConfigureBand2",
@@ -215,10 +215,8 @@ class CommandMap:
             "configuredband",
             Band.B2,
         )
-    
-    def set_stow_mode(self,
-    task_callback=None,
-    task_abort_event=None):
+
+    def set_stow_mode(self, task_callback=None, task_abort_event=None):
         """Call Stow on DS"""
         commands_for_device = {
             "DS": {
@@ -236,7 +234,7 @@ class CommandMap:
             "dishmode",
             DishMode.STOW,
         )
-        
+
     # pylint: disable=too-many-locals
     def _run_long_running_command(
         self,

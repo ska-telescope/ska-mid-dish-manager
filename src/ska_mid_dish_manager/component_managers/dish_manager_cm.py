@@ -488,7 +488,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command_name="SetStowMode",
         )
         status, response = self.submit_task(
-            self._command_map.set_stow_mode, args=[], task_callback=task_callback
+            self._command_map.set_stow_mode,
+            args=[],
+            task_callback=task_callback,
         )
         return status, response
 
