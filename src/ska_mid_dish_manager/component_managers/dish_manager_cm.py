@@ -471,67 +471,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return TaskStatus.REJECTED, str(err)
 
         status, response = self.submit_task(
-            self._configure_band2_cmd,
+            self._command_map.configure_band2_cmd,
             args=[],
             task_callback=task_callback,
         )
         return status, response
-
-    def _configure_band2_cmd(self, task_callback=None, task_abort_event=None):
-        """configureBand on DS, SPF, SPFRX"""
-        assert task_callback, "task_callback has to be defined"
-        task_callback(status=TaskStatus.IN_PROGRESS)
-
-        device_command_ids = {}
-        for device in ["DS", "SPFRX"]:
-            command = SubmittedSlowCommand(
-                f"{device}ConfigureBand2",
-                self._command_tracker,
-                self.component_managers[device],
-                "run_device_command",
-                callback=None,
-                logger=self.logger,
-            )
-            if device == "DS":
-                _, command_id = command("SetIndexPosition", 2)
-                task_callback(
-                    progress=f"SetIndexPosition called on DS, ID {command_id}"  # noqa: E501
-                )
-            else:
-                _, command_id = command("ConfigureBand2", None)
-                task_callback(
-                    progress=f"ConfigureBand2 called on SPFRx, ID {command_id}"  # noqa: E501
-                )
-
-            device_command_ids[device] = command_id
-
-        task_callback(progress="Waiting for band change to B2")
-
-        while True:
-            if task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Track Aborted",
-                )
-                return
-
-            current_band = self.component_state["configuredband"]
-            if current_band != Band.B2:
-                task_abort_event.wait(timeout=1)
-
-                # Read the appropriate attrs and update states.
-                # DS indexerposition
-                # SPFRx configuredband
-                # SPF bandinfocus
-                for comp_man in self.component_managers.values():
-                    comp_man.read_update_component_state()
-
-            else:
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result="ConfigureBand2 completed",
-                )
-                return
 
     def set_stow_mode(
         self,

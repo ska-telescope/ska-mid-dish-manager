@@ -11,6 +11,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     SPFOperatingMode,
     SPFRxOperatingMode,
+    IndexerPosition,
 )
 
 
@@ -38,7 +39,9 @@ class CommandMap:
         )
 
     def set_standby_lp_mode(
-        self, task_callback: Optional[Callable] = None, task_abort_event=None
+        self,
+        task_abort_event=None,
+        task_callback=None,   
     ):
         """Transition the dish to STANDBY_LP mode"""
 
@@ -80,7 +83,7 @@ class CommandMap:
     def set_standby_fp_mode(
         self,
         task_abort_event=None,
-        task_callback: Optional[Callable] = None,
+        task_callback=None,
     ):
         """Transition the dish to STANDBY_FP mode"""
         if self._dish_manager_cm.component_state["dishmode"].name == "OPERATE":
@@ -130,7 +133,7 @@ class CommandMap:
     def set_operate_mode(
         self,
         task_abort_event=None,
-        task_callback: Optional[Callable] = None,
+        task_callback=None,
     ):
         """Transition the dish to OPERATE mode"""
         commands_for_device = {
@@ -163,7 +166,7 @@ class CommandMap:
     def track_cmd(
         self,
         task_abort_event=None,
-        task_callback: Optional[Callable] = None,
+        task_callback=None,
     ):
         """Transition the dish to Track mode"""
         commands_for_device = {
@@ -181,6 +184,36 @@ class CommandMap:
             "Track",
             "achievedtargetlock",
             True,
+        )
+
+    def configure_band2_cmd(
+        self,
+        task_callback=None,
+        task_abort_event=None,
+    ):
+        """configureBand on DS, SPF, SPFRX"""
+        
+        commands_for_device = {
+            "SPFRX": {
+                "command": "ConfigureBand2",
+                "commandValue": 2,
+                "awaitedAttribute": "configuredband",
+                "awaitedValuesList": [Band.B2],
+            },
+            "DS": {
+                "command": "SetIndexPosition",
+                "awaitedAttribute": "indexerposition",
+                "awaitedValuesList": [IndexerPosition.B2],
+            },
+        }
+
+        self._run_long_running_command(
+            task_callback,
+            task_abort_event,
+            commands_for_device,
+            "ConfigureBand2",
+            "configuredband",
+            Band.B2,
         )
         
     # pylint: disable=too-many-locals
@@ -205,8 +238,9 @@ class CommandMap:
                 logger=self.logger,
             )
 
+            command_val = commands_for_device[device].get("commandValue")
             _, command_id = command(
-                commands_for_device[device]["command"], None
+                commands_for_device[device]["command"], command_val
             )
 
             # Report that the command has been called on the subservient device
