@@ -149,7 +149,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model,
             self._command_tracker,
             logger,
-            self._update_component_state,
+            self._update_dishmode_component_states,
         )
 
     # pylint: disable=unused-argument

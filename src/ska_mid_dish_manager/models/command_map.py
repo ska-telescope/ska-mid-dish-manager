@@ -196,12 +196,12 @@ class CommandMap:
         commands_for_device = {
             "SPFRX": {
                 "command": "ConfigureBand2",
-                "commandValue": 2,
                 "awaitedAttribute": "configuredband",
                 "awaitedValuesList": [Band.B2],
             },
             "DS": {
                 "command": "SetIndexPosition",
+                "commandValue": 2,
                 "awaitedAttribute": "indexerposition",
                 "awaitedValuesList": [IndexerPosition.B2],
             },
