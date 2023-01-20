@@ -215,6 +215,27 @@ class CommandMap:
             "configuredband",
             Band.B2,
         )
+    
+    def set_stow_mode(self,
+    task_callback=None,
+    task_abort_event=None):
+        """Call Stow on DS"""
+        commands_for_device = {
+            "DS": {
+                "command": "Stow",
+                "awaitedAttribute": "operatingmode",
+                "awaitedValuesList": [DSOperatingMode.STOW],
+            },
+        }
+
+        self._run_long_running_command(
+            task_callback,
+            task_abort_event,
+            commands_for_device,
+            "Stow",
+            "dishmode",
+            DishMode.STOW,
+        )
         
     # pylint: disable=too-many-locals
     def _run_long_running_command(

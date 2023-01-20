@@ -488,48 +488,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command_name="SetStowMode",
         )
         status, response = self.submit_task(
-            self._set_stow_mode, args=[], task_callback=task_callback
+            self._command_map.set_stow_mode, args=[], task_callback=task_callback
         )
         return status, response
-
-    def _set_stow_mode(self, task_callback=None, task_abort_event=None):
-        """Call Stow on DS"""
-        assert task_callback, "task_callback has to be defined"
-        task_callback(status=TaskStatus.IN_PROGRESS)
-
-        command = SubmittedSlowCommand(
-            "DS_SetStowMode",
-            self._command_tracker,
-            self.component_managers["DS"],
-            "run_device_command",
-            callback=None,
-            logger=self.logger,
-        )
-        _, command_id = command("Stow", None)
-
-        task_callback(progress=f"Stow called on DS, ID {command_id}")
-        task_callback(progress="Waiting for dishMode change to STOW")
-
-        while True:
-            if task_abort_event.is_set():
-                task_callback(
-                    status=TaskStatus.ABORTED,
-                    result="Stow Aborted",
-                )
-                return
-
-            current_dish_mode = self.component_state["dishmode"]
-            if current_dish_mode != DishMode.STOW:
-                task_abort_event.wait(timeout=1)
-                for comp_man in self.component_managers.values():
-                    comp_man.read_update_component_state()
-            else:
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result="Stow completed",
-                    progress="Stow completed",
-                )
-                return
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
