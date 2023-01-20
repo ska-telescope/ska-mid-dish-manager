@@ -160,29 +160,6 @@ class CommandMap:
             DishMode.OPERATE,
         )
 
-    def track_cmd(
-        self,
-        task_abort_event=None,
-        task_callback:Optional[Callable] = None,
-    ):
-        """Transition the dish to OPERATE mode"""
-        commands_for_device = {
-            "DS": {
-                "command": "Track",
-                "awaitedAttribute": "operatingmode",
-                "awaitedValuesList": [DSOperatingMode.POINT],
-            },
-        }
-
-        self._run_long_running_command(
-            task_callback,
-            task_abort_event,
-            commands_for_device,
-            "Track",
-            "achievedtargetlock",
-            True,
-        )
-
     # pylint: disable=too-many-locals
     def _run_long_running_command(
         self,
