@@ -1,8 +1,7 @@
 """Module to manage the mapping of commands to subservient devices"""
 import json
-from typing import Callable, Optional
+from typing import Callable
 
-from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.executor import TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
