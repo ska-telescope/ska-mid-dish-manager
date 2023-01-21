@@ -1,6 +1,5 @@
 """Module to manage the mapping of commands to subservient devices"""
 import json
-from typing import Callable, Optional
 
 from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.executor import TaskStatus
@@ -96,15 +95,15 @@ class CommandMap:
             }
         else:
             commands_for_device = {
-                "SPF": {
-                    "command": "SetOperateMode",
-                    "awaitedAttribute": "operatingmode",
-                    "awaitedValuesList": [SPFOperatingMode.OPERATE],
-                },
                 "DS": {
                     "command": "SetStandbyFPMode",
                     "awaitedAttribute": "operatingmode",
                     "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
+                },
+                "SPF": {
+                    "command": "SetOperateMode",
+                    "awaitedAttribute": "operatingmode",
+                    "awaitedValuesList": [SPFOperatingMode.OPERATE],
                 },
             }
 
@@ -113,7 +112,8 @@ class CommandMap:
                 Band.UNKNOWN,
             ]:
                 commands_for_device["SPFRX"] = {
-                    "command": "SetStandbyMode",
+                    "command": "CaptureData",
+                    "commandValue": True,
                     "awaitedAttribute": "operatingmode",
                     "awaitedValuesList": [
                         SPFRxOperatingMode.STANDBY,

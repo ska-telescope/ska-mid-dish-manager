@@ -137,17 +137,17 @@ class TestDishManagerBehaviour:
         #  '"result"'))
 
         # ('longrunningcommandresult',
-        # ('1659015778.0823436_222123736715640_SPF_SetStandbyFPMode',
+        # ('1659015778.0823436_222123736715640_SPF_SetOperateMode',
         # '"result"'))
 
         # ('longrunningcommandresult',
         # ('1659015778.0741146_217952885485963_SetStandbyFPMode',
         # '"{\\"DS\\": \\"16598.0786_1795_DS_SetStandbyFPMode\\",
-        # \\"SPF\\": \\"1659778.0826_2215640_SPF_SetStandbyFPMode\\",
-        # \\"SPFRX\\": \\"16578.0925_1954609_SPFRX_SetStandbyFPMode\\"}"'))
+        # \\"SPF\\": \\"1659778.0826_2215640_SPF_SetOperateMode\\",
+        # \\"SPFRX\\": \\"16578.0925_1954609_SPFRX_CaptureData\\"}"'))
 
         # ('longrunningcommandresult',
-        # ('16590178.0985_1954609_SPFRX_SetStandbyFPMode', '"result"'))
+        # ('16590178.0985_1954609_SPFRX_CaptureData', '"result"'))
 
         events = event_store.wait_for_n_events(5, timeout=6)
         event_values = event_store.get_data_from_events(events)
@@ -162,8 +162,8 @@ class TestDishManagerBehaviour:
         )
         assert "_SetStandbyFPMode" in event_ids[0]
         assert "_DS_SetStandbyFPMode" in event_ids[1]
-        assert "_SPF_SetStandbyFPMode" in event_ids[2]
-        assert "_SPFRX_SetStandbyFPMode" in event_ids[3]
+        assert "_SPF_SetOperateMode" in event_ids[2]
+        assert "_SPFRX_CaptureData" in event_ids[3]
 
     @pytest.mark.unit
     @pytest.mark.forked

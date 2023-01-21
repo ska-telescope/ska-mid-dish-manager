@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Callable, Optional, Tuple
 
 from ska_tango_base.base.component_manager import TaskExecutorComponentManager
-from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.control_model import CommunicationStatus, HealthState
 from ska_tango_base.executor import TaskStatus
 
