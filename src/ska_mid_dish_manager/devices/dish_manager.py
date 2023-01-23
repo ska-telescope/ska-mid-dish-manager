@@ -166,6 +166,7 @@ class DishManager(SKAController):
 
         # pylint: disable=invalid-name
         # pylint: disable=too-many-statements
+        # pylint: disable=arguments-differ
         def do(self):
             """
             Initializes the attributes and properties of the DishManager
