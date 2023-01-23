@@ -382,12 +382,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         task_callback: Callable = None,
         task_abort_event: Event = None,
     ):
-        if task_callback:
-            task_callback(TaskStatus.IN_PROGRESS)
-
         if task_abort_event.is_set():
             task_callback(TaskStatus.ABORTED)
             return
+
+        if task_callback:
+            task_callback(TaskStatus.IN_PROGRESS)
 
         if self.state != "monitoring":
             task_callback(
