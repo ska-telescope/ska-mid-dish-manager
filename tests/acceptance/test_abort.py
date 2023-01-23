@@ -14,6 +14,7 @@ def turn_on_spf_attribute_update(request):
     request.addfinalizer(toggle_attribute_update)
 
 
+@pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_abort_commands(event_store):
