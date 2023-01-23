@@ -7,12 +7,17 @@ and the subservient devices
 """
 
 import json
+import logging
 import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
 
 from ska_tango_base import SKAController
-from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
+from ska_tango_base.commands import (
+    ResultCode,
+    SlowCommand,
+    SubmittedSlowCommand,
+)
 from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
@@ -94,6 +99,11 @@ class DishManager(SKAController):
                     logger=self.logger,
                 ),
             )
+
+        self.register_command_object(
+            "AbortCommands",
+            self.AbortCommandsCommand(self.component_manager, self.logger),
+        )
 
     def _push_subs_comms_evts(self):
         """
@@ -824,6 +834,44 @@ class DishManager(SKAController):
     # --------
     # Commands
     # --------
+
+    class AbortCommandsCommand(SlowCommand):
+        """The command class for the AbortCommand command."""
+
+        def __init__(
+            self,
+            component_manager: DishManagerComponentManager,
+            logger: Optional[logging.Logger] = None,
+        ) -> None:
+            """
+            Initialise a new AbortCommandsCommand instance.
+
+            :param component_manager: contains the queue manager which
+                manages the worker thread and the LRC attributes
+            :param logger: the logger to be used by this Command. If not
+                provided, then a default module logger will be used.
+            """
+            self._component_manager = component_manager
+            super().__init__(None, logger=logger)
+
+        def do(self) -> Tuple[ResultCode, str]:  # type: ignore[override]
+            """
+            Abort long running commands.
+
+            Abort the currently executing LRC and remove all enqueued
+            LRCs.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            # abort the task on dish manager
+            self._component_manager.abort_tasks()
+            # abort the task on the subservient devices
+            for cm in self._component_manager.component_managers.values():
+                cm.abort_tasks()
+
+            return (ResultCode.STARTED, "Aborting commands")
 
     @command(
         dtype_in=str,
