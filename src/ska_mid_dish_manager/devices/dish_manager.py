@@ -835,6 +835,7 @@ class DishManager(SKAController):
     # Commands
     # --------
 
+    # pylint: disable=too-few-public-methods
     class AbortCommandsCommand(SlowCommand):
         """The command class for the AbortCommand command."""
 
@@ -854,6 +855,7 @@ class DishManager(SKAController):
             self._component_manager = component_manager
             super().__init__(None, logger=logger)
 
+        # pylint: disable=arguments-differ
         def do(self) -> Tuple[ResultCode, str]:  # type: ignore[override]
             """
             Abort long running commands.
