@@ -373,8 +373,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
-                result=f"SetStandbyLPMode Aborted",
-                progress=f"SetStandbyLPMode Aborted",
+                result="SetStandbyLPMode Aborted",
+                progress="SetStandbyLPMode Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -461,8 +461,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
-                result=f"SetStandbyFPMode Aborted",
-                progress=f"SetStandbyFPMode Aborted",
+                result="SetStandbyFPMode Aborted",
+                progress="SetStandbyFPMode Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -561,8 +561,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
-                result=f"SetOperateMode Aborted",
-                progress=f"SetOperateMode Aborted",
+                result="SetOperateMode Aborted",
+                progress="SetOperateMode Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -642,8 +642,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
-                result=f"Track Aborted",
-                progress=f"Track Aborted",
+                result="Track Aborted",
+                progress="Track Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -733,8 +733,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
-                result=f"ConfigureBand2 Aborted",
-                progress=f"ConfigureBand2 Aborted",
+                result="ConfigureBand2 Aborted",
+                progress="ConfigureBand2 Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -813,8 +813,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
-                result=f"SetStowMode Aborted",
-                progress=f"SetStowMode Aborted",
+                result="SetStowMode Aborted",
+                progress="SetStowMode Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)

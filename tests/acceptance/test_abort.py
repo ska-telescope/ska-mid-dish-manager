@@ -44,7 +44,8 @@ def test_abort_commands(event_store):
 
     # record in the progress attribute that Abort was called on DS and SPF
 
-    # confirm in the status attributes that DM aborted but the rest completed/aborted
+    # confirm in the status attributes that DM aborted
+    # but the rest completed/aborted
 
     # confirm dishmanager aborted the request on lrcResult
     event_store.wait_for_value((f"{unique_id}", "SetStandbyFPMode Aborted"))
