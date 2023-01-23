@@ -18,7 +18,7 @@ from ska_tango_base.commands import (
     SlowCommand,
     SubmittedSlowCommand,
 )
-from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
+from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DebugIt, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
@@ -875,6 +875,27 @@ class DishManager(SKAController):
                 cm.abort_commands()
 
             return (ResultCode.STARTED, "Aborting commands")
+
+    @command(
+        doc_in="Abort currently executing long running command on "
+        "DishManager and subservient devices. Empties out the queue "
+        "on DishManager and rejects any scheduled commands. For "
+        "details consult DishManager documentation",
+        dtype_out=None,
+        display_level=DispLevel.OPERATOR,
+        dtype_out="DevVarLongStringArray")
+    @DebugIt()
+    def AbortCommands(self) -> DevVarLongStringArrayType:
+        """
+        Empty out long running commands in queue.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        handler = self.get_command_object("AbortCommands")
+        (return_code, message) = handler()
+        return ([return_code], [message])
 
     @command(
         dtype_in=str,
