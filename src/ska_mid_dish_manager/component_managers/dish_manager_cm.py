@@ -767,8 +767,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
-                    progress="Track Aborted",
-                    result="Track Aborted",
+                    progress="ConfigureBand2 Aborted",
+                    result="ConfigureBand2 Aborted",
                 )
                 return
 
@@ -786,7 +786,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
-                    progress="Track completed",
+                    progress="ConfigureBand2 completed",
                     result="ConfigureBand2 completed",
                 )
                 return
