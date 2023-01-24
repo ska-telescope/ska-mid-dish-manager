@@ -124,3 +124,4 @@ class TestTrack:
         self.ds_cm._update_component_state(pointingstate=PointingState.TRACK)
         event_store.wait_for_value(PointingState.TRACK)
         assert self.device_proxy.achievedTargetLock
+
