@@ -381,11 +381,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         task_callback: Callable = None,
         task_abort_event: Event = None,
     ):
-        if task_callback:
-            task_callback(TaskStatus.IN_PROGRESS)
         if task_abort_event.is_set():
             task_callback(TaskStatus.ABORTED)
             return
+
+        if task_callback:
+            task_callback(TaskStatus.IN_PROGRESS)
 
         if self.state != "monitoring":
             task_callback(
@@ -407,6 +408,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             if task_callback:
                 task_callback(TaskStatus.FAILED, exception=err)
             return
+
+        # perform another abort event check in case it was missed earlier
+        if task_abort_event.is_set():
+            task_callback(progress=f"{command_name} was aborted")
 
         if task_callback:
             task_callback(TaskStatus.COMPLETED, result=str(result))

@@ -369,10 +369,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
         assert task_callback, "task_callback has to be defined"
+        if task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result="SetStandbyLPMode Aborted",
+                progress="SetStandbyLPMode Aborted",
+            )
+            return
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-
         subservient_devices = ["DS", "SPF", "SPFRX"]
 
         # TODO clarify code below, SPFRX stays in DATA_CAPTURE when we dont
@@ -414,6 +420,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
+                    progress="SetStandbyLPMode Aborted",
                     result="SetStandbyLPMode Aborted",
                 )
                 return
@@ -428,6 +435,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
+                    progress="SetStandbyLPMode completed",
                     result="SetStandbyLPMode completed",
                 )
                 return
@@ -436,7 +444,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STANDBY_LP mode"""
+        """Transition the dish to STANDBY_FP mode"""
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetStandbyFPMode",
@@ -449,6 +457,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
         """Set StandbyFP mode on sub devices as long running commands"""
         assert task_callback, "task_callback has to be defined"
+        if task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result="SetStandbyFPMode Aborted",
+                progress="SetStandbyFPMode Aborted",
+            )
+            return
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
@@ -497,6 +512,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
+                    progress="SetStandbyFPMode Aborted",
                     result="SetStandbyFPMode Aborted",
                 )
                 return
@@ -509,6 +525,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
+                    progress="SetStandbyFPMode completed",
                     result="SetStandbyFPMode completed",
                 )
                 return
@@ -540,6 +557,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _set_operate_mode(self, task_callback=None, task_abort_event=None):
         assert task_callback, "task_callback has to be defined"
+        if task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result="SetOperateMode Aborted",
+                progress="SetOperateMode Aborted",
+            )
+            return
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
@@ -577,6 +601,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
+                    progress="SetOperateMode Aborted",
                     result="SetOperateMode Aborted",
                 )
                 return
@@ -589,6 +614,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
+                    progress="SetOperateMode completed",
                     result="SetOperateMode completed",
                 )
                 return
@@ -597,7 +623,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to OPERATE mode"""
+        """Transition the pointing state"""
         dish_mode = self.component_state["dishmode"].name
         if dish_mode != "OPERATE":
             raise CommandNotAllowed(
@@ -612,6 +638,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _track_cmd(self, task_callback=None, task_abort_event=None):
         assert task_callback, "task_callback has to be defined"
+        if task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result="Track Aborted",
+                progress="Track Aborted",
+            )
+            return
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
@@ -633,6 +666,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
+                    progress="Track Aborted",
                     result="Track Aborted",
                 )
                 return
@@ -648,6 +682,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
+                    progress="Track completed",
                     result="Track completed",
                 )
                 return
@@ -694,6 +729,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _configure_band2_cmd(self, task_callback=None, task_abort_event=None):
         """configureBand on DS, SPF, SPFRX"""
         assert task_callback, "task_callback has to be defined"
+        if task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result="ConfigureBand2 Aborted",
+                progress="ConfigureBand2 Aborted",
+            )
+            return
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
@@ -725,7 +767,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
-                    result="Track Aborted",
+                    progress="ConfigureBand2 Aborted",
+                    result="ConfigureBand2 Aborted",
                 )
                 return
 
@@ -743,6 +786,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
+                    progress="ConfigureBand2 completed",
                     result="ConfigureBand2 completed",
                 )
                 return
@@ -765,6 +809,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _set_stow_mode(self, task_callback=None, task_abort_event=None):
         """Call Stow on DS"""
         assert task_callback, "task_callback has to be defined"
+        if task_abort_event.is_set():
+            task_callback(
+                status=TaskStatus.ABORTED,
+                result="SetStowMode Aborted",
+                progress="SetStowMode Aborted",
+            )
+            return
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         command = SubmittedSlowCommand(
@@ -784,6 +835,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
+                    progress="Stow Aborted",
                     result="Stow Aborted",
                 )
                 return
@@ -796,6 +848,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
+                    progress="Stow completed",
                     result="Stow completed",
                 )
                 return
