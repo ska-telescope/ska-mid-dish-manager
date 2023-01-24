@@ -12,13 +12,13 @@ of long running commands. From the docs, *AbortCommands*:
 
 * Once completed the client is notified via a change event on an attribute.
 
-The steps above apply to the execution of long running commands on DishManager.
+The steps also above apply to the execution of long running commands on DishManager.
 Since DishManager provides aggregate attribute monitoring and control to subservient
 devices, it's also useful to detail the events which occur at the sub-level.
 
 Scenario: DishManager issues ``AbortCommands()`` after issuing ``SetStandbyFPMode()``.
 
-**DishManager.AbortCommands() ->**
+**AbortCommands() ->**
 
 * *abort_commands* is called on DishManagerComponentManager
   and the component managers of the subservient devices.
@@ -35,23 +35,25 @@ Scenario: DishManager issues ``AbortCommands()`` after issuing ``SetStandbyFPMod
       on **DS**, *SetOperateMode* on **SPF** and *CaptureData* on
       **SPFRx** (if band is configured).
 
-  * if event check happens before abort event is set DishManager:
+  * if event check happens before abort event is set:
   
-    * DishManager lrc progress attributes will report **"in progress"**.
+    * lrc progress attributes will report **"in progress"**.
     * sub devices command call will trigger.
-    * DishManager lrc progress attributes will report every 1s waiting
+    * lrc progress attributes will report every 1s waiting
       for DishMode for update while checking for abort_event during the wait.
     * DishManager will abort (cancel the waiting) and report aborted on its
-      lrc progress attributes (if abort_event is set while in the wait loop
-      else it will report completed).
+      lrc progress attributes.
     * Subservient devices command call will be busy in a thread as points 3,4
       above are busy running. DishManager will report queued and then **"in progress"**
       on its progress attributes for the individual subservient command calls.
-    * In subservient device component manager another abort check is done before
-      executing the tango command on the device proxy. Again, if the event is set
-      before the check, the command is never triggered. If not, the command will
+    * In the subservient device component manager another abort check is done before
+      executing the sub tango command on the device proxy. Again, if the event is set
+      before the check, the sub command is never triggered. If not, the sub command will
       trigger and will finish; meaning the component state of the subservient device
       will change and abort will not happen in its true sense but only reported.
+
+      .. note:: AbortEvent is checked before the sub command fan out and every
+         second while DishManager waits for the expected change to occur.
 
 * While the above is ongoing, all commands to DishManager will be rejected until
   a `shutdown_and_relaunch`_ is completed on the DishManager component manager.
