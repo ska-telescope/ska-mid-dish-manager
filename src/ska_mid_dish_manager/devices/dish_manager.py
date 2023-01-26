@@ -111,6 +111,23 @@ class DishManager(SKAController):
             self.AbortCommandsCommand(self.component_manager, self.logger),
         )
 
+    def _update_command_exception(
+        self: SKAController, command_id: str, command_exception: Exception
+    ) -> None:
+        """Overriding so we can log the full stack trace.
+
+        :param command_id: Unique ID of the LRC
+        :type command_id: str
+        :param command_exception: The exception instance
+        :type command_exception: Exception
+        """
+        self.logger.exception(
+            f"Command '{command_id}' raised exception {command_exception}"
+        )
+        self._command_result = (command_id, str(command_exception))
+        self.push_change_event("longRunningCommandResult", self._command_result)
+        self.push_archive_event("longRunningCommandResult", self._command_result)
+
     def _push_subs_comms_evts(self):
         """
         Push change events for subservient
