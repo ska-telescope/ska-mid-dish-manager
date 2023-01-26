@@ -12,9 +12,9 @@ import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
 
-from ska_control_model import CommunicationStatus
+from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
-from ska_tango_base.commands import ResultCode, SlowCommand, SubmittedSlowCommand
+from ska_tango_base.commands import SlowCommand, SubmittedSlowCommand
 from tango import AttrWriteType, DebugIt, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
