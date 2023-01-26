@@ -147,8 +147,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self,
             self._dish_mode_model,
             self._command_tracker,
-            logger,
-            self._update_dishmode_component_states,
+            logger
         )
 
     # pylint: disable=unused-argument
@@ -348,12 +347,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "Updating dish manager component state with [%s]", kwargs
         )
         super()._update_component_state(*args, **kwargs)
-
-    def _update_dishmode_component_states(self):
-        """Update the component state required for dishMode changes"""
-        for comp_man in self.component_managers.values():
-            op_mode = comp_man.read_attribute_value("operatingMode")
-            comp_man._update_component_state(operatingmode=op_mode)
 
     def start_communicating(self):
         """Connect from monitored devices"""

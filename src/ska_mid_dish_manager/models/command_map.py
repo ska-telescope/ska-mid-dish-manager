@@ -27,15 +27,11 @@ class CommandMap:
         dish_mode_model,
         command_tracker,
         logger,
-        update_dishmode_component_states,
     ):
         self._dish_manager_cm = dish_manager_cm
         self._dish_mode_model = dish_mode_model
         self._command_tracker = command_tracker
         self.logger = logger
-        self._update_dishmode_component_states = (
-            update_dishmode_component_states
-        )
 
     def set_standby_lp_mode(
         self,
@@ -343,7 +339,6 @@ class CommandMap:
                     comp_man
                 ) in self._dish_manager_cm.component_managers.values():
                     comp_man.read_update_component_state()
-                self._update_dishmode_component_states()
 
             else:
                 task_callback(
