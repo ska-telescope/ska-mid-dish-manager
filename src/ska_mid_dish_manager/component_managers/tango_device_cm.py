@@ -10,9 +10,8 @@ from typing import Any, AnyStr, Callable, List, Optional
 
 import numpy as np
 import tango
-from ska_tango_base.base.component_manager import TaskExecutorComponentManager
 from ska_tango_base.control_model import CommunicationStatus
-from ska_tango_base.executor import TaskStatus
+from ska_tango_base.executor import TaskExecutorComponentManager, TaskStatus
 from transitions import Machine
 
 SLEEP_TIME_BETWEEN_RECONNECTS = 1  # seconds
@@ -370,11 +369,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         task_callback: Callable = None,
         task_abort_event: Event = None,
     ):
-        if task_callback:
-            task_callback(TaskStatus.IN_PROGRESS)
         if task_abort_event.is_set():
             task_callback(TaskStatus.ABORTED)
             return
+
+        if task_callback:
+            task_callback(TaskStatus.IN_PROGRESS)
 
         if self.state != "monitoring":
             task_callback(
@@ -394,6 +394,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             if task_callback:
                 task_callback(TaskStatus.FAILED, exception=err)
             return
+
+        # perform another abort event check in case it was missed earlier
+        if task_abort_event.is_set():
+            task_callback(progress=f"{command_name} was aborted")
 
         if task_callback:
             task_callback(TaskStatus.COMPLETED, result=str(result))
@@ -467,7 +471,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def stop_communicating(self):
         """Stop communication with the device"""
         # pylint: disable=no-member
-        self.abort_tasks(task_callback=self._aborting_tasks_cb)
+        self.abort_commands(task_callback=self._aborting_tasks_cb)
         for attr_name in self.component_state:
             if attr_name == "connection_state":
                 continue
@@ -493,13 +497,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     #  -> to_monitoring
 
     # Stop Communicating
-    #  -> abort_tasks
+    #  -> abort_commands
     #  -> _aborting_tasks_cb
     #  -> to_disconnected
 
     # Reconnecting
     #  -> to_reconnecting
-    #  -> abort_tasks
+    #  -> abort_commands
     #  -> _aborting_tasks_cb
     #  -> to_setting_up_device_proxy
     #  -> setting_up_monitoring
@@ -558,4 +562,4 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Handle reconnecting to the Tango device"""
         self._update_component_state(connection_state="reconnecting")
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-        self.abort_tasks(task_callback=self._aborting_tasks_cb)
+        self.abort_commands(task_callback=self._aborting_tasks_cb)

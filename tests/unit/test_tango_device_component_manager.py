@@ -67,7 +67,7 @@ def test_happy_path(patched_tango, caplog):
     comm_call_group.assert_call("comp_state", connection_state="monitoring")
     comm_call_group.assert_call("comm_state", CommunicationStatus.ESTABLISHED)
 
-    tc_manager.abort_tasks()
+    tc_manager.abort_commands()
 
 
 @pytest.mark.unit
@@ -112,7 +112,7 @@ def test_unhappy_path(patched_tango, caplog):
 
         assert tc_manager.state == "setting_up_device_proxy"
 
-        tc_manager.abort_tasks()
+        tc_manager.abort_commands()
 
 
 @pytest.mark.unit
@@ -162,4 +162,4 @@ def test_device_goes_away(patched_tango, caplog):
     call_group.assert_call("comp_state", connection_state="setting_up_monitoring")
     call_group.assert_call("comp_state", connection_state="monitoring")
     call_group.assert_call("comm_state", CommunicationStatus.ESTABLISHED)
-    tc_manager.abort_tasks()
+    tc_manager.abort_commands()

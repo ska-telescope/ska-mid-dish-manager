@@ -22,6 +22,7 @@ those sub-element devices.
 
    guide/dish_manager_design
    guide/component_managers
+   guide/abort_commands
    guide/dish_manager_models
 
 .. toctree::
