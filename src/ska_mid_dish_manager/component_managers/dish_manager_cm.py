@@ -194,7 +194,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs:
             self.logger.info(
-                ("Updating dishMode with operatingModes DS" " [%s], SPF [%s], SPFRX [%s]"),
+                ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
                 str(ds_comp_state["operatingmode"]),
                 str(spf_comp_state["operatingmode"]),
                 str(spfrx_comp_state["operatingmode"]),
@@ -208,7 +208,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if "healthstate" in kwargs:
             self.logger.info(
-                ("Updating healthState with healthstate DS" " [%s], SPF [%s], SPFRX [%s]"),
+                ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
                 str(ds_comp_state["healthstate"]),
                 str(spf_comp_state["healthstate"]),
                 str(spfrx_comp_state["healthstate"]),
@@ -252,7 +252,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
             self.logger.info(
-                ("Updating configuredBand with DS" " [%s] SPF [%s] SPFRX [%s]"),
+                ("Updating configuredBand with DS [%s] SPF [%s] SPFRX [%s]"),
                 str(ds_comp_state),
                 str(spf_comp_state),
                 str(spfrx_comp_state),

@@ -460,9 +460,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Establish communication with the device"""
         # pylint: disable=no-member
         if self.state != "disconnected":
-            raise RuntimeError(
-                "You can only start communicating " "when you have stopped doing so"
-            )
+            raise RuntimeError("You can only start communicating when you have stopped doing so")
         self.logger.info("start_communicating")
         self.to_setting_up_device_proxy()
 

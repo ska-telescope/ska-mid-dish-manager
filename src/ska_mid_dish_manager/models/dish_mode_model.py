@@ -186,22 +186,22 @@ CONFIGURED_BAND_RULES = {
 
 SPF_BAND_IN_FOCUS_RULES = {
     "B1": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B1' and " "SPFRX.configuredband  == 'Band.B1'"
+        "DS.indexerposition  == 'IndexerPosition.B1' and SPFRX.configuredband  == 'Band.B1'"
     ),
     "B2": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B2' and " "SPFRX.configuredband  == 'Band.B2'"
+        "DS.indexerposition  == 'IndexerPosition.B2' and SPFRX.configuredband  == 'Band.B2'"
     ),
     "B3": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B3' and " "SPFRX.configuredband  == 'Band.B3'"
+        "DS.indexerposition  == 'IndexerPosition.B3' and SPFRX.configuredband  == 'Band.B3'"
     ),
     "B4": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B4' and " "SPFRX.configuredband  == 'Band.B4'"
+        "DS.indexerposition  == 'IndexerPosition.B4' and SPFRX.configuredband  == 'Band.B4'"
     ),
     "B5a": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and " "SPFRX.configuredband == 'Band.B5a'"
+        "DS.indexerposition  == 'IndexerPosition.B5' and SPFRX.configuredband == 'Band.B5a'"
     ),
     "B5b": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and " "SPFRX.configuredband == 'Band.B5b'"
+        "DS.indexerposition  == 'IndexerPosition.B5' and SPFRX.configuredband == 'Band.B5b'"
     ),
 }
 
