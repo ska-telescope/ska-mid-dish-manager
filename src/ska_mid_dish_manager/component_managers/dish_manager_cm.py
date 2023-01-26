@@ -4,9 +4,9 @@ import logging
 from datetime import datetime
 from typing import Callable, Optional, Tuple
 
-from ska_tango_base.base.component_manager import TaskExecutorComponentManager
+from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.control_model import CommunicationStatus, HealthState
-from ska_tango_base.executor import TaskStatus
+from ska_tango_base.executor import TaskExecutorComponentManager, TaskStatus
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
@@ -381,7 +381,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STANDBY_LP mode"""
+        """Transition the dish to STANDBY_FP mode"""
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetStandbyFPMode",
@@ -424,7 +424,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to OPERATE mode"""
+        """Transition the pointing state"""
         dish_mode = self.component_state["dishmode"].name
         if dish_mode != "OPERATE":
             raise CommandNotAllowed(

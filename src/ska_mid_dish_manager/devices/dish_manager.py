@@ -7,13 +7,24 @@ and the subservient devices
 """
 
 import json
+import logging
 import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
 
 from ska_tango_base import SKAController
-from ska_tango_base.commands import ResultCode, SubmittedSlowCommand
-from tango import AttrWriteType, DevFloat, DevVarDoubleArray, DispLevel
+from ska_tango_base.commands import (
+    ResultCode,
+    SlowCommand,
+    SubmittedSlowCommand,
+)
+from tango import (
+    AttrWriteType,
+    DebugIt,
+    DevFloat,
+    DevVarDoubleArray,
+    DispLevel,
+)
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
@@ -95,6 +106,11 @@ class DishManager(SKAController):
                 ),
             )
 
+        self.register_command_object(
+            "AbortCommands",
+            self.AbortCommandsCommand(self.component_manager, self.logger),
+        )
+
     def _push_subs_comms_evts(self):
         """
         Push change events for subservient
@@ -166,6 +182,7 @@ class DishManager(SKAController):
 
         # pylint: disable=invalid-name
         # pylint: disable=too-many-statements
+        # pylint: disable=arguments-differ
         def do(self):
             """
             Initializes the attributes and properties of the DishManager
@@ -824,6 +841,67 @@ class DishManager(SKAController):
     # --------
     # Commands
     # --------
+
+    # pylint: disable=too-few-public-methods
+    class AbortCommandsCommand(SlowCommand):
+        """The command class for the AbortCommand command."""
+
+        def __init__(
+            self,
+            component_manager: DishManagerComponentManager,
+            logger: Optional[logging.Logger] = None,
+        ) -> None:
+            """
+            Initialise a new AbortCommandsCommand instance.
+
+            :param component_manager: contains the queue manager which
+                manages the worker thread and the LRC attributes
+            :param logger: the logger to be used by this Command. If not
+                provided, then a default module logger will be used.
+            """
+            self._component_manager = component_manager
+            super().__init__(None, logger=logger)
+
+        # pylint: disable=arguments-differ
+        def do(self) -> Tuple[ResultCode, str]:  # type: ignore[override]
+            """
+            Abort long running commands.
+
+            Abort the currently executing LRC and remove all enqueued
+            LRCs.
+
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            # abort the task on dish manager
+            self._component_manager.abort_commands()
+            # abort the task on the subservient devices
+            for cm in self._component_manager.component_managers.values():
+                cm.abort_commands()
+
+            return (ResultCode.STARTED, "Aborting commands")
+
+    @command(
+        doc_in="Abort currently executing long running command on "
+        "DishManager and subservient devices. Empties out the queue "
+        "on DishManager and rejects any scheduled commands. For "
+        "details consult DishManager documentation",
+        display_level=DispLevel.OPERATOR,
+        dtype_out="DevVarLongStringArray",
+    )
+    @DebugIt()
+    def AbortCommands(self) -> DevVarLongStringArrayType:
+        """
+        Empty out long running commands in queue.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        handler = self.get_command_object("AbortCommands")
+        (return_code, message) = handler()
+        return ([return_code], [message])
 
     @command(
         dtype_in=str,
