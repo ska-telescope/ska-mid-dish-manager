@@ -54,8 +54,7 @@ class TestDishManagerBehaviour:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers."
-            "tango_device_cm.tango.DeviceProxy"
+            "ska_mid_dish_manager.component_managers.tango_device_cm.tango.DeviceProxy"
         ) as patched_dp:
             patched_dp.return_value = MagicMock()
             patched_dp.command_inout = MagicMock()
@@ -69,24 +68,14 @@ class TestDishManagerBehaviour:
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
         self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers[
-            "SPF"
-        ]
-        self.spfrx_cm = class_instance.component_manager.component_managers[
-            "SPFRX"
-        ]
+        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_LP
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.STANDBY
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.STANDBY_LP
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 
     def teardown_method(self):
         """Tear down context"""
@@ -119,15 +108,9 @@ class TestDishManagerBehaviour:
 
         self.device_proxy.SetStandbyFPMode()
 
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_FP
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
 
         # Sample events:
         # ('longRunningCommandResult', ('', ''))
@@ -157,9 +140,7 @@ class TestDishManagerBehaviour:
             if event_value[1] and event_value[1][0]
         ]
         # Sort via command creation timestamp
-        event_ids.sort(
-            key=lambda x: datetime.fromtimestamp((float(x.split("_")[0])))
-        )
+        event_ids.sort(key=lambda x: datetime.fromtimestamp((float(x.split("_")[0]))))
         assert "_SetStandbyFPMode" in event_ids[0]
         assert "_DS_SetStandbyFPMode" in event_ids[1]
         assert "_SPF_SetStandbyFPMode" in event_ids[2]

@@ -62,9 +62,7 @@ class TestSetOperateMode:
         # Force dishManager dishMode to go to OPERATE
         ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-        spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
-        )
+        spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
         event_store.wait_for_value(DishMode.OPERATE)
 
         with pytest.raises(tango.DevFailed):
@@ -96,9 +94,7 @@ class TestSetOperateMode:
         # Force dishManager dishMode to go to STANDBY_FP
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-        spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.STANDBY
-        )
+        spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
         event_store.wait_for_value(DishMode.STANDBY_FP)
 
         # Clear out the queue to make sure we don't catch old events
@@ -121,9 +117,7 @@ class TestSetOperateMode:
         # and observe that DishManager transitions dishMode to OPERATE mode
         # SPF are already in the expected operatingMode
         ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-        spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
-        )
+        spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
         # we can now expect dishMode to transition to OPERATE
         event_store.wait_for_value(DishMode.OPERATE)
         ds_cm._update_component_state(pointingstate=PointingState.READY)

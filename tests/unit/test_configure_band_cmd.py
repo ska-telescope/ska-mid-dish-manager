@@ -42,32 +42,20 @@ class TestConfigureBand2:
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
         self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers[
-            "SPF"
-        ]
-        self.spfrx_cm = class_instance.component_manager.component_managers[
-            "SPFRX"
-        ]
+        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_LP
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.STANDBY
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.STANDBY_LP
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 
     def teardown_method(self):
         """Tear down context"""
         self.tango_context.stop()
 
-    def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
-        self, event_store, caplog
-    ):
+    def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(self, event_store, caplog):
         """Test ConfigureBand"""
         caplog.set_level(logging.DEBUG)
         attributes_to_subscribe_to = (
@@ -88,24 +76,16 @@ class TestConfigureBand2:
 
         [[_], [unique_id]] = self.device_proxy.SetStandbyFPMode()
 
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_FP
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
 
         assert event_store.wait_for_command_id(unique_id, timeout=6)
         assert self.device_proxy.dishMode == DishMode.STANDBY_FP
 
         # Request ConfigureBand2 on Dish manager
         future_time = datetime.utcnow() + timedelta(days=1)
-        [[_], [unique_id]] = self.device_proxy.ConfigureBand2(
-            future_time.isoformat()
-        )
+        [[_], [unique_id]] = self.device_proxy.ConfigureBand2(future_time.isoformat())
 
         self.spfrx_cm._update_component_state(configuredband=Band.B2)
         self.ds_cm._update_component_state(indexerposition=IndexerPosition.B2)

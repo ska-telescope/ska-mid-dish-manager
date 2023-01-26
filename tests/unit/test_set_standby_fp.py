@@ -40,24 +40,14 @@ class TestSetStandByFPMode:
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
         self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers[
-            "SPF"
-        ]
-        self.spfrx_cm = class_instance.component_manager.component_managers[
-            "SPFRX"
-        ]
+        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_LP
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.STANDBY
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.STANDBY_LP
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 
     def teardown_method(self):
         """Tear down context"""
@@ -85,18 +75,10 @@ class TestSetStandByFPMode:
         # transition subservient devices to FP mode and observe that
         # DishManager transitions dishMode to FP mode after all
         # subservient devices are in FP
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_FP
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         self.ds_cm._update_component_state(powerstate=DSPowerState.FULL_POWER)
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
-        )
-        self.spf_cm._update_component_state(
-            powerstate=SPFPowerState.FULL_POWER
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
-        )
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        self.spf_cm._update_component_state(powerstate=SPFPowerState.FULL_POWER)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
         #  we can now expect dishMode to transition to STANDBY_FP
         assert event_store.wait_for_value(DishMode.STANDBY_FP)

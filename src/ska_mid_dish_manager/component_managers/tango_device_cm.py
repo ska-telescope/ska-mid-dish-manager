@@ -55,13 +55,9 @@ class MonitoredAttribute:
     event_queue: Queue
     subscription_id: Optional[int] = None
 
-    def _subscription_callback(
-        self, logger: logging.Logger, event_data: tango.EventData
-    ):
+    def _subscription_callback(self, logger: logging.Logger, event_data: tango.EventData):
         if event_data.err:
-            logger.error(
-                "Got error from [%s] %s", event_data.device, event_data
-            )
+            logger.error("Got error from [%s] %s", event_data.device, event_data)
         else:
             logger.debug(
                 "Got event with name [%s] and value [%s] from [%s]",
@@ -82,18 +78,14 @@ class MonitoredAttribute:
         with tango.EnsureOmniThread():
             if self.attr_name == "State":
                 if not device_proxy.is_attribute_polled("State"):
-                    device_proxy.poll_attribute(
-                        "State", STATE_ATTR_POLL_PERIOD
-                    )
+                    device_proxy.poll_attribute("State", STATE_ATTR_POLL_PERIOD)
             sub_callback = partial(self._subscription_callback, logger)
             self.subscription_id = device_proxy.subscribe_event(
                 self.attr_name,
                 tango.EventType.CHANGE_EVENT,
                 sub_callback,
             )
-            logger.info(
-                "Subscribed to [%s] with [%s]", self.attr_name, device_proxy
-            )
+            logger.info("Subscribed to [%s] with [%s]", self.attr_name, device_proxy)
             while not task_abort_event.wait(1):
                 pass
             device_proxy.unsubscribe_event(self.subscription_id)
@@ -302,9 +294,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             if isinstance(result, Exception):
                 self.logger.error(result)
             else:
-                self.logger.error(
-                    "Device Proxy creation task failed [%s]", result
-                )
+                self.logger.error("Device Proxy creation task failed [%s]", result)
 
         if retry_count:
             self.logger.info(
@@ -363,9 +353,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 )
                 time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
 
-    def run_device_command(
-        self, command_name, command_arg, task_callback: Callable = None
-    ):
+    def run_device_command(self, command_name, command_arg, task_callback: Callable = None):
         """Execute the command in a thread"""
         task_status, response = self.submit_task(
             self._run_device_command,
@@ -400,9 +388,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         result = None
         try:
-            result = self.execute_command(
-                self._device_proxy, command_name, command_arg
-            )
+            result = self.execute_command(self._device_proxy, command_name, command_arg)
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception(err)
             if task_callback:
@@ -457,16 +443,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :type: attribute_name: str
         """
         attribute_names = [
-            monitored_attribute.attr_name
-            for monitored_attribute in self._monitored_attributes
+            monitored_attribute.attr_name for monitored_attribute in self._monitored_attributes
         ]
         if attribute_name in attribute_names:
             # Already monitoring this attribute
             return
 
-        monitored_attribute = MonitoredAttribute(
-            attribute_name, self._events_queue
-        )
+        monitored_attribute = MonitoredAttribute(attribute_name, self._events_queue)
         self._monitored_attributes.append(monitored_attribute)
 
         if self.state == "monitoring":
@@ -481,10 +464,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Establish communication with the device"""
         # pylint: disable=no-member
         if self.state != "disconnected":
-            raise RuntimeError(
-                "You can only start communicating "
-                "when you have stopped doing so"
-            )
+            raise RuntimeError("You can only start communicating when you have stopped doing so")
         self.logger.info("start_communicating")
         self.to_setting_up_device_proxy()
 
@@ -550,9 +530,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def on_enter_setting_up_device_proxy(self):
         """Set up a connection to the device through the proxy"""
         self.logger.info("in on_enter_setting_up_device_proxy")
-        self._update_component_state(
-            connection_state="setting_up_device_proxy"
-        )
+        self._update_component_state(connection_state="setting_up_device_proxy")
         # Start the device proxy creation
         self.submit_task(
             self._create_device_proxy,
