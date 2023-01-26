@@ -144,7 +144,9 @@ class EventStore:
                 f" but got [{event_info}]",
             ) from err
 
-    def wait_for_progress_update(self, progress_message: str, timeout: int = 5):
+    def wait_for_progress_update(
+        self, progress_message: str, timeout: int = 5
+    ):
         """Wait for a long running command progress update
 
         Wait `timeout` seconds for each fetch.

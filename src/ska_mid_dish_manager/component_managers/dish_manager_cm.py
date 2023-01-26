@@ -4,7 +4,6 @@ import logging
 from datetime import datetime
 from typing import Callable, Optional, Tuple
 
-from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.control_model import CommunicationStatus, HealthState
 from ska_tango_base.executor import TaskExecutorComponentManager, TaskStatus
 
@@ -144,10 +143,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._update_component_state(**initial_component_states)
 
         self._command_map = CommandMap(
-            self,
-            self._dish_mode_model,
-            self._command_tracker,
-            logger
+            self, self._dish_mode_model, self._command_tracker, logger
         )
 
     # pylint: disable=unused-argument

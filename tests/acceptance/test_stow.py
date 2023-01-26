@@ -30,5 +30,5 @@ def test_stow_transition(event_store):
 
     events = event_store.wait_for_command_id(unique_id, timeout=6)
     events_string = "".join([str(event) for event in events])
-    for message in ["Waiting for dishMode change", "Stow completed"]:
+    for message in ["Awaiting dishmode change to 5", "Stow completed"]:
         assert message in events_string

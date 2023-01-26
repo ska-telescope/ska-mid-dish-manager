@@ -37,82 +37,34 @@ class TestStowMode:
     # pylint: disable=missing-function-docstring, protected-access
     def test_stow_mode(
         self,
-        event_store,
+        event_store_class,
     ):
+        main_event_store = event_store_class()
+        progress_event_store = event_store_class()
+
         device_proxy = self.tango_context.device
         device_proxy.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,
-            event_store,
+            main_event_store,
+        )
+
+        device_proxy.subscribe_event(
+            "longRunningCommandProgress",
+            tango.EventType.CHANGE_EVENT,
+            progress_event_store,
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
 
+        ds_cm.read_update_component_state = MagicMock()
+
+        device_proxy.SetStowMode()
+
         # Pretend DS goes into STOW
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
-        event_store.wait_for_value(DishMode.STOW)
-
-    def test_stow_mode_progress_updates(self, event_store):
-        """Execute tests"""
-        self.device_proxy.subscribe_event(
-            "longRunningCommandProgress",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-
-        # Subscribe to longRunningCommandResult so that we can see when the
-        # function has completed with wait_for_command_id
-        self.device_proxy.subscribe_event(
-            "longRunningCommandResult",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-
-        sub_id = self.device_proxy.subscribe_event(
-            "dishMode",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-        assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=6)
-
-        # Force dishManager dishMode to go to STANDBY-FP
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_FP
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.STANDBY
-        )
-        assert event_store.wait_for_value(DishMode.STANDBY_FP)
-
-        # unsubscribe to stop listening for dishMode events
-        self.device_proxy.unsubscribe_event(sub_id)
-        # Clear out the queue to make sure we dont keep previous events
-        event_store.clear_queue()
-
-        # Transition DishManager to STANDBY_FP mode
-        [[_], [unique_id]] = self.device_proxy.SetStandbyLPMode()
-
-        # transition subservient devices to their respective operatingMode
-        # and observe that DishManager transitions dishMode to LP mode. No
-        # need to change the component state of SPFRX since it's in the
-        # expected operating mode
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_LP
-        )
-
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.STANDBY_LP
-        )
-
-        events = event_store.wait_for_command_id(unique_id, timeout=6)
-
-        events_string = "".join([str(event) for event in events])
-
-        print(events_string)
+        main_event_store.wait_for_value(DishMode.STOW)
 
         expected_progress_updates = [
             "Stow called on DS",
@@ -121,12 +73,17 @@ class TestStowMode:
                 "[<DSOperatingMode.STOW: 5>]"
             ),
             "Awaiting dishmode change to 5",
-            (
-                "DS operatingmode changed to, "
-                "[<DSOperatingMode.STOW: 5>]"
-            ),
+            ("DS operatingmode changed to, [<DSOperatingMode.STOW: 5>]"),
             "SetStowMode completed",
         ]
 
+        events = progress_event_store.wait_for_progress_update(
+            expected_progress_updates[-1], timeout=6
+        )
+
+        events_string = "".join([str(event) for event in events])
+
+        # Check that all the expected progress messages appeared
+        # in the event store
         for message in expected_progress_updates:
             assert message in events_string

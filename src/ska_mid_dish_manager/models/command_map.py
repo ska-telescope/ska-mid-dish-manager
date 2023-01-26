@@ -226,7 +226,7 @@ class CommandMap:
             task_callback,
             task_abort_event,
             commands_for_device,
-            "Stow",
+            "SetStowMode",
             "dishmode",
             DishMode.STOW,
         )

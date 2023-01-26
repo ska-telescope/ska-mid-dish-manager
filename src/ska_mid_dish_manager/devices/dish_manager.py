@@ -122,11 +122,16 @@ class DishManager(SKAController):
         :type command_exception: Exception
         """
         self.logger.exception(
-            f"Command '{command_id}' raised exception {command_exception}"
+            "Command '%s' raised exception %s", command_id, command_exception
         )
+        # pylint: disable=attribute-defined-outside-init
         self._command_result = (command_id, str(command_exception))
-        self.push_change_event("longRunningCommandResult", self._command_result)
-        self.push_archive_event("longRunningCommandResult", self._command_result)
+        self.push_change_event(
+            "longRunningCommandResult", self._command_result
+        )
+        self.push_archive_event(
+            "longRunningCommandResult", self._command_result
+        )
 
     def _push_subs_comms_evts(self):
         """

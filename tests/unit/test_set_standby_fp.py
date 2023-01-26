@@ -50,9 +50,10 @@ class TestSetStandByFPMode:
 
         # During sub device command execution, we wait for state changes on our
         # sub devices to work out if the command has completed.
-        # We do this both voa event updates as well as periodic reads on the sub
-        # devices (poll).
-        # Since we mock out the tango layer, read_attribute returns a mock object.
+        # We do this both via event updates as well as periodic reads on the
+        # sub devices (poll).
+        # Since we mock out the tango layer, read_attribute returns a mock
+        # object.
         # This then is used to update state which fails.
         self.ds_cm.read_update_component_state = MagicMock()
         self.spf_cm.read_update_component_state = MagicMock()
@@ -97,10 +98,10 @@ class TestSetStandByFPMode:
         self.dish_manager_cm._update_component_state(configuredband=Band.B2)
 
         # Transition DishManager to STANDBY_FP mode
-        [[_], [unique_id]] = self.device_proxy.SetStandbyFPMode()
+        self.device_proxy.SetStandbyFPMode()
 
         # Clear out the queue to make sure we don't catch old events
-        # dish_mode_event_store.clear_queue()
+        dish_mode_event_store.clear_queue()
 
         # transition subservient devices to FP mode and observe that
         # DishManager transitions dishMode to FP mode after all
@@ -118,6 +119,9 @@ class TestSetStandByFPMode:
         self.spfrx_cm._update_component_state(
             operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
+
+        #  we can now expect dishMode to transition to STANDBY_FP
+        assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
         expected_progress_updates = [
             "SetStandbyFPMode called on DS",
@@ -149,13 +153,9 @@ class TestSetStandByFPMode:
             "SetStandbyFPMode completed",
         ]
 
-        #  we can now expect dishMode to transition to STANDBY_FP
-        assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
-
-        events = progress_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
-
-        # current_dishmode = self.device_proxy.dishMode
-        # assert current_dishmode == DishMode.STANDBY_FP
+        events = progress_event_store.wait_for_progress_update(
+            expected_progress_updates[-1], timeout=6
+        )
 
         events_string = "".join([str(event) for event in events])
 

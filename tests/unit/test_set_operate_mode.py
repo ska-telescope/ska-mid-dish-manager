@@ -74,8 +74,11 @@ class TestSetOperateMode:
 
     def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
         self,
-        event_store,
+        event_store_class,
     ):
+        main_event_store = event_store_class()
+        progress_event_store = event_store_class()
+
         device_proxy = self.tango_context.device
         for attr in [
             "dishMode",
@@ -86,23 +89,34 @@ class TestSetOperateMode:
             device_proxy.subscribe_event(
                 attr,
                 tango.EventType.CHANGE_EVENT,
-                event_store,
+                main_event_store,
             )
+
+        device_proxy.subscribe_event(
+            "longRunningCommandProgress",
+            tango.EventType.CHANGE_EVENT,
+            progress_event_store,
+        )
 
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
         spf_cm = class_instance.component_manager.component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
+
+        ds_cm.read_update_component_state = MagicMock()
+        spf_cm.read_update_component_state = MagicMock()
+        spfrx_cm.read_update_component_state = MagicMock()
+
         # Force dishManager dishMode to go to STANDBY_FP
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         spfrx_cm._update_component_state(
             operatingmode=SPFRxOperatingMode.STANDBY
         )
-        event_store.wait_for_value(DishMode.STANDBY_FP)
+        main_event_store.wait_for_value(DishMode.STANDBY_FP)
 
         # Clear out the queue to make sure we don't catch old events
-        event_store.clear_queue()
+        main_event_store.clear_queue()
 
         # Transition DishManager to OPERATE mode
         # configuredBand not set
@@ -113,7 +127,7 @@ class TestSetOperateMode:
         ds_cm._update_component_state(indexerposition=IndexerPosition.B1)
         spf_cm._update_component_state(bandinfocus=BandInFocus.B1)
         spfrx_cm._update_component_state(configuredband=Band.B1)
-        event_store.wait_for_value(Band.B1)
+        main_event_store.wait_for_value(Band.B1)
 
         device_proxy.SetOperateMode()
 
@@ -125,90 +139,46 @@ class TestSetOperateMode:
             operatingmode=SPFRxOperatingMode.DATA_CAPTURE
         )
         # we can now expect dishMode to transition to OPERATE
-        event_store.wait_for_value(DishMode.OPERATE)
+        main_event_store.wait_for_value(DishMode.OPERATE)
         ds_cm._update_component_state(pointingstate=PointingState.READY)
-        event_store.wait_for_value(PointingState.READY)
+        main_event_store.wait_for_value(PointingState.READY)
 
-    def test_set_operate_mode_progress_updates(self, event_store):
-            """Execute tests"""
-            self.device_proxy.subscribe_event(
-                "longRunningCommandProgress",
-                tango.EventType.CHANGE_EVENT,
-                event_store,
-            )
+        expected_progress_updates = [
+            "SetPointMode called on DS",
+            (
+                "Awaiting DS operatingmode to change to "
+                "[<DSOperatingMode.POINT: 7>]"
+            ),
+            "SetOperateMode called on SPF",
+            (
+                "Awaiting SPF operatingmode to change to "
+                "[<SPFOperatingMode.OPERATE: 3>]"
+            ),
+            "CaptureData called on SPFRX",
+            (
+                "Awaiting SPFRX operatingmode to change to "
+                "[<SPFRxOperatingMode.DATA_CAPTURE: 3>]"
+            ),
+            "Awaiting dishmode change to 7",
+            ("DS operatingmode changed to, [<DSOperatingMode.POINT: 7>]"),
+            (
+                "SPF operatingmode changed to, "
+                "[<SPFOperatingMode.OPERATE: 3>]"
+            ),
+            (
+                "SPFRX operatingmode changed to, "
+                "[<SPFRxOperatingMode.DATA_CAPTURE: 3>]"
+            ),
+            "SetOperateMode completed",
+        ]
 
-            # Subscribe to longRunningCommandResult so that we can see when the
-            # function has completed with wait_for_command_id
-            self.device_proxy.subscribe_event(
-                "longRunningCommandResult",
-                tango.EventType.CHANGE_EVENT,
-                event_store,
-            )
+        events = progress_event_store.wait_for_progress_update(
+            expected_progress_updates[-1], timeout=6
+        )
 
-            sub_id = self.device_proxy.subscribe_event(
-                "dishMode",
-                tango.EventType.CHANGE_EVENT,
-                event_store,
-            )
-            assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=6)
-            # unsubscribe to stop listening for dishMode events
-            self.device_proxy.unsubscribe_event(sub_id)
-            # Clear out the queue to make sure we dont keep previous events
-            event_store.clear_queue()
+        events_string = "".join([str(event) for event in events])
 
-            self.dish_manager_cm._update_component_state(configuredband=Band.B2)
-
-            # Transition DishManager to STANDBY_FP mode
-            [[_], [unique_id]] = self.device_proxy.SetStandbyFPMode()
-
-            # transition subservient devices to FP mode and observe that
-            # DishManager transitions dishMode to FP mode after all
-            # subservient devices are in FP
-            self.ds_cm._update_component_state(
-                operatingmode=DSOperatingMode.STANDBY_FP
-            )
-            self.ds_cm._update_component_state(powerstate=DSPowerState.FULL_POWER)
-            self.spf_cm._update_component_state(
-                operatingmode=SPFOperatingMode.OPERATE
-            )
-            self.spf_cm._update_component_state(
-                powerstate=SPFPowerState.FULL_POWER
-            )
-            self.spfrx_cm._update_component_state(
-                operatingmode=SPFRxOperatingMode.DATA_CAPTURE
-            )
-
-            events = event_store.wait_for_command_id(unique_id, timeout=6)
-
-            events_string = "".join([str(event) for event in events])
-
-            expected_progress_updates = [
-                "SetPointMode called on DS",
-                (
-                    "Awaiting DS operatingmode to change to "
-                    "[<DSOperatingMode.POINT]: 7>]"
-                ),
-                "SetOperateMode called on SPF",
-                (
-                    "Awaiting SPF operatingmode to change to "
-                    "[<SPFOperatingMode.OPERATE: 3>]"
-                ),
-                "CaptureData called on SPFRX",
-                (
-                    "Awaiting SPFRX operatingmode to change to "
-                    "[<SPFRxOperatingMode.DATA_CAPTURE: 3>]"
-                ),
-                "Awaiting dishmode change to 7",
-                (
-                    "SPF operatingmode changed to, "
-                    "[<SPFOperatingMode.OPERATE: 7>]"
-                ),
-                (
-                    "SPFRX operatingmode changed to, "
-                    "[<SPFRxOperatingMode.DATA_CAPTURE: 3>]"
-                ),
-                "SetOperateMode completed",
-            ]
-
-            for message in expected_progress_updates:
-                assert message in events_string
+        # Check that all the expected progress messages appeared
+        # in the event store
+        for message in expected_progress_updates:
+            assert message in events_string
