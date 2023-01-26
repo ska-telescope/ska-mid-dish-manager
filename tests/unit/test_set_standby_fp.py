@@ -47,6 +47,17 @@ class TestSetStandByFPMode:
         self.spfrx_cm = class_instance.component_manager.component_managers[
             "SPFRX"
         ]
+
+        # During sub device command execution, we wait for state changes on our
+        # sub devices to work out if the command has completed.
+        # We do this both voa event updates as well as periodic reads on the sub
+        # devices (poll).
+        # Since we mock out the tango layer, read_attribute returns a mock object.
+        # This then is used to update state which fails.
+        self.ds_cm.read_update_component_state = MagicMock()
+        self.spf_cm.read_update_component_state = MagicMock()
+        self.spfrx_cm.read_update_component_state = MagicMock()
+
         self.dish_manager_cm = class_instance.component_manager
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
