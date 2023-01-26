@@ -90,7 +90,7 @@ class CommandMap:
                 "DS": {
                     "command": "SetStandbyFPMode",
                     "awaitedAttribute": "operatingmode",
-                    "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
+                    "awaitedValuesList": [DSOperatingMode.STANDBY_FP],
                 }
             }
         else:
@@ -98,7 +98,7 @@ class CommandMap:
                 "DS": {
                     "command": "SetStandbyFPMode",
                     "awaitedAttribute": "operatingmode",
-                    "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
+                    "awaitedValuesList": [DSOperatingMode.STANDBY_FP],
                 },
                 "SPF": {
                     "command": "SetOperateMode",
@@ -347,8 +347,10 @@ class CommandMap:
 
             else:
                 task_callback(
+                    progress=f"{running_command} completed",
+                )
+                task_callback(
                     status=TaskStatus.COMPLETED,
                     result=f"{running_command} completed",
-                    progress=f"{running_command} completed",
                 )
                 return

@@ -144,6 +144,46 @@ class EventStore:
                 f" but got [{event_info}]",
             ) from err
 
+    def wait_for_progress_update(self, progress_message: str, timeout: int = 5):
+        """Wait for a long running command progress update
+
+        Wait `timeout` seconds for each fetch.
+
+        :param progress_message: The progress message to wait for
+        :type progress_message: str
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If none are found
+        :return: The result of the long running command
+        :rtype: str
+        """
+        events = []
+        try:
+            while True:
+                event = self._queue.get(timeout=timeout)
+                events.append(event)
+                if not event.attr_value:
+                    continue
+                if not isinstance(event.attr_value.value, tuple):
+                    continue
+                if len(event.attr_value.value) != 2:
+                    continue
+                (_, progress_update) = event.attr_value.value
+                if (
+                    progress_update in progress_message
+                    and event.attr_value.name == "longrunningcommandprogress"
+                ):
+                    return events
+        except queue.Empty as err:
+            event_info = [
+                (event.attr_value.name, event.attr_value.value)
+                for event in events
+            ]
+            raise RuntimeError(
+                f"Never got a progress update with [{progress_message}],",
+                f" but got [{event_info}]",
+            ) from err
+
     @classmethod
     def filter_id_events(
         cls, events: List[tango.EventData], unique_id: str
