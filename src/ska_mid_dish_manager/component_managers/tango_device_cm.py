@@ -10,8 +10,8 @@ from typing import Any, AnyStr, Callable, List, Optional
 
 import numpy as np
 import tango
-from ska_control_model import CommunicationStatus, TaskStatus
-from ska_tango_base.executor import TaskExecutorComponentManager
+from ska_tango_base.control_model import CommunicationStatus
+from ska_tango_base.executor import TaskExecutorComponentManager, TaskStatus
 from transitions import Machine
 
 SLEEP_TIME_BETWEEN_RECONNECTS = 1  # seconds

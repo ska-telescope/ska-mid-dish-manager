@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
-from ska_control_model import TaskStatus
+from ska_tango_base.executor import TaskStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.dish_manager import DishManager
