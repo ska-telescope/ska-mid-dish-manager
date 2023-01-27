@@ -12,8 +12,9 @@ import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
 
+from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
-from ska_tango_base.commands import ResultCode, SlowCommand, SubmittedSlowCommand
+from ska_tango_base.commands import SlowCommand, SubmittedSlowCommand
 from tango import AttrWriteType, DebugIt, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
@@ -21,7 +22,6 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
-    CommunicationStatus,
     DishMode,
     PointingState,
     PowerState,

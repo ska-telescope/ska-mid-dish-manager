@@ -166,14 +166,3 @@ class SPFRxCapabilityStates(enum.IntEnum):
     STANDBY = 2
     CONFIGURE = 3
     OPERATE = 4
-
-
-class CommunicationStatus(enum.IntEnum):
-    # TODO(DevonPetrie 05/01/2022)
-    # This is a placeholder enum
-    # This will be removed when the CommunicationStatus enum
-    # in ska_control_model is updated to start at 0
-    PLACEHOLDER = 0
-    DISABLED = 1
-    NOT_ESTABLISHED = 2
-    ESTABLISHED = 3

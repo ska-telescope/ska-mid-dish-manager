@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import pytest
 import tango
-from ska_tango_base.commands import TaskStatus
+from ska_control_model import TaskStatus
 
 from ska_mid_dish_manager.devices.test_devices.utils import (
     set_configuredBand_b1,

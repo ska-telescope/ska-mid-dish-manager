@@ -6,7 +6,7 @@ from unittest import mock
 
 import pytest
 import tango
-from ska_tango_base.control_model import CommunicationStatus
+from ska_control_model import CommunicationStatus
 from ska_tango_testing.mock import MockCallableGroup
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager

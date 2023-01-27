@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
-from ska_tango_base.control_model import CommunicationStatus
+from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.dish_manager import DishManager
