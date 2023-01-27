@@ -120,4 +120,4 @@ def test_capability_state_b2(
         spfrx_device_proxy.b2CapabilityState == SPFRxCapabilityStates.CONFIGURE
     )
 
-    event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=10)
+    event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=8)
