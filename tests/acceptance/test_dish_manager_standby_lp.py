@@ -53,7 +53,7 @@ def test_standby_lp_transition(event_store_class):
             "SPFRX operatingmode changed to, "
             "[<SPFRxOperatingMode.STANDBY: 2>]"
         ),
-        ("DS operatingmode changed to, " "[<DSOperatingMode.STANDBY_LP: 2>]"),
+        ("DS operatingmode changed to, [<DSOperatingMode.STANDBY_LP: 2>]"),
         "SetStandbyLPMode completed",
     ]
 
