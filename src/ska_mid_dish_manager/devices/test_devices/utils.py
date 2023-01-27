@@ -172,7 +172,7 @@ class EventStore:
                     continue
                 (_, progress_update) = event.attr_value.value
                 if (
-                    progress_message in progress_update 
+                    progress_message in progress_update
                     and event.attr_value.name == "longrunningcommandprogress"
                 ):
                     return events
