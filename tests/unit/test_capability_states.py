@@ -16,19 +16,19 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFCapabilityStates,
     SPFRxCapabilityStates,
 )
-from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
+from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 
 # pylint: disable=redefined-outer-name
 @pytest.fixture(scope="module")
-def dish_mode_model():
-    """Instance of DishModeModel"""
-    return DishModeModel()
+def state_transition():
+    """Instance of StateTransition"""
+    return StateTransition()
 
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_capability_state_rule_unavailable(dish_mode_model):
+def test_capability_state_rule_unavailable(state_transition):
     """Test the capabilityState rules"""
 
     ds_component_state = {
@@ -40,7 +40,7 @@ def test_capability_state_rule_unavailable(dish_mode_model):
     dish_manager_component_state = {"dishmode": None}
 
     assert (
-        dish_mode_model.compute_capability_state(
+        state_transition.compute_capability_state(
             "b5b",
             ds_component_state,
             spfrx_component_state,
@@ -53,7 +53,7 @@ def test_capability_state_rule_unavailable(dish_mode_model):
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_capability_state_rule_standby(dish_mode_model):
+def test_capability_state_rule_standby(state_transition):
     """Test the capabilityState rules"""
 
     ds_component_state = {"operatingmode": None, "indexerposition": None}
@@ -62,7 +62,7 @@ def test_capability_state_rule_standby(dish_mode_model):
     dish_manager_component_state = {"dishmode": DishMode.STANDBY_LP}
 
     assert (
-        dish_mode_model.compute_capability_state(
+        state_transition.compute_capability_state(
             "b5a",
             ds_component_state,
             spfrx_component_state,
@@ -75,7 +75,7 @@ def test_capability_state_rule_standby(dish_mode_model):
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_capability_state_rule_configuring(dish_mode_model):
+def test_capability_state_rule_configuring(state_transition):
     """Test the capabilityState rules"""
 
     ds_component_state = {"operatingmode": None, "indexerposition": None}
@@ -84,7 +84,7 @@ def test_capability_state_rule_configuring(dish_mode_model):
     dish_manager_component_state = {"dishmode": DishMode.CONFIG}
 
     assert (
-        dish_mode_model.compute_capability_state(
+        state_transition.compute_capability_state(
             "b4",
             ds_component_state,
             spfrx_component_state,
@@ -97,7 +97,7 @@ def test_capability_state_rule_configuring(dish_mode_model):
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_capability_state_rule_degraded(dish_mode_model):
+def test_capability_state_rule_degraded(state_transition):
     """Test the capabilityState rules"""
 
     ds_component_state = {
@@ -109,7 +109,7 @@ def test_capability_state_rule_degraded(dish_mode_model):
     dish_manager_component_state = {"dishmode": None}
 
     assert (
-        dish_mode_model.compute_capability_state(
+        state_transition.compute_capability_state(
             "b3",
             ds_component_state,
             spfrx_component_state,
@@ -122,7 +122,7 @@ def test_capability_state_rule_degraded(dish_mode_model):
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_capability_state_rule_operate(dish_mode_model):
+def test_capability_state_rule_operate(state_transition):
     """Test the capabilityState rules"""
 
     ds_component_state = {
@@ -134,7 +134,7 @@ def test_capability_state_rule_operate(dish_mode_model):
     dish_manager_component_state = {"dishmode": DishMode.STOW}
 
     assert (
-        dish_mode_model.compute_capability_state(
+        state_transition.compute_capability_state(
             "b1",
             ds_component_state,
             spfrx_component_state,
@@ -147,7 +147,7 @@ def test_capability_state_rule_operate(dish_mode_model):
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_capability_state_rule_unknown(dish_mode_model):
+def test_capability_state_rule_unknown(state_transition):
     """Test the capabilityState rules"""
 
     ds_component_state = {"operatingmode": None, "indexerposition": None}
@@ -156,7 +156,7 @@ def test_capability_state_rule_unknown(dish_mode_model):
     dish_manager_component_state = {"dishmode": None}
 
     assert (
-        dish_mode_model.compute_capability_state(
+        state_transition.compute_capability_state(
             "b2",
             ds_component_state,
             spfrx_component_state,

@@ -13,12 +13,19 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
+from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 
 # pylint: disable=missing-function-docstring, redefined-outer-name
 @pytest.fixture(scope="module")
 def dish_mode_model():
     return DishModeModel()
+
+# pylint: disable=redefined-outer-name
+@pytest.fixture(scope="module")
+def state_transition():
+    """Instance of StateTransition"""
+    return StateTransition()
 
 
 def test_model_node_matches_dish_mode_enums(dish_mode_model):
@@ -156,9 +163,9 @@ def test_compute_dish_mode(
     spf_comp_state,
     spfrx_comp_state,
     expected_dish_mode,
-    dish_mode_model,
+    state_transition,
 ):
-    actual_dish_mode = dish_mode_model.compute_dish_mode(
+    actual_dish_mode = state_transition.compute_dish_mode(
         ds_comp_state, spfrx_comp_state, spf_comp_state
     )
     assert expected_dish_mode == actual_dish_mode
@@ -240,9 +247,9 @@ def test_compute_dish_healthstate(
     spf_comp_state,
     spfrx_comp_state,
     expected_dish_healthstate,
-    dish_mode_model,
+    state_transition,
 ):
-    actual_dish_healthstate = dish_mode_model.compute_dish_health_state(
+    actual_dish_healthstate = state_transition.compute_dish_health_state(
         ds_comp_state, spfrx_comp_state, spf_comp_state
     )
     assert expected_dish_healthstate == actual_dish_healthstate
@@ -312,9 +319,9 @@ def test_compute_configured_band(
     spf_comp_state,
     spfrx_comp_state,
     expected_band_number,
-    dish_mode_model,
+    state_transition,
 ):
-    actual_band_number = dish_mode_model.compute_configured_band(
+    actual_band_number = state_transition.compute_configured_band(
         ds_comp_state, spfrx_comp_state, spf_comp_state
     )
     assert expected_band_number == actual_band_number
@@ -369,9 +376,9 @@ def test_compute_spf_band_in_focus(
     ds_comp_state,
     spfrx_comp_state,
     expected_band_number,
-    dish_mode_model,
+    state_transition,
 ):
-    actual_band_number = dish_mode_model.compute_spf_band_in_focus(
+    actual_band_number = state_transition.compute_spf_band_in_focus(
         ds_comp_state,
         spfrx_comp_state,
     )
