@@ -21,6 +21,7 @@ from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 def dish_mode_model():
     return DishModeModel()
 
+
 # pylint: disable=redefined-outer-name
 @pytest.fixture(scope="module")
 def state_transition():
