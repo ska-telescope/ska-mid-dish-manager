@@ -18,15 +18,11 @@ def test_stow_transition(event_store_class):
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
 
-    for attr in [
+    dish_manager.subscribe_event(
         "dishMode",
-        "longRunningCommandResult",
-    ]:
-        dish_manager.subscribe_event(
-            attr,
-            tango.EventType.CHANGE_EVENT,
-            main_event_store,
-        )
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
 
     dish_manager.subscribe_event(
         "longRunningCommandProgress",
