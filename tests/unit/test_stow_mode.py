@@ -1,6 +1,7 @@
 """Unit tests verifying model against DS_SetStowMode transition."""
 
 import logging
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -64,7 +65,16 @@ class TestStowMode:
         spf_cm.read_update_component_state = MagicMock()
         spfrx_cm.read_update_component_state = MagicMock()
 
+        assert device_proxy.dishMode != DishMode.STOW
+
         device_proxy.SetStowMode()
+
+        # Wait for a progress message so that SetStowMode has some time to run
+        events = progress_event_store.wait_for_progress_update(
+            "Awaiting dishmode change to", timeout=6
+        )
+
+        events_string = "".join([str(event) for event in events])
 
         # Pretend DS goes into STOW
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
@@ -85,7 +95,7 @@ class TestStowMode:
             expected_progress_updates[-1], timeout=6
         )
 
-        events_string = "".join([str(event) for event in events])
+        events_string += "".join([str(event) for event in events])
 
         # Check that all the expected progress messages appeared
         # in the event store
