@@ -1,7 +1,6 @@
 """Unit tests verifying model against DS_SetStowMode transition."""
 
 import logging
-import time
 from unittest.mock import MagicMock, patch
 
 import pytest
