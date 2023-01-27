@@ -8,11 +8,11 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFBandInFocus,
 )
 from ska_mid_dish_manager.models.transition_rules import (
-    CAPABILITY_STATE_RULES,
-    CONFIGURED_BAND_RULES,
-    DISH_MODE_RULES,
-    HEALTH_STATE_RULES,
-    SPF_BAND_IN_FOCUS_RULES,
+    band_focus_rules,
+    cap_state_rules,
+    config_rules,
+    dish_mode_rules,
+    health_state_rules,
 )
 
 
@@ -40,7 +40,7 @@ class StateTransition:
             ds_component_state, spfrx_component_state, spf_component_state
         )
 
-        for mode, rule in DISH_MODE_RULES.items():
+        for mode, rule in dish_mode_rules.items():
             if rule.matches(dish_manager_states):
                 return DishMode[mode]
         return DishMode.UNKNOWN
@@ -66,7 +66,7 @@ class StateTransition:
             ds_component_state, spfrx_component_state, spf_component_state
         )
 
-        for healthstate, rule in HEALTH_STATE_RULES.items():
+        for healthstate, rule in health_state_rules.items():
             if rule.matches(dish_manager_states):
                 return HealthState[healthstate]
         return HealthState.UNKNOWN
@@ -115,7 +115,7 @@ class StateTransition:
         )
 
         new_cap_state = CapabilityStates.UNKNOWN
-        for capability_state, rule in CAPABILITY_STATE_RULES.items():
+        for capability_state, rule in cap_state_rules.items():
             if rule.matches(dish_manager_states):
                 if capability_state.startswith("STANDBY"):
                     new_cap_state = CapabilityStates["STANDBY"]
@@ -155,7 +155,7 @@ class StateTransition:
             ds_component_state, spfrx_component_state, spf_component_state
         )
 
-        for band_number, rule in CONFIGURED_BAND_RULES.items():
+        for band_number, rule in config_rules.items():
             if rule.matches(dish_manager_states):
                 return Band[band_number]
         return Band.UNKNOWN
@@ -176,7 +176,7 @@ class StateTransition:
         """
         dish_manager_states = self._collapse(ds_component_state, spfrx_component_state)
 
-        for band_number, rule in SPF_BAND_IN_FOCUS_RULES.items():
+        for band_number, rule in band_focus_rules.items():
             if rule.matches(dish_manager_states):
                 return SPFBandInFocus[band_number]
         return SPFBandInFocus.UNKNOWN
