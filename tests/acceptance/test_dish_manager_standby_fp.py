@@ -8,7 +8,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_standby_lp_transition(event_store_class):
+def test_standby_fp_transition(event_store_class):
     """Test transition to Standby_FP"""
     dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
 
@@ -21,6 +21,7 @@ def test_standby_lp_transition(event_store_class):
         dish_mode_event_store,
     )
     # Make sure the intial dish mode is STANDBY LP
+    dish_manager.SetStandbyLPMode()
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
 
     dish_manager.subscribe_event(
