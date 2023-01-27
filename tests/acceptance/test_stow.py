@@ -31,7 +31,7 @@ def test_stow_transition(event_store_class):
     dish_manager.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store
+        progress_event_store,
     )
 
     dish_manager.SetStowMode()
