@@ -1,4 +1,6 @@
 """Test CapabilityState"""
+import logging
+
 import pytest
 import tango
 
@@ -53,6 +55,7 @@ def test_capability_state_b1(
     event_store.wait_for_value(CapabilityStates.STANDBY, timeout=8)
 
 
+# pylint: disable=too-many-arguments
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
@@ -62,10 +65,13 @@ def test_capability_state_b2(
     spf_device_proxy,
     spfrx_device_proxy,
     ds_device_proxy,
+    caplog,
 ):
     """Test transition on CapabilityState b2"""
     set_dish_manager_to_standby_lp(event_store, dish_manager_proxy)
+    caplog.set_level(logging.DEBUG)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_LP
+    assert dish_manager_proxy.b2CapabilityState != CapabilityStates.CONFIGURING
 
     ds_device_proxy.indexerPosition = IndexerPosition.MOVING
 
