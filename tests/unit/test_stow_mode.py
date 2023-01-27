@@ -57,8 +57,12 @@ class TestStowMode:
 
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.component_managers["DS"]
+        spf_cm = class_instance.component_manager.component_managers["SPF"]
+        spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
 
         ds_cm.read_update_component_state = MagicMock()
+        spf_cm.read_update_component_state = MagicMock()
+        spfrx_cm.read_update_component_state = MagicMock()
 
         device_proxy.SetStowMode()
 
