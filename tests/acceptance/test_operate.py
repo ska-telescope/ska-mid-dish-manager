@@ -1,12 +1,11 @@
-"""Test that DS goes into STOW and dishManager reports it"""
+"""Test Operate"""
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import (
-    Band,
-    DishMode,
-    DSOperatingMode,
+from ska_mid_dish_manager.devices.test_devices.utils import (
+    set_dish_manager_to_standby_lp,
 )
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 
 @pytest.mark.acceptance
@@ -15,20 +14,12 @@ from ska_mid_dish_manager.models.dish_enums import (
 def test_stow_transition(event_store_class):
     """Test transition to OPERATE"""
     dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
-    ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
-    # Get at least one device into a known state
-    ds_device.operatingMode = DSOperatingMode.STANDBY_FP
+    set_dish_manager_to_standby_lp(event_store_class, dish_manager)
+    assert dish_manager.dishMode == DishMode.STANDBY_LP
 
-    dish_manager.SetStandbyLPMode()
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
-    configuredband_event_store = event_store_class()
 
-    dish_manager.subscribe_event(
-        "configuredband",
-        tango.EventType.CHANGE_EVENT,
-        configuredband_event_store,
-    )
     dish_manager.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
@@ -40,7 +31,7 @@ def test_stow_transition(event_store_class):
         progress_event_store,
     )
     dish_manager.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=6)
+    assert main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=6)
 
     dish_manager.ConfiguredBand2()
     assert dish_manager.configuredBand == Band.B2
