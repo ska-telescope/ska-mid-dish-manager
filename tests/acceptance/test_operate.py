@@ -57,7 +57,7 @@ def test_stow_transition(event_store_class):
         ),
         "Awaiting dishmode change to 7",
         ("DS operatingmode changed to, [<DSOperatingMode.POINT: 7>]"),
-        ("SPF operatingmode changed to, " "[<SPFOperatingMode.OPERATE: 3>]"),
+        ("SPF operatingmode changed to, [<SPFOperatingMode.OPERATE: 3>]"),
         (
             "SPFRX operatingmode changed to, "
             "[<SPFRxOperatingMode.DATA_CAPTURE: 3>]"
