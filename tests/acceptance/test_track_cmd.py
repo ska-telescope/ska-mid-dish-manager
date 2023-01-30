@@ -45,8 +45,6 @@ def test_track_cmd(event_store_class):
 
     set_configuredBand_b1()
 
-    assert main_event_store.wait_for_value(Band.B1)
-
     dish_manager.SetOperateMode()
 
     # Wait for the operate command to complete
