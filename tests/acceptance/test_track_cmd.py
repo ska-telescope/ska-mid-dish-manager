@@ -21,17 +21,16 @@ def test_track_cmd(event_store_class):
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
 
-    dish_manager.subscribe_event(
+    for attr in [
         "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-
-    dish_manager.subscribe_event(
         "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
+        "longRunningCommandResult",
+    ]:
+        dish_manager.subscribe_event(
+            attr,
+            tango.EventType.CHANGE_EVENT,
+            main_event_store,
+        )
 
     dish_manager.subscribe_event(
         "longRunningCommandProgress",
