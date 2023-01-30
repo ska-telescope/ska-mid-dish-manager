@@ -47,9 +47,9 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
             "[<IndexerPosition.B2: 2>]"
         ),
         "ConfigureBand2 called on SPFRX",
-        ("Awaiting SPFRX configuredband to change to [<Band.B2: 2>"),
+        ("Awaiting SPFRX configuredband to change to [<Band.B2: 2>]"),
         "Awaiting dishmode change to 3",
-        ("SPF operatingmode changed to, " "[<SPFOperatingMode.OPERATE: 3>]"),
+        ("SPF operatingmode changed to, [<SPFOperatingMode.OPERATE: 3>]"),
         ("SPFRX configuredband changed to, [<Band.B2: 2>]"),
         "ConfigureBand2 completed",
     ]
