@@ -1,9 +1,7 @@
 """Test ConfigureBand2"""
-from datetime import datetime, timedelta
 
 import pytest
 import tango
-from ska_tango_base.commands import TaskStatus
 
 from ska_mid_dish_manager.devices.test_devices.utils import (
     set_configuredBand_b1,
@@ -38,10 +36,10 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
         progress_event_store,
     )
 
+    dish_manager_proxy.SetStandbyFPMode()
+    assert main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
     dish_manager_proxy.ConfiguredBand2()
-
-    assert main_event_store.wait_for_command_id(unique_id, timeout=5)
-    assert self.device_proxy.configuredBand == Band.B2
+    assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [
         "SetIndexPosition called on DS",
