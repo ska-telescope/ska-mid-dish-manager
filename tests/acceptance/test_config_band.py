@@ -37,7 +37,7 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
 
     dish_manager_proxy.SetStandbyFPMode()
     assert main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
-    dish_manager_proxy.ConfiguredBand2()
+    dish_manager_proxy.ConfigureBand2()
     assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [
