@@ -4,6 +4,7 @@ import tango
 
 from ska_mid_dish_manager.devices.test_devices.utils import (
     set_configuredBand_b1,
+    set_configuredBand_b2,
     set_dish_manager_to_standby_lp,
 )
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
@@ -37,7 +38,7 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
 
     dish_manager_proxy.SetStandbyFPMode()
     assert main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
-    dish_manager_proxy.ConfiguredBand2()
+    set_configuredBand_b2()
     assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [
