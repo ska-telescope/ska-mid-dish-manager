@@ -5,7 +5,7 @@ import tango
 from ska_mid_dish_manager.devices.test_devices.utils import (
     set_configuredBand_b1,
 )
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 
 @pytest.mark.acceptance
@@ -14,9 +14,9 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
 def test_track_cmd(event_store_class):
     """Test transition to STOW"""
     dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
-    ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
-    # Get at least one device into a known state
-    ds_device.operatingMode = DSOperatingMode.STANDBY_FP
+    # ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
+    # # Get at least one device into a known state
+    # ds_device.operatingMode = DSOperatingMode.STANDBY_FP
 
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -28,12 +28,25 @@ def test_track_cmd(event_store_class):
     )
 
     dish_manager.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+
+    dish_manager.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
         progress_event_store,
     )
 
+    [[_], [unique_id]] = dish_manager.SetStandbyFPMode()
+    main_event_store.wait_for_command_id(unique_id, timeout=8)
+
+    assert dish_manager.dishMode == DishMode.STANDBY_FP
+
     set_configuredBand_b1()
+
+    assert main_event_store.wait_for_value(Band.B1)
 
     dish_manager.SetOperateMode()
 
