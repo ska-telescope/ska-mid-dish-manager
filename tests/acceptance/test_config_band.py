@@ -23,6 +23,7 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
 
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
+    band_event_store = event_store_class()
 
     dish_manager_proxy.subscribe_event(
         "dishMode",
@@ -36,10 +37,16 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
         progress_event_store,
     )
 
+    dish_manager_proxy.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        band_event_store,
+    )
+    # Seting the dish mode to standby full power
     dish_manager_proxy.SetStandbyFPMode()
     assert main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
     set_configuredBand_b2()
-    assert dish_manager_proxy.configuredBand == Band.B2
+    band_event_store.wait_for_value(Band.B2, timeout=5)
 
     expected_progress_updates = [
         "SetIndexPosition called on DS",
