@@ -1,6 +1,4 @@
 """Test CapabilityState"""
-import logging
-
 import pytest
 import tango
 
@@ -8,13 +6,7 @@ from ska_mid_dish_manager.devices.test_devices.utils import (
     EventStore,
     set_dish_manager_to_standby_lp,
 )
-from ska_mid_dish_manager.models.dish_enums import (
-    CapabilityStates,
-    DishMode,
-    IndexerPosition,
-    SPFCapabilityStates,
-    SPFRxCapabilityStates,
-)
+from ska_mid_dish_manager.models.dish_enums import CapabilityStates, DishMode
 
 
 @pytest.mark.acceptance
