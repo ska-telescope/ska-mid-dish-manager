@@ -50,10 +50,7 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
 
     expected_progress_updates = [
         "SetIndexPosition called on DS",
-        (
-            "Awaiting DS indexerposition to change to "
-            "[<IndexerPosition.B2: 2>]"
-        ),
+        ("Awaiting DS indexerposition to change to [<IndexerPosition.B2: 2>]"),
         "ConfigureBand2 called on SPFRX",
         ("Awaiting SPFRX configuredband to change to [<Band.B2: 2>]"),
         "Awaiting dishmode change to 3",

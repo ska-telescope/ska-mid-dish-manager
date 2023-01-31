@@ -12,10 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
-from ska_mid_dish_manager.models.dish_mode_model import (
-    CommandNotAllowed,
-    DishModeModel,
-)
+from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
 
 
 # pylint: disable=missing-function-docstring, redefined-outer-name
@@ -168,10 +165,7 @@ def test_compute_dish_mode(
 
 
 @pytest.mark.parametrize(
-    (
-        "ds_comp_state, spf_comp_state, spfrx_comp_state"
-        ", expected_dish_healthstate"
-    ),
+    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
         (
             dict(healthstate=HealthState.NORMAL),
@@ -255,10 +249,7 @@ def test_compute_dish_healthstate(
 
 
 @pytest.mark.parametrize(
-    (
-        "ds_comp_state, spf_comp_state, spfrx_comp_state"
-        ", expected_band_number"
-    ),
+    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
         (
             dict(something="nothing"),

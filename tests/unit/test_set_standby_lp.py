@@ -39,12 +39,8 @@ class TestSetStandByLPMode:
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
         self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers[
-            "SPF"
-        ]
-        self.spfrx_cm = class_instance.component_manager.component_managers[
-            "SPFRX"
-        ]
+        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
 
         self.ds_cm.read_update_component_state = MagicMock()
         self.spf_cm.read_update_component_state = MagicMock()
@@ -53,15 +49,9 @@ class TestSetStandByLPMode:
         self.dish_manager_cm = class_instance.component_manager
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_LP
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.STANDBY
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.STANDBY_LP
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 
     def teardown_method(self):
         """Tear down context"""
@@ -79,9 +69,7 @@ class TestSetStandByLPMode:
         with pytest.raises(tango.DevFailed):
             _, _ = self.device_proxy.SetStandbyLPMode()
 
-    def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
-        self, event_store_class
-    ):
+    def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(self, event_store_class):
         """Execute tests"""
         dish_mode_event_store = event_store_class()
         progress_event_store = event_store_class()
@@ -101,15 +89,9 @@ class TestSetStandByLPMode:
         assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
 
         # Force dishManager dishMode to go to STANDBY-FP
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_FP
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.STANDBY
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
         assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
         # Transition DishManager to STANDBY_LP issuing a command
@@ -123,44 +105,23 @@ class TestSetStandByLPMode:
         # and observe that DishManager transitions dishMode to LP mode. No
         # need to change the component state of SPFRX since it's in the
         # expected operating mode
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_LP
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
 
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.STANDBY_LP
-        )
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 
         # we can now expect dishMode to transition to STANDBY_LP
-        assert dish_mode_event_store.wait_for_value(
-            DishMode.STANDBY_LP, timeout=6
-        )
+        assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=6)
 
         expected_progress_updates = [
             "SetStandbyLPMode called on DS",
-            (
-                "Awaiting DS operatingmode to change to "
-                "[<DSOperatingMode.STANDBY_LP: 2>]"
-            ),
+            ("Awaiting DS operatingmode to change to [<DSOperatingMode.STANDBY_LP: 2>]"),
             "SetStandbyLPMode called on SPF",
-            (
-                "Awaiting SPF operatingmode to change to "
-                "[<SPFOperatingMode.STANDBY_LP: 2>]"
-            ),
+            ("Awaiting SPF operatingmode to change to [<SPFOperatingMode.STANDBY_LP: 2>]"),
             "SetStandbyMode called on SPFRX",
-            (
-                "Awaiting SPFRX operatingmode to change to "
-                "[<SPFRxOperatingMode.STANDBY: 2>]"
-            ),
+            ("Awaiting SPFRX operatingmode to change to [<SPFRxOperatingMode.STANDBY: 2>]"),
             "Awaiting dishmode change to 2",
-            (
-                "SPFRX operatingmode changed to, "
-                "[<SPFRxOperatingMode.STANDBY: 2>]"
-            ),
-            (
-                "DS operatingmode changed to, "
-                "[<DSOperatingMode.STANDBY_LP: 2>]"
-            ),
+            ("SPFRX operatingmode changed to, [<SPFRxOperatingMode.STANDBY: 2>]"),
+            ("DS operatingmode changed to, [<DSOperatingMode.STANDBY_LP: 2>]"),
             "SetStandbyLPMode completed",
         ]
 

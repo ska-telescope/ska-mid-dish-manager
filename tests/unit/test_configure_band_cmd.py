@@ -42,12 +42,8 @@ class TestConfigureBand2:
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
         self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers[
-            "SPF"
-        ]
-        self.spfrx_cm = class_instance.component_manager.component_managers[
-            "SPFRX"
-        ]
+        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
 
         self.ds_cm.read_update_component_state = MagicMock()
         self.spf_cm.read_update_component_state = MagicMock()
@@ -57,15 +53,9 @@ class TestConfigureBand2:
 
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_LP
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.STANDBY
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.STANDBY_LP
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 
     def teardown_method(self):
         """Tear down context"""
@@ -104,24 +94,16 @@ class TestConfigureBand2:
 
         [[_], [unique_id]] = self.device_proxy.SetStandbyFPMode()
 
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_FP
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
 
         assert main_event_store.wait_for_command_id(unique_id, timeout=6)
         assert self.device_proxy.dishMode == DishMode.STANDBY_FP
 
         # Request ConfigureBand2 on Dish manager
         future_time = datetime.utcnow() + timedelta(days=1)
-        [[_], [unique_id]] = self.device_proxy.ConfigureBand2(
-            future_time.isoformat()
-        )
+        [[_], [unique_id]] = self.device_proxy.ConfigureBand2(future_time.isoformat())
 
         self.spfrx_cm._update_component_state(configuredband=Band.B2)
         self.ds_cm._update_component_state(indexerposition=IndexerPosition.B2)
@@ -132,17 +114,11 @@ class TestConfigureBand2:
 
         expected_progress_updates = [
             "SetIndexPosition called on DS",
-            (
-                "Awaiting DS indexerposition to change to "
-                "[<IndexerPosition.B2: 2>]"
-            ),
+            ("Awaiting DS indexerposition to change to [<IndexerPosition.B2: 2>]"),
             "ConfigureBand2 called on SPFRX",
             ("Awaiting SPFRX configuredband to change to [<Band.B2: 2>"),
             "Awaiting dishmode change to 3",
-            (
-                "SPF operatingmode changed to, "
-                "[<SPFOperatingMode.OPERATE: 3>]"
-            ),
+            ("SPF operatingmode changed to, [<SPFOperatingMode.OPERATE: 3>]"),
             ("SPFRX configuredband changed to, [<Band.B2: 2>]"),
             "ConfigureBand2 completed",
         ]

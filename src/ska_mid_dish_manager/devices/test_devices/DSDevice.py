@@ -13,9 +13,7 @@ import sys
 from tango import AttrWriteType, Database, DbDevInfo, DevShort, DevState
 from tango.server import Device, attribute, command
 
-from ska_mid_dish_manager.devices.test_devices.utils import (
-    random_delay_execution,
-)
+from ska_mid_dish_manager.devices.test_devices.utils import random_delay_execution
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DSOperatingMode,
@@ -179,9 +177,7 @@ class DSDevice(Device):
     # Commands
     # --------
 
-    @command(
-        dtype_in=None, doc_in="Update and push change event", dtype_out=None
-    )
+    @command(dtype_in=None, doc_in="Update and push change event", dtype_out=None)
     def IncrementNonPolled1(self):
         next_value = self.__non_polled_attr_1 + 1
         self.__non_polled_attr_1 = next_value
@@ -233,9 +229,7 @@ class DSDevice(Device):
         self.push_change_event("operatingMode", self._operating_mode)
 
     @random_delay_execution
-    @command(
-        dtype_in=DevShort, doc_in="Update indexerPosition", dtype_out=None
-    )
+    @command(dtype_in=DevShort, doc_in="Update indexerPosition", dtype_out=None)
     def SetIndexPosition(self, band_number):
         LOGGER.info("Called SetIndexPosition")
         self._indexer_position = IndexerPosition(band_number)

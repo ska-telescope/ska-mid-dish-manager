@@ -254,9 +254,7 @@ class CommandMap:
             )
 
             command_val = commands_for_device[device].get("commandValue")
-            _, command_id = command(
-                commands_for_device[device]["command"], command_val
-            )
+            _, command_id = command(commands_for_device[device]["command"], command_val)
 
             # Report that the command has been called on the subservient device
             task_callback(
@@ -267,15 +265,12 @@ class CommandMap:
             )
 
             awaited_attribute = commands_for_device[device]["awaitedAttribute"]
-            awaited_values_list = commands_for_device[device][
-                "awaitedValuesList"
-            ]
+            awaited_values_list = commands_for_device[device]["awaitedValuesList"]
 
             # Report which attribute and value we the device is waiting for
             task_callback(
                 progress=(
-                    f"Awaiting {device} {awaited_attribute}"
-                    f" to change to {awaited_values_list}"
+                    f"Awaiting {device} {awaited_attribute}" f" to change to {awaited_values_list}"
                 )
             )
 
@@ -283,10 +278,7 @@ class CommandMap:
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
         task_callback(
-            progress=(
-                f"Awaiting {awaited_event_attribute}"
-                f" change to {awaited_event_value}"
-            )
+            progress=(f"Awaiting {awaited_event_attribute}" f" change to {awaited_event_value}")
         )
 
         success_reported = dict.fromkeys(commands_for_device.keys(), False)
@@ -302,25 +294,17 @@ class CommandMap:
 
             # Check on dishmanager CMs attribute to see whether
             # the LRC has completed
-            current_awaited_value = self._dish_manager_cm.component_state[
-                awaited_event_attribute
-            ]
+            current_awaited_value = self._dish_manager_cm.component_state[awaited_event_attribute]
 
             # Check each devices to see if their operatingmode
             # attributes are in the correct state
             for device in commands_for_device:
-                awaited_attribute = commands_for_device[device][
-                    "awaitedAttribute"
-                ]
-                awaited_values_list = commands_for_device[device][
-                    "awaitedValuesList"
-                ]
+                awaited_attribute = commands_for_device[device]["awaitedAttribute"]
+                awaited_values_list = commands_for_device[device]["awaitedValuesList"]
 
-                awaited_attribute_value = (
-                    self._dish_manager_cm.component_managers[
-                        device
-                    ].component_state[awaited_attribute]
-                )
+                awaited_attribute_value = self._dish_manager_cm.component_managers[
+                    device
+                ].component_state[awaited_attribute]
 
                 if awaited_attribute_value in awaited_values_list:
                     if not success_reported[device]:
@@ -335,9 +319,7 @@ class CommandMap:
 
             if current_awaited_value != awaited_event_value:
                 task_abort_event.wait(timeout=1)
-                for (
-                    comp_man
-                ) in self._dish_manager_cm.component_managers.values():
+                for comp_man in self._dish_manager_cm.component_managers.values():
                     comp_man.read_update_component_state()
 
             else:

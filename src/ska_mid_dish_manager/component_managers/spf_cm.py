@@ -2,9 +2,7 @@
 import logging
 from typing import AnyStr, Callable, Optional
 
-from ska_mid_dish_manager.component_managers.tango_device_cm import (
-    TangoDeviceComponentManager,
-)
+from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
     HealthState,
     SPFBandInFocus,

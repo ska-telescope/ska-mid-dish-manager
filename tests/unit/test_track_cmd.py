@@ -39,12 +39,8 @@ class TestTrack:
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
         self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers[
-            "SPF"
-        ]
-        self.spfrx_cm = class_instance.component_manager.component_managers[
-            "SPFRX"
-        ]
+        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
 
         self.ds_cm.read_update_component_state = MagicMock()
         self.spf_cm.read_update_component_state = MagicMock()
@@ -80,9 +76,7 @@ class TestTrack:
             event_store,
         )
 
-        self.dish_manager_cm._update_component_state(
-            dishmode=current_dish_mode
-        )
+        self.dish_manager_cm._update_component_state(dishmode=current_dish_mode)
         event_store.wait_for_value(current_dish_mode, timeout=5)
         with pytest.raises(tango.DevFailed):
             _, _ = self.device_proxy.Track()
@@ -114,12 +108,8 @@ class TestTrack:
 
         # Force dishManager dishMode to go to OPERATE
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
-        )
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
         main_event_store.wait_for_value(DishMode.OPERATE)
         self.ds_cm._update_component_state(pointingstate=PointingState.READY)
         main_event_store.wait_for_value(PointingState.READY)
@@ -141,10 +131,7 @@ class TestTrack:
 
         expected_progress_updates = [
             "Track called on DS",
-            (
-                "Awaiting DS operatingmode to change to "
-                "[<DSOperatingMode.POINT: 7>]"
-            ),
+            ("Awaiting DS operatingmode to change to [<DSOperatingMode.POINT: 7>]"),
             "Awaiting achievedtargetlock change to True",
             ("DS operatingmode changed to, [<DSOperatingMode.POINT: 7>]"),
             "Track completed",

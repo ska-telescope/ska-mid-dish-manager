@@ -9,9 +9,7 @@ from ska_tango_base.executor import TaskExecutorComponentManager, TaskStatus
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
-from ska_mid_dish_manager.component_managers.spfrx_cm import (
-    SPFRxComponentManager,
-)
+from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -25,10 +23,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFPowerState,
     SPFRxCapabilityStates,
 )
-from ska_mid_dish_manager.models.dish_mode_model import (
-    CommandNotAllowed,
-    DishModeModel,
-)
+from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
 
 
 # pylint: disable=abstract-method
@@ -142,9 +137,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         }
         self._update_component_state(**initial_component_states)
 
-        self._command_map = CommandMap(
-            self, self._dish_mode_model, self._command_tracker, logger
-        )
+        self._command_map = CommandMap(self, self._dish_mode_model, self._command_tracker, logger)
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
@@ -157,9 +150,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 cm.communication_state == CommunicationStatus.ESTABLISHED
                 for cm in self.component_managers.values()
             ):
-                self._update_communication_state(
-                    CommunicationStatus.ESTABLISHED
-                )
+                self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
                 # Automatic transition to LP mode on startup should come from
                 # operating modes of subservient devices. Likewise, any
@@ -167,9 +158,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 # attribute updates
                 self._component_state_changed()
             else:
-                self._update_communication_state(
-                    CommunicationStatus.NOT_ESTABLISHED
-                )
+                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                 self._update_component_state(healthstate=HealthState.FAILED)
 
             # trigger push events for the connection state attributes
@@ -205,10 +194,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs:
             self.logger.info(
-                (
-                    "Updating dishMode with operatingModes DS"
-                    " [%s], SPF [%s], SPFRX [%s]"
-                ),
+                ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
                 str(ds_comp_state["operatingmode"]),
                 str(spf_comp_state["operatingmode"]),
                 str(spfrx_comp_state["operatingmode"]),
@@ -222,10 +208,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if "healthstate" in kwargs:
             self.logger.info(
-                (
-                    "Updating healthState with healthstate DS"
-                    " [%s], SPF [%s], SPFRX [%s]"
-                ),
+                ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
                 str(ds_comp_state["healthstate"]),
                 str(spf_comp_state["healthstate"]),
                 str(spfrx_comp_state["healthstate"]),
@@ -242,9 +225,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ("Newly calculated component state [pointing_state] [%s]"),
                 ds_comp_state["pointingstate"],
             )
-            self._update_component_state(
-                pointingstate=ds_comp_state["pointingstate"]
-            )
+            self._update_component_state(pointingstate=ds_comp_state["pointingstate"])
 
             if ds_comp_state["pointingstate"] in [
                 PointingState.SLEW,
@@ -255,10 +236,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(achievedtargetlock=True)
 
         # spf bandInFocus
-        if (
-            "indexerposition" in ds_comp_state
-            and "configuredband" in spfrx_comp_state
-        ):
+        if "indexerposition" in ds_comp_state and "configuredband" in spfrx_comp_state:
             band_in_focus = self._dish_mode_model.compute_spf_band_in_focus(
                 ds_comp_state, spfrx_comp_state
             )
@@ -272,16 +250,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_proxy.write_attribute("bandInFocus", band_in_focus)
 
         # configuredBand
-        if (
-            "indexerposition" in kwargs
-            or "bandinfocus" in kwargs
-            or "configuredband" in kwargs
-        ):
+        if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
             self.logger.info(
-                (
-                    "Updating configuredBand with DS"
-                    " [%s] SPF [%s] SPFRX [%s]"
-                ),
+                ("Updating configuredBand with DS [%s] SPF [%s] SPFRX [%s]"),
                 str(ds_comp_state),
                 str(spf_comp_state),
                 str(spfrx_comp_state),
@@ -300,18 +271,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ("Updating capturing with SPFRx [%s]"),
                 str(spfrx_comp_state),
             )
-            self._update_component_state(
-                capturing=spfrx_comp_state["capturingdata"]
-            )
+            self._update_component_state(capturing=spfrx_comp_state["capturingdata"])
 
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode
         # or operatingmode changes
-        if (
-            "indexerposition" in kwargs
-            or "dish_mode" in kwargs
-            or "operatingmode" in kwargs
-        ):
+        if "indexerposition" in kwargs or "dish_mode" in kwargs or "operatingmode" in kwargs:
             for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
                 cap_state_name = f"{band}capabilitystate"
                 new_state = self._dish_mode_model.compute_capability_state(
@@ -339,9 +304,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
-        self.logger.debug(
-            "Updating dish manager component state with [%s]", kwargs
-        )
+        self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
     def start_communicating(self):
@@ -398,8 +361,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             Band.UNKNOWN,
         ]:
             raise CommandNotAllowed(
-                "configuredBand can not be in "
-                f"{Band.NONE.name} or {Band.UNKNOWN.name}",
+                "configuredBand can not be in " f"{Band.NONE.name} or {Band.UNKNOWN.name}",
             )
 
         status, response = self.submit_task(
@@ -417,8 +379,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         dish_mode = self.component_state["dishmode"].name
         if dish_mode != "OPERATE":
             raise CommandNotAllowed(
-                "Track command only allowed in `OPERATE`"
-                f"mode. Current dishMode: {dish_mode}."
+                "Track command only allowed in `OPERATE`" f"mode. Current dishMode: {dish_mode}."
             )
 
         status, response = self.submit_task(
@@ -446,10 +407,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # check timestamp is in the future
         try:
-            if (
-                datetime.fromisoformat(activation_timestamp)
-                <= datetime.utcnow()
-            ):
+            if datetime.fromisoformat(activation_timestamp) <= datetime.utcnow():
                 return (
                     TaskStatus.REJECTED,
                     f"{activation_timestamp} is not in the future",
