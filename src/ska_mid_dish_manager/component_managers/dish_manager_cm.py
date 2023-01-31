@@ -187,7 +187,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "achievedpointing" in kwargs:
             self.logger.info(
                 ("Updating achievedPointing with DS achievedPointing [%s]"),
-                str(ds_comp_state["achievedpointing"]),
+                ds_comp_state["achievedpointing"],
             )
             new_position = ds_comp_state["achievedpointing"]
             self._update_component_state(achievedpointing=new_position)
@@ -196,9 +196,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "operatingmode" in kwargs:
             self.logger.info(
                 ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
-                str(ds_comp_state["operatingmode"]),
-                str(spf_comp_state["operatingmode"]),
-                str(spfrx_comp_state["operatingmode"]),
+                ds_comp_state["operatingmode"],
+                spf_comp_state["operatingmode"],
+                spfrx_comp_state["operatingmode"],
             )
             new_dish_mode = self._state_transition.compute_dish_mode(
                 ds_comp_state,
@@ -210,9 +210,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "healthstate" in kwargs:
             self.logger.info(
                 ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
-                str(ds_comp_state["healthstate"]),
-                str(spf_comp_state["healthstate"]),
-                str(spfrx_comp_state["healthstate"]),
+                ds_comp_state["healthstate"],
+                spf_comp_state["healthstate"],
+                spfrx_comp_state["healthstate"],
             )
             new_health_state = self._state_transition.compute_dish_health_state(
                 ds_comp_state,
@@ -254,9 +254,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
             self.logger.info(
                 ("Updating configuredBand with DS [%s] SPF [%s] SPFRX [%s]"),
-                str(ds_comp_state),
-                str(spf_comp_state),
-                str(spfrx_comp_state),
+                ds_comp_state,
+                spf_comp_state,
+                spfrx_comp_state,
             )
 
             configured_band = self._state_transition.compute_configured_band(
@@ -270,7 +270,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "capturingdata" in spfrx_comp_state:
             self.logger.info(
                 ("Updating capturing with SPFRx [%s]"),
-                str(spfrx_comp_state),
+                spfrx_comp_state,
             )
             self._update_component_state(capturing=spfrx_comp_state["capturingdata"])
 
