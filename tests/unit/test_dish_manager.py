@@ -71,6 +71,11 @@ class TestDishManagerBehaviour:
         self.spf_cm = class_instance.component_manager.component_managers["SPF"]
         self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
+
+        self.ds_cm.read_update_component_state = MagicMock()
+        self.spf_cm.read_update_component_state = MagicMock()
+        self.spfrx_cm.read_update_component_state = MagicMock()
+
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
@@ -106,7 +111,7 @@ class TestDishManagerBehaviour:
         # and have it propagated to the long running command result
         self.dish_manager_cm._update_component_state(configuredband=Band.B2)
 
-        self.device_proxy.SetStandbyFPMode()
+        _, command_id = self.device_proxy.SetStandbyFPMode()
 
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
@@ -132,7 +137,7 @@ class TestDishManagerBehaviour:
         # ('longrunningcommandresult',
         # ('16590178.0985_1954609_SPFRX_CaptureData', '"result"'))
 
-        events = event_store.wait_for_n_events(5, timeout=6)
+        events = event_store.wait_for_command_id(command_id[0], timeout=8)
         event_values = event_store.get_data_from_events(events)
         event_ids = [
             event_value[1][0]
@@ -141,10 +146,10 @@ class TestDishManagerBehaviour:
         ]
         # Sort via command creation timestamp
         event_ids.sort(key=lambda x: datetime.fromtimestamp((float(x.split("_")[0]))))
-        assert "_SetStandbyFPMode" in event_ids[0]
-        assert "_DS_SetStandbyFPMode" in event_ids[1]
-        assert "_SPF_SetOperateMode" in event_ids[2]
-        assert "_SPFRX_CaptureData" in event_ids[3]
+        assert "_SetStandbyFPMode" in event_ids[0], f"Got {event_ids}"
+        assert "_DS_SetStandbyFPMode" in event_ids[1], f"Got {event_ids}"
+        assert "_SPF_SetOperateMode" in event_ids[2], f"Got {event_ids}"
+        assert "_SPFRX_CaptureData" in event_ids[3], f"Got {event_ids}"
 
     @pytest.mark.unit
     @pytest.mark.forked

@@ -139,18 +139,9 @@ class TestSetOperateMode:
 
         expected_progress_updates = [
             "SetPointMode called on DS",
-            ("Awaiting DS operatingmode to change to [<DSOperatingMode.POINT: 7>]"),
             "SetOperateMode called on SPF",
-            ("Awaiting SPF operatingmode to change to [<SPFOperatingMode.OPERATE: 3>]"),
-            "CaptureData called on SPFRX",
-            (
-                "Awaiting SPFRX operatingmode to change to "
-                "[<SPFRxOperatingMode.DATA_CAPTURE: 3>]"
-            ),
-            "Awaiting dishmode change to 7",
-            ("DS operatingmode changed to, [<DSOperatingMode.POINT: 7>]"),
-            ("SPF operatingmode changed to, [<SPFOperatingMode.OPERATE: 3>]"),
-            ("SPFRX operatingmode changed to, [<SPFRxOperatingMode.DATA_CAPTURE: 3>]"),
+            "CaptureData called on SPFRx",
+            "Awaiting dishMode change to OPERATE",
             "SetOperateMode completed",
         ]
 
@@ -158,7 +149,7 @@ class TestSetOperateMode:
             expected_progress_updates[-1], timeout=6
         )
 
-        events_string = "".join([str(event) for event in events])
+        events_string = "".join([str(event.attr_value.value) for event in events])
 
         # Check that all the expected progress messages appeared
         # in the event store

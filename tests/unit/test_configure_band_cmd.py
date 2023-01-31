@@ -114,12 +114,8 @@ class TestConfigureBand2:
 
         expected_progress_updates = [
             "SetIndexPosition called on DS",
-            ("Awaiting DS indexerposition to change to [<IndexerPosition.B2: 2>]"),
-            "ConfigureBand2 called on SPFRX",
-            ("Awaiting SPFRX configuredband to change to [<Band.B2: 2>"),
-            "Awaiting dishmode change to 3",
-            ("SPF operatingmode changed to, [<SPFOperatingMode.OPERATE: 3>]"),
-            ("SPFRX configuredband changed to, [<Band.B2: 2>]"),
+            "ConfigureBand2 called on SPFRx, ID",
+            "Awaiting configuredband to transition to [B2]",
             "ConfigureBand2 completed",
         ]
 

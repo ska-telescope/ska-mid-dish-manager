@@ -68,12 +68,12 @@ class TestStowMode:
 
         device_proxy.SetStowMode()
 
-        # Wait for a progress message so that SetStowMode has some time to run
-        events = progress_event_store.wait_for_progress_update(
-            "Awaiting dishmode change to", timeout=6
-        )
+        # # Wait for a progress message so that SetStowMode has some time to run
+        # events = progress_event_store.wait_for_progress_update(
+        #     "Waiting for dishMode change to STOW", timeout=6
+        # )
 
-        events_string = "".join([str(event) for event in events])
+        # events_string = "".join([str(event) for event in events])
 
         # Pretend DS goes into STOW
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
@@ -81,17 +81,16 @@ class TestStowMode:
 
         expected_progress_updates = [
             "Stow called on DS",
-            ("Awaiting DS operatingmode to change to [<DSOperatingMode.STOW: 5>]"),
-            "Awaiting dishmode change to 5",
-            ("DS operatingmode changed to, [<DSOperatingMode.STOW: 5>]"),
-            "SetStowMode completed",
+            "Waiting for dishMode change to STOW",
+            "Stow completed",
         ]
 
         events = progress_event_store.wait_for_progress_update(
             expected_progress_updates[-1], timeout=6
         )
 
-        events_string += "".join([str(event) for event in events])
+        events_string = ""
+        events_string += "".join([str(event.attr_value.value) for event in events])
 
         # Check that all the expected progress messages appeared
         # in the event store
