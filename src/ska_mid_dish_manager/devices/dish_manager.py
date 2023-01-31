@@ -103,15 +103,15 @@ class DishManager(SKAController):
             return
         self.push_change_event(
             "spfConnectionState",
-            self.component_manager.component_managers["SPF"].communication_state,
+            self.component_manager.sub_component_managers["SPF"].communication_state,
         )
         self.push_change_event(
             "spfrxConnectionState",
-            self.component_manager.component_managers["SPFRX"].communication_state,
+            self.component_manager.sub_component_managers["SPFRX"].communication_state,
         )
         self.push_change_event(
             "dsConnectionState",
-            self.component_manager.component_managers["DS"].communication_state,
+            self.component_manager.sub_component_managers["DS"].communication_state,
         )
 
     # pylint: disable=unused-argument
@@ -250,7 +250,7 @@ class DishManager(SKAController):
     )
     def spfConnectionState(self):
         """Returns the spf connection state"""
-        return self.component_manager.component_managers["SPF"].communication_state
+        return self.component_manager.sub_component_managers["SPF"].communication_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -259,7 +259,7 @@ class DishManager(SKAController):
     )
     def spfrxConnectionState(self):
         """Returns the spfrx connection state"""
-        return self.component_manager.component_managers["SPFRX"].communication_state
+        return self.component_manager.sub_component_managers["SPFRX"].communication_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -268,7 +268,7 @@ class DishManager(SKAController):
     )
     def dsConnectionState(self):
         """Returns the ds connection state"""
-        return self.component_manager.component_managers["DS"].communication_state
+        return self.component_manager.sub_component_managers["DS"].communication_state
 
     @attribute(
         max_dim_x=3,
@@ -553,7 +553,7 @@ class DishManager(SKAController):
         """Set the desiredPointing"""
         # pylint: disable=attribute-defined-outside-init
         self._desired_pointing = value
-        ds_cm = self.component_manager.component_managers["DS"]
+        ds_cm = self.component_manager.sub_component_managers["DS"]
         # pylint: disable=protected-access
         ds_device_proxy = ds_cm._device_proxy
         ds_device_proxy.desiredPointing = value
@@ -833,7 +833,7 @@ class DishManager(SKAController):
             # abort the task on dish manager
             self._component_manager.abort_commands()
             # abort the task on the subservient devices
-            for cm in self._component_manager.component_managers.values():
+            for cm in self._component_manager.sub_component_managers.values():
                 cm.abort_commands()
 
             return (ResultCode.STARTED, "Aborting commands")
@@ -1193,7 +1193,7 @@ class DishManager(SKAController):
         for (
             device,
             component_state,
-        ) in self.component_manager.component_managers.items():
+        ) in self.component_manager.sub_component_managers.items():
             component_states[device] = component_state._component_state
         return json.dumps(component_states)
 
