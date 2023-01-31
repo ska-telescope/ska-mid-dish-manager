@@ -1,7 +1,7 @@
 # pylint: disable=protected-access
 """Component manager for a DishManager tango device"""
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import Callable, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, HealthState, TaskStatus
