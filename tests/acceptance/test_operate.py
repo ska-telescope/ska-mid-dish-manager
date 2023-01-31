@@ -46,15 +46,9 @@ def test_set_operate(event_store_class):
 
     expected_progress_updates = [
         "SetPointMode called on DS",
-        ("Awaiting DS operatingmode to change to [<DSOperatingMode.POINT: 7>]"),
         "SetOperateMode called on SPF",
-        ("Awaiting SPF operatingmode to change to [<SPFOperatingMode.OPERATE: 3>]"),
-        "CaptureData called on SPFRX",
-        ("Awaiting SPFRX operatingmode to change to [<SPFRxOperatingMode.DATA_CAPTURE: 3>]"),
-        "Awaiting dishmode change to 7",
-        ("DS operatingmode changed to, [<DSOperatingMode.POINT: 7>]"),
-        ("SPF operatingmode changed to, [<SPFOperatingMode.OPERATE: 3>]"),
-        ("SPFRX operatingmode changed to, [<SPFRxOperatingMode.DATA_CAPTURE: 3>]"),
+        "CaptureData called on SPFRx",
+        "Awaiting dishMode change to OPERATE",
         "SetOperateMode completed",
     ]
 

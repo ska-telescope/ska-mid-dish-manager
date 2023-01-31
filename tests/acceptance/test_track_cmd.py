@@ -51,10 +51,8 @@ def test_track_cmd(event_store_class):
     dish_manager.Track()
 
     expected_progress_updates = [
-        "Track called on DS",
-        ("Awaiting DS operatingmode to change to [<DSOperatingMode.POINT: 7>]"),
-        "Awaiting achievedtargetlock change to True",
-        ("DS operatingmode changed to, [<DSOperatingMode.POINT: 7>]"),
+        "Track called on DS, ID",
+        "Awaiting target lock change",
         "Track completed",
     ]
 

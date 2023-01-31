@@ -36,10 +36,8 @@ def test_stow_transition(event_store_class):
 
     expected_progress_updates = [
         "Stow called on DS",
-        ("Awaiting DS operatingmode to change to [<DSOperatingMode.STOW: 5>]"),
-        "Awaiting dishmode change to 5",
-        ("DS operatingmode changed to, [<DSOperatingMode.STOW: 5>]"),
-        "SetStowMode completed",
+        "Waiting for dishMode change to STOW",
+        "Stow completed",
     ]
 
     events = progress_event_store.wait_for_progress_update(
