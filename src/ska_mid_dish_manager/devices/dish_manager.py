@@ -138,10 +138,10 @@ class DishManager(SKAController):
             return f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
 
         for comp_state_name, comp_state_value in kwargs.items():
-            dm_attr_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
-            dm_attr_var_name = change_case(dm_attr_name)
-            setattr(self, dm_attr_var_name, comp_state_value)
-            self.push_change_event(dm_attr_name, comp_state_value)
+            attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
+            attribute_variable = change_case(attribute_name)
+            setattr(self, attribute_variable, comp_state_value)
+            self.push_change_event(attribute_name, comp_state_value)
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """
@@ -1189,13 +1189,13 @@ class DishManager(SKAController):
 
         Subservient devices constiture SPF, SPFRx and DS. Used for debugging.
         """
-        comp_states = {}
+        component_states = {}
         for (
             device,
-            comp_state,
+            component_state,
         ) in self.component_manager.component_managers.items():
-            comp_states[device] = comp_state._component_state
-        return json.dumps(comp_states)
+            component_states[device] = component_state._component_state
+        return json.dumps(component_states)
 
 
 def main(args=None, **kwargs):
