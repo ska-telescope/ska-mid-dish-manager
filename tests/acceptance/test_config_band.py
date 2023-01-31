@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import pytest
 import tango
-from ska_tango_base.commands import TaskStatus
+from ska_control_model import TaskStatus
 
 from ska_mid_dish_manager.devices.test_devices.utils import (
     set_configuredBand_b1,
@@ -55,7 +55,6 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
 
     # Do it again to check result
     [[task_status], [result]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())
-
     assert task_status == TaskStatus.COMPLETED
     assert result == "Already in band B2"
 

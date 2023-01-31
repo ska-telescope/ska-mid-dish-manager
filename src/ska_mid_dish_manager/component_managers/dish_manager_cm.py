@@ -1,11 +1,11 @@
 # pylint: disable=protected-access
 """Component manager for a DishManager tango device"""
-import logging
 from datetime import datetime
+import logging
 from typing import Callable, Optional, Tuple
 
-from ska_tango_base.control_model import CommunicationStatus, HealthState
-from ska_tango_base.executor import TaskExecutorComponentManager, TaskStatus
+from ska_control_model import CommunicationStatus, HealthState, TaskStatus
+from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
@@ -24,6 +24,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFRxCapabilityStates,
 )
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
+from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 
 # pylint: disable=abstract-method
@@ -72,6 +73,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self.sub_device_comm_state_cb = sub_device_comm_state_cb
         self._dish_mode_model = DishModeModel()
+        self._state_transition = StateTransition()
         self._command_tracker = command_tracker
         self.component_managers = {}
         self.component_managers["DS"] = DSComponentManager(
@@ -199,7 +201,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 str(spf_comp_state["operatingmode"]),
                 str(spfrx_comp_state["operatingmode"]),
             )
-            new_dish_mode = self._dish_mode_model.compute_dish_mode(
+            new_dish_mode = self._state_transition.compute_dish_mode(
                 ds_comp_state,
                 spfrx_comp_state,
                 spf_comp_state,
@@ -213,7 +215,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 str(spf_comp_state["healthstate"]),
                 str(spfrx_comp_state["healthstate"]),
             )
-            new_health_state = self._dish_mode_model.compute_dish_health_state(
+            new_health_state = self._state_transition.compute_dish_health_state(
                 ds_comp_state,
                 spfrx_comp_state,
                 spf_comp_state,
@@ -237,7 +239,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # spf bandInFocus
         if "indexerposition" in ds_comp_state and "configuredband" in spfrx_comp_state:
-            band_in_focus = self._dish_mode_model.compute_spf_band_in_focus(
+            band_in_focus = self._state_transition.compute_spf_band_in_focus(
                 ds_comp_state, spfrx_comp_state
             )
             # pylint: disable=protected-access
@@ -258,7 +260,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 str(spfrx_comp_state),
             )
 
-            configured_band = self._dish_mode_model.compute_configured_band(
+            configured_band = self._state_transition.compute_configured_band(
                 ds_comp_state,
                 spfrx_comp_state,
                 spf_comp_state,
@@ -279,7 +281,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "indexerposition" in kwargs or "dish_mode" in kwargs or "operatingmode" in kwargs:
             for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
                 cap_state_name = f"{band}capabilitystate"
-                new_state = self._dish_mode_model.compute_capability_state(
+                new_state = self._state_transition.compute_capability_state(
                     band,
                     ds_comp_state,
                     spfrx_comp_state,
@@ -293,7 +295,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
             cap_state_name = f"{band}capabilitystate"
             if cap_state_name in kwargs:
-                new_state = self._dish_mode_model.compute_capability_state(
+                new_state = self._state_transition.compute_capability_state(
                     band,
                     ds_comp_state,
                     spfrx_comp_state,
