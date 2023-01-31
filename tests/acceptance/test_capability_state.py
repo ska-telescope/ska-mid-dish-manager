@@ -60,6 +60,7 @@ def test_capability_state_b1(
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_capability_state_b2(
+    event_store_class,
     event_store,
     dish_manager_proxy,
     spf_device_proxy,
@@ -71,21 +72,39 @@ def test_capability_state_b2(
     set_dish_manager_to_standby_lp(event_store, dish_manager_proxy)
     caplog.set_level(logging.DEBUG)
 
-    # If cap state is not in standby, force it
-    if dish_manager_proxy.b2CapabilityState != CapabilityStates.STANDBY:
-        spf_device_proxy.b2CapabilityState = SPFCapabilityStates.STANDBY
-        spfrx_device_proxy.b2CapabilityState = SPFRxCapabilityStates.STANDBY
+    # Force to known non configuring state
+    spf_device_proxy.b2CapabilityState = SPFCapabilityStates.STANDBY
+    ds_device_proxy.indexerPosition = IndexerPosition.MOVING
+    spfrx_device_proxy.b2CapabilityState = SPFRxCapabilityStates.STANDBY
 
+    # Wait for spfrx change
+    spfrx_events = event_store_class()
+    spfrx_device_proxy.subscribe_event(
+        "b2CapabilityState",
+        tango.EventType.CHANGE_EVENT,
+        spfrx_events,
+    )
+    spfrx_events.wait_for_value(SPFRxCapabilityStates.STANDBY)
+
+    spf_events = event_store_class()
+    spf_device_proxy.subscribe_event(
+        "b2CapabilityState",
+        tango.EventType.CHANGE_EVENT,
+        spf_events,
+    )
+    spf_events.wait_for_value(SPFCapabilityStates.STANDBY)
+
+    # Check dish_manager
     dish_manager_proxy.subscribe_event(
         "b2CapabilityState",
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
     event_store.wait_for_value(SPFCapabilityStates.STANDBY)
-    event_store.clear_queue()
 
-    ds_device_proxy.indexerPosition = IndexerPosition.MOVING
-    spfrx_device_proxy.b2CapabilityState = SPFRxCapabilityStates.CONFIGURE
     spf_device_proxy.b2CapabilityState = SPFCapabilityStates.OPERATE_FULL
+    spfrx_device_proxy.b2CapabilityState = SPFRxCapabilityStates.CONFIGURE
+    spfrx_events.wait_for_value(SPFRxCapabilityStates.CONFIGURE)
+    spf_events.wait_for_value(SPFCapabilityStates.OPERATE_FULL)
 
     event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=8)
