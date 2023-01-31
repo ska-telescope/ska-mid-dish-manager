@@ -40,7 +40,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         logger: logging.Logger,
         command_tracker,
-        sub_device_comm_state_cb,
+        connection_state_callback,
         *args,
         ds_device_fqdn: str = "mid_d0001/lmc/ds_simulator",
         spf_device_fqdn: str = "mid_d0001/spf/simulator",
@@ -72,7 +72,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             **kwargs,
         )
-        self.sub_device_comm_state_cb = sub_device_comm_state_cb
+        self.connection_state_callback = connection_state_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
@@ -142,8 +142,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
-        # communication state will come from args and kwargs
+        """
+        Callback triggered by the component manager when it establishes
+        a connection with the underlying (subservient) device
 
+        The component manager syncs with the device for fresh updates
+        everytime connection is established.
+
+        Note: This callback is triggered by the component manangers of
+        the subservient devices. DishManager reflects this in its connection
+        status attributes.
+        """
         # an empty dict will make all condition always pass. check
         # that the dict is not empty before continuing with trigger
         if self.sub_component_managers:
@@ -162,11 +171,23 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                 self._update_component_state(healthstate=HealthState.FAILED)
 
-            # trigger push events for the connection state attributes
-            self.sub_device_comm_state_cb()
+            # push change events for the connection state attributes
+            self.connection_state_callback()
 
     # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):
+        """
+        Callback triggered by the component manager of the
+        subservient device for component state changes.
+
+        This aggregates the component values and computes the final value
+        which will be reported for the respective attribute. The computed
+        value is sent to DishManager's component_state callback which pushes
+        a change event on the attribute and updates the internal variable.
+
+        Note: This callback is triggered by the component managers of
+        the subservient devices only. DishManager also has its own callback.
+        """
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state

@@ -61,7 +61,7 @@ class DishManager(SKAController):
             spfrx_device_fqdn=self.spfrx_device_fqdn,
             communication_state_callback=None,
             component_state_callback=self._component_state_changed,
-            sub_device_comm_state_cb=self._push_subs_comms_evts,
+            connection_state_callback=self._update_connection_state_attrs,
         )
 
     def init_command_objects(self) -> None:
@@ -93,10 +93,10 @@ class DishManager(SKAController):
             self.AbortCommandsCommand(self.component_manager, self.logger),
         )
 
-    def _push_subs_comms_evts(self):
+    def _update_connection_state_attrs(self):
         """
-        Push change events for subservient
-        device communication state changes
+        Push change events on connection state attributes for
+        subservient devices communication state changes.
         """
         if not hasattr(self, "component_manager"):
             self.logger.warning("Init not completed, but communication state is being updated")
@@ -225,7 +225,7 @@ class DishManager(SKAController):
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
 
-            # push change events for the communication state attributes also
+            # configure change events for the connection state attributes
             for attr in (
                 "spfConnectionState",
                 "spfrxConnectionState",
