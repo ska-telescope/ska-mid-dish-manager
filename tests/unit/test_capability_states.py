@@ -318,3 +318,27 @@ class TestCapabilityStates:
 
         event_store.wait_for_value(CapabilityStates.OPERATE_DEGRADED)
         self.device_proxy.unsubscribe_event(sub_id)
+
+    def test_b2capabilitystate_configuring_change(
+        self,
+        event_store,
+    ):
+        """Test Configuring"""
+        sub_id = self.device_proxy.subscribe_event(
+            "b2CapabilityState",
+            tango.EventType.CHANGE_EVENT,
+            event_store,
+        )
+
+        # Clear out the queue to make sure we don't catch old events
+        event_store.clear_queue()
+
+        # Mimic capabilitystatechanges on sub devices
+        self.ds_cm._update_component_state(
+            indexerposition=IndexerPosition.MOVING,
+        )
+        self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.OPERATE_FULL)
+        self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.CONFIGURE)
+
+        event_store.wait_for_value(CapabilityStates.CONFIGURING)
+        self.device_proxy.unsubscribe_event(sub_id)
