@@ -167,9 +167,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):
-        ds_comp_state = self.sub_component_managers["DS"].component_state
-        spf_comp_state = self.sub_component_managers["SPF"].component_state
-        spfrx_comp_state = self.sub_component_managers["SPFRX"].component_state
+        ds_component_state = self.sub_component_managers["DS"].component_state
+        spf_component_state = self.sub_component_managers["SPF"].component_state
+        spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
         self.logger.debug(
             (
@@ -177,68 +177,68 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ", SPFRx [%s], DM [%s]"
             ),
             kwargs,
-            ds_comp_state,
-            spf_comp_state,
-            spfrx_comp_state,
+            ds_component_state,
+            spf_component_state,
+            spfrx_component_state,
             self.component_state,
         )
 
         if "achievedpointing" in kwargs:
             self.logger.info(
                 ("Updating achievedPointing with DS achievedPointing [%s]"),
-                ds_comp_state["achievedpointing"],
+                ds_component_state["achievedpointing"],
             )
-            new_position = ds_comp_state["achievedpointing"]
+            new_position = ds_component_state["achievedpointing"]
             self._update_component_state(achievedpointing=new_position)
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs:
             self.logger.info(
                 ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
-                ds_comp_state["operatingmode"],
-                spf_comp_state["operatingmode"],
-                spfrx_comp_state["operatingmode"],
+                ds_component_state["operatingmode"],
+                spf_component_state["operatingmode"],
+                spfrx_component_state["operatingmode"],
             )
             new_dish_mode = self._state_transition.compute_dish_mode(
-                ds_comp_state,
-                spfrx_comp_state,
-                spf_comp_state,
+                ds_component_state,
+                spfrx_component_state,
+                spf_component_state,
             )
             self._update_component_state(dishmode=new_dish_mode)
 
         if "healthstate" in kwargs:
             self.logger.info(
                 ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
-                ds_comp_state["healthstate"],
-                spf_comp_state["healthstate"],
-                spfrx_comp_state["healthstate"],
+                ds_component_state["healthstate"],
+                spf_component_state["healthstate"],
+                spfrx_component_state["healthstate"],
             )
             new_health_state = self._state_transition.compute_dish_health_state(
-                ds_comp_state,
-                spfrx_comp_state,
-                spf_comp_state,
+                ds_component_state,
+                spfrx_component_state,
+                spf_component_state,
             )
             self._update_component_state(healthstate=new_health_state)
 
         if "pointingstate" in kwargs:
             self.logger.debug(
-                ("Newly calculated component state [pointing_state] [%s]"),
-                ds_comp_state["pointingstate"],
+                ("Newly calculated pointing state [pointing_state] [%s]"),
+                ds_component_state["pointingstate"],
             )
-            self._update_component_state(pointingstate=ds_comp_state["pointingstate"])
+            self._update_component_state(pointingstate=ds_component_state["pointingstate"])
 
-            if ds_comp_state["pointingstate"] in [
+            if ds_component_state["pointingstate"] in [
                 PointingState.SLEW,
                 PointingState.READY,
             ]:
                 self._update_component_state(achievedtargetlock=False)
-            elif ds_comp_state["pointingstate"] == PointingState.TRACK:
+            elif ds_component_state["pointingstate"] == PointingState.TRACK:
                 self._update_component_state(achievedtargetlock=True)
 
         # spf bandInFocus
-        if "indexerposition" in ds_comp_state and "configuredband" in spfrx_comp_state:
+        if "indexerposition" in ds_component_state and "configuredband" in spfrx_component_state:
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
-                ds_comp_state, spfrx_comp_state
+                ds_component_state, spfrx_component_state
             )
             # pylint: disable=protected-access
             # update the bandInFocus of SPF before configuredBand
@@ -253,25 +253,25 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
             self.logger.info(
                 ("Updating configuredBand with DS [%s] SPF [%s] SPFRX [%s]"),
-                ds_comp_state,
-                spf_comp_state,
-                spfrx_comp_state,
+                ds_component_state,
+                spf_component_state,
+                spfrx_component_state,
             )
 
             configured_band = self._state_transition.compute_configured_band(
-                ds_comp_state,
-                spfrx_comp_state,
-                spf_comp_state,
+                ds_component_state,
+                spfrx_component_state,
+                spf_component_state,
             )
             self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
-        if "capturingdata" in spfrx_comp_state:
+        if "capturingdata" in spfrx_component_state:
             self.logger.info(
                 ("Updating capturing with SPFRx [%s]"),
-                spfrx_comp_state,
+                spfrx_component_state,
             )
-            self._update_component_state(capturing=spfrx_comp_state["capturingdata"])
+            self._update_component_state(capturing=spfrx_component_state["capturingdata"])
 
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode
@@ -281,9 +281,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 cap_state_name = f"{band}capabilitystate"
                 new_state = self._state_transition.compute_capability_state(
                     band,
-                    ds_comp_state,
-                    spfrx_comp_state,
-                    spf_comp_state,
+                    ds_component_state,
+                    spfrx_component_state,
+                    spf_component_state,
                     self.component_state,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
@@ -295,9 +295,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if cap_state_name in kwargs:
                 new_state = self._state_transition.compute_capability_state(
                     band,
-                    ds_comp_state,
-                    spfrx_comp_state,
-                    spf_comp_state,
+                    ds_component_state,
+                    spfrx_component_state,
+                    spf_component_state,
                     self.component_state,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
