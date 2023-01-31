@@ -308,12 +308,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
-    def _update_dishmode_component_states(self):
-        """Update the component state required for dishMode changes"""
-        for comp_man in self.component_managers.values():
-            op_mode = comp_man.read_attribute_value("operatingMode")
-            comp_man._update_component_state(operatingmode=op_mode)
-
     def start_communicating(self):
         """Connect from monitored devices"""
         for com_man in self.component_managers.values():
@@ -392,7 +386,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_abort_event.wait(timeout=1)
                 for comp_man in self.component_managers.values():
                     comp_man.read_update_component_state()
-                self._update_dishmode_component_states()
 
             else:
                 task_callback(
