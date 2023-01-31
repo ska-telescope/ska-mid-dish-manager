@@ -254,13 +254,13 @@ class CommandMap:
             )
 
             command_val = commands_for_device[device].get("commandValue")
-            _, command_id = command(commands_for_device[device]["command"], command_val)
+            _, new_command_id = command(commands_for_device[device]["command"], command_val)
 
             # Report that the command has been called on the subservient device
             task_callback(
                 progress=(
                     f"{commands_for_device[device]['command']}"
-                    f" called on {device}, ID {command_id}"
+                    f" called on {device}, ID {new_command_id}"
                 )
             )
 
@@ -274,7 +274,7 @@ class CommandMap:
                 )
             )
 
-            device_command_ids[device] = command_id
+            device_command_ids[device] = new_command_id
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
         task_callback(
