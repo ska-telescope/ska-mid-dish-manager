@@ -186,28 +186,22 @@ CONFIGURED_BAND_RULES = {
 
 SPF_BAND_IN_FOCUS_RULES = {
     "B1": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B1' and "
-        "SPFRX.configuredband  == 'Band.B1'"
+        "DS.indexerposition  == 'IndexerPosition.B1' and SPFRX.configuredband  == 'Band.B1'"
     ),
     "B2": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B2' and "
-        "SPFRX.configuredband  == 'Band.B2'"
+        "DS.indexerposition  == 'IndexerPosition.B2' and SPFRX.configuredband  == 'Band.B2'"
     ),
     "B3": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B3' and "
-        "SPFRX.configuredband  == 'Band.B3'"
+        "DS.indexerposition  == 'IndexerPosition.B3' and SPFRX.configuredband  == 'Band.B3'"
     ),
     "B4": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B4' and "
-        "SPFRX.configuredband  == 'Band.B4'"
+        "DS.indexerposition  == 'IndexerPosition.B4' and SPFRX.configuredband  == 'Band.B4'"
     ),
     "B5a": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and "
-        "SPFRX.configuredband == 'Band.B5a'"
+        "DS.indexerposition  == 'IndexerPosition.B5' and SPFRX.configuredband == 'Band.B5a'"
     ),
     "B5b": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and "
-        "SPFRX.configuredband == 'Band.B5b'"
+        "DS.indexerposition  == 'IndexerPosition.B5' and SPFRX.configuredband == 'Band.B5b'"
     ),
 }
 
@@ -317,31 +311,17 @@ class DishModeModel:
         dishmode_graph.add_edge("STARTUP", "STANDBY_LP")
 
         # From Standby_LP to other modes
-        dishmode_graph.add_edge(
-            "STANDBY_LP", "STANDBY_FP", commands=["SetStandbyFPMode"]
-        )
-        dishmode_graph.add_edge(
-            "STANDBY_LP", "MAINTENANCE", commands=["SetMaintenanceMode"]
-        )
+        dishmode_graph.add_edge("STANDBY_LP", "STANDBY_FP", commands=["SetStandbyFPMode"])
+        dishmode_graph.add_edge("STANDBY_LP", "MAINTENANCE", commands=["SetMaintenanceMode"])
 
         # From Standby_FP to other modes
-        dishmode_graph.add_edge(
-            "STANDBY_FP", "STANDBY_LP", commands=["SetStandbyLPMode"]
-        )
-        dishmode_graph.add_edge(
-            "STANDBY_FP", "CONFIG", commands=CONFIG_COMMANDS
-        )
-        dishmode_graph.add_edge(
-            "STANDBY_FP", "OPERATE", commands=["SetOperateMode"]
-        )
-        dishmode_graph.add_edge(
-            "STANDBY_FP", "MAINTENANCE", commands=["SetMaintenanceMode"]
-        )
+        dishmode_graph.add_edge("STANDBY_FP", "STANDBY_LP", commands=["SetStandbyLPMode"])
+        dishmode_graph.add_edge("STANDBY_FP", "CONFIG", commands=CONFIG_COMMANDS)
+        dishmode_graph.add_edge("STANDBY_FP", "OPERATE", commands=["SetOperateMode"])
+        dishmode_graph.add_edge("STANDBY_FP", "MAINTENANCE", commands=["SetMaintenanceMode"])
 
         # From Operate to other modes
-        dishmode_graph.add_edge(
-            "OPERATE", "STANDBY_FP", commands=["SetStandbyFPMode"]
-        )
+        dishmode_graph.add_edge("OPERATE", "STANDBY_FP", commands=["SetStandbyFPMode"])
         dishmode_graph.add_edge("OPERATE", "CONFIG", commands=CONFIG_COMMANDS)
 
         # From Config to other modes
@@ -353,12 +333,8 @@ class DishModeModel:
         dishmode_graph.add_edge("CONFIG", "STOW")
 
         # From Stow to other modes
-        dishmode_graph.add_edge(
-            "STOW", "STANDBY_FP", commands=["SetStandbyFPMode"]
-        )
-        dishmode_graph.add_edge(
-            "STOW", "STANDBY_LP", commands=["SetStandbyLPMode"]
-        )
+        dishmode_graph.add_edge("STOW", "STANDBY_FP", commands=["SetStandbyFPMode"])
+        dishmode_graph.add_edge("STOW", "STANDBY_LP", commands=["SetStandbyLPMode"])
         dishmode_graph.add_edge("STOW", "CONFIG", commands=CONFIG_COMMANDS)
 
         # From any mode to Stow
@@ -379,18 +355,14 @@ class DishModeModel:
             "STANDBY_LP",
             commands=["SetStandbyLPMode"],
         )
-        dishmode_graph.add_edge(
-            "MAINTENANCE", "STANDBY_FP", commands=["SetStandbyFPMode"]
-        )
+        dishmode_graph.add_edge("MAINTENANCE", "STANDBY_FP", commands=["SetStandbyFPMode"])
 
         return dishmode_graph
 
     def is_command_allowed(self, dishmode=None, command_name=None):
         allowed_commands = []
         for from_node, to_node in self.dishmode_graph.edges(dishmode):
-            commands = self.dishmode_graph.get_edge_data(
-                from_node, to_node
-            ).get("commands", None)
+            commands = self.dishmode_graph.get_edge_data(from_node, to_node).get("commands", None)
             if commands:
                 allowed_commands.extend(commands)
 
@@ -496,9 +468,7 @@ class DishModeModel:
         :return: the calculated bandinfocus
         :rtype: SPFBandInFocus
         """
-        dish_manager_states = self._collapse(
-            ds_component_state, spfrx_component_state
-        )
+        dish_manager_states = self._collapse(ds_component_state, spfrx_component_state)
 
         for band_number, rule in SPF_BAND_IN_FOCUS_RULES.items():
             if rule.matches(dish_manager_states):

@@ -9,12 +9,7 @@ from typing import Any, List, Tuple
 import numpy as np
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import (
-    Band,
-    BandInFocus,
-    DishMode,
-    IndexerPosition,
-)
+from ska_mid_dish_manager.models.dish_enums import Band, BandInFocus, DishMode, IndexerPosition
 
 
 class EventStore:
@@ -67,14 +62,10 @@ class EventStore:
                     return True
         except queue.Empty as err:
             ev_vals = self.extract_event_values(events)
-            raise RuntimeError(
-                f"Never got an event with value [{value}] got [{ev_vals}]"
-            ) from err
+            raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 
     # pylint:disable=inconsistent-return-statements
-    def wait_for_command_result(
-        self, command_id: str, command_result: Any, timeout: int = 5
-    ):
+    def wait_for_command_result(self, command_id: str, command_result: Any, timeout: int = 5):
         """Wait for a long running command result
 
         Wait `timeout` seconds for each fetch.
@@ -100,9 +91,7 @@ class EventStore:
                 if command_id == lrc_id and command_result == lrc_result:
                     return True
         except queue.Empty as err:
-            raise RuntimeError(
-                f"Never got an LRC result from command [{command_id}]"
-            ) from err
+            raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
 
     def wait_for_command_id(self, command_id: str, timeout: int = 5):
         """Wait for a long running command to complete
@@ -129,24 +118,16 @@ class EventStore:
                 if len(event.attr_value.value) != 2:
                     continue
                 (lrc_id, _) = event.attr_value.value
-                if (
-                    command_id == lrc_id
-                    and event.attr_value.name == "longrunningcommandresult"
-                ):
+                if command_id == lrc_id and event.attr_value.name == "longrunningcommandresult":
                     return events
         except queue.Empty as err:
-            event_info = [
-                (event.attr_value.name, event.attr_value.value)
-                for event in events
-            ]
+            event_info = [(event.attr_value.name, event.attr_value.value) for event in events]
             raise RuntimeError(
                 f"Never got an LRC result from command [{command_id}],",
                 f" but got [{event_info}]",
             ) from err
 
-    def wait_for_progress_update(
-        self, progress_message: str, timeout: int = 5
-    ):
+    def wait_for_progress_update(self, progress_message: str, timeout: int = 5):
         """Wait for a long running command progress update
 
         Wait `timeout` seconds for each fetch.
@@ -177,10 +158,7 @@ class EventStore:
                 ):
                     return events
         except queue.Empty as err:
-            event_info = [
-                (event.attr_value.name, event.attr_value.value)
-                for event in events
-            ]
+            event_info = [(event.attr_value.name, event.attr_value.value) for event in events]
             raise RuntimeError(
                 f"Never got a progress update with [{progress_message}],",
                 f" but got [{event_info}]",
@@ -199,11 +177,7 @@ class EventStore:
         :return: Filtered list of events
         :rtype: List[tango.EventData]
         """
-        return [
-            event
-            for event in events
-            if unique_id in str(event.attr_value.value)
-        ]
+        return [event for event in events if unique_id in str(event.attr_value.value)]
 
     def wait_for_n_events(self, event_count: int, timeout: int = 5):
         """Wait for N number of events
@@ -246,9 +220,7 @@ class EventStore:
             return items
 
     @classmethod
-    def extract_event_values(
-        cls, events: List[tango.EventData]
-    ) -> List[Tuple]:
+    def extract_event_values(cls, events: List[tango.EventData]) -> List[Tuple]:
         """Get the values out of events
 
         :param events: List of events
@@ -257,8 +229,7 @@ class EventStore:
         :rtype: List[Tuple]
         """
         event_info = [
-            (event.attr_value.name, event.attr_value.value, event.device)
-            for event in events
+            (event.attr_value.name, event.attr_value.value, event.device) for event in events
         ]
         return event_info
 
@@ -273,17 +244,13 @@ class EventStore:
             return items
 
     @classmethod
-    def get_data_from_events(
-        cls, events: List[tango.EventData]
-    ) -> List[Tuple]:
+    def get_data_from_events(cls, events: List[tango.EventData]) -> List[Tuple]:
         """Retrieve the event info from the events
 
         :param events: list of
         :type events: List[tango.EventData]
         """
-        return [
-            (event.attr_value.name, event.attr_value.value) for event in events
-        ]
+        return [(event.attr_value.name, event.attr_value.value) for event in events]
 
 
 def random_delay_execution(func):

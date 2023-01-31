@@ -35,15 +35,9 @@ def test_standby_fp_transition(event_store_class):
 
     expected_progress_updates = [
         "SetStandbyFPMode called on DS",
-        (
-            "Awaiting DS operatingmode to change to "
-            "[<DSOperatingMode.STANDBY_FP: 3>]"
-        ),
+        ("Awaiting DS operatingmode to change to [<DSOperatingMode.STANDBY_FP: 3>]"),
         "SetOperateMode called on SPF",
-        (
-            "Awaiting SPF operatingmode to change to "
-            "[<SPFOperatingMode.OPERATE: 3>]"
-        ),
+        ("Awaiting SPF operatingmode to change to [<SPFOperatingMode.OPERATE: 3>]"),
         "CaptureData called on SPFRX",
         (
             "Awaiting SPFRX operatingmode to change to "

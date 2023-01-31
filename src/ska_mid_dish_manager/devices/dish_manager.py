@@ -13,23 +13,11 @@ from functools import reduce
 from typing import List, Optional, Tuple
 
 from ska_tango_base import SKAController
-from ska_tango_base.commands import (
-    ResultCode,
-    SlowCommand,
-    SubmittedSlowCommand,
-)
-from tango import (
-    AttrWriteType,
-    DebugIt,
-    DevFloat,
-    DevVarDoubleArray,
-    DispLevel,
-)
+from ska_tango_base.commands import ResultCode, SlowCommand, SubmittedSlowCommand
+from tango import AttrWriteType, DebugIt, DevFloat, DevVarDoubleArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
-from ska_mid_dish_manager.component_managers.dish_manager_cm import (
-    DishManagerComponentManager,
-)
+from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
@@ -55,15 +43,9 @@ class DishManager(SKAController):
     # Access instances for debugging
     instances = weakref.WeakValueDictionary()
 
-    ds_device_fqdn = device_property(
-        dtype=str, default_value="mid_d0001/lmc/ds_simulator"
-    )
-    spf_device_fqdn = device_property(
-        dtype=str, default_value="mid_d0001/spf/simulator"
-    )
-    spfrx_device_fqdn = device_property(
-        dtype=str, default_value="mid_d0001/spfrx/simulator"
-    )
+    ds_device_fqdn = device_property(dtype=str, default_value="mid_d0001/lmc/ds_simulator")
+    spf_device_fqdn = device_property(dtype=str, default_value="mid_d0001/spf/simulator")
+    spfrx_device_fqdn = device_property(dtype=str, default_value="mid_d0001/spfrx/simulator")
 
     def create_component_manager(self):
         """Create the component manager for DishManager
@@ -121,17 +103,11 @@ class DishManager(SKAController):
         :param command_exception: The exception instance
         :type command_exception: Exception
         """
-        self.logger.exception(
-            "Command '%s' raised exception %s", command_id, command_exception
-        )
+        self.logger.exception("Command '%s' raised exception %s", command_id, command_exception)
         # pylint: disable=attribute-defined-outside-init
         self._command_result = (command_id, str(command_exception))
-        self.push_change_event(
-            "longRunningCommandResult", self._command_result
-        )
-        self.push_archive_event(
-            "longRunningCommandResult", self._command_result
-        )
+        self.push_change_event("longRunningCommandResult", self._command_result)
+        self.push_archive_event("longRunningCommandResult", self._command_result)
 
     def _push_subs_comms_evts(self):
         """
@@ -139,35 +115,25 @@ class DishManager(SKAController):
         device communication state changes
         """
         if not hasattr(self, "component_manager"):
-            self.logger.warning(
-                "Init not completed, but communication state is being updated"
-            )
+            self.logger.warning("Init not completed, but communication state is being updated")
             return
         self.push_change_event(
             "spfConnectionState",
-            self.component_manager.component_managers[
-                "SPF"
-            ].communication_state,
+            self.component_manager.component_managers["SPF"].communication_state,
         )
         self.push_change_event(
             "spfrxConnectionState",
-            self.component_manager.component_managers[
-                "SPFRX"
-            ].communication_state,
+            self.component_manager.component_managers["SPFRX"].communication_state,
         )
         self.push_change_event(
             "dsConnectionState",
-            self.component_manager.component_managers[
-                "DS"
-            ].communication_state,
+            self.component_manager.component_managers["DS"].communication_state,
         )
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
         if not hasattr(self, "_component_state_attr_map"):
-            self.logger.warning(
-                "Init not completed, but state is being updated [%s]", kwargs
-            )
+            self.logger.warning("Init not completed, but state is being updated [%s]", kwargs)
             return
 
         def change_case(attr_name):
@@ -188,16 +154,12 @@ class DishManager(SKAController):
             return f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
 
         for comp_state_name, comp_state_value in kwargs.items():
-            dm_attr_name = self._component_state_attr_map.get(
-                comp_state_name, comp_state_name
-            )
+            dm_attr_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
             dm_attr_var_name = change_case(dm_attr_name)
             setattr(self, dm_attr_var_name, comp_state_value)
             self.push_change_event(dm_attr_name, comp_state_value)
 
-    class InitCommand(
-        SKAController.InitCommand
-    ):  # pylint: disable=too-few-public-methods
+    class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """
         A class for the Dish Manager's init_device() method
         """
@@ -255,9 +217,7 @@ class DishManager(SKAController):
             device._b5b_capability_state = CapabilityStates.UNKNOWN
 
             device._spf_connection_state = CommunicationStatus.NOT_ESTABLISHED
-            device._spfrx_connection_state = (
-                CommunicationStatus.NOT_ESTABLISHED
-            )
+            device._spfrx_connection_state = CommunicationStatus.NOT_ESTABLISHED
             device._ds_connection_state = CommunicationStatus.NOT_ESTABLISHED
 
             device.op_state_model.perform_action("component_standby")
@@ -306,9 +266,7 @@ class DishManager(SKAController):
     )
     def spfConnectionState(self):
         """Returns the spf connection state"""
-        return self.component_manager.component_managers[
-            "SPF"
-        ].communication_state
+        return self.component_manager.component_managers["SPF"].communication_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -317,9 +275,7 @@ class DishManager(SKAController):
     )
     def spfrxConnectionState(self):
         """Returns the spfrx connection state"""
-        return self.component_manager.component_managers[
-            "SPFRX"
-        ].communication_state
+        return self.component_manager.component_managers["SPFRX"].communication_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -328,9 +284,7 @@ class DishManager(SKAController):
     )
     def dsConnectionState(self):
         """Returns the ds connection state"""
-        return self.component_manager.component_managers[
-            "DS"
-        ].communication_state
+        return self.component_manager.component_managers["DS"].communication_state
 
     @attribute(
         max_dim_x=3,
@@ -575,8 +529,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=bool,
-        doc="Indicates whether Dish is capturing data in the configured band "
-        "or not.",
+        doc="Indicates whether Dish is capturing data in the configured band " "or not.",
     )
     def capturing(self):
         """Returns the capturing"""
@@ -584,8 +537,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=Band,
-        doc="The frequency band that the Dish is configured to capture data "
-        "in.",
+        doc="The frequency band that the Dish is configured to capture data " "in.",
     )
     def configuredBand(self):
         """Returns the configuredBand"""
@@ -624,8 +576,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=DishMode,
-        doc="Dish rolled-up operating mode in Dish Control Model (SCM) "
-        "notation",
+        doc="Dish rolled-up operating mode in Dish Control Model (SCM) " "notation",
     )
     def dishMode(self):
         """Returns the dishMode"""
@@ -748,8 +699,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=TrackInterpolationMode,
         access=AttrWriteType.READ_WRITE,
-        doc="Selects the type of interpolation to be used in program "
-        "tracking.",
+        doc="Selects the type of interpolation to be used in program " "tracking.",
     )
     def trackInterpolationMode(self):
         """Returns the trackInterpolationMode"""
@@ -927,8 +877,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution "
-        "should start.",
+        doc_in="Indicates the time, in UTC, at which command execution " "should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -945,8 +894,7 @@ class DishManager(SKAController):
     @command(
         dtype_in=str,
         doc_in=(
-            "Indicates the time, in UTC (ISO 8601), at which command"
-            " execution should start."
+            "Indicates the time, in UTC (ISO 8601), at which command" " execution should start."
         ),
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -968,15 +916,12 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand2")
 
-        result_code, unique_id = handler(
-            activation_timestamp, self._configured_band
-        )
+        result_code, unique_id = handler(activation_timestamp, self._configured_band)
         return ([result_code], [unique_id])
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution "
-        "should start.",
+        doc_in="Indicates the time, in UTC, at which command execution " "should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -992,8 +937,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution "
-        "should start.",
+        doc_in="Indicates the time, in UTC, at which command execution " "should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -1009,8 +953,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution "
-        "should start.",
+        doc_in="Indicates the time, in UTC, at which command execution " "should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -1026,8 +969,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution "
-        "should start.",
+        doc_in="Indicates the time, in UTC, at which command execution " "should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -1255,10 +1197,7 @@ class DishManager(SKAController):
         dtype_in=None,
         dtype_out=str,
         display_level=DispLevel.OPERATOR,
-        doc_out=(
-            "Retrieve the states of SPF, SPFRx"
-            " and DS as DishManager sees it."
-        ),
+        doc_out=("Retrieve the states of SPF, SPFRx" " and DS as DishManager sees it."),
     )
     def GetComponentStates(self):
         """

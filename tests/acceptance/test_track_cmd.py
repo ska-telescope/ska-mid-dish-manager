@@ -2,9 +2,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.devices.test_devices.utils import (
-    set_configuredBand_b1,
-)
+from ska_mid_dish_manager.devices.test_devices.utils import set_configuredBand_b1
 from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 
 
@@ -48,18 +46,13 @@ def test_track_cmd(event_store_class):
     # Wait for the operate command to complete
     assert main_event_store.wait_for_value(DishMode.OPERATE)
 
-    progress_event_store.wait_for_progress_update(
-        "SetOperateMode completed", timeout=6
-    )
+    progress_event_store.wait_for_progress_update("SetOperateMode completed", timeout=6)
 
     dish_manager.Track()
 
     expected_progress_updates = [
         "Track called on DS",
-        (
-            "Awaiting DS operatingmode to change to "
-            "[<DSOperatingMode.POINT: 7>]"
-        ),
+        ("Awaiting DS operatingmode to change to [<DSOperatingMode.POINT: 7>]"),
         "Awaiting achievedtargetlock change to True",
         ("DS operatingmode changed to, [<DSOperatingMode.POINT: 7>]"),
         "Track completed",

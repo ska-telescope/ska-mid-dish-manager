@@ -49,26 +49,19 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
     main_event_store.clear_queue()
 
     future_time = datetime.utcnow() + timedelta(days=1)
-    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(
-        future_time.isoformat()
-    )
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())
     main_event_store.wait_for_command_id(unique_id)
     assert dish_manager_proxy.configuredBand == Band.B2
 
     # Do it again to check result
-    [[task_status], [result]] = dish_manager_proxy.ConfigureBand2(
-        future_time.isoformat()
-    )
+    [[task_status], [result]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())
 
     assert task_status == TaskStatus.COMPLETED
     assert result == "Already in band B2"
 
     expected_progress_updates = [
         "SetIndexPosition called on DS",
-        (
-            "Awaiting DS indexerposition to change to "
-            "[<IndexerPosition.B2: 2>]"
-        ),
+        ("Awaiting DS indexerposition to change to [<IndexerPosition.B2: 2>]"),
         "ConfigureBand2 called on SPFRX",
         ("Awaiting SPFRX configuredband to change to [<Band.B2: 2>]"),
         "Awaiting dishmode change to 3",

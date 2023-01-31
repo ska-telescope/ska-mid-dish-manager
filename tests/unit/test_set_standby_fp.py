@@ -41,12 +41,8 @@ class TestSetStandByFPMode:
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
         self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers[
-            "SPF"
-        ]
-        self.spfrx_cm = class_instance.component_manager.component_managers[
-            "SPFRX"
-        ]
+        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
 
         # During sub device command execution, we wait for state changes on our
         # sub devices to work out if the command has completed.
@@ -62,15 +58,9 @@ class TestSetStandByFPMode:
         self.dish_manager_cm = class_instance.component_manager
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_LP
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.STANDBY
-        )
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.STANDBY_LP
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 
     def teardown_method(self):
         """Tear down context"""
@@ -106,34 +96,20 @@ class TestSetStandByFPMode:
         # transition subservient devices to FP mode and observe that
         # DishManager transitions dishMode to FP mode after all
         # subservient devices are in FP
-        self.ds_cm._update_component_state(
-            operatingmode=DSOperatingMode.STANDBY_FP
-        )
+        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         self.ds_cm._update_component_state(powerstate=DSPowerState.FULL_POWER)
-        self.spf_cm._update_component_state(
-            operatingmode=SPFOperatingMode.OPERATE
-        )
-        self.spf_cm._update_component_state(
-            powerstate=SPFPowerState.FULL_POWER
-        )
-        self.spfrx_cm._update_component_state(
-            operatingmode=SPFRxOperatingMode.DATA_CAPTURE
-        )
+        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        self.spf_cm._update_component_state(powerstate=SPFPowerState.FULL_POWER)
+        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
 
         #  we can now expect dishMode to transition to STANDBY_FP
         assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
         expected_progress_updates = [
             "SetStandbyFPMode called on DS",
-            (
-                "Awaiting DS operatingmode to change to "
-                "[<DSOperatingMode.STANDBY_FP: 3>]"
-            ),
+            ("Awaiting DS operatingmode to change to [<DSOperatingMode.STANDBY_FP: 3>]"),
             "SetOperateMode called on SPF",
-            (
-                "Awaiting SPF operatingmode to change to "
-                "[<SPFOperatingMode.OPERATE: 3>]"
-            ),
+            ("Awaiting SPF operatingmode to change to [<SPFOperatingMode.OPERATE: 3>]"),
             "CaptureData called on SPFRX",
             (
                 "Awaiting SPFRX operatingmode to change to "
@@ -141,10 +117,7 @@ class TestSetStandByFPMode:
                 "<SPFRxOperatingMode.DATA_CAPTURE: 3>]"
             ),
             "Awaiting dishmode change to 3",
-            (
-                "SPF operatingmode changed to, "
-                "[<SPFOperatingMode.OPERATE: 3>]"
-            ),
+            ("SPF operatingmode changed to, [<SPFOperatingMode.OPERATE: 3>]"),
             (
                 "SPFRX operatingmode changed to, "
                 "[<SPFRxOperatingMode.STANDBY: 2>, "
