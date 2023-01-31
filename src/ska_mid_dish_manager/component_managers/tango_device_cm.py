@@ -79,11 +79,11 @@ class MonitoredAttribute:
             if self.attr_name == "State":
                 if not device_proxy.is_attribute_polled("State"):
                     device_proxy.poll_attribute("State", STATE_ATTR_POLL_PERIOD)
-            sub_callback = partial(self._subscription_callback, logger)
+            subscription_callback = partial(self._subscription_callback, logger)
             self.subscription_id = device_proxy.subscribe_event(
                 self.attr_name,
                 tango.EventType.CHANGE_EVENT,
-                sub_callback,
+                subscription_callback,
             )
             logger.info("Subscribed to [%s] with [%s]", self.attr_name, device_proxy)
             while not task_abort_event.wait(1):
@@ -166,7 +166,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
-    def read_update_component_state(self):
+    def update_state_from_monitored_attributes(self):
         """Update the component state by reading the monitored attributes
 
         When an attribute on the device does not match the component_state

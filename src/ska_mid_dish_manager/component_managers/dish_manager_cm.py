@@ -405,7 +405,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if current_dish_mode != DishMode.STANDBY_LP:
                 task_abort_event.wait(timeout=1)
                 for component_manager in self.sub_component_managers.values():
-                    component_manager.read_update_component_state()
+                    component_manager.update_state_from_monitored_attributes()
 
             else:
                 task_callback(
@@ -492,7 +492,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if current_dish_mode != DishMode.STANDBY_FP:
                 task_abort_event.wait(timeout=1)
                 for component_manager in self.sub_component_managers.values():
-                    component_manager.read_update_component_state()
+                    component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -574,7 +574,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if current_dish_mode != DishMode.OPERATE:
                 task_abort_event.wait(timeout=1)
                 for component_manager in self.sub_component_managers.values():
-                    component_manager.read_update_component_state()
+                    component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -638,7 +638,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 # Read pointingState on DS and update state
                 component_manager = self.sub_component_managers["DS"]
-                component_manager.read_update_component_state()
+                component_manager.update_state_from_monitored_attributes()
 
             else:
                 task_callback(
@@ -739,7 +739,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 # SPFRx configuredband
                 # SPF bandinfocus
                 for component_manager in self.sub_component_managers.values():
-                    component_manager.read_update_component_state()
+                    component_manager.update_state_from_monitored_attributes()
 
             else:
                 task_callback(
@@ -802,7 +802,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if current_dish_mode != DishMode.STOW:
                 task_abort_event.wait(timeout=1)
                 for component_manager in self.sub_component_managers.values():
-                    component_manager.read_update_component_state()
+                    component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
