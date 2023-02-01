@@ -47,7 +47,7 @@ class TestStowMode:
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
-        ds_cm = class_instance.component_manager.component_managers["DS"]
+        ds_cm = class_instance.component_manager.sub_component_managers["DS"]
 
         # Pretend DS goes into STOW
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
