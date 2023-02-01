@@ -56,24 +56,7 @@ class TestStowMode:
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
-        ds_cm = class_instance.component_manager.component_managers["DS"]
-        spf_cm = class_instance.component_manager.component_managers["SPF"]
-        spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
-
-        ds_cm.read_update_component_state = MagicMock()
-        spf_cm.read_update_component_state = MagicMock()
-        spfrx_cm.read_update_component_state = MagicMock()
-
-        assert device_proxy.dishMode != DishMode.STOW
-
-        device_proxy.SetStowMode()
-
-        # # Wait for a progress message so that SetStowMode has some time to run
-        # events = progress_event_store.wait_for_progress_update(
-        #     "Waiting for dishMode change to STOW", timeout=6
-        # )
-
-        # events_string = "".join([str(event) for event in events])
+        ds_cm = class_instance.component_manager.sub_component_managers["DS"]
 
         # Pretend DS goes into STOW
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)

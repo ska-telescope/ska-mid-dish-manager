@@ -43,7 +43,7 @@ class TestConnectionStates:
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
-        spf_cm = class_instance.component_manager.component_managers["SPF"]
+        spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
 
         # We expect the spfConnectionState to intially be ESTABLISHED
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
@@ -68,7 +68,7 @@ class TestConnectionStates:
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
-        spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
+        spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
 
         # We expect the spfrxConnectionState to intially be ESTABLISHED
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
@@ -95,7 +95,7 @@ class TestConnectionStates:
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
-        ds_cm = class_instance.component_manager.component_managers["DS"]
+        ds_cm = class_instance.component_manager.sub_component_managers["DS"]
 
         # We expect the dsConnectionState to intially be ESTABLISHED
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)

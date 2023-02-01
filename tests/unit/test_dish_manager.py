@@ -67,9 +67,9 @@ class TestDishManagerBehaviour:
 
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
-        self.ds_cm = class_instance.component_manager.component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.component_managers["SPF"]
-        self.spfrx_cm = class_instance.component_manager.component_managers["SPFRX"]
+        self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
+        self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
 
         self.ds_cm.read_update_component_state = MagicMock()

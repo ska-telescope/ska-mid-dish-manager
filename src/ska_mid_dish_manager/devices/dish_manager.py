@@ -61,7 +61,7 @@ class DishManager(SKAController):
             spfrx_device_fqdn=self.spfrx_device_fqdn,
             communication_state_callback=None,
             component_state_callback=self._component_state_changed,
-            sub_device_comm_state_cb=self._push_subs_comms_evts,
+            connection_state_callback=self._update_connection_state_attrs,
         )
 
     def init_command_objects(self) -> None:
@@ -93,41 +93,25 @@ class DishManager(SKAController):
             self.AbortCommandsCommand(self.component_manager, self.logger),
         )
 
-    def _update_command_exception(
-        self: SKAController, command_id: str, command_exception: Exception
-    ) -> None:
-        """Overriding so we can log the full stack trace.
-
-        :param command_id: Unique ID of the LRC
-        :type command_id: str
-        :param command_exception: The exception instance
-        :type command_exception: Exception
+    def _update_connection_state_attrs(self):
         """
-        self.logger.exception("Command '%s' raised exception %s", command_id, command_exception)
-        # pylint: disable=attribute-defined-outside-init
-        self._command_result = (command_id, str(command_exception))
-        self.push_change_event("longRunningCommandResult", self._command_result)
-        self.push_archive_event("longRunningCommandResult", self._command_result)
-
-    def _push_subs_comms_evts(self):
-        """
-        Push change events for subservient
-        device communication state changes
+        Push change events on connection state attributes for
+        subservient devices communication state changes.
         """
         if not hasattr(self, "component_manager"):
             self.logger.warning("Init not completed, but communication state is being updated")
             return
         self.push_change_event(
             "spfConnectionState",
-            self.component_manager.component_managers["SPF"].communication_state,
+            self.component_manager.sub_component_managers["SPF"].communication_state,
         )
         self.push_change_event(
             "spfrxConnectionState",
-            self.component_manager.component_managers["SPFRX"].communication_state,
+            self.component_manager.sub_component_managers["SPFRX"].communication_state,
         )
         self.push_change_event(
             "dsConnectionState",
-            self.component_manager.component_managers["DS"].communication_state,
+            self.component_manager.sub_component_managers["DS"].communication_state,
         )
 
     # pylint: disable=unused-argument
@@ -154,10 +138,10 @@ class DishManager(SKAController):
             return f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
 
         for comp_state_name, comp_state_value in kwargs.items():
-            dm_attr_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
-            dm_attr_var_name = change_case(dm_attr_name)
-            setattr(self, dm_attr_var_name, comp_state_value)
-            self.push_change_event(dm_attr_name, comp_state_value)
+            attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
+            attribute_variable = change_case(attribute_name)
+            setattr(self, attribute_variable, comp_state_value)
+            self.push_change_event(attribute_name, comp_state_value)
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """
@@ -241,7 +225,7 @@ class DishManager(SKAController):
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
 
-            # push change events for the communication state attributes also
+            # configure change events for the connection state attributes
             for attr in (
                 "spfConnectionState",
                 "spfrxConnectionState",
@@ -266,7 +250,7 @@ class DishManager(SKAController):
     )
     def spfConnectionState(self):
         """Returns the spf connection state"""
-        return self.component_manager.component_managers["SPF"].communication_state
+        return self.component_manager.sub_component_managers["SPF"].communication_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -275,7 +259,7 @@ class DishManager(SKAController):
     )
     def spfrxConnectionState(self):
         """Returns the spfrx connection state"""
-        return self.component_manager.component_managers["SPFRX"].communication_state
+        return self.component_manager.sub_component_managers["SPFRX"].communication_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -284,7 +268,7 @@ class DishManager(SKAController):
     )
     def dsConnectionState(self):
         """Returns the ds connection state"""
-        return self.component_manager.component_managers["DS"].communication_state
+        return self.component_manager.sub_component_managers["DS"].communication_state
 
     @attribute(
         max_dim_x=3,
@@ -569,7 +553,7 @@ class DishManager(SKAController):
         """Set the desiredPointing"""
         # pylint: disable=attribute-defined-outside-init
         self._desired_pointing = value
-        ds_cm = self.component_manager.component_managers["DS"]
+        ds_cm = self.component_manager.sub_component_managers["DS"]
         # pylint: disable=protected-access
         ds_device_proxy = ds_cm._device_proxy
         ds_device_proxy.desiredPointing = value
@@ -849,7 +833,7 @@ class DishManager(SKAController):
             # abort the task on dish manager
             self._component_manager.abort_commands()
             # abort the task on the subservient devices
-            for cm in self._component_manager.component_managers.values():
+            for cm in self._component_manager.sub_component_managers.values():
                 cm.abort_commands()
 
             return (ResultCode.STARTED, "Aborting commands")
@@ -1205,13 +1189,13 @@ class DishManager(SKAController):
 
         Subservient devices constiture SPF, SPFRx and DS. Used for debugging.
         """
-        comp_states = {}
+        component_states = {}
         for (
             device,
-            comp_state,
-        ) in self.component_manager.component_managers.items():
-            comp_states[device] = comp_state._component_state
-        return json.dumps(comp_states)
+            component_state,
+        ) in self.component_manager.sub_component_managers.items():
+            component_states[device] = component_state._component_state
+        return json.dumps(component_states)
 
 
 def main(args=None, **kwargs):

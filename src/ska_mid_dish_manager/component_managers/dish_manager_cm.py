@@ -40,7 +40,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         logger: logging.Logger,
         command_tracker,
-        sub_device_comm_state_cb,
+        connection_state_callback,
         *args,
         ds_device_fqdn: str = "mid_d0001/lmc/ds_simulator",
         spf_device_fqdn: str = "mid_d0001/spf/simulator",
@@ -72,12 +72,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             **kwargs,
         )
-        self.sub_device_comm_state_cb = sub_device_comm_state_cb
+        self.connection_state_callback = connection_state_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
-        self.component_managers = {}
-        self.component_managers["DS"] = DSComponentManager(
+        self.sub_component_managers = {}
+        self.sub_component_managers["DS"] = DSComponentManager(
             ds_device_fqdn,
             logger,
             operatingmode=None,
@@ -89,7 +89,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
-        self.component_managers["SPFRX"] = SPFRxComponentManager(
+        self.sub_component_managers["SPFRX"] = SPFRxComponentManager(
             spfrx_device_fqdn,
             logger,
             operatingmode=None,
@@ -105,7 +105,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             component_state_callback=self._component_state_changed,
             communication_state_callback=self._communication_state_changed,
         )
-        self.component_managers["SPF"] = SPFComponentManager(
+        self.sub_component_managers["SPF"] = SPFComponentManager(
             spf_device_fqdn,
             logger,
             operatingmode=None,
@@ -142,14 +142,23 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self, *args, **kwargs):
-        # communication state will come from args and kwargs
+        """
+        Callback triggered by the component manager when it establishes
+        a connection with the underlying (subservient) device
 
+        The component manager syncs with the device for fresh updates
+        everytime connection is established.
+
+        Note: This callback is triggered by the component manangers of
+        the subservient devices. DishManager reflects this in its connection
+        status attributes.
+        """
         # an empty dict will make all condition always pass. check
         # that the dict is not empty before continuing with trigger
-        if self.component_managers:
+        if self.sub_component_managers:
             if all(
-                cm.communication_state == CommunicationStatus.ESTABLISHED
-                for cm in self.component_managers.values()
+                component_manager.communication_state == CommunicationStatus.ESTABLISHED
+                for component_manager in self.sub_component_managers.values()
             ):
                 self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
@@ -162,15 +171,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                 self._update_component_state(healthstate=HealthState.FAILED)
 
-            # trigger push events for the connection state attributes
-            self.sub_device_comm_state_cb()
+            # push change events for the connection state attributes
+            self.connection_state_callback()
 
     # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):
+        """
+        Callback triggered by the component manager of the
+        subservient device for component state changes.
 
-        ds_comp_state = self.component_managers["DS"].component_state
-        spf_comp_state = self.component_managers["SPF"].component_state
-        spfrx_comp_state = self.component_managers["SPFRX"].component_state
+        This aggregates the component values and computes the final value
+        which will be reported for the respective attribute. The computed
+        value is sent to DishManager's component_state callback which pushes
+        a change event on the attribute and updates the internal variable.
+
+        Note: This callback is triggered by the component managers of
+        the subservient devices only. DishManager also has its own callback.
+        """
+        ds_component_state = self.sub_component_managers["DS"].component_state
+        spf_component_state = self.sub_component_managers["SPF"].component_state
+        spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
         self.logger.debug(
             (
@@ -178,72 +198,72 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ", SPFRx [%s], DM [%s]"
             ),
             kwargs,
-            ds_comp_state,
-            spf_comp_state,
-            spfrx_comp_state,
+            ds_component_state,
+            spf_component_state,
+            spfrx_component_state,
             self.component_state,
         )
 
         if "achievedpointing" in kwargs:
             self.logger.info(
                 ("Updating achievedPointing with DS achievedPointing [%s]"),
-                str(ds_comp_state["achievedpointing"]),
+                ds_component_state["achievedpointing"],
             )
-            new_position = ds_comp_state["achievedpointing"]
+            new_position = ds_component_state["achievedpointing"]
             self._update_component_state(achievedpointing=new_position)
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs:
             self.logger.info(
                 ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
-                str(ds_comp_state["operatingmode"]),
-                str(spf_comp_state["operatingmode"]),
-                str(spfrx_comp_state["operatingmode"]),
+                ds_component_state["operatingmode"],
+                spf_component_state["operatingmode"],
+                spfrx_component_state["operatingmode"],
             )
             new_dish_mode = self._state_transition.compute_dish_mode(
-                ds_comp_state,
-                spfrx_comp_state,
-                spf_comp_state,
+                ds_component_state,
+                spfrx_component_state,
+                spf_component_state,
             )
             self._update_component_state(dishmode=new_dish_mode)
 
         if "healthstate" in kwargs:
             self.logger.info(
                 ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
-                str(ds_comp_state["healthstate"]),
-                str(spf_comp_state["healthstate"]),
-                str(spfrx_comp_state["healthstate"]),
+                ds_component_state["healthstate"],
+                spf_component_state["healthstate"],
+                spfrx_component_state["healthstate"],
             )
             new_health_state = self._state_transition.compute_dish_health_state(
-                ds_comp_state,
-                spfrx_comp_state,
-                spf_comp_state,
+                ds_component_state,
+                spfrx_component_state,
+                spf_component_state,
             )
             self._update_component_state(healthstate=new_health_state)
 
         if "pointingstate" in kwargs:
             self.logger.debug(
-                ("Newly calculated component state [pointing_state] [%s]"),
-                ds_comp_state["pointingstate"],
+                ("Newly calculated pointing state [pointing_state] [%s]"),
+                ds_component_state["pointingstate"],
             )
-            self._update_component_state(pointingstate=ds_comp_state["pointingstate"])
+            self._update_component_state(pointingstate=ds_component_state["pointingstate"])
 
-            if ds_comp_state["pointingstate"] in [
+            if ds_component_state["pointingstate"] in [
                 PointingState.SLEW,
                 PointingState.READY,
             ]:
                 self._update_component_state(achievedtargetlock=False)
-            elif ds_comp_state["pointingstate"] == PointingState.TRACK:
+            elif ds_component_state["pointingstate"] == PointingState.TRACK:
                 self._update_component_state(achievedtargetlock=True)
 
         # spf bandInFocus
-        if "indexerposition" in ds_comp_state and "configuredband" in spfrx_comp_state:
+        if "indexerposition" in ds_component_state and "configuredband" in spfrx_component_state:
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
-                ds_comp_state, spfrx_comp_state
+                ds_component_state, spfrx_component_state
             )
             # pylint: disable=protected-access
             # update the bandInFocus of SPF before configuredBand
-            spf_proxy = self.component_managers["SPF"]._device_proxy
+            spf_proxy = self.sub_component_managers["SPF"]._device_proxy
             # component state changed for DS and SPFRx may be triggered while
             # SPF device proxy is not initialised. Write to the bandInFocus
             # only when you have the device proxy
@@ -254,25 +274,25 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
             self.logger.info(
                 ("Updating configuredBand with DS [%s] SPF [%s] SPFRX [%s]"),
-                str(ds_comp_state),
-                str(spf_comp_state),
-                str(spfrx_comp_state),
+                ds_component_state,
+                spf_component_state,
+                spfrx_component_state,
             )
 
             configured_band = self._state_transition.compute_configured_band(
-                ds_comp_state,
-                spfrx_comp_state,
-                spf_comp_state,
+                ds_component_state,
+                spfrx_component_state,
+                spf_component_state,
             )
             self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
-        if "capturingdata" in spfrx_comp_state:
+        if "capturingdata" in spfrx_component_state:
             self.logger.info(
                 ("Updating capturing with SPFRx [%s]"),
-                str(spfrx_comp_state),
+                spfrx_component_state,
             )
-            self._update_component_state(capturing=spfrx_comp_state["capturingdata"])
+            self._update_component_state(capturing=spfrx_component_state["capturingdata"])
 
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode
@@ -282,9 +302,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 cap_state_name = f"{band}capabilitystate"
                 new_state = self._state_transition.compute_capability_state(
                     band,
-                    ds_comp_state,
-                    spfrx_comp_state,
-                    spf_comp_state,
+                    ds_component_state,
+                    spfrx_component_state,
+                    spf_component_state,
                     self.component_state,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
@@ -296,9 +316,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if cap_state_name in kwargs:
                 new_state = self._state_transition.compute_capability_state(
                     band,
-                    ds_comp_state,
-                    spfrx_comp_state,
-                    spf_comp_state,
+                    ds_component_state,
+                    spfrx_component_state,
+                    spf_component_state,
                     self.component_state,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
@@ -308,16 +328,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
-    def _update_dishmode_component_states(self):
-        """Update the component state required for dishMode changes"""
-        for comp_man in self.component_managers.values():
-            op_mode = comp_man.read_attribute_value("operatingMode")
-            comp_man._update_component_state(operatingmode=op_mode)
-
     def start_communicating(self):
         """Connect from monitored devices"""
-        for com_man in self.component_managers.values():
-            com_man.start_communicating()
+        for component_manager in self.sub_component_managers.values():
+            component_manager.start_communicating()
 
     def set_standby_lp_mode(
         self,
@@ -363,7 +377,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command = SubmittedSlowCommand(
                 f"{device}_{command_name}",
                 self._command_tracker,
-                self.component_managers[device],
+                self.sub_component_managers[device],
                 "run_device_command",
                 callback=None,
                 logger=self.logger,
@@ -392,8 +406,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STANDBY_LP:
                 task_abort_event.wait(timeout=1)
-                for comp_man in self.component_managers.values():
-                    comp_man.read_update_component_state()
+                for component_manager in self.sub_component_managers.values():
+                    component_manager.update_state_from_monitored_attributes()
 
             else:
                 task_callback(
@@ -443,7 +457,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command = SubmittedSlowCommand(
                 f"{device}_{command_name}",
                 self._command_tracker,
-                self.component_managers[device],
+                self.sub_component_managers[device],
                 "run_device_command",
                 callback=None,
                 logger=self.logger,
@@ -483,8 +497,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STANDBY_FP:
                 task_abort_event.wait(timeout=1)
-                for comp_man in self.component_managers.values():
-                    comp_man.read_update_component_state()
+                for component_manager in self.sub_component_managers.values():
+                    component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -537,7 +551,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command = SubmittedSlowCommand(
                 f"{device}_{command_name}",
                 self._command_tracker,
-                self.component_managers[device],
+                self.sub_component_managers[device],
                 "run_device_command",
                 callback=None,
                 logger=self.logger,
@@ -569,8 +583,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.OPERATE:
                 task_abort_event.wait(timeout=1)
-                for comp_man in self.component_managers.values():
-                    comp_man.read_update_component_state()
+                for component_manager in self.sub_component_managers.values():
+                    component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -608,7 +622,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         command = SubmittedSlowCommand(
             "DS_Track",
             self._command_tracker,
-            self.component_managers["DS"],
+            self.sub_component_managers["DS"],
             "run_device_command",
             callback=None,
             logger=self.logger,
@@ -633,8 +647,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_abort_event.wait(timeout=1)
 
                 # Read pointingState on DS and update state
-                comp_man = self.component_managers["DS"]
-                comp_man.read_update_component_state()
+                component_manager = self.sub_component_managers["DS"]
+                component_manager.update_state_from_monitored_attributes()
 
             else:
                 task_callback(
@@ -697,7 +711,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command = SubmittedSlowCommand(
                 f"{device}ConfigureBand2",
                 self._command_tracker,
-                self.component_managers[device],
+                self.sub_component_managers[device],
                 "run_device_command",
                 callback=None,
                 logger=self.logger,
@@ -733,8 +747,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 # DS indexerposition
                 # SPFRx configuredband
                 # SPF bandinfocus
-                for comp_man in self.component_managers.values():
-                    comp_man.read_update_component_state()
+                for component_manager in self.sub_component_managers.values():
+                    component_manager.update_state_from_monitored_attributes()
 
             else:
                 task_callback(
@@ -774,7 +788,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         command = SubmittedSlowCommand(
             "DS_SetStowMode",
             self._command_tracker,
-            self.component_managers["DS"],
+            self.sub_component_managers["DS"],
             "run_device_command",
             callback=None,
             logger=self.logger,
@@ -796,8 +810,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             current_dish_mode = self.component_state["dishmode"]
             if current_dish_mode != DishMode.STOW:
                 task_abort_event.wait(timeout=1)
-                for comp_man in self.component_managers.values():
-                    comp_man.read_update_component_state()
+                for component_manager in self.sub_component_managers.values():
+                    component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
                     status=TaskStatus.COMPLETED,
@@ -809,5 +823,5 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
         """Disconnect from monitored devices"""
-        for com_man in self.component_managers.values():
-            com_man.stop_communicating()
+        for component_manager in self.sub_component_managers.values():
+            component_manager.stop_communicating()
