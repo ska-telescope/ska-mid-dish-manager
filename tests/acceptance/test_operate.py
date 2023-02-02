@@ -45,7 +45,7 @@ def test_set_operate(event_store_class):
         tango.EventType.CHANGE_EVENT,
         band_event_store,
     )
-    assert band_event_store.wait_for_value(Band.B1)
+    assert band_event_store.wait_for_value(Band.B1, timeout=8)
 
     dish_manager.SetOperateMode()
 

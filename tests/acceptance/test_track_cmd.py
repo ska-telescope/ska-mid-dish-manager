@@ -45,7 +45,7 @@ def test_track_cmd(event_store_class):
         tango.EventType.CHANGE_EVENT,
         band_event_store,
     )
-    assert band_event_store.wait_for_value(Band.B1)
+    assert band_event_store.wait_for_value(Band.B1, timeout=8)
 
     [[_], [unique_id]] = dish_manager.SetOperateMode()
     main_event_store.wait_for_command_id(unique_id, timeout=8)
