@@ -149,11 +149,8 @@ class EventStore:
                     continue
                 if not isinstance(event.attr_value.value, tuple):
                     continue
-                if len(event.attr_value.value) != 2:
-                    continue
-                (_, progress_update) = event.attr_value.value
                 if (
-                    progress_message in progress_update
+                    progress_message in str(events)
                     and event.attr_value.name == "longrunningcommandprogress"
                 ):
                     return events

@@ -43,6 +43,10 @@ class TestTrack:
         self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
 
+        self.ds_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spf_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
     def teardown_method(self):
         """Tear down context"""
         self.tango_context.stop()

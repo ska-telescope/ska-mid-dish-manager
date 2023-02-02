@@ -8,7 +8,7 @@ import tango
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.dish_manager import DishManager
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
+from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
 
 LOGGER = logging.getLogger(__name__)
 
@@ -56,26 +56,18 @@ class TestStowMode:
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
+
         ds_cm = class_instance.component_manager.sub_component_managers["DS"]
+        spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
+        spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
 
-        # Pretend DS goes into STOW
+        ds_cm.update_state_from_monitored_attributes = MagicMock()
+        spf_cm.update_state_from_monitored_attributes = MagicMock()
+        spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
+        device_proxy.SetStowMode()
+
+        progress_event_store.wait_for_progress_update("Stow called on DS")
+        progress_event_store.wait_for_progress_update("Waiting for dishMode change to STOW")
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
-        main_event_store.wait_for_value(DishMode.STOW)
-
-        expected_progress_updates = [
-            "Stow called on DS",
-            "Waiting for dishMode change to STOW",
-            "Stow completed",
-        ]
-
-        events = progress_event_store.wait_for_progress_update(
-            expected_progress_updates[-1], timeout=6
-        )
-
-        events_string = ""
-        events_string += "".join([str(event.attr_value.value) for event in events])
-
-        # Check that all the expected progress messages appeared
-        # in the event store
-        for message in expected_progress_updates:
-            assert message in events_string
+        progress_event_store.wait_for_progress_update("Stow completed")

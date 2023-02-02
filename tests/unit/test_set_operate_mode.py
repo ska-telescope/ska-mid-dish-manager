@@ -59,6 +59,11 @@ class TestSetOperateMode:
         ds_cm = class_instance.component_manager.sub_component_managers["DS"]
         spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+
+        ds_cm.update_state_from_monitored_attributes = MagicMock()
+        spf_cm.update_state_from_monitored_attributes = MagicMock()
+        spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
         # Force dishManager dishMode to go to OPERATE
         ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
@@ -100,6 +105,11 @@ class TestSetOperateMode:
         ds_cm = class_instance.component_manager.sub_component_managers["DS"]
         spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+
+        ds_cm.update_state_from_monitored_attributes = MagicMock()
+        spf_cm.update_state_from_monitored_attributes = MagicMock()
+        spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
         # Force dishManager dishMode to go to STANDBY_FP
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)

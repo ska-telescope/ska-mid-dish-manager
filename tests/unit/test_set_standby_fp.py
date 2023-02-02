@@ -44,6 +44,11 @@ class TestSetStandByFPMode:
         self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
         self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
+
+        self.ds_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spf_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)

@@ -72,9 +72,9 @@ class TestDishManagerBehaviour:
         self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
 
-        self.ds_cm.read_update_component_state = MagicMock()
-        self.spf_cm.read_update_component_state = MagicMock()
-        self.spfrx_cm.read_update_component_state = MagicMock()
+        self.ds_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spf_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
 
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
