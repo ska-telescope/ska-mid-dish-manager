@@ -166,6 +166,25 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
+    def clear_monitored_attributes(self):
+        """
+        Sets all the monitored attribute values to 0.
+
+        This is a helper method that can be called before read_update_component_state
+        to ensure that dishManager's CM will update its attributes.
+
+        DishManager will only update its attributes when a tango device CM
+        pushes a change event, by setting all the monitored attributes to 0
+        before calling read_update_component_state we can ensure that there will
+        be a change and that dishManager will update its attributes.
+        """
+        for monitored_attribute in self._monitored_attributes:
+            attribute_name = monitored_attribute.attr_name.lower()
+
+            # Delete it from the component state if it is there
+            if attribute_name in self._component_state:
+                self._component_state[attribute_name] = 0
+
     def update_state_from_monitored_attributes(self):
         """Update the component state by reading the monitored attributes
 

@@ -149,8 +149,9 @@ class EventStore:
                     continue
                 if not isinstance(event.attr_value.value, tuple):
                     continue
+                progress_update = str(event.attr_value.value)
                 if (
-                    progress_message in str(events)
+                    progress_message in progress_update
                     and event.attr_value.name == "longrunningcommandprogress"
                 ):
                     return events
@@ -274,10 +275,10 @@ def set_dish_manager_to_standby_lp(event_store, dish_manager_proxy):
         # Set it to a known mode, can Stow from any state
         if dish_manager_proxy.dishMode != DishMode.STOW:
             dish_manager_proxy.SetStowMode()
-            event_store.wait_for_value(DishMode.STOW, timeout=10)
+            event_store.wait_for_value(DishMode.STOW)
 
         dish_manager_proxy.SetStandbyLPMode()
-        event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
+        event_store.wait_for_value(DishMode.STANDBY_LP)
 
 
 def set_configuredBand_b1():

@@ -2,7 +2,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
+from ska_mid_dish_manager.devices.test_devices.utils import set_dish_manager_to_standby_lp
 
 
 @pytest.mark.acceptance
@@ -11,26 +11,18 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
 def test_standby_lp_transition(event_store_class):
     """Test transition to Standby_LP"""
     dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
-    ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
-    # Get at least one device into a known state
-    ds_device.operatingMode = DSOperatingMode.STANDBY_FP
 
-    dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
 
-    dish_manager.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
     dish_manager.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
         progress_event_store,
     )
 
-    dish_manager.SetStandbyLPMode()
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
+    progress_event_store.clear_queue()
+
+    set_dish_manager_to_standby_lp(event_store_class(), dish_manager)
 
     expected_progress_updates = [
         "SetStandbyLPMode called on DS",

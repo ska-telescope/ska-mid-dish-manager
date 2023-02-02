@@ -1197,6 +1197,19 @@ class DishManager(SKAController):
             component_states[device] = component_state._component_state
         return json.dumps(component_states)
 
+    @command(
+        dtype_in=None,
+        dtype_out=None,
+        display_level=DispLevel.OPERATOR,
+    )
+    def SyncComponentStates(self) -> None:
+        """
+        Sync each subservient device component state with its tango device
+        to refresh the dish manager component state.
+        """
+        if hasattr(self, "component_manager"):
+            self.component_manager.sync_component_states()
+
 
 def main(args=None, **kwargs):
     """Launch a DishManager device."""
