@@ -28,12 +28,6 @@ def test_set_operate(event_store_class):
         )
 
     dish_manager.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
-
-    dish_manager.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
         progress_event_store,
@@ -46,6 +40,11 @@ def test_set_operate(event_store_class):
 
     set_configuredBand_b1()
 
+    dish_manager.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        band_event_store,
+    )
     assert band_event_store.wait_for_value(Band.B1)
 
     dish_manager.SetOperateMode()
