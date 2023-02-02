@@ -328,6 +328,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
+    def sync_component_states(self):
+        """
+        Clear all subservient devices monitored attributes from their component states,
+        then re-read all the monitored attributes from their respective tango device
+        to force dishManager to recalculate it's attributes.
+        """
+        if self.sub_component_managers:
+            for comp_man in self.sub_component_managers.values():
+                comp_man.clear_monitored_attributes()
+                comp_man.read_update_component_state()
+
     def start_communicating(self):
         """Connect from monitored devices"""
         for component_manager in self.sub_component_managers.values():
