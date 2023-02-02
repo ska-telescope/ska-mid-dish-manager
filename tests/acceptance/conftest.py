@@ -106,6 +106,7 @@ def setup_and_teardown(
     for proxy, state in zip(proxies, initial_states):
         restore_tango_device_attribute_state(proxy, state)
 
+    dish_manager_proxy.AbortCommands()
     dish_manager_proxy.SyncComponentStates()
 
     dish_manager_proxy.subscribe_event(
