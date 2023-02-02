@@ -2,11 +2,8 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.devices.test_devices.utils import (
-    EventStore,
-    set_dish_manager_to_standby_lp,
-)
-from ska_mid_dish_manager.models.dish_enums import CapabilityStates, DishMode
+from ska_mid_dish_manager.devices.test_devices.utils import EventStore
+from ska_mid_dish_manager.models.dish_enums import CapabilityStates
 
 
 @pytest.mark.acceptance
@@ -16,9 +13,6 @@ def test_capability_state_b1(
     event_store, dish_manager_proxy, spf_device_proxy, spfrx_device_proxy
 ):
     """Test transition on CapabilityState b1"""
-    set_dish_manager_to_standby_lp(event_store, dish_manager_proxy)
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_LP
-
     dish_manager_proxy.subscribe_event(
         "b1CapabilityState",
         tango.EventType.CHANGE_EVENT,

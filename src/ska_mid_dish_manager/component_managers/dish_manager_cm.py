@@ -337,7 +337,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if self.sub_component_managers:
             for comp_man in self.sub_component_managers.values():
                 comp_man.clear_monitored_attributes()
-                comp_man.read_update_component_state()
+                comp_man.update_state_from_monitored_attributes()
 
     def start_communicating(self):
         """Connect from monitored devices"""

@@ -170,12 +170,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         Sets all the monitored attribute values to 0.
 
-        This is a helper method that can be called before read_update_component_state
+        This is a helper method that can be called before
+        update_state_from_monitored_attributes
         to ensure that dishManager's CM will update its attributes.
 
         DishManager will only update its attributes when a tango device CM
         pushes a change event, by setting all the monitored attributes to 0
-        before calling read_update_component_state we can ensure that there will
+        before calling update_state_from_monitored_attributes we can ensure that there will
         be a change and that dishManager will update its attributes.
         """
         for monitored_attribute in self._monitored_attributes:

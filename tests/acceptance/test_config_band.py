@@ -5,10 +5,7 @@ import pytest
 import tango
 from ska_control_model import TaskStatus
 
-from ska_mid_dish_manager.devices.test_devices.utils import (
-    set_configuredBand_b1,
-    set_dish_manager_to_standby_lp,
-)
+from ska_mid_dish_manager.devices.test_devices.utils import set_configuredBand_b1
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 
@@ -17,9 +14,6 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 @pytest.mark.forked
 def test_configure_band_2(event_store_class, dish_manager_proxy):
     """Test ConfigureBand2"""
-    set_dish_manager_to_standby_lp(event_store_class, dish_manager_proxy)
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_LP
-
     # make sure configureBand is not B2
     set_configuredBand_b1()
 
