@@ -103,21 +103,8 @@ def setup_and_teardown(
         get_spfrx_init_values(),
     ]
 
-    # initial_states = []
-
     for proxy, state in zip(proxies, initial_states):
         restore_tango_device_attribute_state(proxy, state)
-        initial_state = save_tango_device_attribute_state(proxy)
-
-        print(f"\nInitial state ({proxy})")
-        print("===================================================")
-        print(state)
-
-        print(f"\nState after restoring initial ({proxy})")
-        print("===================================================")
-        print(initial_state)
-
-        # initial_states.append(initial_state)
 
     dish_manager_proxy.synccomponentstates()
 
@@ -127,19 +114,9 @@ def setup_and_teardown(
         event_store,
     )
 
-    print("\ndishMode:", dish_manager_proxy.dishMode)
-
     assert event_store.wait_for_value(DishMode.STANDBY_LP)
-
-    # assert False
 
     # A test function will be run at this point
     yield
 
     # Code that will run after the test:
-    # proxies.reverse()
-
-    # for proxy in proxies:
-    #     initial_state = initial_states.pop()
-
-    #     restore_tango_device_attribute_state(proxy, initial_state)

@@ -459,9 +459,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 callback=None,
                 logger=self.logger,
             )
-            logging.info("=======================")
-            logging.info(device)
-            logging.info(command_name)
             if device == "DS":
                 _, command_id = command(command_name, None)
                 device_command_ids[device] = command_id
