@@ -2,7 +2,6 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.devices.test_devices.utils import set_dish_manager_to_standby_lp
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
