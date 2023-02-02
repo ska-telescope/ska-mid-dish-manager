@@ -20,9 +20,6 @@ def test_standby_fp_transition(event_store_class):
         tango.EventType.CHANGE_EVENT,
         dish_mode_event_store,
     )
-    # Make sure the intial dish mode is STANDBY LP
-    dish_manager.SetStandbyLPMode()
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
 
     dish_manager.subscribe_event(
         "longRunningCommandProgress",

@@ -3,7 +3,7 @@ import pytest
 import tango
 
 from ska_mid_dish_manager.devices.test_devices.utils import set_configuredBand_b1
-from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode, PointingState
 
 
 @pytest.mark.acceptance
@@ -15,11 +15,11 @@ def test_track_cmd(event_store_class):
     ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
 
     main_event_store = event_store_class()
+    band_event_store = event_store_class()
     progress_event_store = event_store_class()
 
     for attr in [
         "dishMode",
-        "configuredBand",
         "longRunningCommandResult",
     ]:
         dish_manager.subscribe_event(
@@ -27,6 +27,12 @@ def test_track_cmd(event_store_class):
             tango.EventType.CHANGE_EVENT,
             main_event_store,
         )
+
+    dish_manager.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        band_event_store,
+    )
 
     dish_manager.subscribe_event(
         "longRunningCommandProgress",
@@ -40,6 +46,8 @@ def test_track_cmd(event_store_class):
     assert dish_manager.dishMode == DishMode.STANDBY_FP
 
     set_configuredBand_b1()
+
+    assert band_event_store.wait_for_value(Band.B1)
 
     dish_manager.SetOperateMode()
 
