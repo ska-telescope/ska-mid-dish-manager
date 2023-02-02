@@ -29,12 +29,6 @@ def test_track_cmd(event_store_class):
         )
 
     dish_manager.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
-
-    dish_manager.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
         progress_event_store,
@@ -47,24 +41,24 @@ def test_track_cmd(event_store_class):
 
     set_configuredBand_b1()
 
+    dish_manager.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        band_event_store,
+    )
     assert band_event_store.wait_for_value(Band.B1)
 
-    dish_manager.SetOperateMode()
+    [[_], [unique_id]] = dish_manager.SetOperateMode()
+    main_event_store.wait_for_command_id(unique_id, timeout=8)
 
-    # Wait for the operate command to complete
-    assert main_event_store.wait_for_value(DishMode.OPERATE)
-
-    progress_event_store.wait_for_progress_update("SetOperateMode completed", timeout=6)
-
-    dish_manager.Track()
+    [[_], [unique_id]] = dish_manager.Track()
+    main_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
         "Track called on DS, ID",
         "Awaiting target lock change",
         "Track completed",
     ]
-
-    ds_device.pointingState = PointingState.TRACK
 
     # Wait for the track command to complete
     events = progress_event_store.wait_for_progress_update(
