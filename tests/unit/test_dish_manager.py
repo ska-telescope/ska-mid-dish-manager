@@ -101,14 +101,16 @@ class TestDishManagerBehaviour:
         # Clear out the queue to make sure we dont keep previous events
         event_store.clear_queue()
 
+        # band should be configured to call command on SPFRx device
+        # and have it propagated to the long running command result
+        self.dish_manager_cm._update_component_state(configuredband=Band.B2)
+        self.dish_manager_cm._update_component_state(configuredband=Band.B3)
+
         dish_manager.subscribe_event(
             "longRunningCommandResult",
             tango.EventType.CHANGE_EVENT,
             event_store,
         )
-        # band should be configured to call command on SPFRx device
-        # and have it propagated to the long running command result
-        self.dish_manager_cm._update_component_state(configuredband=Band.B2)
 
         _, command_id = self.device_proxy.SetStandbyFPMode()
 
