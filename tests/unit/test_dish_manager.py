@@ -13,7 +13,7 @@ import tango
 from ska_control_model import TaskStatus
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.devices.dish_manager import DishManager
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,

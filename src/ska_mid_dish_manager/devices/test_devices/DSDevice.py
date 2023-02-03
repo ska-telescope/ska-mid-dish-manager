@@ -249,6 +249,62 @@ class DSDevice(Device):
         self._operating_mode = DSOperatingMode.STOW
         self.push_change_event("operatingMode", self._operating_mode)
 
+    @command(
+        dtype_in=None,
+        doc_in="Used to reset device to default values. Used in testing",
+        dtype_out=None,
+    )
+    def ResetToDefault(self):
+        """
+        Reset device to default values.
+
+        Used in testing only. Events are pushed, but can be ignored by clients
+        Although this command is part of the simulator API, it is not part of
+        the API of the actual/prime mission equipment DS Controller.
+        """
+        LOGGER.info("Called ResetToDefault")
+
+        self._operating_mode = DSOperatingMode.STANDBY_LP
+        self.push_change_event(
+            "operatingMode",
+            self._operating_mode,
+        )
+        self._configured_band = Band.NONE
+        self.push_change_event(
+            "configuredBand",
+            self._configured_band,
+        )
+        self._power_state = DSPowerState.OFF
+        self.push_change_event(
+            "powerState",
+            self._power_state,
+        )
+        self._health_state = HealthState.UNKNOWN
+        self.push_change_event(
+            "healthState",
+            self._health_state,
+        )
+        self._indexer_position = IndexerPosition.UNKNOWN
+        self.push_change_event(
+            "indexerPosition",
+            self._indexer_position,
+        )
+        self._pointing_state = PointingState.UNKNOWN
+        self.push_change_event(
+            "pointingState",
+            self._pointing_state,
+        )
+        self._achieved_pointing = [0.0, 0.0, 30.0]
+        self.push_change_event(
+            "achievedPointing",
+            self._achieved_pointing,
+        )
+        self._desired_pointing = [0.0, 0.0, 30.0]
+        self.push_change_event(
+            "desiredPointing",
+            self._desired_pointing,
+        )
+
 
 def main():
     """Script entrypoint"""

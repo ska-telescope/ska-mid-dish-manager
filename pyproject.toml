@@ -23,7 +23,7 @@ include = [
 ]
 
 [tool.poetry.scripts]
-DishManagerDS = 'ska_mid_dish_manager.devices.dish_manager:main'
+DishManagerDS = 'ska_mid_dish_manager.devices.DishManagerDS:main'
 DishManagerTestDevice = 'ska_mid_dish_manager.devices.test_devices.DishManagerTestDevice:main'
 DSDevice = 'ska_mid_dish_manager.devices.test_devices.DSDevice:main'
 
@@ -35,7 +35,8 @@ url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 python = "^3.10"
 pytango = "9.3.6"
 ska-ser-logging = "^0.4.1"
-ska-tango-base = "0.16.0"
+# ska-tango-base = "0.16.0"
+ska-tango-base = { git = "https://gitlab.com/ska-telescope/ska-tango-base.git", branch = "kar-497-update-task-callback-params" }
 ska-tango-testing = "0.2.0"
 pytest-timeout = "^2.1.0"
 networkx = "2.6.3"

@@ -8,6 +8,7 @@ and the subservient devices
 
 import json
 import logging
+import os
 import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
@@ -15,7 +16,15 @@ from typing import List, Optional, Tuple
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, DebugIt, DevFloat, DevVarDoubleArray, DispLevel
+from tango import (
+    AttrWriteType,
+    Database,
+    DbDevInfo,
+    DebugIt,
+    DevFloat,
+    DevVarDoubleArray,
+    DispLevel,
+)
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -1217,4 +1226,15 @@ def main(args=None, **kwargs):
 
 
 if __name__ == "__main__":
+    db = Database()
+    test_device = DbDevInfo()
+    if "DEVICE_NAME" in os.environ:
+        # DEVICE_NAME should be in the format domain/family/member
+        test_device.name = os.environ["DEVICE_NAME"]
+    else:
+        # fall back to default name
+        test_device.name = "mid_d0001/elt/master"
+    test_device._class = "DishManager"
+    test_device.server = "DishManagerDS/01"
+    db.add_server(test_device.server, test_device, with_dserver=True)
     main()

@@ -41,6 +41,9 @@ dishmanager:
     tag: 1.8.1
     pullPolicy: IfNotPresent
 
+dev_pod:
+  enabled: false
+
 resources:
   limits:
     cpu: 300m

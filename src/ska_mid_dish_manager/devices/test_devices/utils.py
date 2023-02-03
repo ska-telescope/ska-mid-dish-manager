@@ -292,15 +292,26 @@ def set_configuredBand_b1():
     ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
     spf_device = tango.DeviceProxy("mid_d0001/spf/simulator")
     spfrx_device = tango.DeviceProxy("mid_d0001/spfrx/simulator")
+    dm_device = tango.DeviceProxy("mid_d0001/elt/master")
+
+    config_band_event_store = EventStore()
+
+    dm_device.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        config_band_event_store,
+    )
 
     ds_device.indexerPosition = IndexerPosition.B1
-    spf_device.bandinfocus = BandInFocus.B1
+    spf_device.bandInFocus = BandInFocus.B1
     spfrx_device.configuredband = Band.B1
+
+    config_band_event_store.wait_for_value(Band.B1)
 
 
 def set_configuredBand_b2():
     """
-    Set B2 configuredBand
+    Set B1 configuredBand
     Rules:
         DS.indexerposition  == 'IndexerPosition.B2'
         SPFRX.configuredband  == 'Band.B2'
@@ -309,7 +320,18 @@ def set_configuredBand_b2():
     ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
     spf_device = tango.DeviceProxy("mid_d0001/spf/simulator")
     spfrx_device = tango.DeviceProxy("mid_d0001/spfrx/simulator")
+    dm_device = tango.DeviceProxy("mid_d0001/elt/master")
+
+    config_band_event_store = EventStore()
+
+    dm_device.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        config_band_event_store,
+    )
 
     ds_device.indexerPosition = IndexerPosition.B2
-    spf_device.bandinfocus = BandInFocus.B2
+    spf_device.bandInFocus = BandInFocus.B2
     spfrx_device.configuredband = Band.B2
+
+    config_band_event_store.wait_for_value(Band.B2)

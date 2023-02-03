@@ -4,7 +4,7 @@ import os
 
 from tango import Database, DbDevInfo
 
-from ska_mid_dish_manager.devices.dish_manager import DishManager
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 
 
 class DishManagerTestDevice(DishManager):

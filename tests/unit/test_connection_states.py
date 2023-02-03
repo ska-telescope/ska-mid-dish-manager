@@ -6,7 +6,7 @@ import tango
 from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.devices.dish_manager import DishManager
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 
 
 # pylint:disable=attribute-defined-outside-init
