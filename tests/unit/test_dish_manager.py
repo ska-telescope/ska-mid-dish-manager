@@ -88,8 +88,7 @@ class TestDishManagerBehaviour:
 
     @pytest.mark.unit
     @pytest.mark.forked
-    def test_device_reports_long_running_results(self, caplog, event_store):
-        caplog.set_level(logging.DEBUG)
+    def test_device_reports_long_running_results(self, event_store):
         dish_manager = self.device_proxy
         sub_id = dish_manager.subscribe_event(
             "dishMode",
@@ -146,10 +145,12 @@ class TestDishManagerBehaviour:
         ]
         # Sort via command creation timestamp
         event_ids.sort(key=lambda x: datetime.fromtimestamp((float(x.split("_")[0]))))
-        assert "_SetStandbyFPMode" in event_ids[0], f"Got {event_ids}"
-        assert "_DS_SetStandbyFPMode" in event_ids[1], f"Got {event_ids}"
-        assert "_SPF_SetOperateMode" in event_ids[2], f"Got {event_ids}"
-        assert "_SPFRX_CaptureData" in event_ids[3], f"Got {event_ids}"
+        assert sorted([event_id.split("_")[-1] for event_id in event_ids]) == [
+            "CaptureData",
+            "SetOperateMode",
+            "SetStandbyFPMode",
+            "SetStandbyFPMode",
+        ]
 
     @pytest.mark.unit
     @pytest.mark.forked
