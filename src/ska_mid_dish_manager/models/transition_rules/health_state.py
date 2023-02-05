@@ -56,22 +56,8 @@ HEALTH_STATE_RULES = {
         "SPFRX.healthstate == 'HealthState.NORMAL'"
     ),
     "UNKNOWN": rule_engine.Rule(
-        "("
-        "    DS.healthstate == 'HealthState.UNKNOWN' and "
-        "    SPF.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN'] and "
-        "    SPFRX.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN']"
-        ") "
-        "or "
-        "("
-        "    DS.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN'] and "
-        "    SPF.healthstate == 'HealthState.UNKNOWN' and "
-        "    SPFRX.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN']"
-        ") "
-        "or "
-        "("
-        "    DS.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN'] and "
-        "    SPF.healthstate in ['HealthState.NORMAL', 'HealthState.UNKNOWN'] and "
-        "    SPFRX.healthstate == 'HealthState.UNKNOWN'"
-        ")"
+        "DS.healthstate == 'HealthState.UNKNOWN' or "
+        "SPF.healthstate == 'HealthState.UNKNOWN' or "
+        "SPFRX.healthstate == 'HealthState.UNKNOWN'"
     ),
 }
