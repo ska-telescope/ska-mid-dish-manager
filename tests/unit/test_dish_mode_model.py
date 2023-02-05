@@ -6,13 +6,16 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
     DSOperatingMode,
-    HealthState,
     IndexerPosition,
     SPFBandInFocus,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
-from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
+from ska_mid_dish_manager.models.dish_mode_model import (
+    CommandNotAllowed,
+    DishModeModel,
+    HealthState,
+)
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 
@@ -182,10 +185,10 @@ def test_compute_dish_mode(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
         (
-            dict(healthstate=HealthState.NORMAL),
-            dict(healthstate=HealthState.NORMAL),
-            dict(healthstate=HealthState.NORMAL),
-            HealthState.NORMAL,
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
+            HealthState.OK,
         ),
         (
             dict(healthstate=HealthState.DEGRADED),
@@ -207,42 +210,42 @@ def test_compute_dish_mode(
         ),
         (
             dict(healthstate=HealthState.DEGRADED),
-            dict(healthstate=HealthState.NORMAL),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
             HealthState.DEGRADED,
         ),
         (
             dict(healthstate=HealthState.FAILED),
-            dict(healthstate=HealthState.NORMAL),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
             HealthState.FAILED,
         ),
         (
             dict(healthstate=HealthState.UNKNOWN),
-            dict(healthstate=HealthState.NORMAL),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
             HealthState.UNKNOWN,
         ),
         (
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             dict(healthstate=HealthState.DEGRADED),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             HealthState.DEGRADED,
         ),
         (
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             dict(healthstate=HealthState.FAILED),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             HealthState.FAILED,
         ),
         (
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             dict(healthstate=HealthState.UNKNOWN),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             HealthState.UNKNOWN,
         ),
         (
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             dict(healthstate=HealthState.DEGRADED),
             dict(healthstate=HealthState.DEGRADED),
             HealthState.DEGRADED,
