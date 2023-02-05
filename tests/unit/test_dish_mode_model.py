@@ -14,10 +14,9 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.models.dish_mode_model import (
     CommandNotAllowed,
     DishModeModel,
-    HealthState,
 )
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
-
+from ska_control_model import HealthState
 
 # pylint: disable=missing-function-docstring, redefined-outer-name
 @pytest.fixture(scope="module")
