@@ -115,6 +115,12 @@ def test_model_dish_mode_transition_accuracy(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
+            dict(operatingmode=DSOperatingMode.STANDBY_LP),
+            dict(operatingmode=SPFOperatingMode.STARTUP),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.STARTUP,
+        ),
+        (
             dict(operatingmode=DSOperatingMode.STOW),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             dict(operatingmode=SPFRxOperatingMode.CONFIGURE),
