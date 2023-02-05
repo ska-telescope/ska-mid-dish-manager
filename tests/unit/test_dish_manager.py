@@ -45,7 +45,6 @@ def test_dish_manager_remains_in_startup_on_error(patched_tango, caplog):
         assert device_proxy.ping.call_count >= 5
         # check that dishmanager remained in startup
         assert dish_manager.dishMode == DishMode.STARTUP
-        dish_manager.AbortCommands()
 
 
 class TestDishManagerBehaviour:
