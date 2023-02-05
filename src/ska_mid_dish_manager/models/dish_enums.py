@@ -115,13 +115,6 @@ class TrackTableLoadMode(enum.IntEnum):
     NEW = 1
 
 
-class HealthState(enum.IntEnum):
-    UNKNOWN = 0
-    NORMAL = 1
-    DEGRADED = 2
-    FAILED = 3
-
-
 class PowerState(enum.IntEnum):
     UPS = 0
     LOW = 1
