@@ -39,4 +39,9 @@ DISH_MODE_RULES = {
         "SPFRX.operatingmode  == 'SPFRxOperatingMode.STANDBY'"
     ),
     "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
+    "STARTUP": rule_engine.Rule(
+        "DS.operatingmode  == 'DSOperatingMode.STARTUP' or "
+        "SPF.operatingmode  == 'SPFOperatingMode.STARTUP' or "
+        "SPFRX.operatingmode  == 'SPFRxOperatingMode.STARTUP'"
+    ),
 }
