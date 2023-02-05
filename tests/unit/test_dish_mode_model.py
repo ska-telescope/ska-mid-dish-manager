@@ -1,6 +1,7 @@
 """Unit tests verifying model against dishMode transitions."""
 
 import pytest
+from ska_control_model import HealthState
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -11,12 +12,9 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
-from ska_mid_dish_manager.models.dish_mode_model import (
-    CommandNotAllowed,
-    DishModeModel,
-)
+from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
-from ska_control_model import HealthState
+
 
 # pylint: disable=missing-function-docstring, redefined-outer-name
 @pytest.fixture(scope="module")
