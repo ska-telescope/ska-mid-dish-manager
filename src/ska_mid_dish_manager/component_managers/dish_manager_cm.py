@@ -229,9 +229,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if (
             "healthstate" in kwargs
-            and "healthstate" in ds_component_state
-            and "healthstate" in spf_component_state
-            and "healthstate" in spfrx_component_state
+            or "healthstate" in ds_component_state
+            or "healthstate" in spf_component_state
+            or "healthstate" in spfrx_component_state
         ):
             self.logger.info(
                 ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
@@ -263,18 +263,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # TODO discuss the reason for this code
         # spf bandInFocus
-        # if "indexerposition" in ds_component_state and "configuredband" in spfrx_component_state:
-        # band_in_focus = self._state_transition.compute_spf_band_in_focus(
-        #     ds_component_state, spfrx_component_state
-        # )
-        # # pylint: disable=protected-access
-        # # update the bandInFocus of SPF before configuredBand
-        # spf_proxy = self.sub_component_managers["SPF"]._device_proxy
-        # # component state changed for DS and SPFRx may be triggered while
-        # # SPF device proxy is not initialised. Write to the bandInFocus
-        # # only when you have the device proxy
-        # if spf_proxy:
-        #     spf_proxy.write_attribute("bandInFocus", band_in_focus)
+        if "indexerposition" in kwargs and "configuredband" in kwargs:
+            band_in_focus = self._state_transition.compute_spf_band_in_focus(
+                ds_component_state, spfrx_component_state
+            )
+            # pylint: disable=protected-access
+            # update the bandInFocus of SPF before configuredBand
+            spf_proxy = self.sub_component_managers["SPF"]._device_proxy
+            # component state changed for DS and SPFRx may be triggered while
+            # SPF device proxy is not initialised. Write to the bandInFocus
+            # only when you have the device proxy
+            if spf_proxy:
+                spf_proxy.write_attribute("bandInFocus", band_in_focus)
 
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
@@ -336,14 +336,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def sync_component_states(self):
         """
-        Clear all subservient devices monitored attributes from their component states,
+        Sync monitored attributes on component managers with their respective sub devices
+
+        Clear the monitored attributes of all subservient device component managers,
         then re-read all the monitored attributes from their respective tango device
-        to force dishManager to recalculate it's attributes.
+        to force dishManager to recalculate its attributes.
         """
         if self.sub_component_managers:
-            for comp_man in self.sub_component_managers.values():
-                comp_man.clear_monitored_attributes()
-                comp_man.update_state_from_monitored_attributes()
+            for component_manager in self.sub_component_managers.values():
+                component_manager.clear_monitored_attributes()
+                component_manager.update_state_from_monitored_attributes()
 
     def start_communicating(self):
         """Connect from monitored devices"""
