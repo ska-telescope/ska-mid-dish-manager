@@ -261,9 +261,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             elif ds_component_state["pointingstate"] == PointingState.TRACK:
                 self._update_component_state(achievedtargetlock=True)
 
-        # TODO discuss the reason for this code
         # spf bandInFocus
-        if "indexerposition" in kwargs and "configuredband" in kwargs:
+        if "indexerposition" in kwargs or "configuredband" in kwargs:
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
                 ds_component_state, spfrx_component_state
             )
