@@ -83,7 +83,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.component_managers["DS"] = DSComponentManager(
             ds_device_fqdn,
             logger,
-            operatingmode=DSOperatingMode.STARTUP,
+            operatingmode=DSOperatingMode.UNKNOWN,
             pointingstate=None,
             achievedtargetlock=None,
             indexerposition=IndexerPosition.UNKNOWN,
@@ -95,7 +95,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.component_managers["SPFRX"] = SPFRxComponentManager(
             spfrx_device_fqdn,
             logger,
-            operatingmode=SPFRxOperatingMode.STARTUP,
+            operatingmode=SPFRxOperatingMode.UNKNOWN,
             configuredband=Band.NONE,
             capturingdata=False,
             healthstate=HealthState.UNKNOWN,
@@ -111,7 +111,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.component_managers["SPF"] = SPFComponentManager(
             spf_device_fqdn,
             logger,
-            operatingmode=SPFOperatingMode.STARTUP,
+            operatingmode=SPFOperatingMode.UNKNOWN,
             powerstate=SPFPowerState.UNKNOWN,
             healthstate=HealthState.UNKNOWN,
             bandinfocus=BandInFocus.UNKNOWN,
@@ -126,7 +126,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         initial_component_states = {
-            "dishmode": DishMode.STARTUP,
+            "dishmode": DishMode.UNKNOWN,
             "healthstate": HealthState.UNKNOWN,
             "configuredband": Band.NONE,
             "capturing": False,
