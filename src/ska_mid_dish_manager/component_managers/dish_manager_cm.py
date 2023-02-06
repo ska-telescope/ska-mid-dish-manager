@@ -229,9 +229,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if (
             "healthstate" in kwargs
-            or "healthstate" in ds_component_state
-            or "healthstate" in spf_component_state
-            or "healthstate" in spfrx_component_state
+            and "healthstate" in ds_component_state
+            and "healthstate" in spf_component_state
+            and "healthstate" in spfrx_component_state
         ):
             self.logger.info(
                 ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
