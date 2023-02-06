@@ -182,7 +182,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         for monitored_attribute in self._monitored_attributes:
             attribute_name = monitored_attribute.attr_name.lower()
 
-            # Delete it from the component state if it is there
+            # Update it in the component state if it is there
             if attribute_name in self._component_state:
                 self._component_state[attribute_name] = 0
 

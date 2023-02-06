@@ -1,4 +1,4 @@
-"""Tests for running ska-mid-dish-manager acceptance tests"""
+"""Fixtures for running ska-mid-dish-manager acceptance tests"""
 
 import pytest
 import tango
