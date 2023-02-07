@@ -60,7 +60,7 @@ include:
 
 # use test image with tango installed
 k8s-test-runner:
-  image: registry.gitlab.com/ska-telescope/ska-mid-dish-manager/ska-mid-dish-manager:2.0.0-dev.$CI_COMMIT_SHORT_SHA
+  image: registry.gitlab.com/ska-telescope/ska-mid-dish-manager/ska-mid-dish-manager:2.0.0-dev.c$CI_COMMIT_SHORT_SHA
   before_script:
     - echo "Install k8s-tools dependencies"
     - sudo apt-get install wget
