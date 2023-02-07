@@ -7,7 +7,7 @@ import pytest
 import tango
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.devices.dish_manager import DishManager
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
@@ -45,6 +45,11 @@ class TestConfigureBand2:
         self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
         self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
+
+        self.ds_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spf_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
@@ -55,24 +60,36 @@ class TestConfigureBand2:
         """Tear down context"""
         self.tango_context.stop()
 
-    def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(self, event_store, caplog):
+    def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
+        self, event_store_class, caplog
+    ):
         """Test ConfigureBand"""
         caplog.set_level(logging.DEBUG)
-        attributes_to_subscribe_to = (
+
+        main_event_store = event_store_class()
+        progress_event_store = event_store_class()
+
+        for attr in [
             "dishMode",
             "longRunningCommandResult",
             "configuredBand",
-        )
-        for attribute_name in attributes_to_subscribe_to:
+        ]:
             self.device_proxy.subscribe_event(
-                attribute_name,
+                attr,
                 tango.EventType.CHANGE_EVENT,
-                event_store,
+                main_event_store,
             )
-        assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=5)
+
+        self.device_proxy.subscribe_event(
+            "longRunningCommandProgress",
+            tango.EventType.CHANGE_EVENT,
+            progress_event_store,
+        )
+
+        assert main_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=5)
 
         # Clear out the queue to make sure we don't catch old events
-        event_store.clear_queue()
+        main_event_store.clear_queue()
 
         [[_], [unique_id]] = self.device_proxy.SetStandbyFPMode()
 
@@ -80,7 +97,7 @@ class TestConfigureBand2:
         self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
 
-        assert event_store.wait_for_command_id(unique_id, timeout=6)
+        assert main_event_store.wait_for_command_id(unique_id, timeout=6)
         assert self.device_proxy.dishMode == DishMode.STANDBY_FP
 
         # Request ConfigureBand2 on Dish manager
@@ -91,5 +108,23 @@ class TestConfigureBand2:
         self.ds_cm._update_component_state(indexerposition=IndexerPosition.B2)
         self.spf_cm._update_component_state(bandinfocus=BandInFocus.B2)
 
-        assert event_store.wait_for_command_id(unique_id, timeout=5)
+        assert main_event_store.wait_for_command_id(unique_id, timeout=5)
         assert self.device_proxy.configuredBand == Band.B2
+
+        expected_progress_updates = [
+            "SetIndexPosition called on DS",
+            "ConfigureBand2 called on SPFRx, ID",
+            "Awaiting configuredband to transition to [B2]",
+            "ConfigureBand2 completed",
+        ]
+
+        events = progress_event_store.wait_for_progress_update(
+            expected_progress_updates[-1], timeout=6
+        )
+
+        events_string = "".join([str(event) for event in events])
+
+        # Check that all the expected progress messages appeared
+        # in the event store
+        for message in expected_progress_updates:
+            assert message in events_string

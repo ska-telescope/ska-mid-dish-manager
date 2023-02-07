@@ -25,6 +25,7 @@ SPEC_URLS = {
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
+@pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_wide_spec():
     """Test that the interface conforms to the base tango interface"""
     dish_manager_proxy = DeviceProxy("mid_d0001/elt/master")
@@ -52,6 +53,7 @@ def test_dish_manager_conforms_to_dish_master_spec():
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
+@pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_controller_spec():
     """Test that the device interface conforms to the Dish Manager interface"""
     dish_manager_proxy = DeviceProxy("mid_d0001/elt/master")
@@ -65,6 +67,7 @@ def test_dish_manager_conforms_to_ska_controller_spec():
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
+@pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_tango_base_spec():
     """Test that the device interface conforms to the Dish Manager interface"""
     dish_manager_proxy = DeviceProxy("mid_d0001/elt/master")

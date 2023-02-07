@@ -36,6 +36,12 @@ OCI_TAG = $(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
 
 CI_REGISTRY ?= registry.gitlab.com
 
+PYTHON_SWITCHES_FOR_BLACK ?= --line-length 99
+
+PYTHON_SWITCHES_FOR_ISORT ?= -w 99
+
+PYTHON_SWITCHES_FOR_FLAKE8 ?= --max-line-length=99
+
 # Use the previously built image when running in the pipeline
 ifneq ($(CI_JOB_ID),)
 CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \

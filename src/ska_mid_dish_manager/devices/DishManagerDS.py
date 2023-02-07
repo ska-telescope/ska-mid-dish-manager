@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 # pylint: disable=C0302,W0212
 """
 This module implements the dish manager device for DishLMC.
@@ -8,6 +9,7 @@ and the subservient devices
 
 import json
 import logging
+import os
 import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
@@ -15,7 +17,15 @@ from typing import List, Optional, Tuple
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, DebugIt, DevFloat, DevVarDoubleArray, DispLevel
+from tango import (
+    AttrWriteType,
+    Database,
+    DbDevInfo,
+    DebugIt,
+    DevFloat,
+    DevVarDoubleArray,
+    DispLevel,
+)
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -1197,6 +1207,19 @@ class DishManager(SKAController):
             component_states[device] = component_state._component_state
         return json.dumps(component_states)
 
+    @command(
+        dtype_in=None,
+        dtype_out=None,
+        display_level=DispLevel.OPERATOR,
+    )
+    def SyncComponentStates(self) -> None:
+        """
+        Sync each subservient device component state with its tango device
+        to refresh the dish manager component state.
+        """
+        if hasattr(self, "component_manager"):
+            self.component_manager.sync_component_states()
+
 
 def main(args=None, **kwargs):
     """Launch a DishManager device."""
@@ -1204,4 +1227,15 @@ def main(args=None, **kwargs):
 
 
 if __name__ == "__main__":
+    db = Database()
+    test_device = DbDevInfo()
+    if "DEVICE_NAME" in os.environ:
+        # DEVICE_NAME should be in the format domain/family/member
+        test_device.name = os.environ["DEVICE_NAME"]
+    else:
+        # fall back to default name
+        test_device.name = "mid_d0001/elt/master"
+    test_device._class = "DishManager"
+    test_device.server = "DishManagerDS/01"
+    db.add_server(test_device.server, test_device, with_dserver=True)
     main()

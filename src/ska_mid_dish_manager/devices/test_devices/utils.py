@@ -127,6 +127,41 @@ class EventStore:
                 f" but got [{event_info}]",
             ) from err
 
+    def wait_for_progress_update(self, progress_message: str, timeout: int = 5):
+        """Wait for a long running command progress update
+
+        Wait `timeout` seconds for each fetch.
+
+        :param progress_message: The progress message to wait for
+        :type progress_message: str
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If none are found
+        :return: The result of the long running command
+        :rtype: str
+        """
+        events = []
+        try:
+            while True:
+                event = self._queue.get(timeout=timeout)
+                events.append(event)
+                if not event.attr_value:
+                    continue
+                if not isinstance(event.attr_value.value, tuple):
+                    continue
+                progress_update = str(event.attr_value.value)
+                if (
+                    progress_message in progress_update
+                    and event.attr_value.name == "longrunningcommandprogress"
+                ):
+                    return events
+        except queue.Empty as err:
+            event_info = [(event.attr_value.name, event.attr_value.value) for event in events]
+            raise RuntimeError(
+                f"Never got a progress update with [{progress_message}],",
+                f" but got [{event_info}]",
+            ) from err
+
     @classmethod
     def filter_id_events(
         cls, events: List[tango.EventData], unique_id: str
@@ -240,10 +275,10 @@ def set_dish_manager_to_standby_lp(event_store, dish_manager_proxy):
         # Set it to a known mode, can Stow from any state
         if dish_manager_proxy.dishMode != DishMode.STOW:
             dish_manager_proxy.SetStowMode()
-            event_store.wait_for_value(DishMode.STOW, timeout=10)
+            event_store.wait_for_value(DishMode.STOW)
 
         dish_manager_proxy.SetStandbyLPMode()
-        event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
+        event_store.wait_for_value(DishMode.STANDBY_LP)
 
 
 def set_configuredBand_b1():
@@ -257,15 +292,26 @@ def set_configuredBand_b1():
     ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
     spf_device = tango.DeviceProxy("mid_d0001/spf/simulator")
     spfrx_device = tango.DeviceProxy("mid_d0001/spfrx/simulator")
+    dm_device = tango.DeviceProxy("mid_d0001/elt/master")
+
+    config_band_event_store = EventStore()
+
+    dm_device.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        config_band_event_store,
+    )
 
     ds_device.indexerPosition = IndexerPosition.B1
-    spf_device.bandinfocus = BandInFocus.B1
+    spf_device.bandInFocus = BandInFocus.B1
     spfrx_device.configuredband = Band.B1
+
+    config_band_event_store.wait_for_value(Band.B1)
 
 
 def set_configuredBand_b2():
     """
-    Set B2 configuredBand
+    Set B1 configuredBand
     Rules:
         DS.indexerposition  == 'IndexerPosition.B2'
         SPFRX.configuredband  == 'Band.B2'
@@ -274,7 +320,18 @@ def set_configuredBand_b2():
     ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
     spf_device = tango.DeviceProxy("mid_d0001/spf/simulator")
     spfrx_device = tango.DeviceProxy("mid_d0001/spfrx/simulator")
+    dm_device = tango.DeviceProxy("mid_d0001/elt/master")
+
+    config_band_event_store = EventStore()
+
+    dm_device.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        config_band_event_store,
+    )
 
     ds_device.indexerPosition = IndexerPosition.B2
-    spf_device.bandinfocus = BandInFocus.B2
+    spf_device.bandInFocus = BandInFocus.B2
     spfrx_device.configuredband = Band.B2
+
+    config_band_event_store.wait_for_value(Band.B2)

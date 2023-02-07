@@ -7,8 +7,8 @@ import pytest
 import tango
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.devices.dish_manager import DishManager
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
+from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,18 +37,37 @@ class TestStowMode:
     # pylint: disable=missing-function-docstring, protected-access
     def test_stow_mode(
         self,
-        event_store,
+        event_store_class,
     ):
+        main_event_store = event_store_class()
+        progress_event_store = event_store_class()
+
         device_proxy = self.tango_context.device
         device_proxy.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,
-            event_store,
+            main_event_store,
+        )
+
+        device_proxy.subscribe_event(
+            "longRunningCommandProgress",
+            tango.EventType.CHANGE_EVENT,
+            progress_event_store,
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
-        ds_cm = class_instance.component_manager.sub_component_managers["DS"]
 
-        # Pretend DS goes into STOW
+        ds_cm = class_instance.component_manager.sub_component_managers["DS"]
+        spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
+        spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+
+        ds_cm.update_state_from_monitored_attributes = MagicMock()
+        spf_cm.update_state_from_monitored_attributes = MagicMock()
+        spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
+        device_proxy.SetStowMode()
+
+        progress_event_store.wait_for_progress_update("Stow called on DS")
+        progress_event_store.wait_for_progress_update("Waiting for dishMode change to STOW")
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
-        event_store.wait_for_value(DishMode.STOW)
+        progress_event_store.wait_for_progress_update("Stow completed")

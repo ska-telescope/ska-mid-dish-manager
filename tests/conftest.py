@@ -112,6 +112,12 @@ def event_store():  # pylint: disable=too-many-statements
 
 
 @pytest.fixture(scope="function")
+def event_store_class():  # pylint: disable=too-many-statements
+    """Fixture for storing events"""
+    return EventStore
+
+
+@pytest.fixture(scope="function")
 def component_state_store():
     """Fixture for storing component state changes over time"""
 

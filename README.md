@@ -3,7 +3,6 @@ Dish Manager
 
 [![Documentation Status](https://readthedocs.org/projects/ska-telescope-ska-mid-dish-manager/badge/?version=latest)](https://developer.skao.int/projects/ska-mid-dish-manager/en/latest/?badge=latest)
 
-
 This device provides master control and rolled-up monitoring of dish. When commanded, it propagates the associated command to the relevant subservient devices and updates its related attributes based on the aggregation of progress reported by those devices.
 
 ## Requirements
@@ -29,7 +28,7 @@ pip install poetry
 Install the dependencies and the package.
 
 ```bash
-$ poetry install
+poetry install
 ```
 
 ## Testing
@@ -46,5 +45,30 @@ make python-test
 make python-lint
 ```
 
+## Development
+
+### Deploy the chart with simulators
+
+- Deploy the chart with simulator devices
+
+```
+helm upgrade --install dev . -n dev --set "global.minikube=true" --set "ska-mid-dish-simulators.enabled=true" --set "deviceServers.dsdevice.enabled=true" 
+```
+
+### Deploy for development
+
+- Deploy the chart, but replace the dishmanager pod with a development pod for testing DishManager
+
+```
+helm upgrade --install dev . -n dev --set "global.minikube=true" --set "ska-mid-dish-simulators.enabled=true" --set "deviceServers.dsdevice.enabled=true" --set="dev_pod.enabled=true" --set "deviceServers.dsdevice.enabled=true" --set "deviceServers.dishmanager.enabled=false" 
+```
+
+- Then start DishManager in the commandline
+
+```
+/usr/bin/python3 /app/src/ska_mid_dish_manager/devices/DishManagerDS.py 01
+```
+
 ## Writing documentation
+
 The documentation for this project, including how to get started with it, can be found in the docs folder.

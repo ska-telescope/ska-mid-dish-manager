@@ -7,8 +7,9 @@ import pytest
 import tango
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.devices.dish_manager import DishManager
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
+    Band,
     DishMode,
     DSOperatingMode,
     DSPowerState,
@@ -43,6 +44,11 @@ class TestSetStandByFPMode:
         self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
         self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
+
+        self.ds_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spf_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
@@ -53,24 +59,32 @@ class TestSetStandByFPMode:
         """Tear down context"""
         self.tango_context.stop()
 
-    def test_standby_fp(self, event_store):
+    def test_standby_fp(self, event_store_class):
         """Execute tests"""
+        dish_mode_event_store = event_store_class()
+        progress_event_store = event_store_class()
+
         self.device_proxy.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,
-            event_store,
+            dish_mode_event_store,
         )
+
         self.device_proxy.subscribe_event(
-            "longRunningCommandResult",
+            "longRunningCommandProgress",
             tango.EventType.CHANGE_EVENT,
-            event_store,
+            progress_event_store,
         )
-        assert event_store.wait_for_value(DishMode.STANDBY_LP)
-        # Clear out the queue to make sure we don't catch old events
-        event_store.clear_queue()
+
+        assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
+
+        self.dish_manager_cm._update_component_state(configuredband=Band.B2)
 
         # Transition DishManager to STANDBY_FP mode
         self.device_proxy.SetStandbyFPMode()
+
+        # Clear out the queue to make sure we don't catch old events
+        dish_mode_event_store.clear_queue()
 
         # transition subservient devices to FP mode and observe that
         # DishManager transitions dishMode to FP mode after all
@@ -81,4 +95,22 @@ class TestSetStandByFPMode:
         self.spf_cm._update_component_state(powerstate=SPFPowerState.FULL_POWER)
         self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
         #  we can now expect dishMode to transition to STANDBY_FP
-        assert event_store.wait_for_value(DishMode.STANDBY_FP)
+        assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
+
+        expected_progress_updates = [
+            "SetStandbyFPMode called on DS",
+            "SetOperateMode called on SPF",
+            "Awaiting dishMode change to STANDBY_FP",
+            "SetStandbyFPMode completed",
+        ]
+
+        events = progress_event_store.wait_for_progress_update(
+            expected_progress_updates[-1], timeout=6
+        )
+
+        events_string = "".join([str(event.attr_value.value) for event in events])
+
+        # Check that all the expected progress messages appeared
+        # in the event store
+        for message in expected_progress_updates:
+            assert message in events_string

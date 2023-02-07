@@ -1,0 +1,44 @@
+# Command to run server:
+# 
+# /usr/bin/python3 /app/src/ska_mid_dish_manager/devices/dish_manager.py 01 -ORBendPoint giop:tcp::${TANGO_SERVER_PORT} -ORBendPointPublish giop:tcp:${TANGO_SERVER_PUBLISH_HOSTNAME}:${TANGO_SERVER_PORT}
+
+{{- if .Values.dev_pod.enabled }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: devpod
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: dev
+spec:
+  containers:
+  - name: devpod
+    image: "{{ .Values.dishmanager.image.registry }}/{{ .Values.dishmanager.image.image }}:{{ .Values.dishmanager.image.tag }}"
+    imagePullPolicy: IfNotPresent
+    command:
+    - /bin/sh
+    - -c
+    args:
+    - while true; do sleep 20; done
+    stdin: true
+    stdinOnce: true
+    tty: true
+    workingDir: "/home/tango"
+    env:
+    - name: TANGO_HOST
+      value: {{ .Values.global.tango_host }}
+    - name: TANGO_SERVER_PORT
+      value: "45450"
+    - name: TANGO_ZMQ_HEARTBEAT_PORT
+      value: "45460"
+    - name: TANGO_ZMQ_EVENT_PORT
+      value: "45470"
+    - name: TANGO_SERVER_PUBLISH_HOSTNAME
+      value: dishmanager-01.{{ .Release.Namespace }}.svc.cluster.local
+    ports:
+    - containerPort: 22
+      name: ssh
+      protocol: TCP
+
+{{- end }}

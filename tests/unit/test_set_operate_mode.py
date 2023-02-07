@@ -7,7 +7,7 @@ import pytest
 import tango
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.devices.dish_manager import DishManager
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
@@ -59,6 +59,11 @@ class TestSetOperateMode:
         ds_cm = class_instance.component_manager.sub_component_managers["DS"]
         spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+
+        ds_cm.update_state_from_monitored_attributes = MagicMock()
+        spf_cm.update_state_from_monitored_attributes = MagicMock()
+        spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
         # Force dishManager dishMode to go to OPERATE
         ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
@@ -72,8 +77,11 @@ class TestSetOperateMode:
 
     def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
         self,
-        event_store,
+        event_store_class,
     ):
+        main_event_store = event_store_class()
+        progress_event_store = event_store_class()
+
         device_proxy = self.tango_context.device
         for attr in [
             "dishMode",
@@ -84,21 +92,32 @@ class TestSetOperateMode:
             device_proxy.subscribe_event(
                 attr,
                 tango.EventType.CHANGE_EVENT,
-                event_store,
+                main_event_store,
             )
+
+        device_proxy.subscribe_event(
+            "longRunningCommandProgress",
+            tango.EventType.CHANGE_EVENT,
+            progress_event_store,
+        )
 
         class_instance = DishManager.instances.get(device_proxy.name())
         ds_cm = class_instance.component_manager.sub_component_managers["DS"]
         spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
         spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+
+        ds_cm.update_state_from_monitored_attributes = MagicMock()
+        spf_cm.update_state_from_monitored_attributes = MagicMock()
+        spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
         # Force dishManager dishMode to go to STANDBY_FP
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
-        event_store.wait_for_value(DishMode.STANDBY_FP)
+        main_event_store.wait_for_value(DishMode.STANDBY_FP)
 
         # Clear out the queue to make sure we don't catch old events
-        event_store.clear_queue()
+        main_event_store.clear_queue()
 
         # Transition DishManager to OPERATE mode
         # configuredBand not set
@@ -109,7 +128,7 @@ class TestSetOperateMode:
         ds_cm._update_component_state(indexerposition=IndexerPosition.B1)
         spf_cm._update_component_state(bandinfocus=BandInFocus.B1)
         spfrx_cm._update_component_state(configuredband=Band.B1)
-        event_store.wait_for_value(Band.B1)
+        main_event_store.wait_for_value(Band.B1)
 
         device_proxy.SetOperateMode()
 
@@ -119,6 +138,25 @@ class TestSetOperateMode:
         ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
         spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
         # we can now expect dishMode to transition to OPERATE
-        event_store.wait_for_value(DishMode.OPERATE)
+        main_event_store.wait_for_value(DishMode.OPERATE)
         ds_cm._update_component_state(pointingstate=PointingState.READY)
-        event_store.wait_for_value(PointingState.READY)
+        main_event_store.wait_for_value(PointingState.READY)
+
+        expected_progress_updates = [
+            "SetPointMode called on DS",
+            "SetOperateMode called on SPF",
+            "CaptureData called on SPFRx",
+            "Awaiting dishMode change to OPERATE",
+            "SetOperateMode completed",
+        ]
+
+        events = progress_event_store.wait_for_progress_update(
+            expected_progress_updates[-1], timeout=6
+        )
+
+        events_string = "".join([str(event.attr_value.value) for event in events])
+
+        # Check that all the expected progress messages appeared
+        # in the event store
+        for message in expected_progress_updates:
+            assert message in events_string
