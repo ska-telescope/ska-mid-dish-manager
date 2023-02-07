@@ -53,7 +53,7 @@ class TestConnectionStates:
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
-        component_manager = class_instance.component_manager.component_managers[sub_device]
+        component_manager = class_instance.component_manager.sub_component_managers[sub_device]
 
         # We expect the connectionState to intially be ESTABLISHED
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
