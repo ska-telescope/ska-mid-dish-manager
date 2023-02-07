@@ -48,6 +48,7 @@ class DSComponentManager(TangoDeviceComponentManager):
 
     def _update_component_state(self, **kwargs):
         """Update the int we get from the event to the Enum"""
+
         enum_conversion = {
             "operatingmode": DSOperatingMode,
             "powerstate": DSPowerState,

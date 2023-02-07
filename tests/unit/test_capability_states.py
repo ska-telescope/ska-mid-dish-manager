@@ -7,7 +7,7 @@ import pytest
 import tango
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.devices.dish_manager import DishManager
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     DishMode,
@@ -317,4 +317,28 @@ class TestCapabilityStates:
         self.spfrx_cm._update_component_state(b5acapabilitystate=SPFRxCapabilityStates.OPERATE)
 
         event_store.wait_for_value(CapabilityStates.OPERATE_DEGRADED)
+        self.device_proxy.unsubscribe_event(sub_id)
+
+    def test_b2capabilitystate_configuring_change(
+        self,
+        event_store,
+    ):
+        """Test Configuring"""
+        sub_id = self.device_proxy.subscribe_event(
+            "b2CapabilityState",
+            tango.EventType.CHANGE_EVENT,
+            event_store,
+        )
+
+        # Clear out the queue to make sure we don't catch old events
+        event_store.clear_queue()
+
+        # Mimic capabilitystatechanges on sub devices
+        self.ds_cm._update_component_state(
+            indexerposition=IndexerPosition.MOVING,
+        )
+        self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.OPERATE_FULL)
+        self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.CONFIGURE)
+
+        event_store.wait_for_value(CapabilityStates.CONFIGURING)
         self.device_proxy.unsubscribe_event(sub_id)

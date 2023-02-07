@@ -6,7 +6,7 @@ import tango
 from ska_control_model import CommunicationStatus, HealthState
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.devices.dish_manager import DishManager
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 
 
 # pylint:disable=attribute-defined-outside-init
@@ -53,7 +53,7 @@ class TestConnectionStates:
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
-        component_manager = class_instance.component_manager.component_managers[sub_device]
+        component_manager = class_instance.component_manager.sub_component_managers[sub_device]
 
         # We expect the connectionState to intially be ESTABLISHED
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)

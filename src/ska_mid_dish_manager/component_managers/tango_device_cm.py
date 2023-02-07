@@ -166,6 +166,26 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
+    def clear_monitored_attributes(self):
+        """
+        Sets all the monitored attribute values to 0.
+
+        This is a helper method that can be called before
+        update_state_from_monitored_attributes
+        to ensure that dishManager's CM will update its attributes.
+
+        DishManager will only update its attributes when a tango device CM
+        pushes a change event, by setting all the monitored attributes to 0
+        before calling update_state_from_monitored_attributes we can ensure that there will
+        be a change and that dishManager will update its attributes.
+        """
+        for monitored_attribute in self._monitored_attributes:
+            attribute_name = monitored_attribute.attr_name.lower()
+
+            # Update it in the component state if it is there
+            if attribute_name in self._component_state:
+                self._component_state[attribute_name] = 0
+
     def update_state_from_monitored_attributes(self):
         """Update the component state by reading the monitored attributes
 
@@ -177,11 +197,16 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         monitored attributes on the device and the component state.
         """
         for monitored_attribute in self._monitored_attributes:
-            attribute_name = monitored_attribute.attr_name
+            attribute_name = monitored_attribute.attr_name.lower()
+
+            # Add it to component state if not there
+            if attribute_name not in self._component_state:
+                self._component_state[attribute_name] = None
+
             value = self._device_proxy.read_attribute(attribute_name).value
             if isinstance(value, np.ndarray):
                 value = list(value)
-            self._update_component_state(**{attribute_name.lower(): value})
+            self._update_component_state(**{attribute_name: value})
 
     def _update_state_from_event(self, event_data: tango.EventData):
         """Update component state as the change events come in.
