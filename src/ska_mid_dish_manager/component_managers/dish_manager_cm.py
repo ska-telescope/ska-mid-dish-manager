@@ -413,7 +413,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 task_callback(progress=f"{command_name} called on SPFRX, ID {command_id}")
             else:
                 _, command_id = command(command_name, None)
-                task_callback(progress=(f"{command_name} called on {device}," f" ID {command_id}"))
+                task_callback(progress=(f"{command_name} called on {device}, ID {command_id}"))
 
             device_command_ids[device] = command_id
 
