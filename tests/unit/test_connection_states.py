@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
-from ska_control_model import CommunicationStatus
+from ska_control_model import CommunicationStatus, HealthState
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -31,78 +31,41 @@ class TestConnectionStates:
         self.tango_context.stop()
 
     # pylint: disable=missing-function-docstring, protected-access
-    def test_spf_connection_state_in_sync_with_spf_cm_communication_status(
+    @pytest.mark.parametrize(
+        ("sub_device, connection_state_attr"),
+        [
+            ("DS", "dsConnectionState"),
+            ("SPFRX", "spfrxConnectionState"),
+            ("SPF", "spfConnectionState"),
+        ],
+    )
+    def test_connection_state_attrs_mirror_communication_status(
         self,
         event_store,
+        sub_device,
+        connection_state_attr,
     ):
         device_proxy = self.tango_context.device
         device_proxy.subscribe_event(
-            "spfConnectionState",
+            connection_state_attr,
             tango.EventType.CHANGE_EVENT,
             event_store,
         )
 
         class_instance = DishManager.instances.get(device_proxy.name())
-        spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
+        component_manager = class_instance.component_manager.component_managers[sub_device]
 
-        # We expect the spfConnectionState to intially be ESTABLISHED
+        # We expect the connectionState to intially be ESTABLISHED
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+        # From the current implementation, HealthState will report UNKNOWN even
+        # if connection is established; but for now, check when connection is lost
+        # assert device_proxy.healthState == HealthState.OK
 
-        # Force spf communication_state to NOT_ESTABLISHED
-        spf_cm._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
-
-        # We can now expect spfConnectionState to transition to
-        # NOT_ESTABLISHED
-        assert event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-
-    # pylint: disable=missing-function-docstring, protected-access
-    def test_spfrx_connection_state_in_sync_with_spfrx_cm_communication_status(
-        self,
-        event_store,
-    ):
-        device_proxy = self.tango_context.device
-        device_proxy.subscribe_event(
-            "spfrxConnectionState",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-
-        class_instance = DishManager.instances.get(device_proxy.name())
-        spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
-
-        # We expect the spfrxConnectionState to intially be ESTABLISHED
-        assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-
-        # Force spfrx communication_state to NOT_ESTABLISHED
-        spfrx_cm._update_communication_state(
+        # Force communication_state to NOT_ESTABLISHED
+        component_manager._update_communication_state(
             communication_state=CommunicationStatus.NOT_ESTABLISHED
         )
 
-        # We can now expect spfrxConnectionState to transition to
-        # NOT_ESTABLISHED
+        # We can now expect connectionState to transition to NOT_ESTABLISHED
         assert event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-
-    # pylint: disable=missing-function-docstring, protected-access
-    def test_ds_connection_state_in_sync_with_ds_cm_communication_status(
-        self,
-        event_store,
-    ):
-        device_proxy = self.tango_context.device
-        device_proxy.subscribe_event(
-            "dsConnectionState",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-
-        class_instance = DishManager.instances.get(device_proxy.name())
-        ds_cm = class_instance.component_manager.sub_component_managers["DS"]
-
-        # We expect the dsConnectionState to intially be ESTABLISHED
-        assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-
-        # Force ds communication_state to NOT_ESTABLISHED
-        ds_cm._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
-
-        # We can now expect dsConnectionState to transition to
-        # NOT_ESTABLISHED
-        assert event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
+        assert device_proxy.healthState == HealthState.UNKNOWN

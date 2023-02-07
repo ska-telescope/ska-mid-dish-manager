@@ -17,12 +17,15 @@ from ska_mid_dish_manager.models.dish_enums import (
     BandInFocus,
     CapabilityStates,
     DishMode,
+    DSOperatingMode,
     DSPowerState,
     IndexerPosition,
     PointingState,
     SPFCapabilityStates,
+    SPFOperatingMode,
     SPFPowerState,
     SPFRxCapabilityStates,
+    SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
@@ -80,7 +83,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.sub_component_managers["DS"] = DSComponentManager(
             ds_device_fqdn,
             logger,
-            operatingmode=None,
+            operatingmode=DSOperatingMode.UNKNOWN,
             pointingstate=None,
             achievedtargetlock=None,
             indexerposition=IndexerPosition.UNKNOWN,
@@ -92,7 +95,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.sub_component_managers["SPFRX"] = SPFRxComponentManager(
             spfrx_device_fqdn,
             logger,
-            operatingmode=None,
+            operatingmode=SPFRxOperatingMode.UNKNOWN,
             configuredband=Band.NONE,
             capturingdata=False,
             healthstate=HealthState.UNKNOWN,
@@ -108,7 +111,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.sub_component_managers["SPF"] = SPFComponentManager(
             spf_device_fqdn,
             logger,
-            operatingmode=None,
+            operatingmode=SPFOperatingMode.UNKNOWN,
             powerstate=SPFPowerState.UNKNOWN,
             healthstate=HealthState.UNKNOWN,
             bandinfocus=BandInFocus.UNKNOWN,
@@ -123,7 +126,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         initial_component_states = {
-            "dishmode": DishMode.STARTUP,
+            "dishmode": DishMode.UNKNOWN,
             "healthstate": HealthState.UNKNOWN,
             "configuredband": Band.NONE,
             "capturing": False,
@@ -169,7 +172,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._component_state_changed()
             else:
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                self._update_component_state(healthstate=HealthState.FAILED)
+                self._update_component_state(healthstate=HealthState.UNKNOWN)
 
             # push change events for the connection state attributes
             self.connection_state_callback()

@@ -10,6 +10,7 @@ import os
 import random
 import sys
 
+from ska_control_model import HealthState
 from tango import AttrWriteType, Database, DbDevInfo, DevShort, DevState
 from tango.server import Device, attribute, command
 
@@ -18,7 +19,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DSOperatingMode,
     DSPowerState,
-    HealthState,
     IndexerPosition,
     PointingState,
 )
