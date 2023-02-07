@@ -60,7 +60,7 @@ include:
 
 # use test image with tango installed
 k8s-test-runner:
-  image: $SKA_PYTHON_PYTANGO_BUILDER_IMAGE
+  image: $K8S_TEST_IMAGE_TO_TEST
   before_script:
     - echo "Install k8s-tools dependencies"
     - sudo apt-get install wget
