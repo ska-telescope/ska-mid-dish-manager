@@ -58,16 +58,19 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
+python-test:
+  image: registry.gitlab.com/ska-telescope/ska-mid-dish-manager/ska-mid-dish-manager:2.0.0-dev.c$CI_COMMIT_SHORT_SHA
+
 # use test image with tango installed
 k8s-test-runner:
   image: registry.gitlab.com/ska-telescope/ska-mid-dish-manager/ska-mid-dish-manager:2.0.0-dev.c$CI_COMMIT_SHORT_SHA
   before_script:
     - echo "Install k8s-tools dependencies"
     - sudo apt-get install wget
-    - wget -q https://storage.googleapis.com/kubernetes-release/release/v1.25.2/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl
-    - chmod +x /usr/local/bin/kubectl
-    - wget -q https://get.helm.sh/helm-v3.10.0-linux-amd64.tar.gz -O - | tar -xzO linux-amd64/helm > /usr/local/bin/helm
-    - chmod +x /usr/local/bin/helm
+    - sudo wget -q https://storage.googleapis.com/kubernetes-release/release/v1.25.2/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl
+    - sudo chmod 777 /usr/local/bin/kubectl
+    - sudo wget -q https://get.helm.sh/helm-v3.10.0-linux-amd64.tar.gz -O - | tar -xzO linux-amd64/helm > /usr/local/bin/helm
+    - sudo chmod 777 /usr/local/bin/helm
     - '[ -f .make/k8s.mk ] || (echo "File k8s.mk not included in Makefile; exit 1")'
     - 'make help | grep k8s-test'
     - make k8s-install-chart
