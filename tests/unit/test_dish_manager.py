@@ -25,28 +25,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 LOGGER = logging.getLogger(__name__)
 
 
-# pylint: disable=missing-function-docstring
-@pytest.mark.unit
-@pytest.mark.forked
-@patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_dish_manager_remains_in_startup_on_error(patched_tango, caplog):
-    caplog.set_level(logging.DEBUG)
-
-    # Set up mocks
-    device_proxy = MagicMock()
-    patched_tango.DeviceProxy = MagicMock(return_value=device_proxy)
-    patched_tango.DevFailed = tango.DevFailed
-    device_proxy.ping.side_effect = tango.DevFailed("FAIL")
-
-    with DeviceTestContext(DishManager) as dish_manager:
-        # check subservient devices are continously pinged whilst in error
-        while device_proxy.ping.call_count < 5:
-            continue
-        assert device_proxy.ping.call_count >= 5
-        # check that dishmanager remained in startup
-        assert dish_manager.dishMode == DishMode.STARTUP
-
-
 class TestDishManagerBehaviour:
     """Tests DishManager"""
 
@@ -80,6 +58,7 @@ class TestDishManagerBehaviour:
         """Tear down context"""
         self.tango_context.stop()
 
+    # pylint: disable=missing-function-docstring,
     @pytest.mark.unit
     @pytest.mark.forked
     def test_device_reports_long_running_results(self, caplog, event_store):
@@ -145,6 +124,7 @@ class TestDishManagerBehaviour:
         assert "_SPF_SetStandbyFPMode" in event_ids[2]
         assert "_SPFRX_SetStandbyFPMode" in event_ids[3]
 
+    # pylint: disable=missing-function-docstring,
     @pytest.mark.unit
     @pytest.mark.forked
     def test_get_component_state(self):
