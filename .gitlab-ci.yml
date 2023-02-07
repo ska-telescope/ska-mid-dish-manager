@@ -60,6 +60,9 @@ include:
 
 python-test:
   image: registry.gitlab.com/ska-telescope/ska-mid-dish-manager/ska-mid-dish-manager:2.0.0-dev.c$CI_COMMIT_SHORT_SHA
+  before_script:
+    - sudo mkdir -p /build
+    - sudo chmod -R 777 /build
 
 # use test image with tango installed
 k8s-test-runner:
@@ -69,7 +72,7 @@ k8s-test-runner:
     - sudo apt-get install wget
     - sudo wget -q https://storage.googleapis.com/kubernetes-release/release/v1.25.2/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl
     - sudo chmod 777 /usr/local/bin/kubectl
-    - sudo wget -q https://get.helm.sh/helm-v3.10.0-linux-amd64.tar.gz -O - | tar -xzO linux-amd64/helm > /usr/local/bin/helm
+    - sudo wget -q https://get.helm.sh/helm-v3.10.0-linux-amd64.tar.gz -O - | sudo tar -xzO linux-amd64/helm > /usr/local/bin/helm
     - sudo chmod 777 /usr/local/bin/helm
     - '[ -f .make/k8s.mk ] || (echo "File k8s.mk not included in Makefile; exit 1")'
     - 'make help | grep k8s-test'
