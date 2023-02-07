@@ -148,7 +148,6 @@ class TestDishManagerBehaviour:
         # Sort via command creation timestamp
         event_ids.sort(key=lambda x: datetime.fromtimestamp((float(x.split("_")[0]))))
         assert sorted([event_id.split("_")[-1] for event_id in event_ids]) == [
-            "CaptureData",
             "SetOperateMode",
             "SetStandbyFPMode",
             "SetStandbyFPMode",
