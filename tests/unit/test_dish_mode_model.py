@@ -111,6 +111,7 @@ def test_model_dish_mode_transition_accuracy(
 
 
 # Order DS, SPF, SPFRX
+# pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
@@ -178,6 +179,7 @@ def test_compute_dish_mode(
     assert expected_dish_mode == actual_dish_mode
 
 
+# pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
@@ -262,6 +264,7 @@ def test_compute_dish_healthstate(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
+# pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -334,6 +337,7 @@ def test_compute_configured_band(
     assert expected_band_number == actual_band_number
 
 
+# pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
     ("ds_comp_state, spfrx_comp_state, expected_band_number"),
     [
