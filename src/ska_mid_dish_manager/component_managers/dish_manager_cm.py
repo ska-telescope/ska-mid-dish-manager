@@ -282,7 +282,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
             self.logger.info(
-                ("Updating configuredBand from change [%s] with DS [%s] SPF [%s] SPFRX [%s]"),
+                (
+                    "Updating configuredBand on DM from change"
+                    " [%s] with DS [%s] SPF [%s] SPFRX [%s]"
+                ),
                 kwargs,
                 ds_component_state,
                 spf_component_state,
@@ -297,7 +300,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
-        if "capturingdata" in spfrx_component_state:
+        if "capturingdata" in kwargs:
             self.logger.info(
                 ("Updating capturing with SPFRx [%s]"),
                 spfrx_component_state,
@@ -717,11 +720,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
 
-        # Transition to Config while configuring band, keep note of where we were
-        # so we can back to what it was.
-        initial_dish_mode = self.component_state["dishmode"]
-        self._update_component_state(dishmode=DishMode.CONFIG)
-
         device_command_ids = {}
         for device in ["DS", "SPFRX"]:
             command = SubmittedSlowCommand(
@@ -753,8 +751,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     progress="ConfigureBand2 Aborted",
                     result="ConfigureBand2 Aborted",
                 )
-                # Transition back to FP if command was aborted
-                self._update_component_state(dishmode=initial_dish_mode)
                 return
 
             current_band = self.component_state["configuredband"]
@@ -769,7 +765,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     component_manager.update_state_from_monitored_attributes()
 
             else:
-                self._update_component_state(dishmode=initial_dish_mode)
                 task_callback(
                     status=TaskStatus.COMPLETED,
                     progress="ConfigureBand2 completed",
