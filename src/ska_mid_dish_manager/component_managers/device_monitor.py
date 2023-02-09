@@ -1,5 +1,5 @@
 """This module contains TangoDeviceMonitor that monitors attributes on Tango devices
-If an error event is recieved the DeviceProxy and subscription will be recreated
+If an error event is received the DeviceProxy and subscription will be recreated
 """
 import logging
 from concurrent.futures import ThreadPoolExecutor
@@ -7,7 +7,7 @@ from concurrent.futures import TimeoutError as FutureTimeoutError
 from functools import partial
 from queue import Queue
 from threading import Event, Lock
-from typing import Callable, List
+from typing import Callable, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus
@@ -23,24 +23,24 @@ class ReceivedErrorEvent(Exception):
 class TangoDeviceMonitor:
     """Connects to and monitor a Tango device.
     One thread per attribute.
-    Each thread creates a DeviceProxy and subscibes to an attribute
+    Each thread creates a DeviceProxy and subscribes to an attribute
     """
 
     # pylint:disable=too-many-arguments
     def __init__(
         self,
         tango_fqdn: str,
-        monitored_attributes: List[str],
+        monitored_attributes: Tuple[str],
         event_queue: Queue,
         logger: logging.Logger,
-        update_sub_communication_state_cb: Callable,
+        update_sub_communication_state_cb: Optional[Callable] = None,
     ) -> None:
         """Create the TangoDeviceMonitor
 
-        :param tango_fqdn: Tango device name
+        :param: tango_fqdn: Tango device name
         :type tango_fqdn: str
-        :param monitored_attributes: List of attributes to monitor
-        :type monitored_attributes: List[str]
+        :param monitored_attributes: Tuple of attributes to monitor
+        :type monitored_attributes: Tuple[str]
         :param event_queue: Queue where events are sent
         :type event_queue: Queue
         :param logger: logger
@@ -89,8 +89,8 @@ class TangoDeviceMonitor:
                 self._exit_thread_event,
                 self._event_queue,
                 self._logger,
-                self._update_sub_communication_state_cb,
                 self._update_comm_state_lock,
+                self._update_sub_communication_state_cb,
             )
 
             # Quick check for any basic errors
@@ -112,12 +112,12 @@ class TangoDeviceMonitor:
         exit_thread_event: Event,
         event_queue: Queue,
         logger: logging.Logger,
-        update_sub_communication_state_cb: Callable,
         update_comm_state_lock: Lock,
+        update_sub_communication_state_cb: Optional[Callable],
     ):
         """Monitor an attribute
 
-        :param tango_fqdn: The Tango device name
+        :param: tango_fqdn: The Tango device name
         :type tango_fqdn: str
         :param attribute_name: The attribute to monitor
         :type attribute_name: str
@@ -132,7 +132,7 @@ class TangoDeviceMonitor:
         :param update_comm_state_lock: Make sure update_sub_communication_state_cb is called
             sequentially
         :type update_comm_state_lock: Lock
-        :raises ReceivedErrorEvent: Raised when an error event has been recieved
+        :raises ReceivedErrorEvent: Raised when an error event has been received
             The DeviceProxy and subscription is recreated
         """
         retry_count = 0
@@ -140,12 +140,13 @@ class TangoDeviceMonitor:
             while not exit_thread_event.is_set():
                 try:
                     with update_comm_state_lock:
-                        update_sub_communication_state_cb(CommunicationStatus.NOT_ESTABLISHED)
+                        if update_sub_communication_state_cb:
+                            update_sub_communication_state_cb(CommunicationStatus.NOT_ESTABLISHED)
 
-                    def _event_reaction(event_queue, tango_event):
+                    def _event_reaction(events_queue, tango_event):
                         if tango_event.err:
                             logger.error("Got an error event on %s %s", tango_fqdn, tango_event)
-                        event_queue.put(tango_event)
+                        events_queue.put(tango_event)
 
                     device_proxy = tango.DeviceProxy(tango_fqdn)
                     device_proxy.ping()
@@ -157,19 +158,19 @@ class TangoDeviceMonitor:
                     )
                     logger.info("Subscribed on %s to attr %s", tango_fqdn, attribute_name)
                     with update_comm_state_lock:
-                        update_sub_communication_state_cb(CommunicationStatus.ESTABLISHED)
+                        if update_sub_communication_state_cb:
+                            update_sub_communication_state_cb(CommunicationStatus.ESTABLISHED)
                     while not exit_thread_event.wait(1):
                         pass
                     device_proxy.unsubscribe_event(subscription_id)
                     logger.error("Unsubscribed from %s for attr %s", tango_fqdn, attribute_name)
                     subscription_id = None
-                except tango.DevFailed as err:
+                except tango.DevFailed:
                     logger.exception(
                         (
                             f"Error on Tango {tango_fqdn} for attr {attribute_name}, "
                             f"try number {retry_count}"
-                        ),
-                        err,
+                        )
                     )
                     retry_count += 1
                     exit_thread_event.wait(SLEEP_BETWEEN_RECONNECTS)

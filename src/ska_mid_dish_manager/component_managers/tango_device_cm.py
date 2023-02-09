@@ -1,14 +1,14 @@
 """Generic component manager for a subservient tango device"""
 import logging
-from datetime import datetime
 from queue import Empty, Queue
 from threading import Event
-from typing import Any, AnyStr, Callable, List, Optional
+from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
 import tango
 from ska_control_model import CommunicationStatus, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
+
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 
 
@@ -47,14 +47,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     def __init__(
         self,
-        tango_device_fqdn: AnyStr,
-        logger,
-        monitored_attributes: List[str],
+        tango_device_fqdn: str,
+        logger: logging.Logger,
+        monitored_attributes: Tuple[str],
         *args,
         communication_state_callback: Optional[Callable] = None,
         component_state_callback: Optional[Callable] = None,
         **kwargs,
     ):
+        self._component_state = {}
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
         self._events_queue = Queue()
@@ -98,11 +99,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         be a change and that dishManager will update its attributes.
         """
         for monitored_attribute in self._monitored_attributes:
-            attribute_name = monitored_attribute.attr_name.lower()
-
             # Update it in the component state if it is there
-            if attribute_name in self._component_state:
-                self._component_state[attribute_name] = 0
+            if monitored_attribute in self._component_state:
+                self._component_state[monitored_attribute] = 0
 
     def update_state_from_monitored_attributes(self):
         """Update the component state by reading the monitored attributes
@@ -115,16 +114,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         monitored attributes on the device and the component state.
         """
         for monitored_attribute in self._monitored_attributes:
-            attribute_name = monitored_attribute.attr_name.lower()
-
             # Add it to component state if not there
-            if attribute_name not in self._component_state:
-                self._component_state[attribute_name] = None
+            if monitored_attribute not in self._component_state:
+                self._component_state[monitored_attribute] = None
 
-            value = self._device_proxy.read_attribute(attribute_name).value
+            value = self._device_proxy.read_attribute(monitored_attribute).value
             if isinstance(value, np.ndarray):
                 value = list(value)
-            self._update_component_state(**{attribute_name: value})
+            self._update_component_state(**{monitored_attribute: value})
 
     def _update_state_from_event(self, event_data: tango.EventData):
         """Update component state as the change events come in.
@@ -152,8 +149,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def _sub_communication_state_callback(self, communication_status: CommunicationStatus):
         if self.sub_communication_state != communication_status:
             self.sub_communication_state = communication_status
-            self._communication_state_callback()
+            if self._communication_state_callback:
+                self._communication_state_callback()
 
+    # pylint: disable=too-many-arguments
     @classmethod
     def _event_handler(
         cls,
@@ -195,7 +194,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             task_callback=self._event_handler_cb,
         )
 
-    def _event_handler_cb(self, *args, status: TaskStatus = None, **kwargs):
+    def _event_handler_cb(self, status: TaskStatus = None):
         if status and status == TaskStatus.FAILED:
             # Restart monitoring
             self._tango_device_monitor.monitor()
@@ -222,16 +221,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         if task_callback:
             task_callback(TaskStatus.IN_PROGRESS)
-
-        if self.state != "monitoring":
-            task_callback(
-                TaskStatus.FAILED,
-                exception=RuntimeError(
-                    f"Tango device component manager is not ready for commands"
-                    f" in state [{self.state}]"
-                ),
-            )
-            return
 
         result = None
         try:
@@ -293,4 +282,3 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Stop communication with the device"""
         # pylint: disable=no-member
         self._tango_device_monitor.stop_monitoring()
-        self.abort_commands(task_callback=self._aborting_tasks_cb)

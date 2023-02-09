@@ -75,55 +75,57 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             **kwargs,
         )
+        self.logger = logger
         self.connection_state_callback = connection_state_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
-        self.sub_component_managers = {}
-        self.sub_component_managers["DS"] = DSComponentManager(
-            ds_device_fqdn,
-            logger,
-            operatingmode=DSOperatingMode.UNKNOWN,
-            pointingstate=None,
-            achievedtargetlock=None,
-            indexerposition=IndexerPosition.UNKNOWN,
-            powerstate=DSPowerState.UNKNOWN,
-            achievedpointing=[0.0, 0.0, 30.0],
-            component_state_callback=self._component_state_changed,
-            communication_state_callback=self._communication_state_changed,
-        )
-        self.sub_component_managers["SPFRX"] = SPFRxComponentManager(
-            spfrx_device_fqdn,
-            logger,
-            operatingmode=SPFRxOperatingMode.UNKNOWN,
-            configuredband=Band.NONE,
-            capturingdata=False,
-            healthstate=HealthState.UNKNOWN,
-            b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            b4capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            component_state_callback=self._component_state_changed,
-            communication_state_callback=self._communication_state_changed,
-        )
-        self.sub_component_managers["SPF"] = SPFComponentManager(
-            spf_device_fqdn,
-            logger,
-            operatingmode=SPFOperatingMode.UNKNOWN,
-            powerstate=SPFPowerState.UNKNOWN,
-            healthstate=HealthState.UNKNOWN,
-            bandinfocus=BandInFocus.UNKNOWN,
-            b1capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b2capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b3capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            component_state_callback=self._component_state_changed,
-            communication_state_callback=self._communication_state_changed,
-        )
+        self.sub_component_managers = {
+            "DS": DSComponentManager(
+                ds_device_fqdn,
+                logger,
+                operatingmode=DSOperatingMode.UNKNOWN,
+                pointingstate=None,
+                achievedtargetlock=None,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.UNKNOWN,
+                achievedpointing=[0.0, 0.0, 30.0],
+                component_state_callback=self._component_state_changed,
+                communication_state_callback=self._communication_state_changed,
+            ),
+            "SPFRX": SPFRxComponentManager(
+                spfrx_device_fqdn,
+                logger,
+                operatingmode=SPFRxOperatingMode.UNKNOWN,
+                configuredband=Band.NONE,
+                capturingdata=False,
+                healthstate=HealthState.UNKNOWN,
+                b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b4capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                component_state_callback=self._component_state_changed,
+                communication_state_callback=self._communication_state_changed,
+            ),
+            "SPF": SPFComponentManager(
+                spf_device_fqdn,
+                logger,
+                operatingmode=SPFOperatingMode.UNKNOWN,
+                powerstate=SPFPowerState.UNKNOWN,
+                healthstate=HealthState.UNKNOWN,
+                bandinfocus=BandInFocus.UNKNOWN,
+                b1capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b2capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b3capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                component_state_callback=self._component_state_changed,
+                communication_state_callback=self._communication_state_changed,
+            ),
+        }
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         initial_component_states = {
             "dishmode": DishMode.UNKNOWN,
@@ -144,7 +146,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._update_component_state(**initial_component_states)
 
     # pylint: disable=unused-argument
-    def _communication_state_changed(self, *args, **kwargs):
+    def _communication_state_changed(self):
         """
         Callback triggered by the component manager when it establishes
         a connection with the underlying (subservient) device

@@ -31,7 +31,7 @@ class TestDishManagerBehaviour:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.tango_device_cm.tango.DeviceProxy"
+            "ska_mid_dish_manager.component_managers.device_monitor.tango.DeviceProxy"
         ) as patched_dp:
             patched_dp.return_value = MagicMock()
             patched_dp.command_inout = MagicMock()

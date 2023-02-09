@@ -78,7 +78,7 @@ def test_device_monitor_stress(caplog):
     for i in range(20):
         tdm.monitor()
         assert tdm._run_count == i + 1  # pylint: disable=W0212
-        event = event_queue.get(4)
+        event = event_queue.get(timeout=4)
         assert not event.err
         assert event.attr_value.name == "powerState"
         assert event_queue.empty()

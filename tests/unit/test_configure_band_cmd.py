@@ -31,7 +31,7 @@ class TestConfigureBand2:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.tango_device_cm.tango"
+            "ska_mid_dish_manager.component_managers.device_monitor.tango"
         ) as patched_tango:
             patched_dp = MagicMock()
             patched_dp.command_inout = MagicMock()
