@@ -75,7 +75,7 @@ class TangoDeviceMonitor:
         self._logger.info("Setting up monitoring on %s", self._tango_fqdn)
         self._executor = ThreadPoolExecutor(
             max_workers=len(self._monitored_attributes),
-            thread_name_prefix=f"Monitoring_{self._run_count}_run",
+            thread_name_prefix=f"Monitoring_run_{self._run_count}_attr_no_",
         )
         self._logger.info("Monitoring thread pool started for %s", self._tango_fqdn)
         self._exit_thread_event = Event()
@@ -138,10 +138,11 @@ class TangoDeviceMonitor:
         retry_count = 0
         with tango.EnsureOmniThread():
             while not exit_thread_event.is_set():
+                # Not connnected by default
+                with update_comm_state_lock:
+                    if update_sub_communication_state_cb:
+                        update_sub_communication_state_cb(CommunicationStatus.NOT_ESTABLISHED)
                 try:
-                    with update_comm_state_lock:
-                        if update_sub_communication_state_cb:
-                            update_sub_communication_state_cb(CommunicationStatus.NOT_ESTABLISHED)
 
                     def _event_reaction(events_queue, tango_event):
                         if tango_event.err:
@@ -174,26 +175,29 @@ class TangoDeviceMonitor:
                     )
                     retry_count += 1
                     exit_thread_event.wait(SLEEP_BETWEEN_RECONNECTS)
-                except ReceivedErrorEvent as err:
+                except ReceivedErrorEvent:
                     logger.exception(
                         (
                             f"Error event received on Tango {tango_fqdn} for attr"
                             f" {attribute_name}, try number {retry_count}"
-                        ),
-                        err,
+                        )
                     )
                     retry_count += 1
                     exit_thread_event.wait(SLEEP_BETWEEN_RECONNECTS)
-                except Exception as err:  # pylint: disable=W0703
+                except Exception:  # pylint: disable=W0703
                     logger.exception(
                         (
                             f"Error Tango {tango_fqdn} for attr {attribute_name},"
                             f" try number {retry_count}"
-                        ),
-                        err,
+                        )
                     )
                     retry_count += 1
                     exit_thread_event.wait(SLEEP_BETWEEN_RECONNECTS)
+
+            # If we exit the thread we are not committed
+            with update_comm_state_lock:
+                if update_sub_communication_state_cb:
+                    update_sub_communication_state_cb(CommunicationStatus.NOT_ESTABLISHED)
 
     def stop_monitoring(self):
         """Stop all monitoring threads"""

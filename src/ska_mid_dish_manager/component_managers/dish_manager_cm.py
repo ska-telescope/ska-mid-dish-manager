@@ -53,6 +53,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ):
         """"""
         # pylint: disable=useless-super-delegation
+        self.sub_component_managers = None
         super().__init__(
             logger,
             *args,
@@ -90,8 +91,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
                 achievedpointing=[0.0, 0.0, 30.0],
-                component_state_callback=self._component_state_changed,
                 communication_state_callback=self._communication_state_changed,
+                component_state_callback=self._component_state_changed,
             ),
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
@@ -106,8 +107,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b4capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
-                component_state_callback=self._component_state_changed,
                 communication_state_callback=self._communication_state_changed,
+                component_state_callback=self._component_state_changed,
             ),
             "SPF": SPFComponentManager(
                 spf_device_fqdn,
@@ -122,11 +123,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
-                component_state_callback=self._component_state_changed,
                 communication_state_callback=self._communication_state_changed,
+                component_state_callback=self._component_state_changed,
             ),
         }
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         initial_component_states = {
             "dishmode": DishMode.UNKNOWN,
             "healthstate": HealthState.UNKNOWN,
@@ -144,6 +144,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
         }
         self._update_component_state(**initial_component_states)
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     # pylint: disable=unused-argument
     def _communication_state_changed(self):
@@ -162,8 +163,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # that the dict is not empty before continuing with trigger
         if self.sub_component_managers:
             if all(
-                component_manager.sub_communication_state == CommunicationStatus.ESTABLISHED
-                for component_manager in self.sub_component_managers.values()
+                sub_component_manager.sub_communication_state == CommunicationStatus.ESTABLISHED
+                for sub_component_manager in self.sub_component_managers.values()
             ):
                 self._update_communication_state(CommunicationStatus.ESTABLISHED)
 

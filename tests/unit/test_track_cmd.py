@@ -28,11 +28,8 @@ class TestTrack:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.tango"
-        ) as patched_tango:
-            patched_dp = MagicMock()
-            patched_dp.command_inout = MagicMock()
-            patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
+            "ska_mid_dish_manager.component_managers.device_monitor.TangoDeviceMonitor.monitor"
+        ):
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 

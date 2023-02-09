@@ -83,6 +83,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             component_state_callback=component_state_callback,
             **kwargs,
         )
+        # Default to NOT_ESTABLISHED
+        self._sub_communication_state_callback(CommunicationStatus.NOT_ESTABLISHED)
+
         self._start_event_handling_thread()
 
     def clear_monitored_attributes(self):
@@ -147,6 +150,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self.logger.exception("Error updating component state")
 
     def _sub_communication_state_callback(self, communication_status: CommunicationStatus):
+        print("AAAAAAA", communication_status)
         if self.sub_communication_state != communication_status:
             self.sub_communication_state = communication_status
             if self._communication_state_callback:
