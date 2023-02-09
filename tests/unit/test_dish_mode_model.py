@@ -1,12 +1,12 @@
 """Unit tests verifying model against dishMode transitions."""
 
 import pytest
+from ska_control_model import HealthState
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
     DSOperatingMode,
-    HealthState,
     IndexerPosition,
     SPFBandInFocus,
     SPFOperatingMode,
@@ -111,9 +111,16 @@ def test_model_dish_mode_transition_accuracy(
 
 
 # Order DS, SPF, SPFRX
+# pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
+        (
+            dict(operatingmode=DSOperatingMode.STANDBY_LP),
+            dict(operatingmode=SPFOperatingMode.STARTUP),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.STARTUP,
+        ),
         (
             dict(operatingmode=DSOperatingMode.STOW),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
@@ -172,14 +179,15 @@ def test_compute_dish_mode(
     assert expected_dish_mode == actual_dish_mode
 
 
+# pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
         (
-            dict(healthstate=HealthState.NORMAL),
-            dict(healthstate=HealthState.NORMAL),
-            dict(healthstate=HealthState.NORMAL),
-            HealthState.NORMAL,
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
+            HealthState.OK,
         ),
         (
             dict(healthstate=HealthState.DEGRADED),
@@ -201,42 +209,42 @@ def test_compute_dish_mode(
         ),
         (
             dict(healthstate=HealthState.DEGRADED),
-            dict(healthstate=HealthState.NORMAL),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
             HealthState.DEGRADED,
         ),
         (
             dict(healthstate=HealthState.FAILED),
-            dict(healthstate=HealthState.NORMAL),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
             HealthState.FAILED,
         ),
         (
             dict(healthstate=HealthState.UNKNOWN),
-            dict(healthstate=HealthState.NORMAL),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
             HealthState.UNKNOWN,
         ),
         (
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             dict(healthstate=HealthState.DEGRADED),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             HealthState.DEGRADED,
         ),
         (
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             dict(healthstate=HealthState.FAILED),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             HealthState.FAILED,
         ),
         (
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             dict(healthstate=HealthState.UNKNOWN),
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             HealthState.UNKNOWN,
         ),
         (
-            dict(healthstate=HealthState.NORMAL),
+            dict(healthstate=HealthState.OK),
             dict(healthstate=HealthState.DEGRADED),
             dict(healthstate=HealthState.DEGRADED),
             HealthState.DEGRADED,
@@ -256,6 +264,7 @@ def test_compute_dish_healthstate(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
+# pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -328,6 +337,7 @@ def test_compute_configured_band(
     assert expected_band_number == actual_band_number
 
 
+# pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
     ("ds_comp_state, spfrx_comp_state, expected_band_number"),
     [

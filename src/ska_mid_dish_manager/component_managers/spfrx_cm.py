@@ -2,13 +2,10 @@
 import logging
 from typing import AnyStr, Callable, Optional
 
+from ska_control_model import HealthState
+
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
-from ska_mid_dish_manager.models.dish_enums import (
-    Band,
-    HealthState,
-    SPFRxCapabilityStates,
-    SPFRxOperatingMode,
-)
+from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
 
 
 # pylint: disable=invalid-name, missing-function-docstring, signature-differs

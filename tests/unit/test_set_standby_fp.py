@@ -100,7 +100,6 @@ class TestSetStandByFPMode:
         expected_progress_updates = [
             "SetStandbyFPMode called on DS",
             "SetOperateMode called on SPF",
-            "CaptureData called on SPFRx",
             "Awaiting dishMode change to STANDBY_FP",
             "SetStandbyFPMode completed",
         ]

@@ -25,29 +25,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 LOGGER = logging.getLogger(__name__)
 
 
-# pylint: disable=missing-function-docstring
-@pytest.mark.unit
-@pytest.mark.forked
-@patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_dish_manager_remains_in_startup_on_error(patched_tango, caplog):
-    caplog.set_level(logging.DEBUG)
-
-    # Set up mocks
-    device_proxy = MagicMock()
-    patched_tango.DeviceProxy = MagicMock(return_value=device_proxy)
-    patched_tango.DevFailed = tango.DevFailed
-    device_proxy.ping.side_effect = tango.DevFailed("FAIL")
-
-    with DeviceTestContext(DishManager) as dish_manager:
-        # check subservient devices are continously pinged whilst in error
-        while device_proxy.ping.call_count < 5:
-            continue
-        assert device_proxy.ping.call_count >= 5
-        # check that dishmanager remained in startup
-        assert dish_manager.dishMode == DishMode.STARTUP
-        dish_manager.AbortCommands()
-
-
 class TestDishManagerBehaviour:
     """Tests DishManager"""
 
@@ -86,6 +63,7 @@ class TestDishManagerBehaviour:
         """Tear down context"""
         self.tango_context.stop()
 
+    # pylint: disable=missing-function-docstring,
     @pytest.mark.unit
     @pytest.mark.forked
     def test_device_reports_long_running_results(self, event_store):
@@ -148,12 +126,12 @@ class TestDishManagerBehaviour:
         # Sort via command creation timestamp
         event_ids.sort(key=lambda x: datetime.fromtimestamp((float(x.split("_")[0]))))
         assert sorted([event_id.split("_")[-1] for event_id in event_ids]) == [
-            "CaptureData",
             "SetOperateMode",
             "SetStandbyFPMode",
             "SetStandbyFPMode",
         ]
 
+    # pylint: disable=missing-function-docstring,
     @pytest.mark.unit
     @pytest.mark.forked
     def test_get_component_state(self):

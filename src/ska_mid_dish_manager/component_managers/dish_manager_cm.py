@@ -17,12 +17,15 @@ from ska_mid_dish_manager.models.dish_enums import (
     BandInFocus,
     CapabilityStates,
     DishMode,
+    DSOperatingMode,
     DSPowerState,
     IndexerPosition,
     PointingState,
     SPFCapabilityStates,
+    SPFOperatingMode,
     SPFPowerState,
     SPFRxCapabilityStates,
+    SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
@@ -80,7 +83,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.sub_component_managers["DS"] = DSComponentManager(
             ds_device_fqdn,
             logger,
-            operatingmode=None,
+            operatingmode=DSOperatingMode.UNKNOWN,
             pointingstate=None,
             achievedtargetlock=None,
             indexerposition=IndexerPosition.UNKNOWN,
@@ -92,7 +95,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.sub_component_managers["SPFRX"] = SPFRxComponentManager(
             spfrx_device_fqdn,
             logger,
-            operatingmode=None,
+            operatingmode=SPFRxOperatingMode.UNKNOWN,
             configuredband=Band.NONE,
             capturingdata=False,
             healthstate=HealthState.UNKNOWN,
@@ -108,7 +111,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.sub_component_managers["SPF"] = SPFComponentManager(
             spf_device_fqdn,
             logger,
-            operatingmode=None,
+            operatingmode=SPFOperatingMode.UNKNOWN,
             powerstate=SPFPowerState.UNKNOWN,
             healthstate=HealthState.UNKNOWN,
             bandinfocus=BandInFocus.UNKNOWN,
@@ -123,7 +126,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         initial_component_states = {
-            "dishmode": DishMode.STARTUP,
+            "dishmode": DishMode.UNKNOWN,
             "healthstate": HealthState.UNKNOWN,
             "configuredband": Band.NONE,
             "capturing": False,
@@ -169,7 +172,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._component_state_changed()
             else:
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                self._update_component_state(healthstate=HealthState.FAILED)
+                self._update_component_state(healthstate=HealthState.UNKNOWN)
 
             # push change events for the connection state attributes
             self.connection_state_callback()
@@ -192,7 +195,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
-        self.logger.debug(
+        self.logger.info(
             (
                 "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
                 ", SPFRx [%s], DM [%s]"
@@ -266,6 +269,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
                 ds_component_state, spfrx_component_state
             )
+            self.logger.info("Setting bandInFocus to %s on SPF", band_in_focus)
             # pylint: disable=protected-access
             # update the bandInFocus of SPF before configuredBand
             spf_proxy = self.sub_component_managers["SPF"]._device_proxy
@@ -278,7 +282,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
             self.logger.info(
-                ("Updating configuredBand with DS [%s] SPF [%s] SPFRX [%s]"),
+                (
+                    "Updating configuredBand on DM from change"
+                    " [%s] with DS [%s] SPF [%s] SPFRX [%s]"
+                ),
+                kwargs,
                 ds_component_state,
                 spf_component_state,
                 spfrx_component_state,
@@ -292,7 +300,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
-        if "capturingdata" in spfrx_component_state:
+        if "capturingdata" in kwargs:
             self.logger.info(
                 ("Updating capturing with SPFRx [%s]"),
                 spfrx_component_state,
@@ -404,8 +412,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 _, command_id = command(command_name, None)
                 task_callback(progress=f"{command_name} called on SPFRX, ID {command_id}")
             else:
-                _, command_id = command(command_name, None)
-                task_callback(progress=(f"{command_name} called on {device}," f" ID {command_id}"))
+                _, command_id = command("SetStandbyLPMode", None)
+                task_callback(
+                    progress=(f"SetStandbyLPMode called on {device}," f" ID {command_id}")
+                )
 
             device_command_ids[device] = command_id
 
@@ -462,11 +472,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        subservient_devices = [
-            ("DS", "SetStandbyFPMode"),
-            ("SPF", "SetOperateMode"),
-            ("SPFRX", "CaptureData"),
-        ]
+        subservient_devices = ["DS", "SPF", "SPFRX"]
 
         if self.component_state["dishmode"].name == "OPERATE":
             subservient_devices = [("DS", "SetStandbyFPMode")]
@@ -483,21 +489,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if device == "DS":
                 _, command_id = command(command_name, None)
                 device_command_ids[device] = command_id
-                task_callback(progress=f"{command_name} called on DS, ID {command_id}")
+                task_callback(progress=f"SetStandbyFPMode called on DS, ID {command_id}")
             elif device == "SPF":
-                _, command_id = command(command_name, None)
+                _, command_id = command("SetOperateMode", None)
                 device_command_ids[device] = command_id
-                task_callback(progress=f"{command_name} called on SPF, ID {command_id}")
+                task_callback(progress=f"SetOperateMode called on SPF, ID {command_id}")
             else:
                 # allow request only when there's a configured band
                 if self.component_state["configuredband"] not in [
                     Band.NONE,
                     Band.UNKNOWN,
                 ]:
-                    _, command_id = command(f"{command_name}", True)
+                    _, command_id = command("CaptureData", True)
                     device_command_ids[device] = command_id
                     task_callback(
-                        progress=f"{command_name} called on SPFRx, ID {command_id}"  # noqa: E501
+                        progress=f"CaptureData called on SPFRx, ID {command_id}"  # noqa: E501
                     )
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")

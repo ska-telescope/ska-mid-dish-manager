@@ -12,7 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-@pytest.mark.skip()
+# @pytest.mark.skip()
 def test_configure_band_2(event_store_class, dish_manager_proxy):
     """Test ConfigureBand2"""
     # make sure configureBand is not B2
@@ -20,6 +20,13 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
 
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
+    dishmode_event_store = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        dishmode_event_store,
+    )
 
     dish_manager_proxy.subscribe_event(
         "longRunningCommandProgress",
@@ -27,7 +34,7 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
         progress_event_store,
     )
 
-    attributes = ["dishMode", "longrunningcommandresult", "configuredBand"]
+    attributes = ["longrunningcommandresult", "configuredBand"]
     for attribute_name in attributes:
         dish_manager_proxy.subscribe_event(
             attribute_name,
@@ -45,8 +52,10 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
 
     future_time = datetime.utcnow() + timedelta(days=1)
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())
+    dishmode_event_store.wait_for_value(DishMode.CONFIG)
     main_event_store.wait_for_command_id(unique_id)
     assert dish_manager_proxy.configuredBand == Band.B2
+    dishmode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
     # Do it again to check result
     [[task_status], [result]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())

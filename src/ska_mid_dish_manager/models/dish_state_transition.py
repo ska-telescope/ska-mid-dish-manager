@@ -1,12 +1,8 @@
 """State transition computation"""
 
-from ska_mid_dish_manager.models.dish_enums import (
-    Band,
-    CapabilityStates,
-    DishMode,
-    HealthState,
-    SPFBandInFocus,
-)
+from ska_control_model import HealthState
+
+from ska_mid_dish_manager.models.dish_enums import Band, CapabilityStates, DishMode, SPFBandInFocus
 from ska_mid_dish_manager.models.transition_rules import (
     band_focus_rules,
     cap_state_rules,

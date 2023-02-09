@@ -188,7 +188,7 @@ class DishManager(SKAController):
             device._configured_band = Band.NONE
             device._configure_target_lock = []
             device._desired_pointing = [0.0, 0.0, 0.0]
-            device._dish_mode = DishMode.STARTUP
+            device._dish_mode = DishMode.UNKNOWN
             device._dsh_max_short_term_power = 13.5
             device._dsh_power_curtailment = True
             device._frequency_response = [[], []]
