@@ -412,10 +412,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 _, command_id = command(command_name, None)
                 task_callback(progress=f"{command_name} called on SPFRX, ID {command_id}")
             else:
-                _, command_id = command("SetStandbyLPMode", None)
-                task_callback(
-                    progress=(f"SetStandbyLPMode called on {device}," f" ID {command_id}")
-                )
+                _, command_id = command(command_name, None)
+                task_callback(progress=f"{command_name} called on {device}, ID {command_id}")
 
             device_command_ids[device] = command_id
 
@@ -472,7 +470,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         device_command_ids = {}
-        subservient_devices = ["DS", "SPF", "SPFRX"]
+        subservient_devices = [
+            ("DS", "SetStandbyFPMode"),
+            ("SPF", "SetOperateMode"),
+        ]
 
         if self.component_state["dishmode"].name == "OPERATE":
             subservient_devices = [("DS", "SetStandbyFPMode")]
@@ -489,22 +490,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if device == "DS":
                 _, command_id = command(command_name, None)
                 device_command_ids[device] = command_id
-                task_callback(progress=f"SetStandbyFPMode called on DS, ID {command_id}")
-            elif device == "SPF":
-                _, command_id = command("SetOperateMode", None)
+                task_callback(progress=f"{command_name} called on DS, ID {command_id}")
+            if device == "SPF":
+                _, command_id = command(command_name, None)
                 device_command_ids[device] = command_id
-                task_callback(progress=f"SetOperateMode called on SPF, ID {command_id}")
-            else:
-                # allow request only when there's a configured band
-                if self.component_state["configuredband"] not in [
-                    Band.NONE,
-                    Band.UNKNOWN,
-                ]:
-                    _, command_id = command("CaptureData", True)
-                    device_command_ids[device] = command_id
-                    task_callback(
-                        progress=f"CaptureData called on SPFRx, ID {command_id}"  # noqa: E501
-                    )
+                task_callback(progress=f"{command_name} called on SPF, ID {command_id}")
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
         task_callback(progress="Awaiting dishMode change to STANDBY_FP")
