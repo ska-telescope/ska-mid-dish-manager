@@ -113,15 +113,15 @@ class DishManager(SKAController):
             return
         self.push_change_event(
             "spfConnectionState",
-            self.component_manager.sub_component_managers["SPF"].communication_state,
+            self.component_manager.sub_component_managers["SPF"].sub_communication_state,
         )
         self.push_change_event(
             "spfrxConnectionState",
-            self.component_manager.sub_component_managers["SPFRX"].communication_state,
+            self.component_manager.sub_component_managers["SPFRX"].sub_communication_state,
         )
         self.push_change_event(
             "dsConnectionState",
-            self.component_manager.sub_component_managers["DS"].communication_state,
+            self.component_manager.sub_component_managers["DS"].sub_communication_state,
         )
 
     # pylint: disable=unused-argument
@@ -260,7 +260,7 @@ class DishManager(SKAController):
     )
     def spfConnectionState(self):
         """Returns the spf connection state"""
-        return self.component_manager.sub_component_managers["SPF"].communication_state
+        return self.component_manager.sub_component_managers["SPF"].sub_communication_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -269,7 +269,7 @@ class DishManager(SKAController):
     )
     def spfrxConnectionState(self):
         """Returns the spfrx connection state"""
-        return self.component_manager.sub_component_managers["SPFRX"].communication_state
+        return self.component_manager.sub_component_managers["SPFRX"].sub_communication_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -278,7 +278,7 @@ class DishManager(SKAController):
     )
     def dsConnectionState(self):
         """Returns the ds connection state"""
-        return self.component_manager.sub_component_managers["DS"].communication_state
+        return self.component_manager.sub_component_managers["DS"].sub_communication_state
 
     @attribute(
         max_dim_x=3,

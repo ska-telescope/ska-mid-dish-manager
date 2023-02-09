@@ -25,15 +25,6 @@ class DSComponentManager(TangoDeviceComponentManager):
         component_state_callback: Optional[Callable] = None,
         **kwargs
     ):
-
-        super().__init__(
-            tango_device_fqdn,
-            logger,
-            *args,
-            communication_state_callback=communication_state_callback,
-            component_state_callback=component_state_callback,
-            **kwargs
-        )
         self._monitored_attr_names = [
             "operatingMode",
             "powerState",
@@ -42,8 +33,15 @@ class DSComponentManager(TangoDeviceComponentManager):
             "indexerPosition",
             "achievedPointing",
         ]
-        for mon_attr in self._monitored_attr_names:
-            self.monitor_attribute(mon_attr)
+        super().__init__(
+            tango_device_fqdn,
+            logger,
+            self._monitored_attr_names,
+            *args,
+            communication_state_callback=communication_state_callback,
+            component_state_callback=component_state_callback,
+            **kwargs
+        )
 
     def _update_component_state(self, **kwargs):
         """Update the int we get from the event to the Enum"""

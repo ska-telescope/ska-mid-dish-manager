@@ -157,7 +157,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # that the dict is not empty before continuing with trigger
         if self.sub_component_managers:
             if all(
-                component_manager.communication_state == CommunicationStatus.ESTABLISHED
+                component_manager.sub_communication_state == CommunicationStatus.ESTABLISHED
                 for component_manager in self.sub_component_managers.values()
             ):
                 self._update_communication_state(CommunicationStatus.ESTABLISHED)
