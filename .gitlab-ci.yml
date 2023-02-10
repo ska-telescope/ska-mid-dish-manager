@@ -63,9 +63,8 @@ python-publish-to-gitlab:
 python-test:
   image: ${CI_REGISTRY}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}:2.0.0-dev.c$CI_COMMIT_SHORT_SHA
   before_script:
-    - echo "Create the build directory and give all users RW permissions"
-    - sudo mkdir -p ./build
-    - sudo chmod -R a+rw ./build
+    - echo "Give all users RW permissions in cwd"
+    - sudo chmod -R a+rw ./
     - '[ -f .make/python.mk ] || (echo "File python.mk not included in Makefile; exit 1")'
     - 'make help | grep python-test'
     - poetry config virtualenvs.in-project true
