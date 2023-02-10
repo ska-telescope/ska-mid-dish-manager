@@ -1,7 +1,7 @@
 """CapabilityState checks"""
 # pylint: disable=protected-access
 # pylint: disable=attribute-defined-outside-init
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import tango

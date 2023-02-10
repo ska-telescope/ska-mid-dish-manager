@@ -21,7 +21,6 @@ def _check_connection(func):  # pylint: disable=E0213
     """
 
     def _decorator(self, *args, **kwargs):
-
         if self.sub_communication_state != CommunicationStatus.ESTABLISHED:
             raise LostConnection("Communication status not ESTABLISHED")
         return func(self, *args, **kwargs)  # pylint: disable=E1102
@@ -47,6 +46,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         component_state_callback: Optional[Callable] = None,
         **kwargs,
     ):
+        self._is_reconnecting = False
         self._component_state = {}
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
@@ -59,11 +59,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self.logger = logger
 
         self._tango_device_monitor = TangoDeviceMonitor(
-            self._tango_device_fqdn,
-            self._monitored_attributes,
-            self._events_queue,
-            logger,
-            self._sub_communication_state_callback,
+            self._tango_device_fqdn, self._monitored_attributes, self._events_queue, logger
         )
 
         super().__init__(
@@ -123,6 +119,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: Tango event
         :type event_data: tango.EventData
         """
+        # We got a valid event, so cannot be reconnecting
+        self._is_reconnecting = False
+        self._sub_communication_state_callback(CommunicationStatus.ESTABLISHED)
+
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
@@ -147,19 +147,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param communication_status: The communication state
         :type communication_status: CommunicationStatus
         """
-
-        print("AAAAAAAAAAAAAAAA", locals())
-
         if self.sub_communication_state != communication_status:
             self.sub_communication_state = communication_status
             if self._communication_state_callback:
                 self._communication_state_callback()
-            if self.sub_communication_state == CommunicationStatus.NOT_ESTABLISHED:
-                # Reconnect
-                try:
-                    self._tango_device_monitor.monitor()
-                except Exception:
-                    self.logger.exception("MONITOING START ERROR")
 
     # @classmethod
     # def _communication_state_handler(
@@ -179,7 +170,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     #     :return: _description_
     #     :rtype: _type_
     #     """
-    #     if task_callback:   
+    #     if task_callback:
     #         task_callback(status=TaskStatus.IN_PROGRESS)
     #     while task_abort_event and not task_abort_event.is_set():
     #         try:
@@ -197,7 +188,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             args=[
                 self._events_queue,
                 self._update_state_from_event,
-                self._monitored_attributes[0],
             ],
             task_callback=self._event_consumer_cb,
         )
@@ -216,6 +206,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         while task_abort_event and not task_abort_event.is_set():
             try:
                 event_data = event_queue.get(timeout=1)
+                if event_data.err:
+                    task_callback(progress="Error Event Found")
                 if event_data.attr_value:
                     update_state_cb(event_data)
             except Empty:
@@ -241,7 +233,23 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param exception: _description_, defaults to None
         :type exception: Optional[Exception], optional
         """
-        self.logger.info("Event handler callback status [%s], progress [%s] result [%s], exception [%s]", status, progress, result, exception)
+        self.logger.info(
+            (
+                "Device [%s] event handler callback status [%s], "
+                "progress [%s] result [%s], exception [%s]"
+            ),
+            self._tango_device_fqdn,
+            status,
+            progress,
+            result,
+            exception,
+        )
+        if progress and progress == "Error Event Found":
+            self._sub_communication_state_callback(CommunicationStatus.NOT_ESTABLISHED)
+            if not self._is_reconnecting:
+                self.logger.info("Reconnecting to %s", self._tango_device_fqdn)
+                self._is_reconnecting = True
+                self._tango_device_monitor.monitor()
 
     def run_device_command(self, command_name, command_arg, task_callback: Callable = None):
         """Execute the command in a thread"""
@@ -312,6 +320,24 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         result = getattr(device_proxy, attribute_name)
         self.logger.debug(
             "Result of reading [%s] on [%s] is [%s]",
+            attribute_name,
+            self._tango_device_fqdn,
+            result,
+        )
+        return result
+
+    @_check_connection
+    def write_attribute_value(self, attribute_name, attribute_value):
+        """Check the connection and read an attribute"""
+        self.logger.debug(
+            "About to write attribute [%s] on device [%s]",
+            attribute_name,
+            self._tango_device_fqdn,
+        )
+        device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
+        result = device_proxy.write_attribute(attribute_name, attribute_value)
+        self.logger.debug(
+            "Result of writing [%s] on [%s] is [%s]",
             attribute_name,
             self._tango_device_fqdn,
             result,

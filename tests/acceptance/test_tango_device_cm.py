@@ -30,10 +30,10 @@ def test_tango_device_component_manager_state(component_state_store, ds_device_f
 
     com_man.start_communicating()
     assert com_man.sub_communication_state == CommunicationStatus.ESTABLISHED
-    com_man.execute_command(device_proxy, "On", None)
+    com_man.execute_command("On", None)
     assert component_state_store.wait_for_value("state", tango.DevState.ON, timeout=5)
 
-    com_man.execute_command(device_proxy, "IncrementNonPolled1", None)
+    com_man.execute_command("IncrementNonPolled1", None)
     assert component_state_store.wait_for_value(
         "non_polled_attr_1", device_proxy.non_polled_attr_1
     )
@@ -56,7 +56,7 @@ def test_stress_component_monitor(component_state_store, ds_device_fqdn):
     )
     com_man.start_communicating()
     for _ in range(10):
-        com_man.execute_command(device_proxy, "IncrementNonPolled1", None)
+        com_man.execute_command("IncrementNonPolled1", None)
         assert component_state_store.wait_for_value(
             "non_polled_attr_1", device_proxy.non_polled_attr_1
         )

@@ -4,8 +4,6 @@ from queue import Empty, Queue
 
 import pytest
 import tango
-from mock import MagicMock, call
-from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 
@@ -16,16 +14,10 @@ def test_device_monitor(caplog, spf_device_fqdn):
     """Device monitoring sanity check"""
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    callback_mock = MagicMock()
-    tdm = TangoDeviceMonitor(spf_device_fqdn, ["powerState"], event_queue, LOGGER, callback_mock)
+    tdm = TangoDeviceMonitor(spf_device_fqdn, ["powerState"], event_queue, LOGGER)
     tdm.monitor()
     event = event_queue.get(timeout=4)
     # Make sure we end up connected, may take a second or so to come through
-    if len(callback_mock.call_args_list) != 2:
-        with pytest.raises(Empty):
-            event_queue.get(timeout=2)
-    assert callback_mock.call_args_list[0] == call(CommunicationStatus.NOT_ESTABLISHED)
-    assert callback_mock.call_args_list[1] == call(CommunicationStatus.ESTABLISHED)
     assert not event.err
     assert event.attr_value.name == "powerState"
     assert event_queue.empty()
@@ -55,15 +47,13 @@ def test_multi_monitor(caplog, spf_device_fqdn):
     )
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    callback_mock = MagicMock()
-    tdm = TangoDeviceMonitor(spf_device_fqdn, test_attributes, event_queue, LOGGER, callback_mock)
+    tdm = TangoDeviceMonitor(spf_device_fqdn, test_attributes, event_queue, LOGGER)
     tdm.monitor()
     test_attributes_list = list(test_attributes)
     for _ in range(len(test_attributes)):
         event = event_queue.get(timeout=4)
         assert event.attr_value.name.lower() in test_attributes_list
         test_attributes_list.remove(event.attr_value.name.lower())
-    callback_mock.assert_called_with(CommunicationStatus.ESTABLISHED)
     assert not test_attributes_list
 
 
@@ -71,10 +61,7 @@ def test_device_monitor_stress(caplog):
     """Reconnect many times to see if it recovers"""
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    callback_mock = MagicMock()
-    tdm = TangoDeviceMonitor(
-        "mid_d0001/spf/simulator", ["powerState"], event_queue, LOGGER, callback_mock
-    )
+    tdm = TangoDeviceMonitor("mid_d0001/spf/simulator", ["powerState"], event_queue, LOGGER)
     for i in range(20):
         tdm.monitor()
         assert tdm._run_count == i + 1  # pylint: disable=W0212
@@ -88,21 +75,12 @@ def test_device_monitor_stress(caplog):
     # 19 Unsubscriptions
     assert all_logs.count("Unsubscribed from mid_d0001/spf/simulator for attr powerState") == 19
 
-    # Check comms established and not established updated
-    callback_mock.assert_has_calls(
-        (call(CommunicationStatus.ESTABLISHED), call(CommunicationStatus.NOT_ESTABLISHED)),
-        any_order=True,
-    )
-    # Check we finish up with established
-    assert callback_mock.call_args_list[-1] == call(CommunicationStatus.ESTABLISHED)
-
 
 def test_connection_error(caplog):
     """Test that connection is retried"""
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    callback_mock = MagicMock()
-    tdm = TangoDeviceMonitor("fake_device", ["powerState"], event_queue, LOGGER, callback_mock)
+    tdm = TangoDeviceMonitor("fake_device", ["powerState"], event_queue, LOGGER)
     tdm.monitor()
     with pytest.raises(Empty):
         event_queue.get(timeout=4)

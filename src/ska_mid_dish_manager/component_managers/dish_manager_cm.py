@@ -81,7 +81,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
+        # SPF has to go first
         self.sub_component_managers = {
+            "SPF": SPFComponentManager(
+                spf_device_fqdn,
+                logger,
+                operatingmode=SPFOperatingMode.UNKNOWN,
+                powerstate=SPFPowerState.UNKNOWN,
+                healthstate=HealthState.UNKNOWN,
+                bandinfocus=BandInFocus.UNKNOWN,
+                b1capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b2capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b3capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                communication_state_callback=self._communication_state_changed,
+                component_state_callback=self._component_state_changed,
+            ),
             "DS": DSComponentManager(
                 ds_device_fqdn,
                 logger,
@@ -109,23 +126,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 communication_state_callback=self._communication_state_changed,
                 component_state_callback=self._component_state_changed,
-            ),
-            "SPF": SPFComponentManager(
-                spf_device_fqdn,
-                logger,
-                operatingmode=SPFOperatingMode.UNKNOWN,
-                powerstate=SPFPowerState.UNKNOWN,
-                healthstate=HealthState.UNKNOWN,
-                bandinfocus=BandInFocus.UNKNOWN,
-                b1capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-                b2capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-                b3capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-                b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-                b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
-                b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
-                communication_state_callback=self._communication_state_changed,
-                component_state_callback=self._component_state_changed,
-            ),
+            )
         }
         initial_component_states = {
             "dishmode": DishMode.UNKNOWN,
@@ -198,7 +199,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
-        self.logger.info(
+        self.logger.debug(
             (
                 "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
                 ", SPFRx [%s], DM [%s]"
@@ -211,7 +212,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
         if "achievedpointing" in kwargs:
-            self.logger.info(
+            self.logger.debug(
                 ("Updating achievedPointing with DS achievedPointing [%s]"),
                 ds_component_state["achievedpointing"],
             )
@@ -220,7 +221,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs:
-            self.logger.info(
+            self.logger.debug(
                 ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
                 ds_component_state["operatingmode"],
                 spf_component_state["operatingmode"],
@@ -239,7 +240,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             and "healthstate" in spf_component_state
             and "healthstate" in spfrx_component_state
         ):
-            self.logger.info(
+            self.logger.debug(
                 ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
                 ds_component_state["healthstate"],
                 spf_component_state["healthstate"],
@@ -272,19 +273,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
                 ds_component_state, spfrx_component_state
             )
-            self.logger.info("Setting bandInFocus to %s on SPF", band_in_focus)
+            self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
             # pylint: disable=protected-access
             # update the bandInFocus of SPF before configuredBand
-            spf_proxy = self.sub_component_managers["SPF"]._device_proxy
             # component state changed for DS and SPFRx may be triggered while
             # SPF device proxy is not initialised. Write to the bandInFocus
             # only when you have the device proxy
-            if spf_proxy:
-                spf_proxy.write_attribute("bandInFocus", band_in_focus)
+            spf_component_manager = self.sub_component_managers["SPF"]
+            spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
 
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
-            self.logger.info(
+            self.logger.debug(
                 (
                     "Updating configuredBand on DM from change"
                     " [%s] with DS [%s] SPF [%s] SPFRX [%s]"
@@ -304,7 +304,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # update capturing attribute when SPFRx captures data
         if "capturingdata" in kwargs:
-            self.logger.info(
+            self.logger.debug(
                 ("Updating capturing with SPFRx [%s]"),
                 spfrx_component_state,
             )
