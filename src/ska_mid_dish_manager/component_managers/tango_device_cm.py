@@ -122,7 +122,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         # We got a valid event, so cannot be reconnecting
         self._is_reconnecting = False
-        self._sub_communication_state_callback(CommunicationStatus.ESTABLISHED)
+        self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
@@ -141,47 +141,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error updating component state")
 
-    def _sub_communication_state_callback(self, communication_status: CommunicationStatus):
+    def _update_communication_state(self, communication_state: CommunicationStatus):
         """Update the DishManager communication state (via _communication_state_callback),
            which is an aggregation of the ubservient devices communication states.
 
         :param communication_status: The communication state
         :type communication_status: CommunicationStatus
         """
-        if self.sub_communication_state != communication_status:
-            self.sub_communication_state = communication_status
+        if self.sub_communication_state != communication_state:
+            self.sub_communication_state = communication_state
             if self._communication_state_callback:
                 self._communication_state_callback()
-
-    # @classmethod
-    # def _communication_state_handler(
-    #     cls,
-    #     communication_state_queue: Queue,
-    #     task_abort_event: Optional[Event] = None,
-    #     task_callback: Optional[Callable] = None,
-    # ):
-    #     """_summary_
-
-    #     :param communication_state_queue: _description_
-    #     :type communication_state_queue: Queue
-    #     :param task_abort_event: _description_, defaults to None
-    #     :type task_abort_event: Optional[Event], optional
-    #     :param task_callback: _description_, defaults to None
-    #     :type task_callback: Optional[Callable], optional
-    #     :return: _description_
-    #     :rtype: _type_
-    #     """
-    #     if task_callback:
-    #         task_callback(status=TaskStatus.IN_PROGRESS)
-    #     while task_abort_event and not task_abort_event.is_set():
-    #         try:
-    #             new_communication_state = communication_state_queue.get(timeout=1)
-    #             task_callback()
-
-    #         except Empty:
-    #             pass
-    #     if task_callback:
-    #         task_callback(status=TaskStatus.ABORTED)
 
     def _start_event_consumer_thread(self):
         self.submit_task(
@@ -246,7 +216,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             exception,
         )
         if progress and progress == "Error Event Found":
-            self._sub_communication_state_callback(CommunicationStatus.NOT_ESTABLISHED)
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
             if not self._is_reconnecting:
                 self.logger.info("Reconnecting to %s", self._tango_device_fqdn)
                 self._is_reconnecting = True
@@ -354,4 +324,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def stop_communicating(self):
         """Stop communication with the device"""
         # pylint: disable=no-member
+        self._is_reconnecting = False
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._tango_device_monitor.stop_monitoring()

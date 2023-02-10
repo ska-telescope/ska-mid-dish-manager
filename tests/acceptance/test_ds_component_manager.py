@@ -24,7 +24,6 @@ def test_ds_cm(component_state_store, ds_device_fqdn):
         ds_device_fqdn,
         LOGGER,
         component_state_callback=component_state_store,
-
     )
     com_man.start_communicating()
 

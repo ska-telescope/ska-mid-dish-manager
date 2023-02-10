@@ -126,7 +126,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 communication_state_callback=self._communication_state_changed,
                 component_state_callback=self._component_state_changed,
-            )
+            ),
         }
         initial_component_states = {
             "dishmode": DishMode.UNKNOWN,

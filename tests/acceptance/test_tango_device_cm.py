@@ -28,6 +28,9 @@ def test_tango_device_component_manager_state(component_state_store, ds_device_f
     assert com_man.sub_communication_state == CommunicationStatus.NOT_ESTABLISHED
 
     com_man.start_communicating()
+    for _ in range(10):
+        if com_man.sub_communication_state == CommunicationStatus.ESTABLISHED:
+            break
     assert com_man.sub_communication_state == CommunicationStatus.ESTABLISHED
 
     com_man.execute_command("IncrementNonPolled1", None)
@@ -48,7 +51,7 @@ def test_stress_component_monitor(component_state_store, ds_device_fqdn):
     com_man = TangoDeviceComponentManager(
         ds_device_fqdn,
         LOGGER,
-        ("non_polled_attr_1"),
+        ("non_polled_attr_1",),
         component_state_callback=component_state_store,
     )
     com_man.start_communicating()
