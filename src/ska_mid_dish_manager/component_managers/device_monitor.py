@@ -13,10 +13,7 @@ import tango
 from ska_control_model import CommunicationStatus
 
 SLEEP_BETWEEN_RECONNECTS = 1
-
-
-class ReceivedErrorEvent(Exception):
-    """Exception for error event"""
+TEST_CONNECTION_PERIOD = 1
 
 
 # pylint:disable=too-few-public-methods, too-many-instance-attributes
@@ -57,8 +54,8 @@ class TangoDeviceMonitor:
 
         self._exit_thread_event = None
         self._run_count = 0
-        self._thread_futures = []
         self._update_comm_state_lock = Lock()
+        self._thread_futures = []
 
     def monitor(self):
         """Kick off device monitoring
@@ -68,19 +65,31 @@ class TangoDeviceMonitor:
         """
         self._run_count += 1
         if self._executor:
+            self._logger.info("Stopping current monitoring threads on %s", self._tango_fqdn)
             # Clear out existing subscriptions
             self._exit_thread_event.set()
-            self._executor.shutdown(wait=True)
+            self._executor.shutdown(wait=True, cancel_futures=True)
+            self._logger.info("Stopped monitoring threads on %s", self._tango_fqdn)
 
         self._logger.info("Setting up monitoring on %s", self._tango_fqdn)
         self._executor = ThreadPoolExecutor(
-            max_workers=len(self._monitored_attributes),
+            max_workers=len(self._monitored_attributes) + 1,
             thread_name_prefix=f"Monitoring_run_{self._run_count}_attr_no_",
         )
         self._logger.info("Monitoring thread pool started for %s", self._tango_fqdn)
         self._exit_thread_event = Event()
-        self._thread_futures.clear()
+        self._thread_futures = []
 
+        # Start heartbeat thread
+        future = self._executor.submit(
+                self._device_heartbeat,
+                self._tango_fqdn,
+                self._exit_thread_event,
+                self._update_sub_communication_state_cb
+            )
+        self._thread_futures.append(future)
+        
+        # Start attr monitoring threads
         for attribute_name in self._monitored_attributes:
             future = self._executor.submit(
                 self._monitor_attribute,
@@ -92,10 +101,12 @@ class TangoDeviceMonitor:
                 self._update_comm_state_lock,
                 self._update_sub_communication_state_cb,
             )
+            self._thread_futures.append(future)
 
+        for thread_future in self._thread_futures:
             # Quick check for any basic errors
             try:
-                exc = future.exception(0.1)
+                exc = thread_future.exception(0.1)
                 if exc:
                     raise exc
             except FutureTimeoutError:
@@ -132,8 +143,6 @@ class TangoDeviceMonitor:
         :param update_comm_state_lock: Make sure update_sub_communication_state_cb is called
             sequentially
         :type update_comm_state_lock: Lock
-        :raises ReceivedErrorEvent: Raised when an error event has been received
-            The DeviceProxy and subscription is recreated
         """
         retry_count = 0
         with tango.EnsureOmniThread():
@@ -151,6 +160,8 @@ class TangoDeviceMonitor:
 
                     device_proxy = tango.DeviceProxy(tango_fqdn)
                     device_proxy.ping()
+                    if exit_thread_event.is_set():
+                        return
                     event_reaction_cb = partial(_event_reaction, event_queue)
                     subscription_id = device_proxy.subscribe_event(
                         attribute_name,
@@ -158,9 +169,12 @@ class TangoDeviceMonitor:
                         event_reaction_cb,
                     )
                     logger.info("Subscribed on %s to attr %s", tango_fqdn, attribute_name)
+                    if exit_thread_event.is_set():
+                        return
                     with update_comm_state_lock:
                         if update_sub_communication_state_cb:
                             update_sub_communication_state_cb(CommunicationStatus.ESTABLISHED)
+                    # Most time spent here waiting for events
                     while not exit_thread_event.wait(1):
                         pass
                     device_proxy.unsubscribe_event(subscription_id)
@@ -171,15 +185,6 @@ class TangoDeviceMonitor:
                         (
                             f"Error on Tango {tango_fqdn} for attr {attribute_name}, "
                             f"try number {retry_count}"
-                        )
-                    )
-                    retry_count += 1
-                    exit_thread_event.wait(SLEEP_BETWEEN_RECONNECTS)
-                except ReceivedErrorEvent:
-                    logger.exception(
-                        (
-                            f"Error event received on Tango {tango_fqdn} for attr"
-                            f" {attribute_name}, try number {retry_count}"
                         )
                     )
                     retry_count += 1
@@ -199,7 +204,37 @@ class TangoDeviceMonitor:
                 if update_sub_communication_state_cb:
                     update_sub_communication_state_cb(CommunicationStatus.NOT_ESTABLISHED)
 
+    @classmethod
+    def _device_heartbeat(
+        cls,
+        tango_fqdn: str,
+        exit_thread_event: Event,
+        update_sub_communication_state_cb: Callable
+    ):
+        """Polls the connection to the subservient device every TEST_CONNECTION_PERIOD
+
+        :param tango_fqdn: The Tango device
+        :type tango_fqdn: str
+        :param exit_thread_event: The thread exit signal
+        :type exit_thread_event: Event
+        :param logger: The logger
+        :type logger: logging.Logger
+        :param update_sub_communication_state_cb: Update the connection status
+        :type update_sub_communication_state_cb: Callable
+        """
+        while not exit_thread_event.is_set():
+            try:
+                device_proxy = tango.DeviceProxy(tango_fqdn)
+                while not exit_thread_event.is_set():
+                    device_proxy.ping()
+                    update_sub_communication_state_cb(CommunicationStatus.ESTABLISHED)
+                    exit_thread_event.wait(timeout=TEST_CONNECTION_PERIOD)
+            except tango.DevFailed:
+                update_sub_communication_state_cb(CommunicationStatus.NOT_ESTABLISHED)
+                exit_thread_event.wait(timeout=TEST_CONNECTION_PERIOD)
+
     def stop_monitoring(self):
         """Stop all monitoring threads"""
         if self._exit_thread_event:
             self._exit_thread_event.set()
+
