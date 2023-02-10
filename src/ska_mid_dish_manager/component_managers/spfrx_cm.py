@@ -20,7 +20,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         communication_state_callback: Optional[Callable] = None,
         component_state_callback: Optional[Callable] = None,
         **kwargs
-    ):
+    ) -> None:
         super().__init__(
             tango_device_fqdn,
             logger,
@@ -44,7 +44,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         for mon_attr in self._monitored_attr_names:
             self.monitor_attribute(mon_attr)
 
-    def _update_component_state(self, **kwargs):
+    def _update_component_state(self, **kwargs) -> None:
         """Update the int we get from the event to the Enum"""
         enum_conversion = {
             "operatingmode": SPFRxOperatingMode,
@@ -64,17 +64,17 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         super()._update_component_state(**kwargs)
 
     # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable):
+    def on(self, task_callback: Callable):  # type: ignore[override]
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable):
+    def off(self, task_callback: Callable):  # type: ignore[override]
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable):
+    def reset(self, task_callback: Callable):  # type: ignore[override]
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable):
+    def standby(self, task_callback: Callable):  # type: ignore[override]
         raise NotImplementedError
