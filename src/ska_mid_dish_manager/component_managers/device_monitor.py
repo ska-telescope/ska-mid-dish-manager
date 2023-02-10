@@ -169,3 +169,7 @@ class TangoDeviceMonitor:
                     )
                     retry_count += 1
                     exit_thread_event.wait(SLEEP_BETWEEN_RECONNECTS)
+
+    def stop_monitoring(self):
+        """Close all the monitroing threads"""
+        self._exit_thread_event.set()

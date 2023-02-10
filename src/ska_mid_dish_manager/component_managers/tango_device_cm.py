@@ -71,7 +71,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
         # Default to NOT_ESTABLISHED
-        self._communication_state_callback()
+        if self._communication_state_callback:
+            self._communication_state_callback()
         self._start_event_consumer_thread()
 
     def clear_monitored_attributes(self):
