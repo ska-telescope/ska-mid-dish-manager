@@ -6,7 +6,7 @@ state of the device to decide if the requested state is a nearby node to allow o
 # pylint: disable=too-few-public-methods
 from typing import Any, Optional
 
-import networkx as nx  # type: ignore
+import networkx as nx
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
