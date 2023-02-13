@@ -1,6 +1,6 @@
 """Specialization for SPFRx functionality"""
 import logging
-from typing import Any, AnyStr, Callable, Union
+from typing import Any, AnyStr, Callable
 
 from ska_control_model import HealthState
 
@@ -17,8 +17,8 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         tango_device_fqdn: AnyStr,
         logger: logging.Logger,
         *args: Any,
-        communication_state_callback: Union[Any, None] = None,
-        component_state_callback: Union[Any, None] = None,
+        communication_state_callback: Any | None = None,
+        component_state_callback: Any | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(
