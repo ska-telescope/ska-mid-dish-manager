@@ -22,8 +22,8 @@ class DSComponentManager(TangoDeviceComponentManager):
         tango_device_fqdn: Any,
         logger: logging.Logger,
         *args: Any,
-        communication_state_callback: Any | None = None,
-        component_state_callback: Any | None = None,
+        communication_state_callback: Any = None,
+        component_state_callback: Any = None,
         **kwargs: Any,
     ):
 

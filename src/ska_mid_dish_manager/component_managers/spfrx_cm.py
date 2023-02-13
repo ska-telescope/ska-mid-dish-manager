@@ -17,8 +17,8 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         tango_device_fqdn: AnyStr,
         logger: logging.Logger,
         *args: Any,
-        communication_state_callback: Any | None = None,
-        component_state_callback: Any | None = None,
+        communication_state_callback: Any = None,
+        component_state_callback: Any = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(

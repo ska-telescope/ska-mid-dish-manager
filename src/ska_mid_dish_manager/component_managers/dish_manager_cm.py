@@ -375,7 +375,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         return status, response
 
     def _set_standby_lp_mode(
-        self, task_callback: Any | None = None, task_abort_event: Any | None = None
+        self, task_callback: Any = None, task_abort_event: Any = None
     ) -> None:
         assert task_callback, "task_callback has to be defined"
         if task_abort_event is not None and task_abort_event.is_set():
@@ -460,7 +460,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         return status, response
 
     def _set_standby_fp_mode(
-        self, task_callback: Any | None = None, task_abort_event: Any | None = None
+        self, task_callback: Any = None, task_abort_event: Any = None
     ) -> None:
         """Set StandbyFP mode on sub devices as long running commands"""
         assert task_callback, "task_callback has to be defined"
@@ -549,9 +549,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         )
         return status, response
 
-    def _set_operate_mode(
-        self, task_callback: Any | None = None, task_abort_event: Any | None = None
-    ) -> None:
+    def _set_operate_mode(self, task_callback: Any = None, task_abort_event: Any = None) -> None:
         assert task_callback, "task_callback has to be defined"
         if task_abort_event is not None and task_abort_event.is_set():
             task_callback(
@@ -627,9 +625,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         status, response = self.submit_task(self._track_cmd, args=[], task_callback=task_callback)
         return status, response
 
-    def _track_cmd(
-        self, task_callback: Any | None = None, task_abort_event: Any | None = None
-    ) -> None:
+    def _track_cmd(self, task_callback: Any = None, task_abort_event: Any = None) -> None:
         assert task_callback, "task_callback has to be defined"
         if task_abort_event is not None and task_abort_event.is_set():
             task_callback(
@@ -717,7 +713,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         return status, response
 
     def _configure_band2_cmd(
-        self, task_callback: Any | None = None, task_abort_event: Any | None = None
+        self, task_callback: Any = None, task_abort_event: Any = None
     ) -> None:
         """configureBand on DS, SPF, SPFRX"""
         assert task_callback, "task_callback has to be defined"
@@ -797,9 +793,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         )
         return status, response
 
-    def _set_stow_mode(
-        self, task_callback: Any | None = None, task_abort_event: Any | None = None
-    ) -> None:
+    def _set_stow_mode(self, task_callback: Any = None, task_abort_event: Any = None) -> None:
         """Call Stow on DS"""
         assert task_callback, "task_callback has to be defined"
         if task_abort_event is not None and task_abort_event.is_set():
