@@ -1,13 +1,12 @@
 """Generic component manager for a subservient tango device"""
 import logging
 import time
-import typing
 from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
 from queue import Empty, Queue
 from threading import Event
-from typing import Any, AnyStr, List, Optional
+from typing import Any, AnyStr, Callable, List, Optional
 
 import numpy as np
 import tango
@@ -19,7 +18,7 @@ SLEEP_TIME_BETWEEN_RECONNECTS = 1  # seconds
 STATE_ATTR_POLL_PERIOD = 3000
 
 
-def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
+def _check_connection(func):  # pylint: disable=E0213
     """Connection check decorator.
 
     This is a workaround for decorators in classes.
@@ -27,7 +26,7 @@ def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
     Execute the method, if communication fails, commence reconnection.
     """
 
-    def _decorator(self: Any, *args: Any, **kwargs: typing.Dict[str, Any]) -> Any:
+    def _decorator(self, *args, **kwargs):
         try:
             if self.communication_state != CommunicationStatus.ESTABLISHED:
                 raise LostConnection("Communication status not ESTABLISHED")
@@ -53,10 +52,10 @@ class MonitoredAttribute:
     """Package together the information needed for a subscription"""
 
     attr_name: str
-    event_queue: Queue[Any]
+    event_queue: Queue
     subscription_id: Optional[int] = None
 
-    def _subscription_callback(self, logger: logging.Logger, event_data: tango.EventData) -> None:
+    def _subscription_callback(self, logger: logging.Logger, event_data: tango.EventData):
         if event_data.err:
             logger.error("Got error from [%s] %s", event_data.device, event_data)
         else:
@@ -70,11 +69,11 @@ class MonitoredAttribute:
 
     def monitor(
         self,
-        device_proxy: Any,
-        logger: Any,
+        device_proxy,
+        logger,
         task_abort_event: Optional[Event] = None,
-        task_callback: Optional[Any] = None,  # pylint: disable=W0613
-    ) -> None:
+        task_callback: Optional[Callable] = None,  # pylint: disable=W0613
+    ):
         """Manage attribute event subscription"""
         with tango.EnsureOmniThread():
             if self.attr_name == "State":
@@ -87,9 +86,8 @@ class MonitoredAttribute:
                 subscription_callback,
             )
             logger.info("Subscribed to [%s] with [%s]", self.attr_name, device_proxy)
-            if task_abort_event is not None:
-                while not task_abort_event.wait(1):
-                    pass
+            while not task_abort_event.wait(1):
+                pass
             device_proxy.unsubscribe_event(self.subscription_id)
             logger.info(
                 "Unsubscribed from [%s] with [%s]",
@@ -99,7 +97,7 @@ class MonitoredAttribute:
 
 
 # pylint: disable=abstract-method, too-many-instance-attributes, no-member
-class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
+class TangoDeviceComponentManager(TaskExecutorComponentManager):
     """A component manager for a Tango device
 
     Upon class instantiation, a method that tries to connect to the Tango
@@ -123,16 +121,16 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
     def __init__(
         self,
         tango_device_fqdn: AnyStr,
-        logger: Any,
-        *args: Any,
-        communication_state_callback: Any = None,
-        component_state_callback: Any = None,
-        **kwargs: Any,
+        logger,
+        *args,
+        communication_state_callback: Optional[Callable] = None,
+        component_state_callback: Optional[Callable] = None,
+        **kwargs,
     ):
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
-        self._events_queue: Queue[Any] = Queue()
-        self._tango_device_fqdn = tango_device_fqdn  # type: ignore
+        self._events_queue = Queue()
+        self._tango_device_fqdn = tango_device_fqdn
         self._device_proxy = None
         if not logger:
             logger = logging.getLogger()
@@ -168,7 +166,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
 
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
-    def clear_monitored_attributes(self) -> None:
+    def clear_monitored_attributes(self):
         """
         Sets all the monitored attribute values to 0.
 
@@ -188,7 +186,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             if attribute_name in self._component_state:
                 self._component_state[attribute_name] = 0
 
-    def update_state_from_monitored_attributes(self) -> None:
+    def update_state_from_monitored_attributes(self):
         """Update the component state by reading the monitored attributes
 
         When an attribute on the device does not match the component_state
@@ -204,13 +202,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             # Add it to component state if not there
             if attribute_name not in self._component_state:
                 self._component_state[attribute_name] = None
-            if self._device_proxy is not None:
-                value = self._device_proxy.read_attribute(attribute_name).value
-                if isinstance(value, np.ndarray):
-                    value = list(value)
-                self._update_component_state(**{attribute_name: value})
 
-    def _update_state_from_event(self, event_data: tango.EventData) -> None:
+            value = self._device_proxy.read_attribute(attribute_name).value
+            if isinstance(value, np.ndarray):
+                value = list(value)
+            self._update_component_state(**{attribute_name: value})
+
+    def _update_state_from_event(self, event_data: tango.EventData):
         """Update component state as the change events come in.
 
         :param event_data: Tango event
@@ -241,11 +239,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
     @classmethod
     def _event_handler(
         cls,
-        event_queue: Queue[Any],
-        update_state_cb: Any,
+        event_queue: Queue,
+        update_state_cb: Callable,
         task_abort_event: Optional[Event] = None,
-        task_callback: Any = None,
-    ) -> None:
+        task_callback: Optional[Callable] = None,
+    ):
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
         latest_event_message_timestamp = datetime.utcnow().isoformat()
@@ -266,7 +264,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         if task_callback:
             task_callback(status=TaskStatus.ABORTED)
 
-    def _start_monitoring_threads(self) -> Any:
+    def _start_monitoring_threads(self):
         # Start the monitoring threads
         self.logger.info("Starting monitoring threads")
         for monitored_attribute in self._monitored_attributes:
@@ -276,7 +274,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
                 task_callback=None,
             )
 
-    def _start_event_handling_thread(self) -> None:
+    def _start_event_handling_thread(self):
         self.submit_task(
             self._event_handler,
             args=[self._events_queue, self._update_state_from_event],
@@ -289,7 +287,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         result: Optional[Any] = None,
         retry_count: int = 0,
         message: Optional[Any] = None,
-    ) -> None:
+    ):
         """Callback to be called as _create_device_proxy runs
 
         :param: status: The result of the task
@@ -336,9 +334,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         tango_device_fqdn: AnyStr,
         logger: logging.Logger,
         device_proxy: Optional[tango.DeviceProxy] = None,
-        task_abort_event: Optional[Event] = None,
-        task_callback: Any = None,
-    ) -> None:
+        task_abort_event: Event = None,
+        task_callback: Callable = None,
+    ):
         """
         Keep trying to create the device proxy, retrying every
         `SLEEP_TIME_BETWEEN_RECONNECTS` seconds
@@ -361,31 +359,26 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         while True:
             # Leave thread if aborted
             if task_abort_event and task_abort_event.is_set():
-                if task_callback is not None:
-                    task_callback(status=TaskStatus.ABORTED, result=None)
-                    return
+                task_callback(status=TaskStatus.ABORTED, result=None)
+                return
 
             try:
                 retry_count += 1
                 if not device_proxy:
                     device_proxy = tango.DeviceProxy(tango_device_fqdn)
                 device_proxy.ping()
-                if task_callback is not None:
-                    task_callback(status=TaskStatus.COMPLETED, result=device_proxy)
+                task_callback(status=TaskStatus.COMPLETED, result=device_proxy)
                 return
 
             except tango.DevFailed as err:
                 logger.exception(err)
-                if task_callback is not None:
-                    task_callback(
-                        status=TaskStatus.IN_PROGRESS,
-                        retry_count=retry_count,
-                    )
+                task_callback(
+                    status=TaskStatus.IN_PROGRESS,
+                    retry_count=retry_count,
+                )
                 time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
 
-    def run_device_command(
-        self, command_name: Any, command_arg: Any, task_callback: Any = None
-    ) -> Any:
+    def run_device_command(self, command_name, command_arg, task_callback: Callable = None):
         """Execute the command in a thread"""
         task_status, response = self.submit_task(
             self._run_device_command,
@@ -398,28 +391,25 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         self,
         command_name: str,
         command_arg: Any,
-        task_callback: Any = None,
-        task_abort_event: Optional[Event] = None,
-    ) -> None:
-        if task_abort_event is not None:
-            if task_abort_event.is_set():
-                if task_callback is not None:
-                    task_callback(TaskStatus.ABORTED)  # Need to double check this b4 MR
-                    return
+        task_callback: Callable = None,
+        task_abort_event: Event = None,
+    ):
+        if task_abort_event.is_set():
+            task_callback(TaskStatus.ABORTED)
+            return
 
         if task_callback:
             task_callback(TaskStatus.IN_PROGRESS)
 
         if self.state != "monitoring":
-            if task_callback is not None:
-                task_callback(
-                    TaskStatus.FAILED,
-                    exception=RuntimeError(
-                        f"Tango device component manager is not ready for commands"
-                        f" in state [{self.state}]"
-                    ),
-                )
-                return
+            task_callback(
+                TaskStatus.FAILED,
+                exception=RuntimeError(
+                    f"Tango device component manager is not ready for commands"
+                    f" in state [{self.state}]"
+                ),
+            )
+            return
 
         result = None
         try:
@@ -431,16 +421,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             return
 
         # perform another abort event check in case it was missed earlier
-        if task_abort_event is not None:
-            if task_abort_event.is_set():
-                if task_callback is not None:
-                    task_callback(progress=f"{command_name} was aborted")
+        if task_abort_event.is_set():
+            task_callback(progress=f"{command_name} was aborted")
 
         if task_callback:
             task_callback(TaskStatus.COMPLETED, result=str(result))
 
     @_check_connection
-    def execute_command(self, device_proxy: Any, command_name: Any, command_arg: Any) -> Any:
+    def execute_command(self, device_proxy, command_name, command_arg):
         """Check the connection and execute the command on the Tango device"""
         self.logger.debug(
             "About to execute command [%s] on device [%s]",
@@ -457,7 +445,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         return result
 
     @_check_connection
-    def read_attribute_value(self, attribute_name: Any) -> Any:
+    def read_attribute_value(self, attribute_name):
         """Check the connection and read an attribute"""
         self.logger.debug(
             "About to read attribute [%s] on device [%s]",
@@ -473,7 +461,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         )
         return result
 
-    def monitor_attribute(self, attribute_name: str) -> Any:
+    def monitor_attribute(self, attribute_name: str):
         """Update the component state with the Attribute value as it changes
 
         :param: attribute_name: Attribute to keep track of
@@ -497,7 +485,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
                 task_callback=None,
             )
 
-    def start_communicating(self) -> None:
+    def start_communicating(self):
         """Establish communication with the device"""
         # pylint: disable=no-member
         if self.state != "disconnected":
@@ -505,7 +493,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         self.logger.info("start_communicating")
         self.to_setting_up_device_proxy()
 
-    def stop_communicating(self) -> None:
+    def stop_communicating(self):
         """Stop communication with the device"""
         # pylint: disable=no-member
         self.abort_commands(task_callback=self._aborting_tasks_cb)
@@ -516,7 +504,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             # Just setting them to None will cause problems
             # when push_event requires something else like an Enum
 
-    def reconnect(self) -> None:
+    def reconnect(self):
         """Redo the connection to the Tango device"""
         self.to_reconnecting()
 
@@ -546,7 +534,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
     #  -> setting_up_monitoring
     #  -> monitoring
 
-    def _aborting_tasks_cb(self, status: TaskStatus) -> None:
+    def _aborting_tasks_cb(self, status: TaskStatus):
         """A callback that is called during and after the aborting of tasks
 
         :param status: the status of the work
@@ -559,12 +547,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             else:
                 self.to_disconnected()
 
-    def on_enter_disconnected(self) -> None:
+    def on_enter_disconnected(self):
         """Disconnecting from the Tango device"""
         self._update_component_state(connection_state="disconnected")
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
-    def on_enter_setting_up_device_proxy(self) -> None:
+    def on_enter_setting_up_device_proxy(self):
         """Set up a connection to the device through the proxy"""
         self.logger.info("in on_enter_setting_up_device_proxy")
         self._update_component_state(connection_state="setting_up_device_proxy")
@@ -575,7 +563,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             task_callback=self._device_proxy_creation_cb,
         )
 
-    def on_enter_setting_up_monitoring(self) -> None:
+    def on_enter_setting_up_monitoring(self):
         """Set up monitoring after connection"""
         # pylint: disable=no-member
         self.logger.info("in on_enter_setting_up_monitoring")
@@ -584,18 +572,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         self._start_monitoring_threads()
         self.to_monitoring()
 
-    def on_enter_monitoring(self) -> None:
+    def on_enter_monitoring(self):
         """Transition to monitoring after setup is complete"""
         self.logger.info("in on_enter_monitoring")
         self._update_component_state(connection_state="monitoring")
         self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
-    def on_exit_monitoring(self) -> None:
+    def on_exit_monitoring(self):
         """Update communication state after monitoring is closed"""
         self.logger.info("in on_exit_monitoring")
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
-    def on_enter_reconnecting(self) -> None:
+    def on_enter_reconnecting(self):
         """Handle reconnecting to the Tango device"""
         self._update_component_state(connection_state="reconnecting")
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
