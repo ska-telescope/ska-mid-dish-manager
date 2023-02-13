@@ -188,9 +188,9 @@ class TestCapabilityStates:
             self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
             self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
 
-            self.ds_cm.sub_communication_state = CommunicationStatus.ESTABLISHED
-            self.spf_cm.sub_communication_state = CommunicationStatus.ESTABLISHED
-            self.spfrx_cm.sub_communication_state = CommunicationStatus.ESTABLISHED
+            self.ds_cm.communication_state = CommunicationStatus.ESTABLISHED
+            self.spf_cm.communication_state = CommunicationStatus.ESTABLISHED
+            self.spfrx_cm.communication_state = CommunicationStatus.ESTABLISHED
 
             self.dish_manager_cm = class_instance.component_manager
 

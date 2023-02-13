@@ -22,7 +22,7 @@ def _check_connection(func):  # pylint: disable=E0213
     """
 
     def _decorator(self, *args, **kwargs):
-        if self.sub_communication_state != CommunicationStatus.ESTABLISHED:
+        if self.communication_state != CommunicationStatus.ESTABLISHED:
             raise LostConnection("Communication status not ESTABLISHED")
         return func(self, *args, **kwargs)  # pylint: disable=E1102
 
@@ -53,7 +53,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._events_queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
-        self.sub_communication_state = CommunicationStatus.NOT_ESTABLISHED
         if not logger:
             logger = logging.getLogger()
         self.logger = logger
@@ -70,6 +69,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             component_state_callback=component_state_callback,
             **kwargs,
         )
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         # Default to NOT_ESTABLISHED
         if self._communication_state_callback:
             self._communication_state_callback()
@@ -120,9 +120,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: Tango event
         :type event_data: tango.EventData
         """
-        # We got a valid event, so cannot be reconnecting
-        self._update_communication_state(CommunicationStatus.ESTABLISHED)
-
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
@@ -139,18 +136,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # Catch any errors and log it otherwise it remains hidden
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error updating component state")
-
-    def _update_communication_state(self, communication_state: CommunicationStatus):
-        """Update the DishManager communication state (via _communication_state_callback),
-           which is an aggregation of the ubservient devices communication states.
-
-        :param communication_status: The communication state
-        :type communication_status: CommunicationStatus
-        """
-        if self.sub_communication_state != communication_state:
-            self.sub_communication_state = communication_state
-            if self._communication_state_callback:
-                self._communication_state_callback()
 
     def _start_event_consumer_thread(self):
         self.submit_task(
@@ -195,6 +180,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 if event_data.attr_value:
                     latest_valid_event_timestamp = event_data.reception_date.todatetime()
                     update_state_cb(event_data)
+                    task_callback(progress="Valid Event Found")
             except Empty:
                 pass
         if task_callback:
@@ -230,9 +216,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             exception,
         )
         if progress and progress == "Error Event Found":
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
             self.logger.info("Reconnecting to %s", self._tango_device_fqdn)
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
             self._tango_device_monitor.monitor()
+
+        if progress and progress == "Valid Event Found":
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
     def run_device_command(self, command_name, command_arg, task_callback: Callable = None):
         """Execute the command in a thread"""

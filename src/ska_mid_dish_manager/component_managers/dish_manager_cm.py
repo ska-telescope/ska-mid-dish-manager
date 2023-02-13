@@ -77,7 +77,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
         self.logger = logger
-        self.connection_state_callback = connection_state_callback
+        self._connection_state_callback = connection_state_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
@@ -96,7 +96,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
-                communication_state_callback=self._communication_state_changed,
+                communication_state_callback=self._sub_communication_state_changed,
                 component_state_callback=self._component_state_changed,
             ),
             "DS": DSComponentManager(
@@ -108,7 +108,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
                 achievedpointing=[0.0, 0.0, 30.0],
-                communication_state_callback=self._communication_state_changed,
+                communication_state_callback=self._sub_communication_state_changed,
                 component_state_callback=self._component_state_changed,
             ),
             "SPFRX": SPFRxComponentManager(
@@ -124,7 +124,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b4capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
-                communication_state_callback=self._communication_state_changed,
+                communication_state_callback=self._sub_communication_state_changed,
                 component_state_callback=self._component_state_changed,
             ),
         }
@@ -148,7 +148,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     # pylint: disable=unused-argument
-    def _communication_state_changed(self):
+    def _sub_communication_state_changed(self, communication_state: CommunicationStatus = None):
         """
         Callback triggered by the component manager when it establishes
         a connection with the underlying (subservient) device
@@ -160,26 +160,39 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         the subservient devices. DishManager reflects this in its connection
         status attributes.
         """
-        # an empty dict will make all condition always pass. check
-        # that the dict is not empty before continuing with trigger
+        if self.sub_component_managers:
+            if not all(
+                (
+                    self.sub_component_managers["DS"].component_state,
+                    self.sub_component_managers["SPF"].component_state,
+                    self.sub_component_managers["SPFRX"].component_state,
+                )
+            ):
+                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+                self._update_component_state(healthstate=HealthState.UNKNOWN)
+                return
+
         if self.sub_component_managers:
             if all(
-                sub_component_manager.sub_communication_state == CommunicationStatus.ESTABLISHED
+                sub_component_manager.communication_state == CommunicationStatus.ESTABLISHED
                 for sub_component_manager in self.sub_component_managers.values()
             ):
                 self._update_communication_state(CommunicationStatus.ESTABLISHED)
-
-                # Automatic transition to LP mode on startup should come from
-                # operating modes of subservient devices. Likewise, any
-                # reconnection gained should be accompanied by fresh
-                # attribute updates
-                self._component_state_changed()
+                ds_component_state = self.sub_component_managers["DS"].component_state
+                spf_component_state = self.sub_component_managers["SPF"].component_state
+                spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
+                new_health_state = self._state_transition.compute_dish_health_state(
+                    ds_component_state, spfrx_component_state, spf_component_state
+                )
+                self._update_component_state(healthstate=new_health_state)
             else:
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                 self._update_component_state(healthstate=HealthState.UNKNOWN)
 
-            # push change events for the connection state attributes
-            self.connection_state_callback()
+        self._component_state_changed()
+
+        # push change events for the connection state attributes
+        self._connection_state_callback()
 
     # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):
@@ -195,6 +208,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         Note: This callback is triggered by the component managers of
         the subservient devices only. DishManager also has its own callback.
         """
+        if not self.sub_component_managers:
+            return
+        if not all(
+            (
+                self.sub_component_managers["DS"].component_state,
+                self.sub_component_managers["SPF"].component_state,
+                self.sub_component_managers["SPFRX"].component_state,
+            )
+        ):
+            return
+
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
