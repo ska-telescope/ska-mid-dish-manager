@@ -3,8 +3,10 @@
 # pylint: disable=attribute-defined-outside-init
 from unittest.mock import patch
 
+import mock
 import pytest
 import tango
+from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -180,12 +182,17 @@ class TestCapabilityStates:
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 
-        self.device_proxy = self.tango_context.device
-        class_instance = DishManager.instances.get(self.device_proxy.name())
-        self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
-        self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
-        self.dish_manager_cm = class_instance.component_manager
+            self.device_proxy = self.tango_context.device
+            class_instance = DishManager.instances.get(self.device_proxy.name())
+            self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
+            self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
+            self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+
+            self.ds_cm.sub_communication_state = CommunicationStatus.ESTABLISHED
+            self.spf_cm.sub_communication_state = CommunicationStatus.ESTABLISHED
+            self.spfrx_cm.sub_communication_state = CommunicationStatus.ESTABLISHED
+
+            self.dish_manager_cm = class_instance.component_manager
 
     def teardown_method(self):
         """Tear down context"""
@@ -215,7 +222,6 @@ class TestCapabilityStates:
 
         # Mimic capabilitystatechanges on sub devices
         self.dish_manager_cm._update_component_state(dishmode=DishMode.STANDBY_LP)
-        self.spf_cm._update_component_state(b1capabilitystate=SPFCapabilityStates.STANDBY)
         self.spfrx_cm._update_component_state(b1capabilitystate=SPFRxCapabilityStates.STANDBY)
 
         event_store.wait_for_value(CapabilityStates.STANDBY)
@@ -259,7 +265,8 @@ class TestCapabilityStates:
 
         # Mimic capabilitystatechanges on sub devices
         self.dish_manager_cm._update_component_state(dishmode=DishMode.STOW)
-        self.ds_cm._update_component_state(indexerposition=IndexerPosition.MOVING)
+        with patch.object(self.spf_cm, "write_attribute_value", mock.MagicMock()):
+            self.ds_cm._update_component_state(indexerposition=IndexerPosition.MOVING)
         self.spf_cm._update_component_state(b3capabilitystate=SPFCapabilityStates.OPERATE_FULL)
         self.spfrx_cm._update_component_state(b3capabilitystate=SPFRxCapabilityStates.OPERATE)
 

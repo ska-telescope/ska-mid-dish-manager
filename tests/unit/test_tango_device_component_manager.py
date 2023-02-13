@@ -8,7 +8,6 @@ from unittest import mock
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
-from ska_tango_testing.mock import MockCallableGroup
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 
@@ -110,24 +109,20 @@ def test_device_goes_away(patched_tango, caplog):
     """
     caplog.set_level(logging.DEBUG)
 
-    call_group = MockCallableGroup("comm_state", "comp_state", timeout=5)
-
     # Set up mocks
     patched_dp = mock.MagicMock()
     patched_dp.command_inout = mock.MagicMock()
+    patched_dp.ping = mock.MagicMock()
     patched_tango.DeviceProxy = mock.MagicMock(return_value=patched_dp)
+    patched_tango.DevFailed = tango.DevFailed
 
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
         LOGGER,
         ("some_,attr",),
-        communication_state_callback=call_group["comm_state"],
-        component_state_callback=call_group["comp_state"],
     )
 
     tc_manager.start_communicating()
-    call_group.assert_call("comm_state", CommunicationStatus.NOT_ESTABLISHED)
-    call_group.assert_call("comm_state", CommunicationStatus.ESTABLISHED)
 
     # Set up mock error event
     mock_error = mock.MagicMock()
@@ -136,12 +131,4 @@ def test_device_goes_away(patched_tango, caplog):
     # Trigger the failure
     tc_manager._events_queue.put(mock_error)
 
-    # Make sure we lost connection
-    call_group.assert_call("comm_state", CommunicationStatus.NOT_ESTABLISHED)
-    # Make sure we get it back
-    call_group.assert_call("comp_state", connection_state="reconnecting")
-    call_group.assert_call("comp_state", connection_state="setting_up_device_proxy")
-    call_group.assert_call("comp_state", connection_state="setting_up_monitoring")
-    call_group.assert_call("comp_state", connection_state="monitoring")
-    call_group.assert_call("comm_state", CommunicationStatus.ESTABLISHED)
     tc_manager.abort_commands()

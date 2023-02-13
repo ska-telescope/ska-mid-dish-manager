@@ -11,8 +11,7 @@ from typing import Tuple
 
 import tango
 
-SLEEP_BETWEEN_RECONNECTS = 1
-TEST_CONNECTION_PERIOD = 1
+SLEEP_BETWEEN_RECONNECTS = 2
 
 
 # pylint:disable=too-few-public-methods, too-many-instance-attributes
