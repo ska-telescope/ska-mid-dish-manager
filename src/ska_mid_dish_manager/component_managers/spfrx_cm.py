@@ -1,6 +1,6 @@
 """Specialization for SPFRx functionality"""
 import logging
-from typing import AnyStr, Callable, Optional
+from typing import Any, AnyStr, Callable, Union
 
 from ska_control_model import HealthState
 
@@ -16,10 +16,10 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         self,
         tango_device_fqdn: AnyStr,
         logger: logging.Logger,
-        *args,
-        communication_state_callback: Optional[Callable] = None,
-        component_state_callback: Optional[Callable] = None,
-        **kwargs
+        *args: Any,
+        communication_state_callback: Union[Any, None] = None,
+        component_state_callback: Union[Any, None] = None,
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             tango_device_fqdn,
@@ -27,7 +27,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
-            **kwargs
+            **kwargs,
         )
         self._monitored_attr_names = [
             "operatingMode",
@@ -44,7 +44,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         for mon_attr in self._monitored_attr_names:
             self.monitor_attribute(mon_attr)
 
-    def _update_component_state(self, **kwargs) -> None:
+    def _update_component_state(self, **kwargs: Any) -> None:
         """Update the int we get from the event to the Enum"""
         enum_conversion = {
             "operatingmode": SPFRxOperatingMode,
@@ -64,17 +64,17 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         super()._update_component_state(**kwargs)
 
     # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable):  # type: ignore[override]
+    def on(self, task_callback: Callable) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable):  # type: ignore[override]
+    def off(self, task_callback: Callable) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable):  # type: ignore[override]
+    def reset(self, task_callback: Callable) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable):  # type: ignore[override]
+    def standby(self, task_callback: Callable) -> Any:  # type: ignore
         raise NotImplementedError
