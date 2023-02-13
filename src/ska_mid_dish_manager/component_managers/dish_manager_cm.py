@@ -3,7 +3,7 @@
 import json
 import logging
 from datetime import datetime
-from typing import Any, Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, HealthState, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
@@ -32,7 +32,7 @@ from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 
 # pylint: disable=abstract-method
-class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
+class DishManagerComponentManager(TaskExecutorComponentManager):
     """A component manager for DishManager
 
     It watches the component managers of the subservient devices
@@ -42,14 +42,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
     def __init__(
         self,
         logger: logging.Logger,
-        command_tracker: Any,
-        connection_state_callback: Any,
-        *args: Any,
+        command_tracker,
+        connection_state_callback,
+        *args,
         ds_device_fqdn: str = "mid_d0001/lmc/ds_simulator",
         spf_device_fqdn: str = "mid_d0001/spf/simulator",
         spfrx_device_fqdn: str = "mid_d0001/spfrx/simulator",
         max_workers: int = 3,
-        **kwargs: Any,
+        **kwargs,
     ):
         """"""
         # pylint: disable=useless-super-delegation
@@ -144,7 +144,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         self._update_component_state(**initial_component_states)
 
     # pylint: disable=unused-argument
-    def _communication_state_changed(self, *args, **kwargs) -> None:  # type: ignore
+    def _communication_state_changed(self, *args, **kwargs):
         """
         Callback triggered by the component manager when it establishes
         a connection with the underlying (subservient) device
@@ -178,7 +178,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
             self.connection_state_callback()
 
     # pylint: disable=unused-argument, too-many-branches
-    def _component_state_changed(self, *args, **kwargs) -> None:  # type: ignore
+    def _component_state_changed(self, *args, **kwargs):
         """
         Callback triggered by the component manager of the
         subservient device for component state changes.
@@ -228,7 +228,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 spfrx_component_state,
                 spf_component_state,
             )
-            self._update_component_state(dishmode=new_dish_mode)  # type: ignore
+            self._update_component_state(dishmode=new_dish_mode)
 
         if (
             "healthstate" in kwargs
@@ -260,9 +260,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 PointingState.SLEW,
                 PointingState.READY,
             ]:
-                self._update_component_state(achievedtargetlock=False)  # type: ignore
+                self._update_component_state(achievedtargetlock=False)
             elif ds_component_state["pointingstate"] == PointingState.TRACK:
-                self._update_component_state(achievedtargetlock=True)  # type: ignore
+                self._update_component_state(achievedtargetlock=True)
 
         # spf bandInFocus
         if "indexerposition" in kwargs or "configuredband" in kwargs:
@@ -297,7 +297,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 spfrx_component_state,
                 spf_component_state,
             )
-            self._update_component_state(configuredband=configured_band)  # type: ignore
+            self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
         if "capturingdata" in kwargs:
@@ -320,7 +320,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                     spf_component_state,
                     self.component_state,
                 )
-                self._update_component_state(**{cap_state_name: new_state})  # type: ignore
+                self._update_component_state(**{cap_state_name: new_state})
 
         # Update individual CapabilityStates if it changes
         # b5 for SPF
@@ -334,14 +334,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                     spf_component_state,
                     self.component_state,
                 )
-                self._update_component_state(**{cap_state_name: new_state})  # type: ignore
+                self._update_component_state(**{cap_state_name: new_state})
 
-    def _update_component_state(self, *args, **kwargs: dict[str, Any]) -> None:  # type: ignore
+    def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
         self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
-    def sync_component_states(self) -> None:
+    def sync_component_states(self):
         """
         Sync monitored attributes on component managers with their respective sub devices
 
@@ -354,14 +354,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 component_manager.clear_monitored_attributes()
                 component_manager.update_state_from_monitored_attributes()
 
-    def start_communicating(self) -> None:
+    def start_communicating(self):
         """Connect from monitored devices"""
         for component_manager in self.sub_component_managers.values():
             component_manager.start_communicating()
 
     def set_standby_lp_mode(
         self,
-        task_callback: Optional[Callable] = None,  # type: ignore
+        task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STANDBY_LP mode"""
 
@@ -374,11 +374,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         )
         return status, response
 
-    def _set_standby_lp_mode(
-        self, task_callback: Any = None, task_abort_event: Any = None
-    ) -> None:
+    def _set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
         assert task_callback, "task_callback has to be defined"
-        if task_abort_event is not None and task_abort_event.is_set():
+        if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
                 result="SetStandbyLPMode Aborted",
@@ -423,7 +421,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         task_callback(progress="Awaiting dishMode change to STANDBY_LP")
 
         while True:
-            if task_abort_event is not None and task_abort_event.is_set():
+            if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
                     progress="SetStandbyLPMode Aborted",
@@ -432,7 +430,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 return
 
             current_dish_mode = self.component_state["dishmode"]
-            if task_abort_event is not None and current_dish_mode != DishMode.STANDBY_LP:
+            if current_dish_mode != DishMode.STANDBY_LP:
                 task_abort_event.wait(timeout=1)
                 for component_manager in self.sub_component_managers.values():
                     component_manager.update_state_from_monitored_attributes()
@@ -447,7 +445,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
 
     def set_standby_fp_mode(
         self,
-        task_callback: Optional[Callable] = None,  # type: ignore
+        task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STANDBY_FP mode"""
         self._dish_mode_model.is_command_allowed(
@@ -459,12 +457,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         )
         return status, response
 
-    def _set_standby_fp_mode(
-        self, task_callback: Any = None, task_abort_event: Any = None
-    ) -> None:
+    def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
         """Set StandbyFP mode on sub devices as long running commands"""
         assert task_callback, "task_callback has to be defined"
-        if task_abort_event is not None and task_abort_event.is_set():
+        if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
                 result="SetStandbyFPMode Aborted",
@@ -504,7 +500,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         task_callback(progress="Awaiting dishMode change to STANDBY_FP")
 
         while True:
-            if task_abort_event is not None and task_abort_event.is_set():
+            if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
                     progress="SetStandbyFPMode Aborted",
@@ -513,7 +509,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 return
 
             current_dish_mode = self.component_state["dishmode"]
-            if task_abort_event is not None and current_dish_mode != DishMode.STANDBY_FP:
+            if current_dish_mode != DishMode.STANDBY_FP:
                 task_abort_event.wait(timeout=1)
                 for component_manager in self.sub_component_managers.values():
                     component_manager.update_state_from_monitored_attributes()
@@ -527,7 +523,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
 
     def set_operate_mode(
         self,
-        task_callback: Optional[Callable] = None,  # type: ignore
+        task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to OPERATE mode"""
 
@@ -549,9 +545,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         )
         return status, response
 
-    def _set_operate_mode(self, task_callback: Any = None, task_abort_event: Any = None) -> None:
+    def _set_operate_mode(self, task_callback=None, task_abort_event=None):
         assert task_callback, "task_callback has to be defined"
-        if task_abort_event is not None and task_abort_event.is_set():
+        if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
                 result="SetOperateMode Aborted",
@@ -590,7 +586,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         task_callback(progress="Awaiting dishMode change to OPERATE")
 
         while True:
-            if task_abort_event is not None and task_abort_event.is_set():
+            if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
                     progress="SetOperateMode Aborted",
@@ -599,7 +595,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 return
 
             current_dish_mode = self.component_state["dishmode"]
-            if task_abort_event is not None and current_dish_mode != DishMode.OPERATE:
+            if current_dish_mode != DishMode.OPERATE:
                 task_abort_event.wait(timeout=1)
                 for component_manager in self.sub_component_managers.values():
                     component_manager.update_state_from_monitored_attributes()
@@ -613,7 +609,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
 
     def track_cmd(
         self,
-        task_callback: Optional[Callable] = None,  # type: ignore
+        task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the pointing state"""
         dish_mode = self.component_state["dishmode"].name
@@ -625,9 +621,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         status, response = self.submit_task(self._track_cmd, args=[], task_callback=task_callback)
         return status, response
 
-    def _track_cmd(self, task_callback: Any = None, task_abort_event: Any = None) -> None:
+    def _track_cmd(self, task_callback=None, task_abort_event=None):
         assert task_callback, "task_callback has to be defined"
-        if task_abort_event is not None and task_abort_event.is_set():
+        if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
                 result="Track Aborted",
@@ -652,7 +648,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         task_callback(progress="Awaiting target lock change")
 
         while True:
-            if task_abort_event is not None and task_abort_event.is_set():
+            if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
                     progress="Track Aborted",
@@ -661,7 +657,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 return
 
             achieved_target_lock = self.component_state["achievedtargetlock"]
-            if not achieved_target_lock and task_abort_event is not None:
+            if not achieved_target_lock:
                 task_abort_event.wait(timeout=1)
 
                 # Read pointingState on DS and update state
@@ -678,9 +674,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
 
     def configure_band2_cmd(
         self,
-        activation_timestamp: Any,
-        current_configured_band: Any,
-        task_callback: Optional[Callable] = None,  # type: ignore
+        activation_timestamp,
+        current_configured_band,
+        task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Configure frequency band to band 2"""
 
@@ -712,12 +708,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         )
         return status, response
 
-    def _configure_band2_cmd(
-        self, task_callback: Any = None, task_abort_event: Any = None
-    ) -> None:
+    def _configure_band2_cmd(self, task_callback=None, task_abort_event=None):
         """configureBand on DS, SPF, SPFRX"""
         assert task_callback, "task_callback has to be defined"
-        if task_abort_event is not None and task_abort_event.is_set():
+        if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
                 result="ConfigureBand2 Aborted",
@@ -751,7 +745,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
 
         task_callback(progress="Awaiting configuredband to transition to [B2]")
         while True:
-            if task_abort_event is not None and task_abort_event.is_set():
+            if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
                     progress="ConfigureBand2 Aborted",
@@ -760,7 +754,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 return
 
             current_band = self.component_state["configuredband"]
-            if current_band != Band.B2 and task_abort_event is not None:
+            if current_band != Band.B2:
                 task_abort_event.wait(timeout=1)
 
                 # Read the appropriate attrs and update states.
@@ -780,7 +774,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
 
     def set_stow_mode(
         self,
-        task_callback: Optional[Callable] = None,  # type: ignore
+        task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode"""
 
@@ -793,10 +787,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         )
         return status, response
 
-    def _set_stow_mode(self, task_callback: Any = None, task_abort_event: Any = None) -> None:
+    def _set_stow_mode(self, task_callback=None, task_abort_event=None):
         """Call Stow on DS"""
         assert task_callback, "task_callback has to be defined"
-        if task_abort_event is not None and task_abort_event.is_set():
+        if task_abort_event.is_set():
             task_callback(
                 status=TaskStatus.ABORTED,
                 result="SetStowMode Aborted",
@@ -819,7 +813,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
         task_callback(progress="Waiting for dishMode change to STOW")
 
         while True:
-            if task_abort_event is not None and task_abort_event.is_set():
+            if task_abort_event.is_set():
                 task_callback(
                     status=TaskStatus.ABORTED,
                     progress="Stow Aborted",
@@ -828,7 +822,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 return
 
             current_dish_mode = self.component_state["dishmode"]
-            if current_dish_mode != DishMode.STOW and task_abort_event is not None:
+            if current_dish_mode != DishMode.STOW:
                 task_abort_event.wait(timeout=1)
                 for component_manager in self.sub_component_managers.values():
                     component_manager.update_state_from_monitored_attributes()
@@ -841,7 +835,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):  # type: ignore
                 return
 
     # pylint: disable=missing-function-docstring
-    def stop_communicating(self) -> None:
+    def stop_communicating(self):
         """Disconnect from monitored devices"""
         for component_manager in self.sub_component_managers.values():
             component_manager.stop_communicating()
