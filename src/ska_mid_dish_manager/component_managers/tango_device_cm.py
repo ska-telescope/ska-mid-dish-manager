@@ -1,4 +1,5 @@
 """Generic component manager for a subservient tango device"""
+import builtins
 import logging
 import time
 from dataclasses import dataclass
@@ -6,7 +7,7 @@ from datetime import datetime
 from functools import partial
 from queue import Empty, Queue
 from threading import Event
-from typing import Any, AnyStr, List, Optional
+from typing import Any, AnyStr, List, Optional, Text, Union
 
 import numpy as np
 import tango
@@ -26,7 +27,7 @@ def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
     Execute the method, if communication fails, commence reconnection.
     """
 
-    def _decorator(self: Any, *args, **kwargs) -> Any:  # type: ignore
+    def _decorator(self: Any, *args: Any, **kwargs: dict[str, Any]) -> Any:
         try:
             if self.communication_state != CommunicationStatus.ESTABLISHED:
                 raise LostConnection("Communication status not ESTABLISHED")
@@ -121,17 +122,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
 
     def __init__(
         self,
-        tango_device_fqdn: Any,
+        tango_device_fqdn: AnyStr,
         logger: Any,
-        *args: Any,
-        communication_state_callback: Any,
-        component_state_callback: Any,
-        **kwargs: Any,
+        *args: builtins.tuple[builtins.tuple[Any, ...], ...],
+        communication_state_callback: Union[Any, None] = None,
+        component_state_callback: Union[Any, None] = None,
+        **kwargs: dict[str, Any],
     ):
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
         self._events_queue: Queue[Any] = Queue()
-        self._tango_device_fqdn = tango_device_fqdn
+        self._tango_device_fqdn: Union[Text, bytes] = tango_device_fqdn
         self._device_proxy = None
         if not logger:
             logger = logging.getLogger()
@@ -243,7 +244,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         event_queue: Queue[Any],
         update_state_cb: Any,
         task_abort_event: Optional[Event] = None,
-        task_callback: Any | None = None,
+        task_callback: Union[Any, None] = None,
     ) -> None:
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
@@ -336,7 +337,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         logger: logging.Logger,
         device_proxy: Optional[tango.DeviceProxy] = None,
         task_abort_event: Optional[Event] = None,
-        task_callback: Any | None = None,
+        task_callback: Union[Any, None] = None,
     ) -> None:
         """
         Keep trying to create the device proxy, retrying every
@@ -383,7 +384,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
                 time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
 
     def run_device_command(
-        self, command_name: Any, command_arg: Any, task_callback: Any | None = None
+        self, command_name: Any, command_arg: Any, task_callback: Union[Any, None] = None
     ) -> tuple[Any, Any]:
         """Execute the command in a thread"""
         task_status, response = self.submit_task(
@@ -397,7 +398,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         self,
         command_name: str,
         command_arg: Any,
-        task_callback: Any | None = None,
+        task_callback: Union[Any, None] = None,
         task_abort_event: Optional[Event] = None,
     ) -> None:
         if task_abort_event is not None:
