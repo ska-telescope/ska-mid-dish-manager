@@ -72,7 +72,7 @@ class MonitoredAttribute:
         device_proxy: Any,
         logger: Any,
         task_abort_event: Optional[Event] = None,
-        task_callback: Optional[Callable] = None,  # type: ignore
+        task_callback: Optional[Callable] = None,  # pylint: disable=W0613
     ) -> None:
         """Manage attribute event subscription"""
         with tango.EnsureOmniThread():
