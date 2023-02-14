@@ -397,14 +397,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         self,
         command_name: str,
         command_arg: Any,
-        task_callback: Callable = None,  # type: ignore
-        task_abort_event: Event = None,  # type: ignore
+        task_callback: Callable = None,
+        task_abort_event: Event = None,
     ) -> None:
         if task_abort_event.is_set():
             task_callback(TaskStatus.ABORTED)
             return
 
-        if task_callback:  # type: ignore
+        if task_callback:
             task_callback(TaskStatus.IN_PROGRESS)
 
         if self.state != "monitoring":
@@ -422,7 +422,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             result = self.execute_command(self._device_proxy, command_name, command_arg)
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception(err)
-            if task_callback:  # type: ignore
+            if task_callback:
                 task_callback(TaskStatus.FAILED, exception=err)
             return
 
@@ -430,7 +430,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         if task_abort_event.is_set():
             task_callback(progress=f"{command_name} was aborted")
 
-        if task_callback:  # type: ignore
+        if task_callback:
             task_callback(TaskStatus.COMPLETED, result=str(result))
 
     @_check_connection
@@ -514,7 +514,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
 
     def reconnect(self) -> None:
         """Redo the connection to the Tango device"""
-        self.to_reconnecting()  # type: ignore
+        self.to_reconnecting()
 
     # Transition states:
     # disconnected
