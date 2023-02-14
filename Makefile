@@ -47,7 +47,6 @@ python-post-lint:
 	$(PYTHON_RUNNER) mypy --ignore-missing-imports --config-file mypy.ini src/ska_mid_dish_manager/component_managers/ds_cm.py \
 	src/ska_mid_dish_manager/component_managers/spf_cm.py \
 	src/ska_mid_dish_manager/component_managers/spfrx_cm.py \
-	src/ska_mid_dish_manager/component_managers/tango_device_cm.py \
 	src/ska_mid_dish_manager/models/dish_mode_model.py \
 	src/ska_mid_dish_manager/models/dish_state_transition.py	
 	
