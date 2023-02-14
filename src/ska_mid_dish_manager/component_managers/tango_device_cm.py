@@ -283,6 +283,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             task_callback=None,
         )
 
+    @typing.no_type_check
     def _device_proxy_creation_cb(
         self,
         status: TaskStatus,
@@ -311,11 +312,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         if status == TaskStatus.COMPLETED:
             if not self._device_proxy:
                 self._device_proxy = result
-            try:
-                # Device proxy created, set up monitoring
-                self.to_setting_up_monitoring()
-            except AttributeError:
-                print("No such attribute")
+            # Device proxy created, set up monitoring
+            self.to_setting_up_monitoring()
 
         if status == TaskStatus.ABORTED:
             self.logger.info("Device Proxy creation task aborted")
@@ -394,6 +392,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         )
         return task_status, response
 
+    @typing.no_type_check
     def _run_device_command(
         self,
         command_name: str,
@@ -405,21 +404,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             task_callback(TaskStatus.ABORTED)
             return
 
-        if task_callback:
+        if task_callback:  # type: ignore
             task_callback(TaskStatus.IN_PROGRESS)
 
-        try:
-            if self.state != "monitoring":
-                task_callback(
-                    TaskStatus.FAILED,
-                    exception=RuntimeError(
-                        f"Tango device component manager is not ready for commands"
-                        f" in state [{self.state}]"
-                    ),
-                )
-                return
-        except AttributeError:
-            print("No such attribute")
+        if self.state != "monitoring":
+            task_callback(
+                TaskStatus.FAILED,
+                exception=RuntimeError(
+                    f"Tango device component manager is not ready for commands"
+                    f" in state [{self.state}]"
+                ),
+            )
+            return
 
         result = None
         try:
@@ -471,6 +467,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         )
         return result
 
+    @typing.no_type_check
     def monitor_attribute(self, attribute_name: str) -> None:
         """Update the component state with the Attribute value as it changes
 
@@ -495,6 +492,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
                 task_callback=None,
             )
 
+    @typing.no_type_check
     def start_communicating(self) -> None:
         """Establish communication with the device"""
         # pylint: disable=no-member
@@ -544,6 +542,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
     #  -> setting_up_monitoring
     #  -> monitoring
 
+    @typing.no_type_check
     def _aborting_tasks_cb(self, status: TaskStatus) -> None:
         """A callback that is called during and after the aborting of tasks
 
@@ -573,6 +572,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             task_callback=self._device_proxy_creation_cb,
         )
 
+    @typing.no_type_check
     def on_enter_setting_up_monitoring(self) -> None:
         """Set up monitoring after connection"""
         # pylint: disable=no-member
