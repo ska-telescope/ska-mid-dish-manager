@@ -1,13 +1,13 @@
 """Generic component manager for a subservient tango device"""
 import logging
 import time
+import typing
 from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
 from queue import Empty, Queue
 from threading import Event
 from typing import Any, AnyStr, Callable, List, Optional
-import typing
 
 import numpy as np
 import tango
