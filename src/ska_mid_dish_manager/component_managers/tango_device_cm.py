@@ -312,7 +312,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             if not self._device_proxy:
                 self._device_proxy = result
             # Device proxy created, set up monitoring
-            self.to_setting_up_monitoring() #type: igrnore
+            self.to_setting_up_monitoring()
 
         if status == TaskStatus.ABORTED:
             self.logger.info("Device Proxy creation task aborted")
@@ -495,7 +495,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         if self.state != "disconnected":
             raise RuntimeError("You can only start communicating when you have stopped doing so")
         self.logger.info("start_communicating")
-        self.to_setting_up_device_proxy() 
+        self.to_setting_up_device_proxy()
 
     def stop_communicating(self) -> None:
         """Stop communication with the device"""
@@ -510,7 +510,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
 
     def reconnect(self) -> None:
         """Redo the connection to the Tango device"""
-        self.to_reconnecting() # type: igrnore
+        self.to_reconnecting()  # type: ignore
 
     # Transition states:
     # disconnected
@@ -546,8 +546,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         """
         self.logger.info("Waiting for aborting of tasks [%s]", status)
         if status == TaskStatus.COMPLETED:
-            if self.state == "reconnecting": 
-                self.to_setting_up_device_proxy() 
+            if self.state == "reconnecting":
+                self.to_setting_up_device_proxy()
             else:
                 self.to_disconnected()
 
