@@ -311,8 +311,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         if status == TaskStatus.COMPLETED:
             if not self._device_proxy:
                 self._device_proxy = result
-            # Device proxy created, set up monitoring
-            self.to_setting_up_monitoring()
+            try:
+                # Device proxy created, set up monitoring
+                self.to_setting_up_monitoring()
+            except AttributeError:
+                print("No such attribute")
 
         if status == TaskStatus.ABORTED:
             self.logger.info("Device Proxy creation task aborted")
@@ -402,18 +405,21 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             task_callback(TaskStatus.ABORTED)
             return
 
-        if task_callback:  # type: ignore
+        if task_callback:
             task_callback(TaskStatus.IN_PROGRESS)
 
-        if self.state != "monitoring":
-            task_callback(
-                TaskStatus.FAILED,
-                exception=RuntimeError(
-                    f"Tango device component manager is not ready for commands"
-                    f" in state [{self.state}]"
-                ),
-            )
-            return
+        try:
+            if self.state != "monitoring":
+                task_callback(
+                    TaskStatus.FAILED,
+                    exception=RuntimeError(
+                        f"Tango device component manager is not ready for commands"
+                        f" in state [{self.state}]"
+                    ),
+                )
+                return
+        except AttributeError:
+            print("No such attribute")
 
         result = None
         try:
