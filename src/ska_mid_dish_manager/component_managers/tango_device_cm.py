@@ -67,12 +67,13 @@ class MonitoredAttribute:
             )
         self.event_queue.put(event_data, timeout=10)
 
+    # pylint: disable=W0613
     def monitor(
         self,
         device_proxy: Any,
         logger: Any,
         task_abort_event: Optional[Event] = None,
-        task_callback: Optional[Callable] = None,  # pylint: disable=W0613
+        task_callback: Optional[Callable] = None,  # type: ignore
     ) -> None:
         """Manage attribute event subscription"""
         with tango.EnsureOmniThread():
@@ -379,8 +380,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
                 time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
 
     def run_device_command(
-        self, command_name, command_arg, task_callback: Callable = None
-    ):  # type: ignore
+        self, command_name: Any, command_arg: Any, task_callback: Callable = None  # type: ignore
+    ) -> Any:
         """Execute the command in a thread"""
         task_status, response = self.submit_task(
             self._run_device_command,
