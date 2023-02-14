@@ -193,7 +193,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param exception: _description_, defaults to None
         :type exception: Optional[Exception], optional
         """
-        self.logger.info(
+        self.logger.debug(
             (
                 "Device [%s] event handler callback status [%s], "
                 "progress [%s] result [%s], exception [%s]"
