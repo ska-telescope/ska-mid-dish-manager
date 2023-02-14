@@ -44,7 +44,13 @@ PYTHON_SWITCHES_FOR_FLAKE8 ?= --max-line-length=99
 
 # Add this for typehints & static type checking
 python-post-lint:
-	$(PYTHON_RUNNER) mypy --ignore-missing-imports --config-file mypy.ini src/ska_mid_dish_manager/component_managers
+	$(PYTHON_RUNNER) mypy --ignore-missing-imports --config-file mypy.ini src/ska_mid_dish_manager/component_managers/ds_cm.py \
+	src/ska_mid_dish_manager/component_managers/spf_cm.py \
+	src/ska_mid_dish_manager/component_managers/spfrx_cm.py \
+	src/ska_mid_dish_manager/component_managers/tango_device_cm.py \
+	src/ska_mid_dish_manager/models/dish_state_model.py \
+	src/ska_mid_dish_manager/models/dish_state_transition.py \	
+	
 
 
 # Use the previously built image when running in the pipeline

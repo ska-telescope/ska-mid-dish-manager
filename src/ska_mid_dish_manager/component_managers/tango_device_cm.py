@@ -7,6 +7,7 @@ from functools import partial
 from queue import Empty, Queue
 from threading import Event
 from typing import Any, AnyStr, Callable, List, Optional
+import typing
 
 import numpy as np
 import tango
@@ -67,13 +68,13 @@ class MonitoredAttribute:
             )
         self.event_queue.put(event_data, timeout=10)
 
-    # pylint: disable=W0613
+    @typing.no_type_check
     def monitor(
         self,
         device_proxy: Any,
         logger: Any,
         task_abort_event: Optional[Event] = None,
-        task_callback: Optional[Callable] = None,  # type: ignore
+        task_callback: Optional[Callable] = None,  # pylint: disable=W0613
     ) -> None:
         """Manage attribute event subscription"""
         with tango.EnsureOmniThread():
@@ -87,7 +88,7 @@ class MonitoredAttribute:
                 subscription_callback,
             )
             logger.info("Subscribed to [%s] with [%s]", self.attr_name, device_proxy)
-            while not task_abort_event.wait(1):  # type: ignore
+            while not task_abort_event.wait(1):
                 pass
             device_proxy.unsubscribe_event(self.subscription_id)
             logger.info(
