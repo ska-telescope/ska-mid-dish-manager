@@ -48,7 +48,7 @@ python-post-lint:
 	src/ska_mid_dish_manager/component_managers/spf_cm.py \
 	src/ska_mid_dish_manager/component_managers/spfrx_cm.py \
 	src/ska_mid_dish_manager/component_managers/tango_device_cm.py \
-	src/ska_mid_dish_manager/models/dish_state_model.py \
+	src/ska_mid_dish_manager/models/dish_mode_model.py \
 	src/ska_mid_dish_manager/models/dish_state_transition.py \	
 	
 
