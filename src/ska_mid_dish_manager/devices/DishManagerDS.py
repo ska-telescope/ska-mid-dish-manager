@@ -103,29 +103,29 @@ class DishManager(SKAController):
             self.AbortCommandsCommand(self.component_manager, self.logger),
         )
 
-    def _update_connection_state_attrs(self):
+    def _update_connection_state_attrs(self, attribute_name: str):
         """
         Push change events on connection state attributes for
         subservient devices communication state changes.
         """
-
-        print("IIINNN DSSSSS PPUUSSHHH EVEEEBBTSSS")
-
         if not hasattr(self, "component_manager"):
             self.logger.warning("Init not completed, but communication state is being updated")
             return
-        self.push_change_event(
-            "spfConnectionState",
-            self.component_manager.sub_component_managers["SPF"].communication_state,
-        )
-        self.push_change_event(
-            "spfrxConnectionState",
-            self.component_manager.sub_component_managers["SPFRX"].communication_state,
-        )
-        self.push_change_event(
-            "dsConnectionState",
-            self.component_manager.sub_component_managers["DS"].communication_state,
-        )
+        if attribute_name == "spfConnectionState":
+            self.push_change_event(
+                "spfConnectionState",
+                self.component_manager.sub_component_managers["SPF"].communication_state,
+            )
+        if attribute_name == "spfrxConnectionState":
+            self.push_change_event(
+                "spfrxConnectionState",
+                self.component_manager.sub_component_managers["SPFRX"].communication_state,
+            )
+        if attribute_name == "dsConnectionState":
+            self.push_change_event(
+                "dsConnectionState",
+                self.component_manager.sub_component_managers["DS"].communication_state,
+            )
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):

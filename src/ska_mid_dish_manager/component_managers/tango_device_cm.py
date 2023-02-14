@@ -1,6 +1,6 @@
 """Generic component manager for a subservient tango device"""
-import datetime
 import logging
+from datetime import datetime
 from queue import Empty, Queue
 from threading import Event
 from typing import Any, Callable, Optional, Tuple
@@ -158,7 +158,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     ):
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
-        latest_valid_event_timestamp = datetime.datetime.now() - datetime.timedelta(hours=1)
+        latest_valid_event_timestamp = datetime.utcnow().isoformat()
+
         while task_abort_event and not task_abort_event.is_set():
             try:
                 event_data: tango.EventData = event_queue.get(timeout=1)
@@ -166,11 +167,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                     # If we get an error event that is older than the latest valid event
                     # then discard it. If it's a new error event then start the reconnection
                     # process via task_callback and drain until we find a valid event
-                    if event_data.reception_date.todatetime() > latest_valid_event_timestamp:
+                    if event_data.reception_date.isoformat() > latest_valid_event_timestamp:
                         task_callback(progress="Error Event Found")
                         while (
                             event_data.err
-                            and event_data.reception_date.todatetime()
+                            and event_data.reception_date.isoformat()
                             > latest_valid_event_timestamp
                         ):
                             task_callback(
@@ -178,7 +179,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                             )
                             event_data: tango.EventData = event_queue.get(timeout=1)
                 if event_data.attr_value:
-                    latest_valid_event_timestamp = event_data.reception_date.todatetime()
+                    latest_valid_event_timestamp = event_data.attr_value.time.isoformat()
                     update_state_cb(event_data)
                     task_callback(progress="Valid Event Found")
             except Empty:
@@ -204,7 +205,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param exception: _description_, defaults to None
         :type exception: Optional[Exception], optional
         """
-        self.logger.info(
+        self.logger.debug(
             (
                 "Device [%s] event handler callback status [%s], "
                 "progress [%s] result [%s], exception [%s]"

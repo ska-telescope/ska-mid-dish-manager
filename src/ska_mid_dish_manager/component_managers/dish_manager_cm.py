@@ -1,5 +1,6 @@
 # pylint: disable=protected-access
 """Component manager for a DishManager tango device"""
+from functools import partial
 import json
 import logging
 from datetime import datetime
@@ -96,7 +97,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
-                communication_state_callback=self._sub_communication_state_changed,
+                communication_state_callback=partial(
+                    self._sub_communication_state_changed, "spfConnectionState"
+                ),
                 component_state_callback=self._component_state_changed,
             ),
             "DS": DSComponentManager(
@@ -108,7 +111,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
                 achievedpointing=[0.0, 0.0, 30.0],
-                communication_state_callback=self._sub_communication_state_changed,
+                communication_state_callback=partial(
+                    self._sub_communication_state_changed, "dsConnectionState"
+                ),
                 component_state_callback=self._component_state_changed,
             ),
             "SPFRX": SPFRxComponentManager(
@@ -124,7 +129,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b4capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
-                communication_state_callback=self._sub_communication_state_changed,
+                communication_state_callback=partial(
+                    self._sub_communication_state_changed, "spfrxConnectionState"
+                ),
                 component_state_callback=self._component_state_changed,
             ),
         }
@@ -148,7 +155,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     # pylint: disable=unused-argument
-    def _sub_communication_state_changed(self, communication_state: CommunicationStatus = None):
+    def _sub_communication_state_changed(
+        self, attribute_name: str, communication_state: CommunicationStatus = None
+    ):
         """
         Callback triggered by the component manager when it establishes
         a connection with the underlying (subservient) device
@@ -192,7 +201,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._component_state_changed()
 
         # push change events for the connection state attributes
-        self._connection_state_callback()
+        self._connection_state_callback(attribute_name)
 
     # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):
