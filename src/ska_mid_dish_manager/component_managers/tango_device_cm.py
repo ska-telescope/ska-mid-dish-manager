@@ -1,5 +1,4 @@
 """Generic component manager for a subservient tango device"""
-import datetime
 import logging
 from queue import Empty, Queue
 from threading import Event
@@ -58,7 +57,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self.logger = logger
 
         self._tango_device_monitor = TangoDeviceMonitor(
-            self._tango_device_fqdn, self._monitored_attributes, self._events_queue, logger
+            self._tango_device_fqdn,
+            self._monitored_attributes,
+            self._events_queue,
+            logger,
+            self._heartbeat_callback,
+            self._heartbeat_failure_callback,
         )
 
         super().__init__(
@@ -158,31 +162,16 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     ):
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
-        latest_valid_event_timestamp = datetime.datetime.now() - datetime.timedelta(hours=1)
+
         while task_abort_event and not task_abort_event.is_set():
             try:
                 event_data: tango.EventData = event_queue.get(timeout=1)
-                if event_data.err:
-                    # If we get an error event that is older than the latest valid event
-                    # then discard it. If it's a new error event then start the reconnection
-                    # process via task_callback and drain until we find a valid event
-                    if event_data.reception_date.todatetime() > latest_valid_event_timestamp:
-                        task_callback(progress="Error Event Found")
-                        while (
-                            event_data.err
-                            and event_data.reception_date.todatetime()
-                            > latest_valid_event_timestamp
-                        ):
-                            task_callback(
-                                progress="Skipping error event since restart has been kicked off"
-                            )
-                            event_data: tango.EventData = event_queue.get(timeout=1)
                 if event_data.attr_value:
-                    latest_valid_event_timestamp = event_data.reception_date.todatetime()
+                    task_callback(progress="Updating state")
                     update_state_cb(event_data)
-                    task_callback(progress="Valid Event Found")
             except Empty:
                 pass
+
         if task_callback:
             task_callback(status=TaskStatus.ABORTED)
 
@@ -215,13 +204,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             result,
             exception,
         )
-        if progress and progress == "Error Event Found":
-            self.logger.info("Reconnecting to %s", self._tango_device_fqdn)
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-            self._tango_device_monitor.monitor()
 
-        if progress and progress == "Valid Event Found":
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
+    def _heartbeat_callback(self):
+        self._update_communication_state(CommunicationStatus.ESTABLISHED)
+
+    def _heartbeat_failure_callback(self):
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
+        self.logger.info(
+            "Heartbeat failed on %s, attempting to reconnect", self._tango_device_fqdn
+        )
+        self._tango_device_monitor.monitor()
+        self.logger.info("Heartbeat reconnecting")
 
     def run_device_command(self, command_name, command_arg, task_callback: Callable = None):
         """Execute the command in a thread"""

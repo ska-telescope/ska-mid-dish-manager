@@ -6,12 +6,13 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from functools import partial
 from queue import Queue
-from threading import Event, Lock
-from typing import Tuple
+from threading import Event, Lock, Thread
+from typing import Callable, Tuple
 
 import tango
 
 SLEEP_BETWEEN_RECONNECTS = 2
+TEST_CONNECTION_PERIOD = 1
 
 
 # pylint:disable=too-few-public-methods, too-many-instance-attributes
@@ -28,6 +29,8 @@ class TangoDeviceMonitor:
         monitored_attributes: Tuple[str],
         event_queue: Queue,
         logger: logging.Logger,
+        heartbeat_callback: Callable,
+        heartbeat_failure_callback: Callable,
     ) -> None:
         """Create the TangoDeviceMonitor
 
@@ -43,13 +46,18 @@ class TangoDeviceMonitor:
         self._tango_fqdn = tango_fqdn
         self._monitored_attributes = monitored_attributes
         self._event_queue = event_queue
-        self._executor = None
+        self._heartbeat_executor = None
+        self._attribute_executor = None
         self._logger = logger
+        self._heartbeat_callback = heartbeat_callback
+        self._heartbeat_failure_callback = heartbeat_failure_callback
 
-        self._exit_thread_event = None
+        self._exit_attribute_thread_event = None
+        self._exit_heartbeat_thread_event = None
         self._run_count = 0
         self._update_comm_state_lock = Lock()
         self._thread_futures = []
+        self._heartbeat_thread = None
 
     def monitor(self):
         """Kick off device monitoring
@@ -58,29 +66,54 @@ class TangoDeviceMonitor:
         monitoring threads are removed and recreated.
         """
         self._run_count += 1
-        if self._executor:
-            self._logger.info("Stopping current monitoring threads on %s", self._tango_fqdn)
-            # Clear out existing subscriptions
-            self._exit_thread_event.set()
-            self._executor.shutdown(wait=True, cancel_futures=True)
-            self._logger.info("Stopped monitoring threads on %s", self._tango_fqdn)
 
-        self._logger.info("Setting up monitoring on %s", self._tango_fqdn)
-        self._executor = ThreadPoolExecutor(
+        self._logger.info("Setting up monitoring threads for %s", self._tango_fqdn)
+        self._start_attribute_monitoring_threads()
+
+        self._logger.info("Setting up heartbeat thread for %s", self._tango_fqdn)
+        self._start_heartbeat_thread()
+
+    def _start_heartbeat_thread(self):
+        if not self._heartbeat_thread:
+            self._exit_heartbeat_thread_event = Event()
+
+            self._heartbeat_thread = Thread(
+                target=self._heartbeat,
+                args=[
+                    self._tango_fqdn,
+                    self._heartbeat_callback,
+                    self._heartbeat_failure_callback,
+                    self._exit_heartbeat_thread_event,
+                    self._logger,
+                ],
+            )
+            self._heartbeat_thread.start()
+
+            self._logger.info("Heartbeat thread started for %s", self._tango_fqdn)
+        else:
+            self._logger.info("Heartbeat thread already running for %s", self._tango_fqdn)
+
+    def _start_attribute_monitoring_threads(self):
+        if self._attribute_executor:
+            self._logger.info("Stopping current monitoring threads on %s", self._tango_fqdn)
+            self._stop_attribute_monitoring_threads()
+            self._logger.info("Stopped current monitoring threads on %s", self._tango_fqdn)
+
+        self._exit_attribute_thread_event = Event()
+        self._thread_futures = []
+
+        self._attribute_executor = ThreadPoolExecutor(
             max_workers=len(self._monitored_attributes),
             thread_name_prefix=f"Monitoring_run_{self._run_count}_attr_no_",
         )
-        self._logger.info("Monitoring thread pool started for %s", self._tango_fqdn)
-        self._exit_thread_event = Event()
-        self._thread_futures = []
 
         # Start attr monitoring threads
         for attribute_name in self._monitored_attributes:
-            future = self._executor.submit(
+            future = self._attribute_executor.submit(
                 self._monitor_attribute,
                 self._tango_fqdn,
                 attribute_name,
-                self._exit_thread_event,
+                self._exit_attribute_thread_event,
                 self._event_queue,
                 self._logger,
             )
@@ -95,7 +128,43 @@ class TangoDeviceMonitor:
             except FutureTimeoutError:
                 # No error happened in time
                 pass
+
         self._logger.info("Monitoring threads started for %s", self._tango_fqdn)
+
+    def _stop_attribute_monitoring_threads(self):
+        if self._attribute_executor:
+            # Clear out existing subscriptions
+            self._exit_attribute_thread_event.set()
+            self._attribute_executor.shutdown(wait=True, cancel_futures=True)
+
+    @classmethod
+    def _heartbeat(
+        cls,
+        tango_fqdn: str,
+        beat_callback: Callable,
+        failure_callback: Callable,
+        exit_thread_event: Event,
+        logger: logging.Logger,
+    ):
+        logger.info("Heartbeat thread started")
+
+        while not exit_thread_event.is_set():
+            try:
+                device_proxy = tango.DeviceProxy(tango_fqdn)
+
+                while not exit_thread_event.is_set():
+                    device_proxy.ping()
+
+                    beat_callback()
+
+                    exit_thread_event.wait(timeout=TEST_CONNECTION_PERIOD)
+            except tango.DevFailed:
+                logger.info("Heartbeat ping failed")
+
+                exit_thread_event.wait(timeout=SLEEP_BETWEEN_RECONNECTS)
+                failure_callback()
+
+        logger.info("Heartbeat thread finished")
 
     # pylint:disable=too-many-arguments
     @classmethod
@@ -148,7 +217,7 @@ class TangoDeviceMonitor:
                     while not exit_thread_event.wait(1):
                         pass
                     device_proxy.unsubscribe_event(subscription_id)
-                    logger.error("Unsubscribed from %s for attr %s", tango_fqdn, attribute_name)
+                    logger.info("Unsubscribed from %s for attr %s", tango_fqdn, attribute_name)
                     subscription_id = None
                 except tango.DevFailed:
                     logger.exception(
@@ -171,4 +240,8 @@ class TangoDeviceMonitor:
 
     def stop_monitoring(self):
         """Close all the monitroing threads"""
-        self._exit_thread_event.set()
+        if self._exit_heartbeat_thread_event:
+            self._exit_heartbeat_thread_event.set()
+
+        if self._exit_attribute_thread_event:
+            self._exit_attribute_thread_event.set()
