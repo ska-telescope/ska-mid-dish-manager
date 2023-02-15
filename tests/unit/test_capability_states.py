@@ -199,7 +199,7 @@ class TestCapabilityStates:
                     tango.EventType.CHANGE_EVENT,
                     event_store,
                 )
-                event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+                event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=7)
                 self.device_proxy.unsubscribe_event(sub_id)
 
     def teardown_method(self):
