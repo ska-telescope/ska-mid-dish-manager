@@ -69,9 +69,6 @@ class TestConnectionStates:
         # Establish connection
         component_manager._update_communication_state(CommunicationStatus.ESTABLISHED)
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-        # From the current implementation, HealthState will report UNKNOWN even
-        # if connection is established; but for now, check when connection is lost
-        # assert device_proxy.healthState == HealthState.OK
 
         # Force communication_state to NOT_ESTABLISHED
         component_manager._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
