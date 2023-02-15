@@ -6,6 +6,7 @@ state of the device to decide if the requested state is a nearby node to allow o
 # pylint: disable=too-few-public-methods
 
 from dataclasses import dataclass, field
+
 import networkx as nx
 import tango
 
@@ -123,5 +124,7 @@ class DishModeModel:
 
 @dataclass(order=True)
 class PrioritizedEventData:
+    """Tango event data with a priority attribute"""
+
     priority: int
     item: tango.EventData = field(compare=False)

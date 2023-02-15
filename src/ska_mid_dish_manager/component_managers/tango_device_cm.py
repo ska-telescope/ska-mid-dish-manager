@@ -2,7 +2,7 @@
 import datetime
 import logging
 from queue import Empty, PriorityQueue
-from threading import Event, Lock
+from threading import Event
 from typing import Any, Callable, Optional, Tuple
 
 import numpy as np

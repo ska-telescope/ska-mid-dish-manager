@@ -1,9 +1,9 @@
 # pylint: disable=protected-access
 """Component manager for a DishManager tango device"""
-from functools import partial
 import json
 import logging
 from datetime import datetime
+from functools import partial
 from threading import Lock
 from typing import Callable, Optional, Tuple
 

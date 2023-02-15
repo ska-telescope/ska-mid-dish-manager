@@ -8,9 +8,9 @@ from functools import partial
 from queue import Queue
 from threading import Event, Lock, Thread
 from typing import Callable, Tuple
-from ska_control_model import CommunicationStatus
 
 import tango
+from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_mode_model import PrioritizedEventData
 
@@ -64,6 +64,10 @@ class TangoDeviceMonitor:
         self._exit_thread_event.set()
 
     def verify_connection_up(self, start_monitoring_threads: Callable):
+        """
+        Verify connection to the device by pinging it
+        Starts attribute monitoring threads once the connection is verified
+        """
         self._logger.error("Check %s is up", self._tango_fqdn)
         try_count = 0
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -91,7 +95,10 @@ class TangoDeviceMonitor:
                 self._exit_thread_event.wait(TEST_CONNECTION_PERIOD)
 
     def start_monitoring_threads(self):
-
+        """
+        Starts a threadpool for monitoring attributes and submits
+        a thread for each of the devices monitored attributes
+        """
         self._logger.info("Setting up monitoring on %s", self._tango_fqdn)
         self._executor = ThreadPoolExecutor(
             max_workers=len(self._monitored_attributes),

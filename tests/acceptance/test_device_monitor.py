@@ -19,9 +19,7 @@ def test_device_monitor(caplog, spf_device_fqdn):
     """Device monitoring sanity check"""
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    tdm = TangoDeviceMonitor(
-        spf_device_fqdn, ["powerState"], event_queue, LOGGER, empty_func, empty_func
-    )
+    tdm = TangoDeviceMonitor(spf_device_fqdn, ["powerState"], event_queue, LOGGER, empty_func)
     tdm.monitor()
     event = event_queue.get(timeout=4)
     # Make sure we end up connected, may take a second or so to come through
@@ -54,9 +52,7 @@ def test_multi_monitor(caplog, spf_device_fqdn):
     )
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    tdm = TangoDeviceMonitor(
-        spf_device_fqdn, test_attributes, event_queue, LOGGER, empty_func, empty_func
-    )
+    tdm = TangoDeviceMonitor(spf_device_fqdn, test_attributes, event_queue, LOGGER, empty_func)
     tdm.monitor()
     test_attributes_list = list(test_attributes)
     for _ in range(len(test_attributes)):
@@ -71,7 +67,7 @@ def test_device_monitor_stress(caplog):
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
     tdm = TangoDeviceMonitor(
-        "mid_d0001/spf/simulator", ["powerState"], event_queue, LOGGER, empty_func, empty_func
+        "mid_d0001/spf/simulator", ["powerState"], event_queue, LOGGER, empty_func
     )
     for i in range(20):
         tdm.monitor()
@@ -91,9 +87,7 @@ def test_connection_error(caplog):
     """Test that connection is retried"""
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    tdm = TangoDeviceMonitor(
-        "fake_device", ["powerState"], event_queue, LOGGER, empty_func, empty_func
-    )
+    tdm = TangoDeviceMonitor("fake_device", ["powerState"], event_queue, LOGGER, empty_func)
     tdm.monitor()
     with pytest.raises(Empty):
         event_queue.get(timeout=4)
