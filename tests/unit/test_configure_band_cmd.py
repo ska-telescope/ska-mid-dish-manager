@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
-from ska_control_model import CommunicationStatus
 import tango
+from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager

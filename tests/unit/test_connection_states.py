@@ -1,9 +1,9 @@
 """Unit tests for subservient device connection states."""
 from unittest.mock import patch
-from mock import MagicMock
 
 import pytest
 import tango
+from mock import MagicMock
 from ska_control_model import CommunicationStatus, HealthState
 from tango.test_context import DeviceTestContext
 

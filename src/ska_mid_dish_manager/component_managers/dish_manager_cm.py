@@ -200,15 +200,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ds_component_state, spfrx_component_state, spf_component_state
                 )
                 new_dish_mode = self._state_transition.compute_dish_mode(
-                    ds_component_state,
-                    spfrx_component_state,
-                    spf_component_state
+                    ds_component_state, spfrx_component_state, spf_component_state
                 )
 
                 self._update_component_state(healthstate=new_health_state, dishmode=new_dish_mode)
             else:
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                self._update_component_state(healthstate=HealthState.UNKNOWN, dishmode=DishMode.UNKNOWN)
+                self._update_component_state(
+                    healthstate=HealthState.UNKNOWN, dishmode=DishMode.UNKNOWN
+                )
 
         self._component_state_changed()
 
