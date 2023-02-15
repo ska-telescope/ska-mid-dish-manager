@@ -108,6 +108,7 @@ class DishManager(SKAController):
         Push change events on connection state attributes for
         subservient devices communication state changes.
         """
+
         if not hasattr(self, "component_manager"):
             self.logger.warning("Init not completed, but communication state is being updated")
             return

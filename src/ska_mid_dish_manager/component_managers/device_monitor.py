@@ -8,11 +8,14 @@ from functools import partial
 from queue import Queue
 from threading import Event, Lock, Thread
 from typing import Callable, Tuple
+from ska_control_model import CommunicationStatus
 
 import tango
 
+from ska_mid_dish_manager.models.dish_mode_model import PrioritizedEventData
+
 SLEEP_BETWEEN_RECONNECTS = 2
-TEST_CONNECTION_PERIOD = 1
+TEST_CONNECTION_PERIOD = 2
 
 
 # pylint:disable=too-few-public-methods, too-many-instance-attributes
@@ -29,8 +32,7 @@ class TangoDeviceMonitor:
         monitored_attributes: Tuple[str],
         event_queue: Queue,
         logger: logging.Logger,
-        heartbeat_callback: Callable,
-        heartbeat_failure_callback: Callable,
+        update_communication_state: Callable,
     ) -> None:
         """Create the TangoDeviceMonitor
 
@@ -46,74 +48,65 @@ class TangoDeviceMonitor:
         self._tango_fqdn = tango_fqdn
         self._monitored_attributes = monitored_attributes
         self._event_queue = event_queue
-        self._heartbeat_executor = None
-        self._attribute_executor = None
+        self._executor = None
         self._logger = logger
-        self._heartbeat_callback = heartbeat_callback
-        self._heartbeat_failure_callback = heartbeat_failure_callback
+        self._update_communication_state = update_communication_state
 
-        self._exit_attribute_thread_event = None
-        self._exit_heartbeat_thread_event = None
+        self._exit_thread_event = None
         self._run_count = 0
         self._update_comm_state_lock = Lock()
         self._thread_futures = []
-        self._heartbeat_thread = None
+        self._exit_thread_event = Event()
 
-    def monitor(self):
-        """Kick off device monitoring
+    def stop_monitoring(self):
+        """Close all the monitroing threads"""
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        self._exit_thread_event.set()
 
-        This method is idempotent. When called the existing (if any)
-        monitoring threads are removed and recreated.
-        """
+    def verify_connection_up(self, start_monitoring_threads: Callable):
+        self._logger.error("Check %s is up", self._tango_fqdn)
+        try_count = 0
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
         self._run_count += 1
-
-        self._logger.info("Setting up monitoring threads for %s", self._tango_fqdn)
-        self._start_attribute_monitoring_threads()
-
-        self._logger.info("Setting up heartbeat thread for %s", self._tango_fqdn)
-        self._start_heartbeat_thread()
-
-    def _start_heartbeat_thread(self):
-        if not self._heartbeat_thread:
-            self._exit_heartbeat_thread_event = Event()
-
-            self._heartbeat_thread = Thread(
-                target=self._heartbeat,
-                args=[
-                    self._tango_fqdn,
-                    self._heartbeat_callback,
-                    self._heartbeat_failure_callback,
-                    self._exit_heartbeat_thread_event,
-                    self._logger,
-                ],
-            )
-            self._heartbeat_thread.start()
-
-            self._logger.info("Heartbeat thread started for %s", self._tango_fqdn)
-        else:
-            self._logger.info("Heartbeat thread already running for %s", self._tango_fqdn)
-
-    def _start_attribute_monitoring_threads(self):
-        if self._attribute_executor:
+        if self._executor:
             self._logger.info("Stopping current monitoring threads on %s", self._tango_fqdn)
-            self._stop_attribute_monitoring_threads()
-            self._logger.info("Stopped current monitoring threads on %s", self._tango_fqdn)
+            # Clear out existing subscriptions
+            self._exit_thread_event.set()
+            self._executor.shutdown(wait=True, cancel_futures=True)
+            self._logger.info("Stopped monitoring threads on %s", self._tango_fqdn)
 
-        self._exit_attribute_thread_event = Event()
-        self._thread_futures = []
+        self._exit_thread_event = Event()
 
-        self._attribute_executor = ThreadPoolExecutor(
+        while not self._exit_thread_event.is_set():
+            try:
+                proxy = tango.DeviceProxy(self._tango_fqdn)
+                proxy.ping()
+                return start_monitoring_threads()
+            except tango.DevFailed:
+                self._logger.error(
+                    "Cannot connect to %s try number %s", self._tango_fqdn, try_count
+                )
+                try_count += 1
+                self._exit_thread_event.wait(TEST_CONNECTION_PERIOD)
+
+    def start_monitoring_threads(self):
+
+        self._logger.info("Setting up monitoring on %s", self._tango_fqdn)
+        self._executor = ThreadPoolExecutor(
             max_workers=len(self._monitored_attributes),
             thread_name_prefix=f"Monitoring_run_{self._run_count}_attr_no_",
         )
+        self._logger.info("Monitoring thread pool started for %s", self._tango_fqdn)
+        self._thread_futures = []
 
         # Start attr monitoring threads
         for attribute_name in self._monitored_attributes:
-            future = self._attribute_executor.submit(
+            future = self._executor.submit(
                 self._monitor_attribute,
                 self._tango_fqdn,
                 attribute_name,
-                self._exit_attribute_thread_event,
+                self._exit_thread_event,
                 self._event_queue,
                 self._logger,
             )
@@ -128,43 +121,20 @@ class TangoDeviceMonitor:
             except FutureTimeoutError:
                 # No error happened in time
                 pass
-
         self._logger.info("Monitoring threads started for %s", self._tango_fqdn)
+        self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
-    def _stop_attribute_monitoring_threads(self):
-        if self._attribute_executor:
-            # Clear out existing subscriptions
-            self._exit_attribute_thread_event.set()
-            self._attribute_executor.shutdown(wait=True, cancel_futures=True)
+    def monitor(self):
+        """Kick off device monitoring
 
-    @classmethod
-    def _heartbeat(
-        cls,
-        tango_fqdn: str,
-        beat_callback: Callable,
-        failure_callback: Callable,
-        exit_thread_event: Event,
-        logger: logging.Logger,
-    ):
-        logger.info("Heartbeat thread started")
-
-        while not exit_thread_event.is_set():
-            try:
-                device_proxy = tango.DeviceProxy(tango_fqdn)
-
-                while not exit_thread_event.is_set():
-                    device_proxy.ping()
-
-                    beat_callback()
-
-                    exit_thread_event.wait(timeout=TEST_CONNECTION_PERIOD)
-            except tango.DevFailed:
-                logger.info("Heartbeat ping failed")
-
-                exit_thread_event.wait(timeout=SLEEP_BETWEEN_RECONNECTS)
-                failure_callback()
-
-        logger.info("Heartbeat thread finished")
+        This method is idempotent. When called the existing (if any)
+        monitoring threads are removed and recreated.
+        """
+        start_monitoring_thread = Thread(
+            target=self.verify_connection_up,
+            args=[self.start_monitoring_threads],
+        )
+        start_monitoring_thread.start()
 
     # pylint:disable=too-many-arguments
     @classmethod
@@ -192,13 +162,14 @@ class TangoDeviceMonitor:
         retry_count = 0
         with tango.EnsureOmniThread():
             while not exit_thread_event.is_set():
-                # Not connnected by default
                 try:
 
                     def _event_reaction(events_queue, tango_event):
                         if tango_event.err:
                             logger.error("Got an error event on %s %s", tango_fqdn, tango_event)
-                        events_queue.put(tango_event)
+                            events_queue.put(PrioritizedEventData(priority=2, item=tango_event))
+                        else:
+                            events_queue.put(PrioritizedEventData(priority=1, item=tango_event))
 
                     device_proxy = tango.DeviceProxy(tango_fqdn)
                     device_proxy.ping()
@@ -214,11 +185,8 @@ class TangoDeviceMonitor:
                     if exit_thread_event.is_set():
                         return
                     # Most time spent here waiting for events
-                    while not exit_thread_event.wait(1):
+                    while not exit_thread_event.wait(TEST_CONNECTION_PERIOD):
                         pass
-                    device_proxy.unsubscribe_event(subscription_id)
-                    logger.info("Unsubscribed from %s for attr %s", tango_fqdn, attribute_name)
-                    subscription_id = None
                 except tango.DevFailed:
                     logger.exception(
                         (
@@ -227,7 +195,6 @@ class TangoDeviceMonitor:
                         )
                     )
                     retry_count += 1
-                    exit_thread_event.wait(SLEEP_BETWEEN_RECONNECTS)
                 except Exception:  # pylint: disable=W0703
                     logger.exception(
                         (
@@ -236,12 +203,11 @@ class TangoDeviceMonitor:
                         )
                     )
                     retry_count += 1
-                    exit_thread_event.wait(SLEEP_BETWEEN_RECONNECTS)
 
-    def stop_monitoring(self):
-        """Close all the monitroing threads"""
-        if self._exit_heartbeat_thread_event:
-            self._exit_heartbeat_thread_event.set()
-
-        if self._exit_attribute_thread_event:
-            self._exit_attribute_thread_event.set()
+                # Try and clean up the subscription, probably not possible
+                try:
+                    device_proxy.unsubscribe_event(subscription_id)
+                    logger.error("Unsubscribed from %s for attr %s", tango_fqdn, attribute_name)
+                    subscription_id = None
+                except tango.DevError:
+                    logger.error("Could not unsubscribe")

@@ -1,7 +1,8 @@
 """Generic component manager for a subservient tango device"""
+import datetime
 import logging
-from queue import Empty, Queue
-from threading import Event
+from queue import Empty, PriorityQueue
+from threading import Event, Lock
 from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
@@ -10,6 +11,7 @@ from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
+from ska_mid_dish_manager.models.dish_mode_model import PrioritizedEventData
 
 
 def _check_connection(func):  # pylint: disable=E0213
@@ -49,7 +51,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._component_state = {}
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
-        self._events_queue = Queue()
+        self._events_queue = PriorityQueue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
         if not logger:
@@ -61,8 +63,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._monitored_attributes,
             self._events_queue,
             logger,
-            self._heartbeat_callback,
-            self._heartbeat_failure_callback,
+            self._update_communication_state,
         )
 
         super().__init__(
@@ -73,7 +74,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             component_state_callback=component_state_callback,
             **kwargs,
         )
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
         # Default to NOT_ESTABLISHED
         if self._communication_state_callback:
             self._communication_state_callback()
@@ -124,6 +125,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: Tango event
         :type event_data: tango.EventData
         """
+
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
@@ -155,23 +157,35 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @classmethod
     def _event_consumer(
         cls,
-        event_queue: Queue,
+        event_queue: PriorityQueue,
         update_state_cb: Callable,
         task_abort_event: Optional[Event] = None,
         task_callback: Optional[Callable] = None,
     ):
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
-
+        latest_valid_event_timestamp = datetime.datetime.now() - datetime.timedelta(hours=1)
         while task_abort_event and not task_abort_event.is_set():
             try:
-                event_data: tango.EventData = event_queue.get(timeout=1)
+                p_event_data: PrioritizedEventData = event_queue.get(timeout=1)
+                event_data = p_event_data.item
+                if event_data.err:
+                    # If we get an error event that is older than the latest valid event
+                    # then discard it. If it's a new error event then start the reconnection
+                    # process via task_callback and drain until we find a valid event
+                    if event_data.reception_date.todatetime() > latest_valid_event_timestamp:
+                        # Restart the connection
+                        task_callback(progress="Error Event Found")
+                        # Drain the remaining errors
+                        while event_data.err:
+                            p_event_data: PrioritizedEventData = event_queue.get(timeout=1)
+                            event_data = p_event_data.item
+
                 if event_data.attr_value:
-                    task_callback(progress="Updating state")
+                    latest_valid_event_timestamp = event_data.reception_date.todatetime()
                     update_state_cb(event_data)
             except Empty:
                 pass
-
         if task_callback:
             task_callback(status=TaskStatus.ABORTED)
 
@@ -204,18 +218,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             result,
             exception,
         )
-
-    def _heartbeat_callback(self):
-        self._update_communication_state(CommunicationStatus.ESTABLISHED)
-
-    def _heartbeat_failure_callback(self):
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-
-        self.logger.info(
-            "Heartbeat failed on %s, attempting to reconnect", self._tango_device_fqdn
-        )
-        self._tango_device_monitor.monitor()
-        self.logger.info("Heartbeat reconnecting")
+        if progress and progress == "Error Event Found":
+            self.logger.info("Reconnecting to %s", self._tango_device_fqdn)
+            self._tango_device_monitor.monitor()
 
     def run_device_command(self, command_name, command_arg, task_callback: Callable = None):
         """Execute the command in a thread"""
@@ -319,5 +324,4 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def stop_communicating(self):
         """Stop communication with the device"""
         # pylint: disable=no-member
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._tango_device_monitor.stop_monitoring()

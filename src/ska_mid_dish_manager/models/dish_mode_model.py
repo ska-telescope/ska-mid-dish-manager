@@ -5,7 +5,9 @@ state of the device to decide if the requested state is a nearby node to allow o
 
 # pylint: disable=too-few-public-methods
 
+from dataclasses import dataclass, field
 import networkx as nx
+import tango
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -117,3 +119,9 @@ class DishModeModel:
                 f"[{dishmode}], only allowed to do {allowed_commands}"
             )
         )
+
+
+@dataclass(order=True)
+class PrioritizedEventData:
+    priority: int
+    item: tango.EventData = field(compare=False)

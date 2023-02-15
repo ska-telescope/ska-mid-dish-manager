@@ -1,9 +1,10 @@
 # pylint: disable=protected-access
 """Component manager for a DishManager tango device"""
+from functools import partial
 import json
 import logging
 from datetime import datetime
-from functools import partial
+from threading import Lock
 from typing import Callable, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, HealthState, TaskStatus
@@ -82,11 +83,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
+        self._state_update_lock = Lock()
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
                 spf_device_fqdn,
                 logger,
+                self._state_update_lock,
                 operatingmode=SPFOperatingMode.UNKNOWN,
                 powerstate=SPFPowerState.UNKNOWN,
                 healthstate=HealthState.UNKNOWN,
@@ -105,6 +108,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "DS": DSComponentManager(
                 ds_device_fqdn,
                 logger,
+                self._state_update_lock,
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=None,
                 achievedtargetlock=None,
@@ -119,6 +123,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
                 logger,
+                self._state_update_lock,
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
                 capturingdata=False,

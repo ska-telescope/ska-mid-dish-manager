@@ -1,5 +1,6 @@
 """Specialization for SPFRx functionality"""
 import logging
+from threading import Lock
 from typing import AnyStr, Callable, Optional
 
 from ska_control_model import HealthState
@@ -16,6 +17,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         self,
         tango_device_fqdn: AnyStr,
         logger: logging.Logger,
+        state_update_lock: Lock,
         *args,
         communication_state_callback: Optional[Callable] = None,
         component_state_callback: Optional[Callable] = None,
@@ -42,6 +44,8 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             component_state_callback=component_state_callback,
             **kwargs
         )
+        self._communication_state_lock = state_update_lock
+        self._component_state_lock = state_update_lock
 
     def _update_component_state(self, **kwargs):
         """Update the int we get from the event to the Enum"""
