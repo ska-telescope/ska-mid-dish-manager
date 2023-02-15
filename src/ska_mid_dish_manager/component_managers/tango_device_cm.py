@@ -220,7 +220,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         if progress and progress == "Error Event Found":
             self.logger.info("Reconnecting to %s", self._tango_device_fqdn)
-            self._tango_device_monitor.monitor()
+            if self.communication_state == CommunicationStatus.ESTABLISHED:
+                self._tango_device_monitor.monitor()
 
     def run_device_command(self, command_name, command_arg, task_callback: Callable = None):
         """Execute the command in a thread"""

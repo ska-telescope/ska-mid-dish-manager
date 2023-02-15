@@ -67,7 +67,7 @@ class TangoDeviceMonitor:
         Verify connection to the device by pinging it
         Starts attribute monitoring threads once the connection is verified
         """
-        self._logger.error("Check %s is up", self._tango_fqdn)
+        self._logger.info("Check %s is up", self._tango_fqdn)
         try_count = 0
 
         self._run_count += 1
@@ -86,7 +86,7 @@ class TangoDeviceMonitor:
                 proxy.ping()
                 return start_monitoring_threads()
             except tango.DevFailed:
-                self._logger.error(
+                self._logger.info(
                     "Cannot connect to %s try number %s", self._tango_fqdn, try_count
                 )
                 try_count += 1
@@ -166,13 +166,14 @@ class TangoDeviceMonitor:
         :type logger: logging.Logger
         """
         retry_count = 0
+        subscription_id = None
         with tango.EnsureOmniThread():
             while not exit_thread_event.is_set():
                 try:
 
                     def _event_reaction(events_queue, tango_event):
                         if tango_event.err:
-                            logger.error("Got an error event on %s %s", tango_fqdn, tango_event)
+                            logger.info("Got an error event on %s %s", tango_fqdn, tango_event)
                             events_queue.put(PrioritizedEventData(priority=2, item=tango_event))
                         else:
                             events_queue.put(PrioritizedEventData(priority=1, item=tango_event))
@@ -212,8 +213,9 @@ class TangoDeviceMonitor:
 
                 # Try and clean up the subscription, probably not possible
                 try:
-                    device_proxy.unsubscribe_event(subscription_id)
-                    logger.error("Unsubscribed from %s for attr %s", tango_fqdn, attribute_name)
-                    subscription_id = None
-                except tango.DevError:
-                    logger.error("Could not unsubscribe")
+                    if subscription_id:
+                        device_proxy.unsubscribe_event(subscription_id)
+                        logger.info("Unsubscribed from %s for attr %s", tango_fqdn, attribute_name)
+                        subscription_id = None
+                except tango.DevFailed:
+                    logger.info("Could not unsubscribe")
