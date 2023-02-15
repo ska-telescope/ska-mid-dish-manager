@@ -14,7 +14,6 @@ from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_mode_model import PrioritizedEventData
 
-SLEEP_BETWEEN_RECONNECTS = 2
 TEST_CONNECTION_PERIOD = 2
 
 
@@ -192,7 +191,8 @@ class TangoDeviceMonitor:
                     if exit_thread_event.is_set():
                         return
                     # Most time spent here waiting for events
-                    while not exit_thread_event.wait(TEST_CONNECTION_PERIOD):
+                    # Magic number as module variable results in segfault during pytest
+                    while not exit_thread_event.wait(1):
                         pass
                 except tango.DevFailed:
                     logger.exception(
