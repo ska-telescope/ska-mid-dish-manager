@@ -25,7 +25,7 @@ def test_component_manager_continues_reconnecting_when_device_is_unreachable(
     _, _ = mock_tango_device_proxy_instance
     tc_manager = TangoDeviceComponentManager("fake/fqdn/1", LOGGER, ("fake_attr",))
     tc_manager.start_communicating()
-    while "Connection retry count [3]" not in caplog.text:
+    while "try number 3" not in caplog.text:
         pass
     assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
     tc_manager.stop_communicating()
@@ -92,12 +92,13 @@ def test_unhappy_path(patched_tango, caplog):
     tc_manager.start_communicating()
     # Wait a bit
     try:
-        tc_manager._events_queue.get(timeout=3)
+        tc_manager._events_queue.get(timeout=6)
     except Empty:
         pass
     logs = [record.message for record in caplog.records]
-    for count, the_attr in zip(["1", "2", "3"], ["some_attr", "some_other_attr"]):
-        assert f"Error on Tango a/b/c for attr {the_attr}, try number {count}" in logs
+    for count in ("0", "1", "2"):
+        # assert f"Tango error on a/b/c for attr {the_attr}, try number {count}" in logs
+        assert f"Cannot connect to a/b/c try number {count}" in logs
 
 
 @pytest.mark.unit

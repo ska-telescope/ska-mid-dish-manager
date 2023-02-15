@@ -10,10 +10,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
-from ska_control_model import TaskStatus
+from ska_control_model import CommunicationStatus, TaskStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
+from ska_mid_dish_manager.devices.test_devices.utils import EventStore
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
@@ -39,8 +40,18 @@ class TestDishManagerBehaviour:
                 TaskStatus.COMPLETED,
                 "Task Done",
             )
+
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
+            event_store = EventStore()
+            self.device_proxy = self.tango_context.device
+            for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
+                self.device_proxy.subscribe_event(
+                    conn_attr,
+                    tango.EventType.CHANGE_EVENT,
+                    event_store,
+                )
+                event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=7)
 
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
@@ -58,6 +69,10 @@ class TestDishManagerBehaviour:
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
         self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
         self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
+
+        self.ds_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
+        self.spfrx_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
+        self.spf_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
 
     def teardown_method(self):
         """Tear down context"""

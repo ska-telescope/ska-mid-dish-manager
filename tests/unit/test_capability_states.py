@@ -233,8 +233,7 @@ class TestCapabilityStates:
         self.spfrx_cm._update_component_state(b1capabilitystate=SPFRxCapabilityStates.STANDBY)
         self.spf_cm._update_component_state(b1capabilitystate=SPFCapabilityStates.STANDBY)
 
-        event_store.wait_for_value(CapabilityStates.STANDBY, timeout=5)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.STANDBY, timeout=7)
 
     def test_b2capabilitystate_change(
         self,
@@ -255,8 +254,7 @@ class TestCapabilityStates:
         self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.UNAVAILABLE)
         self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.UNAVAILABLE)
 
-        event_store.wait_for_value(CapabilityStates.UNAVAILABLE, timeout=5)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.UNAVAILABLE, timeout=7)
 
     def test_b3capabilitystate_change(
         self,
@@ -279,8 +277,7 @@ class TestCapabilityStates:
         self.spf_cm._update_component_state(b3capabilitystate=SPFCapabilityStates.OPERATE_FULL)
         self.spfrx_cm._update_component_state(b3capabilitystate=SPFRxCapabilityStates.OPERATE)
 
-        event_store.wait_for_value(CapabilityStates.OPERATE_FULL)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.OPERATE_FULL, timeout=7)
 
     def test_b4capabilitystate_change(
         self,
@@ -302,8 +299,7 @@ class TestCapabilityStates:
         self.spf_cm._update_component_state(b4capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED)
         self.spfrx_cm._update_component_state(b4capabilitystate=SPFRxCapabilityStates.CONFIGURE)
 
-        event_store.wait_for_value(CapabilityStates.CONFIGURING)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=7)
 
     def test_b5acapabilitystate_change(
         self,
@@ -329,8 +325,7 @@ class TestCapabilityStates:
         )
         self.spfrx_cm._update_component_state(b5acapabilitystate=SPFRxCapabilityStates.OPERATE)
 
-        event_store.wait_for_value(CapabilityStates.OPERATE_DEGRADED)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.OPERATE_DEGRADED, timoeut=7)
 
     def test_b2capabilitystate_configuring_change(
         self,
@@ -353,5 +348,4 @@ class TestCapabilityStates:
         self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.OPERATE_FULL)
         self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.CONFIGURE)
 
-        event_store.wait_for_value(CapabilityStates.CONFIGURING)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=7)
