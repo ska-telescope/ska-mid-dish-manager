@@ -10,6 +10,7 @@ from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
+from ska_mid_dish_manager.devices.test_devices.utils import EventStore
 from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     DishMode,
@@ -177,8 +178,9 @@ class TestCapabilityStates:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.TangoDeviceMonitor.monitor"
-        ):
+            "ska_mid_dish_manager.component_managers.device_monitor.tango"
+        ) as patched_tango:
+            patched_tango.DeviceProxy.return_value = mock.MagicMock()
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 
@@ -188,11 +190,17 @@ class TestCapabilityStates:
             self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
             self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
 
-            self.ds_cm.communication_state = CommunicationStatus.ESTABLISHED
-            self.spf_cm.communication_state = CommunicationStatus.ESTABLISHED
-            self.spfrx_cm.communication_state = CommunicationStatus.ESTABLISHED
-
             self.dish_manager_cm = class_instance.component_manager
+
+            event_store = EventStore()
+            for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
+                sub_id = self.device_proxy.subscribe_event(
+                    conn_attr,
+                    tango.EventType.CHANGE_EVENT,
+                    event_store,
+                )
+                event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+                self.device_proxy.unsubscribe_event(sub_id)
 
     def teardown_method(self):
         """Tear down context"""
@@ -223,8 +231,9 @@ class TestCapabilityStates:
         # Mimic capabilitystatechanges on sub devices
         self.dish_manager_cm._update_component_state(dishmode=DishMode.STANDBY_LP)
         self.spfrx_cm._update_component_state(b1capabilitystate=SPFRxCapabilityStates.STANDBY)
+        self.spf_cm._update_component_state(b1capabilitystate=SPFCapabilityStates.STANDBY)
 
-        event_store.wait_for_value(CapabilityStates.STANDBY)
+        event_store.wait_for_value(CapabilityStates.STANDBY, timeout=5)
         self.device_proxy.unsubscribe_event(sub_id)
 
     def test_b2capabilitystate_change(
@@ -246,7 +255,7 @@ class TestCapabilityStates:
         self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.UNAVAILABLE)
         self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.UNAVAILABLE)
 
-        event_store.wait_for_value(CapabilityStates.UNAVAILABLE)
+        event_store.wait_for_value(CapabilityStates.UNAVAILABLE, timeout=5)
         self.device_proxy.unsubscribe_event(sub_id)
 
     def test_b3capabilitystate_change(
