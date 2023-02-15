@@ -52,7 +52,6 @@ class TangoDeviceMonitor:
         self._logger = logger
         self._update_communication_state = update_communication_state
 
-        self._exit_thread_event = None
         self._run_count = 0
         self._update_comm_state_lock = Lock()
         self._thread_futures = []
@@ -66,7 +65,6 @@ class TangoDeviceMonitor:
     def verify_connection_up(self, start_monitoring_threads: Callable):
         self._logger.error("Check %s is up", self._tango_fqdn)
         try_count = 0
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
         self._run_count += 1
         if self._executor:
@@ -130,6 +128,7 @@ class TangoDeviceMonitor:
         This method is idempotent. When called the existing (if any)
         monitoring threads are removed and recreated.
         """
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         start_monitoring_thread = Thread(
             target=self.verify_connection_up,
             args=[self.start_monitoring_threads],
