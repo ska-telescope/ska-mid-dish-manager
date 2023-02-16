@@ -194,13 +194,12 @@ class TestCapabilityStates:
 
             event_store = EventStore()
             for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
-                sub_id = self.device_proxy.subscribe_event(
+                self.device_proxy.subscribe_event(
                     conn_attr,
                     tango.EventType.CHANGE_EVENT,
                     event_store,
                 )
                 event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=7)
-                self.device_proxy.unsubscribe_event(sub_id)
 
     def teardown_method(self):
         """Tear down context"""
@@ -219,7 +218,7 @@ class TestCapabilityStates:
         event_store,
     ):
         """Test b1CapabilityState"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b1CapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -240,7 +239,7 @@ class TestCapabilityStates:
         event_store,
     ):
         """Test b2CapabilityState"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b2CapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -261,7 +260,7 @@ class TestCapabilityStates:
         event_store,
     ):
         """Test b3CapabilityState"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b3CapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -284,7 +283,7 @@ class TestCapabilityStates:
         event_store,
     ):
         """Test b4CapabilityState"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b4CapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -306,7 +305,7 @@ class TestCapabilityStates:
         event_store,
     ):
         """Test b5aCapabilityState"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b5aCapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,

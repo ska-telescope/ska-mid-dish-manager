@@ -28,6 +28,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.forked
+# pylint:disable=too-many-instance-attributes
 class TestDishManagerBehaviour(unittest.TestCase):
     """Tests DishManager"""
 
@@ -115,7 +116,7 @@ class TestDishManagerBehaviour(unittest.TestCase):
         )
 
         event_store.clear_queue()
-        _, command_id = self.device_proxy.SetStandbyFPMode()
+        self.device_proxy.SetStandbyFPMode()
 
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
