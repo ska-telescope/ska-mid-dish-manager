@@ -514,6 +514,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             # Just setting them to None will cause problems
             # when push_event requires something else like an Enum
 
+    @typing.no_type_check
     def reconnect(self) -> None:
         """Redo the connection to the Tango device"""
         self.to_reconnecting()
