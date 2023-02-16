@@ -26,7 +26,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 LOGGER = logging.getLogger(__name__)
 
-
+@pytest.mark.forked
 class TestDishManagerBehaviour(unittest.TestCase):
     """Tests DishManager"""
 
@@ -88,7 +88,6 @@ class TestDishManagerBehaviour(unittest.TestCase):
 
     # pylint: disable=missing-function-docstring,
     @pytest.mark.unit
-    @pytest.mark.forked
     def test_device_reports_long_running_results(self):
         event_store = EventStore()
         dish_manager = self.device_proxy
@@ -158,6 +157,5 @@ class TestDishManagerBehaviour(unittest.TestCase):
 
     # pylint: disable=missing-function-docstring,
     @pytest.mark.unit
-    @pytest.mark.forked
     def test_get_component_state(self):
         assert len(json.loads(self.device_proxy.GetComponentStates())) == 3
