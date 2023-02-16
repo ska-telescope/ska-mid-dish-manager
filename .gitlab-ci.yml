@@ -66,6 +66,7 @@ python-test:
     - sudo apt-get update && sudo apt-get install git -y
     - echo "Give all users RW permissions in cwd"
     - sudo chmod -R a+rw ./
+    - git config --global --add safe.directory /builds/ska-telescope/ska-mid-dish-manager
     - '[ -f .make/python.mk ] || (echo "File python.mk not included in Makefile; exit 1")'
     - 'make help | grep python-test'
     - poetry config virtualenvs.in-project true
@@ -95,6 +96,7 @@ k8s-test-runner:
     - sudo chmod +x /usr/local/bin/helm
     - echo "Give all users RW permissions in cwd"
     - sudo chmod -R a+rw ./
+    - git config --global --add safe.directory /builds/ska-telescope/ska-mid-dish-manager
     - '[ -f .make/k8s.mk ] || (echo "File k8s.mk not included in Makefile; exit 1")'
     - 'make help | grep k8s-test'
     - make k8s-install-chart
