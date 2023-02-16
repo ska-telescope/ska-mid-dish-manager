@@ -5,7 +5,6 @@
 
 import json
 import logging
-import unittest
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -15,7 +14,6 @@ from ska_control_model import CommunicationStatus, TaskStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
-from ska_mid_dish_manager.devices.test_devices.utils import EventStore
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
@@ -27,40 +25,22 @@ from ska_mid_dish_manager.models.dish_enums import (
 LOGGER = logging.getLogger(__name__)
 
 
-@pytest.mark.forked
-# pylint:disable=too-many-instance-attributes
-class TestDishManagerBehaviour(unittest.TestCase):
+class TestDishManagerBehaviour:
     """Tests DishManager"""
 
-    def setUp(self):
-        self.patcher_dp = patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.tango.DeviceProxy"
-        )
-        self.patcher_tango = patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-
-        self.patched_dp = self.patcher_dp.start()
-        self.patched_tango = self.patcher_tango.start()
-
-        mocked_device_proxy = MagicMock()
-        self.patched_tango.DeviceProxy.return_value = mocked_device_proxy
-        mocked_device_proxy.command_inout = MagicMock()
-        mocked_device_proxy.command_inout.return_value = (
-            TaskStatus.COMPLETED,
-            "Task Done",
-        )
-
-        self.tango_context = DeviceTestContext(DishManager)
-        self.tango_context.start()
-        event_store = EventStore()
-        self.device_proxy = self.tango_context.device
-        self.device_proxy.logginglevel = 5
-        for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
-            self.device_proxy.subscribe_event(
-                conn_attr,
-                tango.EventType.CHANGE_EVENT,
-                event_store,
+    def setup_method(self):
+        """Set up context"""
+        with patch(
+            "ska_mid_dish_manager.component_managers.tango_device_cm.tango.DeviceProxy"
+        ) as patched_dp:
+            patched_dp.return_value = MagicMock()
+            patched_dp.command_inout = MagicMock()
+            patched_dp.command_inout.return_value = (
+                TaskStatus.COMPLETED,
+                "Task Done",
             )
-            event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=7)
+            self.tango_context = DeviceTestContext(DishManager)
+            self.tango_context.start()
 
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
@@ -68,6 +48,8 @@ class TestDishManagerBehaviour(unittest.TestCase):
         self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
         self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
+
+        self.spf_cm.write_attribute_value = MagicMock()
 
         self.ds_cm.update_state_from_monitored_attributes = MagicMock()
         self.spf_cm.update_state_from_monitored_attributes = MagicMock()
@@ -80,25 +62,24 @@ class TestDishManagerBehaviour(unittest.TestCase):
         self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 
         self.ds_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
-        self.spfrx_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
         self.spf_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
+        self.spfrx_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
 
-    def tearDown(self):
-        self.patcher_dp.stop()
-        self.patcher_tango.stop()
+    def teardown_method(self):
+        """Tear down context"""
         self.tango_context.stop()
 
     # pylint: disable=missing-function-docstring,
     @pytest.mark.unit
-    def test_device_reports_long_running_results(self):
-        event_store = EventStore()
+    @pytest.mark.forked
+    def test_device_reports_long_running_results(self, event_store):
         dish_manager = self.device_proxy
         sub_id = dish_manager.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,
             event_store,
         )
-        assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=6)
+        assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=8)
         # unsubscribe to stop listening for dishMode events
         dish_manager.unsubscribe_event(sub_id)
         # Clear out the queue to make sure we dont keep previous events
@@ -115,7 +96,6 @@ class TestDishManagerBehaviour(unittest.TestCase):
             event_store,
         )
 
-        event_store.clear_queue()
         self.device_proxy.SetStandbyFPMode()
 
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
@@ -142,7 +122,7 @@ class TestDishManagerBehaviour(unittest.TestCase):
         # ('longrunningcommandresult',
         # ('16590178.0985_1954609_SPFRX_CaptureData', '"result"'))
 
-        events = event_store.wait_for_n_events(3)
+        events = event_store.wait_for_n_events(4)
         event_values = event_store.get_data_from_events(events)
         event_ids = [
             event_value[1][0]
@@ -159,5 +139,6 @@ class TestDishManagerBehaviour(unittest.TestCase):
 
     # pylint: disable=missing-function-docstring,
     @pytest.mark.unit
+    @pytest.mark.forked
     def test_get_component_state(self):
         assert len(json.loads(self.device_proxy.GetComponentStates())) == 3
