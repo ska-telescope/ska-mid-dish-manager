@@ -28,19 +28,21 @@ LOGGER = logging.getLogger(__name__)
 class TestDishManagerBehaviour:
     """Tests DishManager"""
 
-    def setup_method(self):
+    @patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango.DeviceProxy")
+    @patch("ska_mid_dish_manager.component_managers.device_monitor.tango.DeviceProxy")
+    def setup_method(self, _, patched_dp, patched_monitor_dp):
         """Set up context"""
-        with patch(
-            "ska_mid_dish_manager.component_managers.tango_device_cm.tango.DeviceProxy"
-        ) as patched_dp:
-            patched_dp.return_value = MagicMock()
-            patched_dp.command_inout = MagicMock()
-            patched_dp.command_inout.return_value = (
-                TaskStatus.COMPLETED,
-                "Task Done",
-            )
-            self.tango_context = DeviceTestContext(DishManager)
-            self.tango_context.start()
+
+        patched_monitor_dp.return_value = MagicMock()
+
+        patched_dp.return_value = MagicMock()
+        patched_dp.command_inout = MagicMock()
+        patched_dp.command_inout.return_value = (
+            TaskStatus.COMPLETED,
+            "Task Done",
+        )
+        self.tango_context = DeviceTestContext(DishManager)
+        self.tango_context.start()
 
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
