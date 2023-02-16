@@ -5,8 +5,8 @@
 
 import json
 import logging
-from datetime import datetime
 import unittest
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -25,6 +25,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
 
 @pytest.mark.forked
 class TestDishManagerBehaviour(unittest.TestCase):
