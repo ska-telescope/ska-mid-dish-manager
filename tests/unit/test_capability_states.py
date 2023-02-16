@@ -190,6 +190,8 @@ class TestCapabilityStates:
             self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
             self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
 
+            self.spf_cm.write_attribute_value = mock.MagicMock()
+
             self.dish_manager_cm = class_instance.component_manager
 
             event_store = EventStore()
