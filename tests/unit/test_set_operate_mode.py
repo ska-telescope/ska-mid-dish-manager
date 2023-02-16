@@ -121,6 +121,8 @@ class TestSetOperateMode:
         spf_cm.update_state_from_monitored_attributes = MagicMock()
         spfrx_cm.update_state_from_monitored_attributes = MagicMock()
 
+        spf_cm.write_attribute_value = MagicMock()
+
         # Force dishManager dishMode to go to STANDBY_FP
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
