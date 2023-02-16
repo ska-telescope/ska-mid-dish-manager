@@ -27,7 +27,7 @@ def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
     Execute the method, if communication fails, commence reconnection.
     """
 
-    def _decorator(self, *args, **kwargs):  # type: ignore
+    def _decorator(self, *args, **kwargs) -> Any:  # type: ignore
         try:
             if self.communication_state != CommunicationStatus.ESTABLISHED:
                 raise LostConnection("Communication status not ESTABLISHED")
@@ -71,8 +71,8 @@ class MonitoredAttribute:
     @typing.no_type_check
     def monitor(
         self,
-        device_proxy: Any,
-        logger: Any,
+        device_proxy: tango.DeviceProxy,
+        logger: logging.Logger,
         task_abort_event: Optional[Event] = None,
         task_callback: Optional[Callable] = None,  # pylint: disable=W0613
     ) -> None:
@@ -88,7 +88,7 @@ class MonitoredAttribute:
                 subscription_callback,
             )
             logger.info("Subscribed to [%s] with [%s]", self.attr_name, device_proxy)
-            while not task_abort_event.wait(1):
+            while task_abort_event is not None and not task_abort_event.wait(1):
                 pass
             device_proxy.unsubscribe_event(self.subscription_id)
             logger.info(
@@ -123,7 +123,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
     def __init__(
         self,
         tango_device_fqdn: AnyStr,
-        logger: Any,
+        logger: logging.Logger,
         *args: Any,
         communication_state_callback: Optional[Callable] = None,  # type: ignore
         component_state_callback: Optional[Callable] = None,  # type: ignore
@@ -382,7 +382,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
                 time.sleep(SLEEP_TIME_BETWEEN_RECONNECTS)
 
     def run_device_command(
-        self, command_name: Any, command_arg: Any, task_callback: Callable = None  # type: ignore
+        self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore
     ) -> Any:
         """Execute the command in a thread"""
         task_status, response = self.submit_task(
@@ -434,7 +434,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             task_callback(TaskStatus.COMPLETED, result=str(result))
 
     @_check_connection
-    def execute_command(self, device_proxy: Any, command_name: Any, command_arg: Any) -> Any:
+    def execute_command(
+        self, device_proxy: tango.DeviceProxy, command_name: str, command_arg: Any
+    ) -> Any:
         """Check the connection and execute the command on the Tango device"""
         self.logger.debug(
             "About to execute command [%s] on device [%s]",
@@ -451,7 +453,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         return result
 
     @_check_connection
-    def read_attribute_value(self, attribute_name: Any) -> Any:
+    def read_attribute_value(self, attribute_name: str) -> Any:
         """Check the connection and read an attribute"""
         self.logger.debug(
             "About to read attribute [%s] on device [%s]",
@@ -512,7 +514,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             # Just setting them to None will cause problems
             # when push_event requires something else like an Enum
 
-    @typing.no_type_check
     def reconnect(self) -> None:
         """Redo the connection to the Tango device"""
         self.to_reconnecting()
