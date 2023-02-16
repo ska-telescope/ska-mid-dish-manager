@@ -325,14 +325,14 @@ class TestCapabilityStates:
         )
         self.spfrx_cm._update_component_state(b5acapabilitystate=SPFRxCapabilityStates.OPERATE)
 
-        event_store.wait_for_value(CapabilityStates.OPERATE_DEGRADED, timoeut=7)
+        event_store.wait_for_value(CapabilityStates.OPERATE_DEGRADED, timeout=7)
 
     def test_b2capabilitystate_configuring_change(
         self,
         event_store,
     ):
         """Test Configuring"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b2CapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
