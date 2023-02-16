@@ -219,7 +219,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
         if event_data.err:
             self.logger.debug("Got event [%s]", event_data)
             # We lost connection, get the connection back
-            self.reconnect()  # type: ignore
+            self.reconnect()
         else:
             # I get lowercase and uppercase "State" from events
             # for some reason, stick to lowercase to avoid duplicates
@@ -514,7 +514,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):  # type: ignore
             # Just setting them to None will cause problems
             # when push_event requires something else like an Enum
 
-    @typing.no_type_check
     def reconnect(self) -> None:
         """Redo the connection to the Tango device"""
         self.to_reconnecting()
