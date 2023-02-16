@@ -6,6 +6,7 @@
 import json
 import logging
 from datetime import datetime
+import unittest
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,32 +27,38 @@ from ska_mid_dish_manager.models.dish_enums import (
 LOGGER = logging.getLogger(__name__)
 
 
-class TestDishManagerBehaviour:
+class TestDishManagerBehaviour(unittest.TestCase):
     """Tests DishManager"""
 
-    def setup_method(self):
-        """Set up context"""
-        with patch(
+    def setUp(self):
+        self.patcher_dp = patch(
             "ska_mid_dish_manager.component_managers.device_monitor.tango.DeviceProxy"
-        ) as patched_dp:
-            patched_dp.return_value = MagicMock()
-            patched_dp.command_inout = MagicMock()
-            patched_dp.command_inout.return_value = (
-                TaskStatus.COMPLETED,
-                "Task Done",
-            )
+        )
+        self.patcher_tango = patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 
-            self.tango_context = DeviceTestContext(DishManager)
-            self.tango_context.start()
-            event_store = EventStore()
-            self.device_proxy = self.tango_context.device
-            for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
-                self.device_proxy.subscribe_event(
-                    conn_attr,
-                    tango.EventType.CHANGE_EVENT,
-                    event_store,
-                )
-                event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=7)
+        self.patched_dp = self.patcher_dp.start()
+        self.patched_tango = self.patcher_tango.start()
+
+        mocked_device_proxy = MagicMock()
+        self.patched_tango.DeviceProxy.return_value = mocked_device_proxy
+        mocked_device_proxy.command_inout = MagicMock()
+        mocked_device_proxy.command_inout.return_value = (
+            TaskStatus.COMPLETED,
+            "Task Done",
+        )
+
+        self.tango_context = DeviceTestContext(DishManager)
+        self.tango_context.start()
+        event_store = EventStore()
+        self.device_proxy = self.tango_context.device
+        self.device_proxy.logginglevel = 5
+        for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
+            self.device_proxy.subscribe_event(
+                conn_attr,
+                tango.EventType.CHANGE_EVENT,
+                event_store,
+            )
+            event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=7)
 
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
@@ -74,14 +81,16 @@ class TestDishManagerBehaviour:
         self.spfrx_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
         self.spf_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
 
-    def teardown_method(self):
-        """Tear down context"""
+    def tearDown(self):
+        self.patcher_dp.stop()
+        self.patcher_tango.stop()
         self.tango_context.stop()
 
     # pylint: disable=missing-function-docstring,
     @pytest.mark.unit
     @pytest.mark.forked
-    def test_device_reports_long_running_results(self, event_store):
+    def test_device_reports_long_running_results(self):
+        event_store = EventStore()
         dish_manager = self.device_proxy
         sub_id = dish_manager.subscribe_event(
             "dishMode",
@@ -105,6 +114,7 @@ class TestDishManagerBehaviour:
             event_store,
         )
 
+        event_store.clear_queue()
         _, command_id = self.device_proxy.SetStandbyFPMode()
 
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
@@ -131,7 +141,7 @@ class TestDishManagerBehaviour:
         # ('longrunningcommandresult',
         # ('16590178.0985_1954609_SPFRX_CaptureData', '"result"'))
 
-        events = event_store.wait_for_command_id(command_id[0], timeout=8)
+        events = event_store.wait_for_n_events(3)
         event_values = event_store.get_data_from_events(events)
         event_ids = [
             event_value[1][0]
