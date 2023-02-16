@@ -1,8 +1,6 @@
-ARG BUILD_IMAGE="artefact.skao.int/ska-tango-images-pytango-builder:9.3.34"
-ARG BASE_IMAGE="artefact.skao.int/ska-tango-images-pytango-runtime:9.3.21"
-FROM $BUILD_IMAGE AS buildenv
+FROM artefact.skao.int/ska-tango-images-pytango-builder:9.3.34 AS buildenv
+FROM artefact.skao.int/ska-tango-images-pytango-runtime:9.3.21 AS runtime
 
-FROM $BASE_IMAGE
 USER root
 
 # Make sure there's no venv
