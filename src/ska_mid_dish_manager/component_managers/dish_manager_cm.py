@@ -161,19 +161,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     # pylint: disable=unused-argument
-    def _sub_communication_state_changed(self, attribute_name: str):
-        """Callback triggered by the component manager when it establishes
+    def _sub_communication_state_changed(
+        self, attribute_name: str, communication_state: CommunicationStatus = None
+    ):
+        """
+        Callback triggered by the component manager when it establishes
         a connection with the underlying (subservient) device
 
         The component manager syncs with the device for fresh updates
         everytime connection is established.
 
-        Note: This callback is triggered by the component managers of
+        Note: This callback is triggered by the component manangers of
         the subservient devices. DishManager reflects this in its connection
-        status attributes
-
-        :param: attribute_name The attribute to update
-        :type: attribute_name str
+        status attributes.
         """
         if self.sub_component_managers:
             if not all(
@@ -217,7 +217,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._connection_state_callback(attribute_name)
 
     # pylint: disable=unused-argument, too-many-branches
-    def _component_state_changed(self, *_, **kwargs):
+    def _component_state_changed(self, *args, **kwargs):
         """
         Callback triggered by the component manager of the
         subservient device for component state changes.
@@ -259,7 +259,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if "achievedpointing" in kwargs:
             self.logger.debug(
-                "Updating achievedPointing with DS achievedPointing [%s]",
+                ("Updating achievedPointing with DS achievedPointing [%s]"),
                 ds_component_state["achievedpointing"],
             )
             new_position = ds_component_state["achievedpointing"]
@@ -268,7 +268,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs:
             self.logger.debug(
-                "Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]",
+                ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
                 ds_component_state["operatingmode"],
                 spf_component_state["operatingmode"],
                 spfrx_component_state["operatingmode"],
@@ -287,7 +287,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             and "healthstate" in spfrx_component_state
         ):
             self.logger.debug(
-                "Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]",
+                ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
                 ds_component_state["healthstate"],
                 spf_component_state["healthstate"],
                 spfrx_component_state["healthstate"],
@@ -301,7 +301,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if "pointingstate" in kwargs:
             self.logger.debug(
-                "Newly calculated pointing state [pointing_state] [%s]",
+                ("Newly calculated pointing state [pointing_state] [%s]"),
                 ds_component_state["pointingstate"],
             )
             self._update_component_state(pointingstate=ds_component_state["pointingstate"])
@@ -351,7 +351,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # update capturing attribute when SPFRx captures data
         if "capturingdata" in kwargs:
             self.logger.debug(
-                "Updating capturing with SPFRx [%s]",
+                ("Updating capturing with SPFRx [%s]"),
                 spfrx_component_state,
             )
             self._update_component_state(capturing=spfrx_component_state["capturingdata"])

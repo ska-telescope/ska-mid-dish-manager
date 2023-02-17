@@ -59,7 +59,7 @@ class TangoDeviceMonitor:
         self._start_monitoring_thread = Thread()  # pylint: disable=bad-thread-instantiation
 
     def stop_monitoring(self):
-        """Close all the monitoring threads"""
+        """Close all the monitroing threads"""
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
         # Stop any existing start monitoring thread
@@ -75,12 +75,9 @@ class TangoDeviceMonitor:
             self._logger.info("Stopped monitoring threads on %s", self._tango_fqdn)
 
     def _verify_connection_up(self, start_monitoring_threads: Callable):
-        """Verify connection to the device by pinging it
+        """
+        Verify connection to the device by pinging it
         Starts attribute monitoring threads once the connection is verified
-
-        :param: start_monitoring_threads Start monitoring threads
-        :type: start_monitoring_threads Callable
-        :return: None
         """
         self._logger.info("Check %s is up", self._tango_fqdn)
         try_count = 0
