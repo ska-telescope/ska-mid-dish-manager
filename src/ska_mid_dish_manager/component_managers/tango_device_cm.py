@@ -14,7 +14,7 @@ from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMo
 from ska_mid_dish_manager.models.dish_mode_model import PrioritizedEventData
 
 
-def _check_connection(func):  # pylint: disable=E0213
+def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
     """Connection check decorator.
 
     This is a workaround for decorators in classes.
@@ -82,7 +82,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._communication_state_callback()
         self._start_event_consumer_thread()
 
-    def clear_monitored_attributes(self):
+    def clear_monitored_attributes(self) -> None:
         """
         Sets all the monitored attribute values to 0.
 
@@ -100,7 +100,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             if monitored_attribute in self._component_state:
                 self._component_state[monitored_attribute] = 0
 
-    def update_state_from_monitored_attributes(self):
+    def update_state_from_monitored_attributes(self) -> None:
         """Update the component state by reading the monitored attributes
 
         When an attribute on the device does not match the component_state
@@ -121,7 +121,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 value = list(value)
             self._update_component_state(**{monitored_attribute: value})
 
-    def _update_state_from_event(self, event_data: tango.EventData):
+    def _update_state_from_event(self, event_data: tango.EventData) -> None:
         """Update component state as the change events come in.
 
         :param event_data: Tango event
@@ -162,8 +162,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         event_queue: PriorityQueue,
         update_state_cb: Callable,
         task_abort_event: Optional[Event] = None,
-        task_callback: Optional[Callable] = None,
-    ):
+        task_callback: Optional[Callable] = None,  # type: ignore
+    ) -> None:
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
         latest_valid_event_timestamp = datetime.datetime.now() - datetime.timedelta(hours=1)
@@ -225,7 +225,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             if self.communication_state == CommunicationStatus.ESTABLISHED:
                 self._tango_device_monitor.monitor()
 
-    def run_device_command(self, command_name, command_arg, task_callback: Callable = None):
+    def run_device_command(
+        self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore
+    ) -> Any:
         """Execute the command in a thread"""
         task_status, response = self.submit_task(
             self._run_device_command,
@@ -234,13 +236,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         return task_status, response
 
+    @typing.no_type_check
     def _run_device_command(
         self,
         command_name: str,
         command_arg: Any,
         task_callback: Callable = None,
         task_abort_event: Event = None,
-    ):
+    ) -> None:
         if task_abort_event.is_set():
             task_callback(status=TaskStatus.ABORTED)
             return
@@ -283,7 +286,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         return result
 
     @_check_connection
-    def read_attribute_value(self, attribute_name):
+    def read_attribute_value(self, attribute_name: str) -> Any:
         """Check the connection and read an attribute"""
         self.logger.debug(
             "About to read attribute [%s] on device [%s]",
@@ -318,13 +321,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         return result
 
-    def start_communicating(self):
+    @typing.no_type_check
+    def start_communicating(self) -> None:
         """Establish communication with the device"""
         # pylint: disable=no-member
         self.logger.info("start_communicating")
         self._tango_device_monitor.monitor()
 
-    def stop_communicating(self):
+    def stop_communicating(self) -> None:
         """Stop communication with the device"""
         # pylint: disable=no-member
         self._tango_device_monitor.stop_monitoring()

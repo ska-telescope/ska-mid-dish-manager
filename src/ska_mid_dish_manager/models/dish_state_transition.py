@@ -1,5 +1,7 @@
 """State transition computation"""
 
+from typing import Any
+
 from ska_control_model import HealthState
 
 from ska_mid_dish_manager.models.dish_enums import Band, CapabilityStates, DishMode, SPFBandInFocus
@@ -17,9 +19,9 @@ class StateTransition:
 
     def compute_dish_mode(
         self,
-        ds_component_state: dict,
-        spfrx_component_state: dict,
-        spf_component_state: dict,
+        ds_component_state: dict,  # type: ignore
+        spfrx_component_state: dict,  # type: ignore
+        spf_component_state: dict,  # type: ignore
     ) -> DishMode:
         """Compute the dishMode based off component_states
 
@@ -43,9 +45,9 @@ class StateTransition:
 
     def compute_dish_health_state(
         self,
-        ds_component_state: dict,
-        spfrx_component_state: dict,
-        spf_component_state: dict,
+        ds_component_state: dict,  # type: ignore
+        spfrx_component_state: dict,  # type: ignore
+        spf_component_state: dict,  # type: ignore
     ) -> HealthState:
         """Compute the HealthState based off component_states
 
@@ -70,11 +72,11 @@ class StateTransition:
     # pylint: disable=too-many-arguments
     def compute_capability_state(
         self,
-        band,  # Literal["b1", "b2", "b3", "b4", "b5a", "b5b"],
-        ds_component_state: dict,
-        spfrx_component_state: dict,
-        spf_component_state: dict,
-        dish_manager_component_state: dict,
+        band: Any,  # Literal["b1", "b2", "b3", "b4", "b5a", "b5b"],
+        ds_component_state: dict,  # type: ignore
+        spfrx_component_state: dict,  # type: ignore
+        spf_component_state: dict,  # type: ignore
+        dish_manager_component_state: dict,  # type: ignore
     ) -> CapabilityStates:
         """Compute the capabilityState based off component_states
 
@@ -132,9 +134,9 @@ class StateTransition:
 
     def compute_configured_band(
         self,
-        ds_component_state: dict,
-        spfrx_component_state: dict,
-        spf_component_state: dict,
+        ds_component_state: dict,  # type: ignore
+        spfrx_component_state: dict,  # type: ignore
+        spf_component_state: dict,  # type: ignore
     ) -> Band:
         """Compute the configuredband based off component_states
 
@@ -158,8 +160,8 @@ class StateTransition:
 
     def compute_spf_band_in_focus(
         self,
-        ds_component_state: dict,
-        spfrx_component_state: dict,
+        ds_component_state: dict,  # type: ignore
+        spfrx_component_state: dict,  # type: ignore
     ) -> SPFBandInFocus:
         """Compute the bandinfocus based off component_states
 
@@ -180,13 +182,13 @@ class StateTransition:
     @classmethod
     def _collapse(
         cls,
-        ds_component_state: dict,
-        spfrx_component_state,
-        spf_component_state: dict = None,
-        dish_manager_component_state: dict = None,
-    ) -> dict:
+        ds_component_state: dict,  # type: ignore
+        spfrx_component_state: Any,
+        spf_component_state: dict | None = None,  # type: ignore
+        dish_manager_component_state: dict | None = None,  # type: ignore
+    ) -> dict:  # type: ignore
         """Collapse multiple state dicts into one"""
-        dish_manager_states = {"DS": {}, "SPF": {}, "SPFRX": {}, "DM": {}}
+        dish_manager_states = {"DS": {}, "SPF": {}, "SPFRX": {}, "DM": {}}  # type: ignore
 
         for key, val in ds_component_state.items():
             dish_manager_states["DS"][key] = str(val)

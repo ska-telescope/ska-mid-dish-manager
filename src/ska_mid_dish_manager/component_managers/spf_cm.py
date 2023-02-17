@@ -52,7 +52,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
         self._communication_state_lock = state_update_lock
         self._component_state_lock = state_update_lock
 
-    def _update_component_state(self, **kwargs):
+    def _update_component_state(self, **kwargs: Any) -> None:
         """Update the int we get from the event to the Enum"""
 
         enum_conversion = {

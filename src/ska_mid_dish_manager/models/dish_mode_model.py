@@ -4,6 +4,7 @@ state of the device to decide if the requested state is a nearby node to allow o
 """
 
 # pylint: disable=too-few-public-methods
+from typing import Any, Optional
 
 from dataclasses import dataclass, field
 
@@ -39,11 +40,11 @@ class CommandNotAllowed(Exception):
 class DishModeModel:
     """A representation of the mode transition diagram"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.dishmode_graph = self._build_model()
 
     @classmethod
-    def _build_model(cls):
+    def _build_model(cls) -> Any:
         dishmode_graph = nx.DiGraph()
         for node in DISH_MODE_NODES:
             dishmode_graph.add_node(node)
@@ -103,7 +104,9 @@ class DishModeModel:
 
         return dishmode_graph
 
-    def is_command_allowed(self, dishmode=None, command_name=None):
+    def is_command_allowed(
+        self, dishmode: Optional[str] = None, command_name: Optional[str] = None
+    ) -> bool:
         """Determine if requested tango command is allowed based on current dish mode"""
         allowed_commands = []
         for from_node, to_node in self.dishmode_graph.edges(dishmode):
