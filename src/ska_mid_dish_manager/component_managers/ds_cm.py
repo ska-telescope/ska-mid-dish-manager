@@ -1,7 +1,7 @@
 """Specialization for DS functionality"""
 import logging
 from threading import Lock
-from typing import AnyStr, Callable, Optional
+from typing import Any, Callable, Optional
 
 from ska_control_model import HealthState
 

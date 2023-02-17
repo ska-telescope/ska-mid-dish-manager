@@ -3,10 +3,10 @@ This model enforces the legal transitions when a command is triggered. It assess
 state of the device to decide if the requested state is a nearby node to allow or reject a command.
 """
 
+from dataclasses import dataclass, field
+
 # pylint: disable=too-few-public-methods
 from typing import Any, Optional
-
-from dataclasses import dataclass, field
 
 import networkx as nx
 import tango

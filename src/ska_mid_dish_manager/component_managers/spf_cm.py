@@ -1,7 +1,7 @@
 """Specialization for SPF functionality"""
 import logging
 from threading import Lock
-from typing import AnyStr, Callable, Optional
+from typing import Any, AnyStr, Callable, Optional
 
 from ska_control_model import HealthState
 
