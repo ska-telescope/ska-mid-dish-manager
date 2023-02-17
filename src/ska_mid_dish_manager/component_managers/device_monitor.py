@@ -2,12 +2,12 @@
 If an error event is received the DeviceProxy and subscription will be recreated
 """
 import logging
-from concurrent.futures import ThreadPoolExecutor, Future
+from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from functools import partial
 from queue import Queue
 from threading import Event, Lock, Thread
-from typing import Callable, Tuple, List, Optional
+from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus
@@ -56,7 +56,8 @@ class TangoDeviceMonitor:
         self._update_comm_state_lock = Lock()
         self._thread_futures: List[Future] = []
         self._exit_thread_event: Event = Event()
-        self._start_monitoring_thread: Thread = Thread()  # pylint: disable=bad-thread-instantiation
+        # pylint: disable=bad-thread-instantiation
+        self._start_monitoring_thread: Thread = Thread()
 
     def stop_monitoring(self) -> None:
         """Close all the monitroing threads"""

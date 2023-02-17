@@ -23,7 +23,7 @@ def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
     Execute the method, if communication fails, commence reconnection.
     """
 
-    def _decorator(self: TangoDeviceComponentManager, *args: Any, **kwargs: Any) -> Callable:
+    def _decorator(self, *args: Any, **kwargs: Any) -> Callable:  # type: ignore
         if self.communication_state != CommunicationStatus.ESTABLISHED:
             raise LostConnection("Communication status not ESTABLISHED")
         return func(self, *args, **kwargs)  # pylint: disable=E1102
@@ -49,7 +49,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         component_state_callback: Any = None,
         **kwargs: Any,
     ):
-        self._component_state = {}
+        self._component_state: dict = {}  # type: ignore
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
         self._events_queue: PriorityQueue = PriorityQueue()
@@ -80,7 +80,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         # Default to NOT_ESTABLISHED
         if self._communication_state_callback:
-            self._communication_state_callback() # type: ignore
+            self._communication_state_callback()  # type: ignore
         self._start_event_consumer_thread()
 
     def clear_monitored_attributes(self) -> None:

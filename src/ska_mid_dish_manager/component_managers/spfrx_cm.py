@@ -1,7 +1,7 @@
 """Specialization for SPFRx functionality"""
 import logging
 from threading import Lock
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable
 
 from ska_control_model import HealthState
 
@@ -67,17 +67,17 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         super()._update_component_state(**kwargs)
 
     # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable = None) -> Any: # type: ignore
+    def on(self, task_callback: Callable = None) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable = None) -> Any: # type: ignore
+    def off(self, task_callback: Callable = None) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable = None) -> Any: # type: ignore
+    def reset(self, task_callback: Callable = None) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable = None) -> Any: # type: ignore
+    def standby(self, task_callback: Callable = None) -> Any:  # type: ignore
         raise NotImplementedError
