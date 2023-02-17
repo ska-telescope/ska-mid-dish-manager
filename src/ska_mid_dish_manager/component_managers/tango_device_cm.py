@@ -75,6 +75,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
+        self._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
+
         # Default to NOT_ESTABLISHED
         if self._communication_state_callback:
             self._communication_state_callback()

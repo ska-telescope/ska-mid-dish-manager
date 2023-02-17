@@ -55,27 +55,32 @@ class TangoDeviceMonitor:
         self._update_comm_state_lock = Lock()
         self._thread_futures = []
         self._exit_thread_event = Event()
+        self._start_monitoring_thread = Thread()
 
     def stop_monitoring(self):
         """Close all the monitroing threads"""
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
+        # Set the exit thread event to exit all threads
         self._exit_thread_event.set()
 
-    def verify_connection_up(self, start_monitoring_threads: Callable):
+        # Stop any existing start monitoring thread
+        if self._start_monitoring_thread.is_alive():
+            self._start_monitoring_thread.join()
+
+        # Clear out existing subscriptions
+        if self._executor:
+            self._logger.info("Stopping current monitoring threads on %s", self._tango_fqdn)
+            self._executor.shutdown(wait=True, cancel_futures=True)
+            self._logger.info("Stopped monitoring threads on %s", self._tango_fqdn)
+
+    def _verify_connection_up(self, start_monitoring_threads: Callable):
         """
         Verify connection to the device by pinging it
         Starts attribute monitoring threads once the connection is verified
         """
         self._logger.info("Check %s is up", self._tango_fqdn)
         try_count = 0
-
-        self._run_count += 1
-        if self._executor:
-            self._logger.info("Stopping current monitoring threads on %s", self._tango_fqdn)
-            # Clear out existing subscriptions
-            self._exit_thread_event.set()
-            self._executor.shutdown(wait=True, cancel_futures=True)
-            self._logger.info("Stopped monitoring threads on %s", self._tango_fqdn)
 
         self._exit_thread_event = Event()
 
@@ -91,7 +96,7 @@ class TangoDeviceMonitor:
                 try_count += 1
                 self._exit_thread_event.wait(TEST_CONNECTION_PERIOD)
 
-    def start_monitoring_threads(self):
+    def _start_monitoring_threads(self):
         """
         Starts a threadpool for monitoring attributes and submits
         a thread for each of the devices monitored attributes
@@ -134,12 +139,16 @@ class TangoDeviceMonitor:
         This method is idempotent. When called the existing (if any)
         monitoring threads are removed and recreated.
         """
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-        start_monitoring_thread = Thread(
-            target=self.verify_connection_up,
-            args=[self.start_monitoring_threads],
+        self._run_count += 1
+
+        if self._start_monitoring_thread.is_alive() or self._executor:
+            self.stop_monitoring()
+
+        self._start_monitoring_thread = Thread(
+            target=self._verify_connection_up,
+            args=[self._start_monitoring_threads],
         )
-        start_monitoring_thread.start()
+        self._start_monitoring_thread.start()
 
     # pylint:disable=too-many-arguments
     @classmethod
@@ -218,4 +227,4 @@ class TangoDeviceMonitor:
                         logger.info("Unsubscribed from %s for attr %s", tango_fqdn, attribute_name)
                         subscription_id = None
                 except tango.DevFailed:
-                    logger.info("Could not unsubscribe")
+                    logger.info("Could not unsubscribe from %s for attr %s", tango_fqdn, attribute_name)
