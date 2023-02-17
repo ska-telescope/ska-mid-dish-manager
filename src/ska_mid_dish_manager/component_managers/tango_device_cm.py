@@ -23,7 +23,7 @@ def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
     Execute the method, if communication fails, commence reconnection.
     """
 
-    def _decorator(self, *args, **kwargs):
+    def _decorator(self: TangoDeviceComponentManager, *args: Any, **kwargs: Any) -> Callable:
         if self.communication_state != CommunicationStatus.ESTABLISHED:
             raise LostConnection("Communication status not ESTABLISHED")
         return func(self, *args, **kwargs)  # pylint: disable=E1102
@@ -43,16 +43,16 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self,
         tango_device_fqdn: str,
         logger: logging.Logger,
-        monitored_attributes: Tuple[str],
-        *args,
-        communication_state_callback: Optional[Callable] = None,
-        component_state_callback: Optional[Callable] = None,
-        **kwargs,
+        monitored_attributes: Tuple[str, ...],
+        *args: Any,
+        communication_state_callback: Any = None,
+        component_state_callback: Any = None,
+        **kwargs: Any,
     ):
         self._component_state = {}
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
-        self._events_queue = PriorityQueue()
+        self._events_queue: PriorityQueue = PriorityQueue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
         if not logger:
@@ -80,7 +80,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         # Default to NOT_ESTABLISHED
         if self._communication_state_callback:
-            self._communication_state_callback()
+            self._communication_state_callback() # type: ignore
         self._start_event_consumer_thread()
 
     def clear_monitored_attributes(self) -> None:
@@ -146,7 +146,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error updating component state")
 
-    def _start_event_consumer_thread(self):
+    def _start_event_consumer_thread(self) -> None:
         self.submit_task(
             self._event_consumer,
             args=[
@@ -178,10 +178,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                     # process via task_callback and drain until we find a valid event
                     if event_data.reception_date.todatetime() > latest_valid_event_timestamp:
                         # Restart the connection
-                        task_callback(progress="Error Event Found")
+                        if task_callback:
+                            task_callback(progress="Error Event Found")
                         # Drain the remaining errors
                         while event_data.err:
-                            p_event_data: PrioritizedEventData = event_queue.get(timeout=1)
+                            p_event_data = event_queue.get(timeout=1)
                             event_data = p_event_data.item
 
                 if event_data.attr_value:
@@ -198,7 +199,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         progress: Optional[int] = None,
         result: Optional[tuple[ResultCode, str]] = None,
         exception: Optional[Exception] = None,
-    ):
+    ) -> None:
         """Just log the status of the event handler thread
 
         :param status: _description_, defaults to None
@@ -269,7 +270,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.COMPLETED, result=str(result))
 
     @_check_connection
-    def execute_command(self, command_name, command_arg):
+    def execute_command(self, command_name: str, command_arg: Any) -> Any:
         """Check the connection and execute the command on the Tango device"""
         self.logger.debug(
             "About to execute command [%s] on device [%s]",
@@ -305,7 +306,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         return result
 
     @_check_connection
-    def write_attribute_value(self, attribute_name, attribute_value):
+    def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
         """Check the connection and read an attribute"""
         self.logger.debug(
             "About to write attribute [%s] on device [%s]",

@@ -2,12 +2,12 @@
 If an error event is received the DeviceProxy and subscription will be recreated
 """
 import logging
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, Future
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from functools import partial
 from queue import Queue
 from threading import Event, Lock, Thread
-from typing import Callable, Tuple
+from typing import Callable, Tuple, List, Optional
 
 import tango
 from ska_control_model import CommunicationStatus
@@ -29,7 +29,7 @@ class TangoDeviceMonitor:
     def __init__(
         self,
         tango_fqdn: str,
-        monitored_attributes: Tuple[str],
+        monitored_attributes: Tuple[str, ...],
         event_queue: Queue,
         logger: logging.Logger,
         update_communication_state: Callable,
@@ -48,17 +48,17 @@ class TangoDeviceMonitor:
         self._tango_fqdn = tango_fqdn
         self._monitored_attributes = monitored_attributes
         self._event_queue = event_queue
-        self._executor = None
         self._logger = logger
         self._update_communication_state = update_communication_state
 
+        self._executor: Optional[ThreadPoolExecutor] = None
         self._run_count = 0
         self._update_comm_state_lock = Lock()
-        self._thread_futures = []
-        self._exit_thread_event = Event()
-        self._start_monitoring_thread = Thread()  # pylint: disable=bad-thread-instantiation
+        self._thread_futures: List[Future] = []
+        self._exit_thread_event: Event = Event()
+        self._start_monitoring_thread: Thread = Thread()  # pylint: disable=bad-thread-instantiation
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Close all the monitroing threads"""
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
@@ -74,7 +74,7 @@ class TangoDeviceMonitor:
             self._executor.shutdown(wait=True, cancel_futures=True)
             self._logger.info("Stopped monitoring threads on %s", self._tango_fqdn)
 
-    def _verify_connection_up(self, start_monitoring_threads: Callable):
+    def _verify_connection_up(self, start_monitoring_threads: Callable) -> None:
         """
         Verify connection to the device by pinging it
         Starts attribute monitoring threads once the connection is verified
@@ -96,7 +96,7 @@ class TangoDeviceMonitor:
                 try_count += 1
                 self._exit_thread_event.wait(TEST_CONNECTION_PERIOD)
 
-    def _start_monitoring_threads(self):
+    def _start_monitoring_threads(self) -> None:
         """
         Starts a threadpool for monitoring attributes and submits
         a thread for each of the devices monitored attributes
@@ -133,7 +133,7 @@ class TangoDeviceMonitor:
         self._logger.info("Monitoring threads started for %s", self._tango_fqdn)
         self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
-    def monitor(self):
+    def monitor(self) -> None:
         """Kick off device monitoring
 
         This method is idempotent. When called the existing (if any)
@@ -159,7 +159,7 @@ class TangoDeviceMonitor:
         exit_thread_event: Event,
         event_queue: Queue,
         logger: logging.Logger,
-    ):
+    ) -> None:
         """Monitor an attribute
 
         :param: tango_fqdn: The Tango device name
@@ -179,7 +179,7 @@ class TangoDeviceMonitor:
             while not exit_thread_event.is_set():
                 try:
 
-                    def _event_reaction(events_queue, tango_event):
+                    def _event_reaction(events_queue: Queue, tango_event: tango.EventData) -> None:
                         if tango_event.err:
                             logger.info("Got an error event on %s %s", tango_fqdn, tango_event)
                             events_queue.put(PrioritizedEventData(priority=2, item=tango_event))

@@ -1,7 +1,7 @@
 """Specialization for SPF functionality"""
 import logging
 from threading import Lock
-from typing import Any, AnyStr, Callable, Optional
+from typing import Any, Callable, Optional
 
 from ska_control_model import HealthState
 
@@ -20,15 +20,15 @@ class SPFComponentManager(TangoDeviceComponentManager):
 
     def __init__(
         self,
-        tango_device_fqdn: AnyStr,
+        tango_device_fqdn: str,
         logger: logging.Logger,
         state_update_lock: Lock,
-        *args,
+        *args: Any,
         communication_state_callback: Optional[Callable] = None,
         component_state_callback: Optional[Callable] = None,
-        **kwargs
+        **kwargs: Any
     ):
-        self._monitored_attr_names = [
+        self._monitored_attr_names = (
             "operatingMode",
             "powerState",
             "healthState",
@@ -39,7 +39,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b4CapabilityState",
             "b5aCapabilityState",
             "b5bCapabilityState",
-        ]
+        )
         super().__init__(
             tango_device_fqdn,
             logger,
@@ -74,17 +74,17 @@ class SPFComponentManager(TangoDeviceComponentManager):
         super()._update_component_state(**kwargs)
 
     # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable = None):
+    def on(self, task_callback: Callable = None) -> Any: # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable = None):
+    def off(self, task_callback: Callable = None) -> Any: # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable = None):
+    def reset(self, task_callback: Callable = None) -> Any: # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable = None):
+    def standby(self, task_callback: Callable = None) -> Any: # type: ignore
         raise NotImplementedError

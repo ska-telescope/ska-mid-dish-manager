@@ -23,19 +23,19 @@ class DSComponentManager(TangoDeviceComponentManager):
         tango_device_fqdn: Any,
         logger: logging.Logger,
         state_update_lock: Lock,
-        *args,
+        *args: Any,
         communication_state_callback: Optional[Callable] = None,
         component_state_callback: Optional[Callable] = None,
-        **kwargs
+        **kwargs: Any
     ):
-        self._monitored_attr_names = [
+        self._monitored_attr_names = (
             "operatingMode",
             "powerState",
             "healthState",
             "pointingState",
             "indexerPosition",
             "achievedPointing",
-        ]
+        )
         super().__init__(
             tango_device_fqdn,
             logger,
@@ -65,17 +65,17 @@ class DSComponentManager(TangoDeviceComponentManager):
         super()._update_component_state(**kwargs)
 
     # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable = None):
+    def on(self, task_callback: Callable = None) -> Any: # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable = None):
+    def off(self, task_callback: Callable = None) -> Any: # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable = None):
+    def reset(self, task_callback: Callable = None) -> Any: # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable = None):
+    def standby(self, task_callback: Callable = None) -> Any: # type: ignore
         raise NotImplementedError
