@@ -1,6 +1,6 @@
 """Specialization for SPF functionality"""
 import logging
-from typing import AnyStr, Callable, Optional
+from typing import Any, AnyStr, Callable
 
 from ska_control_model import HealthState
 
@@ -21,10 +21,10 @@ class SPFComponentManager(TangoDeviceComponentManager):
         self,
         tango_device_fqdn: AnyStr,
         logger: logging.Logger,
-        *args,
-        communication_state_callback: Optional[Callable] = None,
-        component_state_callback: Optional[Callable] = None,
-        **kwargs
+        *args: Any,
+        communication_state_callback: Any = None,
+        component_state_callback: Any = None,
+        **kwargs: Any
     ):
         super().__init__(
             tango_device_fqdn,
@@ -49,7 +49,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
         for mon_attr in self._monitored_attr_names:
             self.monitor_attribute(mon_attr)
 
-    def _update_component_state(self, **kwargs):
+    def _update_component_state(self, **kwargs: Any) -> None:
         """Update the int we get from the event to the Enum"""
 
         enum_conversion = {
@@ -71,17 +71,17 @@ class SPFComponentManager(TangoDeviceComponentManager):
         super()._update_component_state(**kwargs)
 
     # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable):
+    def on(self, task_callback: Callable) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable):
+    def off(self, task_callback: Callable) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable):
+    def reset(self, task_callback: Callable) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable):
+    def standby(self, task_callback: Callable) -> Any:  # type: ignore
         raise NotImplementedError
