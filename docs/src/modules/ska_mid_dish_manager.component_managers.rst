@@ -4,6 +4,14 @@ ska\_mid\_dish\_manager.component\_managers package
 Submodules
 ----------
 
+ska\_mid\_dish\_manager.component\_managers.device\_monitor module
+------------------------------------------------------------------
+
+.. automodule:: ska_mid_dish_manager.component_managers.device_monitor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ska\_mid\_dish\_manager.component\_managers.dish\_manager\_cm module
 --------------------------------------------------------------------
 

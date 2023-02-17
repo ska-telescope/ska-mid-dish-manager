@@ -12,10 +12,10 @@ Subpackages
 Submodules
 ----------
 
-ska\_mid\_dish\_manager.devices.dish\_manager module
+ska\_mid\_dish\_manager.devices.DishManagerDS module
 ----------------------------------------------------
 
-.. automodule:: ska_mid_dish_manager.devices.dish_manager
+.. automodule:: ska_mid_dish_manager.devices.DishManagerDS
    :members:
    :undoc-members:
    :show-inheritance:
