@@ -15,6 +15,7 @@ from ska_control_model import CommunicationStatus
 from ska_mid_dish_manager.models.dish_mode_model import PrioritizedEventData
 
 TEST_CONNECTION_PERIOD = 2
+SLEEP_BETWEEN_EVENTS = 0.5
 
 
 # pylint:disable=too-few-public-methods, too-many-instance-attributes
@@ -55,21 +56,20 @@ class TangoDeviceMonitor:
         self._update_comm_state_lock = Lock()
         self._thread_futures = []
         self._exit_thread_event = Event()
-        self._start_monitoring_thread = Thread()
+        self._start_monitoring_thread = Thread()  # pylint: disable=bad-thread-instantiation
 
     def stop_monitoring(self):
         """Close all the monitroing threads"""
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
-        # Set the exit thread event to exit all threads
-        self._exit_thread_event.set()
-
         # Stop any existing start monitoring thread
         if self._start_monitoring_thread.is_alive():
+            self._exit_thread_event.set()
             self._start_monitoring_thread.join()
 
         # Clear out existing subscriptions
         if self._executor:
+            self._exit_thread_event.set()
             self._logger.info("Stopping current monitoring threads on %s", self._tango_fqdn)
             self._executor.shutdown(wait=True, cancel_futures=True)
             self._logger.info("Stopped monitoring threads on %s", self._tango_fqdn)
@@ -200,8 +200,7 @@ class TangoDeviceMonitor:
                     if exit_thread_event.is_set():
                         return
                     # Most time spent here waiting for events
-                    # Magic number as module variable results in segfault during pytest
-                    while not exit_thread_event.wait(1):
+                    while not exit_thread_event.wait(SLEEP_BETWEEN_EVENTS):
                         pass
                 except tango.DevFailed:
                     logger.exception(
@@ -225,6 +224,8 @@ class TangoDeviceMonitor:
                     if subscription_id:
                         device_proxy.unsubscribe_event(subscription_id)
                         logger.info("Unsubscribed from %s for attr %s", tango_fqdn, attribute_name)
-                        subscription_id = None
-                except tango.DevFailed:
-                    logger.info("Could not unsubscribe from %s for attr %s", tango_fqdn, attribute_name)
+                except tango.DevFailed as err:
+                    logger.exception(err)
+                    logger.info(
+                        "Could not unsubscribe from %s for attr %s", tango_fqdn, attribute_name
+                    )

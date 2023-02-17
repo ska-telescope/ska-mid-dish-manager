@@ -3,10 +3,6 @@ import logging
 
 import pytest
 import tango
-import time
-from functools import partial
-from queue import Queue
-from threading import Event
 from ska_control_model import CommunicationStatus
 from ska_tango_testing.mock import MockCallable
 

@@ -122,9 +122,21 @@ def test_dish_manager_behaviour(patched_dp, patched_monitor_dp, event_store):
     ]
 
 
-def test_component_states():
+@patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango.DeviceProxy")
+@patch("ska_mid_dish_manager.component_managers.device_monitor.tango.DeviceProxy")
+def test_component_states(patched_dp, patched_monitor_dp):
     """Test that GetComponentStates for 3 devices are returned"""
+    patched_monitor_dp.return_value = MagicMock()
+
+    patched_dp.return_value = MagicMock()
+    patched_dp.command_inout = MagicMock()
+    patched_dp.command_inout.return_value = (
+        TaskStatus.COMPLETED,
+        "Task Done",
+    )
+
     tango_context = DeviceTestContext(DishManager)
     tango_context.start()
+
     assert len(json.loads(tango_context.device.GetComponentStates())) == 3
     tango_context.stop()

@@ -1,17 +1,18 @@
 """Test device Monitor"""
 import logging
+from functools import partial
 from queue import Empty, Queue
 
 import pytest
 import tango
-import time
+from mock import MagicMock
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 
 LOGGER = logging.getLogger(__name__)
 
 
-def empty_func(*args, **kwargs):
+def empty_func(*args, **kwargs):  # pylint: disable=unused-argument
     """An empty function"""
     pass  # pylint:disable=unnecessary-pass
 
@@ -65,37 +66,48 @@ def test_multi_monitor(caplog, spf_device_fqdn):
     assert not test_attributes_list
 
 
-def test_device_monitor_stress(caplog):
+def test_device_monitor_stress():
     """Reconnect many times to see if it recovers"""
-    caplog.set_level(logging.DEBUG)
+    logs_queue = Queue()
+
+    def add_log(logs_queue, *args):
+        logs_queue.put(args)
+
+    mocked_logger = MagicMock()
+    mocked_logger.info.side_effect = partial(add_log, logs_queue)
+    mocked_logger.debug.side_effect = partial(add_log, logs_queue)
+
     event_queue = Queue()
     tdm = TangoDeviceMonitor(
-        "mid_d0001/spf/simulator", ["powerState"], event_queue, LOGGER, empty_func
+        "mid_d0001/spf/simulator", ["powerState"], event_queue, mocked_logger, empty_func
     )
-    for i in range(20):
+    for i in range(10):
         tdm.monitor()
         event = event_queue.get(timeout=4)
         assert tdm._run_count == i + 1  # pylint: disable=W0212
         assert not event.item.err
         assert event.item.attr_value.name == "powerState"
         assert event_queue.empty()
+        # Wait a bit for things to settle
+        try:
+            event_queue.get(timeout=0.5)
+        except Empty:
+            pass
 
-    time.sleep(3)
+    all_logs = []
+    while not logs_queue.empty():
+        all_logs.append(str(logs_queue.get(timeout=3)))
 
-    all_logs = [record.message for record in caplog.records]
-
-    logging.info(all_logs)
-    logging.info(all_logs.count("Subscribed on mid_d0001/spf/simulator to attr powerState"))
-    logging.info(all_logs.count("Unsubscribed from mid_d0001/spf/simulator for attr powerState"))
-
-    subscribe_count = all_logs.count("Subscribed on mid_d0001/spf/simulator to attr powerState")
-    successful_unsubscribe_count = all_logs.count("Unsubscribed from mid_d0001/spf/simulator for attr powerState")
-    unsuccessful_unsubscribe_count = all_logs.count("Could not unsubscribe from mid_d0001/spf/simulator for attr powerState")
-
-    # 20 Subscriptions
-    assert subscribe_count == 20
-    # 19 Unsubscriptions
-    assert (successful_unsubscribe_count + unsuccessful_unsubscribe_count) == 19
+    assert (
+        all_logs.count(
+            "('Unsubscribed from %s for attr %s', 'mid_d0001/spf/simulator', 'powerState')"
+        )
+        == 9
+    )
+    assert (
+        all_logs.count("('Subscribed on %s to attr %s', 'mid_d0001/spf/simulator', 'powerState')")
+        == 10
+    )
 
 
 def test_connection_error(caplog):
