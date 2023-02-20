@@ -3,10 +3,13 @@ This model enforces the legal transitions when a command is triggered. It assess
 state of the device to decide if the requested state is a nearby node to allow or reject a command.
 """
 
+from dataclasses import dataclass, field
+
 # pylint: disable=too-few-public-methods
 from typing import Any, Optional
 
 import networkx as nx
+import tango
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -120,3 +123,11 @@ class DishModeModel:
                 f"[{dishmode}], only allowed to do {allowed_commands}"
             )
         )
+
+
+@dataclass(order=True)
+class PrioritizedEventData:
+    """Tango event data with a priority attribute"""
+
+    priority: int
+    item: tango.EventData = field(compare=False)

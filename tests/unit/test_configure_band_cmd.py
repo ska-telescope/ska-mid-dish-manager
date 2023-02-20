@@ -5,9 +5,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
+from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
+from ska_mid_dish_manager.devices.test_devices.utils import EventStore
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
@@ -31,13 +33,22 @@ class TestConfigureBand2:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.tango_device_cm.tango"
+            "ska_mid_dish_manager.component_managers.device_monitor.tango"
         ) as patched_tango:
-            patched_dp = MagicMock()
-            patched_dp.command_inout = MagicMock()
-            patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
+            patched_tango.DeviceProxy.return_value = MagicMock()
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
+            # Wait for the threads to start otherwise the mocks get
+            # returned back to non mock
+            event_store = EventStore()
+            self.device_proxy = self.tango_context.device
+            for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
+                self.device_proxy.subscribe_event(
+                    conn_attr,
+                    tango.EventType.CHANGE_EVENT,
+                    event_store,
+                )
+                event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
@@ -45,6 +56,8 @@ class TestConfigureBand2:
         self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
         self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
         self.dish_manager_cm = class_instance.component_manager
+
+        self.spf_cm.write_attribute_value = MagicMock()
 
         self.ds_cm.update_state_from_monitored_attributes = MagicMock()
         self.spf_cm.update_state_from_monitored_attributes = MagicMock()

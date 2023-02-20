@@ -1,13 +1,16 @@
 """CapabilityState checks"""
 # pylint: disable=protected-access
 # pylint: disable=attribute-defined-outside-init
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
+import mock
 import pytest
 import tango
+from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
+from ska_mid_dish_manager.devices.test_devices.utils import EventStore
 from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     DishMode,
@@ -175,20 +178,30 @@ class TestCapabilityStates:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.tango_device_cm.tango"
+            "ska_mid_dish_manager.component_managers.device_monitor.tango"
         ) as patched_tango:
-            patched_dp = MagicMock()
-            patched_dp.command_inout = MagicMock()
-            patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
+            patched_tango.DeviceProxy.return_value = mock.MagicMock()
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 
-        self.device_proxy = self.tango_context.device
-        class_instance = DishManager.instances.get(self.device_proxy.name())
-        self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
-        self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
-        self.dish_manager_cm = class_instance.component_manager
+            self.device_proxy = self.tango_context.device
+            class_instance = DishManager.instances.get(self.device_proxy.name())
+            self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
+            self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
+            self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+
+            self.spf_cm.write_attribute_value = mock.MagicMock()
+
+            self.dish_manager_cm = class_instance.component_manager
+
+            event_store = EventStore()
+            for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
+                self.device_proxy.subscribe_event(
+                    conn_attr,
+                    tango.EventType.CHANGE_EVENT,
+                    event_store,
+                )
+                event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=7)
 
     def teardown_method(self):
         """Tear down context"""
@@ -207,7 +220,7 @@ class TestCapabilityStates:
         event_store,
     ):
         """Test b1CapabilityState"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b1CapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -218,18 +231,17 @@ class TestCapabilityStates:
 
         # Mimic capabilitystatechanges on sub devices
         self.dish_manager_cm._update_component_state(dishmode=DishMode.STANDBY_LP)
-        self.spf_cm._update_component_state(b1capabilitystate=SPFCapabilityStates.STANDBY)
         self.spfrx_cm._update_component_state(b1capabilitystate=SPFRxCapabilityStates.STANDBY)
+        self.spf_cm._update_component_state(b1capabilitystate=SPFCapabilityStates.STANDBY)
 
-        event_store.wait_for_value(CapabilityStates.STANDBY)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.STANDBY, timeout=7)
 
     def test_b2capabilitystate_change(
         self,
         event_store,
     ):
         """Test b2CapabilityState"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b2CapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -243,15 +255,14 @@ class TestCapabilityStates:
         self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.UNAVAILABLE)
         self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.UNAVAILABLE)
 
-        event_store.wait_for_value(CapabilityStates.UNAVAILABLE)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.UNAVAILABLE, timeout=7)
 
     def test_b3capabilitystate_change(
         self,
         event_store,
     ):
         """Test b3CapabilityState"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b3CapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -262,19 +273,19 @@ class TestCapabilityStates:
 
         # Mimic capabilitystatechanges on sub devices
         self.dish_manager_cm._update_component_state(dishmode=DishMode.STOW)
-        self.ds_cm._update_component_state(indexerposition=IndexerPosition.MOVING)
+        with patch.object(self.spf_cm, "write_attribute_value", mock.MagicMock()):
+            self.ds_cm._update_component_state(indexerposition=IndexerPosition.MOVING)
         self.spf_cm._update_component_state(b3capabilitystate=SPFCapabilityStates.OPERATE_FULL)
         self.spfrx_cm._update_component_state(b3capabilitystate=SPFRxCapabilityStates.OPERATE)
 
-        event_store.wait_for_value(CapabilityStates.OPERATE_FULL)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.OPERATE_FULL, timeout=7)
 
     def test_b4capabilitystate_change(
         self,
         event_store,
     ):
         """Test b4CapabilityState"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b4CapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -289,15 +300,14 @@ class TestCapabilityStates:
         self.spf_cm._update_component_state(b4capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED)
         self.spfrx_cm._update_component_state(b4capabilitystate=SPFRxCapabilityStates.CONFIGURE)
 
-        event_store.wait_for_value(CapabilityStates.CONFIGURING)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=7)
 
     def test_b5acapabilitystate_change(
         self,
         event_store,
     ):
         """Test b5aCapabilityState"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b5aCapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -316,15 +326,14 @@ class TestCapabilityStates:
         )
         self.spfrx_cm._update_component_state(b5acapabilitystate=SPFRxCapabilityStates.OPERATE)
 
-        event_store.wait_for_value(CapabilityStates.OPERATE_DEGRADED)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.OPERATE_DEGRADED, timeout=7)
 
     def test_b2capabilitystate_configuring_change(
         self,
         event_store,
     ):
         """Test Configuring"""
-        sub_id = self.device_proxy.subscribe_event(
+        self.device_proxy.subscribe_event(
             "b2CapabilityState",
             tango.EventType.CHANGE_EVENT,
             event_store,
@@ -340,5 +349,4 @@ class TestCapabilityStates:
         self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.OPERATE_FULL)
         self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.CONFIGURE)
 
-        event_store.wait_for_value(CapabilityStates.CONFIGURING)
-        self.device_proxy.unsubscribe_event(sub_id)
+        event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=7)

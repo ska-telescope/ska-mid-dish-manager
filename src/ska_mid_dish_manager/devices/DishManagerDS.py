@@ -66,12 +66,12 @@ class DishManager(SKAController):
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
+            self._update_connection_state_attrs,
             ds_device_fqdn=self.ds_device_fqdn,
             spf_device_fqdn=self.spf_device_fqdn,
             spfrx_device_fqdn=self.spfrx_device_fqdn,
             communication_state_callback=None,
             component_state_callback=self._component_state_changed,
-            connection_state_callback=self._update_connection_state_attrs,
         )
 
     def init_command_objects(self) -> None:
@@ -103,26 +103,30 @@ class DishManager(SKAController):
             self.AbortCommandsCommand(self.component_manager, self.logger),
         )
 
-    def _update_connection_state_attrs(self):
+    def _update_connection_state_attrs(self, attribute_name: str):
         """
         Push change events on connection state attributes for
         subservient devices communication state changes.
         """
+
         if not hasattr(self, "component_manager"):
             self.logger.warning("Init not completed, but communication state is being updated")
             return
-        self.push_change_event(
-            "spfConnectionState",
-            self.component_manager.sub_component_managers["SPF"].communication_state,
-        )
-        self.push_change_event(
-            "spfrxConnectionState",
-            self.component_manager.sub_component_managers["SPFRX"].communication_state,
-        )
-        self.push_change_event(
-            "dsConnectionState",
-            self.component_manager.sub_component_managers["DS"].communication_state,
-        )
+        if attribute_name == "spfConnectionState":
+            self.push_change_event(
+                "spfConnectionState",
+                self.component_manager.sub_component_managers["SPF"].communication_state,
+            )
+        if attribute_name == "spfrxConnectionState":
+            self.push_change_event(
+                "spfrxConnectionState",
+                self.component_manager.sub_component_managers["SPFRX"].communication_state,
+            )
+        if attribute_name == "dsConnectionState":
+            self.push_change_event(
+                "dsConnectionState",
+                self.component_manager.sub_component_managers["DS"].communication_state,
+            )
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):

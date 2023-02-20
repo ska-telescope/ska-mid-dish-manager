@@ -1,12 +1,14 @@
 """Unit tests for subservient device connection states."""
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import tango
+from mock import MagicMock
 from ska_control_model import CommunicationStatus, HealthState
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
+from ska_mid_dish_manager.devices.test_devices.utils import EventStore
 
 
 # pylint:disable=attribute-defined-outside-init
@@ -18,13 +20,22 @@ class TestConnectionStates:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.tango_device_cm.tango"
+            "ska_mid_dish_manager.component_managers.device_monitor.tango"
         ) as patched_tango:
-            patched_dp = MagicMock()
-            patched_dp.command_inout = MagicMock()
-            patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
+            patched_tango.DeviceProxy.return_value = MagicMock()
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
+            # Wait for the threads to start otherwise the mocks get
+            # returned back to non mock
+            event_store = EventStore()
+            self.device_proxy = self.tango_context.device
+            for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
+                self.device_proxy.subscribe_event(
+                    conn_attr,
+                    tango.EventType.CHANGE_EVENT,
+                    event_store,
+                )
+                event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
     def teardown_method(self):
         """Tear down context"""
@@ -55,16 +66,12 @@ class TestConnectionStates:
         class_instance = DishManager.instances.get(device_proxy.name())
         component_manager = class_instance.component_manager.sub_component_managers[sub_device]
 
-        # We expect the connectionState to intially be ESTABLISHED
+        # Establish connection
+        component_manager._update_communication_state(CommunicationStatus.ESTABLISHED)
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-        # From the current implementation, HealthState will report UNKNOWN even
-        # if connection is established; but for now, check when connection is lost
-        # assert device_proxy.healthState == HealthState.OK
 
         # Force communication_state to NOT_ESTABLISHED
-        component_manager._update_communication_state(
-            communication_state=CommunicationStatus.NOT_ESTABLISHED
-        )
+        component_manager._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
         # We can now expect connectionState to transition to NOT_ESTABLISHED
         assert event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)

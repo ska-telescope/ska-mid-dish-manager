@@ -1,5 +1,6 @@
 """Test DS component manager"""
 import logging
+from threading import Lock
 
 import pytest
 import tango
@@ -20,13 +21,15 @@ def test_ds_cm(component_state_store, ds_device_fqdn):
     device_proxy.Stow()
     device_proxy.powerState = DSPowerState.OFF
 
+    state_update_lock = Lock()
+
     com_man = DSComponentManager(
         ds_device_fqdn,
         LOGGER,
+        state_update_lock,
         component_state_callback=component_state_store,
     )
     com_man.start_communicating()
-    component_state_store.wait_for_value("connection_state", "monitoring")
 
     device_proxy.SetStartupMode()
     component_state_store.wait_for_value("operatingmode", DSOperatingMode.STARTUP)
@@ -40,4 +43,3 @@ def test_ds_cm(component_state_store, ds_device_fqdn):
     assert "achievedPointing" in device_proxy.get_attribute_list()
 
     com_man.stop_communicating()
-    component_state_store.wait_for_value("connection_state", "disconnected", timeout=7)

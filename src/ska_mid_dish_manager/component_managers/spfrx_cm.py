@@ -1,6 +1,7 @@
 """Specialization for SPFRx functionality"""
 import logging
-from typing import Any, AnyStr, Callable
+from threading import Lock
+from typing import Any, Callable
 
 from ska_control_model import HealthState
 
@@ -14,22 +15,15 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
 
     def __init__(
         self,
-        tango_device_fqdn: AnyStr,
+        tango_device_fqdn: str,
         logger: logging.Logger,
+        state_update_lock: Lock,
         *args: Any,
         communication_state_callback: Any = None,
         component_state_callback: Any = None,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(
-            tango_device_fqdn,
-            logger,
-            *args,
-            communication_state_callback=communication_state_callback,
-            component_state_callback=component_state_callback,
-            **kwargs,
-        )
-        self._monitored_attr_names = [
+        **kwargs: Any
+    ):
+        self._monitored_attr_names = (
             "operatingMode",
             "capturingData",
             "configuredBand",
@@ -40,9 +34,18 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "b4CapabilityState",
             "b5aCapabilityState",
             "b5bCapabilityState",
-        ]
-        for mon_attr in self._monitored_attr_names:
-            self.monitor_attribute(mon_attr)
+        )
+        super().__init__(
+            tango_device_fqdn,
+            logger,
+            self._monitored_attr_names,
+            *args,
+            communication_state_callback=communication_state_callback,
+            component_state_callback=component_state_callback,
+            **kwargs
+        )
+        self._communication_state_lock = state_update_lock
+        self._component_state_lock = state_update_lock
 
     def _update_component_state(self, **kwargs: Any) -> None:
         """Update the int we get from the event to the Enum"""
@@ -64,17 +67,17 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         super()._update_component_state(**kwargs)
 
     # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable) -> Any:  # type: ignore
+    def on(self, task_callback: Callable = None) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable) -> Any:  # type: ignore
+    def off(self, task_callback: Callable = None) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable) -> Any:  # type: ignore
+    def reset(self, task_callback: Callable = None) -> Any:  # type: ignore
         raise NotImplementedError
 
     # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable) -> Any:  # type: ignore
+    def standby(self, task_callback: Callable = None) -> Any:  # type: ignore
         raise NotImplementedError

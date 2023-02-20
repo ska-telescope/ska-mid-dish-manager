@@ -2,7 +2,7 @@
 with the DSManager achievedPointing attribute."""
 
 import logging
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import tango
@@ -22,11 +22,8 @@ class TestAchievedPointing:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.tango_device_cm.tango"
-        ) as patched_tango:
-            patched_dp = MagicMock()
-            patched_dp.command_inout = MagicMock()
-            patched_tango.DeviceProxy = MagicMock(return_value=patched_dp)
+            "ska_mid_dish_manager.component_managers.device_monitor.TangoDeviceMonitor.monitor"
+        ):
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 

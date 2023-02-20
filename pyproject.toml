@@ -40,7 +40,6 @@ ska-tango-base = { git = "https://gitlab.com/ska-telescope/ska-tango-base.git", 
 ska-tango-testing = "0.2.0"
 pytest-timeout = "^2.1.0"
 networkx = "2.6.3"
-transitions = "^0.9.0"
 rule-engine = "^3.5.0"
 numpy = "1.23.0"
 typing-extensions = "^4.3.0"
@@ -87,6 +86,9 @@ line_length = 99
 
 [tool.black]
 line-length = 99
+
+[tool.flake8]
+max-line-length = 99
 
 [tool.coverage.paths]
 source = ["src"]

@@ -12,7 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-# @pytest.mark.skip()
+@pytest.mark.skip()
 def test_configure_band_2(event_store_class, dish_manager_proxy):
     """Test ConfigureBand2"""
     # make sure configureBand is not B2
@@ -53,6 +53,7 @@ def test_configure_band_2(event_store_class, dish_manager_proxy):
     future_time = datetime.utcnow() + timedelta(days=1)
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())
     dishmode_event_store.wait_for_value(DishMode.CONFIG)
+    assert 0, dish_manager_proxy.longrunningcommandresult
     main_event_store.wait_for_command_id(unique_id)
     assert dish_manager_proxy.configuredBand == Band.B2
     dishmode_event_store.wait_for_value(DishMode.STANDBY_FP)

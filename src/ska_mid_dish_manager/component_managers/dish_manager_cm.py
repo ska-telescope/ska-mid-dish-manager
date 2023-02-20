@@ -3,6 +3,8 @@
 import json
 import logging
 from datetime import datetime
+from functools import partial
+from threading import Lock
 from typing import Callable, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, HealthState, TaskStatus
@@ -53,6 +55,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ):
         """"""
         # pylint: disable=useless-super-delegation
+        self.sub_component_managers = None
         super().__init__(
             logger,
             *args,
@@ -75,56 +78,69 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             **kwargs,
         )
-        self.connection_state_callback = connection_state_callback
+        self.logger = logger
+        self._connection_state_callback = connection_state_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
-        self.sub_component_managers = {}
-        self.sub_component_managers["DS"] = DSComponentManager(
-            ds_device_fqdn,
-            logger,
-            operatingmode=DSOperatingMode.UNKNOWN,
-            pointingstate=None,
-            achievedtargetlock=None,
-            indexerposition=IndexerPosition.UNKNOWN,
-            powerstate=DSPowerState.UNKNOWN,
-            achievedpointing=[0.0, 0.0, 30.0],
-            component_state_callback=self._component_state_changed,
-            communication_state_callback=self._communication_state_changed,
-        )
-        self.sub_component_managers["SPFRX"] = SPFRxComponentManager(
-            spfrx_device_fqdn,
-            logger,
-            operatingmode=SPFRxOperatingMode.UNKNOWN,
-            configuredband=Band.NONE,
-            capturingdata=False,
-            healthstate=HealthState.UNKNOWN,
-            b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            b4capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
-            component_state_callback=self._component_state_changed,
-            communication_state_callback=self._communication_state_changed,
-        )
-        self.sub_component_managers["SPF"] = SPFComponentManager(
-            spf_device_fqdn,
-            logger,
-            operatingmode=SPFOperatingMode.UNKNOWN,
-            powerstate=SPFPowerState.UNKNOWN,
-            healthstate=HealthState.UNKNOWN,
-            bandinfocus=BandInFocus.UNKNOWN,
-            b1capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b2capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b3capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
-            component_state_callback=self._component_state_changed,
-            communication_state_callback=self._communication_state_changed,
-        )
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        self._state_update_lock = Lock()
+        # SPF has to go first
+        self.sub_component_managers = {
+            "SPF": SPFComponentManager(
+                spf_device_fqdn,
+                logger,
+                self._state_update_lock,
+                operatingmode=SPFOperatingMode.UNKNOWN,
+                powerstate=SPFPowerState.UNKNOWN,
+                healthstate=HealthState.UNKNOWN,
+                bandinfocus=BandInFocus.UNKNOWN,
+                b1capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b2capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b3capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                communication_state_callback=partial(
+                    self._sub_communication_state_changed, "spfConnectionState"
+                ),
+                component_state_callback=self._component_state_changed,
+            ),
+            "DS": DSComponentManager(
+                ds_device_fqdn,
+                logger,
+                self._state_update_lock,
+                healthstate=HealthState.UNKNOWN,
+                operatingmode=DSOperatingMode.UNKNOWN,
+                pointingstate=None,
+                achievedtargetlock=None,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.UNKNOWN,
+                achievedpointing=[0.0, 0.0, 30.0],
+                communication_state_callback=partial(
+                    self._sub_communication_state_changed, "dsConnectionState"
+                ),
+                component_state_callback=self._component_state_changed,
+            ),
+            "SPFRX": SPFRxComponentManager(
+                spfrx_device_fqdn,
+                logger,
+                self._state_update_lock,
+                operatingmode=SPFRxOperatingMode.UNKNOWN,
+                configuredband=Band.NONE,
+                capturingdata=False,
+                healthstate=HealthState.UNKNOWN,
+                b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b4capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                communication_state_callback=partial(
+                    self._sub_communication_state_changed, "spfrxConnectionState"
+                ),
+                component_state_callback=self._component_state_changed,
+            ),
+        }
         initial_component_states = {
             "dishmode": DishMode.UNKNOWN,
             "healthstate": HealthState.UNKNOWN,
@@ -142,9 +158,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
         }
         self._update_component_state(**initial_component_states)
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     # pylint: disable=unused-argument
-    def _communication_state_changed(self, *args, **kwargs):
+    def _sub_communication_state_changed(
+        self, attribute_name: str, communication_state: CommunicationStatus = None
+    ):
         """
         Callback triggered by the component manager when it establishes
         a connection with the underlying (subservient) device
@@ -156,26 +175,46 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         the subservient devices. DishManager reflects this in its connection
         status attributes.
         """
-        # an empty dict will make all condition always pass. check
-        # that the dict is not empty before continuing with trigger
         if self.sub_component_managers:
-            if all(
-                component_manager.communication_state == CommunicationStatus.ESTABLISHED
-                for component_manager in self.sub_component_managers.values()
+            if not all(
+                (
+                    self.sub_component_managers["DS"].component_state,
+                    self.sub_component_managers["SPF"].component_state,
+                    self.sub_component_managers["SPFRX"].component_state,
+                )
             ):
-                self._update_communication_state(CommunicationStatus.ESTABLISHED)
-
-                # Automatic transition to LP mode on startup should come from
-                # operating modes of subservient devices. Likewise, any
-                # reconnection gained should be accompanied by fresh
-                # attribute updates
-                self._component_state_changed()
-            else:
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                 self._update_component_state(healthstate=HealthState.UNKNOWN)
+                return
 
-            # push change events for the connection state attributes
-            self.connection_state_callback()
+        if self.sub_component_managers:
+            if all(
+                sub_component_manager.communication_state == CommunicationStatus.ESTABLISHED
+                for sub_component_manager in self.sub_component_managers.values()
+            ):
+                self._update_communication_state(CommunicationStatus.ESTABLISHED)
+                ds_component_state = self.sub_component_managers["DS"].component_state
+                spf_component_state = self.sub_component_managers["SPF"].component_state
+                spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
+
+                new_health_state = self._state_transition.compute_dish_health_state(
+                    ds_component_state, spfrx_component_state, spf_component_state
+                )
+                new_dish_mode = self._state_transition.compute_dish_mode(
+                    ds_component_state, spfrx_component_state, spf_component_state
+                )
+
+                self._update_component_state(healthstate=new_health_state, dishmode=new_dish_mode)
+            else:
+                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+                self._update_component_state(
+                    healthstate=HealthState.UNKNOWN, dishmode=DishMode.UNKNOWN
+                )
+
+        self._component_state_changed()
+
+        # push change events for the connection state attributes
+        self._connection_state_callback(attribute_name)
 
     # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):
@@ -191,11 +230,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         Note: This callback is triggered by the component managers of
         the subservient devices only. DishManager also has its own callback.
         """
+        if not self.sub_component_managers:
+            return
+        if not all(
+            (
+                self.sub_component_managers["DS"].component_state,
+                self.sub_component_managers["SPF"].component_state,
+                self.sub_component_managers["SPFRX"].component_state,
+            )
+        ):
+            return
+
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
-        self.logger.info(
+        self.logger.debug(
             (
                 "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
                 ", SPFRx [%s], DM [%s]"
@@ -208,7 +258,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
         if "achievedpointing" in kwargs:
-            self.logger.info(
+            self.logger.debug(
                 ("Updating achievedPointing with DS achievedPointing [%s]"),
                 ds_component_state["achievedpointing"],
             )
@@ -217,7 +267,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs:
-            self.logger.info(
+            self.logger.debug(
                 ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
                 ds_component_state["operatingmode"],
                 spf_component_state["operatingmode"],
@@ -236,7 +286,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             and "healthstate" in spf_component_state
             and "healthstate" in spfrx_component_state
         ):
-            self.logger.info(
+            self.logger.debug(
                 ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
                 ds_component_state["healthstate"],
                 spf_component_state["healthstate"],
@@ -269,19 +319,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
                 ds_component_state, spfrx_component_state
             )
-            self.logger.info("Setting bandInFocus to %s on SPF", band_in_focus)
+            self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
             # pylint: disable=protected-access
             # update the bandInFocus of SPF before configuredBand
-            spf_proxy = self.sub_component_managers["SPF"]._device_proxy
             # component state changed for DS and SPFRx may be triggered while
             # SPF device proxy is not initialised. Write to the bandInFocus
             # only when you have the device proxy
-            if spf_proxy:
-                spf_proxy.write_attribute("bandInFocus", band_in_focus)
+            spf_component_manager = self.sub_component_managers["SPF"]
+            spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
 
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
-            self.logger.info(
+            self.logger.debug(
                 (
                     "Updating configuredBand on DM from change"
                     " [%s] with DS [%s] SPF [%s] SPFRX [%s]"
@@ -301,7 +350,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # update capturing attribute when SPFRx captures data
         if "capturingdata" in kwargs:
-            self.logger.info(
+            self.logger.debug(
                 ("Updating capturing with SPFRx [%s]"),
                 spfrx_component_state,
             )
@@ -377,10 +426,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _set_standby_lp_mode(self, task_callback=None, task_abort_event=None):
         assert task_callback, "task_callback has to be defined"
         if task_abort_event.is_set():
+            task_callback(progress="SetStandbyLPMode Aborted")
             task_callback(
                 status=TaskStatus.ABORTED,
                 result="SetStandbyLPMode Aborted",
-                progress="SetStandbyLPMode Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -423,8 +472,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         while True:
             if task_abort_event.is_set():
                 task_callback(
-                    status=TaskStatus.ABORTED,
                     progress="SetStandbyLPMode Aborted",
+                )
+                task_callback(
+                    status=TaskStatus.ABORTED,
                     result="SetStandbyLPMode Aborted",
                 )
                 return
@@ -437,8 +488,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
             else:
                 task_callback(
-                    status=TaskStatus.COMPLETED,
                     progress="SetStandbyLPMode completed",
+                )
+                task_callback(
+                    status=TaskStatus.COMPLETED,
                     result="SetStandbyLPMode completed",
                 )
                 return
@@ -455,16 +508,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status, response = self.submit_task(
             self._set_standby_fp_mode, args=[], task_callback=task_callback
         )
+
         return status, response
 
     def _set_standby_fp_mode(self, task_callback=None, task_abort_event=None):
         """Set StandbyFP mode on sub devices as long running commands"""
         assert task_callback, "task_callback has to be defined"
+
         if task_abort_event.is_set():
+            task_callback(
+                progress="SetStandbyFPMode Aborted",
+            )
             task_callback(
                 status=TaskStatus.ABORTED,
                 result="SetStandbyFPMode Aborted",
-                progress="SetStandbyFPMode Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -502,8 +559,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         while True:
             if task_abort_event.is_set():
                 task_callback(
-                    status=TaskStatus.ABORTED,
                     progress="SetStandbyFPMode Aborted",
+                )
+                task_callback(
+                    status=TaskStatus.ABORTED,
                     result="SetStandbyFPMode Aborted",
                 )
                 return
@@ -515,8 +574,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
-                    status=TaskStatus.COMPLETED,
                     progress="SetStandbyFPMode completed",
+                )
+                task_callback(
+                    status=TaskStatus.COMPLETED,
                     result="SetStandbyFPMode completed",
                 )
                 return
@@ -549,9 +610,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         assert task_callback, "task_callback has to be defined"
         if task_abort_event.is_set():
             task_callback(
+                progress="SetOperateMode Aborted",
+            )
+            task_callback(
                 status=TaskStatus.ABORTED,
                 result="SetOperateMode Aborted",
-                progress="SetOperateMode Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -588,8 +651,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         while True:
             if task_abort_event.is_set():
                 task_callback(
-                    status=TaskStatus.ABORTED,
                     progress="SetOperateMode Aborted",
+                )
+                task_callback(
+                    status=TaskStatus.ABORTED,
                     result="SetOperateMode Aborted",
                 )
                 return
@@ -601,8 +666,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
-                    status=TaskStatus.COMPLETED,
                     progress="SetOperateMode completed",
+                )
+                task_callback(
+                    status=TaskStatus.COMPLETED,
                     result="SetOperateMode completed",
                 )
                 return
@@ -625,9 +692,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         assert task_callback, "task_callback has to be defined"
         if task_abort_event.is_set():
             task_callback(
+                progress="Track Aborted",
+            )
+            task_callback(
                 status=TaskStatus.ABORTED,
                 result="Track Aborted",
-                progress="Track Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -650,8 +719,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         while True:
             if task_abort_event.is_set():
                 task_callback(
-                    status=TaskStatus.ABORTED,
                     progress="Track Aborted",
+                )
+                task_callback(
+                    status=TaskStatus.ABORTED,
                     result="Track Aborted",
                 )
                 return
@@ -666,8 +737,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
             else:
                 task_callback(
-                    status=TaskStatus.COMPLETED,
                     progress="Track completed",
+                )
+                task_callback(
+                    status=TaskStatus.COMPLETED,
                     result="Track completed",
                 )
                 return
@@ -713,9 +786,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         assert task_callback, "task_callback has to be defined"
         if task_abort_event.is_set():
             task_callback(
+                progress="ConfigureBand2 Aborted",
+            )
+            task_callback(
                 status=TaskStatus.ABORTED,
                 result="ConfigureBand2 Aborted",
-                progress="ConfigureBand2 Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -747,8 +822,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         while True:
             if task_abort_event.is_set():
                 task_callback(
-                    status=TaskStatus.ABORTED,
                     progress="ConfigureBand2 Aborted",
+                )
+                task_callback(
+                    status=TaskStatus.ABORTED,
                     result="ConfigureBand2 Aborted",
                 )
                 return
@@ -766,8 +843,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
             else:
                 task_callback(
-                    status=TaskStatus.COMPLETED,
                     progress="ConfigureBand2 completed",
+                )
+                task_callback(
+                    status=TaskStatus.COMPLETED,
                     result="ConfigureBand2 completed",
                 )
                 return
@@ -792,9 +871,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         assert task_callback, "task_callback has to be defined"
         if task_abort_event.is_set():
             task_callback(
+                progress="SetStowMode Aborted",
+            )
+            task_callback(
                 status=TaskStatus.ABORTED,
                 result="SetStowMode Aborted",
-                progress="SetStowMode Aborted",
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -815,8 +896,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         while True:
             if task_abort_event.is_set():
                 task_callback(
-                    status=TaskStatus.ABORTED,
                     progress="Stow Aborted",
+                )
+                task_callback(
+                    status=TaskStatus.ABORTED,
                     result="Stow Aborted",
                 )
                 return
@@ -828,8 +911,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
-                    status=TaskStatus.COMPLETED,
                     progress="Stow completed",
+                )
+                task_callback(
+                    status=TaskStatus.COMPLETED,
                     result="Stow completed",
                 )
                 return
