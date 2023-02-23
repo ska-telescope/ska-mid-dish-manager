@@ -2,9 +2,19 @@
 Tango Devices
 ==============
 
-.. automodule:: ska_mid_dish_manager.devices
+Subpackages
+-----------
 
 .. toctree::
+  :maxdepth: 2
 
-  DishManager Tango Device<dish_manager>
-  DS Test Tango Device<ds>
+  Test Devices<test_devices/index>
+
+
+Modules
+-------
+
+.. toctree::
+  :maxdepth: 2
+
+  DishManager Device Server<dish_manager>

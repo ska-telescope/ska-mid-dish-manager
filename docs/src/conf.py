@@ -45,8 +45,10 @@ sys.path.insert(0, os.path.abspath("../../src"))
 # adapted from ska-low-mccs conf.py
 # pylint: disable=invalid-name
 autodoc_mock_imports = [
+    "numpy",
     "transitions",
     "networkx",
+    "ska_control_model",
     "ska_tango_base",
     "tango",
     "rule_engine"
@@ -67,13 +69,12 @@ def setup(app):
 
 # -- Project information -----------------------------------------------------
 
-
 project = 'SKA Mid Dish Manager'
-copyright = '2022, KAROO Team'
+copyright = '2023, KAROO Team'
 author = 'KAROO Team'
 
 # The full version, including alpha/beta/rc tags
-release = '1.8.0'
+release = '2.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -111,6 +112,13 @@ master_doc = "index"
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# If true, the current module name will be prepended to all description
+# unit titles (such as .. function::).
+add_module_names = False
+
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
+
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
@@ -123,6 +131,16 @@ todo_include_todos = True
 #
 html_theme = 'sphinx_rtd_theme'
 
+html_context = {
+    "display_gitlab": True,  # Integrate GitHub
+    "favicon": "img/favicon.ico",
+    "logo": "img/logo.png",
+    "theme_logo_only": True,
+    "gitlab_user": "ska-telescope",  # Username
+    "gitlab_repo": "ska-tango-base",  # Repo name
+    "gitlab_version": "main",  # Version
+    "conf_py_path": "/docs/src/",  # Path in the checkout to the docs root
+}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".

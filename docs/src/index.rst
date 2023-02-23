@@ -31,12 +31,6 @@ those sub-element devices.
 
    api/index
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Modules
-
-   modules/modules
-
 Indices and tables
 ==================
 

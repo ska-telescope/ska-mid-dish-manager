@@ -1,7 +1,7 @@
-========================
-DishManager Tango Device
-========================
+=========================
+DishManager Device Server
+=========================
 
-.. automodule:: ska_mid_dish_manager.devices.dish_manager
+.. automodule:: ska_mid_dish_manager.devices.DishManagerDS
    :members:
    :show-inheritance:

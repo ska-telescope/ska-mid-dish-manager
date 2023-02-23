@@ -3,7 +3,7 @@ API
 ===
 
 .. toctree::
-  :caption: Subpackages Interface
+  :caption: DishManager Interface
   :maxdepth: 2
 
   Component Managers<component_managers/index>
@@ -12,7 +12,7 @@ API
 
 
 .. toctree::
-  :caption: DishManager interface
+  :caption: DishManager Running Device Interface
   :maxdepth: 2
 
-  DishManager Tango Device interface<dish_manager_interface>
+  DishManager Tango Device Interface<dish_manager_interface>
