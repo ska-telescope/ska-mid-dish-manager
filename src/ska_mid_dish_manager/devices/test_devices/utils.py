@@ -288,7 +288,7 @@ def set_configuredBand_b1():
     DS.indexerposition  == 'IndexerPosition.B1'
     SPFRX.configuredband  == 'Band.B1'
     SPF.bandinfocus == 'BandInFocus.B1'
-    """ 
+    """
     ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
     spf_device = tango.DeviceProxy("mid_d0001/spf/simulator")
     spfrx_device = tango.DeviceProxy("mid_d0001/spfrx/simulator")
