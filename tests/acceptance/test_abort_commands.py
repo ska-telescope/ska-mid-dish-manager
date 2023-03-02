@@ -17,7 +17,6 @@ def turn_on_spf_attribute_update(request):
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-@pytest.mark.skip("ABORT COMMANDS STOP MONITORING")
 def test_abort_commands(event_store):
     """Test AbortCommands aborts the executing long running command"""
     dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
