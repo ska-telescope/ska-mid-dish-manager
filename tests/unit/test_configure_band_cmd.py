@@ -137,8 +137,6 @@ class TestConfigureBand2:
 
         events_string = "".join([str(event) for event in events])
 
-        print(events_string)
-
         # Check that all the expected progress messages appeared
         # in the event store
         for message in expected_progress_updates:
