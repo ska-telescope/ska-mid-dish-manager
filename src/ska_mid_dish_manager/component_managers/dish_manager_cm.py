@@ -33,6 +33,7 @@ from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 
 # pylint: disable=abstract-method
+# pylint: disable=too-many-instance-attributes
 class DishManagerComponentManager(TaskExecutorComponentManager):
     """A component manager for DishManager
 
