@@ -191,7 +191,7 @@ class CommandMap:
                 "awaitedAttribute": "indexerposition",
                 "awaitedValuesList": [IndexerPosition.B2],
             },
-            "SPF": {
+            "SPFRX": {
                 "command": "ConfigureBand2",
                 "awaitedAttribute": "configuredband",
                 "awaitedValuesList": [Band.B2],
@@ -282,7 +282,7 @@ class CommandMap:
             # Report which attribute and value we the device is waiting for
             task_callback(
                 progress=(
-                    f"Awaiting {device} {awaited_attribute}" f" to change to {awaited_values_list}"
+                    f"Awaiting {device} {awaited_attribute}" f" change to {awaited_values_list}"
                 )
             )
 

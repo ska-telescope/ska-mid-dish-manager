@@ -126,8 +126,8 @@ class TestConfigureBand2:
 
         expected_progress_updates = [
             "SetIndexPosition called on DS",
-            "ConfigureBand2 called on SPFRx, ID",
-            "Awaiting configuredband to transition to [B2]",
+            "ConfigureBand2 called on SPFRX, ID",
+            "Awaiting configuredband change to B2",
             "ConfigureBand2 completed",
         ]
 
@@ -136,6 +136,8 @@ class TestConfigureBand2:
         )
 
         events_string = "".join([str(event) for event in events])
+
+        print(events_string)
 
         # Check that all the expected progress messages appeared
         # in the event store
