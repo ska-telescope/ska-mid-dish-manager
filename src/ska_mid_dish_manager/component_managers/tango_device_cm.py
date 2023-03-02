@@ -197,7 +197,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self,
         status: Optional[TaskStatus] = None,
         progress: Optional[int] = None,
-        result: Optional[tuple[ResultCode, str]] = None,
+        result: Optional[Tuple[ResultCode, str]] = None,
         exception: Optional[Exception] = None,
     ) -> None:
         """Just log the status of the event handler thread
