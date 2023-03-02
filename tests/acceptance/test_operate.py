@@ -55,8 +55,8 @@ def test_set_operate(event_store_class):
     expected_progress_updates = [
         "SetPointMode called on DS",
         "SetOperateMode called on SPF",
-        "CaptureData called on SPFRx",
-        "Awaiting dishMode change to OPERATE",
+        "CaptureData called on SPFRX",
+        "Awaiting dishmode change to OPERATE",
         "SetOperateMode completed",
     ]
 
@@ -65,5 +65,8 @@ def test_set_operate(event_store_class):
     )
 
     events_string = "".join([str(event) for event in events])
+
+    print(events_string)
+
     for message in expected_progress_updates:
         assert message in events_string

@@ -35,6 +35,8 @@ def test_standby_lp_transition(event_store_class):
 
     assert dish_manager.dishMode == DishMode.STANDBY_FP
 
+    progress_event_store.clear_queue()
+
     dish_manager.SetStandbyLPMode()
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
 
@@ -44,7 +46,7 @@ def test_standby_lp_transition(event_store_class):
         "SetStandbyLPMode called on DS",
         "SetStandbyLPMode called on SPF",
         "SetStandbyMode called on SPFRX",
-        "Awaiting dishMode change to STANDBY_LP",
+        "Awaiting dishmode change to STANDBY_LP",
         "SetStandbyLPMode completed",
     ]
 

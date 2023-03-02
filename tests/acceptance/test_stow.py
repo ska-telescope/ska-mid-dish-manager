@@ -36,7 +36,7 @@ def test_stow_transition(event_store_class):
 
     expected_progress_updates = [
         "Stow called on DS",
-        "Waiting for dishMode change to STOW",
+        "Awaiting dishmode change to STOW",
         "Stow completed",
     ]
 

@@ -65,6 +65,6 @@ class TestStowMode:
         device_proxy.SetStowMode()
 
         progress_event_store.wait_for_progress_update("Stow called on DS")
-        progress_event_store.wait_for_progress_update("Waiting for dishMode change to STOW")
+        progress_event_store.wait_for_progress_update("Awaiting dishmode change to STOW")
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
         progress_event_store.wait_for_progress_update("Stow completed")

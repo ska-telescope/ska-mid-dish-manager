@@ -113,7 +113,7 @@ class TestSetStandByLPMode:
             "SetStandbyLPMode called on DS",
             "SetStandbyLPMode called on SPF",
             "SetStandbyMode called on SPFRX",
-            "Awaiting dishMode change to STANDBY_LP",
+            "Awaiting dishmode change to STANDBY_LP",
             "SetStandbyLPMode completed",
         ]
 
