@@ -1,6 +1,5 @@
 # pylint: disable=protected-access
 """Component manager for a DishManager tango device"""
-import json
 import logging
 from datetime import datetime
 from functools import partial
@@ -8,12 +7,12 @@ from threading import Lock
 from typing import Callable, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, HealthState, TaskStatus
-from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
+from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
@@ -31,7 +30,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
-from ska_mid_dish_manager.models.command_map import CommandMap
+
 
 # pylint: disable=abstract-method
 class DishManagerComponentManager(TaskExecutorComponentManager):
@@ -480,7 +479,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Track command only allowed in `OPERATE`" f"mode. Current dishMode: {dish_mode}."
             )
 
-        status, response = self.submit_task(self._command_map.track_cmd, args=[], task_callback=task_callback)
+        status, response = self.submit_task(
+            self._command_map.track_cmd, args=[], task_callback=task_callback
+        )
         return status, response
 
     def configure_band2_cmd(

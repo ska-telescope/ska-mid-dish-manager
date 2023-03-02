@@ -1,7 +1,7 @@
 """Module to manage the mapping of commands to subservient devices"""
 import enum
 import json
-from typing import Callable, Optional 
+from typing import Callable, Optional
 
 from ska_tango_base.commands import SubmittedSlowCommand
 from ska_tango_base.executor import TaskStatus
@@ -10,9 +10,9 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
     DSOperatingMode,
+    IndexerPosition,
     SPFOperatingMode,
     SPFRxOperatingMode,
-    IndexerPosition,
 )
 
 
@@ -33,9 +33,7 @@ class CommandMap:
         self._command_tracker = command_tracker
         self.logger = logger
 
-    def set_standby_lp_mode(
-        self, task_callback: Optional[Callable] = None, task_abort_event=None
-    ):
+    def set_standby_lp_mode(self, task_callback: Optional[Callable] = None, task_abort_event=None):
         """Transition the dish to STANDBY_LP mode"""
 
         # TODO clarify code below, SPFRX stays in DATA_CAPTURE when we dont
@@ -87,7 +85,7 @@ class CommandMap:
                     "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
                 }
             }
-        else :
+        else:
             commands_for_device = {
                 "SPF": {
                     "command": "SetOperateMode",
@@ -108,7 +106,10 @@ class CommandMap:
                 commands_for_device["SPFRX"] = {
                     "command": "SetStandbyMode",
                     "awaitedAttribute": "operatingmode",
-                    "awaitedValuesList": [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.DATA_CAPTURE],
+                    "awaitedValuesList": [
+                        SPFRxOperatingMode.STANDBY,
+                        SPFRxOperatingMode.DATA_CAPTURE,
+                    ],
                 }
 
         self._run_long_running_command(
@@ -188,13 +189,13 @@ class CommandMap:
                 "command": "SetIndexPosition",
                 "commandValue": 2,
                 "awaitedAttribute": "indexerposition",
-                "awaitedValuesList": [IndexerPosition.B2]
+                "awaitedValuesList": [IndexerPosition.B2],
             },
             "SPF": {
                 "command": "ConfigureBand2",
                 "awaitedAttribute": "configuredband",
-                "awaitedValuesList": [Band.B2]
-            }
+                "awaitedValuesList": [Band.B2],
+            },
         }
 
         self._run_long_running_command(
@@ -216,7 +217,7 @@ class CommandMap:
             "DS": {
                 "command": "Stow",
                 "awaitedAttribute": "operatingmode",
-                "awaitedValuesList": [DSOperatingMode.STOW]
+                "awaitedValuesList": [DSOperatingMode.STOW],
             },
         }
 
@@ -228,7 +229,7 @@ class CommandMap:
             "dishmode",
             DishMode.STOW,
         )
-        
+
     # pylint: disable=too-many-locals
     def _run_long_running_command(
         self,
@@ -265,9 +266,7 @@ class CommandMap:
 
             command_value = commands_for_device[device].get("commandValue")
 
-            _, command_id = command(
-                commands_for_device[device]["command"], command_value
-            )
+            _, command_id = command(commands_for_device[device]["command"], command_value)
 
             # Report that the command has been called on the subservient device
             task_callback(
@@ -283,8 +282,7 @@ class CommandMap:
             # Report which attribute and value we the device is waiting for
             task_callback(
                 progress=(
-                    f"Awaiting {device} {awaited_attribute}"
-                    f" to change to {awaited_values_list}"
+                    f"Awaiting {device} {awaited_attribute}" f" to change to {awaited_values_list}"
                 )
             )
 
@@ -296,11 +294,10 @@ class CommandMap:
 
         if isinstance(awaited_event_value, enum.IntEnum):
             awaited_event_value_print = awaited_event_value.name
-        
+
         task_callback(
             progress=(
-                f"Awaiting {awaited_event_attribute}"
-                f" change to {awaited_event_value_print}"
+                f"Awaiting {awaited_event_attribute}" f" change to {awaited_event_value_print}"
             )
         )
 
@@ -319,23 +316,17 @@ class CommandMap:
 
             # Check on dishmanager CMs attribute to see whether
             # the LRC has completed
-            current_awaited_value = self._dish_manager_cm.component_state[
-                awaited_event_attribute
-            ]
+            current_awaited_value = self._dish_manager_cm.component_state[awaited_event_attribute]
 
             # Check each devices to see if their operatingmode
             # attributes are in the correct state
             for device in commands_for_device:
-                awaited_attribute = commands_for_device[device][
-                    "awaitedAttribute"
-                ]
+                awaited_attribute = commands_for_device[device]["awaitedAttribute"]
                 awaited_values_list = commands_for_device[device]["awaitedValuesList"]
 
-                awaited_attribute_value = (
-                    self._dish_manager_cm.sub_component_managers[
-                        device
-                    ].component_state[awaited_attribute]
-                )
+                awaited_attribute_value = self._dish_manager_cm.sub_component_managers[
+                    device
+                ].component_state[awaited_attribute]
 
                 if awaited_attribute_value in awaited_values_list:
                     if not success_reported[device]:
