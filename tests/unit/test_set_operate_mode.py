@@ -158,8 +158,8 @@ class TestSetOperateMode:
         expected_progress_updates = [
             "SetPointMode called on DS",
             "SetOperateMode called on SPF",
-            "CaptureData called on SPFRX",
-            "Awaiting dishmode change to OPERATE",
+            "CaptureData called on SPFRx",
+            "Awaiting dishMode change to OPERATE",
             "SetOperateMode completed",
         ]
 

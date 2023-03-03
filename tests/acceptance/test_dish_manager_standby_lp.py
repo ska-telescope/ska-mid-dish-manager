@@ -45,8 +45,8 @@ def test_standby_lp_transition(event_store_class):
     expected_progress_updates = [
         "SetStandbyLPMode called on DS",
         "SetStandbyLPMode called on SPF",
-        "SetStandbyMode called on SPFRX",
-        "Awaiting dishmode change to STANDBY_LP",
+        "SetStandbyMode called on SPFRx",
+        "Awaiting dishMode change to STANDBY_LP",
         "SetStandbyLPMode completed",
     ]
 

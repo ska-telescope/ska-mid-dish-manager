@@ -39,7 +39,7 @@ def test_abort_commands(event_store):
 
     # Transition to FP mode
     [[_], [unique_id]] = dish_manager.SetStandbyFPMode()
-    event_store.wait_for_value((f"{unique_id}", "Awaiting dishmode change to STANDBY_FP"))
+    event_store.wait_for_value((f"{unique_id}", "Awaiting dishMode change to STANDBY_FP"))
     dish_manager.AbortCommands()
 
     # TODO record in the progress attribute

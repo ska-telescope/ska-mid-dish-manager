@@ -33,6 +33,19 @@ class CommandMap:
         self._command_tracker = command_tracker
         self.logger = logger
 
+        self._keys_to_output_map = {
+            "dishmode": "dishMode",
+            "SPFRX": "SPFRx",
+        }
+
+    def _key_to_output(self, key):
+        output = self._keys_to_output_map.get(key)
+
+        if not output:
+            output = key
+
+        return output
+
     def set_standby_lp_mode(self, task_callback: Optional[Callable] = None, task_abort_event=None):
         """Transition the dish to STANDBY_LP mode"""
 
@@ -272,7 +285,7 @@ class CommandMap:
             task_callback(
                 progress=(
                     f"{commands_for_device[device]['command']}"
-                    f" called on {device}, ID {command_id}"
+                    f" called on {self._key_to_output(device)}, ID {command_id}"
                 )
             )
 
@@ -282,7 +295,8 @@ class CommandMap:
             # Report which attribute and value we the device is waiting for
             task_callback(
                 progress=(
-                    f"Awaiting {device} {awaited_attribute}" f" change to {awaited_values_list}"
+                    f"Awaiting {self._key_to_output(device)} {awaited_attribute}"
+                    f" change to {awaited_values_list}"
                 )
             )
 
@@ -297,7 +311,8 @@ class CommandMap:
 
         task_callback(
             progress=(
-                f"Awaiting {awaited_event_attribute}" f" change to {awaited_event_value_print}"
+                f"Awaiting {self._key_to_output(awaited_event_attribute)}"
+                f" change to {awaited_event_value_print}"
             )
         )
 
