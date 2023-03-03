@@ -3,16 +3,16 @@ API
 ===
 
 .. toctree::
-  :caption: Subpackages Interface
+  :caption: Devices Interface
   :maxdepth: 2
 
-  Component Managers<component_managers/index>
-  Tango Devices<devices/index>
-  Models<models/index>
-
+  DishManager and TestDevices<devices/index>
+  DishManager YAML Spec<dish_manager_interface>
 
 .. toctree::
-  :caption: DishManager interface
+  :caption: Subpackages and Other Modules
   :maxdepth: 2
 
-  DishManager Tango Device interface<dish_manager_interface>
+  Models<models/index>
+  Component Managers<component_managers/index>
+  Utility Functions<utils>

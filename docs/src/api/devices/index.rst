@@ -4,7 +4,8 @@ Tango Devices
 
 .. automodule:: ska_mid_dish_manager.devices
 
+
 .. toctree::
 
-  DishManager Tango Device<dish_manager>
-  DS Test Tango Device<ds>
+  DishManager Device Server<dish_manager>
+  Test Devices<test_devices/index>

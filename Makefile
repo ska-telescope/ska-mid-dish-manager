@@ -32,6 +32,8 @@ PYTHON_SWITCHES_FOR_ISORT ?= -w 99
 
 PYTHON_SWITCHES_FOR_FLAKE8 ?= --max-line-length=99
 
+PYTHON_LINE_LENGTH ?= 99
+
 OCI_TAG = $(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
 
 CI_REGISTRY ?= registry.gitlab.com

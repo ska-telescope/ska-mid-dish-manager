@@ -1,6 +1,6 @@
 """State transition computation"""
 
-from typing import Any
+from typing import Optional
 
 from ska_control_model import HealthState
 
@@ -72,7 +72,7 @@ class StateTransition:
     # pylint: disable=too-many-arguments
     def compute_capability_state(
         self,
-        band: Any,  # Literal["b1", "b2", "b3", "b4", "b5a", "b5b"],
+        band: str,  # Literal["b1", "b2", "b3", "b4", "b5a", "b5b"],
         ds_component_state: dict,  # type: ignore
         spfrx_component_state: dict,  # type: ignore
         spf_component_state: dict,  # type: ignore
@@ -183,9 +183,9 @@ class StateTransition:
     def _collapse(
         cls,
         ds_component_state: dict,  # type: ignore
-        spfrx_component_state: Any,
-        spf_component_state: dict | None = None,  # type: ignore
-        dish_manager_component_state: dict | None = None,  # type: ignore
+        spfrx_component_state: dict,
+        spf_component_state: Optional[dict] = None,  # type: ignore
+        dish_manager_component_state: Optional[dict] = None,  # type: ignore
     ) -> dict:  # type: ignore
         """Collapse multiple state dicts into one"""
         dish_manager_states = {"DS": {}, "SPF": {}, "SPFRX": {}, "DM": {}}  # type: ignore

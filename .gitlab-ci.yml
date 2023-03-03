@@ -46,19 +46,6 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
-# pin build images
-docs-build:
-  image: artefact.skao.int/ska-cicd-k8s-tools-build-deploy:0.7.5
-
-docs-pages:
-  image: artefact.skao.int/ska-cicd-k8s-tools-build-deploy:0.7.5
-
-python-build-for-development:
-  image: artefact.skao.int/ska-cicd-k8s-tools-build-deploy:0.7.6
-
-python-publish-to-gitlab:
-  image: artefact.skao.int/ska-cicd-k8s-tools-build-deploy:0.7.6
-
 # override test images and set permissions
 python-test:
   image: ${CI_REGISTRY}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}:2.0.0-dev.c$CI_COMMIT_SHORT_SHA
