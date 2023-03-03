@@ -2,6 +2,7 @@
 
 import rule_engine
 
+
 CONFIGURED_BAND_RULES = {
     "NONE": rule_engine.Rule("SPFRX.configuredband  == 'Band.NONE'"),
     "B1": rule_engine.Rule(

@@ -137,7 +137,7 @@ html_context = {
     "logo": "img/logo.png",
     "theme_logo_only": True,
     "gitlab_user": "ska-telescope",  # Username
-    "gitlab_repo": "ska-tango-base",  # Repo name
+    "gitlab_repo": "ska-mid-dish-manager",  # Repo name
     "gitlab_version": "main",  # Version
     "conf_py_path": "/docs/src/",  # Path in the checkout to the docs root
 }

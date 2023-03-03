@@ -3,7 +3,7 @@ SKA Mid Dish Manager Documentation
 ==================================
 
 Description
-===========
+-----------
 
 This device provides master control and rolled-up monitoring of dish. When
 commanded, it propagates the associated command to the relevant sub-systems
@@ -32,7 +32,7 @@ those sub-element devices.
    api/index
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

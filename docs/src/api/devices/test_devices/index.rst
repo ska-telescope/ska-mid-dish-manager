@@ -1,12 +1,10 @@
+============
 Test Devices
 ============
 
-Modules
--------
+.. automodule:: ska_mid_dish_manager.devices.test_devices
 
 .. toctree::
-   :maxdepth: 2
 
    DishStructure Simulator Device<DSDevice>
-   A Dish Manager Test Device<TestDishManagerDevice>
-   Utility Functions<utils>
+   Dish Manager Test Device<TestDishManagerDevice>

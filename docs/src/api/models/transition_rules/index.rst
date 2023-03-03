@@ -2,13 +2,11 @@
 Transition Rules
 ================
 
-Submodules
-----------
+.. automodule:: ska_mid_dish_manager.models.transition_rules
 
 .. toctree::
-   :maxdepth: 2
 
-   Dish Mananger Band Configuration<band_configuration>
-   Dish Manager Capability State<capability_state>
-   Dish Manager Dish Mode<dish_mode>
-   Dish Manager Health State <health_state>
+   Band Configuration<band_configuration>
+   Capability State<capability_state>
+   Dish Mode<dish_mode>
+   Health State <health_state>
