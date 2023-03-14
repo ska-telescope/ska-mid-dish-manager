@@ -19,7 +19,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 # pylint: disable=too-few-public-methods
 class CommandMap:
     """
-    A module to handle the mapping of commands to subservient devices.
+    Command fan out to handle the mapping of DishManager commands to subservient devices.
     """
 
     # pylint: disable=too-many-arguments
@@ -57,7 +57,7 @@ class CommandMap:
         #  == "STANDBY_FP":
         #     subservient_devices = ["DS", "SPF"]
 
-        commands_for_device = {
+        commands_for_sub_devices = {
             "SPF": {
                 "command": "SetStandbyLPMode",
                 "awaitedAttribute": "operatingmode",
@@ -78,7 +78,7 @@ class CommandMap:
         self._run_long_running_command(
             task_callback,
             task_abort_event,
-            commands_for_device,
+            commands_for_sub_devices,
             "SetStandbyLPMode",
             "dishmode",
             DishMode.STANDBY_LP,
@@ -91,7 +91,7 @@ class CommandMap:
     ):
         """Transition the dish to STANDBY_FP mode"""
         if self._dish_manager_cm.component_state["dishmode"].name == "OPERATE":
-            commands_for_device = {
+            commands_for_sub_devices = {
                 "DS": {
                     "command": "SetStandbyFPMode",
                     "awaitedAttribute": "operatingmode",
@@ -99,7 +99,7 @@ class CommandMap:
                 }
             }
         else:
-            commands_for_device = {
+            commands_for_sub_devices = {
                 "SPF": {
                     "command": "SetOperateMode",
                     "awaitedAttribute": "operatingmode",
@@ -116,7 +116,7 @@ class CommandMap:
                 Band.NONE,
                 Band.UNKNOWN,
             ]:
-                commands_for_device["SPFRX"] = {
+                commands_for_sub_devices["SPFRX"] = {
                     "command": "SetStandbyMode",
                     "awaitedAttribute": "operatingmode",
                     "awaitedValuesList": [
@@ -128,7 +128,7 @@ class CommandMap:
         self._run_long_running_command(
             task_callback,
             task_abort_event,
-            commands_for_device,
+            commands_for_sub_devices,
             "SetStandbyFPMode",
             "dishmode",
             DishMode.STANDBY_FP,
@@ -140,7 +140,7 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Transition the dish to OPERATE mode"""
-        commands_for_device = {
+        commands_for_sub_devices = {
             "SPF": {
                 "command": "SetOperateMode",
                 "awaitedAttribute": "operatingmode",
@@ -148,7 +148,7 @@ class CommandMap:
             },
             "SPFRX": {
                 "command": "CaptureData",
-                "commandValue": True,
+                "commandArgument": True,
                 "awaitedAttribute": "operatingmode",
                 "awaitedValuesList": [SPFRxOperatingMode.DATA_CAPTURE],
             },
@@ -162,7 +162,7 @@ class CommandMap:
         self._run_long_running_command(
             task_callback,
             task_abort_event,
-            commands_for_device,
+            commands_for_sub_devices,
             "SetOperateMode",
             "dishmode",
             DishMode.OPERATE,
@@ -174,7 +174,7 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Transition the dish to Track mode"""
-        commands_for_device = {
+        commands_for_sub_devices = {
             "DS": {
                 "command": "Track",
                 "awaitedAttribute": "operatingmode",
@@ -185,7 +185,7 @@ class CommandMap:
         self._run_long_running_command(
             task_callback,
             task_abort_event,
-            commands_for_device,
+            commands_for_sub_devices,
             "Track",
             "achievedtargetlock",
             True,
@@ -197,10 +197,10 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Configure band 2 on DS and SPF"""
-        commands_for_device = {
+        commands_for_sub_devices = {
             "DS": {
                 "command": "SetIndexPosition",
-                "commandValue": 2,
+                "commandArgument": 2,
                 "awaitedAttribute": "indexerposition",
                 "awaitedValuesList": [IndexerPosition.B2],
             },
@@ -214,7 +214,7 @@ class CommandMap:
         self._run_long_running_command(
             task_callback,
             task_abort_event,
-            commands_for_device,
+            commands_for_sub_devices,
             "ConfigureBand2",
             "configuredband",
             Band.B2,
@@ -226,7 +226,7 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Transition the dish to Stow mode"""
-        commands_for_device = {
+        commands_for_sub_devices = {
             "DS": {
                 "command": "Stow",
                 "awaitedAttribute": "operatingmode",
@@ -237,7 +237,7 @@ class CommandMap:
         self._run_long_running_command(
             task_callback,
             task_abort_event,
-            commands_for_device,
+            commands_for_sub_devices,
             "Stow",
             "dishmode",
             DishMode.STOW,
@@ -248,7 +248,7 @@ class CommandMap:
         self,
         task_callback,
         task_abort_event,
-        commands_for_device,
+        commands_for_sub_devices,
         running_command,
         awaited_event_attribute,
         awaited_event_value,
@@ -267,9 +267,11 @@ class CommandMap:
 
         device_command_ids = {}
 
-        for device in commands_for_device:
+        for device in commands_for_sub_devices:
+            command_name = commands_for_sub_devices[device]["command"]
+
             command = SubmittedSlowCommand(
-                f"{device}_{commands_for_device[device]['command']}",
+                f"{device}_{command_name}",
                 self._command_tracker,
                 self._dish_manager_cm.sub_component_managers[device],
                 "run_device_command",
@@ -277,22 +279,22 @@ class CommandMap:
                 logger=self.logger,
             )
 
-            command_value = commands_for_device[device].get("commandValue")
+            command_argument = commands_for_sub_devices[device].get("commandArgument")
 
-            _, command_id = command(commands_for_device[device]["command"], command_value)
+            _, command_id = command(command_name, command_argument)
 
             # Report that the command has been called on the subservient device
             task_callback(
                 progress=(
-                    f"{commands_for_device[device]['command']}"
+                    f"{commands_for_sub_devices[device]['command']}"
                     f" called on {self._key_to_output(device)}, ID {command_id}"
                 )
             )
 
-            awaited_attribute = commands_for_device[device]["awaitedAttribute"]
-            awaited_values_list = commands_for_device[device]["awaitedValuesList"]
+            awaited_attribute = commands_for_sub_devices[device]["awaitedAttribute"]
+            awaited_values_list = commands_for_sub_devices[device]["awaitedValuesList"]
 
-            # Report which attribute and value we the device is waiting for
+            # Report which attribute and value the device is waiting for
             task_callback(
                 progress=(
                     f"Awaiting {self._key_to_output(device)} {awaited_attribute}"
@@ -305,7 +307,6 @@ class CommandMap:
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 
         awaited_event_value_print = awaited_event_value
-
         if isinstance(awaited_event_value, enum.IntEnum):
             awaited_event_value_print = awaited_event_value.name
 
@@ -316,7 +317,7 @@ class CommandMap:
             )
         )
 
-        success_reported = dict.fromkeys(commands_for_device.keys(), False)
+        success_reported = dict.fromkeys(commands_for_sub_devices.keys(), False)
 
         while True:
             if task_abort_event.is_set():
@@ -329,15 +330,14 @@ class CommandMap:
                 )
                 return
 
-            # Check on dishmanager CMs attribute to see whether
-            # the LRC has completed
+            # Check on dishmanager CMs attribute to see whether the LRC has completed
             current_awaited_value = self._dish_manager_cm.component_state[awaited_event_attribute]
 
             # Check each devices to see if their operatingmode
             # attributes are in the correct state
-            for device in commands_for_device:
-                awaited_attribute = commands_for_device[device]["awaitedAttribute"]
-                awaited_values_list = commands_for_device[device]["awaitedValuesList"]
+            for device in commands_for_sub_devices:
+                awaited_attribute = commands_for_sub_devices[device]["awaitedAttribute"]
+                awaited_values_list = commands_for_sub_devices[device]["awaitedValuesList"]
 
                 awaited_attribute_value = self._dish_manager_cm.sub_component_managers[
                     device
