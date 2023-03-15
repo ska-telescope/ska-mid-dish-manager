@@ -65,5 +65,6 @@ def test_set_operate(event_store_class):
     )
 
     events_string = "".join([str(event) for event in events])
+
     for message in expected_progress_updates:
         assert message in events_string

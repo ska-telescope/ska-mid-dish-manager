@@ -59,7 +59,7 @@ def test_track_cmd(event_store_class, ds_device_proxy, dish_manager_proxy):
 
     expected_progress_updates = [
         "Track called on DS, ID",
-        "Awaiting target lock change",
+        "Awaiting achievedtargetlock change to True",
         "Track completed",
     ]
 
@@ -71,6 +71,7 @@ def test_track_cmd(event_store_class, ds_device_proxy, dish_manager_proxy):
     # Check that all the expected progress messages appeared
     # in the event store
     events_string = "".join([str(event) for event in events])
+
     for message in expected_progress_updates:
         assert message in events_string
 

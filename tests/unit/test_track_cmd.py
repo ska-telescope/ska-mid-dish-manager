@@ -127,7 +127,7 @@ class TestTrack:
 
         expected_progress_updates = [
             "Track called on DS, ID",
-            "Awaiting target lock change",
+            "Awaiting achievedtargetlock change to True",
             "Track completed",
         ]
 

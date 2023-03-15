@@ -127,7 +127,7 @@ class TestConfigureBand2:
         expected_progress_updates = [
             "SetIndexPosition called on DS",
             "ConfigureBand2 called on SPFRx, ID",
-            "Awaiting configuredband to transition to [B2]",
+            "Awaiting configuredband change to B2",
             "ConfigureBand2 completed",
         ]
 
