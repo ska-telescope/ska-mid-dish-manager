@@ -914,7 +914,9 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand2")
 
-        result_code, unique_id = handler(activation_timestamp, self._configured_band)
+        result_code, unique_id = handler(
+            activation_timestamp, self._configured_band, self._synchronised
+        )
         return ([result_code], [unique_id])
 
     @command(
