@@ -10,7 +10,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 @pytest.mark.forked
 def test_standby_lp_transition(event_store_class):
     """Test transition to Standby_LP"""
-    dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
+    dish_manager = tango.DeviceProxy("ska001/elt/master")
 
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()

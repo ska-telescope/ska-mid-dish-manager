@@ -10,11 +10,11 @@ server:
       classes:
         - name: "DishManager"
           devices:
-            - name: "mid_d{{ printf "%04s" . }}/elt/master"
+            - name: "ska{{ printf "%01s" . }}/elt/master"
               properties:
                 - name: "ReceptorNumber"
                   values:
-                    - "{{ printf "%04s" . }}"
+                    - "{{ printf "%01s" . }}"
                 - name: "SkaLevel"
                   values:
                     - "1"
@@ -30,15 +30,18 @@ server:
                 - name: "GroupDefinitions"
                   values:
                     - ""
-                - name: "ds_device_fqdn"
+                - name: "DSDeviceFqdn"
                   values:
-                    - "mid_d{{ printf "%04s" . }}/lmc/ds_simulator"
-                - name: "spf_device_fqdn"
+                    - "ska{{ printf "%01s" . }}/lmc/ds_simulator"
+                - name: "SPFDeviceFqdn"
                   values:
-                    - "mid_d{{ printf "%04s" . }}/spf/simulator"
-                - name: "spfrx_device_fqdn"
+                    - "ska{{ printf "%01s" . }}/spf/simulator"
+                - name: "SPFRxDeviceFqdn"
                   values:
-                    - "mid_d{{ printf "%04s" . }}/spfrx/simulator"
+                    - "ska{{ printf "%01s" . }}/spfrx/simulator"
+                - name: "DishId"
+                  values:
+                    - "SKA{{ printf "%01s" . }}"
   {{- end }}
 depends_on:
   - device: sys/database/2

@@ -8,7 +8,7 @@ def turn_on_spf_attribute_update(request):
     """Ensure that attribute updates on spf is restored"""
 
     def toggle_attribute_update():
-        spf_device = tango.DeviceProxy("mid_d0001/spf/simulator")
+        spf_device = tango.DeviceProxy("ska001/spf/simulator")
         spf_device.skipAttributeUpdates = False
 
     request.addfinalizer(toggle_attribute_update)
@@ -19,10 +19,10 @@ def turn_on_spf_attribute_update(request):
 @pytest.mark.forked
 def test_abort_commands(event_store):
     """Test AbortCommands aborts the executing long running command"""
-    dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
+    dish_manager = tango.DeviceProxy("ska001/elt/master")
 
     # Set a flag on SPF to skip attribute updates
-    spf_device = tango.DeviceProxy("mid_d0001/spf/simulator")
+    spf_device = tango.DeviceProxy("ska001/spf/simulator")
     spf_device.skipAttributeUpdates = True
 
     for attr in [

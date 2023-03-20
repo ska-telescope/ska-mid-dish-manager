@@ -28,7 +28,7 @@ SPEC_URLS = {
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_wide_spec():
     """Test that the interface conforms to the base tango interface"""
-    dish_manager_proxy = DeviceProxy("mid_d0001/elt/master")
+    dish_manager_proxy = DeviceProxy("ska001/elt/master")
     result = validate_device_from_url(
         dish_manager_proxy.name(),
         SPEC_URLS["ska_tango_guide_ska_wide"],
@@ -42,7 +42,7 @@ def test_dish_manager_conforms_to_ska_wide_spec():
 @pytest.mark.xfail(reason="Pending changes on telescope model to dtype_out")
 def test_dish_manager_conforms_to_dish_master_spec():
     """Test that the device interface conforms to the Dish Manager interface"""
-    dish_manager_proxy = DeviceProxy("mid_d0001/elt/master")
+    dish_manager_proxy = DeviceProxy("ska001/elt/master")
     result = validate_device_from_url(
         dish_manager_proxy.name(),
         SPEC_URLS["dish_manager"],
@@ -56,7 +56,7 @@ def test_dish_manager_conforms_to_dish_master_spec():
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_controller_spec():
     """Test that the device interface conforms to the Dish Manager interface"""
-    dish_manager_proxy = DeviceProxy("mid_d0001/elt/master")
+    dish_manager_proxy = DeviceProxy("ska001/elt/master")
     result = validate_device_from_url(
         dish_manager_proxy.name(),
         SPEC_URLS["ska_controller"],
@@ -70,7 +70,7 @@ def test_dish_manager_conforms_to_ska_controller_spec():
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_tango_base_spec():
     """Test that the device interface conforms to the Dish Manager interface"""
-    dish_manager_proxy = DeviceProxy("mid_d0001/elt/master")
+    dish_manager_proxy = DeviceProxy("ska001/elt/master")
     result = validate_device_from_url(
         dish_manager_proxy.name(),
         SPEC_URLS["ska_tango_base"],

@@ -177,22 +177,22 @@ def component_state_store():
 
 @pytest.fixture
 def dish_manager_device_fqdn():
-    return "mid_d0001/elt/master"
+    return "ska001/elt/master"
 
 
 @pytest.fixture
 def ds_device_fqdn():
-    return "mid_d0001/lmc/ds_simulator"
+    return "ska001/lmc/ds_simulator"
 
 
 @pytest.fixture
 def spf_device_fqdn():
-    return "mid_d0001/spf/simulator"
+    return "ska001/spf/simulator"
 
 
 @pytest.fixture
 def spfrx_device_fqdn():
-    return "mid_d0001/spfrx/simulator"
+    return "ska001/spfrx/simulator"
 
 
 @pytest.fixture

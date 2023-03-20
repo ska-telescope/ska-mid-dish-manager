@@ -10,8 +10,8 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
 @pytest.mark.forked
 def test_stow_transition(event_store_class):
     """Test transition to STOW"""
-    dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
-    ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
+    dish_manager = tango.DeviceProxy("ska001/elt/master")
+    ds_device = tango.DeviceProxy("ska001/lmc/ds_simulator")
     # Get at least one device into a known state
     ds_device.operatingMode = DSOperatingMode.STANDBY_FP
 

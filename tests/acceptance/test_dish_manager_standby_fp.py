@@ -13,7 +13,7 @@ from ska_mid_dish_manager.devices.test_devices.utils import (
 @pytest.mark.forked
 def test_standby_fp_transition(event_store_class):
     """Test transition to Standby_FP"""
-    dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
+    dish_manager = tango.DeviceProxy("ska001/elt/master")
 
     result_event_store = event_store_class()
     progress_event_store = event_store_class()

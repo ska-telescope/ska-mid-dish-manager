@@ -24,7 +24,7 @@ global:
   # List the dishes, if set, then this list will be applied to instances of:
   # deviceServers.dishmaster
   dish_devices: ["dish-manager"]
-  dishes: ["01"]
+  dishes: ["001"]
 
 
 dsconfig:

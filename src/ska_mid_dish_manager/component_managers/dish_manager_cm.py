@@ -46,10 +46,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         logger: logging.Logger,
         command_tracker,
         connection_state_callback,
+        ds_device_fqdn: str,
+        spf_device_fqdn: str,
+        spfrx_device_fqdn: str,
         *args,
-        ds_device_fqdn: str = "mid_d0001/lmc/ds_simulator",
-        spf_device_fqdn: str = "mid_d0001/spf/simulator",
-        spfrx_device_fqdn: str = "mid_d0001/spfrx/simulator",
         max_workers: int = 3,
         **kwargs,
     ):
