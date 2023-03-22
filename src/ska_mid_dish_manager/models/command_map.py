@@ -193,10 +193,13 @@ class CommandMap:
 
     def configure_band2_cmd(
         self,
+        synchronise,
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
         """Configure band 2 on DS and SPF"""
+        self.logger.info(f"ConfigureBand2 called with synchronise = {synchronise}")
+
         commands_for_sub_devices = {
             "DS": {
                 "command": "SetIndexPosition",
@@ -206,6 +209,7 @@ class CommandMap:
             },
             "SPFRX": {
                 "command": "ConfigureBand2",
+                "commandArgument": synchronise,
                 "awaitedAttribute": "configuredband",
                 "awaitedValuesList": [Band.B2],
             },

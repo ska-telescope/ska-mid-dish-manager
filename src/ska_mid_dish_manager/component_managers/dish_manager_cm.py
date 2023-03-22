@@ -490,6 +490,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         activation_timestamp,
         current_configured_band,
+        synchronise,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Configure frequency band to band 2"""
@@ -517,7 +518,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         status, response = self.submit_task(
             self._command_map.configure_band2_cmd,
-            args=[],
+            args=[synchronise],
             task_callback=task_callback,
         )
         return status, response
