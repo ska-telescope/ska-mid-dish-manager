@@ -12,7 +12,6 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-# @pytest.mark.skip()
 def test_configure_band_2(event_store_class, dish_manager_proxy):
     """Test ConfigureBand2"""
     # make sure configureBand is not B2
