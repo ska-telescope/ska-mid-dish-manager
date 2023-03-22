@@ -3,18 +3,17 @@ from datetime import datetime, timedelta
 
 import pytest
 import tango
-import time
 from ska_control_model import TaskStatus
 
 from ska_mid_dish_manager.devices.test_devices.utils import set_configuredBand_b1
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode, DSOperatingMode, SPFOperatingMode, SPFRxOperatingMode
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 # @pytest.mark.skip()
-def test_configure_band_2(event_store_class, dish_manager_proxy, spf_device_proxy, spfrx_device_proxy, ds_device_proxy):
+def test_configure_band_2(event_store_class, dish_manager_proxy):
     """Test ConfigureBand2"""
     # make sure configureBand is not B2
     set_configuredBand_b1()
