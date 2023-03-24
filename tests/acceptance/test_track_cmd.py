@@ -2,7 +2,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.devices.test_devices.utils import set_configuredBand_b1
+from tests.utils import set_configuredBand_b1
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode, PointingState
 
 

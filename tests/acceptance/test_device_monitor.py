@@ -66,7 +66,7 @@ def test_multi_monitor(caplog, spf_device_fqdn):
     assert not test_attributes_list
 
 
-def test_device_monitor_stress():
+def test_device_monitor_stress(spf_device_fqdn):
     """Reconnect many times to see if it recovers"""
     logs_queue = Queue()
 
@@ -79,7 +79,7 @@ def test_device_monitor_stress():
 
     event_queue = Queue()
     tdm = TangoDeviceMonitor(
-        "ska001/spf/simulator", ["powerState"], event_queue, mocked_logger, empty_func
+        spf_device_fqdn, ["powerState"], event_queue, mocked_logger, empty_func
     )
     for i in range(10):
         tdm.monitor()
@@ -99,14 +99,10 @@ def test_device_monitor_stress():
         all_logs.append(str(logs_queue.get(timeout=3)))
 
     assert (
-        all_logs.count(
-            "('Unsubscribed from %s for attr %s', 'ska001/spf/simulator', 'powerState')"
-        )
-        == 9
+        all_logs.count(f"('Unsubscribed from {spf_device_fqdn} for attr powerState')") == 9
     )
     assert (
-        all_logs.count("('Subscribed on %s to attr %s', 'ska001/spf/simulator', 'powerState')")
-        == 10
+        all_logs.count(f"('Subscribed on {spf_device_fqdn} to attr powerState')") == 10
     )
 
 

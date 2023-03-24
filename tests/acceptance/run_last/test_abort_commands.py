@@ -7,9 +7,8 @@ import tango
 def turn_on_spf_attribute_update(request):
     """Ensure that attribute updates on spf is restored"""
 
-    def toggle_attribute_update():
-        spf_device = tango.DeviceProxy("ska001/spf/simulator")
-        spf_device.skipAttributeUpdates = False
+    def toggle_attribute_update(spf_device_proxy):
+        spf_device_proxy.skipAttributeUpdates = False
 
     request.addfinalizer(toggle_attribute_update)
 
@@ -17,29 +16,26 @@ def turn_on_spf_attribute_update(request):
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_abort_commands(event_store):
+def test_abort_commands(event_store, dish_manager_proxy, spf_device_proxy):
     """Test AbortCommands aborts the executing long running command"""
-    dish_manager = tango.DeviceProxy("ska001/elt/master")
-
     # Set a flag on SPF to skip attribute updates
-    spf_device = tango.DeviceProxy("ska001/spf/simulator")
-    spf_device.skipAttributeUpdates = True
+    spf_device_proxy.skipAttributeUpdates = True
 
     for attr in [
         "longRunningCommandStatus",
         "longRunningCommandResult",
         "longRunningCommandProgress",
     ]:
-        dish_manager.subscribe_event(
+        dish_manager_proxy.subscribe_event(
             attr,
             tango.EventType.CHANGE_EVENT,
             event_store,
         )
 
     # Transition to FP mode
-    [[_], [unique_id]] = dish_manager.SetStandbyFPMode()
+    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     event_store.wait_for_value((f"{unique_id}", "Awaiting dishMode change to STANDBY_FP"))
-    dish_manager.AbortCommands()
+    dish_manager_proxy.AbortCommands()
 
     # TODO record in the progress attribute
     # that Abort was called on DS and SPF

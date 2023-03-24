@@ -10,7 +10,7 @@ from tango import DevState
 from tango.server import Device
 from tango.test_context import DeviceTestContext, MultiDeviceTestContext, get_host_ip
 
-from ska_mid_dish_manager.devices.test_devices.utils import EventStore
+from tests.utils import EventStore
 
 
 # pylint: disable=invalid-name, missing-function-docstring

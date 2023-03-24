@@ -15,4 +15,3 @@ API
 
   Models<models/index>
   Component Managers<component_managers/index>
-  Utility Functions<utils>
