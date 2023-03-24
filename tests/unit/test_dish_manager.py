@@ -140,3 +140,24 @@ def test_component_states(patched_dp, patched_monitor_dp):
 
     assert len(json.loads(tango_context.device.GetComponentStates())) == 3
     tango_context.stop()
+
+
+@patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango.DeviceProxy")
+@patch("ska_mid_dish_manager.component_managers.device_monitor.tango.DeviceProxy")
+def test_desired_pointing_write(patched_dp, patched_monitor_dp):
+    """Test that the write method of the desiredPointing attribute functions correctly"""
+    patched_monitor_dp.return_value = MagicMock()
+    patched_dp.return_value = MagicMock()
+
+    tango_context = DeviceTestContext(DishManager)
+    tango_context.start()
+
+    device_proxy = tango_context.device
+
+    write_value = [0.0, 1.0, 2.0]
+
+    device_proxy.desiredPointing = write_value
+
+    assert device_proxy.desiredPointing == write_value
+
+    tango_context.stop()
