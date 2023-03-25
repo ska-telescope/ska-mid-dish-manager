@@ -8,9 +8,8 @@
 import logging
 import os
 import random
-import time
 import sys
-
+import time
 from functools import wraps
 
 from ska_control_model import HealthState

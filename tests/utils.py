@@ -267,7 +267,9 @@ def set_dish_manager_to_standby_lp(event_store, dish_manager_proxy):
         event_store.wait_for_value(DishMode.STANDBY_LP)
 
 
-def set_configuredBand_b1(dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy):
+def set_configuredBand_b1(
+    dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+):
     """
     Set B1 configuredBand
     Rules:
@@ -290,7 +292,9 @@ def set_configuredBand_b1(dish_manager_proxy, ds_device_proxy, spf_device_proxy,
     config_band_event_store.wait_for_value(Band.B1)
 
 
-def set_configuredBand_b2(dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy):
+def set_configuredBand_b2(
+    dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+):
     """
     Set B1 configuredBand
     Rules:

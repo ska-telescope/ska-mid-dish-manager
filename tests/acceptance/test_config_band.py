@@ -5,18 +5,23 @@ import pytest
 import tango
 from ska_control_model import TaskStatus
 
-from tests.utils import set_configuredBand_b1
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from tests.utils import set_configuredBand_b1
 
 
+# pylint: disable=too-many-locals
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 @pytest.mark.skip()
-def test_configure_band_2(event_store_class, dish_manager_proxy):
+def test_configure_band_2(
+    event_store_class, dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+):
     """Test ConfigureBand2"""
     # make sure configureBand is not B2
-    set_configuredBand_b1()
+    set_configuredBand_b1(
+        dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+    )
 
     main_event_store = event_store_class()
     progress_event_store = event_store_class()

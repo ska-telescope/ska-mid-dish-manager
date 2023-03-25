@@ -9,7 +9,6 @@ from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
-from tests.utils import EventStore
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
@@ -20,6 +19,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from tests.utils import EventStore
 
 LOGGER = logging.getLogger(__name__)
 

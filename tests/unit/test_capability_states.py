@@ -10,7 +10,6 @@ from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
-from tests.utils import EventStore
 from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     DishMode,
@@ -20,6 +19,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFRxCapabilityStates,
 )
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
+from tests.utils import EventStore
 
 
 # pylint: disable=redefined-outer-name
