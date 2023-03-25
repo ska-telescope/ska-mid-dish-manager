@@ -98,8 +98,16 @@ def test_device_monitor_stress(spf_device_fqdn):
     while not logs_queue.empty():
         all_logs.append(str(logs_queue.get(timeout=3)))
 
-    assert all_logs.count(f"('Unsubscribed from {spf_device_fqdn} for attr powerState')") == 9
-    assert all_logs.count(f"('Subscribed on {spf_device_fqdn} to attr powerState')") == 10
+    assert (
+        all_logs.count(
+            "('Unsubscribed from %s for attr %s', 'ska001/spf/simulator', 'powerState')"
+        )
+        == 9
+    )
+    assert (
+        all_logs.count("('Subscribed on %s to attr %s', 'ska001/spf/simulator', 'powerState')")
+        == 10
+    )
 
 
 def test_connection_error(caplog):
