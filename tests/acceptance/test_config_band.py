@@ -57,9 +57,10 @@ def test_configure_band_2(
 
     future_time = datetime.utcnow() + timedelta(days=1)
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())
+
     dishmode_event_store.wait_for_value(DishMode.CONFIG)
-    assert 0, dish_manager_proxy.longrunningcommandresult
     main_event_store.wait_for_command_id(unique_id)
+
     assert dish_manager_proxy.configuredBand == Band.B2
     dishmode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
@@ -71,7 +72,7 @@ def test_configure_band_2(
     expected_progress_updates = [
         "SetIndexPosition called on DS",
         "ConfigureBand2 called on SPFRx, ID",
-        "Awaiting configuredband to transition to [B2]",
+        "Awaiting configuredband change to B2",
         "ConfigureBand2 completed",
     ]
 
