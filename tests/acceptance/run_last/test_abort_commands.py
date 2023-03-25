@@ -3,11 +3,11 @@ import pytest
 import tango
 
 
-@pytest.fixture(autouse=True, scope="module")
-def turn_on_spf_attribute_update(request):
+@pytest.fixture(autouse=True)
+def turn_on_spf_attribute_update(request, spf_device_proxy):
     """Ensure that attribute updates on spf is restored"""
 
-    def toggle_attribute_update(spf_device_proxy):
+    def toggle_attribute_update():
         spf_device_proxy.skipAttributeUpdates = False
 
     request.addfinalizer(toggle_attribute_update)
