@@ -1,4 +1,4 @@
-"""Tests for running ska-mid-dish-manager tests"""
+"""Contains pytest fixtures for other tests setup"""
 
 import queue
 import socket
