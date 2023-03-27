@@ -9,12 +9,13 @@ import logging
 import os
 import random
 import sys
+import time
+from functools import wraps
 
 from ska_control_model import HealthState
 from tango import AttrWriteType, Database, DbDevInfo, DevShort, DevState
 from tango.server import Device, attribute, command
 
-from ska_mid_dish_manager.devices.test_devices.utils import random_delay_execution
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DSOperatingMode,
@@ -25,6 +26,17 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 LOGGER = logging.getLogger()
+
+
+def random_delay_execution(func):
+    """Delay a command a bit"""
+
+    @wraps(func)
+    def inner(*args, **kwargs):
+        time.sleep(round(random.uniform(1.5, 2.5), 2))
+        return func(*args, **kwargs)
+
+    return inner
 
 
 class DSDevice(Device):

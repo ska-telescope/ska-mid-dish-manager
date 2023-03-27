@@ -2,7 +2,7 @@ name: "ds-device-{{.Release.Name}}"
 function: test-device
 domain: testing
 command: "/usr/local/bin/DSDevice "
-instances: ["01"]
+instances: ["001"]
 server:
   name: "DSDevice"
   instances:
@@ -11,7 +11,7 @@ server:
       classes:
         - name: "DSDevice"
           devices:
-            - name: "mid_d{{ printf "%04s" . }}/lmc/ds_simulator"
+            - name: "ska{{ printf "%01s" . }}/lmc/ds_simulator"
   {{- end }}
 depends_on:
   - device: sys/database/2

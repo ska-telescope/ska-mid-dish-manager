@@ -1,4 +1,4 @@
-"""Tests for running ska-mid-dish-manager tests"""
+"""Contains pytest fixtures for other tests setup"""
 
 import queue
 import socket
@@ -10,7 +10,7 @@ from tango import DevState
 from tango.server import Device
 from tango.test_context import DeviceTestContext, MultiDeviceTestContext, get_host_ip
 
-from ska_mid_dish_manager.devices.test_devices.utils import EventStore
+from tests.utils import EventStore
 
 
 # pylint: disable=invalid-name, missing-function-docstring
@@ -177,22 +177,22 @@ def component_state_store():
 
 @pytest.fixture
 def dish_manager_device_fqdn():
-    return "mid_d0001/elt/master"
+    return "ska001/elt/master"
 
 
 @pytest.fixture
 def ds_device_fqdn():
-    return "mid_d0001/lmc/ds_simulator"
+    return "ska001/lmc/ds_simulator"
 
 
 @pytest.fixture
 def spf_device_fqdn():
-    return "mid_d0001/spf/simulator"
+    return "ska001/spf/simulator"
 
 
 @pytest.fixture
 def spfrx_device_fqdn():
-    return "mid_d0001/spfrx/simulator"
+    return "ska001/spfrx/simulator"
 
 
 @pytest.fixture

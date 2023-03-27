@@ -2,14 +2,16 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.devices.test_devices.utils import set_configuredBand_b1
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode, PointingState
+from tests.utils import set_configuredBand_b1
 
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_track_cmd(event_store_class, ds_device_proxy, dish_manager_proxy):
+def test_track_cmd(
+    event_store_class, dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+):
     """Test transition to STOW"""
 
     main_event_store = event_store_class()
@@ -37,7 +39,9 @@ def test_track_cmd(event_store_class, ds_device_proxy, dish_manager_proxy):
 
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
 
-    set_configuredBand_b1()
+    set_configuredBand_b1(
+        dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+    )
 
     dish_manager_proxy.subscribe_event(
         "configuredBand",

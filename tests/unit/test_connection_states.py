@@ -8,7 +8,7 @@ from ska_control_model import CommunicationStatus, HealthState
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
-from ska_mid_dish_manager.devices.test_devices.utils import EventStore
+from tests.utils import EventStore
 
 
 # pylint:disable=attribute-defined-outside-init

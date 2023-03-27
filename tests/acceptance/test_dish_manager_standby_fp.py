@@ -2,39 +2,40 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.devices.test_devices.utils import (
-    set_configuredBand_b1,
-    set_configuredBand_b2,
-)
+from tests.utils import set_configuredBand_b1, set_configuredBand_b2
 
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_standby_fp_transition(event_store_class):
+def test_standby_fp_transition(
+    event_store_class, dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+):
     """Test transition to Standby_FP"""
-    dish_manager = tango.DeviceProxy("mid_d0001/elt/master")
-
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
 
-    dish_manager.subscribe_event(
+    dish_manager_proxy.subscribe_event(
         "longrunningCommandResult",
         tango.EventType.CHANGE_EVENT,
         result_event_store,
     )
 
-    dish_manager.subscribe_event(
+    dish_manager_proxy.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
         progress_event_store,
     )
 
     # Force a transition
-    set_configuredBand_b1()
-    set_configuredBand_b2()
+    set_configuredBand_b1(
+        dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+    )
+    set_configuredBand_b2(
+        dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+    )
 
-    [[_], [unique_id]] = dish_manager.SetStandbyFPMode()
+    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [

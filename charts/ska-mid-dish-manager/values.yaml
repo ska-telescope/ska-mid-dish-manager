@@ -21,10 +21,13 @@ global:
   # .Values.deviceServers.<device>.instances
   # File, data/<device>.yaml, instances
 
-  # List the dishes, if set, then this list will be applied to instances of:
-  # deviceServers.dishmaster
+  # List the dishes, if set, then this list will be
+  # applied to instances of > deviceServers.dishmanager
+  # Values follow the sequence in the mnenomic Dish ID
+  # defined in ADR-32 i.e. SKA[nnn] where nnn starts
+  # from 001 to 133
   dish_devices: ["dish-manager"]
-  dishes: ["01"]
+  dishes: ["001"]
 
 
 dsconfig:

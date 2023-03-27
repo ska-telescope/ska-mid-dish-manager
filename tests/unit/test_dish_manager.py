@@ -13,7 +13,6 @@ from ska_control_model import CommunicationStatus, TaskStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
-from ska_mid_dish_manager.devices.test_devices.utils import EventStore
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
@@ -21,6 +20,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from tests.utils import EventStore
 
 
 @pytest.mark.unit
@@ -141,7 +141,7 @@ class TestDishManager:
         assert sorted([event_id.split("_")[-1] for event_id in event_ids]) == [
             "SetOperateMode",
             "SetStandbyFPMode",
-            "SetStandbyFPMode",
+            "SetStandbyMode",
         ]
 
     def test_component_states(self):

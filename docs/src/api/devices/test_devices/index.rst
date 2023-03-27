@@ -7,4 +7,3 @@ Test Devices
 .. toctree::
 
    DishStructure Simulator Device<DSDevice>
-   Dish Manager Test Device<TestDishManagerDevice>

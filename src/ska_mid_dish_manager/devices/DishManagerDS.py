@@ -53,9 +53,13 @@ class DishManager(SKAController):
     # Access instances for debugging
     instances = weakref.WeakValueDictionary()
 
-    ds_device_fqdn = device_property(dtype=str, default_value="mid_d0001/lmc/ds_simulator")
-    spf_device_fqdn = device_property(dtype=str, default_value="mid_d0001/spf/simulator")
-    spfrx_device_fqdn = device_property(dtype=str, default_value="mid_d0001/spfrx/simulator")
+    # -----------------
+    # Device Properties
+    # -----------------
+    DSDeviceFqdn = device_property(dtype=str)
+    SPFDeviceFqdn = device_property(dtype=str)
+    SPFRxDeviceFqdn = device_property(dtype=str)
+    DishId = device_property(dtype=str)
 
     def create_component_manager(self):
         """Create the component manager for DishManager
@@ -67,9 +71,9 @@ class DishManager(SKAController):
             self.logger,
             self._command_tracker,
             self._update_connection_state_attrs,
-            ds_device_fqdn=self.ds_device_fqdn,
-            spf_device_fqdn=self.spf_device_fqdn,
-            spfrx_device_fqdn=self.spfrx_device_fqdn,
+            self.DSDeviceFqdn,
+            self.SPFDeviceFqdn,
+            self.SPFRxDeviceFqdn,
             communication_state_callback=None,
             component_state_callback=self._component_state_changed,
         )
@@ -1238,7 +1242,7 @@ if __name__ == "__main__":
         test_device.name = os.environ["DEVICE_NAME"]
     else:
         # fall back to default name
-        test_device.name = "mid_d0001/elt/master"
+        test_device.name = "ska001/elt/master"
     test_device._class = "DishManager"
     test_device.server = "DishManagerDS/01"
     db.add_server(test_device.server, test_device, with_dserver=True)

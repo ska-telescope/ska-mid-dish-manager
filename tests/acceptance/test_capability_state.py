@@ -2,8 +2,8 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.devices.test_devices.utils import EventStore
 from ska_mid_dish_manager.models.dish_enums import CapabilityStates
+from tests.utils import EventStore
 
 
 @pytest.mark.acceptance

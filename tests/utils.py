@@ -1,9 +1,6 @@
 # pylint: disable=invalid-name
 """General utils for test devices"""
 import queue
-import random
-import time
-from functools import wraps
 from typing import Any, List, Tuple
 
 import numpy as np
@@ -251,17 +248,6 @@ class EventStore:
         return [(event.attr_value.name, event.attr_value.value) for event in events]
 
 
-def random_delay_execution(func):
-    """Delay a command a bit"""
-
-    @wraps(func)
-    def inner(*args, **kwargs):
-        time.sleep(round(random.uniform(1.5, 2.5), 2))
-        return func(*args, **kwargs)
-
-    return inner
-
-
 def set_dish_manager_to_standby_lp(event_store, dish_manager_proxy):
     """Ensure dishManager is in a known state"""
     if dish_manager_proxy.dishMode != DishMode.STANDBY_LP:
@@ -281,7 +267,9 @@ def set_dish_manager_to_standby_lp(event_store, dish_manager_proxy):
         event_store.wait_for_value(DishMode.STANDBY_LP)
 
 
-def set_configuredBand_b1():
+def set_configuredBand_b1(
+    dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+):
     """
     Set B1 configuredBand
     Rules:
@@ -289,27 +277,24 @@ def set_configuredBand_b1():
     SPFRX.configuredband  == 'Band.B1'
     SPF.bandinfocus == 'BandInFocus.B1'
     """
-    ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
-    spf_device = tango.DeviceProxy("mid_d0001/spf/simulator")
-    spfrx_device = tango.DeviceProxy("mid_d0001/spfrx/simulator")
-    dm_device = tango.DeviceProxy("mid_d0001/elt/master")
-
     config_band_event_store = EventStore()
 
-    dm_device.subscribe_event(
+    dish_manager_proxy.subscribe_event(
         "configuredBand",
         tango.EventType.CHANGE_EVENT,
         config_band_event_store,
     )
 
-    ds_device.indexerPosition = IndexerPosition.B1
-    spf_device.bandInFocus = BandInFocus.B1
-    spfrx_device.configuredband = Band.B1
+    ds_device_proxy.indexerPosition = IndexerPosition.B1
+    spf_device_proxy.bandInFocus = BandInFocus.B1
+    spfrx_device_proxy.configuredband = Band.B1
 
     config_band_event_store.wait_for_value(Band.B1)
 
 
-def set_configuredBand_b2():
+def set_configuredBand_b2(
+    dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+):
     """
     Set B1 configuredBand
     Rules:
@@ -317,21 +302,16 @@ def set_configuredBand_b2():
     SPFRX.configuredband  == 'Band.B2'
     SPF.bandinfocus == 'BandInFocus.B2'
     """
-    ds_device = tango.DeviceProxy("mid_d0001/lmc/ds_simulator")
-    spf_device = tango.DeviceProxy("mid_d0001/spf/simulator")
-    spfrx_device = tango.DeviceProxy("mid_d0001/spfrx/simulator")
-    dm_device = tango.DeviceProxy("mid_d0001/elt/master")
-
     config_band_event_store = EventStore()
 
-    dm_device.subscribe_event(
+    dish_manager_proxy.subscribe_event(
         "configuredBand",
         tango.EventType.CHANGE_EVENT,
         config_band_event_store,
     )
 
-    ds_device.indexerPosition = IndexerPosition.B2
-    spf_device.bandInFocus = BandInFocus.B2
-    spfrx_device.configuredband = Band.B2
+    ds_device_proxy.indexerPosition = IndexerPosition.B2
+    spf_device_proxy.bandInFocus = BandInFocus.B2
+    spfrx_device_proxy.configuredband = Band.B2
 
     config_band_event_store.wait_for_value(Band.B2)
