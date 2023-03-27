@@ -313,6 +313,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attribute_name,
             self._tango_device_fqdn,
         )
+
+        # Note: If this function is called at a high rate then re-creating the device proxy
+        # here will be inefficient. Consider moving the declaration out of this function.
         device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
         result = device_proxy.write_attribute(attribute_name, attribute_value)
         self.logger.debug(

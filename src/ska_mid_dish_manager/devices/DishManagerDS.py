@@ -572,9 +572,7 @@ class DishManager(SKAController):
         # pylint: disable=attribute-defined-outside-init
         self._desired_pointing = value
         ds_cm = self.component_manager.sub_component_managers["DS"]
-        # pylint: disable=protected-access
-        ds_device_proxy = ds_cm._device_proxy
-        ds_device_proxy.desiredPointing = value
+        ds_cm.write_attribute_value("desiredPointing", value)
 
     @attribute(
         dtype=DishMode,
