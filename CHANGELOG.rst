@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.1.0
+*************
+- Conform to ADR-32 Dish ID format e.g. mid_d0001/elt/master -> ska001/elt/master
+
 Version 2.0.1
 *************
 - Increment python package version to match helm chart version
