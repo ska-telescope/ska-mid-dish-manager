@@ -158,4 +158,4 @@ class TestDishManager:
         self.device_proxy.desiredPointing = write_value
 
         mocked_write.assert_called()
-        assert self.device_proxy.desiredPointing == write_value
+        assert list(self.device_proxy.desiredPointing) == list(write_value)
