@@ -141,7 +141,7 @@ class TestDishManager:
         assert sorted([event_id.split("_")[-1] for event_id in event_ids]) == [
             "SetOperateMode",
             "SetStandbyFPMode",
-            "SetStandbyFPMode",
+            "SetStandbyMode",
         ]
 
     def test_component_states(self):
