@@ -27,14 +27,6 @@ def test_standby_fp_transition(
         progress_event_store,
     )
 
-    # Force a transition
-    set_configuredBand_b1(
-        dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
-    )
-    set_configuredBand_b2(
-        dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
-    )
-
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 

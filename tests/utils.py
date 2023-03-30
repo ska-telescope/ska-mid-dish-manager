@@ -251,7 +251,6 @@ class EventStore:
 def set_dish_manager_to_standby_lp(event_store, dish_manager_proxy):
     """Ensure dishManager is in a known state"""
     if dish_manager_proxy.dishMode != DishMode.STANDBY_LP:
-
         dish_manager_proxy.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,

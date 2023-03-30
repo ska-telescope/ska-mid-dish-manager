@@ -103,7 +103,6 @@ class CommandMap:
                 },
             }
 
-
         self._run_long_running_command(
             task_callback,
             task_abort_event,

@@ -82,7 +82,7 @@ class DishManager(SKAController):
         """Initialise the command handlers"""
         super().init_command_objects()
 
-        for (command_name, method_name) in [
+        for command_name, method_name in [
             ("SetStandbyLPMode", "set_standby_lp_mode"),
             ("SetOperateMode", "set_operate_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
@@ -877,7 +877,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution " "should start.",
+        doc_in="Indicates the time, in UTC, at which command execution should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -893,9 +893,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in=(
-            "Indicates the time, in UTC (ISO 8601), at which command" " execution should start."
-        ),
+        doc_in=("Indicates the time, in UTC (ISO 8601), at which command execution should start."),
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
@@ -916,14 +914,12 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand2")
 
-        result_code, unique_id = handler(
-            activation_timestamp, self._configured_band, self._synchronised
-        )
+        result_code, unique_id = handler(activation_timestamp, self._synchronised)
         return ([result_code], [unique_id])
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution " "should start.",
+        doc_in="Indicates the time, in UTC, at which command execution should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -939,7 +935,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution " "should start.",
+        doc_in="Indicates the time, in UTC, at which command execution should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -955,7 +951,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution " "should start.",
+        doc_in="Indicates the time, in UTC, at which command execution should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -971,7 +967,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution " "should start.",
+        doc_in="Indicates the time, in UTC, at which command execution should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )

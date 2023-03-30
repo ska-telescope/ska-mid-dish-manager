@@ -92,7 +92,6 @@ class TestDishManager:
         # Clear out the queue to make sure we dont keep previous events
         event_store.clear_queue()
 
-
         self.device_proxy.subscribe_event(
             "longRunningCommandResult",
             tango.EventType.CHANGE_EVENT,
@@ -129,7 +128,7 @@ class TestDishManager:
         assert sorted([event_id.split("_")[-1] for event_id in event_ids]) == [
             "SetOperateMode",
             "SetStandbyFPMode",
-            "SetStandbyFPMode"
+            "SetStandbyFPMode",
         ]
 
     def test_component_states(self):
