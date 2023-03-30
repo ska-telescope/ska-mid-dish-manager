@@ -75,8 +75,6 @@ class TestSetStandByFPMode:
 
         assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
 
-        self.dish_manager_cm._update_component_state(configuredband=Band.B2)
-
         # Transition DishManager to STANDBY_FP mode
         self.device_proxy.SetStandbyFPMode()
 
@@ -90,7 +88,6 @@ class TestSetStandByFPMode:
         self.ds_cm._update_component_state(powerstate=DSPowerState.FULL_POWER)
         self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         self.spf_cm._update_component_state(powerstate=SPFPowerState.FULL_POWER)
-        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
         #  we can now expect dishMode to transition to STANDBY_FP
         assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
