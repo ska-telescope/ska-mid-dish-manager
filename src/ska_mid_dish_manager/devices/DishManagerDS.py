@@ -1128,16 +1128,6 @@ class DishManager(SKAController):
         raise NotImplementedError
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
-    def StartCapture(self):
-        """Capture data from the CBF"""
-        raise NotImplementedError
-
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
-    def StopCapture(self):
-        """Stop capturing data"""
-        raise NotImplementedError
-
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def Synchronise(self):
         """
         Reset configured band sample counters. Command only valid in
