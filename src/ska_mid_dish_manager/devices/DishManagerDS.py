@@ -206,7 +206,7 @@ class DishManager(SKAController):
             device._poly_track = []
             device._power_state = PowerState.LOW
             device._program_track_table = []
-            device._synchronised = True
+            device._synchronised = False
             device._track_interpolation_mode = TrackInterpolationMode.NEWTON
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.ADD
