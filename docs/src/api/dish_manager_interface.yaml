@@ -162,12 +162,6 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
-    - name: StartCapture
-      disp_level: OPERATOR
-      doc_in: Uninitialised
-      doc_out: Uninitialised
-      dtype_in: DevVoid
-      dtype_out: DevVoid
     - name: StartCommunication
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -186,12 +180,6 @@
       doc_out: Device status
       dtype_in: DevVoid
       dtype_out: DevString
-    - name: StopCapture
-      disp_level: OPERATOR
-      doc_in: Uninitialised
-      doc_out: Uninitialised
-      dtype_in: DevVoid
-      dtype_out: DevVoid
     - name: StopCommunication
       disp_level: OPERATOR
       doc_in: Uninitialised
