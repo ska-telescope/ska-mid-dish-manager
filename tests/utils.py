@@ -6,7 +6,13 @@ from typing import Any, List, Tuple
 import numpy as np
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import Band, BandInFocus, DishMode, IndexerPosition
+from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    BandInFocus,
+    DishMode,
+    IndexerPosition,
+    SPFRxOperatingMode,
+)
 
 
 class EventStore:
@@ -287,6 +293,8 @@ def set_configuredBand_b1(
     ds_device_proxy.indexerPosition = IndexerPosition.B1
     spf_device_proxy.bandInFocus = BandInFocus.B1
     spfrx_device_proxy.configuredband = Band.B1
+    # accompany spfrx configuredband change with operatingMode change
+    spfrx_device_proxy.operatingMode = SPFRxOperatingMode.DATA_CAPTURE
 
     config_band_event_store.wait_for_value(Band.B1)
 
@@ -312,5 +320,7 @@ def set_configuredBand_b2(
     ds_device_proxy.indexerPosition = IndexerPosition.B2
     spf_device_proxy.bandInFocus = BandInFocus.B2
     spfrx_device_proxy.configuredband = Band.B2
+    # accompany spfrx configuredband change with operatingMode change
+    spfrx_device_proxy.operatingMode = SPFRxOperatingMode.DATA_CAPTURE
 
     config_band_event_store.wait_for_value(Band.B2)
