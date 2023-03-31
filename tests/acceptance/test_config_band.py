@@ -37,7 +37,6 @@ def test_configure_band_2(
     )
     main_event_store.clear_queue()
 
-
     dish_manager_proxy.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
