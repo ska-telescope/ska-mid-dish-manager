@@ -67,7 +67,16 @@ pytest-bdd = "^6.0.1"
 requests = "^2.28.1"
 mypy = "^0.982"
 
-
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = "--forked --json-report --json-report-file=build/reports/report.json --cov-report html:build/htmlcov --cov-report xml:build/reports/code-coverage.xml --cov-report term:skip-covered --cov=ska_mid_dish_manager --junitxml=build/reports/unit-tests.xml --verbose"
+console_output_style = "progress"
+junit_family = "legacy"
+markers = [
+    "unit",
+    "acceptance",
+    "SKA_mid"
+]
 
 [tool.isort]
 multi_line_output = 3
