@@ -48,15 +48,6 @@ class CommandMap:
 
     def set_standby_lp_mode(self, task_callback: Optional[Callable] = None, task_abort_event=None):
         """Transition the dish to STANDBY_LP mode"""
-
-        # TODO clarify code below, SPFRX stays in DATA_CAPTURE when we dont
-        # execute setstandby on it. So going from LP to FP never completes
-        # since dishMode does not update.
-        #
-        # if self._dish_manager_cm.component_state["dishmode"].name
-        #  == "STANDBY_FP":
-        #     subservient_devices = ["DS", "SPF"]
-
         commands_for_sub_devices = {
             "SPF": {
                 "command": "SetStandbyLPMode",
@@ -112,19 +103,6 @@ class CommandMap:
                 },
             }
 
-            if self._dish_manager_cm.component_state["configuredband"] not in [
-                Band.NONE,
-                Band.UNKNOWN,
-            ]:
-                commands_for_sub_devices["SPFRX"] = {
-                    "command": "SetStandbyMode",
-                    "awaitedAttribute": "operatingmode",
-                    "awaitedValuesList": [
-                        SPFRxOperatingMode.STANDBY,
-                        SPFRxOperatingMode.DATA_CAPTURE,
-                    ],
-                }
-
         self._run_long_running_command(
             task_callback,
             task_abort_event,
@@ -145,12 +123,6 @@ class CommandMap:
                 "command": "SetOperateMode",
                 "awaitedAttribute": "operatingmode",
                 "awaitedValuesList": [SPFOperatingMode.OPERATE],
-            },
-            "SPFRX": {
-                "command": "CaptureData",
-                "commandArgument": True,
-                "awaitedAttribute": "operatingmode",
-                "awaitedValuesList": [SPFRxOperatingMode.DATA_CAPTURE],
             },
             "DS": {
                 "command": "SetPointMode",

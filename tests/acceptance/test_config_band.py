@@ -17,11 +17,6 @@ def test_configure_band_2(
     event_store_class, dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
 ):
     """Test ConfigureBand2"""
-    # make sure configureBand is not B2
-    set_configuredBand_b1(
-        dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
-    )
-
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
     dishmode_event_store = event_store_class()
@@ -46,13 +41,16 @@ def test_configure_band_2(
             main_event_store,
         )
 
-    main_event_store.clear_queue()
-
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     main_event_store.wait_for_command_id(unique_id, timeout=8)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
-
+    # make sure configureBand is not B2
+    set_configuredBand_b1(
+        dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+    )
     main_event_store.clear_queue()
+    progress_event_store.clear_queue()
+    dishmode_event_store.clear_queue()
 
     future_time = datetime.utcnow() + timedelta(days=1)
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())

@@ -141,6 +141,8 @@ class TestSetOperateMode:
         ds_cm._update_component_state(indexerposition=IndexerPosition.B1)
         spf_cm._update_component_state(bandinfocus=BandInFocus.B1)
         spfrx_cm._update_component_state(configuredband=Band.B1)
+        # spfrx operating mode transitions to Data Capture after successful band configuration
+        spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
         main_event_store.wait_for_value(Band.B1)
 
         device_proxy.SetOperateMode()
@@ -149,7 +151,6 @@ class TestSetOperateMode:
         # and observe that DishManager transitions dishMode to OPERATE mode
         # SPF are already in the expected operatingMode
         ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-        spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
         # we can now expect dishMode to transition to OPERATE
         main_event_store.wait_for_value(DishMode.OPERATE)
         ds_cm._update_component_state(pointingstate=PointingState.READY)
@@ -158,7 +159,6 @@ class TestSetOperateMode:
         expected_progress_updates = [
             "SetPointMode called on DS",
             "SetOperateMode called on SPF",
-            "CaptureData called on SPFRx",
             "Awaiting dishMode change to OPERATE",
             "SetOperateMode completed",
         ]

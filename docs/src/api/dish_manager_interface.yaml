@@ -186,6 +186,12 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVoid
+    - name: SyncComponentStates
+      disp_level: OPERATOR
+      doc_in: Uninitialised
+      doc_out: Uninitialised
+      dtype_in: DevVoid
+      dtype_out: DevVoid
     - name: Synchronise
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -851,7 +857,6 @@
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
-      - PLACEHOLDER
       - DISABLED
       - NOT_ESTABLISHED
       - ESTABLISHED
@@ -1327,7 +1332,6 @@
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
-      - PLACEHOLDER
       - DISABLED
       - NOT_ESTABLISHED
       - ESTABLISHED
@@ -1348,7 +1352,6 @@
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
-      - PLACEHOLDER
       - DISABLED
       - NOT_ESTABLISHED
       - ESTABLISHED
@@ -1483,13 +1486,14 @@
       writable: READ
       writable_attr_name: None
     properties:
+    - name: DSDeviceFqdn
+    - name: DishId
     - name: GroupDefinitions
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
     - name: MaxCapabilities
     - name: ReceptorNumber
+    - name: SPFDeviceFqdn
+    - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: ds_device_fqdn
     - name: polled_cmd
-    - name: spf_device_fqdn
-    - name: spfrx_device_fqdn

@@ -28,6 +28,6 @@ dependencies:
   version: 0.4.2
   repository: https://artefact.skao.int/repository/helm-internal
 - name: ska-mid-dish-simulators
-  version: 0.0.7
+  version: 0.0.8
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-simulators.enabled

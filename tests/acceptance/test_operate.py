@@ -57,7 +57,6 @@ def test_set_operate(
     expected_progress_updates = [
         "SetPointMode called on DS",
         "SetOperateMode called on SPF",
-        "CaptureData called on SPFRx",
         "Awaiting dishMode change to OPERATE",
         "SetOperateMode completed",
     ]

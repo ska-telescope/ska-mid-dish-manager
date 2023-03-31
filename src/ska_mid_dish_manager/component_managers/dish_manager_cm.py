@@ -489,7 +489,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def configure_band2_cmd(
         self,
         activation_timestamp,
-        current_configured_band,
         synchronise,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
@@ -500,7 +499,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             command_name="ConfigureBand2",
         )
 
-        if current_configured_band == Band.B2:
+        if self.component_state["configuredband"] == Band.B2:
             return TaskStatus.REJECTED, f"Already in band {Band.B2.name}"
 
         # TODO Check if ConfigureBand2 is already running
