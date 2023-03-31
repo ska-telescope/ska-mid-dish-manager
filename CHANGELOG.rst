@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.1.1
+*************
+- Use ska-mid-dish-simulators v0.0.8 with SPFRx interface change
+- Update fanout for SPFRx to remove `CaptureData` and references to it
+
 Version 2.1.0
 *************
 - Conform to ADR-32 Dish ID format e.g. mid_d0001/elt/master -> ska001/elt/master
