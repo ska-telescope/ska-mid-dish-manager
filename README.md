@@ -51,16 +51,28 @@ make python-lint
 
 - Deploy the chart with simulator devices
 
-```
-helm upgrade --install dev . -n dish-manager --set global.minikube=true --set ska-mid-dish-simulators.enabled=true --set deviceServers.dsdevice.enabled=true --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true --set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true
+```bash
+$ helm upgrade --install dev . -n dish-manager \ # "." is charts/ska-mid-dish-manager
+--set global.minikube=true \
+--set deviceServers.dsdevice.enabled=true \ # enable DS test device
+--set ska-mid-dish-simulators.enabled=true \ # enable simulators (select which simulator to deploy below)
+--set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
+--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true
 ```
 
 ### Deploy for development
 
 - Deploy the chart, but replace the dishmanager pod with a development pod for testing DishManager
 
-```
-helm upgrade --install dev . -n dish-manager --set global.minikube=true --set ska-mid-dish-simulators.enabled=true --set deviceServers.dsdevice.enabled=true --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true --set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true --set="dev_pod.enabled=true" --set "deviceServers.dishmanager.enabled=false"
+```bash
+$ helm upgrade --install dev . -n dish-manager \
+--set global.minikube=true \
+--set dev_pod.enabled=true \ # enable devpod for development
+--set deviceServers.dishmanager.enabled=false \ # disable dishmanager to use devpod
+--set deviceServers.dsdevice.enabled=true \
+--set ska-mid-dish-simulators.enabled=true \
+--set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
+--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true
 ```
 
 - Then start DishManager in the commandline
