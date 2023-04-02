@@ -223,7 +223,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # push change events for the connection state attributes
         self._connection_state_callback(attribute_name)
 
-    # pylint: disable=unused-argument, too-many-branches
+    # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _component_state_changed(self, *args, **kwargs):
         """
         Callback triggered by the component manager of the
@@ -287,6 +287,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             self._update_component_state(dishmode=new_dish_mode)
 
+            # fan-out requires further updates to SPFRx operatingMode
+            # if band is already configured for fp or operate transition
+            spfrx_component_manager = self.sub_component_managers["SPFRX"]
+            # follow through with the spfrx operatingMode update
+            # if the new event update is not data capture
+            if spfrx_component_state["operatingmode"] != SPFRxOperatingMode.DATA_CAPTURE:
+                # Update SPFRx operatingMode to DATA-CAPTURE if band is
+                # configured and new dish mode is STANDBY-FP or OPERATE
+                if self.component_state["configuredband"] not in [Band.NONE, Band.UNKNOWN]:
+                    if new_dish_mode in [DishMode.STANDBY_FP, DishMode.OPERATE]:
+                        self.logger.debug("Setting operatingMode on SPFRx to DATA-CAPTURE")
+                        spfrx_component_manager.write_attribute_value(
+                            "operatingMode", SPFRxOperatingMode.DATA_CAPTURE
+                        )
+                        spfrx_component_manager.write_attribute_value("capturingData", True)
+
         if (
             "healthstate" in kwargs
             and "healthstate" in ds_component_state
@@ -327,11 +343,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ds_component_state, spfrx_component_state
             )
             self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
-            # pylint: disable=protected-access
             # update the bandInFocus of SPF before configuredBand
-            # component state changed for DS and SPFRx may be triggered while
-            # SPF device proxy is not initialised. Write to the bandInFocus
-            # only when you have the device proxy
             spf_component_manager = self.sub_component_managers["SPF"]
             spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
 
