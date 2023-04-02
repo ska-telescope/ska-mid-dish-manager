@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.1.2
+*************
+- Use ska-mid-dish-simulators v0.0.9 with updates to capturingData attribute
+- Apply SPFRx operatingMode `DATA-CAPTURE` updates according to fan-out requirements
+
 Version 2.1.1
 *************
 - Use ska-mid-dish-simulators v0.0.8 with SPFRx interface change
