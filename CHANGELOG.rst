@@ -7,8 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 Version 2.1.2
 *************
-- Use ska-mid-dish-simulators v0.0.9 with updates to capturingData attribute
-- Apply SPFRx operatingMode `DATA-CAPTURE` updates according to fan-out requirements
+- Use ska-mid-dish-simulators v1.0.0 with updates to SPFRx device SetStandbyMode cmd
 
 Version 2.1.1
 *************
