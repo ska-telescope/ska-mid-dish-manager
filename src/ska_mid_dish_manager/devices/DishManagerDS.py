@@ -206,7 +206,6 @@ class DishManager(SKAController):
             device._poly_track = []
             device._power_state = PowerState.LOW
             device._program_track_table = []
-            device._synchronised = False
             device._track_interpolation_mode = TrackInterpolationMode.NEWTON
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.ADD
@@ -749,14 +748,6 @@ class DishManager(SKAController):
         self._track_table_load_mode = value
 
     @attribute(
-        dtype=bool,
-        doc="Indicates whether the configured band is synchronised or not.",
-    )
-    def synchronised(self):
-        """Returns the synchronised"""
-        return self._synchronised
-
-    @attribute(
         dtype=CapabilityStates,
         access=AttrWriteType.READ,
         doc="Report the device b1CapabilityState",
@@ -892,13 +883,13 @@ class DishManager(SKAController):
         raise NotImplementedError
 
     @command(
-        dtype_in=str,
+        dtype_in=bool,
         doc_in=("Indicates the time, in UTC (ISO 8601), at which command execution should start."),
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def ConfigureBand2(
-        self, activation_timestamp
+        self, synchronise
     ) -> DevVarLongStringArrayType:  # pylint: disable=unused-argument
         """
         Implemented as a Long Running Command
@@ -914,16 +905,16 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand2")
 
-        result_code, unique_id = handler(activation_timestamp, self._synchronised)
+        result_code, unique_id = handler(synchronise)
         return ([result_code], [unique_id])
 
     @command(
-        dtype_in=str,
+        dtype_in=bool,
         doc_in="Indicates the time, in UTC, at which command execution should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand3(self, timestamp):  # pylint: disable=unused-argument
+    def ConfigureBand3(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
@@ -934,12 +925,12 @@ class DishManager(SKAController):
         raise NotImplementedError
 
     @command(
-        dtype_in=str,
+        dtype_in=bool,
         doc_in="Indicates the time, in UTC, at which command execution should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand4(self, timestamp):  # pylint: disable=unused-argument
+    def ConfigureBand4(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
@@ -950,12 +941,12 @@ class DishManager(SKAController):
         raise NotImplementedError
 
     @command(
-        dtype_in=str,
+        dtype_in=bool,
         doc_in="Indicates the time, in UTC, at which command execution should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand5a(self, timestamp):  # pylint: disable=unused-argument
+    def ConfigureBand5a(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
@@ -966,12 +957,12 @@ class DishManager(SKAController):
         raise NotImplementedError
 
     @command(
-        dtype_in=str,
+        dtype_in=bool,
         doc_in="Indicates the time, in UTC, at which command execution should start.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand5b(self, timestamp):  # pylint: disable=unused-argument
+    def ConfigureBand5b(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to

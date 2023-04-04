@@ -1,6 +1,5 @@
 """Unit tests for the ConfigureBand2 command on dish manager."""
 import logging
-from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -114,8 +113,7 @@ class TestConfigureBand2:
         assert self.device_proxy.dishMode == DishMode.STANDBY_FP
 
         # Request ConfigureBand2 on Dish manager
-        future_time = datetime.utcnow() + timedelta(days=1)
-        [[_], [unique_id]] = self.device_proxy.ConfigureBand2(future_time.isoformat())
+        [[_], [unique_id]] = self.device_proxy.ConfigureBand2(False)
 
         self.spfrx_cm._update_component_state(configuredband=Band.B2)
         self.ds_cm._update_component_state(indexerposition=IndexerPosition.B2)

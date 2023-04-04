@@ -1,7 +1,6 @@
 # pylint: disable=protected-access
 """Component manager for a DishManager tango device"""
 import logging
-from datetime import datetime
 from functools import partial
 from threading import Lock
 from typing import Callable, Optional, Tuple
@@ -488,7 +487,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def configure_band2_cmd(
         self,
-        activation_timestamp,
         synchronise,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
@@ -503,17 +501,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return TaskStatus.REJECTED, f"Already in band {Band.B2.name}"
 
         # TODO Check if ConfigureBand2 is already running
-
-        # check timestamp is in the future
-        try:
-            if datetime.fromisoformat(activation_timestamp) <= datetime.utcnow():
-                return (
-                    TaskStatus.REJECTED,
-                    f"{activation_timestamp} is not in the future",
-                )
-        except ValueError as err:
-            self.logger.exception(err)
-            return TaskStatus.REJECTED, str(err)
 
         status, response = self.submit_task(
             self._command_map.configure_band2_cmd,
