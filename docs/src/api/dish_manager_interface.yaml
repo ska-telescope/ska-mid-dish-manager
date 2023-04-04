@@ -17,38 +17,55 @@
       dtype_out: DevString
     - name: ConfigureBand1
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC, at which command execution should start.
+      doc_in: "\n        If the synchronise argument is true, the SPFRx FPGA is instructed\
+        \ to synchronise\n        its internal flywheel 1PPS to the SAT-1PPS for the\
+        \ ADC that is applicable to the band\n        being configured, and the band\
+        \ counters are reset. (Should be default to False).\n        "
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevBoolean
       dtype_out: DevVoid
     - name: ConfigureBand2
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC (ISO 8601), at which command execution should
-        start.
+      doc_in: "\n        If the synchronise argument is true, the SPFRx FPGA is instructed\
+        \ to synchronise\n        its internal flywheel 1PPS to the SAT-1PPS for the\
+        \ ADC that is applicable to the band\n        being configured, and the band\
+        \ counters are reset. (Should be default to False).\n        "
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVarLongStringArray
     - name: ConfigureBand3
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC, at which command execution should start.
+      doc_in: "\n        If the synchronise argument is true, the SPFRx FPGA is instructed\
+        \ to synchronise\n        its internal flywheel 1PPS to the SAT-1PPS for the\
+        \ ADC that is applicable to the band\n        being configured, and the band\
+        \ counters are reset. (Should be default to False).\n        "
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVoid
     - name: ConfigureBand4
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC, at which command execution should start.
+      doc_in: "\n        If the synchronise argument is true, the SPFRx FPGA is instructed\
+        \ to synchronise\n        its internal flywheel 1PPS to the SAT-1PPS for the\
+        \ ADC that is applicable to the band\n        being configured, and the band\
+        \ counters are reset. (Should be default to False).\n        "
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVoid
     - name: ConfigureBand5a
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC, at which command execution should start.
+      doc_in: "\n        If the synchronise argument is true, the SPFRx FPGA is instructed\
+        \ to synchronise\n        its internal flywheel 1PPS to the SAT-1PPS for the\
+        \ ADC that is applicable to the band\n        being configured, and the band\
+        \ counters are reset. (Should be default to False).\n        "
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVoid
     - name: ConfigureBand5b
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC, at which command execution should start.
+      doc_in: "\n        If the synchronise argument is true, the SPFRx FPGA is instructed\
+        \ to synchronise\n        its internal flywheel 1PPS to the SAT-1PPS for the\
+        \ ADC that is applicable to the band\n        being configured, and the band\
+        \ counters are reset.\n        "
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVoid

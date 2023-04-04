@@ -867,8 +867,10 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     @command(
-        dtype_in=str,
-        doc_in="Indicates the time, in UTC, at which command execution should start.",
+        dtype_in=bool,
+        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
+        "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -884,7 +886,9 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in=("Indicates the time, in UTC (ISO 8601), at which command execution should start."),
+        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
+        "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
@@ -910,7 +914,9 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in="Indicates the time, in UTC, at which command execution should start.",
+        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
+        "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -926,7 +932,9 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in="Indicates the time, in UTC, at which command execution should start.",
+        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
+        "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -942,7 +950,9 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in="Indicates the time, in UTC, at which command execution should start.",
+        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
+        "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -958,7 +968,9 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in="Indicates the time, in UTC, at which command execution should start.",
+        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
+        "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
