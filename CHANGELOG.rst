@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 Version 2.1.2
 *************
+- Updated DishManager configureBand interface: configureBandx(timestamp) > configureBandx(boolean)
 - Use ska-mid-dish-simulators v0.1.0 with updates to SPFRx device SetStandbyMode cmd
 
 Version 2.1.1
