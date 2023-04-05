@@ -89,7 +89,8 @@ class TangoDeviceMonitor:
             try:
                 proxy = tango.DeviceProxy(self._tango_fqdn)
                 proxy.ping()
-                return start_monitoring_threads()
+                start_monitoring_threads()
+                return
             except tango.DevFailed:
                 self._logger.info(
                     "Cannot connect to %s try number %s", self._tango_fqdn, try_count
