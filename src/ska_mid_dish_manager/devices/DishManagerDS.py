@@ -868,13 +868,13 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand1(self, timestamp):  # pylint: disable=unused-argument
+    def ConfigureBand1(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
@@ -886,7 +886,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out="DevVarLongStringArray",
@@ -894,7 +894,7 @@ class DishManager(SKAController):
     )
     def ConfigureBand2(
         self, synchronise
-    ) -> DevVarLongStringArrayType:  # pylint: disable=unused-argument
+    ) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
 
@@ -914,7 +914,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out=None,
@@ -932,7 +932,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out=None,
@@ -950,7 +950,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out=None,
@@ -968,7 +968,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in=bool,
-        doc_in="If the synchronise argument is true, the SPFRx FPGA is instructed to synchronise "
+        doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
         dtype_out=None,

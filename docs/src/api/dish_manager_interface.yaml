@@ -17,7 +17,7 @@
       dtype_out: DevString
     - name: ConfigureBand1
       disp_level: OPERATOR
-      doc_in: If the synchronise argument is true, the SPFRx FPGA is instructed to
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
         (Should be default to False).
@@ -26,7 +26,7 @@
       dtype_out: DevVoid
     - name: ConfigureBand2
       disp_level: OPERATOR
-      doc_in: If the synchronise argument is true, the SPFRx FPGA is instructed to
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
         (Should be default to False).
@@ -35,7 +35,7 @@
       dtype_out: DevVarLongStringArray
     - name: ConfigureBand3
       disp_level: OPERATOR
-      doc_in: If the synchronise argument is true, the SPFRx FPGA is instructed to
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
         (Should be default to False).
@@ -44,7 +44,7 @@
       dtype_out: DevVoid
     - name: ConfigureBand4
       disp_level: OPERATOR
-      doc_in: If the synchronise argument is true, the SPFRx FPGA is instructed to
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
         (Should be default to False).
@@ -53,7 +53,7 @@
       dtype_out: DevVoid
     - name: ConfigureBand5a
       disp_level: OPERATOR
-      doc_in: If the synchronise argument is true, the SPFRx FPGA is instructed to
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
         (Should be default to False).
@@ -62,7 +62,7 @@
       dtype_out: DevVoid
     - name: ConfigureBand5b
       disp_level: OPERATOR
-      doc_in: If the synchronise argument is true, the SPFRx FPGA is instructed to
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
         (Should be default to False).
