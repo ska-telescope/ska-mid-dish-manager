@@ -892,9 +892,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand2(
-        self, synchronise
-    ) -> DevVarLongStringArrayType:
+    def ConfigureBand2(self, synchronise) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
 
