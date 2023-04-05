@@ -17,40 +17,57 @@
       dtype_out: DevString
     - name: ConfigureBand1
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC, at which command execution should start.
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
+        synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
+        applicable to the band being configured, and the band counters are reset.
+        (Should be default to False).
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevBoolean
       dtype_out: DevVoid
     - name: ConfigureBand2
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC (ISO 8601), at which command execution should
-        start.
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
+        synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
+        applicable to the band being configured, and the band counters are reset.
+        (Should be default to False).
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevBoolean
       dtype_out: DevVarLongStringArray
     - name: ConfigureBand3
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC, at which command execution should start.
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
+        synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
+        applicable to the band being configured, and the band counters are reset.
+        (Should be default to False).
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevBoolean
       dtype_out: DevVoid
     - name: ConfigureBand4
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC, at which command execution should start.
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
+        synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
+        applicable to the band being configured, and the band counters are reset.
+        (Should be default to False).
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevBoolean
       dtype_out: DevVoid
     - name: ConfigureBand5a
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC, at which command execution should start.
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
+        synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
+        applicable to the band being configured, and the band counters are reset.
+        (Should be default to False).
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevBoolean
       dtype_out: DevVoid
     - name: ConfigureBand5b
       disp_level: OPERATOR
-      doc_in: Indicates the time, in UTC, at which command execution should start.
+      doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
+        synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
+        applicable to the band being configured, and the band counters are reset.
+        (Should be default to False).
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevBoolean
       dtype_out: DevVoid
     - name: DebugDevice
       disp_level: OPERATOR
@@ -1365,22 +1382,6 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
-    - name: synchronised
-      data_format: SCALAR
-      data_type: DevBoolean
-      description: Indicates whether the configured band is synchronised or not.
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: Not specified
-      label: synchronised
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
     - name: testMode
       data_format: SCALAR
       data_type: DevEnum
@@ -1497,3 +1498,4 @@
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
     - name: polled_cmd
+
