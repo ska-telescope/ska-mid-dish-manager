@@ -849,7 +849,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "03e5b2865c52417a6ddc5302705897cfb8b1edbaedc5c805c339cf32ee71f1ba"
+content-hash = "c5d2c6efba0e421e547e47f553c5168a54bae42078518c0ab387430a3652ec64"
 
 [metadata.files]
 argparse = [
