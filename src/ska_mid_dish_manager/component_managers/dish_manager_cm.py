@@ -326,11 +326,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ds_component_state, spfrx_component_state
             )
             self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
-            # pylint: disable=protected-access
             # update the bandInFocus of SPF before configuredBand
-            # component state changed for DS and SPFRx may be triggered while
-            # SPF device proxy is not initialised. Write to the bandInFocus
-            # only when you have the device proxy
             spf_component_manager = self.sub_component_managers["SPF"]
             spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
 
