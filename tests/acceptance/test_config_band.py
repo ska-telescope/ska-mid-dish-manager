@@ -1,6 +1,4 @@
 """Test ConfigureBand2"""
-from datetime import datetime, timedelta
-
 import pytest
 import tango
 from ska_control_model import TaskStatus
@@ -52,8 +50,7 @@ def test_configure_band_2(
     progress_event_store.clear_queue()
     dishmode_event_store.clear_queue()
 
-    future_time = datetime.utcnow() + timedelta(days=1)
-    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(False)
 
     dishmode_event_store.wait_for_value(DishMode.CONFIG)
     main_event_store.wait_for_command_id(unique_id)
@@ -62,7 +59,7 @@ def test_configure_band_2(
     dishmode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
     # Do it again to check result
-    [[task_status], [result]] = dish_manager_proxy.ConfigureBand2(future_time.isoformat())
+    [[task_status], [result]] = dish_manager_proxy.ConfigureBand2(False)
     assert task_status == TaskStatus.COMPLETED
     assert result == "Already in band B2"
 

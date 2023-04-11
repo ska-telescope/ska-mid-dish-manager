@@ -54,6 +54,7 @@ make python-lint
 ```bash
 $ helm upgrade --install dev . -n dish-manager \ # "." is charts/ska-mid-dish-manager
 --set global.minikube=true \
+--set global.dishes={001, 002} \ # number of instances to deploy; if not specified defaults to 001
 --set deviceServers.dsdevice.enabled=true \ # enable DS test device
 --set ska-mid-dish-simulators.enabled=true \ # enable simulators (select which simulator to deploy below)
 --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \

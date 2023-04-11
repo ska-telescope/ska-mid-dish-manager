@@ -1,7 +1,6 @@
 # pylint: disable=protected-access
 """Component manager for a DishManager tango device"""
 import logging
-from datetime import datetime
 from functools import partial
 from threading import Lock
 from typing import Callable, Optional, Tuple
@@ -327,11 +326,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ds_component_state, spfrx_component_state
             )
             self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
-            # pylint: disable=protected-access
             # update the bandInFocus of SPF before configuredBand
-            # component state changed for DS and SPFRx may be triggered while
-            # SPF device proxy is not initialised. Write to the bandInFocus
-            # only when you have the device proxy
             spf_component_manager = self.sub_component_managers["SPF"]
             spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
 
@@ -488,7 +483,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def configure_band2_cmd(
         self,
-        activation_timestamp,
         synchronise,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
@@ -503,17 +497,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return TaskStatus.REJECTED, f"Already in band {Band.B2.name}"
 
         # TODO Check if ConfigureBand2 is already running
-
-        # check timestamp is in the future
-        try:
-            if datetime.fromisoformat(activation_timestamp) <= datetime.utcnow():
-                return (
-                    TaskStatus.REJECTED,
-                    f"{activation_timestamp} is not in the future",
-                )
-        except ValueError as err:
-            self.logger.exception(err)
-            return TaskStatus.REJECTED, str(err)
 
         status, response = self.submit_task(
             self._command_map.configure_band2_cmd,
