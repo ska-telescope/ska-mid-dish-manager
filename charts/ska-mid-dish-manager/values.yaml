@@ -16,6 +16,8 @@ global:
   retry:
   - "--tries=10"
 
+  operator: true
+
   ## Order of instances resolution ##
   # .Values.global.dishes
   # .Values.deviceServers.<device>.instances
