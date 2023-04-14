@@ -47,7 +47,7 @@ make python-lint
 
 ## Development
 
-### Before deploying any charts, deploy the ska-tango-operator
+### If ska-tango-operator has not been installed, install it as below
 
 - Deploy the ska-tango-operator to manage pods and their configurations.
 
