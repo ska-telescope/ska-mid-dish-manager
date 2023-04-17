@@ -17,10 +17,10 @@ ifeq ($(MAKECMDGOALS),python-test)
 MARK = unit
 endif
 
-# ifeq ($(MAKECMDGOALS),k8s-test-runner)
-# MARK = acceptance
+ifeq ($(MAKECMDGOALS),k8s-test-runner)
+MARK = acceptance
 # TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
-# endif
+endif
 
 # Set the specific environment variables required for pytest
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
