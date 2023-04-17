@@ -16,3 +16,5 @@ def test_sleep(dish_manager_proxy):
 
     print("AAAfter")
     print(dish_manager_proxy.getComponentStates())
+
+    assert 0
