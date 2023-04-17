@@ -40,7 +40,7 @@ class SubscriptionTracker:
         self._subscribed_attrs = dict.fromkeys(self._monitored_attributes, False)
         self._update_lock = Lock()
 
-    def subscription_started(self, attribute_name: str):
+    def subscription_started(self, attribute_name: str) -> None:
         """Mark attr as subscribed
 
         :param attribute_name: The attribute name
@@ -51,7 +51,7 @@ class SubscriptionTracker:
             self._subscribed_attrs[attribute_name] = True
         self.update_subscription_status()
 
-    def subscription_stopped(self, attribute_name):
+    def subscription_stopped(self, attribute_name) -> None:
         """Mark attr as unsubscribed
 
         :param attribute_name: The attribute name
@@ -62,7 +62,7 @@ class SubscriptionTracker:
             self._subscribed_attrs[attribute_name] = False
         self.update_subscription_status()
 
-    def clear_subscriptions(self):
+    def clear_subscriptions(self) -> None:
         """Set all attrs as not subscribed"""
         with self._update_lock:
             for key in self._subscribed_attrs:
@@ -78,7 +78,7 @@ class SubscriptionTracker:
         with self._update_lock:
             return all(self._subscribed_attrs.values())
 
-    def update_subscription_status(self):
+    def update_subscription_status(self) -> None:
         """Update Communication Status"""
         if self.all_subscribed():
             self._logger.info("Updating CommunicationStatus as ESTABLISHED")
