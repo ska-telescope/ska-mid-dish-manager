@@ -51,7 +51,7 @@ class SubscriptionTracker:
             self._subscribed_attrs[attribute_name] = True
         self.update_subscription_status()
 
-    def subscription_stopped(self, attribute_name) -> None:
+    def subscription_stopped(self, attribute_name: str) -> None:
         """Mark attr as unsubscribed
 
         :param attribute_name: The attribute name
