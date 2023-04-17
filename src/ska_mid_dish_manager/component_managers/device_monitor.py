@@ -18,6 +18,76 @@ TEST_CONNECTION_PERIOD = 2
 SLEEP_BETWEEN_EVENTS = 0.5
 
 
+class SubscriptionTracker:
+    """Thread safe way to track which attributes are subscribed"""
+
+    def __init__(
+        self,
+        monitored_attributes: Tuple[str, ...],
+        update_communication_state: Callable,
+        logger: logging.Logger,
+    ):
+        """Keep track of which attributes has been subscribed to.
+
+        :param monitored_attributes: The attribute names to monitor
+        :type monitored_attributes: Tuple[str, ...]
+        :param update_communication_state: Update communication status
+        :type update_communication_state: Callable
+        """
+        self._monitored_attributes = monitored_attributes
+        self._update_communication_state = update_communication_state
+        self._logger = logger
+        self._subscribed_attrs = dict.fromkeys(self._monitored_attributes, False)
+        self._update_lock = Lock()
+
+    def subscription_started(self, attribute_name: str):
+        """Mark attr as subscribed
+
+        :param attribute_name: The attribute name
+        :type attribute_name: str
+        """
+        with self._update_lock:
+            self._logger.info("Marking %s attribute as subscribed", attribute_name)
+            self._subscribed_attrs[attribute_name] = True
+        self.update_subscription_status()
+
+    def subscription_stopped(self, attribute_name):
+        """Mark attr as unsubscribed
+
+        :param attribute_name: The attribute name
+        :type attribute_name: str
+        """
+        with self._update_lock:
+            self._logger.info("Marking %s attribute as not subscribed", attribute_name)
+            self._subscribed_attrs[attribute_name] = False
+        self.update_subscription_status()
+
+    def clear_subscriptions(self):
+        """Set all attrs as not subscribed"""
+        with self._update_lock:
+            for key in self._subscribed_attrs:
+                self._subscribed_attrs[key] = False
+        self.update_subscription_status()
+
+    def all_subscribed(self) -> bool:
+        """Check if all attributes has been subscribed
+
+        :return: All attributes subscribed
+        :rtype: bool
+        """
+        with self._update_lock:
+            return all(self._subscribed_attrs.values())
+
+    def update_subscription_status(self):
+        """Update Communication Status"""
+        if self.all_subscribed():
+            self._logger.info("Updating CommunicationStatus as ESTABLISHED")
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
+        else:
+            self._logger.info("Updating CommunicationStatus as NOT_ESTABLISHED")
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
+
 # pylint:disable=too-few-public-methods, too-many-instance-attributes
 class TangoDeviceMonitor:
     """Connects to and monitor a Tango device.
@@ -49,19 +119,21 @@ class TangoDeviceMonitor:
         self._monitored_attributes = monitored_attributes
         self._event_queue = event_queue
         self._logger = logger
-        self._update_communication_state = update_communication_state
 
         self._executor: Optional[ThreadPoolExecutor] = None
         self._run_count = 0
-        self._update_comm_state_lock = Lock()
         self._thread_futures: List[Future] = []
         self._exit_thread_event: Event = Event()
         # pylint: disable=bad-thread-instantiation
         self._start_monitoring_thread: Thread = Thread()
 
+        self._subscription_tracker = SubscriptionTracker(
+            self._monitored_attributes, update_communication_state, self._logger
+        )
+
     def stop_monitoring(self) -> None:
         """Close all the monitroing threads"""
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        self._subscription_tracker.clear_subscriptions()
 
         # Stop any existing start monitoring thread
         if self._start_monitoring_thread.is_alive():
@@ -120,6 +192,7 @@ class TangoDeviceMonitor:
                 self._exit_thread_event,
                 self._event_queue,
                 self._logger,
+                self._subscription_tracker,
             )
             self._thread_futures.append(future)
 
@@ -133,7 +206,6 @@ class TangoDeviceMonitor:
                 # No error happened in time
                 pass
         self._logger.info("Monitoring threads started for %s", self._tango_fqdn)
-        self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
     def monitor(self) -> None:
         """Kick off device monitoring
@@ -161,6 +233,7 @@ class TangoDeviceMonitor:
         exit_thread_event: Event,
         event_queue: Queue,
         logger: logging.Logger,
+        subscription_tracker: SubscriptionTracker,
     ) -> None:
         """Monitor an attribute
 
@@ -198,6 +271,7 @@ class TangoDeviceMonitor:
                         tango.EventType.CHANGE_EVENT,
                         event_reaction_cb,
                     )
+                    subscription_tracker.subscription_started(attribute_name)
                     logger.info("Subscribed on %s to attr %s", tango_fqdn, attribute_name)
                     if exit_thread_event.is_set():
                         return

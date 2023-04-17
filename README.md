@@ -47,6 +47,16 @@ make python-lint
 
 ## Development
 
+### If ska-tango-operator has not been installed, install it as below
+
+- Deploy the ska-tango-operator to manage pods and their configurations.
+
+```bash
+$ helm repo add k8s-helm-repository https://artefact.skao.int/repository/helm-internal
+$ kubectl create namespace ska-tango-operator-system
+$ helm upgrade --install to k8s-helm-repository/ska-tango-operator -n ska-tango-operator-system
+```
+
 ### Deploy the chart with simulators
 
 - Deploy the chart with simulator devices
@@ -54,7 +64,7 @@ make python-lint
 ```bash
 $ helm upgrade --install dev . -n dish-manager \ # "." is charts/ska-mid-dish-manager
 --set global.minikube=true \
---set global.dishes={001, 002} \ # number of instances to deploy; if not specified defaults to 001
+--set global.dishes={001,002} \ # number of instances to deploy; if not specified defaults to 001
 --set deviceServers.dsdevice.enabled=true \ # enable DS test device
 --set ska-mid-dish-simulators.enabled=true \ # enable simulators (select which simulator to deploy below)
 --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
