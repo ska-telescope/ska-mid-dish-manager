@@ -1,10 +1,9 @@
 """Test sleep"""
+import pytest
+import tango
 from ska_control_model import CommunicationStatus
 
 from tests.utils import EventStore
-
-import tango
-import pytest
 
 
 @pytest.mark.acceptance
