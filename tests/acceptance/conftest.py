@@ -21,19 +21,19 @@ def setup_and_teardown(
     spf_event_store = EventStore()
     spfrx_event_store = EventStore()
 
-    ds_device_proxy.subscribe_event(
+    dish_manager_proxy.subscribe_event(
         "dsConnectionState",
         tango.EventType.CHANGE_EVENT,
         ds_event_store,
     )
 
-    spf_device_proxy.subscribe_event(
+    dish_manager_proxy.subscribe_event(
         "spfConnectionState",
         tango.EventType.CHANGE_EVENT,
         spf_event_store,
     )
 
-    spfrx_device_proxy.subscribe_event(
+    dish_manager_proxy.subscribe_event(
         "spfrxConnectionState",
         tango.EventType.CHANGE_EVENT,
         spfrx_event_store,
