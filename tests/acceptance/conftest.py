@@ -29,4 +29,6 @@ def setup_and_teardown(
     )
     assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=30)
 
+    print(dish_manager_proxy.getComponentStates())
+
     yield
