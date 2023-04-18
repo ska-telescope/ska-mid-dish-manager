@@ -261,7 +261,9 @@ class TangoDeviceMonitor:
 
                     def _event_reaction(events_queue: Queue, tango_event: tango.EventData) -> None:
                         if tango_event.err:
-                            logger.info("Got an error event on %s %s", tango_fqdn, str(tango_event).strip())
+                            logger.info(
+                                "Got an error event on %s %s", tango_fqdn, str(tango_event).strip()
+                            )
                             events_queue.put(PrioritizedEventData(priority=2, item=tango_event))
                         else:
                             events_queue.put(PrioritizedEventData(priority=1, item=tango_event))
