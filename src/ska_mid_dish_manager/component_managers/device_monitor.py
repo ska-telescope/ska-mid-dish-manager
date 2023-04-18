@@ -29,10 +29,15 @@ class SubscriptionTracker:
     ):
         """Keep track of which attributes has been subscribed to.
 
+        Set communication_state to ESTABLISHED only when all are subscribed.
+        Set NOT_ESTABLISHED otherwise.
+
         :param monitored_attributes: The attribute names to monitor
         :type monitored_attributes: Tuple[str, ...]
         :param update_communication_state: Update communication status
         :type update_communication_state: Callable
+        :param update_communication_state: Logger
+        :type update_communication_state: logging.Logger
         """
         self._monitored_attributes = monitored_attributes
         self._update_communication_state = update_communication_state
