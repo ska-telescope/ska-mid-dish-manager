@@ -2,6 +2,8 @@
 
 import pytest
 import tango
+from tests.utils import EventStore
+from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
@@ -15,6 +17,31 @@ def setup_and_teardown(
     spfrx_device_proxy,
 ):
     """Reset the tango devices to a fresh state before each test"""
+    ds_event_store = EventStore()
+    spf_event_store = EventStore()
+    spfrx_event_store = EventStore()
+
+    ds_device_proxy.subscribe_event(
+        "dsConnectionState",
+        tango.EventType.CHANGE_EVENT,
+        ds_event_store,
+    )
+
+    spf_device_proxy.subscribe_event(
+        "spfConnectionState",
+        tango.EventType.CHANGE_EVENT,
+        spf_event_store,
+    )
+
+    spfrx_device_proxy.subscribe_event(
+        "spfrxConnectionState",
+        tango.EventType.CHANGE_EVENT,
+        spfrx_event_store,
+    )
+
+    assert ds_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
+    assert spf_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
+    assert spfrx_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
 
     ds_device_proxy.ResetToDefault()
     spf_device_proxy.ResetToDefault()
@@ -27,8 +54,7 @@ def setup_and_teardown(
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=30)
 
-    print(dish_manager_proxy.getComponentStates())
+    assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=30)
 
     yield
