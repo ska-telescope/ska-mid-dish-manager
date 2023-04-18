@@ -88,6 +88,9 @@ k8s-test-runner:
     - 'make help | grep k8s-test'
     - make k8s-install-chart
     - make k8s-wait
+    - kubectl describe databaseds.tango.tango-controls.org -n ${KUBE_NAMESPACE}
+    - kubectl get deviceservers.tango.tango-controls.org -n ${KUBE_NAMESPACE}
+    - kubectl describe deviceservers.tango.tango-controls.org -n ${KUBE_NAMESPACE}
 
 #mypy job
 mypy:
