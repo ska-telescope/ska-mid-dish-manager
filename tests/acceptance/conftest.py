@@ -2,10 +2,10 @@
 
 import pytest
 import tango
-from tests.utils import EventStore
 from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
+from tests.utils import EventStore
 
 
 @pytest.fixture(autouse=True)
