@@ -52,6 +52,8 @@ make python-lint
 - Deploy the ska-tango-operator to manage pods and their configurations.
 
 ```bash
+$ helm repo add k8s-helm-repository https://artefact.skao.int/repository/helm-internal
+$ kubectl create namespace ska-tango-operator-system
 $ helm upgrade --install to k8s-helm-repository/ska-tango-operator -n ska-tango-operator-system
 ```
 
