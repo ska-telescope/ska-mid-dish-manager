@@ -29,6 +29,7 @@ class TestConnectionStates:
             # returned back to non mock
             event_store = EventStore()
             self.device_proxy = self.tango_context.device
+
             for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
                 self.device_proxy.subscribe_event(
                     conn_attr,
@@ -66,8 +67,6 @@ class TestConnectionStates:
         class_instance = DishManager.instances.get(device_proxy.name())
         component_manager = class_instance.component_manager.sub_component_managers[sub_device]
 
-        # Establish connection
-        component_manager._update_communication_state(CommunicationStatus.ESTABLISHED)
         assert event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
         # Force communication_state to NOT_ESTABLISHED
