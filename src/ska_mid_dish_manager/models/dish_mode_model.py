@@ -6,7 +6,7 @@ state of the device to decide if the requested state is a nearby node to allow o
 from dataclasses import dataclass, field
 
 # pylint: disable=too-few-public-methods
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import networkx as nx
 import tango
@@ -109,7 +109,7 @@ class DishModeModel:
         self,
         dishmode: Optional[str] = None,
         command_name: Optional[str] = None,
-        task_callback: Optional[callable] = None,
+        task_callback: Optional[Callable] = None,
     ) -> bool:
         """Determine if requested tango command is allowed based on current dish mode"""
         allowed_commands = []
