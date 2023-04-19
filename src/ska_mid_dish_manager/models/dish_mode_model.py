@@ -9,9 +9,8 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 import networkx as nx
-from ska_control_model import TaskStatus
-
 import tango
+from ska_control_model import TaskStatus
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
