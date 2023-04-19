@@ -39,9 +39,9 @@ def setup_and_teardown(
         spfrx_event_store,
     )
 
-    assert ds_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
-    assert spf_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
-    assert spfrx_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
+    assert ds_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+    assert spf_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+    assert spfrx_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
     ds_device_proxy.ResetToDefault()
     spf_device_proxy.ResetToDefault()
@@ -55,6 +55,6 @@ def setup_and_teardown(
         event_store,
     )
 
-    assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=30)
+    assert event_store.wait_for_value(DishMode.STANDBY_LP)
 
     yield
