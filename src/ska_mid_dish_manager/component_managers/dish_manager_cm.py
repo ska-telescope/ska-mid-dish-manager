@@ -181,6 +181,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         the subservient devices. DishManager reflects this in its connection
         status attributes.
         """
+        # Update the DM component communication states
+        if self.sub_component_managers:
+            self._update_component_state(
+                spfconnectionstate=self.sub_component_managers["SPF"].communication_state
+            )
+            self._update_component_state(
+                spfrxconnectionstate=self.sub_component_managers["SPFRX"].communication_state
+            )
+            self._update_component_state(
+                dsconnectionstate=self.sub_component_managers["DS"].communication_state
+            )
+
         if self.sub_component_managers:
             if not all(
                 (
