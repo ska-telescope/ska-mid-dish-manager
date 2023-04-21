@@ -17,10 +17,7 @@ python-versions = ">=3.7.2"
 [package.dependencies]
 lazy-object-proxy = ">=1.4.0"
 typing-extensions = {version = ">=4.0.0", markers = "python_version < \"3.11\""}
-wrapt = [
-    {version = ">=1.11,<2", markers = "python_version < \"3.11\""},
-    {version = ">=1.14,<2", markers = "python_version >= \"3.11\""},
-]
+wrapt = {version = ">=1.11,<2", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "attrs"
@@ -437,10 +434,7 @@ python-versions = ">=3.7.2"
 [package.dependencies]
 astroid = ">=2.15.2,<=2.17.0-dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
-dill = [
-    {version = ">=0.2", markers = "python_version < \"3.11\""},
-    {version = ">=0.3.6", markers = "python_version >= \"3.11\""},
-]
+dill = {version = ">=0.2", markers = "python_version < \"3.11\""}
 isort = ">=4.2.5,<6"
 mccabe = ">=0.6,<0.8"
 platformdirs = ">=2.2.0"
@@ -699,7 +693,7 @@ version = "0.18.0"
 description = "SKA Tango base classes"
 category = "main"
 optional = false
-python-versions = "^3.7.2"
+python-versions = "~3.10"
 develop = false
 
 [package.dependencies]
@@ -714,8 +708,8 @@ transitions = "^0.9.0"
 [package.source]
 type = "git"
 url = "https://gitlab.com/ska-telescope/ska-tango-base.git"
-reference = "kar-497-update-task-callback-params"
-resolved_reference = "a3e5755b5a539a6d2d67c96c58132aca29f9bde4"
+reference = "main"
+resolved_reference = "d8c68eb400312119ef89f01868a915ceef2f8b21"
 
 [[package]]
 name = "ska-tango-testing"
@@ -847,8 +841,8 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.10"
-content-hash = "c5d2c6efba0e421e547e47f553c5168a54bae42078518c0ab387430a3652ec64"
+python-versions = "~3.10"
+content-hash = "6c1cbec5e376526130027a281f100f9641125be38f269e08085281039f632e78"
 
 [metadata.files]
 argparse = [
