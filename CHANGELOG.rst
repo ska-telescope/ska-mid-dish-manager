@@ -9,6 +9,7 @@ Version 2.2.2
 *************
 - Updated DishManager command fanout to SPFRx to support removal of CaptureData command
 - Bug fixes and improvements
+- Use ska-mid-dish-simulators v0.2.0 with simulator log forwarding towards TLS
 
 Version 2.1.2
 *************
