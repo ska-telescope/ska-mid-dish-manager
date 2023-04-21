@@ -3,6 +3,8 @@ SHELL=/bin/bash
 
 NAME=ska-mid-dish-manager
 
+SKA_TANGO_OPERATOR = false
+
 VERSION=$(shell grep -e "^version = s*" pyproject.toml | cut -d = -f 2 | xargs)
 IMAGE=$(CAR_OCI_REGISTRY_HOST)/$(NAME)
 DOCKER_BUILD_CONTEXT=.
