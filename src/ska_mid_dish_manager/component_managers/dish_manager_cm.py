@@ -432,6 +432,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetStandbyLPMode",
+            task_callback=task_callback,
         )
         status, response = self.submit_task(
             self._command_map.set_standby_lp_mode, args=[], task_callback=task_callback
@@ -446,6 +447,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetStandbyFPMode",
+            task_callback=task_callback,
         )
         status, response = self.submit_task(
             self._command_map.set_standby_fp_mode, args=[], task_callback=task_callback
@@ -462,15 +464,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetOperateMode",
+            task_callback=task_callback,
         )
 
         if self.component_state["configuredband"] in [
             Band.NONE,
             Band.UNKNOWN,
         ]:
-            raise CommandNotAllowed(
+            ex = CommandNotAllowed(
                 "configuredBand can not be in " f"{Band.NONE.name} or {Band.UNKNOWN.name}",
             )
+            task_callback(status=TaskStatus.REJECTED, exception=ex)
+            raise ex
 
         status, response = self.submit_task(
             self._command_map.set_operate_mode, args=[], task_callback=task_callback
@@ -484,9 +489,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the pointing state"""
         dish_mode = self.component_state["dishmode"].name
         if dish_mode != "OPERATE":
-            raise CommandNotAllowed(
+            ex = CommandNotAllowed(
                 "Track command only allowed in `OPERATE`" f"mode. Current dishMode: {dish_mode}."
             )
+            task_callback(status=TaskStatus.REJECTED, exception=ex)
+            raise ex
 
         status, response = self.submit_task(
             self._command_map.track_cmd, args=[], task_callback=task_callback
@@ -503,9 +510,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="ConfigureBand2",
+            task_callback=task_callback,
         )
 
         if self.component_state["configuredband"] == Band.B2:
+            task_callback(status=TaskStatus.REJECTED, result=f"Already in band {Band.B2.name}")
             return TaskStatus.REJECTED, f"Already in band {Band.B2.name}"
 
         # TODO Check if ConfigureBand2 is already running
@@ -526,6 +535,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetStowMode",
+            task_callback=task_callback,
         )
         status, response = self.submit_task(
             self._command_map.set_stow_mode, args=[], task_callback=task_callback
