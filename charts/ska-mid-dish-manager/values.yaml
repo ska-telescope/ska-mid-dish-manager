@@ -1,10 +1,7 @@
 enabled: true
 
-legacy_compatibility: true
-
 ska-mid-dish-simulators:
   enabled: false
-  legacy_compatibility: true
 
 system: SW-infrastructure
 subsystem: ska-dish-lmc

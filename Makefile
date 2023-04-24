@@ -11,7 +11,7 @@ DOCKER_FILE_PATH=Dockerfile
 MINIKUBE ?= true ## Minikube or not
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 
-SKA_TANGO_OPERATOR ?= true
+SKA_TANGO_OPERATOR = true
 
 ifeq ($(MAKECMDGOALS),python-test)
 MARK = unit
