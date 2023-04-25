@@ -90,6 +90,8 @@ k8s-test-runner:
     - kubectl describe databaseds.tango.tango-controls.org -n "$KUBE_NAMESPACE"
     - kubectl get deviceservers.tango.tango-controls.org -n "$KUBE_NAMESPACE"
     - kubectl describe deviceservers.tango.tango-controls.org -n "$KUBE_NAMESPACE"
+    - echo "Sleeping 5 minutes so all pods can start up"
+    - sleep 300
     - make k8s-wait
     - kubectl describe pod deviceserver-dsdevice-001-0  -n "$KUBE_NAMESPACE"
     - kubectl describe pod deviceserver-spfdevice-001-0  -n "$KUBE_NAMESPACE"
