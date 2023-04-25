@@ -87,6 +87,9 @@ k8s-test-runner:
     - '[ -f .make/k8s.mk ] || (echo "File k8s.mk not included in Makefile; exit 1")'
     - 'make help | grep k8s-test'
     - make k8s-install-chart
+    - kubectl describe databaseds.tango.tango-controls.org -n "$KUBE_NAMESPACE"
+    - kubectl get deviceservers.tango.tango-controls.org -n "$KUBE_NAMESPACE"
+    - kubectl describe deviceservers.tango.tango-controls.org -n "$KUBE_NAMESPACE"
     - make k8s-wait
 
 #mypy job
