@@ -91,6 +91,9 @@ k8s-test-runner:
     - kubectl get deviceservers.tango.tango-controls.org -n "$KUBE_NAMESPACE"
     - kubectl describe deviceservers.tango.tango-controls.org -n "$KUBE_NAMESPACE"
     - make k8s-wait
+    - kubectl describe pod deviceserver-dsdevice-001-0  -n "$KUBE_NAMESPACE"
+    - kubectl describe pod deviceserver-spfdevice-001-0  -n "$KUBE_NAMESPACE"
+    - kubectl describe pod deviceserver-spfrxdevice-001-0  -n "$KUBE_NAMESPACE"
 
 #mypy job
 mypy:
