@@ -17,6 +17,11 @@ def setup_and_teardown(
     spfrx_device_proxy,
 ):
     """Reset the tango devices to a fresh state before each test"""
+
+    assert ds_device_proxy.ping()
+    assert spf_device_proxy.ping()
+    assert spfrx_device_proxy.ping()
+
     ds_event_store = EventStore()
     spf_event_store = EventStore()
     spfrx_event_store = EventStore()
