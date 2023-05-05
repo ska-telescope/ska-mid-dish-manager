@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.2.3
+*************
+- Bump the simulators dependency chart up to 1.2.0
+
 Version 2.2.2
 *************
 - Updated DishManager command fanout to SPFRx to support removal of CaptureData command
