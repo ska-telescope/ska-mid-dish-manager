@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.2.4
+*************
+- Updated helm chart to make the spfrx device name configurable
+- Installing ska-tango-base from a release
+
 Version 2.2.3
 *************
 - Bump the simulators dependency chart up to 1.2.0
