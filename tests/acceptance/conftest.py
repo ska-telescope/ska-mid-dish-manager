@@ -32,6 +32,6 @@ def setup_and_teardown(
         event_store.wait_for_value(DishMode.STANDBY_LP, timeout=7)
     except RuntimeError as err:
         component_states = dish_manager_proxy.GetComponentStates()
-        raise Exception(f"DishManager not in STANDBY_LP:\n {component_states}\n") from err
+        raise RuntimeError(f"DishManager not in STANDBY_LP:\n {component_states}\n") from err
 
     yield
