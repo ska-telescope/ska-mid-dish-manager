@@ -43,6 +43,9 @@ dishmanager:
     image: ska-mid-dish-manager
     tag: 2.2.3
     pullPolicy: IfNotPresent
+  spfrx:
+    family_name: "spfrx"
+    member_name: "simulator"
 
 dev_pod:
   enabled: false

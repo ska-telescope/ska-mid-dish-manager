@@ -3,7 +3,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import DishMode, SPFOperatingMode
 
 
 @pytest.fixture(autouse=True)
@@ -17,8 +17,16 @@ def setup_and_teardown(
     """Reset the tango devices to a fresh state before each test"""
 
     ds_device_proxy.ResetToDefault()
-    spf_device_proxy.ResetToDefault()
     spfrx_device_proxy.ResetToDefault()
+    spf_device_proxy.ResetToDefault()
+
+    spf_device_proxy.subscribe_event(
+        "operatingMode",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=7)
+    event_store.clear_queue()
 
     dish_manager_proxy.SyncComponentStates()
 
@@ -27,6 +35,11 @@ def setup_and_teardown(
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    assert event_store.wait_for_value(DishMode.STANDBY_LP)
+
+    try:
+        event_store.wait_for_value(DishMode.STANDBY_LP, timeout=7)
+    except RuntimeError as err:
+        component_states = dish_manager_proxy.GetComponentStates()
+        raise RuntimeError(f"DishManager not in STANDBY_LP:\n {component_states}\n") from err
 
     yield

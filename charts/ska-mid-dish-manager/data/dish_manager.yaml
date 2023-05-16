@@ -38,7 +38,7 @@ server:
                     - "ska{{ printf "%01s" . }}/spf/simulator"
                 - name: "SPFRxDeviceFqdn"
                   values:
-                    - "ska{{ printf "%01s" . }}/spfrx/simulator"
+                    - "ska{{ printf "%01s" . }}/{{ $.Values.dishmanager.spfrx.family_name }}/{{ $.Values.dishmanager.spfrx.member_name }}"
                 - name: "DishId"
                   values:
                     - "SKA{{ printf "%01s" . }}"
