@@ -23,7 +23,7 @@ class SubscriptionTracker:
 
     def __init__(
         self,
-        tango_fqdn,
+        tango_fqdn: str,
         monitored_attributes: Tuple[str, ...],
         update_communication_state: Callable,
         logger: logging.Logger,
@@ -60,6 +60,7 @@ class SubscriptionTracker:
 
             count = 0
 
+            # pylint:disable=consider-using-dict-items
             for attr_name in self._subscribed_attrs:
                 if self._subscribed_attrs[attr_name]:
                     count += 1
