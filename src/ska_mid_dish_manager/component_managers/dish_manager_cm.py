@@ -220,7 +220,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ),
                     self.sub_component_managers["SPF"].communication_state,
                     self.sub_component_managers["SPFRX"].communication_state,
-                    self.sub_component_managers["DS"].communication_state
+                    self.sub_component_managers["DS"].communication_state,
                 )
 
                 if all(
@@ -241,7 +241,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         ds_component_state, spfrx_component_state, spf_component_state
                     )
 
-                    self._update_component_state(healthstate=new_health_state, dishmode=new_dish_mode)
+                    self._update_component_state(
+                        healthstate=new_health_state, dishmode=new_dish_mode
+                    )
                 else:
                     self.logger.debug("CommunicationState is NOT_ESTABLISHED")
                     self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)

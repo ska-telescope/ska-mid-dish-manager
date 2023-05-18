@@ -69,7 +69,7 @@ class SubscriptionTracker:
                 self._tango_fqdn,
                 attribute_name,
                 count,
-                len(self._subscribed_attrs)
+                len(self._subscribed_attrs),
             )
             self.update_subscription_status()
 
@@ -106,7 +106,9 @@ class SubscriptionTracker:
             self._logger.info("%s: Updating CommunicationStatus as ESTABLISHED", self._tango_fqdn)
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
         else:
-            self._logger.info("%s: Updating CommunicationStatus as NOT_ESTABLISHED", self._tango_fqdn)
+            self._logger.info(
+                "%s: Updating CommunicationStatus as NOT_ESTABLISHED", self._tango_fqdn
+            )
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
 
