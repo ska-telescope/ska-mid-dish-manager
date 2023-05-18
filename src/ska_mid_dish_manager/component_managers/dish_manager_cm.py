@@ -84,6 +84,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
+        self._sub_communication_state_change_lock = Lock()
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
@@ -182,57 +183,76 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status attributes.
         """
         # Update the DM component communication states
-        if self.sub_component_managers:
-            self._update_component_state(
-                spfconnectionstate=self.sub_component_managers["SPF"].communication_state
-            )
-            self._update_component_state(
-                spfrxconnectionstate=self.sub_component_managers["SPFRX"].communication_state
-            )
-            self._update_component_state(
-                dsconnectionstate=self.sub_component_managers["DS"].communication_state
-            )
+        with self._sub_communication_state_change_lock:
+            self.logger.debug("CommunicationState changed")
 
-        if self.sub_component_managers:
-            if not all(
-                (
-                    self.sub_component_managers["DS"].component_state,
-                    self.sub_component_managers["SPF"].component_state,
-                    self.sub_component_managers["SPFRX"].component_state,
-                )
-            ):
-                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                self._update_component_state(healthstate=HealthState.UNKNOWN)
-                return
+            if self.sub_component_managers:
+                self.logger.debug("Updating subservient CMs")
 
-        if self.sub_component_managers:
-            if all(
-                sub_component_manager.communication_state == CommunicationStatus.ESTABLISHED
-                for sub_component_manager in self.sub_component_managers.values()
-            ):
-                self._update_communication_state(CommunicationStatus.ESTABLISHED)
-                ds_component_state = self.sub_component_managers["DS"].component_state
-                spf_component_state = self.sub_component_managers["SPF"].component_state
-                spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
-
-                new_health_state = self._state_transition.compute_dish_health_state(
-                    ds_component_state, spfrx_component_state, spf_component_state
-                )
-                new_dish_mode = self._state_transition.compute_dish_mode(
-                    ds_component_state, spfrx_component_state, spf_component_state
-                )
-
-                self._update_component_state(healthstate=new_health_state, dishmode=new_dish_mode)
-            else:
-                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                 self._update_component_state(
-                    healthstate=HealthState.UNKNOWN, dishmode=DishMode.UNKNOWN
+                    spfconnectionstate=self.sub_component_managers["SPF"].communication_state
+                )
+                self._update_component_state(
+                    spfrxconnectionstate=self.sub_component_managers["SPFRX"].communication_state
+                )
+                self._update_component_state(
+                    dsconnectionstate=self.sub_component_managers["DS"].communication_state
                 )
 
-        self._component_state_changed()
+            if self.sub_component_managers:
+                if not all(
+                    (
+                        self.sub_component_managers["DS"].component_state,
+                        self.sub_component_managers["SPF"].component_state,
+                        self.sub_component_managers["SPFRX"].component_state,
+                    )
+                ):
+                    self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+                    self._update_component_state(healthstate=HealthState.UNKNOWN)
+                    return
 
-        # push change events for the connection state attributes
-        self._connection_state_callback(attribute_name)
+            if self.sub_component_managers:
+                self.logger.debug(
+                    (
+                        "SPF communication status: %s,\n"
+                        "SPFRx communication status: %s,\n"
+                        "DS communication status: %s"
+                    ),
+                    self.sub_component_managers["SPF"].communication_state,
+                    self.sub_component_managers["SPFRX"].communication_state,
+                    self.sub_component_managers["DS"].communication_state
+                )
+
+                if all(
+                    sub_component_manager.communication_state == CommunicationStatus.ESTABLISHED
+                    for sub_component_manager in self.sub_component_managers.values()
+                ):
+                    self.logger.debug("CommunicationState is ESTABLISHED")
+
+                    self._update_communication_state(CommunicationStatus.ESTABLISHED)
+                    ds_component_state = self.sub_component_managers["DS"].component_state
+                    spf_component_state = self.sub_component_managers["SPF"].component_state
+                    spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
+
+                    new_health_state = self._state_transition.compute_dish_health_state(
+                        ds_component_state, spfrx_component_state, spf_component_state
+                    )
+                    new_dish_mode = self._state_transition.compute_dish_mode(
+                        ds_component_state, spfrx_component_state, spf_component_state
+                    )
+
+                    self._update_component_state(healthstate=new_health_state, dishmode=new_dish_mode)
+                else:
+                    self.logger.debug("CommunicationState is NOT_ESTABLISHED")
+                    self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+                    self._update_component_state(
+                        healthstate=HealthState.UNKNOWN, dishmode=DishMode.UNKNOWN
+                    )
+
+            self._component_state_changed()
+
+            # push change events for the connection state attributes
+            self._connection_state_callback(attribute_name)
 
     # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):

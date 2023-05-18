@@ -23,6 +23,7 @@ class SubscriptionTracker:
 
     def __init__(
         self,
+        tango_fqdn,
         monitored_attributes: Tuple[str, ...],
         update_communication_state: Callable,
         logger: logging.Logger,
@@ -39,6 +40,7 @@ class SubscriptionTracker:
         :param update_communication_state: Logger
         :type update_communication_state: logging.Logger
         """
+        self._tango_fqdn = tango_fqdn
         self._monitored_attributes = monitored_attributes
         self._update_communication_state = update_communication_state
         self._logger = logger
@@ -51,10 +53,25 @@ class SubscriptionTracker:
         :param attribute_name: The attribute name
         :type attribute_name: str
         """
+        self._logger.info("%s subscription started", self._tango_fqdn)
+
         with self._update_lock:
-            self._logger.info("Marking %s attribute as subscribed", attribute_name)
             self._subscribed_attrs[attribute_name] = True
-        self.update_subscription_status()
+
+            count = 0
+
+            for attr_name in self._subscribed_attrs:
+                if self._subscribed_attrs[attr_name]:
+                    count += 1
+
+            self._logger.info(
+                "%s: Marking %s attribute as subscribed. %s/%s subscribed",
+                self._tango_fqdn,
+                attribute_name,
+                count,
+                len(self._subscribed_attrs)
+            )
+            self.update_subscription_status()
 
     def subscription_stopped(self, attribute_name: str) -> None:
         """Mark attr as unsubscribed
@@ -65,14 +82,14 @@ class SubscriptionTracker:
         with self._update_lock:
             self._logger.info("Marking %s attribute as not subscribed", attribute_name)
             self._subscribed_attrs[attribute_name] = False
-        self.update_subscription_status()
+            self.update_subscription_status()
 
     def clear_subscriptions(self) -> None:
         """Set all attrs as not subscribed"""
         with self._update_lock:
             for key in self._subscribed_attrs:
                 self._subscribed_attrs[key] = False
-        self.update_subscription_status()
+            self.update_subscription_status()
 
     def all_subscribed(self) -> bool:
         """Check if all attributes has been subscribed
@@ -80,16 +97,16 @@ class SubscriptionTracker:
         :return: All attributes subscribed
         :rtype: bool
         """
-        with self._update_lock:
-            return all(self._subscribed_attrs.values())
+        # with self._update_lock:
+        return all(self._subscribed_attrs.values())
 
     def update_subscription_status(self) -> None:
         """Update Communication Status"""
         if self.all_subscribed():
-            self._logger.info("Updating CommunicationStatus as ESTABLISHED")
+            self._logger.info("%s: Updating CommunicationStatus as ESTABLISHED", self._tango_fqdn)
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
         else:
-            self._logger.info("Updating CommunicationStatus as NOT_ESTABLISHED")
+            self._logger.info("%s: Updating CommunicationStatus as NOT_ESTABLISHED", self._tango_fqdn)
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
 
@@ -133,7 +150,7 @@ class TangoDeviceMonitor:
         self._start_monitoring_thread: Thread = Thread()
 
         self._subscription_tracker = SubscriptionTracker(
-            self._monitored_attributes, update_communication_state, self._logger
+            self._tango_fqdn, self._monitored_attributes, update_communication_state, self._logger
         )
 
     def stop_monitoring(self) -> None:
