@@ -20,12 +20,17 @@ endif
 ifeq ($(MAKECMDGOALS),k8s-test-runner)
 MARK = acceptance
 TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
-endif
-
-ifeq ($(MAKECMDGOALS),lmc-acceptance-test)
+else
+# echo "yyyyy in the else block"
+# echo $(MARK)
 MARK = lmc
 TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
 endif
+
+# ifeq ($(MAKECMDGOALS),lmc-acceptance-test)
+# MARK = lmc
+# TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
+# endif
 
 # Set the specific environment variables required for pytest
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
