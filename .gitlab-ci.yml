@@ -89,6 +89,9 @@ k8s-test-runner:
     - make k8s-install-chart
     - make k8s-wait
 
+lmc-acceptance-test:
+  extends: k8s-test-runner
+
 #mypy job
 mypy:
   stage: lint
