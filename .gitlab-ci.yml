@@ -11,6 +11,7 @@ stages:
   - lint
   - build
   - test
+  - lmc-confidence
   - publish
   - pages
   - scan
@@ -91,6 +92,7 @@ k8s-test-runner:
 
 lmc-acceptance-test:
   extends: k8s-test-runner
+  stage: lmc-confidence
 
 #mypy job
 mypy:
