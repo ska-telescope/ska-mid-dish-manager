@@ -95,6 +95,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         for monitored_attribute in self._monitored_attributes:
             # Update it in the component state if it is there
+            monitored_attribute = monitored_attribute.lower()
+
             if monitored_attribute in self._component_state:
                 self._component_state[monitored_attribute] = 0
 
@@ -110,6 +112,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
         for monitored_attribute in self._monitored_attributes:
+            monitored_attribute = monitored_attribute.lower()
+
             # Add it to component state if not there
             if monitored_attribute not in self._component_state:
                 self._component_state[monitored_attribute] = None

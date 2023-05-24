@@ -409,9 +409,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Update individual CapabilityStates if it changes
         # b5 for SPF
-        for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
-            cap_state_name = f"{band}capabilitystate"
-            if cap_state_name in kwargs:
+        if "indexerposition" in kwargs or "dish_mode" in kwargs or "operatingmode" in kwargs:
+            cap_state_updates = {}
+            for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
+                cap_state_name = f"{band}capabilitystate"
                 new_state = self._state_transition.compute_capability_state(
                     band,
                     ds_component_state,
@@ -419,7 +420,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     spf_component_state,
                     self.component_state,
                 )
-                self._update_component_state(**{cap_state_name: new_state})
+                cap_state_updates[cap_state_name] = new_state
+            self._update_component_state(**cap_state_updates)
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
