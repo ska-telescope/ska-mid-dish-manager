@@ -3,7 +3,9 @@ Verify that:
     LMC reports Band X Capability as OPERATE (L2-4699)
 """
 
+import datetime
 import logging
+import time
 
 import pytest
 import tango
@@ -137,7 +139,7 @@ def check_dish_manager_band_capability_state(
     dm_cap_state_events = [
         evt_vals[1] for evt_vals in dm_events if evt_vals[1] == CapabilityStates[expected_state]
     ]
-    assert dm_cap_state_events
+    assert dm_cap_state_events, datetime.datetime.fromtimestamp(time.time())
 
     b_x_capability_state = retrieve_attr_value(dish_manager, f"b{band_number}CapabilityState")
     assert b_x_capability_state == expected_state

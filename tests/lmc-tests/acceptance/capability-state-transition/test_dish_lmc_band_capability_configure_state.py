@@ -3,7 +3,9 @@ Verify that:
     LMC reports Band_X Capability as CONFIGURE state if DSH is in CONFIGURE mode (L2-4700)
 """
 
+import datetime
 import logging
+import time
 
 import pytest
 import tango
@@ -141,6 +143,8 @@ def check_dish_transient_capability_state(
         for evt_vals in dish_evts
         if evt_vals[0].lower() == f"b{band_number}capabilitystate"
     ]
-    assert CapabilityStates[expected_state] in capability_state_evts
+    assert (
+        CapabilityStates[expected_state] in capability_state_evts
+    ), datetime.datetime.fromtimestamp(time.time())
 
     LOGGER.info(f"{dish_manager} b{band_number}CapabilityState reported: {expected_state}")
