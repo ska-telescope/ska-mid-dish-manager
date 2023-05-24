@@ -256,7 +256,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # push change events for the connection state attributes
             self._connection_state_callback(attribute_name)
 
-    # pylint: disable=unused-argument, too-many-branches, too-many-locals
+    # pylint: disable=unused-argument, too-many-branches
     def _component_state_changed(self, *args, **kwargs):
         """
         Callback triggered by the component manager of the
@@ -409,10 +409,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Update individual CapabilityStates if it changes
         # b5 for SPF
-        if "indexerposition" in kwargs or "dish_mode" in kwargs or "operatingmode" in kwargs:
-            cap_state_updates = {}
-            for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
-                cap_state_name = f"{band}capabilitystate"
+        for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
+            cap_state_name = f"{band}capabilitystate"
+            if cap_state_name in kwargs:
                 new_state = self._state_transition.compute_capability_state(
                     band,
                     ds_component_state,
@@ -420,8 +419,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     spf_component_state,
                     self.component_state,
                 )
-                cap_state_updates[cap_state_name] = new_state
-            self._update_component_state(**cap_state_updates)
+                self._update_component_state(**{cap_state_name: new_state})
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
