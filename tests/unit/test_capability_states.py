@@ -234,14 +234,7 @@ class TestCapabilityStates:
         self.spfrx_cm._update_component_state(b1capabilitystate=SPFRxCapabilityStates.STANDBY)
         self.spf_cm._update_component_state(b1capabilitystate=SPFCapabilityStates.STANDBY)
 
-        # event_store.wait_for_value(CapabilityStates.STANDBY, timeout=7)
-        comp_states = {
-            "SPF": self.spf_cm._component_state,
-            "DS": self.ds_cm._component_state,
-            "SPFRx": self.spfrx_cm._component_state,
-        }
-
-        assert 0, comp_states
+        event_store.wait_for_value(CapabilityStates.STANDBY, timeout=7)
 
     def test_b2capabilitystate_change(
         self,
