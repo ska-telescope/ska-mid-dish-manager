@@ -143,8 +143,8 @@ def check_dish_transient_capability_state(
         for evt_vals in dish_evts
         if evt_vals[0].lower() == f"b{band_number}capabilitystate"
     ]
-    assert (
-        CapabilityStates[expected_state] in capability_state_evts
-    ), datetime.datetime.fromtimestamp(time.time())
+    assert CapabilityStates[expected_state] in capability_state_evts, str(
+        datetime.datetime.fromtimestamp(time.time())
+    )
 
     LOGGER.info(f"{dish_manager} b{band_number}CapabilityState reported: {expected_state}")

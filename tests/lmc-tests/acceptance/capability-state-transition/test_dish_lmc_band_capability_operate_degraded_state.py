@@ -141,6 +141,6 @@ def check_dish_manager_band_capability_transient_state(
     dm_cap_state_events = [
         evt_vals[1] for evt_vals in dm_events if evt_vals[1] == CapabilityStates[expected_state]
     ]
-    assert dm_cap_state_events, datetime.datetime.fromtimestamp(time.time())
+    assert dm_cap_state_events, str(datetime.datetime.fromtimestamp(time.time()))
 
     LOGGER.info(f"{dish_manager} b{band_number}CapabilityState reported: {expected_state}")
