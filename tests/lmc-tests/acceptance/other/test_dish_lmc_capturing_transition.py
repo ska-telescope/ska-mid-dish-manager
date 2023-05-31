@@ -13,14 +13,14 @@ from utils import retrieve_attr_value
 LOGGER = logging.getLogger(__name__)
 
 
-@pytest.mark.acceptance
+@pytest.mark.lmc
 @scenario("XTP-14050.feature", "LMC does not capture data in STANDBY-LP mode")
 def test_dish_lmc_does_not_capture_data_in_lp():
     # pylint: disable=missing-function-docstring
     pass
 
 
-@pytest.mark.acceptance
+@pytest.mark.lmc
 @scenario(
     "XTP-15468.feature",
     "LMC does not capture data in STANDBY-FP mode with no band",
@@ -32,7 +32,7 @@ def test_dish_lmc_does_not_capture_data_in_fp_no_band(
     pass
 
 
-@pytest.mark.acceptance
+@pytest.mark.lmc
 @scenario("XTP-15469.feature", "LMC captures data in the configuredBand")
 def test_dish_lmc_captures_data_in_the_configured_band():
     # pylint: disable=missing-function-docstring

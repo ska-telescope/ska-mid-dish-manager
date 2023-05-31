@@ -8,7 +8,7 @@ from utils import retrieve_attr_value
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
-@pytest.mark.acceptance
+@pytest.mark.lmc
 @pytest.mark.parametrize("domain", ["001"])
 @pytest.mark.parametrize("family_member", ["lmc/ds_simulator", "spf/simulator", "spfrx/simulator"])
 def test_sub_elements_startup_with_expected_operating_mode(domain, family_member):
@@ -21,7 +21,7 @@ def test_sub_elements_startup_with_expected_operating_mode(domain, family_member
     assert tango_device_proxy.operatingMode.name.replace("-", "_") == expected_operating_mode
 
 
-@pytest.mark.acceptance
+@pytest.mark.lmc
 def test_dish_manager_startups_with_expected_dish_mode(event_store):
     """Test that dish master starts up with the expected dishMode"""
     dish_manager = tango.DeviceProxy("ska001/elt/master")

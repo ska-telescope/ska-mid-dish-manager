@@ -22,7 +22,7 @@ def fixture_initial_dish_mode():
     return {"dishMode": None}
 
 
-@pytest.mark.acceptance
+@pytest.mark.lmc
 @scenario("XTP-5703.feature", "Test dish lmc band selection")
 def test_band_selection(reset_receiver_devices, reset_ds_indexer_position):
     # pylint: disable=missing-function-docstring
