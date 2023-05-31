@@ -5,10 +5,11 @@ Verify that dish lmc captures data in the configured band
 import logging
 
 import pytest
-import tango
 from pytest_bdd import given, scenario, then
 from pytest_bdd.parsers import parse
 from utils import retrieve_attr_value
+
+import tango
 
 LOGGER = logging.getLogger(__name__)
 
@@ -72,7 +73,7 @@ def check_spfrx_operating_mode(spfrx, event_store, expected_operating_mode):
     # pylint: disable=missing-function-docstring
     # for cases that the event may not arrive early just wait a bit
     spfrx.subscribe_event(
-        f"operatingMode",
+        "operatingMode",
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
@@ -84,18 +85,10 @@ def check_spfrx_operating_mode(spfrx, event_store, expected_operating_mode):
     LOGGER.info(f"{spfrx} operatingMode: {current_operating_mode}")
 
 
-@then(
-    parse(
-        "dish_manager capturing and spfrx capturingData attributes should report {value}"
-    )
-)
-def dish_manager_capturing_reports_spfrx_capturing_data(
-    dish_manager, spfrx, value
-):
+@then(parse("dish_manager capturing and spfrx capturingData attributes should report {value}"))
+def dish_manager_capturing_reports_spfrx_capturing_data(dish_manager, spfrx, value):
     # pylint: disable=missing-function-docstring
     capturing = retrieve_attr_value(dish_manager, "capturing")
     capturing_data = retrieve_attr_value(spfrx, "capturingData")
     assert str(capturing) == str(capturing_data) == str(value)
-    LOGGER.info(
-        f"{dish_manager} capturing: {capturing}, {spfrx} capturingData: {capturing_data}"
-    )
+    LOGGER.info(f"{dish_manager} capturing: {capturing}, {spfrx} capturingData: {capturing_data}")

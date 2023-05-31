@@ -6,11 +6,12 @@ Verify that dish transitions to CONFIG from STANDBY_FP, STOW and OPERATE
 import logging
 
 import pytest
-import tango
-from ska_mid_dish_manager.models.dish_enums import DishMode
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
 from utils import retrieve_attr_value
+
+import tango
+from ska_mid_dish_manager.models.dish_enums import DishMode
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,14 +63,12 @@ def configure_band(
 
 
 @then(parse("dish_manager dishMode should report {transient_mode} briefly"))
-def check_dish_mode(transient_mode, dish_manager, dish_manager_event_store):
+def check_dish_mode_reports_config(transient_mode, dish_manager, dish_manager_event_store):
     # pylint: disable=missing-function-docstring
     # convert dish mode to have underscore for enums in utils
     transient_mode = transient_mode.replace("-", "_")
 
-    dish_manager_event_store.wait_for_value(
-        DishMode[transient_mode], timeout=10
-    )
+    dish_manager_event_store.wait_for_value(DishMode[transient_mode], timeout=10)
     LOGGER.info(f"{dish_manager} dishMode reported: {transient_mode}")
 
 
@@ -118,7 +117,7 @@ def check_dish_configured_band(band_number, dish_manager):
 
 
 @then("dish_manager should report its initial dishMode")
-def check_dish_mode(dish_manager, initial_mode):
+def check_dish_mode_reports_initial_mode(dish_manager, initial_mode):
     # pylint: disable=missing-function-docstring
     dish_mode = retrieve_attr_value(dish_manager, "dishMode")
     assert dish_mode == initial_mode["dishMode"]

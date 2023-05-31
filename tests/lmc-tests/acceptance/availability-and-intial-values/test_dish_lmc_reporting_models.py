@@ -3,13 +3,12 @@
 """
 
 import pytest
+
 import tango
 
 
 @pytest.mark.acceptance
-def test_dish_manager_supports_all_reporting_models(
-    dish_manager, dish_manager_event_store
-):
+def test_dish_manager_supports_all_reporting_models(dish_manager, dish_manager_event_store):
     """Test that dish manager supports attribute reads on request and with events"""
     dish_mode = dish_manager.dishMode.value
 
@@ -31,9 +30,7 @@ def test_dish_manager_supports_all_reporting_models(
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize("domain", ["001"])
-@pytest.mark.parametrize(
-    "family_member", ["lmc/ds_simulator", "spf/simulator", "spfrx/simulator"]
-)
+@pytest.mark.parametrize("family_member", ["lmc/ds_simulator", "spf/simulator", "spfrx/simulator"])
 def test_sub_elements_support_all_reporting_models(domain, family_member):
     """Test that dish structure, spf and spfrx devices
     support attribute reads on request and with events"""
@@ -42,17 +39,12 @@ def test_sub_elements_support_all_reporting_models(domain, family_member):
     evt_ids = []
 
     # On request
-    assert (
-        operating_mode
-        == tango_device_proxy.read_attribute("operatingMode").value
-    )
+    assert operating_mode == tango_device_proxy.read_attribute("operatingMode").value
 
     # change events
     cb = tango.utils.EventCallback()
     evt_ids.append(
-        tango_device_proxy.subscribe_event(
-            "operatingMode", tango.EventType.CHANGE_EVENT, cb, []
-        )
+        tango_device_proxy.subscribe_event("operatingMode", tango.EventType.CHANGE_EVENT, cb, [])
     )
     # On event subscription the first event data is the current
     # attribute value. Confirm this with earlier retrieved value
