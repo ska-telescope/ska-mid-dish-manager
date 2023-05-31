@@ -2,8 +2,9 @@ import logging
 
 import pytest
 import tango
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from utils import EventStore, tango_dev_proxy
+
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 LOGGER = logging.getLogger(__name__)
 

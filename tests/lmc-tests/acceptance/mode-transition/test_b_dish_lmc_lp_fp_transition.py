@@ -11,11 +11,10 @@ E.g FULL-POWER to FULL_POWER
 import logging
 
 import pytest
+import tango
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
 from utils import retrieve_attr_value
-
-import tango
 
 LOGGER = logging.getLogger(__name__)
 

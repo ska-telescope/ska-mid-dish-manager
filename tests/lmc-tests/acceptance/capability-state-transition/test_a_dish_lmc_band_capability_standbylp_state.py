@@ -4,11 +4,11 @@ Verify that LMC reports Band_X Capability as STANDBY state if DSH is in STANDBY-
 import logging
 
 import pytest
+import tango
 from pytest_bdd import given, scenario, then
 from pytest_bdd.parsers import parse
 from utils import retrieve_attr_value
 
-import tango
 from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     SPFCapabilityStates,

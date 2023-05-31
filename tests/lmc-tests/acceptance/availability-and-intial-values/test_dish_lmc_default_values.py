@@ -2,9 +2,9 @@
 (R.LMC.SM.10, R.LMC.SM.2)
 """
 import pytest
+import tango
 from utils import retrieve_attr_value
 
-import tango
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 

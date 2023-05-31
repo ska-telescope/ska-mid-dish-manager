@@ -5,11 +5,11 @@ Verify that LMC reports Band X Capability as OPERATE-DEGRADED (L2-4698)
 import logging
 
 import pytest
+import tango
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
 from utils import retrieve_attr_value
 
-import tango
 from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     SPFCapabilityStates,
