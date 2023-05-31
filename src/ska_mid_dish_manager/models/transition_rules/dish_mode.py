@@ -4,17 +4,9 @@ import rule_engine
 
 DISH_MODE_RULES = {
     "CONFIG": rule_engine.Rule(
-        "DS.operatingmode in "
-        "   ['DSOperatingMode.POINT', "
-        "    'DSOperatingMode.STOW', "
-        "    'DSOperatingMode.STANDBY_LP', "
-        "    'DSOperatingMode.STANDBY_FP'] "
-        " and "
-        "SPF.operatingmode  in "
-        " ['SPFOperatingMode.OPERATE', "
-        "  'SPFOperatingMode.STANDBY_LP'] "
-        "and "
-        "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE'"
+        "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE' "
+        "or "
+        "DS.indexerposition  == 'IndexerPosition.MOVING' "
     ),
     "MAINTENANCE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.STOW' and "
