@@ -33,4 +33,3 @@ def test_sub_elements_startup_with_expected_operating_mode(domain, family_member
     tango_device_proxy = tango.DeviceProxy(f"ska{domain}/{family_member}")
     expected_operating_mode = "STANDBY" if "spfrx" in family_member else "STANDBY_LP"
     assert tango_device_proxy.operatingMode.name.replace("-", "_") == expected_operating_mode
-
