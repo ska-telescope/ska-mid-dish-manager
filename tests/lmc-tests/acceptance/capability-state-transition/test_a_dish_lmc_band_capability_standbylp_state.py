@@ -5,7 +5,7 @@ import logging
 
 import pytest
 import tango
-from dish_enums import CapabilityStates, SPFCapabilityStates, SPFRxCapabilityStates
+from ska_mid_dish_manager.models.dish_enums import CapabilityStates, SPFCapabilityStates, SPFRxCapabilityStates
 from pytest_bdd import given, scenario, then
 from pytest_bdd.parsers import parse
 from utils import retrieve_attr_value

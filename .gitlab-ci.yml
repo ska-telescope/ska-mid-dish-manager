@@ -89,6 +89,7 @@ k8s-test-runner:
     - make k8s-install-chart
     - make k8s-wait
 
+# trigger this test before any release of dish-manager to give confidence tests will pass in dish-lmc repo
 lmc-acceptance-test:
   extends: k8s-test-runner
   variables:
@@ -101,6 +102,7 @@ lmc-acceptance-test:
     - make k8s-delete-namespace || true
     - '[ -f build/status ] || (echo "Something went wrong with the test (no build/status file); exit 1")'
     - exit $(cat build/status)
+  when: manual
 
 
 #mypy job
