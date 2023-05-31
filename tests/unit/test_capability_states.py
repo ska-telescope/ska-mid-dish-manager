@@ -343,9 +343,7 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.ds_cm._update_component_state(
-            indexerposition=IndexerPosition.MOVING,
-        )
+        self.dish_manager_cm._update_component_state(dishmode=DishMode.CONFIG)
         self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.OPERATE_FULL)
         self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.CONFIGURE)
 

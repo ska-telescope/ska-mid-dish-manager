@@ -122,6 +122,12 @@ def test_model_dish_mode_transition_accuracy(
             DishMode.STARTUP,
         ),
         (
+            dict(indexerposition=IndexerPosition.MOVING),
+            dict(operatingmode=SPFOperatingMode.STANDBY_LP),
+            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            DishMode.CONFIG,
+        ),
+        (
             dict(operatingmode=DSOperatingMode.STOW),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             dict(operatingmode=SPFRxOperatingMode.CONFIGURE),
