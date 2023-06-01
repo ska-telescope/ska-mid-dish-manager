@@ -54,7 +54,7 @@ class SubscriptionTracker:
         with self._update_lock:
             self._logger.info("Marking %s attribute as subscribed", attribute_name)
             self._subscribed_attrs[attribute_name] = True
-        self.update_subscription_status()
+            self.update_subscription_status()
 
     def subscription_stopped(self, attribute_name: str) -> None:
         """Mark attr as unsubscribed
@@ -65,14 +65,14 @@ class SubscriptionTracker:
         with self._update_lock:
             self._logger.info("Marking %s attribute as not subscribed", attribute_name)
             self._subscribed_attrs[attribute_name] = False
-        self.update_subscription_status()
+            self.update_subscription_status()
 
     def clear_subscriptions(self) -> None:
         """Set all attrs as not subscribed"""
         with self._update_lock:
             for key in self._subscribed_attrs:
                 self._subscribed_attrs[key] = False
-        self.update_subscription_status()
+            self.update_subscription_status()
 
     def all_subscribed(self) -> bool:
         """Check if all attributes has been subscribed
@@ -80,8 +80,7 @@ class SubscriptionTracker:
         :return: All attributes subscribed
         :rtype: bool
         """
-        with self._update_lock:
-            return all(self._subscribed_attrs.values())
+        return all(self._subscribed_attrs.values())
 
     def update_subscription_status(self) -> None:
         """Update Communication Status"""

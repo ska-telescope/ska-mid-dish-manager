@@ -57,11 +57,7 @@ CAPABILITY_STATE_RULES = {
         " SPFRX.capabilitystate == 'SPFRxCapabilityStates.OPERATE'"
     ),
     "CONFIGURING": rule_engine.Rule(
-        "( "
-        "   DM.dishmode == 'DishMode.CONFIG' "
-        "   or "
-        "   DS.indexerposition == 'IndexerPosition.MOVING' "
-        ")  "
+        "DM.dishmode == 'DishMode.CONFIG' "
         " and "
         "SPF.capabilitystate in "
         "     ['SPFCapabilityStates.OPERATE_DEGRADED', "

@@ -63,8 +63,6 @@ Capability State Transition Rules
    "CONFIGURING": rule_engine.Rule(
       "( "
       "   DM.dishmode == 'DishMode.CONFIG' "
-      "   or "
-      "   DS.indexerposition == 'IndexerPosition.MOVING' "
       ")  "
       " and "
       "SPF.capabilitystate in "
