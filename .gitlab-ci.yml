@@ -89,6 +89,22 @@ k8s-test-runner:
     - make k8s-install-chart
     - make k8s-wait
 
+# trigger this test before any release of dish-manager to give confidence tests will pass in dish-lmc repo
+lmc-acceptance-test:
+  extends: k8s-test-runner
+  variables:
+    KUBE_NAMESPACE: 'ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-lmc'
+  script:
+    - make k8s-lmc-test || true
+    # ST-1258: Cleanup and exit if the test return code is present
+    - make k8s-uninstall-chart || true
+    - kubectl -n $KUBE_NAMESPACE delete pods,svc,daemonsets,deployments,replicasets,statefulsets,cronjobs,jobs,ingresses,configmaps --all || true
+    - make k8s-delete-namespace || true
+    - '[ -f build/status ] || (echo "Something went wrong with the test (no build/status file); exit 1")'
+    - exit $(cat build/status)
+  when: manual
+
+
 #mypy job
 mypy:
   stage: lint

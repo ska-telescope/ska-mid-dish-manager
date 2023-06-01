@@ -22,6 +22,37 @@ MARK = acceptance
 TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
 endif
 
+ifeq ($(MAKECMDGOALS),k8s-lmc-test)
+MARK = lmc
+TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
+endif
+
+k8s-lmc-test:
+##  Cleanup
+	@rm -fr build; mkdir build
+	@find ./$(k8s_test_folder) -name "*.pyc" -type f -delete
+
+##  Install requirements
+	if [[ -f pyproject.toml ]]; then \
+		poetry config virtualenvs.create false; \
+		echo 'k8s-test: installing poetry dependencies';  \
+		poetry install; \
+	else if [[ -f $(k8s_test_folder)/requirements.txt ]]; then \
+			echo 'k8s-test: installing $(k8s_test_folder)/requirements.txt'; \
+			pip install -qUr $(k8s_test_folder)/requirements.txt; \
+		fi; \
+	fi;
+
+##  Run tests
+	export PYTHONPATH=${PYTHONPATH}:/app/src$(k8s_test_src_dirs)
+	mkdir -p build
+	cd $(K8S_RUN_TEST_FOLDER) && $(K8S_TEST_TEST_COMMAND); echo $$? > $(BASE)/build/status
+
+##  Post tests reporting
+	pip list > build/pip_list.txt
+	@echo "k8s_test_command: test command exit is: $$(cat build/status)"
+
+
 # Set the specific environment variables required for pytest
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
