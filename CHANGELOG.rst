@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 Version 2.2.5
 *************
 - Bug fixes
+
+  - Refactored capability state updates in _component_state_changed
+  - Updated tango_device_cm to use .lower() on monitored attribute names when updating component states
+
 - Manual job to run lmc test prior to dish manager release
 
 Version 2.2.4
