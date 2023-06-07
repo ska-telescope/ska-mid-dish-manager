@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-dish-manager"
-version = "2.2.4"
+version = "2.2.5"
 description = "SKA Dish Manager TANGO device server"
 authors = ["Team Karoo"]
 license = "BSD-3-Clause"
@@ -99,6 +99,7 @@ markers = [
     "XTP-15469",
     "XTP-15470",
     "XTP-15471",
+    "XTP-16286",
     "L2-4699",
     "L2-4700",
     "L2-4697",
