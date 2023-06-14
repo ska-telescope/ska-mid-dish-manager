@@ -1136,6 +1136,7 @@ class DishManager(SKAController):
     @command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
     )
     def Track(self) -> DevVarLongStringArrayType:
         """
@@ -1165,7 +1166,11 @@ class DishManager(SKAController):
 
         return ([result_code], [unique_id])
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        dtype_out="DevVarLongStringArray"
+        display_level=DispLevel.OPERATOR,
+    )
     def TrackStop(self) -> DevVarLongStringArrayType:
         """
         When the TrackStop command Is received the Dish will stop tracking
