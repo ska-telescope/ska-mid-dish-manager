@@ -1,4 +1,4 @@
-"""Test that DS goes into Track and dishManager reports it"""
+"""Test that DS goes into STOW and dishManager reports it"""
 import pytest
 import tango
 
@@ -9,10 +9,10 @@ from tests.utils import set_configuredBand_b1
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_track_cmd(
+def test_track_stop_cmd(
     event_store_class, dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
 ):
-    """Test Track command"""
+    """Test TrackStop command"""
 
     main_event_store = event_store_class()
     band_event_store = event_store_class()
@@ -61,10 +61,16 @@ def test_track_cmd(
 
     main_event_store.wait_for_command_id(unique_id, timeout=8)
 
+    # Call TrackStop on DishManager
+    [[_], [unique_id]] = dish_manager_proxy.TrackStop()
+
+    # Force pointingstate update
+    ds_device_proxy.pointingState = PointingState.READY
+
     expected_progress_updates = [
-        "Track called on DS, ID",
-        "Awaiting achievedtargetlock change to True",
-        "Track completed",
+        "TrackStop called on DS, ID",
+        "Awaiting achievedtargetlock change to False",
+        "TrackStop completed",
     ]
 
     # Wait for the track command to complete
