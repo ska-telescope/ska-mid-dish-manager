@@ -61,11 +61,16 @@ def test_track_stop_cmd(
 
     main_event_store.wait_for_command_id(unique_id, timeout=8)
 
+    main_event_store.clear_queue()
+    progress_event_store.clear_queue()
+
     # Call TrackStop on DishManager
     [[_], [unique_id]] = dish_manager_proxy.TrackStop()
 
     # Force pointingstate update
     ds_device_proxy.pointingState = PointingState.READY
+
+    main_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
         "TrackStop called on DS, ID",
@@ -75,7 +80,7 @@ def test_track_stop_cmd(
 
     # Wait for the track command to complete
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
+        expected_progress_updates[-1], timeout=8
     )
 
     # Check that all the expected progress messages appeared
