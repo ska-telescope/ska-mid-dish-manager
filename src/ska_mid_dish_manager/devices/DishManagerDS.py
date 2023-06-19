@@ -1173,8 +1173,13 @@ class DishManager(SKAController):
     )
     def TrackStop(self) -> DevVarLongStringArrayType:
         """
+        Implemented as a Long Running Command
+
         When the TrackStop command Is received the Dish will stop tracking
         but will not apply brakes.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
         handler = self.get_command_object("TrackStop")
         result_code, unique_id = handler()

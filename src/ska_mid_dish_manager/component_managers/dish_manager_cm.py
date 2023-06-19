@@ -515,7 +515,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Stop tracking"""
         dish_mode = self.component_state["dishmode"]
         pointing_state = self.component_state["pointingstate"]
-        if dish_mode != DishMode.OPERATE or pointing_state != PointingState.TRACK:
+        if dish_mode != DishMode.OPERATE or pointing_state not in [
+            PointingState.TRACK, PointingState.SLEW
+        ]:
             ex = CommandNotAllowed(
                 f"Track Stop command only allowed in `OPERATE` mode and `TRACK` pointing state."
                 f"Current dishMode: {dish_mode}, pointingState: {pointing_state}"

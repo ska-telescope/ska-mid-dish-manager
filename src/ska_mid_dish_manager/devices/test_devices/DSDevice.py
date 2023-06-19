@@ -241,7 +241,7 @@ class DSDevice(Device):
         self.push_change_event("operatingMode", self._operating_mode)
 
     @random_delay_execution
-    @command(dtype_in=None, doc_in="Track", dtype_out=None)
+    @command(dtype_in=None, doc_in="Stop Tracking", dtype_out=None)
     def TrackStop(self):
         LOGGER.info("Called TrackStop")
 

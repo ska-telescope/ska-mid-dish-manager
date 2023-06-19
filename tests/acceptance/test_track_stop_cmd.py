@@ -1,4 +1,4 @@
-"""Test that DS goes into STOW and dishManager reports it"""
+"""Test that DS stops tracking and dishManager reports it"""
 import pytest
 import tango
 

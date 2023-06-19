@@ -169,7 +169,7 @@ class CommandMap:
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
-        """Transition the dish to Track mode"""
+        """Stop Tracking"""
         commands_for_sub_devices = {
             "DS": {
                 "command": "TrackStop",

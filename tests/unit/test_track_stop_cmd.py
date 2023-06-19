@@ -1,4 +1,4 @@
-"""Unit tests for the Track command."""
+"""Unit tests for the TrackStop command."""
 
 import logging
 from unittest.mock import MagicMock, patch
