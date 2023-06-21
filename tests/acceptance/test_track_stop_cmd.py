@@ -55,10 +55,6 @@ def test_track_stop_cmd(
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
 
-    # Force a pointingstate update
-    ds_device_proxy.pointingState = PointingState.SCAN
-    ds_device_proxy.pointingState = PointingState.TRACK
-
     main_event_store.wait_for_command_id(unique_id, timeout=8)
 
     main_event_store.clear_queue()
