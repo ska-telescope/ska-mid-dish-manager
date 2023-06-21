@@ -63,7 +63,7 @@ def test_track_cmd(
 
     expected_progress_updates = [
         "Track called on DS, ID",
-        "Awaiting achievedtargetlock change to True",
+        "Awaiting pointingstate change to TRACK",
         "Track completed",
     ]
 

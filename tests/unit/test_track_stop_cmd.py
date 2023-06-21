@@ -134,7 +134,7 @@ class TestTrackStop:
 
         expected_progress_updates = [
             "TrackStop called on DS, ID",
-            "Awaiting achievedtargetlock change to False",
+            "Awaiting pointingstate change to READY",
             "TrackStop completed",
         ]
 

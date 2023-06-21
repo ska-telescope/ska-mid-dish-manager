@@ -160,8 +160,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "Track",
-            "achievedtargetlock",
-            True,
+            "pointingstate",
+            PointingState.TRACK,
         )
 
     def track_stop_cmd(
@@ -183,8 +183,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "TrackStop",
-            "achievedtargetlock",
-            False,
+            "pointingstate",
+            PointingState.READY,
         )
 
     def configure_band2_cmd(
