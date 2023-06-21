@@ -67,9 +67,6 @@ def test_track_stop_cmd(
     # Call TrackStop on DishManager
     [[_], [unique_id]] = dish_manager_proxy.TrackStop()
 
-    # Force pointingstate update
-    ds_device_proxy.pointingState = PointingState.READY
-
     main_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [

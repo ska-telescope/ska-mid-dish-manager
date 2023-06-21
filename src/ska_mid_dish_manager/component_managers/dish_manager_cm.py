@@ -520,8 +520,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             PointingState.SLEW,
         ]:
             ex = CommandNotAllowed(
-                f"Track Stop command only allowed in `OPERATE` mode and `TRACK` pointing state."
-                f"Current dishMode: {dish_mode}, pointingState: {pointing_state}"
+                f"Track Stop command only allowed in `OPERATE` dish mode and in `TRACK` and `SLEW`"
+                f"pointing states. Current dishMode: {dish_mode}, pointingState: {pointing_state}"
             )
             if task_callback:
                 task_callback(status=TaskStatus.REJECTED, exception=ex)

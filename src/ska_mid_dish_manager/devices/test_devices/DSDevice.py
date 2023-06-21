@@ -240,10 +240,20 @@ class DSDevice(Device):
         self._operating_mode = DSOperatingMode.POINT
         self.push_change_event("operatingMode", self._operating_mode)
 
+        self._pointing_state = PointingState.SCAN
+        self.push_change_event("pointingState", self._pointing_state)
+
+        time.sleep(round(random.uniform(0.5, 1), 2))
+
+        self._pointing_state = PointingState.TRACK
+        self.push_change_event("pointingState", self._pointing_state)
+
     @random_delay_execution
     @command(dtype_in=None, doc_in="Stop Tracking", dtype_out=None)
     def TrackStop(self):
         LOGGER.info("Called TrackStop")
+        self._pointing_state = PointingState.READY
+        self.push_change_event("pointingState", self._pointing_state)
 
     @random_delay_execution
     @command(dtype_in=DevShort, doc_in="Update indexerPosition", dtype_out=None)
