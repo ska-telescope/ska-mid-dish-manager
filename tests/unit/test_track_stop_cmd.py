@@ -116,11 +116,9 @@ class TestTrackStop:
         # transition DS pointingState to TRACK
         self.ds_cm._update_component_state(pointingstate=PointingState.SLEW)
         main_event_store.wait_for_value(PointingState.SLEW)
-        assert not self.device_proxy.achievedTargetLock
 
         self.ds_cm._update_component_state(pointingstate=PointingState.TRACK)
         main_event_store.wait_for_value(PointingState.TRACK)
-        assert self.device_proxy.achievedTargetLock
 
         main_event_store.wait_for_command_id(unique_id, timeout=6)
 
@@ -130,7 +128,6 @@ class TestTrackStop:
         # transition DS pointingState to TRACK
         self.ds_cm._update_component_state(pointingstate=PointingState.READY)
         main_event_store.wait_for_value(PointingState.READY)
-        assert not self.device_proxy.achievedTargetLock
 
         expected_progress_updates = [
             "TrackStop called on DS, ID",

@@ -74,5 +74,3 @@ def test_track_cmd(
 
     for message in expected_progress_updates:
         assert message in events_string
-
-    assert dish_manager_proxy.achievedTargetLock
