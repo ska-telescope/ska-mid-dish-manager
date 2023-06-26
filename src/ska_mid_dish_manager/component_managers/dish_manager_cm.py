@@ -480,7 +480,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ex = CommandNotAllowed(
                 "configuredBand can not be in " f"{Band.NONE.name} or {Band.UNKNOWN.name}",
             )
-            task_callback(status=TaskStatus.REJECTED, exception=ex)
+            if task_callback:
+                task_callback(status=TaskStatus.REJECTED, exception=ex)
             raise ex
 
         status, response = self.submit_task(
@@ -496,13 +497,38 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         dish_mode = self.component_state["dishmode"].name
         if dish_mode != "OPERATE":
             ex = CommandNotAllowed(
-                "Track command only allowed in `OPERATE`" f"mode. Current dishMode: {dish_mode}."
+                f"Track command only allowed in `OPERATE` mode. Current dishMode: {dish_mode}."
             )
-            task_callback(status=TaskStatus.REJECTED, exception=ex)
+            if task_callback:
+                task_callback(status=TaskStatus.REJECTED, exception=ex)
             raise ex
 
         status, response = self.submit_task(
             self._command_map.track_cmd, args=[], task_callback=task_callback
+        )
+        return status, response
+
+    def track_stop_cmd(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Stop tracking"""
+        dish_mode = self.component_state["dishmode"]
+        pointing_state = self.component_state["pointingstate"]
+        if dish_mode != DishMode.OPERATE or pointing_state not in [
+            PointingState.TRACK,
+            PointingState.SLEW,
+        ]:
+            ex = CommandNotAllowed(
+                f"Track Stop command only allowed in `OPERATE` dish mode and in `TRACK` and `SLEW`"
+                f"pointing states. Current dishMode: {dish_mode}, pointingState: {pointing_state}"
+            )
+            if task_callback:
+                task_callback(status=TaskStatus.REJECTED, exception=ex)
+            raise ex
+
+        status, response = self.submit_task(
+            self._command_map.track_stop_cmd, args=[], task_callback=task_callback
         )
         return status, response
 
@@ -520,7 +546,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
         if self.component_state["configuredband"] == Band.B2:
-            task_callback(status=TaskStatus.REJECTED, result=f"Already in band {Band.B2.name}")
+            if task_callback:
+                task_callback(status=TaskStatus.REJECTED, result=f"Already in band {Band.B2.name}")
             return TaskStatus.REJECTED, f"Already in band {Band.B2.name}"
 
         # TODO Check if ConfigureBand2 is already running

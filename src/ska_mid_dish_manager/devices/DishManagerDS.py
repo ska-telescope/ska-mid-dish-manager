@@ -87,6 +87,7 @@ class DishManager(SKAController):
             ("SetOperateMode", "set_operate_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
+            ("TrackStop", "track_stop_cmd"),
             ("ConfigureBand2", "configure_band2_cmd"),
             ("SetStowMode", "set_stow_mode"),
         ]:
@@ -1135,6 +1136,7 @@ class DishManager(SKAController):
     @command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
     )
     def Track(self) -> DevVarLongStringArrayType:
         """
@@ -1164,13 +1166,25 @@ class DishManager(SKAController):
 
         return ([result_code], [unique_id])
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
-    def TrackStop(self):
+    @command(
+        dtype_in=None,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    def TrackStop(self) -> DevVarLongStringArrayType:
         """
+        Implemented as a Long Running Command
+
         When the TrackStop command Is received the Dish will stop tracking
         but will not apply brakes.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("TrackStop")
+        result_code, unique_id = handler()
+
+        return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StopCommunication(self):

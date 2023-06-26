@@ -11,6 +11,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
     IndexerPosition,
+    PointingState,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -159,8 +160,31 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "Track",
-            "achievedtargetlock",
-            True,
+            "pointingstate",
+            PointingState.TRACK,
+        )
+
+    def track_stop_cmd(
+        self,
+        task_abort_event=None,
+        task_callback: Optional[Callable] = None,
+    ):
+        """Stop Tracking"""
+        commands_for_sub_devices = {
+            "DS": {
+                "command": "TrackStop",
+                "awaitedAttribute": "pointingstate",
+                "awaitedValuesList": [PointingState.READY],
+            },
+        }
+
+        self._run_long_running_command(
+            task_callback,
+            task_abort_event,
+            commands_for_sub_devices,
+            "TrackStop",
+            "pointingstate",
+            PointingState.READY,
         )
 
     def configure_band2_cmd(

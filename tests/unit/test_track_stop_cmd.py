@@ -1,4 +1,4 @@
-"""Unit tests for the Track command."""
+"""Unit tests for the TrackStop command."""
 
 import logging
 from unittest.mock import MagicMock, patch
@@ -22,8 +22,8 @@ LOGGER = logging.getLogger(__name__)
 # pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
 @pytest.mark.forked
-class TestTrack:
-    """Tests for Track"""
+class TestTrackStop:
+    """Tests for TrackStop"""
 
     def setup_method(self):
         """Set up context"""
@@ -50,34 +50,31 @@ class TestTrack:
 
     # pylint: disable=missing-function-docstring, protected-access
     @pytest.mark.parametrize(
-        "current_dish_mode",
+        "current_pointing_state",
         [
-            DishMode.STANDBY_LP,
-            DishMode.STANDBY_FP,
-            DishMode.STARTUP,
-            DishMode.SHUTDOWN,
-            DishMode.MAINTENANCE,
-            DishMode.STOW,
-            DishMode.CONFIG,
+            PointingState.READY,
+            PointingState.SLEW,
+            PointingState.SCAN,
         ],
     )
-    def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
+    def test_track_stop_cmd_fails_when_pointing_state_is_not_track(
         self,
         event_store,
-        current_dish_mode,
+        current_pointing_state,
     ):
         self.device_proxy.subscribe_event(
-            "dishMode",
+            "pointingState",
             tango.EventType.CHANGE_EVENT,
             event_store,
         )
 
-        self.dish_manager_cm._update_component_state(dishmode=current_dish_mode)
-        event_store.wait_for_value(current_dish_mode, timeout=5)
-        with pytest.raises(tango.DevFailed):
-            _, _ = self.device_proxy.Track()
+        self.ds_cm._update_component_state(pointingstate=current_pointing_state)
+        event_store.wait_for_value(current_pointing_state, timeout=5)
 
-    def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
+        with pytest.raises(tango.DevFailed):
+            _, _ = self.device_proxy.TrackStop()
+
+    def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
         self,
         event_store_class,
     ):
@@ -114,7 +111,7 @@ class TestTrack:
         main_event_store.clear_queue()
 
         # Request Track on Dish
-        self.device_proxy.Track()
+        [[_], [unique_id]] = self.device_proxy.Track()
 
         # transition DS pointingState to TRACK
         self.ds_cm._update_component_state(pointingstate=PointingState.SLEW)
@@ -123,10 +120,19 @@ class TestTrack:
         self.ds_cm._update_component_state(pointingstate=PointingState.TRACK)
         main_event_store.wait_for_value(PointingState.TRACK)
 
+        main_event_store.wait_for_command_id(unique_id, timeout=6)
+
+        # Request TrackStop on Dish
+        self.device_proxy.TrackStop()
+
+        # transition DS pointingState to TRACK
+        self.ds_cm._update_component_state(pointingstate=PointingState.READY)
+        main_event_store.wait_for_value(PointingState.READY)
+
         expected_progress_updates = [
-            "Track called on DS, ID",
-            "Awaiting pointingstate change to TRACK",
-            "Track completed",
+            "TrackStop called on DS, ID",
+            "Awaiting pointingstate change to READY",
+            "TrackStop completed",
         ]
 
         events = progress_event_store.wait_for_progress_update(
