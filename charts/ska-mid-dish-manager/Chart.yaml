@@ -25,7 +25,7 @@ maintainers:
     email: alethole@sarao.ac.za
 dependencies:
 - name: ska-tango-util
-  version: 0.4.2
+  version: 0.4.6
   repository: https://artefact.skao.int/repository/helm-internal
 - name: ska-mid-dish-simulators
   version: 1.2.0
