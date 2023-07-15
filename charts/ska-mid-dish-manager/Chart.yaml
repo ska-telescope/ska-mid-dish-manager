@@ -11,10 +11,8 @@ sources:
 maintainers:
   - name: Johan Venter
     email: jventer@sarao.ac.za
-  - name: Paul Swart
-    email: p.swart@sarao.ac.za
   - name: Samuel Twum
-    email: stwum@sarao.ac.za
+    email: samuel.twum@skao.int
   - name: Phelokazi dube
     email: pdube@sarao.ac.za
   - name: Barbara Ojur
@@ -23,6 +21,8 @@ maintainers:
     email: dpetrie@sarao.ac.za
   - name: Abednigo Lethole
     email: alethole@sarao.ac.za
+  - name: Umkhulu Silere
+    email: usilere@sarao.ac.za
 dependencies:
 - name: ska-tango-util
   version: 0.4.6
