@@ -86,6 +86,7 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 -include .make/k8s.mk
 -include .make/helm.mk
 
+k8s-dep-update: k8s-pre-dep-update k8s-post-dep-update
 
 # include your own private variables for custom deployment configuration
 -include PrivateRules.mak
