@@ -1,6 +1,0 @@
-docutils < 0.20
-Sphinx == 5.3.0
-sphinx-rtd-theme
-sphinx-autodoc-typehints
-sphinxcontrib-plantuml
-typing_extensions
