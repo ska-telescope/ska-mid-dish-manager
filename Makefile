@@ -76,7 +76,6 @@ ifneq ($(CI_JOB_ID),)
 CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
 	--set dishmanager.image.tag=$(OCI_TAG) \
-	--set global.minikube=false \
 	--set ska-mid-dish-simulators.enabled=true \
 	--set deviceServers.dsdevice.enabled=true \
 	--set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
