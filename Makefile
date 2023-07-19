@@ -118,12 +118,3 @@ k8s-lmc-test:
 ##  Post tests reporting
 	pip list > build/pip_list.txt
 	@echo "k8s_test_command: test command exit is: $$(cat build/status)"
-
-
-k8s-custom-do-install-chart: k8s-namespace
-	@echo "install-chart: install $(K8S_UMBRELLA_CHART_PATH) release: $(HELM_RELEASE) in Namespace: $(KUBE_NAMESPACE) with params: $(K8S_CHART_PARAMS)"
-	helm upgrade --install $(HELM_RELEASE) \
-	$(K8S_CHART_PARAMS) \
-	 $(K8S_UMBRELLA_CHART_PATH) --namespace $(KUBE_NAMESPACE)
-
-k8s-custom-install-chart: k8s-pre-install-chart k8s-custom-do-install-chart k8s-post-install-chart
