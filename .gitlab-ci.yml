@@ -86,7 +86,7 @@ k8s-test-runner:
     - git config --global --add safe.directory /builds/ska-telescope/ska-mid-dish-manager
     - '[ -f .make/k8s.mk ] || (echo "File k8s.mk not included in Makefile; exit 1")'
     - 'make help | grep k8s-test'
-    - make k8s-install-chart
+    - make k8s-custom-install-chart
     - make k8s-wait
 
 # trigger this test before any release of dish-manager to give confidence tests will pass in dish-lmc repo
