@@ -1,0 +1,100 @@
+{{ define "ska-tango-util.multidevice-job.tpl" }}
+
+{{- if not .local.Values.global.operator }}
+
+---
+{{ $labels := coalesce .local.Values.global.labels .local.Values.labels "label:none" }}
+{{ $annotations := coalesce .local.Values.global.annotations .local.Values.annotations }}
+{{ $default_tango_host := printf "%s-%s" "databaseds-tango-base-" .local.Release.Name }}
+{{ $tango_host := tpl (coalesce .local.Values.global.tango_host .local.Values.tango_host $default_tango_host | toString) .local }}
+{{ $dsconfig := coalesce .local.Values.global.dsconfig .local.Values.dsconfig}}
+{{ $deviceserver_name := tpl (coalesce .name .deviceserver.name | toString) .local }}
+---
+# run once Job for loading Device Server config
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{$deviceserver_name | toString }}-{{ .local.Release.Name }}-config
+  namespace: {{ .local.Release.Namespace }}
+  labels:
+{{ toYaml $labels | indent 4 }}
+    component: configurator
+    function: deployment
+    intent: enabling
+    domain: self-configuration
+{{ if $annotations }}
+  annotations:
+{{ toYaml $annotations | indent 4 }}
+{{ end }}
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      initContainers:
+      - name: check-databaseds-ready
+        image: {{ $dsconfig.image.registry }}/{{ $dsconfig.image.image }}:{{ $dsconfig.image.tag }}
+        imagePullPolicy: {{ $dsconfig.image.pullPolicy }}
+        command:
+          - sh
+          - -c
+        args:
+          - retry
+          {{- if .local.Values.global.retry }}
+          {{- range $retry_option := .local.Values.global.retry }}
+          - {{ $retry_option }}
+          {{- end }}
+          {{- else }}
+          - --max=60
+          {{- end }}
+          - --
+          - tango_admin
+          - --check-device
+          - sys/database/2
+        env:
+        - name: TANGO_HOST
+          value: {{ $tango_host }}
+{{- if (.local.Values.global.environment_variables) }}
+{{- range $index, $envvar := .local.Values.global.environment_variables }}
+        - name: {{$envvar.name}}
+          value: {{tpl ($envvar.value | toString) $ }}
+{{- end }}
+{{- end }}
+      containers:
+      - name: dsconfig
+        image: "{{ $dsconfig.image.registry }}/{{ $dsconfig.image.image }}:{{ $dsconfig.image.tag }}"
+        imagePullPolicy: {{ $dsconfig.image.pullPolicy }}
+        command: # exit code 2 is CONFIG_APPLIED - https://github.com/MaxIV-KitsControls/lib-maxiv-dsconfig/blob/master/dsconfig/utils.py#L11 !!!! this should not be an error !!!!
+          - retry
+          {{- if .local.Values.global.retry }}
+          {{- range $retry_option := .local.Values.global.retry }}
+          - {{ $retry_option }}
+          {{- end }}
+          {{- else }}
+          - --max=60
+          {{- end }}
+          - --
+          - sh
+          - data/bootstrap.sh
+        env:
+        - name: TANGO_HOST
+          value: {{ $tango_host }}
+{{- if (.local.Values.global.environment_variables) }}
+{{- range $index, $envvar := .local.Values.global.environment_variables }}
+        - name: {{$envvar.name}}
+          value: {{tpl ($envvar.value | toString) $ }}
+{{- end }}
+{{- end }}
+        volumeMounts:
+          - name: configuration
+            mountPath: data
+            readOnly: true
+      volumes:
+        - name: configuration
+          configMap:
+            name: {{$deviceserver_name | toString }}-{{ .local.Release.Name }}-dsconfig-json
+      restartPolicy: Never
+
+
+
+{{ end }}
+{{ end }} # multidevice-job.tpl

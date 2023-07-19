@@ -1,0 +1,177 @@
+---
+suite: vnc
+templates:
+  - vnc.yaml
+tests:
+  - it: should have two documents rendered.
+    set:
+      vnc:
+        enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: should have the correct apiVersion, v1, for the Service resource.
+    set:
+      vnc:
+        enabled: true
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: Service
+      - isAPIVersion:
+          of: v1
+
+  - it: should have the correct apiVersion, apps/v1, for the StatefulSet resource.
+    set:
+      vnc:
+        enabled: true
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: StatefulSet
+      - isAPIVersion:
+          of: apps/v1
+
+  - it: should have a service of type NodePort, and a container listening on port 5920 and 6081.
+    set:
+      vnc:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.type
+          value: NodePort
+        documentIndex: 0
+      - equal:
+          path: spec.ports
+          value:
+          - name: vncport
+            port: 5920
+            protocol: TCP
+          - name: novncport
+            port: 6081
+            protocol: TCP
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].ports
+          value:
+          - name: vncport
+            containerPort: 5920
+          - name: novncport
+            containerPort: 6081
+        documentIndex: 1
+
+  - it: should have a Service that routes traffic to the pods, and a Statfulset with pods, with set labels.
+    set:
+      labels:
+        app: ska-tango-images-test
+        dummy-label: dumm
+      vnc:
+        enabled: true
+        component: vnc-gui-test
+        domain: interactive-testing-test
+        function: generic-tango-vnc-gui-test
+        intent: enabling-test
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app: ska-tango-images-test
+            dummy-label: dumm
+            component: vnc-gui-test
+            domain: interactive-testing-test
+            function: generic-tango-vnc-gui-test
+            intent: enabling-test
+        documentIndex: 0
+      - equal:
+          path: spec.template.metadata.labels
+          value:
+            app: ska-tango-images-test
+            dummy-label: dumm
+            component: vnc-gui-test
+            domain: interactive-testing-test
+            function: generic-tango-vnc-gui-test
+            intent: enabling-test
+        documentIndex: 1
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app: ska-tango-images-test
+            dummy-label: dumm
+            component: vnc-gui-test
+            domain: interactive-testing-test
+            function: generic-tango-vnc-gui-test
+            intent: enabling-test
+        documentIndex: 1
+
+  - it: should set the service name to its own cluster hostname.
+    set:
+      vnc:
+        enabled: true
+        component: vnc-gui-test
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.serviceName
+          value: ska-tango-base-vnc-gui-test
+
+  - it: should have a set number of replicas for the StatefulSet.
+    set:
+      vnc:
+        enabled: true
+        replicas: 6
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 6
+
+  - it: should use the docker image given by the image my-own-registry/my-own-image.
+    set:
+      vnc:
+        enabled: true
+        image:
+          registry: my-own-registry
+          image: my-own-image
+          tag: 1.2.3
+    documentIndex: 1
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: my-own-registry/my-own-image:1.2.3
+
+  - it: should pull the image if it is not present.
+    set:
+      vnc:
+        enabled: true
+        image:
+          pullPolicy: AnyPullPolicy
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: AnyPullPolicy
+
+  - it: should set the correct environment variables for the StatefulSet.
+    set:
+      global:
+        tango_host: databaseds-test:12345
+      vnc:
+        enabled: true
+    documentIndex: 1
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KUBE_NAMESPACE
+            value: NAMESPACE
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TANGO_HOST
+            value: databaseds-test:12345
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HELM_RELEASE
+            value: RELEASE-NAME

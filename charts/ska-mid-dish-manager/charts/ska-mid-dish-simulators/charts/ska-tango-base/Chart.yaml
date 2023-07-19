@@ -1,0 +1,10 @@
+apiVersion: v2
+appVersion: 0.4.6
+dependencies:
+- name: ska-tango-util
+  repository: file://../ska-tango-util
+  version: 0.4.6
+description: A Helm chart for deploying the TANGO base system on Kubernetes
+icon: https://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
+name: ska-tango-base
+version: 0.4.6

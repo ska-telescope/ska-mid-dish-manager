@@ -1,0 +1,763 @@
+---
+suite: deviceservers
+templates:
+  - deviceservers.yaml
+tests:
+  - it: should have seven documents rendered.
+    asserts:
+      - hasDocuments:
+          count: 7
+
+  - it: should have the correct apiVersion, v1, for the ConfigMap resource.
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - isAPIVersion:
+          of: v1
+
+  - it: should have a ConfigMap for the TangoTest device server with data having configuration.json.
+    documentIndex: 0
+    set:
+      deviceServers:
+        tangotest:
+          name: testserver
+          instances: ["testx"]
+          server:
+            name: TestServer
+            instances:
+              - name: "testx"
+                classes:
+                - name: "TestServerClass"
+                  devices:
+                    - name: "xxx/xx/x"
+    asserts:
+      - equal:
+          path: data
+          value:
+            TestServer.py: "\n#!/usr/bin/env python\n\nimport importlib\nimport importlib.util\nfrom tango.server import run\n\nclasses
+              = []\n\ndef main(args=None, **kwargs):\n  \n  return run(classes=(classes), args=args,
+              **kwargs)\n\nif __name__ == '__main__':\n    main()\n"
+            bootstrap.sh: |
+              #/bin/sh
+              json2tango -w -a -u data/configuration.json
+              rc=$?
+              if [ $rc -eq 0 ]; then
+                echo "finished normally."
+                exit 0
+              else
+                if [ $rc -eq 2 ]; then
+                  echo "finished with an update."
+                  exit 0
+                else
+                  echo "finished with an ERROR."
+                  exit $rc
+                fi
+              fi
+            configuration.json: |
+              {
+                "servers": {
+                  "TestServer" : {
+                    "testx": {
+                      "TestServerClass": {
+                        "xxx/xx/x": {
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+  - it: it should have a Job resource that runs the bootstrap.sh script in the dsconfig container.
+    documentIndex: 4
+    set:
+      global:
+        retry:
+          - "--sleep=x"
+          - "--tries=y"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: dsconfig
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value:
+            - retry
+            - --sleep=x
+            - --tries=y
+            - --
+            - sh
+            - data/bootstrap.sh
+
+  - it: should have the correct apiVersion, v1, for the ServiceAccount resource.
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: ServiceAccount
+      - isAPIVersion:
+          of: v1
+
+  - it: should have a ServiceAccount that uses metadata.
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: metadata
+          value:
+            name: tangotest-sa-RELEASE-NAME
+            namespace: NAMESPACE
+
+  - it: should have the correct apiVersion, rbac.authorization.k8s.io/v1, for the RoleBinding resource.
+    documentIndex: 2
+    asserts:
+      - isKind:
+          of: RoleBinding
+      - isAPIVersion:
+          of: rbac.authorization.k8s.io/v1
+
+  - it: should have a RoleBinding with Subjects.
+    documentIndex: 2
+    set:
+      deviceServers:
+        tangotest:
+          name: tangotest-x
+    asserts:
+      - equal:
+          path: subjects
+          value:
+          - kind: ServiceAccount
+            name: tangotest-x-sa-RELEASE-NAME
+            namespace: NAMESPACE
+
+  - it: should have a RoleBinding with roleRef.
+    documentIndex: 2
+    set:
+      deviceServers:
+        tangotest:
+          name: tangotest-x
+    asserts:
+      - equal:
+          path: roleRef
+          value:
+            kind: Role
+            name: tangotest-x-role-RELEASE-NAME
+            apiGroup: rbac.authorization.k8s.io
+
+  - it: should have the correct apiVersion, rbac.authorization.k8s.io/v1, for the Role resource.
+    documentIndex: 3
+    asserts:
+      - isKind:
+          of: Role
+      - isAPIVersion:
+          of: rbac.authorization.k8s.io/v1
+
+  - it: should have a Role with rules set.
+    documentIndex: 3
+    asserts:
+      - equal:
+          path: rules
+          value:
+          - apiGroups: [ "", "batch", "apps" ]
+            resources: [ "jobs" ]
+            verbs: [ "list", "get", "watch" ]
+
+  - it: should have the correct apiVersion, batch/v1, for the Job resource.
+    documentIndex: 4
+    asserts:
+      - isKind:
+          of: Job
+      - isAPIVersion:
+          of: batch/v1
+
+  - it: should have a Job with template having container uses docker image my-own-registry/my-own-image.
+    documentIndex: 4
+    set:
+      dsconfig:
+        image:
+          registry: my-own-registry
+          image: my-own-image
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: my-own-registry/my-own-image
+
+  - it: should have a Job resource that has a volume that uses a configMap named tangotest-test-dsconfig-json.
+    documentIndex: 4
+    set:
+      deviceServers:
+        tangotest:
+          name: tangotest-test
+    asserts:
+      - equal:
+          path: spec.template.spec.volumes[0]
+          value:
+            name: configuration
+            configMap:
+              name: tangotest-test-RELEASE-NAME-dsconfig-json
+
+  - it: should have a Job resource with a restartPolicy set to 'Never'.
+    documentIndex: 4
+    asserts:
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+
+  - it: should have a Job with the containers having the TANGO_HOST, databaseds-test:12345, environment variable set.
+    documentIndex: 4
+    set:
+      global:
+        tango_host: databaseds-test:12345
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].env
+          content:
+            name: TANGO_HOST
+            value: databaseds-test:12345
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TANGO_HOST
+            value: databaseds-test:12345
+
+  - it: should have the correct apiVersion, v1, for the Service resource.
+    documentIndex: 5
+    asserts:
+      - isKind:
+          of: Service
+      - isAPIVersion:
+          of: v1
+
+  - it: should have the correct apiVersion, apps/v1, for the StatefulSet resource.
+    documentIndex: 6
+    asserts:
+      - isKind:
+          of: StatefulSet
+      - isAPIVersion:
+          of: apps/v1
+
+  - it: should have a Service, and Statfulset with pods having labels.
+    set:
+      labels.app: ska-tango-images-x
+      deviceServers:
+        tangotest:
+          name: tangotest-test
+          function: tango-test-x
+          domain: tango-base-x 
+          instances: ["helm-test"]
+          server:
+            instances:
+              - name: "helm-test"
+      subsystem: ska-tango-base-test
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            subsystem: ska-tango-base-test
+            component: tangotest-test-helm-test
+        documentIndex: 5
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            subsystem: ska-tango-base-test
+            component: tangotest-test-helm-test
+        documentIndex: 6
+      - equal:
+          path: spec.template.metadata.labels
+          value:
+            component: tangotest-test-helm-test
+            function: tango-test-x
+            domain: tango-base-x
+            subsystem: ska-tango-base-test
+            app: ska-tango-images-x
+        documentIndex: 6
+
+  - it: should have a Statfulset with template having initcontainer uses docker image bitnami/kubectl.
+    documentIndex: 6
+    asserts:
+      - matchRegex:
+            path: spec.template.spec.initContainers[0].image
+            pattern: bitnami/kubectl
+
+  - it: should set the service name to its own cluster hostname.
+    documentIndex: 6
+    set:
+      deviceServers:
+        tangotest:
+          name: tangotest-x
+          instances: ["testx"]
+          server:
+            name: "TangoTest"
+            instances:
+            - name: "testx"
+              classes:
+              - name: "TangoTest"
+                devices:
+                - name: "xxx/xx/x"
+    asserts:
+      - equal:
+          path: spec.serviceName
+          value: tangotest-x-testx
+
+  - it: should have one replica of the statefulset
+    documentIndex: 6
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: should use the docker image specified in the values.yaml, my-own-registry/my-own-image.
+    documentIndex: 6
+    set:
+      deviceServers:
+        tangotest:
+          image:
+            registry: my-own-registry
+            image: my-own-image
+            tag: 1.2.3
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: my-own-registry/my-own-image:1.2.3
+
+  - it: should use the provided image pull policy.
+    documentIndex: 6
+    set:
+      deviceServers:
+        tangotest:
+          image:
+            pullPolicy: AnyPullPolicy
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: AnyPullPolicy
+
+  - it: should have the VolumeMounts.
+    documentIndex: 6
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: configuration
+            mountPath: data
+            readOnly: true
+
+  - it: should have the readiness probes setup using the parameters in the values.yaml file.
+    documentIndex: 6
+    set:
+      deviceServers:
+        tangotest:
+          readinessProbe:
+            failureThreshold: x
+            initialDelaySeconds: x
+            periodSeconds: x
+            successThreshold: x
+            timeoutSeconds: x
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].readinessProbe
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe
+          value:
+            exec:
+              command:
+              - sh
+              - -c
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/1
+            failureThreshold: x
+            initialDelaySeconds: x
+            periodSeconds: x
+            successThreshold: x
+            timeoutSeconds: x
+
+  - it: should have the liveness probes setup using the parameters in the values.yaml file.
+    documentIndex: 6
+    set:
+      deviceServers:
+        tangotest:
+          livenessProbe:
+            failureThreshold: x
+            initialDelaySeconds: x
+            periodSeconds: x
+            successThreshold: x
+            timeoutSeconds: x
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].livenessProbe
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe
+          value:
+            exec:
+              command:
+              - sh
+              - -c
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/1
+            failureThreshold: x
+            initialDelaySeconds: x
+            periodSeconds: x
+            successThreshold: x
+            timeoutSeconds: x
+
+  - it: should generate readiness and liveness probes for a TANGO server instance with one Tango class and multiple devices.
+    documentIndex: 6
+    set:
+      deviceServers:
+        tangotest:
+          server:
+            name: "TangoTest"
+            instances:
+            - name: "test"
+              classes:
+              - name: "TangoTest"
+                devices:
+                - name: "sys/tg_test/1"
+                - name: "sys/tg_test/2"
+                - name: "sys/tg_test/3"
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].livenessProbe
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].readinessProbe
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.exec.command
+          value:
+            - sh
+            - -c
+            - tango_admin
+            - --ping-device
+            - sys/tg_test/1
+            - "&&"
+            - tango_admin
+            - --ping-device
+            - sys/tg_test/2
+            - "&&"
+            - tango_admin
+            - --ping-device
+            - sys/tg_test/3
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.exec.command
+          value:
+            - sh
+            - -c
+            - tango_admin
+            - --ping-device
+            - sys/tg_test/1
+            - "&&"
+            - tango_admin
+            - --ping-device
+            - sys/tg_test/2
+            - "&&"
+            - tango_admin
+            - --ping-device
+            - sys/tg_test/3
+
+  - it: should use the appropriate values to generate the liveness and readiness probes from both the values.yaml and the _multidevice-svc.yaml files, respectively.
+    documentIndex: 6
+    set:
+      deviceServers:
+        tangotest:
+          livenessProbe:
+            failureThreshold: null
+            periodSeconds: null
+            initialDelaySeconds: x
+            successThreshold: x
+            timeoutSeconds: x
+          readinessProbe:
+            timeoutSeconds: null
+            successThreshold: null
+            failureThreshold: x
+            initialDelaySeconds: x
+            periodSeconds: x
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe
+          value:
+            exec:
+              command:
+              - sh
+              - -c
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/1
+            failureThreshold: 3
+            initialDelaySeconds: x
+            periodSeconds: 5
+            successThreshold: x
+            timeoutSeconds: x
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe
+          value:
+            exec:
+              command:
+              - sh
+              - -c
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/1
+            failureThreshold: x
+            initialDelaySeconds: x
+            periodSeconds: x
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: should use default values (from the _multidevice-svc.yaml) to generate the liveness and readiness probes if the readinessProbe/livenessProbe tags are not present in the values.yaml file.
+    documentIndex: 6
+    set:
+      deviceServers:
+        tangotest:
+          livenessProbe: null
+          readinessProbe: null
+    asserts:
+      - isNotEmpty:
+          path: spec.template.spec.containers[0].livenessProbe
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe
+          value:
+            exec:
+              command:
+              - sh
+              - -c
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/1
+            failureThreshold: 3
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe
+          value:
+            exec:
+              command:
+              - sh
+              - -c
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/1
+            failureThreshold: 3
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+
+  - it: should generate liveness and readiness probes for a TANGO server instance with multiple TANGO classes.
+    documentIndex: 6
+    set:
+      global:
+        retry:
+          - "--sleep=x"
+          - "--tries=y"
+      deviceServers:
+        tangotest:
+          legacy_compatibility: true
+          command: "/usr/local/bin/TangoServer"
+          server:
+            name: "TangoTest"
+            instances:
+            - name: "test"
+              classes:
+              - name: "TangoTest1"
+                devices:
+                - name: "sys/tg_test/11"
+              - name: "TangoTest2"
+                devices:
+                - name: "sys/tg_test/12"
+              - name: "TangoTest3"
+                devices:
+                - name: "sys/tg_test/13"
+          livenessProbe:
+            failureThreshold: x
+            initialDelaySeconds: x
+            periodSeconds: x
+            successThreshold: x
+            timeoutSeconds: x
+          readinessProbe:
+            failureThreshold: x
+            initialDelaySeconds: x
+            periodSeconds: x
+            successThreshold: x
+            timeoutSeconds: x
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value:
+            - retry
+            - --sleep=x
+            - --tries=y
+            - --
+            - /usr/local/bin/TangoServer
+            - "test"
+            - -ORBendPoint
+            - giop:tcp::$(TANGO_SERVER_PORT)
+            - -ORBendPointPublish
+            - giop:tcp:$(TANGO_SERVER_PUBLISH_HOSTNAME):$(TANGO_SERVER_PORT)
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe
+          value:
+            exec:
+              command:
+              - sh
+              - -c
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/11
+              - "&&"
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/12
+              - "&&"
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/13
+            failureThreshold: x
+            initialDelaySeconds: x
+            periodSeconds: x
+            successThreshold: x
+            timeoutSeconds: x
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe
+          value:
+            exec:
+              command:
+              - sh
+              - -c
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/11
+              - "&&"
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/12
+              - "&&"
+              - tango_admin
+              - --ping-device
+              - sys/tg_test/13
+            failureThreshold: x
+            initialDelaySeconds: x
+            periodSeconds: x
+            successThreshold: x
+            timeoutSeconds: x
+
+  - it: should generate multiple StatefulSet resources for a TANGO server with multiple server instances.
+    set:
+      global:
+        retry:
+          - "--sleep=x"
+          - "--tries=y"
+      deviceServers:
+        tangotest:
+          legacy_compatibility: true
+          command: "/usr/local/bin/TangoServer"
+          instances: ["test", "test2"]
+          server:
+            instances:
+            - name: "test"
+              classes:
+              - name: "TangoTest1"
+                devices:
+                - name: "sys/tg_test/1"
+            - name: "test2"
+              classes:
+              - name: "TangoTest2"
+                devices:
+                - name: "sys/tg_test/2"
+    asserts:
+      - isKind:
+          of: StatefulSet
+        documentIndex: 6
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value:
+            - retry
+            - --sleep=x
+            - --tries=y
+            - --
+            - /usr/local/bin/TangoServer
+            - "test"
+            - -ORBendPoint
+            - giop:tcp::$(TANGO_SERVER_PORT)
+            - -ORBendPointPublish
+            - giop:tcp:$(TANGO_SERVER_PUBLISH_HOSTNAME):$(TANGO_SERVER_PORT)
+        documentIndex: 6
+      - isKind:
+          of: StatefulSet
+        documentIndex: 8
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value:
+            - retry
+            - --sleep=x
+            - --tries=y
+            - --
+            - /usr/local/bin/TangoServer
+            - "test2"
+            - -ORBendPoint
+            - giop:tcp::$(TANGO_SERVER_PORT)
+            - -ORBendPointPublish
+            - giop:tcp:$(TANGO_SERVER_PUBLISH_HOSTNAME):$(TANGO_SERVER_PORT)
+        documentIndex: 8
+
+  - it: should have a TANGO_SERVER_PORT environment variable set to 45450 by default
+    set:
+      global.device_server_port: null
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TANGO_SERVER_PORT
+            value: "45450"
+        documentIndex: 6
+
+  - it: should have a TANGO_SERVER_PUBLISH environment variable set to the "<server-name>-<server-instance>.<namespace>.svc.cluster.local" by default.
+    set:
+      global:
+        cluster_domain: null
+      deviceServers:
+        tangotest:
+          name: tangotest-test
+          instances: ["test2"]
+          server:
+            name: "TangoTest"
+            instances:
+            - name: "test2"
+              classes:
+              - name: "TangoTest"
+                devices:
+                - name: "xx/xxxx/x"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TANGO_SERVER_PUBLISH_HOSTNAME
+            value: tangotest-test-test2.NAMESPACE.svc.cluster.local
+        documentIndex: 6
+
+  - it: should have resource limits configured.
+    documentIndex: 6
+    set:
+      deviceServers:
+        tangotest:
+          resources:
+            requests:
+              cpu: xxxm
+              memory: xxxMi
+              ephemeral-storage: xGi
+            limits:
+              cpu: xxxm
+              memory: xxxMi
+              ephemeral-storage: xGi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources
+          value:
+            requests:
+              cpu: xxxm
+              memory: xxxMi
+              ephemeral-storage: xGi
+            limits:
+              cpu: xxxm
+              memory: xxxMi
+              ephemeral-storage: xGi

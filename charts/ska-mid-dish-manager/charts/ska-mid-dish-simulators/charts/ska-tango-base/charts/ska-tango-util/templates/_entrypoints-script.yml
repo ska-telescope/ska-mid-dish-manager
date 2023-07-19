@@ -1,0 +1,45 @@
+{{- /*
+tango-util.entrypoints-script.tpl
+Parameters:
+- deviceserver (the deviceserver entire yaml tag)
+- DEBUG (number: activate debugpy at this port; leave empty otherwise)
+*/}}
+{{- define "ska-tango-util.entrypoints-script.tpl" }}
+#!/usr/bin/env python
+
+import importlib
+import importlib.util
+from tango.server import run
+
+classes = []
+
+{{- range $entrypoint := .deviceserver.entrypoints }}
+splitted_name = str(" {{ $entrypoint.name }} ").split(sep='.')
+module_name = ".".join(splitted_name[:-1])
+{{- if $entrypoint.path }}
+spec = importlib.util.spec_from_file_location(module_name.strip(), "{{  $entrypoint.path }}")
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+
+myclass = getattr(mod, splitted_name[-1].strip())
+if not myclass in classes:
+  classes.append(myclass)
+
+{{- else }}
+
+mod = importlib.import_module(module_name.strip())
+myclass = getattr(mod,  splitted_name[-1].strip())
+if not myclass in classes:
+  classes.append(myclass)
+
+{{- end }}
+{{- end }}
+
+def main(args=None, **kwargs):
+  {{ if .DEBUG }}import debugpy; debugpy.listen({{ .DEBUG }}){{ end }}
+  return run(classes=(classes), args=args, **kwargs)
+
+if __name__ == '__main__':
+    main()
+
+{{- end }}

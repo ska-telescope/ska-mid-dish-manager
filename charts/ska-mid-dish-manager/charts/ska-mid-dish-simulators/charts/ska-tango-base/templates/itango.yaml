@@ -1,0 +1,71 @@
+{{- if .Values.itango.enabled }}
+{{- $default_tango_host := printf "%s-%s" "databaseds-tango-base-" .Release.Name }}
+{{- $tango_host := tpl (coalesce .Values.global.tango_host .Values.tango_host $default_tango_host | toString) . }}
+{{- $dsconfig := coalesce .Values.global.dsconfig .Values.dsconfig}}
+{{- $tries := coalesce  .Values.global.tries 10}}
+{{- $sleep := coalesce  .Values.global.sleep 5}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ template "ska-tango-base.name" . }}-{{ .Values.itango.component }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ toYaml (coalesce .Values.global.labels .Values.labels "label:none") | indent 4 }}
+    component: {{ .Values.itango.component }}
+    function: {{ .Values.itango.function }}
+    domain: {{ .Values.itango.domain }}
+    intent: {{ .Values.itango.intent }}
+{{- if or (.Values.global.annotations) (.Values.annotations) }}
+  annotations:
+{{ toYaml (coalesce .Values.global.annotations .Values.annotations) | indent 4 }}
+{{- end }}
+spec:
+  initContainers:
+  - name: check-dependencies-0
+    image: "{{ $dsconfig.image.registry }}/{{ $dsconfig.image.image }}:{{ $dsconfig.image.tag }}"
+    imagePullPolicy: {{ $dsconfig.image.pullPolicy }}
+    command:
+      - retry
+      - --tries={{$tries}} 
+      - --sleep={{$sleep}}
+      - --
+      - tango_admin
+      - --check-device
+      - sys/database/2
+    env:
+    - name: TANGO_HOST
+      value: {{ $tango_host }}
+  containers:
+  - name: itango
+    image: "{{ .Values.itango.image.registry }}/{{ .Values.itango.image.image }}:{{ .Values.itango.image.tag }}"
+    imagePullPolicy: {{ .Values.itango.image.pullPolicy }}
+    command:
+      - /usr/local/bin/wait-for-it.sh
+      - {{ $tango_host }}
+      - --timeout=30
+      - --strict
+      - --
+      - sleep
+      - infinity
+      # - /venv/bin/itango3
+    env:
+    - name: TANGO_HOST
+      value: "{{ $tango_host }}"
+    resources:
+{{ toYaml .Values.itango.resources | indent 6 }}
+  restartPolicy: Always
+{{- with .Values.nodeSelector }}
+  nodeSelector:
+{{ toYaml . | indent 4 }}
+{{- end }}
+{{- with .Values.affinity }}
+  affinity:
+{{ toYaml . | indent 4 }}
+{{- end }}
+{{- with .Values.tolerations }}
+  tolerations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+
+{{- end }}

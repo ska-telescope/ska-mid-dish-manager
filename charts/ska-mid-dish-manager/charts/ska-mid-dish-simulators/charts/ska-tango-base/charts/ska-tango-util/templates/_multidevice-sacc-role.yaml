@@ -1,0 +1,41 @@
+{{ define "ska-tango-util.multidevice-sacc-role.tpl" }}
+{{- if not .local.Values.global.operator }}
+
+---
+{{ $deviceserver_name := tpl (coalesce .name .deviceserver.name | toString) .local }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{$deviceserver_name | toString }}-sa-{{ .local.Release.Name }}
+  namespace: {{ .local.Release.Namespace }}
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{$deviceserver_name | toString }}-role-bind-{{ .local.Release.Name }}
+  namespace: {{ .local.Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{$deviceserver_name | toString }}-sa-{{ .local.Release.Name }}
+  namespace: {{ .local.Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{$deviceserver_name | toString }}-role-{{ .local.Release.Name }}
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{$deviceserver_name | toString }}-role-{{ .local.Release.Name }}
+  namespace: {{ .local.Release.Namespace }}
+rules:
+- apiGroups: ["", "batch", "apps"]
+  resources: ["jobs"]
+  verbs: ["list", "get", "watch"]
+
+
+{{ end }}
+{{ end }} # multidevice-sacc-role.tpl

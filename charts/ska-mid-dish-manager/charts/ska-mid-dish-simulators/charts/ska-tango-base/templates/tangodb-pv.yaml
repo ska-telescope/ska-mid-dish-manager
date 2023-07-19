@@ -1,0 +1,57 @@
+{{- if not .Values.global.operator }}
+{{ if .Values.tangodb.enabled }}
+
+{{ if .Values.tangodb.use_pv }}
+{{ if (coalesce .Values.global.minikube .Values.minikube false) }}
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: {{ template "ska-tango-base.name" . }}-tangodb-storage
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ toYaml (coalesce .Values.global.labels .Values.labels "label:none") | indent 4 }}
+{{ if or (.Values.global.annotations) (.Values.annotations) }}
+  annotations:
+{{ toYaml (coalesce .Values.global.annotations .Values.annotations) | indent 4 }}
+{{ end }}
+spec:
+  storageClassName: standard
+  persistentVolumeReclaimPolicy: Recycle
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /{{ template "ska-tango-base.name" . }}-tangodb-storage-{{ .Release.Name }}
+{{ end }}
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "ska-tango-base.name" . }}-tangodb-storage
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ toYaml (coalesce .Values.global.labels .Values.labels "label:none") | indent 4 }}
+{{ if or (.Values.global.annotations) (.Values.annotations) }}
+  annotations:
+{{ toYaml (coalesce .Values.global.annotations .Values.annotations) | indent 4 }}
+{{ end }}
+spec:
+{{ if (coalesce .Values.global.minikube .Values.minikube false)  }}
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+{{ else }}
+  storageClassName: nfss1
+  accessModes:
+    - ReadWriteMany
+{{ end }}
+  resources:
+    requests:
+      storage: 1Gi
+{{ end }}
+
+{{ end }}
+{{- end }}

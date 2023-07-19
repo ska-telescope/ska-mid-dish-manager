@@ -1,0 +1,149 @@
+{{- define "ska-tango-util.configuration.tpl" -}}
+{{ $default_tango_host := printf "%s-%s:10000" "databaseds-tango-base" .Release.Name }}
+
+{{ $tango_host := tpl (coalesce .Values.global.tango_host .Values.tango_host $default_tango_host | toString) . }}
+{{ $dsconfig := coalesce .Values.global.dsconfig .Values.dsconfig}}
+{{ $itango := coalesce .Values.global.itango .Values.itango}}
+
+{{- if not .Values.global.operator }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.subsystem }}-sa-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Values.subsystem }}-role-bind-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.subsystem }}-sa-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ .Values.subsystem }}-role-{{ .Release.Name }}
+  apiGroup: rbac.authorization.k8s.io
+---
+
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Values.subsystem }}-role-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups: ["", "batch", "apps"]
+  resources: ["jobs"]
+  verbs: ["list", "get", "watch"]
+
+---
+# Device Server configurations
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.subsystem }}-configuration-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ toYaml (coalesce .Values.global.labels .Values.labels "label:none") | indent 4 }}
+    component: configurator
+    function: deployment
+    intent: enabling
+    domain: self-configuration
+  annotations:
+{{ toYaml (coalesce .Values.global.annotations .Values.annotations "annotations:none") | indent 4 }}
+data:
+{{ (tpl (.Files.Glob .Values.dsconfig.configuration_file).AsConfig . ) | indent 2  }}
+  bootstrap.sh: |
+    #/bin/sh
+    json2tango -w -a -u {{ .Values.dsconfig.configuration_file}}
+    rc=$?
+    if [ $rc -eq 0 ]; then
+      echo "finished normally."
+      exit 0
+    else
+      if [ $rc -eq 2 ]; then
+        echo "finished with an update."
+        exit 0
+      else
+        echo "finished with an ERROR."
+        exit $rc
+      fi
+    fi
+
+---
+# run once Job for loading Device Server config
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.subsystem }}-configuration-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ toYaml (coalesce .Values.global.labels .Values.labels "label:none") | indent 4 }}
+    component: configurator
+    function: deployment
+    intent: enabling
+    domain: self-configuration
+  annotations:
+{{ toYaml (coalesce .Values.global.annotations .Values.annotations "annotations:none") | indent 4 }}
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      initContainers:
+      - name: check-databaseds-ready
+        image: {{ $dsconfig.image.registry }}/{{ $dsconfig.image.image }}:{{ $dsconfig.image.tag }}
+        imagePullPolicy: {{ $dsconfig.image.pullPolicy }}
+        command:
+          - retry
+          {{- if .Values.global.retry }}
+          {{- range $retry_option := .Values.global.retry }}
+          - {{ $retry_option }}
+          {{- end }}
+          {{- else }}
+          - --max=60
+          {{- end }}
+          - --
+          - /usr/local/bin/wait-for-it.sh
+          - {{ $tango_host }}
+          - --timeout=60
+          - --strict
+          - --
+          - echo {{ $tango_host }} ready
+{{- if (.Values.global.environment_variables) }}
+        env:
+{{- range $index, $envvar := .Values.global.environment_variables }}
+        - name: {{$envvar.name}}
+          value: {{tpl ($envvar.value | toString) $ }}
+{{- end }}
+{{- end }}
+      containers:
+      - name: dsconfig
+        image: "{{ $dsconfig.image.registry }}/{{ $dsconfig.image.image }}:{{ $dsconfig.image.tag }}"
+        imagePullPolicy: {{ $dsconfig.image.pullPolicy }}
+        command: # exit code 2 is CONFIG_APPLIED - https://github.com/MaxIV-KitsControls/lib-maxiv-dsconfig/blob/master/dsconfig/utils.py#L11 !!!! this should not be an error !!!!
+          - sh
+          - data/bootstrap.sh
+        env:
+        - name: TANGO_HOST
+          value: {{ $tango_host }}
+{{- if (.Values.global.environment_variables) }}
+{{- range $index, $envvar := .Values.global.environment_variables }}
+        - name: {{$envvar.name}}
+          value: {{tpl ($envvar.value | toString) $ }}
+{{- end }}
+{{- end }}
+        volumeMounts:
+          - name: configuration
+            mountPath: data
+            readOnly: true
+      volumes:
+        - name: configuration
+          configMap:
+            name: {{ .Values.subsystem }}-configuration-{{ .Release.Name }}
+      restartPolicy: Never
+
+{{- end }}
+{{- end }}

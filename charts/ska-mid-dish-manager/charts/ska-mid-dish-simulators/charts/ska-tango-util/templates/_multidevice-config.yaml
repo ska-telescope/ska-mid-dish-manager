@@ -1,0 +1,121 @@
+{{ define "ska-tango-util.multidevice-config.tpl" }}
+{{- $labels := coalesce .local.Values.global.labels .local.Values.labels "label: none" }}
+{{- $annotations := coalesce .local.Values.global.annotations .local.Values.annotations }}
+{{- $deviceserver := .deviceserver }}
+{{- $deviceserver_name := tpl (coalesce .name .deviceserver.name | toString) .local }}
+{{- $chart := .local }}
+{{- if not .local.Values.global.operator }}
+
+---
+# Device Server configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $deviceserver_name | toString }}-{{ .local.Release.Name }}-dsconfig-json
+  namespace: {{ .local.Release.Namespace }}
+  labels:
+{{ toYaml $labels | indent 4 }}
+    component: configurator
+    function: deployment
+    intent: enabling
+    domain: self-configuration
+  annotations:
+{{ toYaml $annotations | indent 4 }}
+data:
+  configuration.json: |
+    {
+      "servers": {
+        "{{ $deviceserver.server.name }}" : {
+          {{- range $index_instance,$instance := $deviceserver.server.instances }}
+          {{- if has $instance.name $deviceserver.instances }}
+          {{- if hasKey $deviceserver "tmp_start_instance" }},{{end}}
+          {{- $_ := set $deviceserver "tmp_start_instance" "1" }}
+          "{{ $instance.name }}": {
+            {{- range $index_class, $class := $instance.classes }}
+            {{- if $index_class}},{{end}}
+            "{{ $class.name }}": {
+              {{- range $index_device, $device := $class.devices }}
+              {{- if $index_device}},{{end}}
+              "{{ $device.name }}": {
+                {{- if $device.properties }}
+                "properties": {
+                  {{- range $index_property, $property := $device.properties }}
+                  {{- if $index_property}},{{end}}
+                  "{{ $property.name }}": [
+                    {{- range $index_value, $value := $property.values }}
+                    {{- if $index_value}},{{end}}
+                    "{{ tpl $value $chart }}"
+                    {{- end }}
+                    ]
+                  {{- end }}
+                }{{ if $device.attribute_properties }},{{ end }}
+                {{- end }}
+                {{- if $device.attribute_properties }}
+                "attribute_properties": {
+                  {{- range $index_attr_prop, $attr_prop := $device.attribute_properties }}
+                  {{- if $index_attr_prop}},{{end}}
+                  "{{ $attr_prop.attribute }}": {
+                    {{- range $index_prop, $prop := $attr_prop.properties }}
+                    {{- if $index_prop}},{{end}}
+                    "{{ $prop.name }}": [
+                    {{- range $index_value, $value := $prop.values }}
+                    {{- if $index_value}},{{end}}
+                    "{{ tpl $value $chart }}"
+                    {{- end }}
+                    ]
+                    {{- end }}
+                  }
+                {{- end }}
+                }
+                {{- end }}
+              }
+              {{- end }}
+            }
+            {{- end }}
+          }
+          {{- end }}
+          {{- end }}
+        }
+      }{{ if $deviceserver.class_properties }},
+      "classes": {
+        {{- range $index_class_prop_group, $class_prop_group := $deviceserver.class_properties }}
+        {{- if $index_class_prop_group}},{{end}}
+          "{{ $class_prop_group.name }}": {
+              "properties": {
+                {{- range $index_class_prop, $class_prop := $class_prop_group.properties }}
+                {{- if $index_class_prop}},{{end}}
+                  "{{ $class_prop.name }}": [
+                    {{- range $index_value, $value := $class_prop.values }}
+                    {{- if $index_value}},{{end}}
+                    "{{ tpl $value $chart }}"
+                    {{- end }}
+                  ]
+                {{- end }}
+              }
+          }
+        {{- end }}
+      }
+      {{ end }}
+    }
+    {{- $_ := unset $deviceserver "tmp_start_instance" }}
+  bootstrap.sh: |
+    #/bin/sh
+    json2tango -w -a -u data/configuration.json
+    rc=$?
+    if [ $rc -eq 0 ]; then
+      echo "finished normally."
+      exit 0
+    else
+      if [ $rc -eq 2 ]; then
+        echo "finished with an update."
+        exit 0
+      else
+        echo "finished with an ERROR."
+        exit $rc
+      fi
+    fi
+  {{ $deviceserver.server.name }}.py: |
+{{- $context := dict "deviceserver" $deviceserver "DEBUG" $chart.Values.global.DEBUG }}
+{{- include "ska-tango-util.entrypoints-script.tpl" $context | nindent 4}}
+{{- end }}
+{{- end }} # multidevice-config.tpl

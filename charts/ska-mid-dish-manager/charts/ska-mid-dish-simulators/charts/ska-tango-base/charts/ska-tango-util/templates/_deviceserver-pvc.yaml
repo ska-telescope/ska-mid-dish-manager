@@ -1,0 +1,93 @@
+{{- /*
+Creates persistent volume claim and a management pod for the data it contains.
+It is ONE claim per deviceserver definition not per instance!
+These will only be created if the key "deviceserver.volume" is defined, and if
+"volume.existingClaimName" is not defined. If it is, the named claim will be
+mounted at "mountPath" instead.
+It assumes dynamic persistent volumes.
+
+Parameters are:
+
+- volume.name         name of the volume, e.g. "firmware"
+- volume.mountPath    mount path inside the container, e.g. "/firmware"
+- volume.size         (optional and set to 250Mi by default)
+- volume.admin_image  structure composed by registry, image, tag and policy for the OCI image to use
+- volume.readOnly     whether to mount the volume as read only, default true
+- volume.existingClaimName  name of an existing PVC to use instead of creating
+- local (the local chart)
+
+*/}}
+{{- define "ska-tango-util.deviceserver-pvc.tpl" }}
+{{- /* replace with "if and .volume (not .volume.existingClaimName)" for Helm >= 3.10 */}}
+{{- if .volume }}
+{{- if not .volume.existingClaimName }}
+{{- $volume_name := .volume.name }}
+{{- $volume_path := .volume.mountPath }}
+{{- $volume_size := coalesce .volume.storage "250Mi" }}
+{{- $labels := coalesce .local.Values.global.labels .local.Values.labels "label:none" }}
+{{- $annotations := coalesce .local.Values.global.annotations .local.Values.annotations }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $volume_name | toString }}-pvc-{{ .local.Release.Name }}
+  namespace: {{ .local.Release.Namespace }}
+  labels:
+{{ toYaml $labels | indent 4 }}
+{{- if $annotations }}
+  annotations:
+{{ toYaml $annotations | indent 4 }}
+{{- end }}
+spec:
+{{- if (coalesce .local.Values.global.minikube .local.Values.minikube false)  }}
+  storageClassName: standard
+{{- else }}
+  storageClassName: nfss1
+{{- end }}
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ $volume_size }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    vol: {{ $volume_name | toString }}-admin
+{{ toYaml $labels | indent 4 }}
+  name: {{ $volume_name | toString }}-admin-{{ .local.Release.Name }}
+  namespace: {{ .local.Release.Namespace }}
+{{- if $annotations }}
+  annotations:
+{{ toYaml $annotations | indent 4 }}
+{{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      vol: {{ $volume_name | toString }}-admin
+  template:
+    metadata:
+      labels:
+        vol: {{ $volume_name | toString }}-admin
+    spec:
+      containers:
+      - name: volume-admin
+        image: "{{ $.volume.admin_image.registry }}/{{ $.volume.admin_image.image }}:{{ $.volume.admin_image.tag }}"
+        imagePullPolicy: {{ $.volume.admin_image.pullPolicy }}
+        command: [ "/bin/sh", "-c", "--" ]
+        args: [ "touch {{ $volume_path }}/started; while true; do sleep 30; done;" ]
+        volumeMounts:
+          - name: volume-data
+            mountPath: {{ $volume_path }}
+      volumes:
+      - name: volume-data
+        persistentVolumeClaim: 
+          claimName: {{ $volume_name | toString }}-pvc-{{ .local.Release.Name }}
+
+{{- end -}}
+{{- end }}
+
+{{ end }} # deviceserver-pvc.tpl
