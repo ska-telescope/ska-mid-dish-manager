@@ -5,6 +5,15 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.2.6
+*************
+- Upgraded ska-tango-util to v0.4.6
+- Upgraded dsconfig docker image to v1.5.11
+- Upgraded ska-mid-dish-simulators chart to v1.2.1
+- Added .readthedocs.yaml for docs build
+- Fleshed out TrackStop command implementation
+- Updated helm chart to make the sub device names configurable
+
 Version 2.2.5
 *************
 - Bug fixes
