@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,possibly-unused-variable
 """General utils for test devices"""
 import queue
 from typing import Any, List, Tuple
