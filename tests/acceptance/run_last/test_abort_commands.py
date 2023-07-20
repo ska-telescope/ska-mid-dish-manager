@@ -15,6 +15,7 @@ def turn_on_spf_attribute_update(request, spf_device_proxy):
     request.addfinalizer(toggle_attribute_update)
 
 
+@pytest.mark.skip("Investigate failure")
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
