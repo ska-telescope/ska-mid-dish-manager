@@ -48,7 +48,7 @@ dishmanager:
 
   # Setting fqdn assumes you are only deploying one Dish Manager
   # with custom sub devices addresses
-  # Otherwise device names will follow "ska0<N>/a/b" for N dishes
+  # Otherwise device names will follow "ska0<N>/<family_name>/<member_name>" for N dishes
   spf:
     fqdn: ""
     family_name: "spf"
