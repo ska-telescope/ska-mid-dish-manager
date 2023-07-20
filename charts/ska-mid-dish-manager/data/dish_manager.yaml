@@ -32,10 +32,10 @@ server:
                     - ""
                 - name: "DSDeviceFqdn"
                   values:
-                    - "ska{{ printf "%01s" . }}/lmc/ds_simulator"
+                    - "ska{{ printf "%01s" . }}/{{ $.Values.dishmanager.ds.family_name }}/{{ $.Values.dishmanager.ds.member_name }}"
                 - name: "SPFDeviceFqdn"
                   values:
-                    - "ska{{ printf "%01s" . }}/spf/simulator"
+                    - "ska{{ printf "%01s" . }}/{{ $.Values.dishmanager.spf.family_name }}/{{ $.Values.dishmanager.spf.member_name }}"
                 - name: "SPFRxDeviceFqdn"
                   values:
                     - "ska{{ printf "%01s" . }}/{{ $.Values.dishmanager.spfrx.family_name }}/{{ $.Values.dishmanager.spfrx.member_name }}"
