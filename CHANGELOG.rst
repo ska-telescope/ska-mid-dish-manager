@@ -12,6 +12,7 @@ Version 2.2.6
 - Upgraded ska-mid-dish-simulators chart to v1.2.1
 - Added .readthedocs.yaml for docs build
 - Fleshed out TrackStop command implementation
+- Updated helm chart to make the sub device names configurable
 
 Version 2.2.5
 *************
