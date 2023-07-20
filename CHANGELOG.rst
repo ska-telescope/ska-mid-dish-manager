@@ -5,6 +5,13 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.2.6
+*************
+- Upgraded ska-tango-util to v0.4.6
+- Updated dsconfig docker image to v1.5.11
+- Added .readthedocs.yaml for docs build
+- Fleshed out TrackStop command implementation
+
 Version 2.2.5
 *************
 - Bug fixes
