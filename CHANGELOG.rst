@@ -8,7 +8,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 Version 2.2.6
 *************
 - Upgraded ska-tango-util to v0.4.6
-- Updated dsconfig docker image to v1.5.11
+- Upgraded dsconfig docker image to v1.5.11
+- Upgraded ska-mid-dish-simulators chart to v1.2.1
 - Added .readthedocs.yaml for docs build
 - Fleshed out TrackStop command implementation
 
