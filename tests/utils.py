@@ -296,7 +296,15 @@ def set_configuredBand_b1(
     # accompany spfrx configuredband change with operatingMode change
     spfrx_device_proxy.operatingMode = SPFRxOperatingMode.DATA_CAPTURE
 
-    config_band_event_store.wait_for_value(Band.B1)
+    try:
+        config_band_event_store.wait_for_value(Band.B1)
+    except RuntimeError as err:
+        spf_indexer_pos = ds_device_proxy.indexerPosition
+        spf_band_in_focus = spf_device_proxy.bandInFocus
+        spfrx_configured_band = spfrx_device_proxy.configuredband
+        spfrx_operating_mode = spfrx_device_proxy.operatingMode
+        dish_manager_configured_band = dish_manager_proxy.configuredBand
+        raise RuntimeError(f"\nState when error occured:\n{locals()}\n") from err
 
 
 def set_configuredBand_b2(
