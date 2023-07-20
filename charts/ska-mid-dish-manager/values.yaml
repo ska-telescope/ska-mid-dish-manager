@@ -45,12 +45,6 @@ dishmanager:
     image: ska-mid-dish-manager
     tag: 2.2.6
     pullPolicy: IfNotPresent
-  ds:
-    family_name: "lmc"
-    member_name: "ds_simulator"
-  spf:
-    family_name: "spf"
-    member_name: "simulator"
   spfrx:
     family_name: "spfrx"
     member_name: "simulator"
