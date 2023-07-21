@@ -48,7 +48,7 @@ include:
 
 # override test images and set permissions
 python-test:
-  image: ${CI_REGISTRY}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}:2.2.6-dev.c$CI_COMMIT_SHORT_SHA
+  image: ${CI_REGISTRY}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}:2.2.7-dev.c$CI_COMMIT_SHORT_SHA
   before_script:
     - sudo apt-get update && sudo apt-get install git -y
     - echo "Give all users RW permissions in cwd"
@@ -71,7 +71,7 @@ python-test:
       fi;
 
 k8s-test-runner:
-  image: ${CI_REGISTRY}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}:2.2.6-dev.c$CI_COMMIT_SHORT_SHA
+  image: ${CI_REGISTRY}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}:2.2.7-dev.c$CI_COMMIT_SHORT_SHA
   before_script:
     - echo "Install k8s-tools dependencies"
     - sudo apt-get update && sudo apt-get install wget && sudo apt-get install git -y
