@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.2.7
+*************
+- Revert ska-tango-util upgrade in 2.2.6
+- Upgrade ska-mid-dish-simulators chart to v1.2.2
+
 Version 2.2.6
 *************
 - Upgraded ska-tango-util to v0.4.6

@@ -10,8 +10,6 @@ telescope: SKA-mid
 labels:
   app: ska-mid-dish-manager
 
-legacy_compatibility: true
-
 global:
   minikube: false
   tango_host: databaseds-tango-base-test:10000
@@ -43,7 +41,7 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 2.2.6
+    tag: 2.2.7
     pullPolicy: IfNotPresent
 
   # Setting fqdn assumes you are only deploying one Dish Manager
