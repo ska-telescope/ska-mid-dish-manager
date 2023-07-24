@@ -288,7 +288,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(achievedpointing=new_position)
 
         # Only update dishMode if there are operatingmode changes
-        if "operatingmode" in kwargs:
+        if "operatingmode" in kwargs or "indexerposition" in kwargs:
             self.logger.debug(
                 ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
                 ds_component_state["operatingmode"],

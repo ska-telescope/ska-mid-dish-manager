@@ -273,8 +273,6 @@ class TestCapabilityStates:
 
         # Mimic capabilitystatechanges on sub devices
         self.dish_manager_cm._update_component_state(dishmode=DishMode.STOW)
-        with patch.object(self.spf_cm, "write_attribute_value", mock.MagicMock()):
-            self.ds_cm._update_component_state(indexerposition=IndexerPosition.MOVING)
         self.spf_cm._update_component_state(b3capabilitystate=SPFCapabilityStates.OPERATE_FULL)
         self.spfrx_cm._update_component_state(b3capabilitystate=SPFRxCapabilityStates.OPERATE)
 
