@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.2.8
+*************
+- Fix bug in component manager for dishMode computation
+
 Version 2.2.7
 *************
 - Revert ska-tango-util upgrade in 2.2.6

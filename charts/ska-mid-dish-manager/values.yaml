@@ -41,7 +41,7 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 2.2.7
+    tag: 2.2.8
     pullPolicy: IfNotPresent
 
   # Setting fqdn assumes you are only deploying one Dish Manager
