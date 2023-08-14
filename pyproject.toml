@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-dish-manager"
-version = "2.2.8"
+version = "2.2.9"
 description = "SKA Dish Manager TANGO device server"
 authors = ["Team Karoo"]
 license = "BSD-3-Clause"

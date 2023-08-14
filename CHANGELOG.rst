@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.2.9
+*************
+- Upgrade ska-mid-dish-simulators chart to v1.3.1
+- Upgrade ska tango utils chart to v0.4.6
+
 Version 2.2.8
 *************
 - Fix bug in component manager for dishMode computation
