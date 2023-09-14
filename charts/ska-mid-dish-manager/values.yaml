@@ -79,6 +79,3 @@ deviceServers:
   dsdevice:
     file: "data/ds_device.yaml"
     enabled: false
-
-legacy_compatibility: true
-
