@@ -46,49 +46,6 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
-# override test images and set permissions
-python-test:
-  image: ${CI_REGISTRY}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}:2.2.9-dev.c$CI_COMMIT_SHORT_SHA
-  before_script:
-    - sudo apt-get update && sudo apt-get install git -y
-    - echo "Give all users RW permissions in cwd"
-    - sudo chmod -R a+rw ./
-    - git config --global --add safe.directory /builds/ska-telescope/ska-mid-dish-manager
-    - '[ -f .make/python.mk ] || (echo "File python.mk not included in Makefile; exit 1")'
-    - 'make help | grep python-test'
-    - poetry config virtualenvs.in-project true
-    - echo "python-build Setting.. poetry config virtualenvs.create $POETRY_CONFIG_VIRTUALENVS_CREATE"
-    - poetry config virtualenvs.create $POETRY_CONFIG_VIRTUALENVS_CREATE
-    - |
-      if [[ -f pyproject.toml ]]; then
-        echo "python-test: Installing with poetry";
-        time poetry install;
-      else
-        if  [[ -f requirements.txt ]]; then
-          echo "python-test: Installing with pip";
-          time pip3 install -r requirements.txt;
-        fi;
-      fi;
-
-k8s-test-runner:
-  image: ${CI_REGISTRY}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}:2.2.9-dev.c$CI_COMMIT_SHORT_SHA
-  before_script:
-    - echo "Install k8s-tools dependencies"
-    - sudo apt-get update && sudo apt-get install wget && sudo apt-get install git -y
-    - sudo wget -q https://storage.googleapis.com/kubernetes-release/release/v1.25.6/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl
-    - sudo chmod +x /usr/local/bin/kubectl
-    - sudo wget -q https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
-    - sudo tar -zxvf helm-v3.11.0-linux-amd64.tar.gz
-    - sudo mv linux-amd64/helm /usr/local/bin/helm
-    - sudo chmod +x /usr/local/bin/helm
-    - echo "Give all users RW permissions in cwd"
-    - sudo chmod -R a+rw ./
-    - git config --global --add safe.directory /builds/ska-telescope/ska-mid-dish-manager
-    - '[ -f .make/k8s.mk ] || (echo "File k8s.mk not included in Makefile; exit 1")'
-    - 'make help | grep k8s-test'
-    - make k8s-install-chart
-    - make k8s-wait
-
 # trigger this test before any release of dish-manager to give confidence tests will pass in dish-lmc repo
 lmc-acceptance-test:
   extends: k8s-test-runner
