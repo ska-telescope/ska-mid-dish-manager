@@ -12,6 +12,7 @@ labels:
 
 global:
   minikube: false
+  operator: false
   tango_host: databaseds-tango-base-test:10000
   retry:
   - "--tries=10"
@@ -78,6 +79,3 @@ deviceServers:
   dsdevice:
     file: "data/ds_device.yaml"
     enabled: false
-
-legacy_compatibility: true
-

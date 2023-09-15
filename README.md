@@ -64,6 +64,7 @@ $ helm upgrade --install to k8s-helm-repository/ska-tango-operator -n ska-tango-
 ```bash
 $ helm upgrade --install dev . -n dish-manager \ # "." is charts/ska-mid-dish-manager
 --set global.minikube=true \
+--set global.operator=true \
 --set global.dishes={001,002} \ # number of instances to deploy; if not specified defaults to 001
 --set deviceServers.dsdevice.enabled=true \ # enable DS test device
 --set ska-mid-dish-simulators.enabled=true \ # enable simulators (select which simulator to deploy below)
@@ -78,6 +79,7 @@ $ helm upgrade --install dev . -n dish-manager \ # "." is charts/ska-mid-dish-ma
 ```bash
 $ helm upgrade --install dev . -n dish-manager \
 --set global.minikube=true \
+--set global.operator=true \
 --set dev_pod.enabled=true \ # enable devpod for development
 --set deviceServers.dishmanager.enabled=false \ # disable dishmanager to use devpod
 --set deviceServers.dsdevice.enabled=true \
