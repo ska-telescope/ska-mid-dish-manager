@@ -8,7 +8,9 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_stow_transition(event_store_class, dish_manager_proxy, ds_device_proxy):
+def test_stow_transition(
+    monitor_tango_servers, event_store_class, dish_manager_proxy, ds_device_proxy
+):
     """Test transition to STOW"""  # Get at least one device into a known state
     ds_device_proxy.operatingMode = DSOperatingMode.STANDBY_FP
 

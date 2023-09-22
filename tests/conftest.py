@@ -17,7 +17,10 @@ from tests.utils import EventStore
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--event-storage-files-path", action="store", default=None, help="File path to store event tracking files to"
+        "--event-storage-files-path",
+        action="store",
+        default=None,
+        help="File path to store event tracking files to",
     )
 
 
@@ -231,9 +234,7 @@ class TrackedDevice:
 
 
 class EventPrinter:
-    def __init__(
-        self, filename: str, tracked_devices: Tuple[TrackedDevice] = ()
-    ) -> None:
+    def __init__(self, filename: str, tracked_devices: Tuple[TrackedDevice] = ()) -> None:
         self.tracked_devices = tracked_devices
         self.filename = filename
 
@@ -241,9 +242,7 @@ class EventPrinter:
         for tracked_device in self.tracked_devices:
             dp = tracked_device.device_proxy
             for attr_name in tracked_device.attribute_names:
-                sub_id = dp.subscribe_event(
-                    attr_name, tango.EventType.CHANGE_EVENT, self
-                )
+                sub_id = dp.subscribe_event(attr_name, tango.EventType.CHANGE_EVENT, self)
                 tracked_device.subscription_ids.append(sub_id)
 
     def __exit__(self, exc_type, exc_value, exc_tb):
@@ -259,28 +258,20 @@ class EventPrinter:
         with open(self.filename, "a") as open_file:
             if ev.err:
                 err = ev.errors[0]
-                open_file.write(
-                    f"\nEvent Error {err.desc} {err.origin} {err.reason}"
-                )
+                open_file.write(f"\nEvent Error {err.desc} {err.origin} {err.reason}")
             else:
                 attr_name = ev.attr_name.split("/")[-1]
                 attr_value = ev.attr_value.value
                 if ev.attr_value.type == tango.CmdArgType.DevEnum:
-                    attr_value = ev.device.get_attribute_config(
-                        attr_name
-                    ).enum_labels[attr_value]
+                    attr_value = ev.device.get_attribute_config(attr_name).enum_labels[attr_value]
 
                 open_file.write(
-                    (
-                        f"\nEvent\t{ev.reception_date}\t{ev.device}"
-                        f"\t{attr_name}\t{attr_value}"
-                    )
+                    (f"\nEvent\t{ev.reception_date}\t{ev.device}" f"\t{attr_name}\t{attr_value}")
                 )
 
 
 @pytest.fixture(scope="function")
 def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds_device_proxy):
-
     event_files_dir = request.config.getoption("--event-storage-files-path")
     if event_files_dir is None:
         yield None
@@ -328,9 +319,7 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
         ),
     )
 
-    event_printer = EventPrinter(
-        file_path, (dm_tracker, ds_tracker)
-    )
+    event_printer = EventPrinter(file_path, (dm_tracker, ds_tracker))
     with event_printer:
         with open(file_path, "a") as open_file:
             open_file.write("\n\nEvents set up, test starting\n")
