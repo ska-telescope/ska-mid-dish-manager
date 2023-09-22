@@ -3,7 +3,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, SPFOperatingMode
+from ska_mid_dish_manager.models.dish_enums import DishMode, SPFOperatingMode, DSOperatingMode, IndexerPosition
 
 
 @pytest.fixture(autouse=True)
@@ -16,9 +16,31 @@ def setup_and_teardown(
 ):
     """Reset the tango devices to a fresh state before each test"""
 
-    ds_device_proxy.ResetToDefault()
+    # ds_device_proxy.ResetToDefault()
     spfrx_device_proxy.ResetToDefault()
     spf_device_proxy.ResetToDefault()
+
+    ds_device_proxy.subscribe_event(
+        "operatingMode",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    ds_device_proxy.subscribe_event(
+        "indexerPosition",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+
+    if ds_device_proxy.operatingMode != DSOperatingMode.STOW:
+        ds_device_proxy.Stow()
+        assert event_store.wait_for_value(DSOperatingMode.STOW, timeout=9)
+
+    ds_device_proxy.SetStandbyLPMode()
+    assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=9)
+
+    if ds_device_proxy.indexerPosition != IndexerPosition.B1:
+        ds_device_proxy.SetIndexPosition(IndexerPosition.B1)
+        assert event_store.wait_for_value(IndexerPosition.B1, timeout=9)
 
     spf_device_proxy.subscribe_event(
         "operatingMode",

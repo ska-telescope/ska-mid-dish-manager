@@ -290,16 +290,18 @@ def set_configuredBand_b1(
         config_band_event_store,
     )
 
-    ds_device_proxy.indexerPosition = IndexerPosition.B1
+    if ds_device_proxy.indexerPosition != IndexerPosition.B1:
+        ds_device_proxy.SetIndexPosition(IndexerPosition.B1)
+
     spf_device_proxy.bandInFocus = BandInFocus.B1
     spfrx_device_proxy.configuredband = Band.B1
     # accompany spfrx configuredband change with operatingMode change
     spfrx_device_proxy.operatingMode = SPFRxOperatingMode.DATA_CAPTURE
 
     try:
-        config_band_event_store.wait_for_value(Band.B1)
+        config_band_event_store.wait_for_value(Band.B1, timeout=7)
     except RuntimeError as err:
-        spf_indexer_pos = ds_device_proxy.indexerPosition
+        ds_indexer_pos = ds_device_proxy.indexerPosition
         spf_band_in_focus = spf_device_proxy.bandInFocus
         spfrx_configured_band = spfrx_device_proxy.configuredband
         spfrx_operating_mode = spfrx_device_proxy.operatingMode
@@ -325,10 +327,11 @@ def set_configuredBand_b2(
         config_band_event_store,
     )
 
-    ds_device_proxy.indexerPosition = IndexerPosition.B2
+    if ds_device_proxy.indexerPosition != IndexerPosition.B2:
+        ds_device_proxy.SetIndexPosition(IndexerPosition.B2)
     spf_device_proxy.bandInFocus = BandInFocus.B2
     spfrx_device_proxy.configuredband = Band.B2
     # accompany spfrx configuredband change with operatingMode change
     spfrx_device_proxy.operatingMode = SPFRxOperatingMode.DATA_CAPTURE
 
-    config_band_event_store.wait_for_value(Band.B2)
+    config_band_event_store.wait_for_value(Band.B2, timeout=7)
