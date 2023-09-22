@@ -3,7 +3,12 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, SPFOperatingMode, DSOperatingMode, IndexerPosition
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    IndexerPosition,
+    SPFOperatingMode,
+)
 
 
 @pytest.fixture(autouse=True)
