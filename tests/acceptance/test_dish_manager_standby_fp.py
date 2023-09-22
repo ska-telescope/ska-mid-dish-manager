@@ -3,6 +3,7 @@ import pytest
 import tango
 
 
+# pylint: disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked

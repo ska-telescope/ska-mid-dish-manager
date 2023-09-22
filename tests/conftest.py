@@ -16,6 +16,7 @@ from tests.utils import EventStore
 
 
 def pytest_addoption(parser):
+    "Add additional options"
     parser.addoption(
         "--event-storage-files-path",
         action="store",
@@ -228,12 +229,16 @@ def spfrx_device_proxy(spfrx_device_fqdn):
 
 @dataclass
 class TrackedDevice:
+    """Class to group tracked device information"""
+
     device_proxy: tango.DeviceProxy
     attribute_names: Tuple[str]
     subscription_ids: List[int] = field(default_factory=list)
 
 
 class EventPrinter:
+    """Class that writes to attribte changes to a file"""
+
     def __init__(self, filename: str, tracked_devices: Tuple[TrackedDevice] = ()) -> None:
         self.tracked_devices = tracked_devices
         self.filename = filename
@@ -255,7 +260,7 @@ class EventPrinter:
                 pass
 
     def push_event(self, ev: tango.EventData):
-        with open(self.filename, "a") as open_file:
+        with open(self.filename, "a", encoding="utf-8") as open_file:
             if ev.err:
                 err = ev.errors[0]
                 open_file.write(f"\nEvent Error {err.desc} {err.origin} {err.reason}")
@@ -321,6 +326,6 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
 
     event_printer = EventPrinter(file_path, (dm_tracker, ds_tracker))
     with event_printer:
-        with open(file_path, "a") as open_file:
+        with open(file_path, "a", encoding="utf-8") as open_file:
             open_file.write("\n\nEvents set up, test starting\n")
         yield

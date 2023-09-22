@@ -11,6 +11,7 @@ from ska_mid_dish_manager.models.dish_enums import DSOperatingMode, DSPowerState
 LOGGER = logging.getLogger(__name__)
 
 
+# pylint: disable=unused-argument,too-many-arguments
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
