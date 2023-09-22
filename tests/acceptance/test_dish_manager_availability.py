@@ -3,6 +3,7 @@ import pytest
 from tango import DeviceProxy, DevState
 
 
+# pylint: disable=unused-argument,too-many-arguments
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.parametrize("dish_number", ["001"])
