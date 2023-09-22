@@ -12,7 +12,12 @@ from tests.utils import set_configuredBand_b1
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_configure_band_2(
-    event_store_class, dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+    ds_device_proxy,
+    spf_device_proxy,
+    spfrx_device_proxy,
 ):
     """Test ConfigureBand2"""
     main_event_store = event_store_class()

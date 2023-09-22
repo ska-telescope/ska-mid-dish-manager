@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_ds_cm(component_state_store, ds_device_fqdn):
+def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates"""
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
     # Get into a known state
