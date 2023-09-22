@@ -9,7 +9,7 @@ from tests.utils import set_configuredBand_b1
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_track_cmd(
+def test_track_and_track_stop_cmds(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -71,6 +71,29 @@ def test_track_cmd(
     # Wait for the track command to complete
     events = progress_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=6
+    )
+
+    # Check that all the expected progress messages appeared
+    # in the event store
+    events_string = "".join([str(event) for event in events])
+
+    for message in expected_progress_updates:
+        assert message in events_string
+
+    # Call TrackStop on DishManager
+    [[_], [unique_id]] = dish_manager_proxy.TrackStop()
+
+    main_event_store.wait_for_command_id(unique_id, timeout=8)
+
+    expected_progress_updates = [
+        "TrackStop called on DS, ID",
+        "Awaiting pointingstate change to READY",
+        "TrackStop completed",
+    ]
+
+    # Wait for the track command to complete
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=8
     )
 
     # Check that all the expected progress messages appeared
