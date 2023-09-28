@@ -24,7 +24,7 @@ def test_dish_manager_startups_with_expected_dish_mode(event_store):
 
 @pytest.mark.lmc
 @pytest.mark.parametrize("domain", ["001"])
-@pytest.mark.parametrize("family_member", ["lmc/ds_simulator", "spf/simulator", "spfrx/simulator"])
+@pytest.mark.parametrize("family_member", ["ds/managersimulator", "spf/simulator", "spfrx/simulator"])
 def test_sub_elements_startup_with_expected_operating_mode(domain, family_member):
     """
     Test that dish structure, spf and spfrx

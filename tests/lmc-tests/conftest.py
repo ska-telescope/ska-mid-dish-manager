@@ -16,7 +16,7 @@ def dish_manager_device_proxy():
 
 @pytest.fixture(name="dish_structure", scope="module")
 def dish_structure_device_proxy():
-    return tango_dev_proxy("ska001/lmc/ds_simulator", LOGGER)
+    return tango_dev_proxy("ska001/ds/managersimulator", LOGGER)
 
 
 @pytest.fixture(name="spf", scope="module")
