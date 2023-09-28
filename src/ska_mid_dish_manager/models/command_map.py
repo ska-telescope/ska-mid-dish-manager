@@ -280,8 +280,16 @@ class CommandMap:
             )
 
             command_argument = commands_for_sub_devices[device].get("commandArgument")
-
-            _, command_id = command(command_name, command_argument)
+            # fail the command immediately, if the subservient device fails
+            response, command_id = command(command_name, command_argument)
+            if response == TaskStatus.FAILED:
+                if task_callback:
+                    task_callback(
+                        status=TaskStatus.FAILED,
+                        result=f"{running_command} failed while executing "
+                        f"{command_name} on {device}",
+                    )
+                return
 
             # Report that the command has been called on the subservient device
             task_callback(
@@ -330,20 +338,27 @@ class CommandMap:
                 )
                 return
 
-            # Check on dishmanager CMs attribute to see whether the LRC has completed
-            current_awaited_value = self._dish_manager_cm.component_state[awaited_event_attribute]
-
-            # Check each devices to see if their operatingmode
-            # attributes are in the correct state
+            # TODO wrap this `for loop` in a function to make the while loop shorter
             for device in commands_for_sub_devices:
+                # stop waiting if the any of the fanned out commands fail
+                command_id = device_command_ids[device]
+                current_status = self._command_tracker.get_command_status(command_id)
+                if current_status == TaskStatus.FAILED:
+                    if task_callback:
+                        task_callback(
+                            status=TaskStatus.FAILED,
+                            result=f"{running_command} failed waiting on {device}",
+                        )
+                    return
+                # Check each device and report attribute values that are in the expected state
                 awaited_attribute = commands_for_sub_devices[device]["awaitedAttribute"]
                 awaited_values_list = commands_for_sub_devices[device]["awaitedValuesList"]
 
-                awaited_attribute_value = self._dish_manager_cm.sub_component_managers[
+                component_attr_value = self._dish_manager_cm.sub_component_managers[
                     device
                 ].component_state[awaited_attribute]
 
-                if awaited_attribute_value in awaited_values_list:
+                if component_attr_value in awaited_values_list:
                     if not success_reported[device]:
                         task_callback(
                             progress=(
@@ -354,6 +369,8 @@ class CommandMap:
 
                         success_reported[device] = True
 
+            # Check on dishmanager CMs attribute to see whether the LRC has completed
+            current_awaited_value = self._dish_manager_cm.component_state[awaited_event_attribute]
             if current_awaited_value != awaited_event_value:
                 task_abort_event.wait(timeout=1)
                 for component_manager in self._dish_manager_cm.sub_component_managers.values():
