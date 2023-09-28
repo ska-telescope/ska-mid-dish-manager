@@ -278,7 +278,7 @@ class CommandMap:
                 f" change to {awaited_values_list}"
             )
         )
-
+        # store the command id to track later
         command_ids[device] = command_id
 
     def _is_fan_out_cmd_executing(self, task_callback, device, command_ids, running_command):
@@ -303,7 +303,7 @@ class CommandMap:
         if component_attr_value in awaited_values_list:
             if not progress_store[device]:
                 task_callback(
-                    progress=(f"{device} {awaited_attribute} changed to {awaited_values_list}")
+                    progress=f"{device} {awaited_attribute} changed to {awaited_values_list}"
                 )
 
                 progress_store[device] = True
@@ -336,7 +336,7 @@ class CommandMap:
                 args = (task_callback, device, fan_out_args, device_command_ids)
                 self._fan_out_cmd(*args)
             except RuntimeError:
-                cmd_name = device["command"]
+                cmd_name = fan_out_args["command"]
                 task_callback(
                     status=TaskStatus.FAILED,
                     result=f"{running_command} failed while executing {cmd_name} on {device}",
