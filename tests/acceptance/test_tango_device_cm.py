@@ -39,10 +39,10 @@ def test_tango_device_component_manager_state(
 
     assert com_man.communication_state == CommunicationStatus.ESTABLISHED
 
-    test_mode_initial_val = ds_device_fqdn.read_attribute("testmode").value
-    ds_device_fqdn.testmode = 0 if test_mode_initial_val else 1
+    test_mode_initial_val = device_proxy.read_attribute("testmode").value
+    device_proxy.testmode = 0 if test_mode_initial_val else 1
     assert component_state_store.wait_for_value("testmode", 0 if test_mode_initial_val else 1)
-    ds_device_fqdn.testmode = test_mode_initial_val
+    device_proxy.testmode = test_mode_initial_val
 
     com_man.stop_communicating()
     assert com_man.communication_state == CommunicationStatus.NOT_ESTABLISHED
@@ -67,10 +67,11 @@ def test_stress_component_monitor(monitor_tango_servers, component_state_store, 
 
     mock_callable.assert_call(CommunicationStatus.ESTABLISHED, lookahead=3)
 
-    test_mode_initial_val = ds_device_fqdn.read_attribute("testmode").value
+    device_proxy = tango.DeviceProxy(ds_device_fqdn)
+    test_mode_initial_val = device_proxy.read_attribute("testmode").value
     for _ in range(10):
-        current_val = ds_device_fqdn.read_attribute("testmode").value
+        current_val = device_proxy.read_attribute("testmode").value
         new_val = 0 if current_val else 1
-        ds_device_fqdn.testmode = new_val
+        device_proxy.testmode = new_val
         assert component_state_store.wait_for_value("testmode", new_val)
-    ds_device_fqdn.testmode = test_mode_initial_val
+    device_proxy.testmode = test_mode_initial_val
