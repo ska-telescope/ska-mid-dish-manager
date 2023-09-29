@@ -99,6 +99,32 @@ def check_spf_capability_state(band_number, expected_state, spf, spf_event_store
     assert b_x_capability_state == expected_state
     LOGGER.info(f"{spf} b{band_number}CapabilityState: {b_x_capability_state}")
 
+@then(
+    parse(
+        "dish_manager b{band_number}CapabilityState should have reported {expected_state} briefly"
+    )
+)
+def check_dish_transient_capability_state(
+    band_number,
+    expected_state,
+    dish_manager,
+    dish_manager_event_store,
+    device_event_store,
+):
+    # pylint: disable=missing-function-docstring
+    dish_evts = dish_manager_event_store.get_queue_values(timeout=10)
+    # combine the fresh events and the old one to check for values
+    dish_evts = dish_evts + device_event_store["dish_manager"]
+
+    capability_state_evts = [
+        evt_vals[1]
+        for evt_vals in dish_evts
+        if evt_vals[0].lower() == f"b{band_number}capabilitystate"
+    ]
+    assert CapabilityStates[expected_state] in capability_state_evts
+
+    LOGGER.info(f"{dish_manager} b{band_number}CapabilityState reported: {expected_state}")
+
 
 @then(parse("dish_manager b{band_number}CapabilityState should report {expected_state}"))
 def check_dish_capability_state(
