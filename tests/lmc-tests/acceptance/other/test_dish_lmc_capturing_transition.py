@@ -26,7 +26,7 @@ def test_dish_lmc_does_not_capture_data_in_lp():
     "LMC does not capture data in STANDBY-FP mode with no band",
 )
 def test_dish_lmc_does_not_capture_data_in_fp_no_band(
-    reset_receiver_devices, reset_ds_indexer_position
+    monitor_tango_servers, reset_receiver_devices, reset_ds_indexer_position
 ):
     # pylint: disable=missing-function-docstring
     pass
