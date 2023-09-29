@@ -18,6 +18,11 @@ from ska_mid_dish_manager.models.dish_enums import (
 LOGGER = logging.getLogger(__name__)
 
 
+@pytest.fixture(scope="module")
+def device_event_store():
+    return {}
+
+
 @pytest.mark.lmc
 @scenario(
     "XTP-15471.feature",
