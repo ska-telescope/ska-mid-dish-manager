@@ -22,6 +22,10 @@ def test_tango_device_component_manager_state(
     mock_callable = MockCallable(timeout=5)
 
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
+
+    # testMode is not polled
+    device_proxy.poll_attribute("testMode", 100)
+
     assert device_proxy.ping()
 
     com_man = TangoDeviceComponentManager(
@@ -40,8 +44,9 @@ def test_tango_device_component_manager_state(
     assert com_man.communication_state == CommunicationStatus.ESTABLISHED
 
     test_mode_initial_val = device_proxy.read_attribute("testmode").value
-    device_proxy.testmode = 0 if test_mode_initial_val else 1
-    assert component_state_store.wait_for_value("testmode", 0 if test_mode_initial_val else 1)
+    new_value = 0 if test_mode_initial_val else 1
+    device_proxy.testmode = new_value
+    assert component_state_store.wait_for_value("testmode", new_value, timeout=7)
     device_proxy.testmode = test_mode_initial_val
 
     com_man.stop_communicating()
@@ -68,6 +73,9 @@ def test_stress_component_monitor(monitor_tango_servers, component_state_store, 
     mock_callable.assert_call(CommunicationStatus.ESTABLISHED, lookahead=3)
 
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
+    # testMode is not polled
+    device_proxy.poll_attribute("testMode", 100)
+
     test_mode_initial_val = device_proxy.read_attribute("testmode").value
     for _ in range(10):
         current_val = device_proxy.read_attribute("testmode").value
