@@ -99,6 +99,7 @@ def check_spf_capability_state(band_number, expected_state, spf, spf_event_store
     assert b_x_capability_state == expected_state
     LOGGER.info(f"{spf} b{band_number}CapabilityState: {b_x_capability_state}")
 
+
 @then(
     parse(
         "dish_manager b{band_number}CapabilityState should have reported {expected_state} briefly"
