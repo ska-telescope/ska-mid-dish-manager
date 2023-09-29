@@ -30,7 +30,7 @@ def test_dish_manager_supports_all_reporting_models(dish_manager, dish_manager_e
 @pytest.mark.lmc
 @pytest.mark.parametrize("domain", ["001"])
 @pytest.mark.parametrize(
-    "family_member", ["ds/managersimulator", "spf/simulator", "spfrx/simulator"]
+    "family_member", ["ds/manager", "spf/simulator", "spfrx/simulator"]
 )
 def test_sub_elements_support_all_reporting_models(domain, family_member):
     """Test that dish structure, spf and spfrx devices
