@@ -23,7 +23,7 @@ LOGGER = logging.getLogger(__name__)
     "XTP-6269.feature",
     "LMC Reports DSH Capability Standby in LP Mode",
 )
-def test_dish_manager_capability_state_reports_standby_in_lp_mode():
+def test_dish_manager_capability_state_reports_standby_in_lp_mode(monitor_tango_servers):
     """Test that dish lmc reports STANDBY capability state"""
     pass
 

@@ -29,7 +29,7 @@ def device_event_store():
 @pytest.mark.lmc
 @scenario("XTP-6270.feature", "LMC Reports DSH Capability Configure")
 def test_dish_lmc_capability_state_reports_configure(
-    reset_receiver_devices, reset_ds_indexer_position
+    monitor_tango_servers, reset_receiver_devices, reset_ds_indexer_position
 ):
     """Test that dish lmc reports CONFIGURE capability state"""
     pass

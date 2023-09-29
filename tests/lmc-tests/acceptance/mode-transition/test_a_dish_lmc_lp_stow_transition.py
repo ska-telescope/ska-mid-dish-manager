@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.lmc
 @scenario("XTP-813.feature", "Test STANDBY-LP to STOW")
-def test_lp_to_stow_mode_transition():
+def test_lp_to_stow_mode_transition(monitor_tango_servers):
     # pylint: disable=missing-function-docstring
     pass
 

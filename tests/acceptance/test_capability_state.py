@@ -6,11 +6,12 @@ from ska_mid_dish_manager.models.dish_enums import CapabilityStates
 from tests.utils import EventStore
 
 
+# pylint:disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_capability_state_b1(
-    event_store, dish_manager_proxy, spf_device_proxy, spfrx_device_proxy
+    monitor_tango_servers, event_store, dish_manager_proxy, spf_device_proxy, spfrx_device_proxy
 ):
     """Test transition on CapabilityState b1"""
     dish_manager_proxy.subscribe_event(

@@ -6,11 +6,17 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import set_configuredBand_b1
 
 
+# pylint: disable=too-many-locals,unused-argument,too-many-arguments
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_track_stop_cmd(
-    event_store_class, dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+    ds_device_proxy,
+    spf_device_proxy,
+    spfrx_device_proxy,
 ):
     """Test TrackStop command"""
 
