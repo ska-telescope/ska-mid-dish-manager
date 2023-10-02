@@ -24,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
     "XTP-15465.feature",
     "Test STANDBY-LP to STANDBY-FP",
 )
-def test_lp_to_fp_mode_transition():
+def test_lp_to_fp_mode_transition(monitor_tango_servers):
     # pylint: disable=missing-function-docstring
     pass
 

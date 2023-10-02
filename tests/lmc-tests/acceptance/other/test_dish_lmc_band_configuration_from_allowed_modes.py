@@ -24,7 +24,7 @@ def fixture_initial_dish_mode():
 
 @pytest.mark.lmc
 @scenario("XTP-5703.feature", "Test dish lmc band selection")
-def test_band_selection(reset_receiver_devices, reset_ds_indexer_position):
+def test_band_selection(monitor_tango_servers, reset_receiver_devices, reset_ds_indexer_position):
     # pylint: disable=missing-function-docstring
     pass
 

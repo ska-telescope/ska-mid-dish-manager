@@ -1,8 +1,10 @@
 """Contains pytest fixtures for other tests setup"""
 
+import os
 import queue
 import socket
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, List, Tuple
 
 import pytest
 import tango
@@ -11,6 +13,16 @@ from tango.server import Device
 from tango.test_context import DeviceTestContext, MultiDeviceTestContext, get_host_ip
 
 from tests.utils import EventStore
+
+
+def pytest_addoption(parser):
+    "Add additional options"
+    parser.addoption(
+        "--event-storage-files-path",
+        action="store",
+        default=None,
+        help="File path to store event tracking files to",
+    )
 
 
 # pylint: disable=invalid-name, missing-function-docstring
@@ -213,3 +225,107 @@ def spf_device_proxy(spf_device_fqdn):
 @pytest.fixture
 def spfrx_device_proxy(spfrx_device_fqdn):
     return tango.DeviceProxy(spfrx_device_fqdn)
+
+
+@dataclass
+class TrackedDevice:
+    """Class to group tracked device information"""
+
+    device_proxy: tango.DeviceProxy
+    attribute_names: Tuple[str]
+    subscription_ids: List[int] = field(default_factory=list)
+
+
+class EventPrinter:
+    """Class that writes to attribte changes to a file"""
+
+    def __init__(self, filename: str, tracked_devices: Tuple[TrackedDevice] = ()) -> None:
+        self.tracked_devices = tracked_devices
+        self.filename = filename
+
+    def __enter__(self):
+        for tracked_device in self.tracked_devices:
+            dp = tracked_device.device_proxy
+            for attr_name in tracked_device.attribute_names:
+                sub_id = dp.subscribe_event(attr_name, tango.EventType.CHANGE_EVENT, self)
+                tracked_device.subscription_ids.append(sub_id)
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        for tracked_device in self.tracked_devices:
+            try:
+                dp = tracked_device.device_proxy
+                for sub_id in tracked_device.subscription_ids:
+                    dp.unsubscribe_event(sub_id)
+            except tango.DevError:
+                pass
+
+    def push_event(self, ev: tango.EventData):
+        with open(self.filename, "a", encoding="utf-8") as open_file:
+            if ev.err:
+                err = ev.errors[0]
+                open_file.write(f"\nEvent Error {err.desc} {err.origin} {err.reason}")
+            else:
+                attr_name = ev.attr_name.split("/")[-1]
+                attr_value = ev.attr_value.value
+                if ev.attr_value.type == tango.CmdArgType.DevEnum:
+                    attr_value = ev.device.get_attribute_config(attr_name).enum_labels[attr_value]
+
+                open_file.write(
+                    (f"\nEvent\t{ev.reception_date}\t{ev.device}" f"\t{attr_name}\t{attr_value}")
+                )
+
+
+@pytest.fixture(scope="function")
+def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds_device_proxy):
+    event_files_dir = request.config.getoption("--event-storage-files-path")
+    if event_files_dir is None:
+        yield None
+        return
+
+    if not os.path.exists(event_files_dir):
+        os.makedirs(event_files_dir)
+
+    file_name = ".".join((f"events_{request.node.name}", "txt"))
+    file_path = os.path.join(event_files_dir, file_name)
+
+    dm_tracker = TrackedDevice(
+        dish_manager_proxy,
+        (
+            "dishmode",
+            # "capturing", TODO push event is disabled
+            "healthstate",
+            "pointingstate",
+            "b1capabilitystate",
+            "b2capabilitystate",
+            "b3capabilitystate",
+            "b4capabilitystate",
+            "b5acapabilitystate",
+            "b5bcapabilitystate",
+            "achievedtargetlock",
+            "achievedpointing",
+            "configuredband",
+            "spfconnectionstate",
+            "spfrxconnectionstate",
+            "dsconnectionstate",
+            "longrunningcommandstatus",
+            "longrunningcommandresult",
+            "longrunningcommandprogress",
+        ),
+    )
+    ds_tracker = TrackedDevice(
+        ds_device_proxy,
+        (
+            "operatingMode",
+            "powerState",
+            "healthState",
+            "pointingState",
+            "indexerPosition",
+            "achievedPointing",
+        ),
+    )
+
+    event_printer = EventPrinter(file_path, (dm_tracker, ds_tracker))
+    with event_printer:
+        with open(file_path, "a", encoding="utf-8") as open_file:
+            open_file.write("\n\nEvents set up, test starting\n")
+        yield
