@@ -9,4 +9,4 @@ Feature: Dish LMC acceptance tests
 		When I issue ConfigureBand2 on dish_manager
 		Then spfrx b2CapabilityState should report OPERATE
 		And spf b2CapabilityState should report OPERATE-FULL
-		And dish_manager b2CapabilityState should report STANDBY or CONFIGURING
+		And dish_manager b2CapabilityState should report STANDBY
