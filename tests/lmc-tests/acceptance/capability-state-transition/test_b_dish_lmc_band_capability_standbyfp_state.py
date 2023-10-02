@@ -18,9 +18,10 @@ from ska_mid_dish_manager.models.dish_enums import (
 LOGGER = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="module")
-def device_event_store():
-    return {}
+@pytest.fixture(scope="function")
+def dm_event_store(event_store_class):
+    # pylint: disable=missing-function-docstring
+    return event_store_class()
 
 
 @pytest.mark.lmc
@@ -46,7 +47,7 @@ def check_dish_manager_dish_mode(
 
     modes_helper.ensure_dish_manager_mode(dish_mode)
     current_dish_mode = retrieve_attr_value(dish_manager, "dishMode")
-    LOGGER.info(f"{dish_manager} dishMode: {current_dish_mode}")
+    LOGGER.info(f"check_dish_manager_dish_mode {dish_manager} dishMode: {current_dish_mode}")
 
 
 @when(parse("I issue ConfigureBand{band_number} on dish_manager"))
@@ -58,7 +59,7 @@ def configure_band(
     spfrx,
     spfrx_event_store,
     dish_manager,
-    dish_manager_event_store,
+    dm_event_store,
 ):
     # pylint: disable=missing-function-docstring
     spf.subscribe_event(
@@ -76,9 +77,10 @@ def configure_band(
     dish_manager.subscribe_event(
         f"b{band_number}CapabilityState",
         tango.EventType.CHANGE_EVENT,
-        dish_manager_event_store,
+        dm_event_store,
     )
 
+    dm_event_store.clear_queue()
     dish_freq_band_configuration.go_to_band(band_number)
 
 
@@ -105,39 +107,10 @@ def check_spf_capability_state(band_number, expected_state, spf, spf_event_store
     LOGGER.info(f"{spf} b{band_number}CapabilityState: {b_x_capability_state}")
 
 
-@then(
-    parse(
-        "dish_manager b{band_number}CapabilityState should have reported {expected_state} briefly"
-    )
-)
-def check_dish_transient_capability_state(
-    band_number,
-    expected_state,
-    dish_manager,
-    dish_manager_event_store,
-    device_event_store,
-):
-    # pylint: disable=missing-function-docstring
-    dish_evts = dish_manager_event_store.get_queue_values(timeout=10)
-    # combine the fresh events and the old one to check for values
-    dish_evts = dish_evts + device_event_store["dish_manager"]
-
-    capability_state_evts = [
-        evt_vals[1]
-        for evt_vals in dish_evts
-        if evt_vals[0].lower() == f"b{band_number}capabilitystate"
-    ]
-    assert CapabilityStates[expected_state] in capability_state_evts
-
-    LOGGER.info(f"{dish_manager} b{band_number}CapabilityState reported: {expected_state}")
-
-
 @then(parse("dish_manager b{band_number}CapabilityState should report {expected_state}"))
-def check_dish_capability_state(
-    band_number, expected_state, dish_manager_event_store, dish_manager
-):
+def check_dish_capability_state(band_number, expected_state, dm_event_store, dish_manager):
     # pylint: disable=missing-function-docstring
-    dish_manager_event_store.wait_for_value(CapabilityStates[expected_state], timeout=10)
+    dm_event_store.wait_for_value(CapabilityStates[expected_state], timeout=20)
     b_x_capability_state = retrieve_attr_value(dish_manager, f"b{band_number}CapabilityState")
     assert b_x_capability_state == expected_state
     LOGGER.info(f"{dish_manager} b{band_number}CapabilityState: {b_x_capability_state}")

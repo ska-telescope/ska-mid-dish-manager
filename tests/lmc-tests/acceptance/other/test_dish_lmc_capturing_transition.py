@@ -25,9 +25,7 @@ def test_dish_lmc_does_not_capture_data_in_lp():
     "XTP-15468.feature",
     "LMC does not capture data in STANDBY-FP mode with no band",
 )
-def test_dish_lmc_does_not_capture_data_in_fp_no_band(
-    reset_receiver_devices, reset_ds_indexer_position
-):
+def test_dish_lmc_does_not_capture_data_in_fp_no_band():
     # pylint: disable=missing-function-docstring
     pass
 
@@ -45,6 +43,7 @@ def dish_manager_configure_band(
     dish_freq_band_configuration,
 ):
     # pylint: disable=missing-function-docstring
+
     dish_freq_band_configuration.go_to_band(band_number)
 
 

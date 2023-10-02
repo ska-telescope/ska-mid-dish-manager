@@ -64,7 +64,7 @@ def check_configured_band_and_spfrx_operating_mode(
 @when(
     parse("I issue {command_name} on dish_manager"),
 )
-def desired_dish_mode(command_name, modes_helper):
+def desired_dish_mode(command_name, modes_helper, dish_manager):
     # pylint: disable=missing-function-docstring
     cmd_modes_map = {
         "SetStandbyLPMode": "STANDBY_LP",
@@ -73,7 +73,9 @@ def desired_dish_mode(command_name, modes_helper):
         "SetStowMode": "STOW",
     }
     desired_dish_mode = cmd_modes_map[command_name]
+    LOGGER.info(f"DishManager is {dish_manager.dishMode.name} going to mode {desired_dish_mode}")
     modes_helper.dish_manager_go_to_mode(desired_dish_mode)
+    LOGGER.info(f"DishManager transitioned to {dish_manager.dishMode}")
 
 
 @then(parse("dish_manager dishMode should report {desired_dish_mode}"))

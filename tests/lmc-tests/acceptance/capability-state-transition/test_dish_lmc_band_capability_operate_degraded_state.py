@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.lmc
 @scenario("XTP-6439.feature", "LMC Reports DSH Capability Operate Degraded")
-def test_band_capability_state_operate_degraded(reset_receiver_devices, reset_ds_indexer_position):
+def test_band_capability_state_operate_degraded():
     # pylint: disable=missing-function-docstring
     pass
 
