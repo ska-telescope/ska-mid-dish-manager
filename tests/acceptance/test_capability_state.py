@@ -6,7 +6,7 @@ from ska_mid_dish_manager.models.dish_enums import CapabilityStates
 from tests.utils import EventStore
 
 
-# pylint: disable=unused-argument,too-many-arguments
+# pylint:disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked

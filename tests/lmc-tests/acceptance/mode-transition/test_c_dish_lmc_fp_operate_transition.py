@@ -23,7 +23,7 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.lmc
 @scenario("XTP-15466.feature", "Test STANDBY-FP to OPERATE")
-def test_fp_to_operate_mode_transition():
+def test_fp_to_operate_mode_transition(monitor_tango_servers):
     # pylint: disable=missing-function-docstring
     pass
 

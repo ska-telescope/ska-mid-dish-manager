@@ -5,7 +5,7 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
 
 
-# pylint: disable=unused-argument,too-many-arguments
+# pylint: disable=too-many-locals,unused-argument
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked

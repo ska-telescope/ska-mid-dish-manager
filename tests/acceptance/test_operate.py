@@ -6,7 +6,7 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import set_configuredBand_b1
 
 
-# pylint: disable=unused-argument,too-many-arguments
+# pylint: disable=too-many-locals,unused-argument,too-many-arguments
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
