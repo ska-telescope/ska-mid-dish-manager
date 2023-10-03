@@ -54,8 +54,8 @@ dishmanager:
     member_name: "simulator"
   ds:
     fqdn: ""
-    family_name: "lmc"
-    member_name: "ds_simulator"
+    family_name: "ds"
+    member_name: "manager"
   spfrx:
     fqdn: ""
     family_name: "spfrx"
@@ -76,6 +76,3 @@ deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
     enabled: true
-  dsdevice:
-    file: "data/ds_device.yaml"
-    enabled: false

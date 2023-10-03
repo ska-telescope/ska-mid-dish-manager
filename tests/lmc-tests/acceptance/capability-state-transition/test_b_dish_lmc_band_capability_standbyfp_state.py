@@ -18,6 +18,12 @@ from ska_mid_dish_manager.models.dish_enums import (
 LOGGER = logging.getLogger(__name__)
 
 
+@pytest.fixture(scope="function")
+def dm_event_store(event_store_class):
+    # pylint: disable=missing-function-docstring
+    return event_store_class()
+
+
 @pytest.mark.lmc
 @scenario(
     "XTP-15471.feature",
@@ -53,7 +59,7 @@ def configure_band(
     spfrx,
     spfrx_event_store,
     dish_manager,
-    dish_manager_event_store,
+    dm_event_store,
 ):
     # pylint: disable=missing-function-docstring
     spf.subscribe_event(
@@ -71,9 +77,10 @@ def configure_band(
     dish_manager.subscribe_event(
         f"b{band_number}CapabilityState",
         tango.EventType.CHANGE_EVENT,
-        dish_manager_event_store,
+        dm_event_store,
     )
 
+    dm_event_store.clear_queue()
     dish_freq_band_configuration.go_to_band(band_number)
 
 
@@ -101,11 +108,9 @@ def check_spf_capability_state(band_number, expected_state, spf, spf_event_store
 
 
 @then(parse("dish_manager b{band_number}CapabilityState should report {expected_state}"))
-def check_dish_capability_state(
-    band_number, expected_state, dish_manager_event_store, dish_manager
-):
+def check_dish_capability_state(band_number, expected_state, dm_event_store, dish_manager):
     # pylint: disable=missing-function-docstring
-    dish_manager_event_store.wait_for_value(CapabilityStates[expected_state], timeout=10)
+    dm_event_store.wait_for_value(CapabilityStates[expected_state], timeout=20)
     b_x_capability_state = retrieve_attr_value(dish_manager, f"b{band_number}CapabilityState")
     assert b_x_capability_state == expected_state
     LOGGER.info(f"{dish_manager} b{band_number}CapabilityState: {b_x_capability_state}")

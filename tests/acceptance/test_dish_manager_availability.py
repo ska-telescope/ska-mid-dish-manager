@@ -12,4 +12,4 @@ def test_dishes_are_available(monitor_tango_servers, dish_number):
     dish_manager_proxy = DeviceProxy(f"ska{dish_number}/elt/master")
     assert isinstance(dish_manager_proxy.ping(), int)
     assert dish_manager_proxy.State() == DevState.STANDBY
-    assert dish_manager_proxy.pointingState.name == "UNKNOWN"
+    assert dish_manager_proxy.pointingState.name == "READY"

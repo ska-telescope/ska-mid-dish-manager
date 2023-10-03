@@ -1,11 +1,19 @@
 import logging
+import sys
 
 import pytest
 import tango
 from utils import EventStore, tango_dev_proxy
 
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    DishMode,
+    DSOperatingMode,
+    IndexerPosition,
+    SPFOperatingMode,
+)
 
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 LOGGER = logging.getLogger(__name__)
 
 
@@ -16,7 +24,7 @@ def dish_manager_device_proxy():
 
 @pytest.fixture(name="dish_structure", scope="module")
 def dish_structure_device_proxy():
-    return tango_dev_proxy("ska001/lmc/ds_simulator", LOGGER)
+    return tango_dev_proxy("ska001/ds/manager", LOGGER)
 
 
 @pytest.fixture(name="spf", scope="module")
@@ -69,39 +77,9 @@ def spf_event_store():
     return EventStore()
 
 
-@pytest.fixture(scope="function")
-def reset_ds_indexer_position(dish_structure, event_store):
-    # do nothing if indexer is unknown
-    if dish_structure.indexerPosition.name == "UNKNOWN":
-        return
-
-    if dish_structure.operatingMode.name not in ["STOW", "STANDBY", "POINT"]:
-        dish_structure.subscribe_event(
-            "operatingMode",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-        # indexer wont be moving if ds is not in allowed mode
-        # transition ds to stow to allow SetIndexPosition cmd accepted
-        dish_structure.Stow()
-        STOW = 5
-        event_store.wait_for_value(STOW)
-
-    LOGGER.info("Resetting indexer position to UNKNOWN")
-    UNKNOWN = 0
-    dish_structure.SetIndexPosition(UNKNOWN)
-
-
-@pytest.fixture(scope="function")
-def reset_receiver_devices(spf, spfrx):
-    LOGGER.info("Restoring all receiver devices to default")
-    spf.ResetToDefault()
-    spfrx.ResetToDefault()
-
-
 @pytest.fixture
 def dish_freq_band_configuration(
-    event_store,
+    dish_manager_event_store,
     dish_manager,
 ):
     """
@@ -125,34 +103,22 @@ def dish_freq_band_configuration(
             dish_manager.subscribe_event(
                 "configuredBand",
                 tango.EventType.CHANGE_EVENT,
-                event_store,
+                dish_manager_event_store,
             )
-            event_store.clear_queue()
+            dish_manager_event_store.clear_queue()
 
             [[_], [_]] = dish_manager.command_inout(f"ConfigureBand{band_number}", False)
 
-            try:
-                # wait for events
-                event_store.wait_for_value(Band(int(band_number)), timeout=60)
-                assert dish_manager.configuredBand.name == f"B{band_number}"
-                LOGGER.info(f"{dish_manager} successfully transitioned to Band {band_number}")
-            except RuntimeError:
-                LOGGER.info(
-                    f"Expected {dish_manager} to transition to band {band_number}"
-                    f" no event was recorded. ConfiguredBand:{dish_manager.configuredBand.name}"
-                )
-            except AssertionError:
-                LOGGER.info(
-                    f"Expected {dish_manager} to be in band {band_number}"
-                    f" but currently reporting band {dish_manager.configuredBand.name}"
-                )
+            dish_manager_event_store.wait_for_value(Band(int(band_number)), timeout=60)
+            assert dish_manager.configuredBand.name == f"B{band_number}"
+            LOGGER.info(f"{dish_manager} successfully transitioned to Band {band_number}")
 
     return _BandSelector()
 
 
 @pytest.fixture
 def modes_helper(
-    event_store,
+    dish_manager_event_store,
     dish_manager,
     modes_command_map,
     dish_freq_band_configuration,
@@ -162,72 +128,124 @@ def modes_helper(
     """
 
     class _ModesHelper:
-        def ensure_dish_manager_mode(self, mode_name):
-            """Move dish master to mode_name.
+        def ensure_dish_manager_mode(self, desired_mode_name):
+            """Move dish manager to desired mode.
             Via STANDBY_FP, to ensure any mode can move to any mode.
             """
-            if dish_manager.dishMode.name == mode_name:
-                LOGGER.info("Dish master is already at requested mode")
+            if dish_manager.dishMode.name == desired_mode_name:
+                LOGGER.info("Dish manager is already at requested mode")
                 return
 
             # handle case where dish mode is unknown
             if dish_manager.dishMode.name == "UNKNOWN":
                 self.dish_manager_go_to_mode("STOW")
-                if mode_name == "STOW":
+                if desired_mode_name == "STOW":
                     return
 
-            if mode_name == "STOW":
+            if desired_mode_name == "STOW":
                 self.dish_manager_go_to_mode("STOW")
                 return
-            elif mode_name == "STANDBY_FP":
+            elif desired_mode_name == "STANDBY_FP":
                 self.dish_manager_go_to_mode("STANDBY_FP")
                 return
             else:
                 # transition to desired mode through STANDBY_FP
                 self.dish_manager_go_to_mode("STANDBY_FP")
-                self.dish_manager_go_to_mode(mode_name)
+                self.dish_manager_go_to_mode(desired_mode_name)
 
-        def dish_manager_go_to_mode(self, mode_name):
-            """Move device to mode_name"""
-            if dish_manager.dishMode.name == mode_name:
-                LOGGER.info("Dish master is already at requested mode")
+        def dish_manager_go_to_mode(self, desired_mode_name):
+            """Move device to desired dish mode"""
+            if dish_manager.dishMode.name == desired_mode_name:
+                LOGGER.info("Dish manager is already at requested mode")
                 return
 
             # make sure there is a configured
             # band if the requested mode is operate
-            if mode_name == "OPERATE" and dish_manager.configuredBand.name in ["NONE", "UNKNOWN"]:
+            if desired_mode_name == "OPERATE" and dish_manager.configuredBand.name in [
+                "NONE",
+                "UNKNOWN",
+            ]:
                 dish_freq_band_configuration.go_to_band(2)
 
             dish_manager.subscribe_event(
                 "dishMode",
                 tango.EventType.CHANGE_EVENT,
-                event_store,
+                dish_manager_event_store,
             )
-            event_store.clear_queue()
+            dish_manager_event_store.clear_queue()
 
-            # Move to mode_name
-            command_name = modes_command_map[mode_name]
+            # Move to desired mode
+            command_name = modes_command_map[desired_mode_name]
             LOGGER.info(
-                f"Moving {dish_manager} from " f"{dish_manager.dishMode.name} to {mode_name}"
+                f"Moving {dish_manager} from "
+                f"{dish_manager.dishMode.name} to {desired_mode_name}"
             )
 
             LOGGER.info(f"{dish_manager} executing {command_name} ")
             [[_], [_]] = dish_manager.command_inout(command_name)
 
-            try:
-                # wait for events
-                event_store.wait_for_value(DishMode[mode_name], timeout=60)
-                assert dish_manager.dishMode.name == mode_name
-                LOGGER.info(f"{dish_manager} successfully transitioned to {mode_name} mode")
-            except RuntimeError:
-                LOGGER.info(
-                    f"Expected {dish_manager} to transition to {mode_name} dish mode"
-                    f" but no event was recorded. Current dishMode:{dish_manager.dishMode.name}"
-                )
-            except AssertionError:
-                LOGGER.info(
-                    f"Expected {dish_manager} to be in {mode_name} dish mode"
-                    f" but currently reporting {dish_manager.dishMode.name} dish mode"
-                )
+            # wait for events
+            dish_manager_event_store.wait_for_value(DishMode[desired_mode_name], timeout=8)
+            assert dish_manager.dishMode.name == desired_mode_name
+            LOGGER.info(f"{dish_manager} successfully transitioned to {desired_mode_name} mode")
 
     return _ModesHelper()
+
+
+@pytest.fixture(autouse=True)
+def setup_and_teardown(
+    event_store,
+    dish_manager_proxy,
+    ds_device_proxy,
+    spf_device_proxy,
+    spfrx_device_proxy,
+):
+    """Reset the tango devices to a fresh state before each test"""
+    spfrx_device_proxy.ResetToDefault()
+    spf_device_proxy.ResetToDefault()
+
+    ds_device_proxy.subscribe_event(
+        "operatingMode",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    ds_device_proxy.subscribe_event(
+        "indexerPosition",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+
+    if ds_device_proxy.operatingMode != DSOperatingMode.STOW:
+        ds_device_proxy.Stow()
+        assert event_store.wait_for_value(DSOperatingMode.STOW, timeout=9)
+
+    ds_device_proxy.SetStandbyLPMode()
+    assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=9)
+
+    if ds_device_proxy.indexerPosition != IndexerPosition.B1:
+        ds_device_proxy.SetIndexPosition(IndexerPosition.B1)
+        assert event_store.wait_for_value(IndexerPosition.B1, timeout=9)
+
+    spf_device_proxy.subscribe_event(
+        "operatingMode",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=7)
+    event_store.clear_queue()
+
+    dish_manager_proxy.SyncComponentStates()
+
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+
+    try:
+        event_store.wait_for_value(DishMode.STANDBY_LP, timeout=7)
+    except RuntimeError as err:
+        component_states = dish_manager_proxy.GetComponentStates()
+        raise RuntimeError(f"DishManager not in STANDBY_LP:\n {component_states}\n") from err
+
+    yield
