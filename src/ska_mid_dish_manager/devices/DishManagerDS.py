@@ -310,12 +310,7 @@ class DishManager(SKAController):
         """Returns the achievedTargetLock"""
         return self._achieved_target_lock
 
-    @attribute(
-        dtype=DevFloat,
-        access=AttrWriteType.READ_WRITE,
-        doc="Indicates the SPFRx attenuation in the horizontal "
-        "signal chain for the configuredband.",
-    )
+    @attribute(dtype=DevFloat, access=AttrWriteType.READ_WRITE)
     def attenuationPolH(self):
         """Returns the attenuationPolH"""
         return self._attenuation_pol_h
@@ -325,15 +320,8 @@ class DishManager(SKAController):
         """Set the attenuationPolH"""
         # pylint: disable=attribute-defined-outside-init
         self._attenuation_pol_h = value
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("attenuationPolH", value)
 
-    @attribute(
-        dtype=DevFloat,
-        access=AttrWriteType.READ_WRITE,
-        doc="Indicates the SPFRx attenuation in the vertical "
-        "signal chain for the configuredband.",
-    )
+    @attribute(dtype=DevFloat, access=AttrWriteType.READ_WRITE)
     def attenuationPolV(self):
         """Returns the attenuationPolV"""
         return self._attenuation_pol_v
@@ -343,8 +331,6 @@ class DishManager(SKAController):
         """Set the attenuationPolV("""
         # pylint: disable=attribute-defined-outside-init
         self._attenuation_pol_v = value
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("attenuationPolV", value)
 
     @attribute(
         dtype=bool,
@@ -593,7 +579,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=DishMode,
-        doc="Dish rolled-up operating mode in Dish Control Model (SCM) notation",
+        doc="Dish rolled-up operating mode in Dish Control Model (SCM) " "notation",
     )
     def dishMode(self):
         """Returns the dishMode"""
