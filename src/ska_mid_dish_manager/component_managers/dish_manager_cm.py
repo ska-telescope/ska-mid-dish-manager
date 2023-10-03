@@ -73,6 +73,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achievedtargetlock=None,
             achievedpointing=[0.0, 0.0, 30.0],
             configuredband=Band.NONE,
+            attenuationpolh=0.0,
+            attenuationpolv=0.0,
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,

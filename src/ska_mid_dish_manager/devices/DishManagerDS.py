@@ -242,6 +242,8 @@ class DishManager(SKAController):
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
                 "achievedpointing": "achievedPointing",
+                "attenuationpolh": "attenuationPolH",
+                "attenuationpolv": "attenuationPolV",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
