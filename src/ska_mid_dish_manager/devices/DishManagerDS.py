@@ -90,7 +90,8 @@ class DishManager(SKAController):
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("TrackStop", "track_stop_cmd"),
-            ("ConfigureBand2", "configure_band2_cmd"),
+            ("ConfigureBand1", "configure_band_cmd"),
+            ("ConfigureBand2", "configure_band_cmd"),
             ("SetStowMode", "set_stow_mode"),
         ]:
             self.register_command_object(
@@ -877,15 +878,21 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand1(self, synchronise):  # pylint: disable=unused-argument
+    def ConfigureBand1(self, synchronise) -> DevVarLongStringArrayType:
         """
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 1. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand1")
+
+        result_code, unique_id = handler("1", synchronise)
+        return ([result_code], [unique_id])
 
     @command(
         dtype_in=bool,
@@ -910,7 +917,7 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand2")
 
-        result_code, unique_id = handler(synchronise)
+        result_code, unique_id = handler("2", synchronise)
         return ([result_code], [unique_id])
 
     @command(

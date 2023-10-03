@@ -187,27 +187,31 @@ class CommandMap:
             PointingState.READY,
         )
 
-    def configure_band2_cmd(
+    def configure_band_cmd(
         self,
+        band_number,
         synchronise,
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
-        """Configure band 2 on DS and SPF"""
-        self.logger.info(f"ConfigureBand2 called with synchronise = {synchronise}")
+        """Configure band on DS and SPFRx"""
+        band_enum = Band[f"B{band_number}"]
+        indexer_enum = IndexerPosition[f"B{band_number}"]
+        requested_cmd = f"ConfigureBand{band_number}"
+        self.logger.info(f"{requested_cmd} called with synchronise = {synchronise}")
 
         commands_for_sub_devices = {
             "DS": {
                 "command": "SetIndexPosition",
-                "commandArgument": 2,
+                "commandArgument": band_number,
                 "awaitedAttribute": "indexerposition",
-                "awaitedValuesList": [IndexerPosition.B2],
+                "awaitedValuesList": [indexer_enum],
             },
             "SPFRX": {
-                "command": "ConfigureBand2",
+                "command": requested_cmd,
                 "commandArgument": synchronise,
                 "awaitedAttribute": "configuredband",
-                "awaitedValuesList": [Band.B2],
+                "awaitedValuesList": [band_enum],
             },
         }
 
@@ -215,9 +219,9 @@ class CommandMap:
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
-            "ConfigureBand2",
+            requested_cmd,
             "configuredband",
-            Band.B2,
+            band_enum,
         )
 
     def set_stow_mode(

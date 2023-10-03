@@ -532,29 +532,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    def configure_band2_cmd(
+    def configure_band_cmd(
         self,
+        band_number,
         synchronise,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Configure frequency band to band 2"""
+        """Configure frequency band"""
+        band_enum = Band[f"B{band_number}"]
+        requested_cmd = f"ConfigureBand{band_number}"
 
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
-            command_name="ConfigureBand2",
+            command_name=requested_cmd,
             task_callback=task_callback,
         )
 
-        if self.component_state["configuredband"] == Band.B2:
+        if self.component_state["configuredband"] == band_enum:
             if task_callback:
-                task_callback(status=TaskStatus.REJECTED, result=f"Already in band {Band.B2.name}")
-            return TaskStatus.REJECTED, f"Already in band {Band.B2.name}"
-
-        # TODO Check if ConfigureBand2 is already running
+                task_callback(
+                    status=TaskStatus.REJECTED, result=f"Already in band {band_enum.name}"
+                )
+            return TaskStatus.REJECTED, f"Already in band {band_enum.name}"
 
         status, response = self.submit_task(
-            self._command_map.configure_band2_cmd,
-            args=[synchronise],
+            self._command_map.configure_band_cmd,
+            args=[band_number, synchronise],
             task_callback=task_callback,
         )
         return status, response
