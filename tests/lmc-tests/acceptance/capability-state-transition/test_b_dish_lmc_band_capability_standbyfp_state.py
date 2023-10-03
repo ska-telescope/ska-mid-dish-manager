@@ -47,7 +47,7 @@ def check_dish_manager_dish_mode(
 
     modes_helper.ensure_dish_manager_mode(dish_mode)
     current_dish_mode = retrieve_attr_value(dish_manager, "dishMode")
-    LOGGER.info(f"check_dish_manager_dish_mode {dish_manager} dishMode: {current_dish_mode}")
+    LOGGER.info(f"{dish_manager} dishMode: {current_dish_mode}")
 
 
 @when(parse("I issue ConfigureBand{band_number} on dish_manager"))

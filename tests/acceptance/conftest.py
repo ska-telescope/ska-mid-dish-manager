@@ -20,8 +20,6 @@ def setup_and_teardown(
     spfrx_device_proxy,
 ):
     """Reset the tango devices to a fresh state before each test"""
-
-    # ds_device_proxy.ResetToDefault()
     spfrx_device_proxy.ResetToDefault()
     spf_device_proxy.ResetToDefault()
 

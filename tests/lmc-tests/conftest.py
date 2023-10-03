@@ -129,11 +129,11 @@ def modes_helper(
 
     class _ModesHelper:
         def ensure_dish_manager_mode(self, desired_mode_name):
-            """Move dish master to desired_mode_name.
+            """Move dish manager to desired mode.
             Via STANDBY_FP, to ensure any mode can move to any mode.
             """
             if dish_manager.dishMode.name == desired_mode_name:
-                LOGGER.info("Dish master is already at requested mode")
+                LOGGER.info("Dish manager is already at requested mode")
                 return
 
             # handle case where dish mode is unknown
@@ -154,9 +154,9 @@ def modes_helper(
                 self.dish_manager_go_to_mode(desired_mode_name)
 
         def dish_manager_go_to_mode(self, desired_mode_name):
-            """Move device to desired_mode_name"""
+            """Move device to desired dish mode"""
             if dish_manager.dishMode.name == desired_mode_name:
-                LOGGER.info("Dish master is already at requested mode")
+                LOGGER.info("Dish manager is already at requested mode")
                 return
 
             # make sure there is a configured
@@ -174,7 +174,7 @@ def modes_helper(
             )
             dish_manager_event_store.clear_queue()
 
-            # Move to mode_name
+            # Move to desired mode
             command_name = modes_command_map[desired_mode_name]
             LOGGER.info(
                 f"Moving {dish_manager} from "
@@ -201,8 +201,6 @@ def setup_and_teardown(
     spfrx_device_proxy,
 ):
     """Reset the tango devices to a fresh state before each test"""
-
-    # ds_device_proxy.ResetToDefault()
     spfrx_device_proxy.ResetToDefault()
     spf_device_proxy.ResetToDefault()
 
