@@ -203,7 +203,7 @@ class CommandMap:
         commands_for_sub_devices = {
             "DS": {
                 "command": "SetIndexPosition",
-                "commandArgument": band_number,
+                "commandArgument": int(band_number),
                 "awaitedAttribute": "indexerposition",
                 "awaitedValuesList": [indexer_enum],
             },
