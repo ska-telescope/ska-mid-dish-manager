@@ -22,9 +22,7 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.lmc
 @scenario("XTP-6271.feature", "LMC Reports DSH Capability Operate")
-def test_band_capability_state_operate(
-    monitor_tango_servers, reset_receiver_devices, reset_ds_indexer_position
-):
+def test_band_capability_state_operate():
     # pylint: disable=missing-function-docstring
     pass
 

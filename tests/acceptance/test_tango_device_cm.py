@@ -11,21 +11,27 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceC
 LOGGER = logging.getLogger(__name__)
 
 
-# pylint:disable=protected-access
+# pylint:disable=protected-access,unused-argument
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_tango_device_component_manager_state(component_state_store, ds_device_fqdn):
+def test_tango_device_component_manager_state(
+    monitor_tango_servers, component_state_store, ds_device_fqdn
+):
     """Test commands and monitoring"""
     mock_callable = MockCallable(timeout=5)
 
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
+
+    # testMode is not polled
+    device_proxy.poll_attribute("testMode", 100)
+
     assert device_proxy.ping()
 
     com_man = TangoDeviceComponentManager(
         ds_device_fqdn,
         LOGGER,
-        ("polled_attr_1", "non_polled_attr_1"),
+        ("operatingMode", "healthState", "testmode"),
         component_state_callback=component_state_store,
         communication_state_callback=mock_callable,
     )
@@ -37,10 +43,11 @@ def test_tango_device_component_manager_state(component_state_store, ds_device_f
 
     assert com_man.communication_state == CommunicationStatus.ESTABLISHED
 
-    com_man.execute_command("IncrementNonPolled1", None)
-    assert component_state_store.wait_for_value(
-        "non_polled_attr_1", device_proxy.non_polled_attr_1
-    )
+    test_mode_initial_val = device_proxy.read_attribute("testmode").value
+    new_value = 0 if test_mode_initial_val else 1
+    device_proxy.testmode = new_value
+    assert component_state_store.wait_for_value("testmode", new_value, timeout=7)
+    device_proxy.testmode = test_mode_initial_val
 
     com_man.stop_communicating()
     assert com_man.communication_state == CommunicationStatus.NOT_ESTABLISHED
@@ -49,15 +56,14 @@ def test_tango_device_component_manager_state(component_state_store, ds_device_f
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_stress_component_monitor(component_state_store, ds_device_fqdn):
+def test_stress_component_monitor(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates"""
     mock_callable = MockCallable(timeout=5)
 
-    device_proxy = tango.DeviceProxy(ds_device_fqdn)
     com_man = TangoDeviceComponentManager(
         ds_device_fqdn,
         LOGGER,
-        ("non_polled_attr_1",),
+        ("testMode",),
         component_state_callback=component_state_store,
         communication_state_callback=mock_callable,
     )
@@ -66,8 +72,14 @@ def test_stress_component_monitor(component_state_store, ds_device_fqdn):
 
     mock_callable.assert_call(CommunicationStatus.ESTABLISHED, lookahead=3)
 
+    device_proxy = tango.DeviceProxy(ds_device_fqdn)
+    # testMode is not polled
+    device_proxy.poll_attribute("testMode", 100)
+
+    test_mode_initial_val = device_proxy.read_attribute("testmode").value
     for _ in range(10):
-        com_man.execute_command("IncrementNonPolled1", None)
-        assert component_state_store.wait_for_value(
-            "non_polled_attr_1", device_proxy.non_polled_attr_1
-        )
+        current_val = device_proxy.read_attribute("testmode").value
+        new_val = 0 if current_val else 1
+        device_proxy.testmode = new_val
+        assert component_state_store.wait_for_value("testmode", new_val)
+    device_proxy.testmode = test_mode_initial_val

@@ -62,14 +62,15 @@ $ helm upgrade --install to k8s-helm-repository/ska-tango-operator -n ska-tango-
 - Deploy the chart with simulator devices
 
 ```bash
-$ helm upgrade --install dev . -n dish-manager \ # "." is charts/ska-mid-dish-manager
+$ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
 --set global.minikube=true \
 --set global.operator=true \
 --set global.dishes={001,002} \ # number of instances to deploy; if not specified defaults to 001
---set deviceServers.dsdevice.enabled=true \ # enable DS test device
---set ska-mid-dish-simulators.enabled=true \ # enable simulators (select which simulator to deploy below)
+--set ska-mid-dish-simulators.enabled=true \
+--set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
 --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
---set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true
+--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
+--set ska-mid-dish-ds-manager.enabled=true
 ```
 
 ### Deploy for development
@@ -77,15 +78,17 @@ $ helm upgrade --install dev . -n dish-manager \ # "." is charts/ska-mid-dish-ma
 - Deploy the chart, but replace the dishmanager pod with a development pod for testing DishManager
 
 ```bash
-$ helm upgrade --install dev . -n dish-manager \
+$ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
 --set global.minikube=true \
 --set global.operator=true \
+--set global.dishes={001,002} \ # number of instances to deploy; if not specified defaults to 001
 --set dev_pod.enabled=true \ # enable devpod for development
 --set deviceServers.dishmanager.enabled=false \ # disable dishmanager to use devpod
---set deviceServers.dsdevice.enabled=true \
 --set ska-mid-dish-simulators.enabled=true \
+--set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
 --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
---set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true
+--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
+--set ska-mid-dish-ds-manager.enabled=true
 ```
 
 - Then start DishManager in the commandline

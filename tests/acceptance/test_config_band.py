@@ -57,7 +57,7 @@ def test_configure_band_2(
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(False)
 
-    dishmode_event_store.wait_for_value(DishMode.CONFIG)
+    dishmode_event_store.wait_for_value(DishMode.CONFIG, timeout=9)
     main_event_store.wait_for_command_id(unique_id)
 
     assert dish_manager_proxy.configuredBand == Band.B2

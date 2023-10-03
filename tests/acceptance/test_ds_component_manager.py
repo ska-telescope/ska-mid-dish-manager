@@ -32,9 +32,6 @@ def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     )
     com_man.start_communicating()
 
-    device_proxy.SetStartupMode()
-    component_state_store.wait_for_value("operatingmode", DSOperatingMode.STARTUP)
-
     device_proxy.SetStandbyFPMode()
     component_state_store.wait_for_value("operatingmode", DSOperatingMode.STANDBY_FP)
 
