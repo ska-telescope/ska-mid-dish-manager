@@ -130,6 +130,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 configuredband=Band.NONE,
                 capturingdata=False,
                 healthstate=HealthState.UNKNOWN,
+                attenuationpolh=0.0,
+                attenuationpolv=0.0,
                 b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -345,6 +347,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # update the bandInFocus of SPF before configuredBand
             spf_component_manager = self.sub_component_managers["SPF"]
             spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
+
+        # spfrx attenuation
+        if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
+            attenuation = {
+                "attenuationpolv": spfrx_component_state["attenuationpolv"],
+                "attenuationpolh": spfrx_component_state["attenuationpolh"],
+            }
+            self._update_component_state(**attenuation)
 
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
