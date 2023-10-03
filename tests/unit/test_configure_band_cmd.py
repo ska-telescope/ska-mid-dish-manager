@@ -131,7 +131,7 @@ class TestConfigureBand:
         expected_progress_updates = [
             "SetIndexPosition called on DS",
             f"{command} called on SPFRx, ID",
-            "Awaiting configuredband change to B2",
+            f"Awaiting configuredband change to {band_number}",
             f"{command} completed",
         ]
 

@@ -875,7 +875,7 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def ConfigureBand1(self, synchronise) -> DevVarLongStringArrayType:
