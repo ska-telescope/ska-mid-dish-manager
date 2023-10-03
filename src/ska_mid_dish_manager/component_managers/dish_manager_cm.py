@@ -242,7 +242,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # push change events for the connection state attributes
             self._connection_state_callback(attribute_name)
 
-    # pylint: disable=unused-argument, too-many-branches, too-many-locals
+    # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _component_state_changed(self, *args, **kwargs):
         """
         Callback triggered by the component manager of the
