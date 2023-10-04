@@ -359,7 +359,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(DevFloat,),
-        max_dim_x=5,
+        max_dim_x=20,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 2 pointing models used by Dish to do "
         "pointing corrections.",
