@@ -10,6 +10,7 @@ and the subservient devices
 import json
 import logging
 import os
+import tango
 import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
@@ -372,6 +373,9 @@ class DishManager(SKAController):
         """Set the band2PointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band2_pointing_model_params = value
+        ds_proxy = tango.DeviceProxy(self.DSDeviceFqdn)
+        self.logger.debug("band2PointingModelParams write method %s ", value)
+        ds_proxy.band2PointingModelParams(value)
 
     @attribute(
         dtype=(DevFloat,),
