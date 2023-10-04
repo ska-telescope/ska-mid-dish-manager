@@ -23,7 +23,7 @@ LOGGER = logging.getLogger(__name__)
     "XTP-6269.feature",
     "LMC Reports DSH Capability Standby in LP Mode",
 )
-def test_dish_manager_capability_state_reports_standby_in_lp_mode():
+def test_dish_manager_capability_state_reports_standby_in_lp_mode(monitor_tango_servers):
     """Test that dish lmc reports STANDBY capability state"""
     pass
 
@@ -84,9 +84,7 @@ def check_dish_capability_state(
         tango.EventType.CHANGE_EVENT,
         dish_manager_event_store,
     )
-
-    dish_manager_event_store.wait_for_value(CapabilityStates[expected_state], timeout=10)
-
     b_x_capability_state = retrieve_attr_value(dish_manager, f"b{band_number}CapabilityState")
+    dish_manager_event_store.wait_for_value(CapabilityStates[expected_state], timeout=10)
     assert b_x_capability_state == expected_state
     LOGGER.info(f"{dish_manager} b{band_number}CapabilityState: {b_x_capability_state}")

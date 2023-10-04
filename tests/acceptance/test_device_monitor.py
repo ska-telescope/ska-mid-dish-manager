@@ -17,7 +17,8 @@ def empty_func(*args, **kwargs):  # pylint: disable=unused-argument
     pass  # pylint:disable=unnecessary-pass
 
 
-def test_device_monitor(caplog, spf_device_fqdn):
+# pylint:disable=unused-argument
+def test_device_monitor(monitor_tango_servers, caplog, spf_device_fqdn):
     """Device monitoring sanity check"""
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()

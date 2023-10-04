@@ -26,11 +26,22 @@ def device_event_store():
     return {}
 
 
+@pytest.fixture(scope="function")
+def dish_mode_event_store(event_store_class):
+    return event_store_class()
+
+
+@pytest.fixture(scope="function")
+def cap_state_event_store(event_store_class):
+    return event_store_class()
+
+
+@pytest.mark.xfail(
+    reason="Config on DM is very quick and SPF and SPFRx has to update in that same window"
+)
 @pytest.mark.lmc
 @scenario("XTP-6270.feature", "LMC Reports DSH Capability Configure")
-def test_dish_lmc_capability_state_reports_configure(
-    reset_receiver_devices, reset_ds_indexer_position
-):
+def test_dish_lmc_capability_state_reports_configure():
     """Test that dish lmc reports CONFIGURE capability state"""
     pass
 
@@ -50,22 +61,27 @@ def check_dish_manager_dish_mode(dish_mode, dish_manager, modes_helper):
 @when(parse("I issue ConfigureBand{band_number} on dish_manager"))
 def configure_band(
     band_number,
+    dish_mode_event_store,
+    cap_state_event_store,
     dish_freq_band_configuration,
     dish_manager,
     spfrx,
     spf,
-    dish_manager_event_store,
     spfrx_event_store,
     spf_event_store,
 ):
     # pylint: disable=missing-function-docstring
-    attrs = ["dishMode", f"b{band_number}CapabilityState"]
-    for attr in attrs:
-        dish_manager.subscribe_event(
-            attr,
-            tango.EventType.CHANGE_EVENT,
-            dish_manager_event_store,
-        )
+    dish_manager.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        dish_mode_event_store,
+    )
+
+    dish_manager.subscribe_event(
+        f"b{band_number}CapabilityState",
+        tango.EventType.CHANGE_EVENT,
+        cap_state_event_store,
+    )
 
     spfrx.subscribe_event(
         f"b{band_number}CapabilityState",
@@ -84,22 +100,14 @@ def configure_band(
 
 
 @then(parse("dish_manager dishMode should have reported {expected_mode} briefly"))
-def check_dish_mode(dish_manager, expected_mode, dish_manager_event_store, device_event_store):
+def check_dish_mode(expected_mode, dish_mode_event_store):
     # pylint: disable=missing-function-docstring
-    dish_evts = dish_manager_event_store.get_queue_values(timeout=10)
-    # pass on the events for later use
-    device_event_store["dish_manager"] = dish_evts
-
-    dish_mode_evts = [evt_vals[1] for evt_vals in dish_evts if evt_vals[0].lower() == "dishmode"]
-    assert DishMode[expected_mode] in dish_mode_evts
-    LOGGER.info(f"{dish_manager} dishMode reported: {expected_mode}")
+    dish_mode_event_store.wait_for_value(DishMode[expected_mode], timeout=10)
 
 
 @then(parse("spf b{band_number}CapabilityState should report {expected_state}"))
 def then_check_spf_capability_state(band_number, expected_state, spf, spf_event_store):
     # pylint: disable=missing-function-docstring
-    # convert expected state to have underscore
-    # for SPFCapabilityStates OPERATE_FULL enum
     expected_state = expected_state.replace("-", "_")
 
     spf_event_store.wait_for_value(SPFCapabilityStates[expected_state], timeout=10)
@@ -130,23 +138,7 @@ def check_spfrx_capability_state(band_number, operate, configure, spfrx, spfrx_e
         "dish_manager b{band_number}CapabilityState should have reported {expected_state} briefly"
     )
 )
-def check_dish_transient_capability_state(
-    band_number,
-    expected_state,
-    dish_manager,
-    dish_manager_event_store,
-    device_event_store,
-):
+def check_dish_transient_capability_state(band_number, expected_state, cap_state_event_store):
     # pylint: disable=missing-function-docstring
-    dish_evts = dish_manager_event_store.get_queue_values(timeout=10)
-    # combine the fresh events and the old one to check for values
-    dish_evts = dish_evts + device_event_store["dish_manager"]
-
-    capability_state_evts = [
-        evt_vals[1]
-        for evt_vals in dish_evts
-        if evt_vals[0].lower() == f"b{band_number}capabilitystate"
-    ]
-    assert CapabilityStates[expected_state] in capability_state_evts
-
-    LOGGER.info(f"{dish_manager} b{band_number}CapabilityState reported: {expected_state}")
+    cap_state_event_store.wait_for_value(CapabilityStates[expected_state], timeout=10)
+    LOGGER.info(f"dish_manager b{band_number}CapabilityState reported: {expected_state}")

@@ -44,7 +44,7 @@ endif
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
 
-PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --cucumberjson=build/cucumber.json
+PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --cucumberjson=build/cucumber.json --event-storage-files-path="build/events"
 
 PYTHON_SWITCHES_FOR_BLACK ?= --line-length 99
 
@@ -70,9 +70,12 @@ CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
 	--set dishmanager.image.tag=$(OCI_TAG) \
 	--set ska-mid-dish-simulators.enabled=true \
-	--set deviceServers.dsdevice.enabled=true \
+	--set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
 	--set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
-	--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true
+	--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
+	--set ska-mid-dish-ds-manager.enabled=true \
+	--set ska-mid-dish-ds-manager.ska-tango-base.enabled=false \
+	--set ska-mid-dish-simulators.ska-tango-base.enabled=false
 K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 endif
 

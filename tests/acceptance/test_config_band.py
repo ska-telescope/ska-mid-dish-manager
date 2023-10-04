@@ -7,12 +7,17 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import set_configuredBand_b1
 
 
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals,unused-argument,too-many-arguments
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_configure_band_2(
-    event_store_class, dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+    ds_device_proxy,
+    spf_device_proxy,
+    spfrx_device_proxy,
 ):
     """Test ConfigureBand2"""
     main_event_store = event_store_class()
@@ -52,7 +57,7 @@ def test_configure_band_2(
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(False)
 
-    dishmode_event_store.wait_for_value(DishMode.CONFIG)
+    dishmode_event_store.wait_for_value(DishMode.CONFIG, timeout=9)
     main_event_store.wait_for_command_id(unique_id)
 
     assert dish_manager_proxy.configuredBand == Band.B2

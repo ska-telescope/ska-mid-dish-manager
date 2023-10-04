@@ -22,9 +22,15 @@ def fixture_initial_dish_mode():
     return {"dishMode": None}
 
 
+@pytest.fixture(scope="function")
+def dm_event_store(event_store_class):
+    # pylint: disable=missing-function-docstring
+    return event_store_class()
+
+
 @pytest.mark.lmc
 @scenario("XTP-5703.feature", "Test dish lmc band selection")
-def test_band_selection(reset_receiver_devices, reset_ds_indexer_position):
+def test_band_selection():
     # pylint: disable=missing-function-docstring
     pass
 
@@ -33,7 +39,7 @@ def test_band_selection(reset_receiver_devices, reset_ds_indexer_position):
 def dish_reports_allowed_dish_mode(
     dish_mode,
     dish_manager,
-    dish_manager_event_store,
+    dm_event_store,
     modes_helper,
     initial_mode,
 ):
@@ -42,7 +48,7 @@ def dish_reports_allowed_dish_mode(
     dish_manager.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
-        dish_manager_event_store,
+        dm_event_store,
     )
     dish_mode = dish_mode.replace("-", "_")
 
@@ -63,12 +69,12 @@ def configure_band(
 
 
 @then(parse("dish_manager dishMode should report {transient_mode} briefly"))
-def check_dish_mode_reports_config(transient_mode, dish_manager, dish_manager_event_store):
+def check_dish_mode_reports_config(transient_mode, dish_manager, dm_event_store):
     # pylint: disable=missing-function-docstring
     # convert dish mode to have underscore for enums in utils
     transient_mode = transient_mode.replace("-", "_")
 
-    dish_manager_event_store.wait_for_value(DishMode[transient_mode], timeout=10)
+    dm_event_store.wait_for_value(DishMode[transient_mode], timeout=10)
     LOGGER.info(f"{dish_manager} dishMode reported: {transient_mode}")
 
 

@@ -7,7 +7,9 @@ import tango
 
 
 @pytest.mark.lmc
-def test_dish_manager_supports_all_reporting_models(dish_manager, dish_manager_event_store):
+def test_dish_manager_supports_all_reporting_models(
+    monitor_tango_servers, dish_manager, dish_manager_event_store
+):
     """Test that dish manager supports attribute reads on request and with events"""
     dish_mode = dish_manager.dishMode.value
 
@@ -29,7 +31,7 @@ def test_dish_manager_supports_all_reporting_models(dish_manager, dish_manager_e
 
 @pytest.mark.lmc
 @pytest.mark.parametrize("domain", ["001"])
-@pytest.mark.parametrize("family_member", ["lmc/ds_simulator", "spf/simulator", "spfrx/simulator"])
+@pytest.mark.parametrize("family_member", ["ds/manager", "spf/simulator", "spfrx/simulator"])
 def test_sub_elements_support_all_reporting_models(domain, family_member):
     """Test that dish structure, spf and spfrx devices
     support attribute reads on request and with events"""

@@ -9,7 +9,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
 @pytest.mark.lmc
-def test_dish_manager_startups_with_expected_dish_mode(event_store):
+def test_dish_manager_startups_with_expected_dish_mode(monitor_tango_servers, event_store):
     """Test that dish master starts up with the expected dishMode"""
     dish_manager = tango.DeviceProxy("ska001/elt/master")
     dish_manager.subscribe_event(
@@ -24,7 +24,7 @@ def test_dish_manager_startups_with_expected_dish_mode(event_store):
 
 @pytest.mark.lmc
 @pytest.mark.parametrize("domain", ["001"])
-@pytest.mark.parametrize("family_member", ["lmc/ds_simulator", "spf/simulator", "spfrx/simulator"])
+@pytest.mark.parametrize("family_member", ["ds/manager", "spf/simulator", "spfrx/simulator"])
 def test_sub_elements_startup_with_expected_operating_mode(domain, family_member):
     """
     Test that dish structure, spf and spfrx
