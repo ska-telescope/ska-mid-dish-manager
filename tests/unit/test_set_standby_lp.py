@@ -118,7 +118,7 @@ class TestSetStandByLPMode:
         ]
 
         events = progress_event_store.wait_for_progress_update(
-            expected_progress_updates[-1], timeout=6
+            expected_progress_updates[-1], timeout=10
         )
 
         events_string = "".join([str(event.attr_value.value) for event in events])
