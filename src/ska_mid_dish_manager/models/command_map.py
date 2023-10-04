@@ -244,6 +244,7 @@ class CommandMap:
         )
 
     def _fan_out_cmd(self, task_callback, device, fan_out_args, command_ids):
+        """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
         command = SubmittedSlowCommand(
@@ -282,6 +283,7 @@ class CommandMap:
         command_ids[device] = command_id
 
     def _is_fan_out_cmd_executing(self, task_callback, device, command_ids, running_command):
+        """Check the status of the fanned out command on the subservient device"""
         command_id = command_ids[device]
         current_status = self._command_tracker.get_command_status(command_id)
         if current_status == TaskStatus.FAILED:
@@ -293,6 +295,7 @@ class CommandMap:
         return True
 
     def _report_fan_out_cmd_progress(self, task_callback, device, fan_out_args, progress_store):
+        """Report and update the progress of the fanned out command"""
         awaited_attribute = fan_out_args["awaitedAttribute"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
 
@@ -318,6 +321,7 @@ class CommandMap:
         awaited_event_attribute,
         awaited_event_value,
     ):
+        """Run the long running command and track progress"""
         assert task_callback, "task_callback has to be defined"
 
         if task_abort_event.is_set():
