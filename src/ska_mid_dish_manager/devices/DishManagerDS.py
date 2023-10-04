@@ -10,11 +10,11 @@ and the subservient devices
 import json
 import logging
 import os
-import tango
 import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
 
+import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SlowCommand, SubmittedSlowCommand
