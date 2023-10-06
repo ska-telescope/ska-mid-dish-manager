@@ -242,6 +242,7 @@ class DishManager(SKAController):
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
                 "achievedpointing": "achievedPointing",
+                "band2pointingmodelparams": "band2PointingModelParams",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -371,11 +372,14 @@ class DishManager(SKAController):
     @band2PointingModelParams.write
     def band2PointingModelParams(self, value):
         """Set the band2PointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band2_pointing_model_params = value
+        self.logger.debug("band2PointingModelParams write method called with params %s", value)
+
+        # The argument value is a list of two floats: [off_xel, off_el]
+        if len(value) != 2:
+            raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
+
         ds_proxy = tango.DeviceProxy(self.DSDeviceFqdn)
-        self.logger.debug("band2PointingModelParams write method %s ", value)
-        ds_proxy.band2PointingModelParams(value)
+        ds_proxy.band2PointingModelParams = value
 
     @attribute(
         dtype=(DevFloat,),
