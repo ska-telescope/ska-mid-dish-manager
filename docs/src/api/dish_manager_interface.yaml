@@ -568,7 +568,7 @@
       format: '%6.2f'
       label: band2PointingModelParams
       max_alarm: Not specified
-      max_dim_x: 5
+      max_dim_x: 20
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1498,4 +1498,3 @@
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
     - name: polled_cmd
-
