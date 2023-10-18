@@ -90,7 +90,8 @@ class DishManager(SKAController):
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("TrackStop", "track_stop_cmd"),
-            ("ConfigureBand2", "configure_band2_cmd"),
+            ("ConfigureBand1", "configure_band_cmd"),
+            ("ConfigureBand2", "configure_band_cmd"),
             ("SetStowMode", "set_stow_mode"),
         ]:
             self.register_command_object(
@@ -241,6 +242,8 @@ class DishManager(SKAController):
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
                 "achievedpointing": "achievedPointing",
+                "attenuationpolh": "attenuationPolH",
+                "attenuationpolv": "attenuationPolV",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -309,7 +312,12 @@ class DishManager(SKAController):
         """Returns the achievedTargetLock"""
         return self._achieved_target_lock
 
-    @attribute(dtype=DevFloat, access=AttrWriteType.READ_WRITE)
+    @attribute(
+        dtype=DevFloat,
+        access=AttrWriteType.READ_WRITE,
+        doc="Indicates the SPFRx attenuation in the horizontal "
+        "signal chain for the configuredband.",
+    )
     def attenuationPolH(self):
         """Returns the attenuationPolH"""
         return self._attenuation_pol_h
@@ -319,8 +327,15 @@ class DishManager(SKAController):
         """Set the attenuationPolH"""
         # pylint: disable=attribute-defined-outside-init
         self._attenuation_pol_h = value
+        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_cm.write_attribute_value("attenuationPolH", value)
 
-    @attribute(dtype=DevFloat, access=AttrWriteType.READ_WRITE)
+    @attribute(
+        dtype=DevFloat,
+        access=AttrWriteType.READ_WRITE,
+        doc="Indicates the SPFRx attenuation in the vertical "
+        "signal chain for the configuredband.",
+    )
     def attenuationPolV(self):
         """Returns the attenuationPolV"""
         return self._attenuation_pol_v
@@ -330,6 +345,8 @@ class DishManager(SKAController):
         """Set the attenuationPolV("""
         # pylint: disable=attribute-defined-outside-init
         self._attenuation_pol_v = value
+        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_cm.write_attribute_value("attenuationPolV", value)
 
     @attribute(
         dtype=bool,
@@ -578,7 +595,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=DishMode,
-        doc="Dish rolled-up operating mode in Dish Control Model (SCM) " "notation",
+        doc="Dish rolled-up operating mode in Dish Control Model (SCM) notation",
     )
     def dishMode(self):
         """Returns the dishMode"""
@@ -874,18 +891,24 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand1(self, synchronise):  # pylint: disable=unused-argument
+    def ConfigureBand1(self, synchronise) -> DevVarLongStringArrayType:
         """
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 1. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand1")
+
+        result_code, unique_id = handler("1", synchronise)
+        return ([result_code], [unique_id])
 
     @command(
         dtype_in=bool,
@@ -910,7 +933,7 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand2")
 
-        result_code, unique_id = handler(synchronise)
+        result_code, unique_id = handler("2", synchronise)
         return ([result_code], [unique_id])
 
     @command(

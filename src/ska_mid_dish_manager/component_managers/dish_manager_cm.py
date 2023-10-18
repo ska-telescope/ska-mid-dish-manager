@@ -73,6 +73,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achievedtargetlock=None,
             achievedpointing=[0.0, 0.0, 30.0],
             configuredband=Band.NONE,
+            attenuationpolh=0.0,
+            attenuationpolv=0.0,
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
@@ -130,6 +132,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 configuredband=Band.NONE,
                 capturingdata=False,
                 healthstate=HealthState.UNKNOWN,
+                attenuationpolh=0.0,
+                attenuationpolv=0.0,
                 b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -238,7 +242,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # push change events for the connection state attributes
             self._connection_state_callback(attribute_name)
 
-    # pylint: disable=unused-argument, too-many-branches, too-many-locals
+    # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _component_state_changed(self, *args, **kwargs):
         """
         Callback triggered by the component manager of the
@@ -345,6 +349,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # update the bandInFocus of SPF before configuredBand
             spf_component_manager = self.sub_component_managers["SPF"]
             spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
+
+        # spfrx attenuation
+        if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
+            attenuation = {
+                "attenuationpolv": spfrx_component_state["attenuationpolv"],
+                "attenuationpolh": spfrx_component_state["attenuationpolh"],
+            }
+            self._update_component_state(**attenuation)
 
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
@@ -532,29 +544,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    def configure_band2_cmd(
+    def configure_band_cmd(
         self,
+        band_number,
         synchronise,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Configure frequency band to band 2"""
+        """Configure frequency band"""
+        band_enum = Band[f"B{band_number}"]
+        requested_cmd = f"ConfigureBand{band_number}"
 
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
-            command_name="ConfigureBand2",
+            command_name=requested_cmd,
             task_callback=task_callback,
         )
 
-        if self.component_state["configuredband"] == Band.B2:
+        if self.component_state["configuredband"] == band_enum:
             if task_callback:
-                task_callback(status=TaskStatus.REJECTED, result=f"Already in band {Band.B2.name}")
-            return TaskStatus.REJECTED, f"Already in band {Band.B2.name}"
-
-        # TODO Check if ConfigureBand2 is already running
+                task_callback(
+                    status=TaskStatus.REJECTED, result=f"Already in band {band_enum.name}"
+                )
+            return TaskStatus.REJECTED, f"Already in band {band_enum.name}"
 
         status, response = self.submit_task(
-            self._command_map.configure_band2_cmd,
-            args=[synchronise],
+            self._command_map.configure_band_cmd,
+            args=[band_number, synchronise],
             task_callback=task_callback,
         )
         return status, response
