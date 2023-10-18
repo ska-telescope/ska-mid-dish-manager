@@ -1,7 +1,8 @@
 # pylint: disable=invalid-name,possibly-unused-variable
 """General utils for test devices"""
 import queue
-from typing import Any, List, Tuple
+import time
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 import tango
@@ -252,6 +253,28 @@ class EventStore:
         :type events: List[tango.EventData]
         """
         return [(event.attr_value.name, event.attr_value.value) for event in events]
+
+
+def poll_for_attribute_value(
+    device_proxy: tango.DeviceProxy, attribute: Any, value: Any, timeout: int = 5
+) -> Optional[bool]:
+    """Wait for a devices attribute value to match the given value."""
+    t_end = time.time() + timeout
+
+    actual_value = None
+    while time.time() < t_end:
+        actual_value = device_proxy.read_attribute(attribute).value
+
+        if isinstance(actual_value, np.ndarray):
+            all_values_equal = np.isclose(actual_value, value).all()
+
+            if all_values_equal:
+                return True
+        else:
+            if actual_value == value:
+                return True
+
+    raise RuntimeError(f"Never got expected value [{value}] got [{actual_value}]")
 
 
 def set_dish_manager_to_standby_lp(event_store, dish_manager_proxy):
