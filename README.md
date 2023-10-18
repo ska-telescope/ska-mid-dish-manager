@@ -73,6 +73,12 @@ $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
 --set ska-mid-dish-ds-manager.enabled=true
 ```
 
+`ska-tango-base` is not deployed by default, to deploy it add the `--set` below:
+
+```bash
+--set ska-tango-base.enabled=true
+```
+
 ### Deploy for development
 
 - Deploy the chart, but replace the dishmanager pod with a development pod for testing DishManager
