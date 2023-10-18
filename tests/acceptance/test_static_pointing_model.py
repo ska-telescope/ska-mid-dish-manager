@@ -1,6 +1,4 @@
 """Test Static Pointing Model."""
-from typing import Any
-
 import pytest
 import tango
 
