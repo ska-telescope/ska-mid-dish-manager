@@ -23,7 +23,7 @@
         (Should be default to False).
       doc_out: Uninitialised
       dtype_in: DevBoolean
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand2
       disp_level: OPERATOR
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
@@ -325,7 +325,8 @@
     - name: attenuationPolH
       data_format: SCALAR
       data_type: DevFloat
-      description: Returns the attenuationPolH
+      description: Indicates the SPFRx attenuation in the horizontal signal chain
+        for the configuredband.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -341,7 +342,8 @@
     - name: attenuationPolV
       data_format: SCALAR
       data_type: DevFloat
-      description: Returns the attenuationPolV
+      description: Indicates the SPFRx attenuation in the vertical signal chain for
+        the configuredband.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
