@@ -116,7 +116,9 @@ def test_model_dish_mode_transition_accuracy(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
-            dict(operatingmode=DSOperatingMode.STANDBY_LP),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+            ),
             dict(operatingmode=SPFOperatingMode.STARTUP),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STARTUP,
@@ -140,38 +142,44 @@ def test_model_dish_mode_transition_accuracy(
             DishMode.CONFIG,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STANDBY_LP),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+            ),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STANDBY_LP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STANDBY_FP),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+            ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STANDBY_FP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STANDBY_FP),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+            ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
             DishMode.STANDBY_FP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.POINT),
+            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
             DishMode.OPERATE,
         ),
         # Any other random combo goes to UNKNOWN
         (
-            dict(operatingmode=DSOperatingMode.UNKNOWN),
+            dict(operatingmode=DSOperatingMode.UNKNOWN, indexerposition=IndexerPosition.UNKNOWN),
             dict(operatingmode=SPFOperatingMode.ERROR),
             dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
             DishMode.UNKNOWN,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW),
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
             dict(operatingmode=SPFOperatingMode.ERROR),
             dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
             DishMode.STOW,

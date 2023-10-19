@@ -247,7 +247,7 @@ class CommandMap:
             DishMode.STOW,
         )
 
-    def _fan_out_cmd(self, task_callback, device, fan_out_args, command_ids):
+    def _fan_out_cmd(self, task_callback, device, fan_out_args):
         """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
@@ -283,8 +283,7 @@ class CommandMap:
                 f" change to {awaited_values_list}"
             )
         )
-        # store the command id to track later
-        command_ids[device] = command_id
+        return command_id
 
     def _is_fan_out_cmd_executing(self, task_callback, device, command_ids, running_command):
         """Check the status of the fanned out command on the subservient device"""
@@ -298,7 +297,7 @@ class CommandMap:
             return False
         return True
 
-    def _report_fan_out_cmd_progress(self, task_callback, device, fan_out_args, progress_store):
+    def _report_fan_out_cmd_progress(self, task_callback, device, fan_out_args):
         """Report and update the progress of the fanned out command"""
         awaited_attribute = fan_out_args["awaitedAttribute"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
@@ -308,12 +307,11 @@ class CommandMap:
         ].component_state[awaited_attribute]
 
         if component_attr_value in awaited_values_list:
-            if not progress_store[device]:
-                task_callback(
-                    progress=f"{device} {awaited_attribute} changed to {awaited_values_list}"
-                )
-
-                progress_store[device] = True
+            task_callback(
+                progress=f"{device} {awaited_attribute} changed to {awaited_values_list}"
+            )
+            return True
+        return False
 
     # pylint: disable=too-many-locals
     def _run_long_running_command(
@@ -341,8 +339,7 @@ class CommandMap:
 
         for device, fan_out_args in commands_for_sub_devices.items():
             try:
-                args = (task_callback, device, fan_out_args, device_command_ids)
-                self._fan_out_cmd(*args)
+                device_command_ids[device] = self._fan_out_cmd(task_callback, device, fan_out_args)
             except RuntimeError:
                 cmd_name = fan_out_args["command"]
                 task_callback(
@@ -364,7 +361,7 @@ class CommandMap:
             )
         )
 
-        success_reported = dict.fromkeys(commands_for_sub_devices.keys(), False)
+        attribute_update_reported = dict.fromkeys(commands_for_sub_devices.keys(), False)
 
         while True:
             if task_abort_event.is_set():
@@ -376,24 +373,26 @@ class CommandMap:
                 return
 
             for device, fan_out_args in commands_for_sub_devices.items():
-                # stop waiting if the any of the fanned out commands fail
-                args = (task_callback, device, device_command_ids, running_command)
-                if not self._is_fan_out_cmd_executing(*args):
-                    return
                 # Check each device and report attribute values that are in the expected state
-                args = (task_callback, device, fan_out_args, success_reported)
-                self._report_fan_out_cmd_progress(*args)
+                if not attribute_update_reported[device]:
+                    attribute_update_reported[device] = self._report_fan_out_cmd_progress(
+                        task_callback, device, fan_out_args
+                    )
 
             # Check on dishmanager to see whether the LRC has completed
             current_awaited_value = self._dish_manager_cm.component_state[awaited_event_attribute]
+
             if current_awaited_value != awaited_event_value:
                 task_abort_event.wait(timeout=1)
-                for component_manager in self._dish_manager_cm.sub_component_managers.values():
+                for device in commands_for_sub_devices.keys():
+                    component_manager = self._dish_manager_cm.sub_component_managers[device]
                     component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
+                    progress=f"{running_command} completed",
+                )
+                task_callback(
                     status=TaskStatus.COMPLETED,
                     result=f"{running_command} completed",
-                    progress=f"{running_command} completed",
                 )
                 return
