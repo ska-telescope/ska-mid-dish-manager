@@ -31,9 +31,6 @@ class TestStowMode:
             self.device_proxy = self.tango_context.device
             class_instance = DishManager.instances.get(self.device_proxy.name())
             self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
-            self.ds_cm._update_communication_state(
-                communication_state=CommunicationStatus.ESTABLISHED
-            )
 
     def teardown_method(self):
         """Tear down context"""
@@ -41,6 +38,7 @@ class TestStowMode:
 
     # pylint: disable=missing-function-docstring, protected-access
     def test_stow_mode(self, event_store_class):
+        self.ds_cm._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
         progress_event_store = event_store_class()
         self.device_proxy.subscribe_event(
             "longRunningCommandProgress",
