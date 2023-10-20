@@ -2,8 +2,6 @@
 import pytest
 import tango
 
-from tests.utils import poll_for_attribute_value
-
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -20,7 +18,7 @@ def test_read_band2_static_pointing_model_parameters(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_write_band2_static_pointing_model_parameters(
-    dish_manager_proxy: tango.DeviceProxy,
+    dish_manager_proxy: tango.DeviceProxy, event_store_class
 ) -> None:
     """Test Band2 Static Pointing Model Parameters."""
     write_values = [1.2, 3.4]
@@ -31,6 +29,8 @@ def test_write_band2_static_pointing_model_parameters(
     expected_values[11] = write_values[0]  # CAobs
     expected_values[19] = write_values[1]  # Eobs
 
-    assert poll_for_attribute_value(
-        dish_manager_proxy, "band2PointingModelParams", expected_values
+    model_event_store = event_store_class()
+    dish_manager_proxy.subscribe_event(
+        "band2PointingModelParams", tango.EventType.CHANGE_EVENT, model_event_store
     )
+    model_event_store.wait_for_value(expected_values, timeout=7)

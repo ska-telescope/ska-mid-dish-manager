@@ -8,28 +8,6 @@ import tango
 from tango import CmdArgType
 
 
-def poll_for_attribute_value(
-    device_proxy: tango.DeviceProxy, attribute: Any, value: Any, timeout: int = 5
-) -> Optional[bool]:
-    """Wait for a devices attribute value to match the given value."""
-    t_end = time.time() + timeout
-
-    actual_value = None
-    while time.time() < t_end:
-        actual_value = device_proxy.read_attribute(attribute).value
-
-        if isinstance(actual_value, np.ndarray):
-            all_values_equal = np.isclose(actual_value, value).all()
-
-            if all_values_equal:
-                return True
-        else:
-            if actual_value == value:
-                return True
-
-    raise RuntimeError(f"Never got expected value [{value}] got [{actual_value}]")
-
-
 def retrieve_attr_value(dev_proxy, attr_name):
     """Get the attribute reading from device"""
     current_val = dev_proxy.read_attribute(attr_name)
@@ -107,11 +85,13 @@ class EventStore:
                 events.append(event)
                 if not event.attr_value:
                     continue
+
                 if isinstance(event.attr_value.value, np.ndarray):
-                    if (event.attr_value.value != value).all():
-                        continue
                     if (event.attr_value.value == value).all():
                         return True
+                    if np.isclose(event.attr_value.value, value).all():
+                        return True
+                    continue
 
                 if event.attr_value.value != value:
                     continue

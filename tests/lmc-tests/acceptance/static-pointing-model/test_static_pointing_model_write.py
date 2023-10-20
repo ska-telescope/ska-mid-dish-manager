@@ -5,10 +5,11 @@ Verify that dish lmc updates static pointing model parameters on a write
 import json
 import logging
 
+import numpy as np
 import pytest
+import tango
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
-from utils import poll_for_attribute_value
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,8 +41,11 @@ def parameters_are_updated():
 
 
 @then(parse("{pointing_model_parameter} should report {new_value}"))
-def check_reported_value(pointing_model_parameter, new_value, dish_manager):
+def check_reported_value(pointing_model_parameter, new_value, dish_manager, event_store_class):
     # pylint: disable=missing-function-docstring
     new_values = json.loads(new_value)
-
-    assert poll_for_attribute_value(dish_manager, pointing_model_parameter, new_values)
+    model_event_store = event_store_class()
+    dish_manager.subscribe_event(
+        pointing_model_parameter, tango.EventType.CHANGE_EVENT, model_event_store
+    )
+    model_event_store.wait_for_value(new_values, timeout=7)
