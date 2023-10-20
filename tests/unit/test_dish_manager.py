@@ -132,7 +132,10 @@ class TestDishManager:
 
     def test_component_states(self):
         """Test that GetComponentStates for 3 devices are returned"""
-        assert len(json.loads(self.tango_context.device.GetComponentStates())) == 4
+        json_string = json.loads(self.tango_context.device.GetComponentStates())
+        assert "DS" in json_string
+        assert "SPFRx" in json_string
+        assert "SPF" in json_string
 
     def test_desired_pointing_write(self):
         """Test that the write method of the desiredPointing attribute functions correctly"""
