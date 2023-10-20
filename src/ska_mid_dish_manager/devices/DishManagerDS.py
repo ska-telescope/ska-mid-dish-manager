@@ -1248,7 +1248,7 @@ class DishManager(SKAController):
         ) in self.component_manager.sub_component_managers.items():
             component_states[device] = component_state._component_state
         component_states["DM"] = self.component_manager._component_state
-        return json.dumps(component_states)
+        return json.dumps(str(component_states))
 
     @command(
         dtype_in=None,
