@@ -608,6 +608,39 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    def slew(
+        self,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Slew the dish."""
+        status, response = self.submit_task(
+            self._command_map.slew, args=[argin], task_callback=task_callback
+        )
+        return status, response
+
+    def track_load_static_off(
+        self,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Load the static pointing model offsets."""
+        status, response = self.submit_task(
+            self._command_map.track_load_static_off, args=[argin], task_callback=task_callback
+        )
+        return status, response
+
+    def track_load_table(
+        self,
+        argin: str,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Load the track table."""
+        status, response = self.submit_task(
+            self._command_map.track_load_table, args=[argin], task_callback=task_callback
+        )
+        return status, response
+
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
         """Disconnect from monitored devices"""
