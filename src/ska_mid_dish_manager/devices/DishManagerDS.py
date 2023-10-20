@@ -379,8 +379,17 @@ class DishManager(SKAController):
         dtype=(DevFloat,),
         max_dim_x=20,
         access=AttrWriteType.READ_WRITE,
-        doc="Parameters for (local) Band 2 pointing models used by Dish to do "
-        "pointing corrections.",
+        doc="""
+            Parameters for (local) Band 2 pointing models used by Dish to do pointing corrections.
+
+            Band 2 pointing model parameters are:
+            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
+            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
+            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
+
+            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
+            values will be updated.
+        """,
     )
     def band2PointingModelParams(self):
         """Returns the band2PointingModelParams"""
