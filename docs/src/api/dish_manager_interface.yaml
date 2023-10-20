@@ -563,8 +563,14 @@
     - name: band2PointingModelParams
       data_format: SPECTRUM
       data_type: DevFloat
-      description: Parameters for (local) Band 2 pointing models used by Dish to do
-        pointing corrections.
+      description: "\n            Parameters for (local) Band 2 pointing models used\
+        \ by Dish to do pointing corrections.\n\n            Band 2 pointing model\
+        \ parameters are:\n            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0,\
+        \ [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n            [9] ABA, [10] ABphi, [11]\
+        \ CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,\n            [16] HESE4,\
+        \ [17] HECE8, [18] HESE8, [19] Eobs\n\n            When writing we expect\
+        \ a list of 2 values. Namely, CAobs and Eobs. Only those two\n           \
+        \ values will be updated.\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
