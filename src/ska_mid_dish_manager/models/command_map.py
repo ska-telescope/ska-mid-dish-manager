@@ -379,7 +379,7 @@ class CommandMap:
             return True
         return False
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, too-many-branches
     def _run_long_running_command(
         self,
         task_callback,
