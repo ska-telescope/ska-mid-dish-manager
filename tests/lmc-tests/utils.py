@@ -1,7 +1,6 @@
 import queue
-import time
 from threading import Event
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
 import tango

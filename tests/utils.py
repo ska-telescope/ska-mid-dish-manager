@@ -1,8 +1,7 @@
 # pylint: disable=invalid-name,possibly-unused-variable
 """General utils for test devices"""
 import queue
-import time
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
 import tango

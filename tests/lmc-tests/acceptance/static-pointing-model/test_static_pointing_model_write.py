@@ -5,7 +5,6 @@ Verify that dish lmc updates static pointing model parameters on a write
 import json
 import logging
 
-import numpy as np
 import pytest
 import tango
 from pytest_bdd import given, scenario, then, when
