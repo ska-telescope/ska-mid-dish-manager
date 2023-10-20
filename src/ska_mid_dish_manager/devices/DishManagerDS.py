@@ -14,6 +14,7 @@ import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
 
+import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SlowCommand, SubmittedSlowCommand
@@ -242,6 +243,7 @@ class DishManager(SKAController):
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
                 "achievedpointing": "achievedPointing",
+                "band2pointingmodelparams": "band2PointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
             }
@@ -375,10 +377,19 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(DevFloat,),
-        max_dim_x=5,
+        max_dim_x=20,
         access=AttrWriteType.READ_WRITE,
-        doc="Parameters for (local) Band 2 pointing models used by Dish to do "
-        "pointing corrections.",
+        doc="""
+            Parameters for (local) Band 2 pointing models used by Dish to do pointing corrections.
+
+            Band 2 pointing model parameters are:
+            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
+            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
+            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
+
+            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
+            values will be updated.
+        """,
     )
     def band2PointingModelParams(self):
         """Returns the band2PointingModelParams"""
@@ -387,8 +398,14 @@ class DishManager(SKAController):
     @band2PointingModelParams.write
     def band2PointingModelParams(self, value):
         """Set the band2PointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band2_pointing_model_params = value
+        self.logger.debug("band2PointingModelParams write method called with params %s", value)
+
+        # The argument value is a list of two floats: [off_xel, off_el]
+        if len(value) != 2:
+            raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
+
+        ds_proxy = tango.DeviceProxy(self.DSDeviceFqdn)
+        ds_proxy.band2PointingModelParams = value
 
     @attribute(
         dtype=(DevFloat,),
@@ -1240,7 +1257,7 @@ class DishManager(SKAController):
         ) in self.component_manager.sub_component_managers.items():
             component_states[device] = component_state._component_state
         component_states["DM"] = self.component_manager._component_state
-        return json.dumps(component_states)
+        return json.dumps(str(component_states))
 
     @command(
         dtype_in=None,

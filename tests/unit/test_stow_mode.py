@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
+from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -27,10 +28,9 @@ class TestStowMode:
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 
-        self.device_proxy = self.tango_context.device
-        class_instance = DishManager.instances.get(self.device_proxy.name())
-        self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
-        self.ds_cm.update_state_from_monitored_attributes = MagicMock()
+            self.device_proxy = self.tango_context.device
+            class_instance = DishManager.instances.get(self.device_proxy.name())
+            self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
 
     def teardown_method(self):
         """Tear down context"""
@@ -38,6 +38,7 @@ class TestStowMode:
 
     # pylint: disable=missing-function-docstring, protected-access
     def test_stow_mode(self, event_store_class):
+        self.ds_cm._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
         progress_event_store = event_store_class()
         self.device_proxy.subscribe_event(
             "longRunningCommandProgress",
@@ -45,6 +46,7 @@ class TestStowMode:
             progress_event_store,
         )
 
+        self.ds_cm.update_state_from_monitored_attributes = MagicMock()
         self.device_proxy.SetStowMode()
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
 

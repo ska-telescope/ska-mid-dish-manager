@@ -10,6 +10,9 @@ telescope: SKA-mid
 labels:
   app: ska-mid-dish-manager
 
+ska-tango-base:
+  enabled: false
+
 global:
   minikube: false
   operator: false

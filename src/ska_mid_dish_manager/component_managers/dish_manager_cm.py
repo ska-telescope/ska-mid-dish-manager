@@ -78,6 +78,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            band2pointingmodelparams=[],
             **kwargs,
         )
         self.logger = logger
@@ -119,6 +120,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
                 achievedpointing=[0.0, 0.0, 30.0],
+                band2pointingmodelparams=[],
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
@@ -161,6 +163,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "spfconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
             "spfrxconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
             "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
+            "band2pointingmodelparams": [],
         }
         self._update_component_state(**initial_component_states)
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -416,6 +419,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self.component_state,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
+
+        # Update the pointing model params if they change
+        for band in ["1", "2", "3", "4", "5a", "5b"]:
+            pointing_param_name = f"band{band}pointingmodelparams"
+
+            if pointing_param_name in kwargs:
+                self.logger.debug(
+                    ("Updating %s with DS %s %s"),
+                    pointing_param_name,
+                    pointing_param_name,
+                    ds_component_state[pointing_param_name],
+                )
+                self._update_component_state(
+                    **{pointing_param_name: ds_component_state[pointing_param_name]}
+                )
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""

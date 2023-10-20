@@ -167,12 +167,12 @@ def modes_helper(
             ]:
                 dish_freq_band_configuration.go_to_band(2)
 
+            dish_manager_event_store.clear_queue()
             dish_manager.subscribe_event(
                 "dishMode",
                 tango.EventType.CHANGE_EVENT,
                 dish_manager_event_store,
             )
-            dish_manager_event_store.clear_queue()
 
             # Move to desired mode
             command_name = modes_command_map[desired_mode_name]
@@ -186,6 +186,19 @@ def modes_helper(
 
             # wait for events
             dish_manager_event_store.wait_for_value(DishMode[desired_mode_name], timeout=8)
+
+            # For some reason the attribute updates lag the events sometimes
+            # Redoing the subscription and waiting for more updates
+            if dish_manager.dishMode.name != desired_mode_name:
+                LOGGER.info("Redoing the sub to catch lagging updates")
+                dish_manager_event_store.clear_queue()
+                dish_manager.subscribe_event(
+                    "dishMode",
+                    tango.EventType.CHANGE_EVENT,
+                    dish_manager_event_store,
+                )
+                dish_manager_event_store.wait_for_value(DishMode[desired_mode_name], timeout=8)
+
             assert dish_manager.dishMode.name == desired_mode_name
             LOGGER.info(f"{dish_manager} successfully transitioned to {desired_mode_name} mode")
 
