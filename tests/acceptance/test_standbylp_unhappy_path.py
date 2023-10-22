@@ -1,6 +1,7 @@
 """Test StandbyLPMode unhappy path."""
 import pytest
 import tango
+
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
