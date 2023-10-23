@@ -169,9 +169,13 @@
       disp_level: OPERATOR
       doc_in: '[0]: Azimuth
 
-        [1]: Elevation'
+        [1]: Elevation,
+
+        [2]: Azimuth Speed,
+
+        [3]: Elevation Speed'
       doc_out: Uninitialised
-      dtype_in: DevVarDoubleArray
+      dtype_in: DevString
       dtype_out: DevVoid
     - name: Standby
       disp_level: OPERATOR
@@ -220,6 +224,22 @@
       doc_in: Uninitialised
       doc_out: Uninitialised
       dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
+    - name: TrackLoadStaticOff
+      disp_level: OPERATOR
+      doc_in: Uninitialised
+      doc_out: Uninitialised
+      dtype_in: DevString
+      dtype_out: DevVarLongStringArray
+    - name: TrackLoadTable
+      disp_level: OPERATOR
+      doc_in: '[0]: LoadMode
+
+        [1]: SequenceLength,
+
+        [2]: TrackTable'
+      doc_out: Uninitialised
+      dtype_in: DevString
       dtype_out: DevVarLongStringArray
     - name: TrackStop
       disp_level: OPERATOR
@@ -1465,8 +1485,9 @@
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
-      - ADD
       - NEW
+      - APPEND
+      - RESET
       format: '%s'
       label: trackTableLoadMode
       max_alarm: Not specified

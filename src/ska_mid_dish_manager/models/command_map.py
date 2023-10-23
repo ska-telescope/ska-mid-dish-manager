@@ -150,8 +150,8 @@ class CommandMap:
         commands_for_sub_devices = {
             "DS": {
                 "command": "Track",
-                "awaitedAttribute": "operatingmode",
-                "awaitedValuesList": [DSOperatingMode.POINT],
+                "awaitedAttribute": "pointingstate",
+                "awaitedValuesList": [PointingState.TRACK],
             },
         }
 
@@ -287,6 +287,7 @@ class CommandMap:
             "TrackLoadStaticOff",
             "",
             None,
+            skip_progress_updates=True,
         )
 
     def track_load_table(

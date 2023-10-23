@@ -1270,7 +1270,7 @@ class DishManager(SKAController):
             raise ValueError(f"Length of argument ({len(values)}) is not as expected (3).")
 
         handler = self.get_command_object("TrackLoadTable")
-        result_code, unique_id = handler(values[0], values[1], values[2])
+        result_code, unique_id = handler(argin)
         return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
