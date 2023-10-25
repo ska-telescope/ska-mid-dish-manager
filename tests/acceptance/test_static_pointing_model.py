@@ -47,7 +47,7 @@ def test_track_load_static_off(
     """Test Band2 Static Pointing Model Parameters."""
     write_values = [20.1, 0.5]
 
-    dish_manager_proxy.TrackLoadStaticOff(json.dumps(write_values))
+    dish_manager_proxy.TrackLoadStaticOff(write_values)
 
     expected_values = [0.0] * 20
     expected_values[11] = write_values[0]  # CAobs
