@@ -1,5 +1,4 @@
 """Test Static Pointing Model."""
-import json
 from typing import Any
 
 import pytest
