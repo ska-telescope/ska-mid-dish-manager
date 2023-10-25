@@ -175,7 +175,7 @@
 
         [3]: Elevation Speed'
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevVarFloatArray
       dtype_out: DevVoid
     - name: Standby
       disp_level: OPERATOR
@@ -229,7 +229,7 @@
       disp_level: OPERATOR
       doc_in: Uninitialised
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevVarFloatArray
       dtype_out: DevVarLongStringArray
     - name: TrackLoadTable
       disp_level: OPERATOR
@@ -239,7 +239,7 @@
 
         [2]: TrackTable'
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevVarFloatArray
       dtype_out: DevVarLongStringArray
     - name: TrackStop
       disp_level: OPERATOR
