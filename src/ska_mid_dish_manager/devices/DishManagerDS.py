@@ -1147,12 +1147,12 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @command(
-        dtype_in="DevString",
+        dtype_in="DevVarFloatArray",
         doc_in="[0]: Azimuth\n[1]: Elevation,\n[2]: Azimuth Speed,\n[3]: Elevation Speed",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    def Slew(self, argin):  # pylint: disable=unused-argument
+    def Slew(self, values):  # pylint: disable=unused-argument
         """
         Trigger the Dish to start moving at the given speeds to the commanded (Az,El) position.
 
@@ -1162,12 +1162,11 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        values = json.loads(argin)
         if len(values) != 4:
             raise ValueError(f"Length of argument ({len(values)}) is not as expected (4).")
 
         handler = self.get_command_object("Slew")
-        result_code, unique_id = handler(argin)
+        result_code, unique_id = handler(values)
 
         return ([result_code], [unique_id])
 
@@ -1233,44 +1232,42 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @command(  # type: ignore[misc]
-        dtype_in="DevString",
+        dtype_in="DevVarFloatArray",
         dtype_out="DevVarLongStringArray",
     )
     @DebugIt()  # type: ignore[misc]
-    def TrackLoadStaticOff(self, argin) -> DevVarLongStringArrayType:
+    def TrackLoadStaticOff(self, values) -> DevVarLongStringArrayType:
         """
         Loads the given static pointing model offsets.
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        values = json.loads(argin)
         if len(values) != 2:
             raise ValueError(f"Length of argument ({len(values)}) is not as expected (2).")
 
         handler = self.get_command_object("TrackLoadStaticOff")
-        result_code, unique_id = handler(argin)
+        result_code, unique_id = handler(values)
         return ([result_code], [unique_id])
 
     @command(  # type: ignore[misc]
-        dtype_in="DevString",
+        dtype_in="DevVarFloatArray",
         dtype_out="DevVarLongStringArray",
         doc_in="[0]: LoadMode\n[1]: SequenceLength,\n[2]: TrackTable",
     )
     @DebugIt()  # type: ignore[misc]
-    def TrackLoadTable(self, argin) -> DevVarLongStringArrayType:
+    def TrackLoadTable(self, values) -> DevVarLongStringArrayType:
         """
         Loads the track table with the given load mode.
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        values = json.loads(argin)
         if len(values) != 3:
             raise ValueError(f"Length of argument ({len(values)}) is not as expected (3).")
 
         handler = self.get_command_object("TrackLoadTable")
-        result_code, unique_id = handler(argin)
+        result_code, unique_id = handler(values)
         return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)

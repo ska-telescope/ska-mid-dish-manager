@@ -610,34 +610,34 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def slew(
         self,
-        argin: str,
+        values: list[float],
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Slew the dish."""
         status, response = self.submit_task(
-            self._command_map.slew, args=[argin], task_callback=task_callback
+            self._command_map.slew, args=[values], task_callback=task_callback
         )
         return status, response
 
     def track_load_static_off(
         self,
-        argin: str,
+        values: list[float],
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Load the static pointing model offsets."""
         status, response = self.submit_task(
-            self._command_map.track_load_static_off, args=[argin], task_callback=task_callback
+            self._command_map.track_load_static_off, args=[values], task_callback=task_callback
         )
         return status, response
 
     def track_load_table(
         self,
-        argin: str,
+        values: list[float],
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Load the track table."""
         status, response = self.submit_task(
-            self._command_map.track_load_table, args=[argin], task_callback=task_callback
+            self._command_map.track_load_table, args=[values], task_callback=task_callback
         )
         return status, response
 
