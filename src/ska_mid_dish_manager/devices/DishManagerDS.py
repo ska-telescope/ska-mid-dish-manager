@@ -247,7 +247,7 @@ class DishManager(SKAController):
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
-                "kvalue": "kValue"
+                "kvalue": "kValue",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1274,14 +1274,12 @@ class DishManager(SKAController):
         if hasattr(self, "component_manager"):
             self.component_manager.sync_component_states()
 
-    @command(
-        dtype_in=int, doc_in="kvalue"
-    )
+    @command(dtype_in=int, doc_in="kvalue")
     def SetKValue(self, value: int) -> None:
         """Set the kvalue on spfrx"""
         self._k_value = value
         spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("kvalue",value)
+        spfrx_cm.write_attribute_value("kvalue", value)
 
 
 def main(args=None, **kwargs):
