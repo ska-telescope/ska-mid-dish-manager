@@ -355,10 +355,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=int,
         access=AttrWriteType.READ,
-        doc="Returns the kValue",
+        doc="Returns the kValue for SPFRX",
     )
     def kValue(self):
-        """Returns the kValue"""
+        """Returns the kValue for SPFRX"""
         return self._kvalue
 
     @attribute(
