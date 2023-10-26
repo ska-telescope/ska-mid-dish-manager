@@ -74,6 +74,7 @@ class CommandMap:
             "SetStandbyLPMode",
             "dishmode",
             DishMode.STANDBY_LP,
+            skip_progress_updates=False,
         )
 
     def set_standby_fp_mode(
@@ -111,6 +112,7 @@ class CommandMap:
             "SetStandbyFPMode",
             "dishmode",
             DishMode.STANDBY_FP,
+            skip_progress_updates=False,
         )
 
     def set_operate_mode(
@@ -139,6 +141,7 @@ class CommandMap:
             "SetOperateMode",
             "dishmode",
             DishMode.OPERATE,
+            skip_progress_updates=False,
         )
 
     def track_cmd(
@@ -162,6 +165,7 @@ class CommandMap:
             "Track",
             "pointingstate",
             PointingState.TRACK,
+            skip_progress_updates=False,
         )
 
     def track_stop_cmd(
@@ -185,6 +189,7 @@ class CommandMap:
             "TrackStop",
             "pointingstate",
             PointingState.READY,
+            skip_progress_updates=False,
         )
 
     def configure_band_cmd(
@@ -222,6 +227,7 @@ class CommandMap:
             requested_cmd,
             "configuredband",
             band_enum,
+            skip_progress_updates=False,
         )
 
     def set_stow_mode(
@@ -245,6 +251,7 @@ class CommandMap:
             "Stow",
             "dishmode",
             DishMode.STOW,
+            skip_progress_updates=False,
         )
 
     def set_k_value(
