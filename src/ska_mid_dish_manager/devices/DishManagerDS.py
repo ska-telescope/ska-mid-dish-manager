@@ -214,7 +214,7 @@ class DishManager(SKAController):
             device._track_interpolation_mode = TrackInterpolationMode.NEWTON
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.ADD
-            device._k_value = 0
+            device._kvalue = 0
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -351,6 +351,15 @@ class DishManager(SKAController):
         self._attenuation_pol_v = value
         spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
         spfrx_cm.write_attribute_value("attenuationPolV", value)
+
+    @attribute(
+        dtype=int,
+        access=AttrWriteType.READ,
+        doc="Returns the kValue",
+    )
+    def kValue(self):
+        """Returns the kValue"""
+        return self._kvalue
 
     @attribute(
         dtype=bool,
@@ -1273,13 +1282,6 @@ class DishManager(SKAController):
         """
         if hasattr(self, "component_manager"):
             self.component_manager.sync_component_states()
-
-    @command(dtype_in=int, doc_in="kvalue")
-    def SetKValue(self, value: int) -> None:
-        """Set the kvalue on spfrx"""
-        self._k_value = value
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("kvalue", value)
 
 
 def main(args=None, **kwargs):

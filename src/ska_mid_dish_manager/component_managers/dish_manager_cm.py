@@ -608,6 +608,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    def set_k_value(
+        self,
+        k_value: int,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Set kValue"""
+        status, response = self.submit_task(
+            self._command_map.set_k_value, args=[k_value], task_callback=task_callback
+        )
+        return status, response
+
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
         """Disconnect from monitored devices"""
