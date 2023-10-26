@@ -407,7 +407,7 @@ class CommandMap:
 
         for device, fan_out_args in commands_for_sub_devices.items():
             try:
-                device_command_ids[device] = self._fan_out_cmd(task_callback, device, fan_out_args)
+                device_command_ids[device] = self._fan_out_cmd(task_callback, device, fan_out_args, skip_progress_updates)
             except RuntimeError:
                 cmd_name = fan_out_args["command"]
                 task_callback(
