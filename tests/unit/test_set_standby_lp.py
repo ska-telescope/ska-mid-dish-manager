@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
-from ska_control_model import ResultCode
+from ska_control_model import CommunicationStatus, ResultCode
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -29,26 +29,35 @@ class TestSetStandByLPMode:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.TangoDeviceMonitor.monitor"
+            (
+                "ska_mid_dish_manager.component_managers.tango_device_cm."
+                "TangoDeviceComponentManager.start_communicating"
+            )
         ):
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
-        self.device_proxy = self.tango_context.device
-        class_instance = DishManager.instances.get(self.device_proxy.name())
-        self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
-        self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
-        self.dish_manager_cm = class_instance.component_manager
+            self.device_proxy = self.tango_context.device
+            class_instance = DishManager.instances.get(self.device_proxy.name())
+            self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
+            self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
+            self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+            self.dish_manager_cm = class_instance.component_manager
 
-        self.ds_cm.update_state_from_monitored_attributes = MagicMock()
-        self.spf_cm.update_state_from_monitored_attributes = MagicMock()
-        self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+            class_instance = DishManager.instances.get(self.device_proxy.name())
+            for com_man in class_instance.component_manager.sub_component_managers.values():
+                com_man._update_communication_state(
+                    communication_state=CommunicationStatus.ESTABLISHED
+                )
 
-        # trigger transition to StandbyLP mode to
-        # mimic automatic transition after startup
-        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
-        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
-        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
+            self.ds_cm.update_state_from_monitored_attributes = MagicMock()
+            self.spf_cm.update_state_from_monitored_attributes = MagicMock()
+            self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+
+            # trigger transition to StandbyLP mode to
+            # mimic automatic transition after startup
+            self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+            self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+            self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 
     def teardown_method(self):
         """Tear down context"""
