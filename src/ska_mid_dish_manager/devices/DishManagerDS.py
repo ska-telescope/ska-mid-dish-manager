@@ -94,6 +94,7 @@ class DishManager(SKAController):
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
             ("SetStowMode", "set_stow_mode"),
+            ("SetKValue", "set_k_value"),
         ]:
             self.register_command_object(
                 command_name,
@@ -1236,6 +1237,20 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("TrackStop")
         result_code, unique_id = handler()
+
+        return ([result_code], [unique_id])
+
+    @command(
+        dtype_in="DevLong64",
+        dtype_out="DevVoid",
+        display_level=DispLevel.OPERATOR,
+    )
+    def SetKValue(self, values):
+        """
+        This command sets the kvalue on SPFRx
+        """
+        handler = self.get_command_object("SetKValue")
+        result_code, unique_id = handler(values)
 
         return ([result_code], [unique_id])
 
