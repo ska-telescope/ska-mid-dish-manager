@@ -26,6 +26,7 @@ LOGGER = logging.getLogger(__name__)
 class TestTrackStop:
     """Tests for TrackStop"""
 
+    # pylint: disable=protected-access
     def setup_method(self):
         """Set up context"""
         with patch(

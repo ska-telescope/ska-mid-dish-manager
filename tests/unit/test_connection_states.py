@@ -16,6 +16,7 @@ from tests.utils import EventStore
 class TestConnectionStates:
     """Tests for connection state attributes"""
 
+    # pylint: disable=protected-access
     def setup_method(self):
         """Set up context"""
         with patch(

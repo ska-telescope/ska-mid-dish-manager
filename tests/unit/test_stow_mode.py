@@ -20,6 +20,7 @@ LOGGER = logging.getLogger(__name__)
 class TestStowMode:
     """Tests for SetStowMode"""
 
+    # pylint: disable=protected-access
     def setup_method(self):
         """Set up context"""
         with patch(

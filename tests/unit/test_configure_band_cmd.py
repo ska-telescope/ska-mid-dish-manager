@@ -40,14 +40,15 @@ class TestConfigureBand:
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 
+            event_store = EventStore()
+            self.device_proxy = self.tango_context.device
+
             class_instance = DishManager.instances.get(self.device_proxy.name())
             for com_man in class_instance.component_manager.sub_component_managers.values():
                 com_man._update_communication_state(
                     communication_state=CommunicationStatus.ESTABLISHED
                 )
 
-            event_store = EventStore()
-            self.device_proxy = self.tango_context.device
             for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
                 self.device_proxy.subscribe_event(
                     conn_attr,

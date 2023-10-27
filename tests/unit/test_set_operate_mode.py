@@ -30,6 +30,7 @@ LOGGER = logging.getLogger(__name__)
 class TestSetOperateMode:
     """Tests for SetOperateMode"""
 
+    # pylint: disable=protected-access
     def setup_method(self):
         """Set up context"""
         with patch(
@@ -40,6 +41,7 @@ class TestSetOperateMode:
         ):
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
+            self.device_proxy = self.tango_context.device
             class_instance = DishManager.instances.get(self.device_proxy.name())
 
             for com_man in class_instance.component_manager.sub_component_managers.values():
