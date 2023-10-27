@@ -23,7 +23,10 @@ class TestStowMode:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.TangoDeviceMonitor.monitor"
+            (
+                "ska_mid_dish_manager.component_managers.tango_device_cm."
+                "TangoDeviceComponentManager.start_communicating"
+            )
         ):
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
@@ -31,6 +34,11 @@ class TestStowMode:
             self.device_proxy = self.tango_context.device
             class_instance = DishManager.instances.get(self.device_proxy.name())
             self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
+
+            for com_man in class_instance.component_manager.sub_component_managers.values():
+                com_man._update_communication_state(
+                    communication_state=CommunicationStatus.ESTABLISHED
+                )
 
     def teardown_method(self):
         """Tear down context"""

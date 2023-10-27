@@ -3,7 +3,6 @@ from unittest.mock import patch
 
 import pytest
 import tango
-from mock import MagicMock
 from ska_control_model import CommunicationStatus, HealthState
 from tango.test_context import DeviceTestContext
 
@@ -20,15 +19,23 @@ class TestConnectionStates:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.tango"
-        ) as patched_tango:
-            patched_tango.DeviceProxy.return_value = MagicMock()
+            (
+                "ska_mid_dish_manager.component_managers.tango_device_cm."
+                "TangoDeviceComponentManager.start_communicating"
+            )
+        ):
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
             # Wait for the threads to start otherwise the mocks get
             # returned back to non mock
             event_store = EventStore()
             self.device_proxy = self.tango_context.device
+
+            class_instance = DishManager.instances.get(self.device_proxy.name())
+            for com_man in class_instance.component_manager.sub_component_managers.values():
+                com_man._update_communication_state(
+                    communication_state=CommunicationStatus.ESTABLISHED
+                )
 
             for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
                 self.device_proxy.subscribe_event(
