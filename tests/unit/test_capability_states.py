@@ -201,6 +201,11 @@ class TestCapabilityStates:
 
             self.dish_manager_cm = class_instance.component_manager
 
+            for com_man in class_instance.component_manager.sub_component_managers.values():
+                com_man._update_communication_state(
+                    communication_state=CommunicationStatus.ESTABLISHED
+                )
+
             event_store = EventStore()
             for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
                 self.device_proxy.subscribe_event(
