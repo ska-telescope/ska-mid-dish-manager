@@ -4,8 +4,6 @@ from typing import Any
 import pytest
 import tango
 
-from tests.utils import EventStore
-
 
 @pytest.mark.acceptance
 @pytest.mark.forked
