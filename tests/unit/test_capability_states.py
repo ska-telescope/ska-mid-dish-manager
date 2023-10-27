@@ -178,9 +178,11 @@ class TestCapabilityStates:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.tango"
-        ) as patched_tango:
-            patched_tango.DeviceProxy.return_value = mock.MagicMock()
+            (
+                "ska_mid_dish_manager.component_managers.tango_device_cm."
+                "TangoDeviceComponentManager.start_communicating"
+            )
+        ):
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 
@@ -189,6 +191,9 @@ class TestCapabilityStates:
             self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
             self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
             self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+
+            for cm in [self.ds_cm, self.spf_cm, self.spfrx_cm]:
+                cm._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
 
             self.spf_cm.write_attribute_value = mock.MagicMock()
 
