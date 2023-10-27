@@ -358,7 +358,7 @@ class DishManager(SKAController):
         doc="Returns the kvalue for SPFRX",
     )
     def kvalue(self):
-        """Returns the kValue for SPFRX"""
+        """Returns the kvalue for SPFRX"""
         return self.component_manager.component_state["kvalue"]
 
     @attribute(

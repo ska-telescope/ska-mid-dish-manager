@@ -614,17 +614,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    def set_kvalue(
-        self,
-        kvalue,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
-        """Set kvalue"""
-        status, response = self.submit_task(
-            self._command_map.set_kvalue, args=[kvalue], task_callback=task_callback
-        )
-        return status, response
-
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
         """Disconnect from monitored devices"""
