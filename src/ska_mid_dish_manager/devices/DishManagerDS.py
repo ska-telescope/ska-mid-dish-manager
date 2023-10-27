@@ -94,7 +94,7 @@ class DishManager(SKAController):
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
             ("SetStowMode", "set_stow_mode"),
-            ("SetKValue", "set_k_value"),
+            ("SetKValue", "set_kvalue"),
         ]:
             self.register_command_object(
                 command_name,
@@ -248,7 +248,7 @@ class DishManager(SKAController):
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
-                "kvalue": "kValue",
+                "kvalue": "kvalue",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -356,9 +356,9 @@ class DishManager(SKAController):
     @attribute(
         dtype=int,
         access=AttrWriteType.READ,
-        doc="Returns the kValue for SPFRX",
+        doc="Returns the kvalue for SPFRX",
     )
-    def kValue(self):
+    def kvalue(self):
         """Returns the kValue for SPFRX"""
         return self._kvalue
 

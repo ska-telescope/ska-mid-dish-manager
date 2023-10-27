@@ -36,7 +36,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "b5bCapabilityState",
             "attenuationPolH",
             "attenuationPolV",
-            "kValue",
+            "kvalue",
         )
         super().__init__(
             tango_device_fqdn,

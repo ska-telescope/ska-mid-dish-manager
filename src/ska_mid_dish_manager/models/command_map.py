@@ -254,17 +254,17 @@ class CommandMap:
             skip_progress_updates=False,
         )
 
-    def set_k_value(
+    def set_kvalue(
         self,
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ) -> None:
-        """Set k Value"""
+        """Set kvalue on SPFRx"""
         commands_for_sub_devices = {
             "SPFRX": {
                 "command": "SetKValue",
                 "awaitedAttribute": "",
-                "awaitedValuesList": None,
+                "awaitedValuesList": [],
             },
         }
 

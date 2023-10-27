@@ -608,14 +608,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    def set_k_value(
+    def set_kvalue(
         self,
-        k_value: int,
+        kvalue,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Set kValue"""
+        """Set kvalue"""
         status, response = self.submit_task(
-            self._command_map.set_k_value, args=[k_value], task_callback=task_callback
+            self._command_map.set_kvalue, args=[kvalue], task_callback=task_callback
         )
         return status, response
 
