@@ -1,9 +1,10 @@
 """Test Set kvalue on SPFRx."""
 from typing import Any
-from tests.utils import EventStore
 
 import pytest
 import tango
+
+from tests.utils import EventStore
 
 
 @pytest.mark.acceptance
