@@ -75,6 +75,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             configuredband=Band.NONE,
             attenuationpolh=0.0,
             attenuationpolv=0.0,
+            kvalue=0,
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
@@ -136,6 +137,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 healthstate=HealthState.UNKNOWN,
                 attenuationpolh=0.0,
                 attenuationpolv=0.0,
+                kvalue=0,
                 b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -360,6 +362,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "attenuationpolh": spfrx_component_state["attenuationpolh"],
             }
             self._update_component_state(**attenuation)
+
+        # kvalue
+        if "kvalue" in kwargs:
+            self._update_component_state(kvalue=kwargs["kvalue"])
 
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:

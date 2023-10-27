@@ -215,7 +215,6 @@ class DishManager(SKAController):
             device._track_interpolation_mode = TrackInterpolationMode.NEWTON
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.ADD
-            device._kvalue = 0
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -360,7 +359,7 @@ class DishManager(SKAController):
     )
     def kvalue(self):
         """Returns the kValue for SPFRX"""
-        return self._kvalue
+        return self.component_manager.component_state["kvalue"]
 
     @attribute(
         dtype=bool,
@@ -1245,14 +1244,12 @@ class DishManager(SKAController):
         dtype_out="DevVoid",
         display_level=DispLevel.OPERATOR,
     )
-    def SetKValue(self, values):
+    def SetKValue(self, kvalue):
         """
         This command sets the kvalue on SPFRx
         """
-        handler = self.get_command_object("SetKValue")
-        result_code, unique_id = handler(values)
-
-        return ([result_code], [unique_id])
+        ds_cm = self.component_manager.sub_component_managers["SPFRX"]
+        ds_cm.write_attribute_value("kvalue", kvalue)
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StopCommunication(self):
