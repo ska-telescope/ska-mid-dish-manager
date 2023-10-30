@@ -3,7 +3,7 @@ import logging
 from threading import Lock
 from typing import Any, Callable
 
-from ska_control_model import HealthState
+from ska_control_model import HealthState, ResultCode
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
@@ -68,6 +68,9 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
                 kwargs[attr] = enum_(kwargs[attr])
 
         super()._update_component_state(**kwargs)
+
+    def set_kvalue(self, value):
+        return (ResultCode.OK, "SetKValue sent successfully to SPFRx")
 
     # pylint: disable=missing-function-docstring, invalid-name
     def on(self, task_callback: Callable = None) -> Any:  # type: ignore

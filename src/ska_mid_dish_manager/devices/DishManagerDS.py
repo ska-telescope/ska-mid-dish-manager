@@ -17,7 +17,7 @@ from typing import List, Optional, Tuple
 import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
-from ska_tango_base.commands import SlowCommand, SubmittedSlowCommand
+from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
 from tango import (
     AttrWriteType,
     Database,
@@ -110,6 +110,11 @@ class DishManager(SKAController):
         self.register_command_object(
             "AbortCommands",
             self.AbortCommandsCommand(self.component_manager, self.logger),
+        )
+
+        self.register_command_object(
+            "SetKValue",
+            self.SetKValueCommand(self.component_manager, self.logger),
         )
 
     def _update_connection_state_attrs(self, attribute_name: str):
@@ -892,6 +897,37 @@ class DishManager(SKAController):
 
             return (ResultCode.STARTED, "Aborting commands")
 
+    class SetKValueCommand(FastCommand):
+        """Class for handling the SetKValue command."""
+
+        def __init__(
+            self,
+            component_manager: DishManagerComponentManager,
+            logger: Optional[logging.Logger] = None,
+        ) -> None:
+            """
+            Initialise a new SetKValueCommand instance.
+
+            :param component_manager: the device to which this command belongs.
+            :param logger: a logger for this command to use.
+            """
+            self._component_manager = component_manager
+            super().__init__(logger)
+
+        def do(
+            self,
+            *args: Any,
+        ) -> tuple[ResultCode, str]:
+            """
+            Implement SetKValue command functionality.
+
+            :param args: k value.
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            return self._component_manager.set_kvalue(*args)
+
     @command(
         doc_in="Abort currently executing long running command on "
         "DishManager and subservient devices. Empties out the queue "
@@ -1240,15 +1276,16 @@ class DishManager(SKAController):
 
     @command(
         dtype_in="DevLong64",
-        dtype_out="DevVoid",
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def SetKValue(self, value):
         """
         This command sets the kValue on SPFRx
         """
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("kValue", value)
+        handler = self.get_command_object("SetKValue")
+        (return_code, message) = handler(value)
+        return ([return_code], [message])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StopCommunication(self):
