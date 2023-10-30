@@ -5,6 +5,7 @@ from functools import partial
 from threading import Lock
 from typing import Callable, Optional, Tuple
 
+import tango
 from ska_control_model import CommunicationStatus, HealthState, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
 
@@ -26,6 +27,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFPowerState,
     SPFRxCapabilityStates,
     SPFRxOperatingMode,
+    TrackTableLoadMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
@@ -440,6 +442,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
+    def _track_load_table(self, sequence_length: int, table: list[float]) -> None:
+        """Load the track table."""
+        self.logger.debug("Calling track load table on DSManager.")
+        device_proxy = tango.DeviceProxy(self.sub_component_managers["DS"]._tango_device_fqdn)
+        float_list = [TrackTableLoadMode.NEW, sequence_length]
+        float_list.extend(table)
+
+        device_proxy.trackLoadTable(float_list)
+
     def sync_component_states(self):
         """
         Sync monitored attributes on component managers with their respective sub devices
@@ -627,17 +638,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Load the static pointing model offsets."""
         status, response = self.submit_task(
             self._command_map.track_load_static_off, args=[values], task_callback=task_callback
-        )
-        return status, response
-
-    def track_load_table(
-        self,
-        values: list[float],
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
-        """Load the track table."""
-        status, response = self.submit_task(
-            self._command_map.track_load_table, args=[values], task_callback=task_callback
         )
         return status, response
 

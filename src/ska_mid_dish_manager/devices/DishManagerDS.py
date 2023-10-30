@@ -88,7 +88,6 @@ class DishManager(SKAController):
             ("SetStowMode", "set_stow_mode"),
             ("Slew", "slew"),
             ("TrackLoadStaticOff", "track_load_static_off"),
-            ("TrackLoadTable", "track_load_table"),
         ]:
             self.register_command_object(
                 command_name,
@@ -677,10 +676,10 @@ class DishManager(SKAController):
         dtype=(float,),
         max_dim_x=150,
         access=AttrWriteType.READ_WRITE,
-        doc="Timestamp of i‐th coordinate in table (max 50 coordinates) given "
-        "in milliseconds since UNIX epoch, UTC, representing time at which "
-        "Dish should track i‐th coordinate.\n Azimuth of i‐th coordinate in "
-        "table (max 50 coordinates) given in degrees.\n Elevation of i‐th "
+        doc="Timestamp of i-th coordinate in table (max 50 coordinates) given "
+        "in milliseconds since TAI epoch, representing time at which "
+        "Dish should track i-th coordinate.\n Azimuth of i-th coordinate in "
+        "table (max 50 coordinates) given in degrees.\n Elevation of i-th "
         "coordinate in table (max 50 coordinates) given in degrees",
     )
     def programTrackTable(self):
@@ -688,10 +687,23 @@ class DishManager(SKAController):
         return self._program_track_table
 
     @programTrackTable.write
-    def programTrackTable(self, value):
+    def programTrackTable(self, table):
         """Set the programTrackTable"""
         # pylint: disable=attribute-defined-outside-init
-        self._program_track_table = value
+        # Spectrum that is a multiple of 3 values (timestamp, azimuth coordinate, elevation coordinate):
+        # i.e. [timestamp_0, az_pos_0, el_pos_0, timestamp_1, az_pos_1, el_pos_1, ..., timestamp_n, az_pos_n, el_pos_n]
+        self.logger.debug("programTrackTable write method called with table %s", table)
+        length_of_table = len(table)
+        if length_of_table > 0:
+            # Checks that the tables length is a multiple of 3
+            if length_of_table % 3 == 0:
+                sequence_length = length_of_table / 3
+                self.component_manager._track_load_table(sequence_length, table)
+                self._program_track_table = table
+            else:
+                raise ValueError(
+                    f"Length of table ({len(table)}) is not a multiple of 3 (timestamp, azimuth coordinate, elevation coordinate) as expected."
+                )
 
     @attribute(
         dtype=int,
@@ -1247,26 +1259,6 @@ class DishManager(SKAController):
             raise ValueError(f"Length of argument ({len(values)}) is not as expected (2).")
 
         handler = self.get_command_object("TrackLoadStaticOff")
-        result_code, unique_id = handler(values)
-        return ([result_code], [unique_id])
-
-    @command(  # type: ignore[misc]
-        dtype_in="DevVarFloatArray",
-        dtype_out="DevVarLongStringArray",
-        doc_in="[0]: LoadMode\n[1]: SequenceLength,\n[2]: TrackTable",
-    )
-    @DebugIt()  # type: ignore[misc]
-    def TrackLoadTable(self, values) -> DevVarLongStringArrayType:
-        """
-        Loads the track table with the given load mode.
-
-        :return: A tuple containing a return code and a string
-            message indicating status.
-        """
-        if len(values) != 3:
-            raise ValueError(f"Length of argument ({len(values)}) is not as expected (3).")
-
-        handler = self.get_command_object("TrackLoadTable")
         result_code, unique_id = handler(values)
         return ([result_code], [unique_id])
 

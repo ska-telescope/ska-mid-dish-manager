@@ -290,29 +290,6 @@ class CommandMap:
             skip_progress_updates=True,
         )
 
-    def track_load_table(
-        self, argin: str, task_abort_event=None, task_callback: Optional[Callable] = None
-    ):
-        """Transition the dish to Stow mode"""
-        commands_for_sub_devices = {
-            "DS": {
-                "command": "TrackLoadTable",
-                "commandArgument": argin,
-                "awaitedAttribute": "",
-                "awaitedValuesList": [],
-            },
-        }
-
-        self._run_long_running_command(
-            task_callback,
-            task_abort_event,
-            commands_for_sub_devices,
-            "TrackLoadTable",
-            "",
-            None,
-            skip_progress_updates=True,
-        )
-
     def _fan_out_cmd(self, task_callback, device, fan_out_args, skip_progress_updates=False):
         """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]

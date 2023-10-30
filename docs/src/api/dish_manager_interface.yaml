@@ -231,16 +231,6 @@
       doc_out: Uninitialised
       dtype_in: DevVarFloatArray
       dtype_out: DevVarLongStringArray
-    - name: TrackLoadTable
-      disp_level: OPERATOR
-      doc_in: '[0]: LoadMode
-
-        [1]: SequenceLength,
-
-        [2]: TrackTable'
-      doc_out: Uninitialised
-      dtype_in: DevVarFloatArray
-      dtype_out: DevVarLongStringArray
     - name: TrackStop
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -1330,11 +1320,11 @@
     - name: programTrackTable
       data_format: SPECTRUM
       data_type: DevDouble
-      description: "Timestamp of i\u2010th coordinate in table (max 50 coordinates)\
-        \ given in milliseconds since UNIX epoch, UTC, representing time at which\
-        \ Dish should track i\u2010th coordinate.\n Azimuth of i\u2010th coordinate\
-        \ in table (max 50 coordinates) given in degrees.\n Elevation of i\u2010th\
-        \ coordinate in table (max 50 coordinates) given in degrees"
+      description: "Timestamp of i-th coordinate in table (max 50 coordinates) given\
+        \ in milliseconds since TAI epoch, representing time at which Dish should\
+        \ track i-th coordinate.\n Azimuth of i-th coordinate in table (max 50 coordinates)\
+        \ given in degrees.\n Elevation of i-th coordinate in table (max 50 coordinates)\
+        \ given in degrees"
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1526,4 +1516,5 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
+    - name: __SubDevices
     - name: polled_cmd
