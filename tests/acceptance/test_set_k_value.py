@@ -9,7 +9,7 @@ import tango
 @pytest.mark.forked
 def test_set_kvalue(
     dish_manager_proxy: tango.DeviceProxy,
-    spfrx_device_proxy: tangoDeviceProxy,
+    spfrx_device_proxy: tango.DeviceProxy,
     event_store_class: Any,
 ) -> None:
     """Test SetKValue on SPFRx."""
