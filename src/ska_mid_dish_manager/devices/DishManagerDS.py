@@ -12,7 +12,7 @@ import logging
 import os
 import weakref
 from functools import reduce
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, ResultCode
