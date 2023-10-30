@@ -357,7 +357,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="Returns the kValue for SPFRX",
     )
-    def kvalue(self):
+    def kValue(self):
         """Returns the kValue for SPFRX"""
         return self.component_manager.component_state["kvalue"]
 
