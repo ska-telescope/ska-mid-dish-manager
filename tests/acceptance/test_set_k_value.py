@@ -19,10 +19,10 @@ def test_set_kvalue(
     dm_model_event_store = event_store_class()
     spfrx_model_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
-        "kvalue", tango.EventType.CHANGE_EVENT, dm_model_event_store
+        "kValue", tango.EventType.CHANGE_EVENT, dm_model_event_store
     )
     spfrx_device_proxy.subscribe_event(
-        "kvalue", tango.EventType.CHANGE_EVENT, spfrx_model_event_store
+        "kValue", tango.EventType.CHANGE_EVENT, spfrx_model_event_store
     )
     dm_model_event_store.wait_for_value(value, timeout=7)
     spfrx_model_event_store.wait_for_value(value, timeout=7)

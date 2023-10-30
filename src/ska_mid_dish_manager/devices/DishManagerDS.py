@@ -247,7 +247,7 @@ class DishManager(SKAController):
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
-                "kvalue": "kvalue",
+                "kvalue": "kValue",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -355,10 +355,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=int,
         access=AttrWriteType.READ,
-        doc="Returns the kvalue for SPFRX",
+        doc="Returns the kValue for SPFRX",
     )
     def kvalue(self):
-        """Returns the kvalue for SPFRX"""
+        """Returns the kValue for SPFRX"""
         return self.component_manager.component_state["kvalue"]
 
     @attribute(
@@ -1244,12 +1244,12 @@ class DishManager(SKAController):
         dtype_out="DevVoid",
         display_level=DispLevel.OPERATOR,
     )
-    def SetKValue(self, kvalue):
+    def SetKValue(self, value):
         """
-        This command sets the kvalue on SPFRx
+        This command sets the kValue on SPFRx
         """
         spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("kvalue", kvalue)
+        spfrx_cm.write_attribute_value("kValue", value)
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StopCommunication(self):
