@@ -94,7 +94,6 @@ class DishManager(SKAController):
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
             ("SetStowMode", "set_stow_mode"),
-            ("SetKValue", "set_kvalue"),
         ]:
             self.register_command_object(
                 command_name,
