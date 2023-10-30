@@ -690,8 +690,9 @@ class DishManager(SKAController):
     def programTrackTable(self, table):
         """Set the programTrackTable"""
         # pylint: disable=attribute-defined-outside-init
-        # Spectrum that is a multiple of 3 values (timestamp, azimuth coordinate, elevation coordinate):
-        # i.e. [timestamp_0, az_pos_0, el_pos_0, timestamp_1, az_pos_1, el_pos_1, ..., timestamp_n, az_pos_n, el_pos_n]
+        # Spectrum that is a multiple of 3 values:
+        # - (timestamp, azimuth coordinate, elevation coordinate)
+        # i.e. [timestamp_0, az_pos_0, el_pos_0, ..., timestamp_n, az_pos_n, el_pos_n]
         self.logger.debug("programTrackTable write method called with table %s", table)
         length_of_table = len(table)
         if length_of_table > 0:
@@ -702,7 +703,8 @@ class DishManager(SKAController):
                 self._program_track_table = table
             else:
                 raise ValueError(
-                    f"Length of table ({len(table)}) is not a multiple of 3 (timestamp, azimuth coordinate, elevation coordinate) as expected."
+                    f"Length of table ({len(table)}) is not a multiple of 3 "
+                    "(timestamp, azimuth coordinate, elevation coordinate) as expected."
                 )
 
     @attribute(
