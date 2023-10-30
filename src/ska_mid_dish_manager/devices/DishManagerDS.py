@@ -1248,8 +1248,8 @@ class DishManager(SKAController):
         """
         This command sets the kvalue on SPFRx
         """
-        ds_cm = self.component_manager.sub_component_managers["SPFRX"]
-        ds_cm.write_attribute_value("kvalue", kvalue)
+        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_cm.write_attribute_value("kvalue", kvalue)
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StopCommunication(self):

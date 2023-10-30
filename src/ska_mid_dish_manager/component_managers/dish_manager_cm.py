@@ -365,7 +365,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # kvalue
         if "kvalue" in kwargs:
-            self._update_component_state(kvalue=kwargs["kvalue"])
+            self._update_component_state(kvalue=spfrx_component_state["kvalue"])
 
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
