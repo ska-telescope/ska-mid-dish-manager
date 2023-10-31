@@ -5,6 +5,7 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
+# pylint:disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
