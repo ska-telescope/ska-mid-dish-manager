@@ -8,7 +8,9 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_standbyfpmode_raise_exceptions(event_store_class, dish_manager_proxy, spf_device_proxy):
+def test_standbyfpmode_raise_exceptions(
+    undo_raise_exceptions, event_store_class, dish_manager_proxy, spf_device_proxy
+):
     """Tests if standbyLP command fails when an exception is raised."""
 
     progress_event_store = event_store_class()

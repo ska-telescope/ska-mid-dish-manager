@@ -6,7 +6,9 @@ import tango
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_standbyfpmode_raise_exceptions(event_store_class, dish_manager_proxy, spf_device_proxy):
+def test_standbyfpmode_raise_exceptions(
+    undo_raise_exceptions, event_store_class, dish_manager_proxy, spf_device_proxy
+):
     """Tests if standbyFP command fails when an exception is raised."""
 
     # Intentionally raising an exception on the SPF device.
