@@ -6,12 +6,13 @@ from threading import Lock
 from typing import Callable, Optional, Tuple
 
 import tango
-from ska_control_model import CommunicationStatus, HealthState, TaskStatus
+from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
+from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -77,6 +78,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             configuredband=Band.NONE,
             attenuationpolh=0.0,
             attenuationpolv=0.0,
+            kvalue=0,
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
@@ -138,6 +140,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 healthstate=HealthState.UNKNOWN,
                 attenuationpolh=0.0,
                 attenuationpolv=0.0,
+                kvalue=0,
                 b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -362,6 +365,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "attenuationpolh": spfrx_component_state["attenuationpolh"],
             }
             self._update_component_state(**attenuation)
+
+        # kvalue
+        if "kvalue" in kwargs:
+            self._update_component_state(kvalue=spfrx_component_state["kvalue"])
 
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
@@ -640,6 +647,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_map.track_load_static_off, args=[values], task_callback=task_callback
         )
         return status, response
+
+    def set_kvalue(
+        self,
+        k_value,
+    ) -> Tuple[ResultCode, str]:
+        """Set the k-value on the SPFRx"""
+        spfrx_cm = self.sub_component_managers["SPFRX"]
+        try:
+            spfrx_cm.write_attribute_value("kvalue", k_value)
+        except LostConnection:
+            return (ResultCode.REJECTED, "Lost connection to SPFRx")
+        return (ResultCode.OK, "SetKValue command completed OK")
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
