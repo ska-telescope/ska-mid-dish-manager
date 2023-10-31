@@ -5,12 +5,13 @@ from functools import partial
 from threading import Lock
 from typing import Callable, Optional, Tuple
 
-from ska_control_model import CommunicationStatus, HealthState, TaskStatus
+from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
+from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -613,6 +614,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_map.set_stow_mode, args=[], task_callback=task_callback
         )
         return status, response
+
+    def set_kvalue(
+        self,
+        k_value,
+    ) -> Tuple[ResultCode, str]:
+        """Set the k-value on the SPFRx"""
+        spfrx_cm = self.sub_component_managers["SPFRX"]
+        try:
+            spfrx_cm.write_attribute_value("kvalue", k_value)
+        except LostConnection:
+            return (ResultCode.REJECTED, "Lost connection to SPFRx")
+        return (ResultCode.OK, "SetKValue command completed OK")
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):

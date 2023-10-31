@@ -897,37 +897,6 @@ class DishManager(SKAController):
 
             return (ResultCode.STARTED, "Aborting commands")
 
-    class SetKValueCommand(FastCommand):
-        """Class for handling the SetKValue command."""
-
-        def __init__(
-            self,
-            component_manager: DishManagerComponentManager,
-            logger: Optional[logging.Logger] = None,
-        ) -> None:
-            """
-            Initialise a new SetKValueCommand instance.
-
-            :param component_manager: the device to which this command belongs.
-            :param logger: a logger for this command to use.
-            """
-            self._component_manager = component_manager
-            super().__init__(logger)
-
-        def do(
-            self,
-            *args: Any,
-        ) -> tuple[ResultCode, str]:
-            """
-            Implement SetKValue command functionality.
-
-            :param args: k value.
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            return self._component_manager.set_kvalue(*args)
-
     @command(
         doc_in="Abort currently executing long running command on "
         "DishManager and subservient devices. Empties out the queue "
@@ -1274,17 +1243,49 @@ class DishManager(SKAController):
 
         return ([result_code], [unique_id])
 
+    class SetKValueCommand(FastCommand):
+        """Class for handling the SetKValue command."""
+
+        def __init__(
+            self,
+            component_manager: DishManagerComponentManager,
+            logger: Optional[logging.Logger] = None,
+        ) -> None:
+            """
+            Initialise a new SetKValueCommand instance.
+
+            :param component_manager: the device to which this command belongs.
+            :param logger: a logger for this command to use.
+            """
+            self._component_manager = component_manager
+            super().__init__(logger)
+
+        def do(
+            self,
+            *args: Any,
+            **kwargs: Any,
+        ) -> tuple[ResultCode, str]:
+            """
+            Implement SetKValue command functionality.
+
+            :param args: k value.
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            return self._component_manager.set_kvalue(*args)
+
     @command(
         dtype_in="DevLong64",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def SetKValue(self, value):
+    def SetKValue(self, value) -> DevVarLongStringArrayType:
         """
         This command sets the kValue on SPFRx
         """
         handler = self.get_command_object("SetKValue")
-        (return_code, message) = handler(value)
+        return_code, message = handler(value)
         return ([return_code], [message])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
