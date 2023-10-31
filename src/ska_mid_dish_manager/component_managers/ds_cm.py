@@ -35,6 +35,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "pointingState",
             "indexerPosition",
             "achievedPointing",
+            "band2PointingModelParams",
         )
         super().__init__(
             tango_device_fqdn,

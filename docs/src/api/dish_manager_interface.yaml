@@ -23,7 +23,7 @@
         (Should be default to False).
       doc_out: Uninitialised
       dtype_in: DevBoolean
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand2
       disp_level: OPERATOR
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
@@ -135,6 +135,12 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVoid
+    - name: SetKValue
+      disp_level: OPERATOR
+      doc_in: Uninitialised
+      doc_out: Uninitialised
+      dtype_in: DevLong64
+      dtype_out: DevVarLongStringArray
     - name: SetMaintenanceMode
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -325,7 +331,8 @@
     - name: attenuationPolH
       data_format: SCALAR
       data_type: DevFloat
-      description: Returns the attenuationPolH
+      description: Indicates the SPFRx attenuation in the horizontal signal chain
+        for the configuredband.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -341,7 +348,8 @@
     - name: attenuationPolV
       data_format: SCALAR
       data_type: DevFloat
-      description: Returns the attenuationPolV
+      description: Indicates the SPFRx attenuation in the vertical signal chain for
+        the configuredband.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -561,14 +569,20 @@
     - name: band2PointingModelParams
       data_format: SPECTRUM
       data_type: DevFloat
-      description: Parameters for (local) Band 2 pointing models used by Dish to do
-        pointing corrections.
+      description: "\n            Parameters for (local) Band 2 pointing models used\
+        \ by Dish to do pointing corrections.\n\n            Band 2 pointing model\
+        \ parameters are:\n            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0,\
+        \ [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n            [9] ABA, [10] ABphi, [11]\
+        \ CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,\n            [16] HESE4,\
+        \ [17] HECE8, [18] HESE8, [19] Eobs\n\n            When writing we expect\
+        \ a list of 2 values. Namely, CAobs and Eobs. Only those two\n           \
+        \ values will be updated.\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
       label: band2PointingModelParams
       max_alarm: Not specified
-      max_dim_x: 5
+      max_dim_x: 20
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1023,6 +1037,22 @@
       - UNKNOWN
       format: '%s'
       label: healthState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: kValue
+      data_format: SCALAR
+      data_type: DevLong64
+      description: Returns the kValue for SPFRX
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%d'
+      label: kValue
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
@@ -1498,4 +1528,4 @@
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
     - name: polled_cmd
-
+    

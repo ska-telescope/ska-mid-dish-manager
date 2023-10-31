@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
-from ska_control_model import CommunicationStatus, TaskStatus
+from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -30,14 +30,11 @@ class TestDishManager:
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.tango"
-        ) as patched_tango:
-            patched_tango.DeviceProxy.return_value = MagicMock()
-            patched_tango.DeviceProxy.command_inout = MagicMock()
-            patched_tango.DeviceProxy.command_inout.return_value = (
-                TaskStatus.COMPLETED,
-                "Task Done",
+            (
+                "ska_mid_dish_manager.component_managers.tango_device_cm."
+                "TangoDeviceComponentManager.start_communicating"
             )
+        ):
 
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
@@ -49,6 +46,12 @@ class TestDishManager:
             self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
 
             self.dish_manager_cm = class_instance.component_manager
+
+            class_instance = DishManager.instances.get(self.device_proxy.name())
+            for com_man in class_instance.component_manager.sub_component_managers.values():
+                com_man._update_communication_state(
+                    communication_state=CommunicationStatus.ESTABLISHED
+                )
 
             # Wait for the threads to start otherwise the mocks get
             # returned back to non mock
@@ -132,7 +135,10 @@ class TestDishManager:
 
     def test_component_states(self):
         """Test that GetComponentStates for 3 devices are returned"""
-        assert len(json.loads(self.tango_context.device.GetComponentStates())) == 4
+        json_string = json.loads(self.tango_context.device.GetComponentStates())
+        assert "DS" in json_string
+        assert "SPFRx" in json_string
+        assert "SPF" in json_string
 
     def test_desired_pointing_write(self):
         """Test that the write method of the desiredPointing attribute functions correctly"""

@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 import tango
+from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -19,13 +20,25 @@ LOGGER = logging.getLogger(__name__)
 class TestAchievedPointing:
     """Test DishManager reports correct DS pointing coordinates"""
 
+    # pylint: disable=protected-access
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.TangoDeviceMonitor.monitor"
+            (
+                "ska_mid_dish_manager.component_managers.tango_device_cm."
+                "TangoDeviceComponentManager.start_communicating"
+            )
         ):
+
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
+
+            self.device_proxy = self.tango_context.device
+            class_instance = DishManager.instances.get(self.device_proxy.name())
+            for com_man in class_instance.component_manager.sub_component_managers.values():
+                com_man._update_communication_state(
+                    communication_state=CommunicationStatus.ESTABLISHED
+                )
 
     def teardown_method(self):
         """Tear down context"""

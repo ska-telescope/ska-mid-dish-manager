@@ -26,21 +26,29 @@ LOGGER = logging.getLogger(__name__)
 # pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-class TestConfigureBand2:
-    """Tests for ConfigureBand2"""
+class TestConfigureBand:
+    """Tests for ConfigureBand"""
 
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.tango"
-        ) as patched_tango:
-            patched_tango.DeviceProxy.return_value = MagicMock()
+            (
+                "ska_mid_dish_manager.component_managers.tango_device_cm."
+                "TangoDeviceComponentManager.start_communicating"
+            )
+        ):
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
-            # Wait for the threads to start otherwise the mocks get
-            # returned back to non mock
+
             event_store = EventStore()
             self.device_proxy = self.tango_context.device
+
+            class_instance = DishManager.instances.get(self.device_proxy.name())
+            for com_man in class_instance.component_manager.sub_component_managers.values():
+                com_man._update_communication_state(
+                    communication_state=CommunicationStatus.ESTABLISHED
+                )
+
             for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
                 self.device_proxy.subscribe_event(
                     conn_attr,
@@ -72,8 +80,15 @@ class TestConfigureBand2:
         """Tear down context"""
         self.tango_context.stop()
 
+    @pytest.mark.parametrize(
+        "command,band_number",
+        [
+            ("ConfigureBand1", "B1"),
+            ("ConfigureBand2", "B2"),
+        ],
+    )
     def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
-        self, event_store_class, caplog
+        self, command, band_number, event_store_class, caplog
     ):
         """Test ConfigureBand"""
         caplog.set_level(logging.DEBUG)
@@ -112,21 +127,20 @@ class TestConfigureBand2:
         assert main_event_store.wait_for_command_id(unique_id, timeout=6)
         assert self.device_proxy.dishMode == DishMode.STANDBY_FP
 
-        # Request ConfigureBand2 on Dish manager
-        [[_], [unique_id]] = self.device_proxy.ConfigureBand2(False)
+        [[_], [unique_id]] = self.device_proxy.command_inout(command, False)
 
-        self.spfrx_cm._update_component_state(configuredband=Band.B2)
-        self.ds_cm._update_component_state(indexerposition=IndexerPosition.B2)
-        self.spf_cm._update_component_state(bandinfocus=BandInFocus.B2)
+        self.spfrx_cm._update_component_state(configuredband=Band[band_number])
+        self.ds_cm._update_component_state(indexerposition=IndexerPosition[band_number])
+        self.spf_cm._update_component_state(bandinfocus=BandInFocus[band_number])
 
         assert main_event_store.wait_for_command_id(unique_id, timeout=5)
-        assert self.device_proxy.configuredBand == Band.B2
+        assert self.device_proxy.configuredBand == Band[band_number]
 
         expected_progress_updates = [
             "SetIndexPosition called on DS",
-            "ConfigureBand2 called on SPFRx, ID",
-            "Awaiting configuredband change to B2",
-            "ConfigureBand2 completed",
+            f"{command} called on SPFRx, ID",
+            f"Awaiting configuredband change to {band_number}",
+            f"{command} completed",
         ]
 
         events = progress_event_store.wait_for_progress_update(

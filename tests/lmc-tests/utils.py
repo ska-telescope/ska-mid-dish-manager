@@ -84,11 +84,13 @@ class EventStore:
                 events.append(event)
                 if not event.attr_value:
                     continue
+
                 if isinstance(event.attr_value.value, np.ndarray):
-                    if (event.attr_value.value != value).all():
-                        continue
                     if (event.attr_value.value == value).all():
                         return True
+                    if np.isclose(event.attr_value.value, value).all():
+                        return True
+                    continue
 
                 if event.attr_value.value != value:
                     continue

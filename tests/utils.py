@@ -54,10 +54,11 @@ class EventStore:
                 if not event.attr_value:
                     continue
                 if isinstance(event.attr_value.value, np.ndarray):
-                    if (event.attr_value.value != value).all():
-                        continue
                     if (event.attr_value.value == value).all():
                         return True
+                    if np.isclose(event.attr_value.value, value).all():
+                        return True
+                    continue
 
                 if event.attr_value.value != value:
                     continue
@@ -283,6 +284,7 @@ def set_configuredBand_b1(
     SPF.bandinfocus == 'BandInFocus.B1'
     """
     config_band_event_store = EventStore()
+    indexer_event_store = EventStore()
 
     dish_manager_proxy.subscribe_event(
         "configuredBand",
@@ -290,8 +292,18 @@ def set_configuredBand_b1(
         config_band_event_store,
     )
 
-    if ds_device_proxy.indexerPosition != IndexerPosition.B1:
-        ds_device_proxy.SetIndexPosition(IndexerPosition.B1)
+    ds_device_proxy.subscribe_event(
+        "indexerPosition",
+        tango.EventType.CHANGE_EVENT,
+        indexer_event_store,
+    )
+
+    # Force at least one update
+    ds_device_proxy.SetIndexPosition(IndexerPosition.B2)
+    indexer_event_store.wait_for_value(IndexerPosition.B2)
+
+    ds_device_proxy.SetIndexPosition(IndexerPosition.B1)
+    indexer_event_store.wait_for_value(IndexerPosition.B1)
 
     spf_device_proxy.bandInFocus = BandInFocus.B1
     spfrx_device_proxy.configuredband = Band.B1

@@ -12,11 +12,12 @@ import logging
 import os
 import weakref
 from functools import reduce
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
+import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
-from ska_tango_base.commands import SlowCommand, SubmittedSlowCommand
+from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
 from tango import (
     AttrWriteType,
     Database,
@@ -90,7 +91,8 @@ class DishManager(SKAController):
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("TrackStop", "track_stop_cmd"),
-            ("ConfigureBand2", "configure_band2_cmd"),
+            ("ConfigureBand1", "configure_band_cmd"),
+            ("ConfigureBand2", "configure_band_cmd"),
             ("SetStowMode", "set_stow_mode"),
         ]:
             self.register_command_object(
@@ -108,6 +110,11 @@ class DishManager(SKAController):
         self.register_command_object(
             "AbortCommands",
             self.AbortCommandsCommand(self.component_manager, self.logger),
+        )
+
+        self.register_command_object(
+            "SetKValue",
+            self.SetKValueCommand(self.component_manager, self.logger),
         )
 
     def _update_connection_state_attrs(self, attribute_name: str):
@@ -241,6 +248,10 @@ class DishManager(SKAController):
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
                 "achievedpointing": "achievedPointing",
+                "band2pointingmodelparams": "band2PointingModelParams",
+                "attenuationpolh": "attenuationPolH",
+                "attenuationpolv": "attenuationPolV",
+                "kvalue": "kValue",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -309,7 +320,12 @@ class DishManager(SKAController):
         """Returns the achievedTargetLock"""
         return self._achieved_target_lock
 
-    @attribute(dtype=DevFloat, access=AttrWriteType.READ_WRITE)
+    @attribute(
+        dtype=DevFloat,
+        access=AttrWriteType.READ_WRITE,
+        doc="Indicates the SPFRx attenuation in the horizontal "
+        "signal chain for the configuredband.",
+    )
     def attenuationPolH(self):
         """Returns the attenuationPolH"""
         return self._attenuation_pol_h
@@ -319,8 +335,15 @@ class DishManager(SKAController):
         """Set the attenuationPolH"""
         # pylint: disable=attribute-defined-outside-init
         self._attenuation_pol_h = value
+        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_cm.write_attribute_value("attenuationPolH", value)
 
-    @attribute(dtype=DevFloat, access=AttrWriteType.READ_WRITE)
+    @attribute(
+        dtype=DevFloat,
+        access=AttrWriteType.READ_WRITE,
+        doc="Indicates the SPFRx attenuation in the vertical "
+        "signal chain for the configuredband.",
+    )
     def attenuationPolV(self):
         """Returns the attenuationPolV"""
         return self._attenuation_pol_v
@@ -330,6 +353,17 @@ class DishManager(SKAController):
         """Set the attenuationPolV("""
         # pylint: disable=attribute-defined-outside-init
         self._attenuation_pol_v = value
+        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_cm.write_attribute_value("attenuationPolV", value)
+
+    @attribute(
+        dtype=int,
+        access=AttrWriteType.READ,
+        doc="Returns the kValue for SPFRX",
+    )
+    def kValue(self):
+        """Returns the kValue for SPFRX"""
+        return self.component_manager.component_state["kvalue"]
 
     @attribute(
         dtype=bool,
@@ -358,10 +392,19 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(DevFloat,),
-        max_dim_x=5,
+        max_dim_x=20,
         access=AttrWriteType.READ_WRITE,
-        doc="Parameters for (local) Band 2 pointing models used by Dish to do "
-        "pointing corrections.",
+        doc="""
+            Parameters for (local) Band 2 pointing models used by Dish to do pointing corrections.
+
+            Band 2 pointing model parameters are:
+            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
+            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
+            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
+
+            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
+            values will be updated.
+        """,
     )
     def band2PointingModelParams(self):
         """Returns the band2PointingModelParams"""
@@ -370,8 +413,14 @@ class DishManager(SKAController):
     @band2PointingModelParams.write
     def band2PointingModelParams(self, value):
         """Set the band2PointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band2_pointing_model_params = value
+        self.logger.debug("band2PointingModelParams write method called with params %s", value)
+
+        # The argument value is a list of two floats: [off_xel, off_el]
+        if len(value) != 2:
+            raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
+
+        ds_proxy = tango.DeviceProxy(self.DSDeviceFqdn)
+        ds_proxy.band2PointingModelParams = value
 
     @attribute(
         dtype=(DevFloat,),
@@ -578,7 +627,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=DishMode,
-        doc="Dish rolled-up operating mode in Dish Control Model (SCM) " "notation",
+        doc="Dish rolled-up operating mode in Dish Control Model (SCM) notation",
     )
     def dishMode(self):
         """Returns the dishMode"""
@@ -874,18 +923,24 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand1(self, synchronise):  # pylint: disable=unused-argument
+    def ConfigureBand1(self, synchronise) -> DevVarLongStringArrayType:
         """
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 1. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand1")
+
+        result_code, unique_id = handler("1", synchronise)
+        return ([result_code], [unique_id])
 
     @command(
         dtype_in=bool,
@@ -910,7 +965,7 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand2")
 
-        result_code, unique_id = handler(synchronise)
+        result_code, unique_id = handler("2", synchronise)
         return ([result_code], [unique_id])
 
     @command(
@@ -1188,6 +1243,51 @@ class DishManager(SKAController):
 
         return ([result_code], [unique_id])
 
+    class SetKValueCommand(FastCommand):
+        """Class for handling the SetKValue command."""
+
+        def __init__(
+            self,
+            component_manager: DishManagerComponentManager,
+            logger: Optional[logging.Logger] = None,
+        ) -> None:
+            """
+            Initialise a new SetKValueCommand instance.
+
+            :param component_manager: the device to which this command belongs.
+            :param logger: a logger for this command to use.
+            """
+            self._component_manager = component_manager
+            super().__init__(logger)
+
+        def do(
+            self,
+            *args: Any,
+            **kwargs: Any,
+        ) -> tuple[ResultCode, str]:
+            """
+            Implement SetKValue command functionality.
+
+            :param args: k value.
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            return self._component_manager.set_kvalue(*args)
+
+    @command(
+        dtype_in="DevLong64",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    def SetKValue(self, value) -> DevVarLongStringArrayType:
+        """
+        This command sets the kValue on SPFRx
+        """
+        handler = self.get_command_object("SetKValue")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StopCommunication(self):
         """Stop communicating with monitored devices"""
@@ -1217,7 +1317,7 @@ class DishManager(SKAController):
         ) in self.component_manager.sub_component_managers.items():
             component_states[device] = component_state._component_state
         component_states["DM"] = self.component_manager._component_state
-        return json.dumps(component_states)
+        return json.dumps(str(component_states))
 
     @command(
         dtype_in=None,

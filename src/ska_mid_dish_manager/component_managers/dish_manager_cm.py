@@ -5,12 +5,13 @@ from functools import partial
 from threading import Lock
 from typing import Callable, Optional, Tuple
 
-from ska_control_model import CommunicationStatus, HealthState, TaskStatus
+from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
+from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -73,9 +74,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achievedtargetlock=None,
             achievedpointing=[0.0, 0.0, 30.0],
             configuredband=Band.NONE,
+            attenuationpolh=0.0,
+            attenuationpolv=0.0,
+            kvalue=0,
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            band2pointingmodelparams=[],
             **kwargs,
         )
         self.logger = logger
@@ -117,6 +122,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
                 achievedpointing=[0.0, 0.0, 30.0],
+                band2pointingmodelparams=[],
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
@@ -130,6 +136,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 configuredband=Band.NONE,
                 capturingdata=False,
                 healthstate=HealthState.UNKNOWN,
+                attenuationpolh=0.0,
+                attenuationpolv=0.0,
+                kvalue=0,
                 b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -157,6 +166,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "spfconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
             "spfrxconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
             "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
+            "band2pointingmodelparams": [],
         }
         self._update_component_state(**initial_component_states)
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -238,7 +248,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # push change events for the connection state attributes
             self._connection_state_callback(attribute_name)
 
-    # pylint: disable=unused-argument, too-many-branches, too-many-locals
+    # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _component_state_changed(self, *args, **kwargs):
         """
         Callback triggered by the component manager of the
@@ -346,6 +356,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spf_component_manager = self.sub_component_managers["SPF"]
             spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
 
+        # spfrx attenuation
+        if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
+            attenuation = {
+                "attenuationpolv": spfrx_component_state["attenuationpolv"],
+                "attenuationpolh": spfrx_component_state["attenuationpolh"],
+            }
+            self._update_component_state(**attenuation)
+
+        # kvalue
+        if "kvalue" in kwargs:
+            self._update_component_state(kvalue=spfrx_component_state["kvalue"])
+
         # configuredBand
         if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
             self.logger.debug(
@@ -404,6 +426,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self.component_state,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
+
+        # Update the pointing model params if they change
+        for band in ["1", "2", "3", "4", "5a", "5b"]:
+            pointing_param_name = f"band{band}pointingmodelparams"
+
+            if pointing_param_name in kwargs:
+                self.logger.debug(
+                    ("Updating %s with DS %s %s"),
+                    pointing_param_name,
+                    pointing_param_name,
+                    ds_component_state[pointing_param_name],
+                )
+                self._update_component_state(
+                    **{pointing_param_name: ds_component_state[pointing_param_name]}
+                )
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
@@ -532,29 +569,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    def configure_band2_cmd(
+    def configure_band_cmd(
         self,
+        band_number,
         synchronise,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Configure frequency band to band 2"""
+        """Configure frequency band"""
+        band_enum = Band[f"B{band_number}"]
+        requested_cmd = f"ConfigureBand{band_number}"
 
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
-            command_name="ConfigureBand2",
+            command_name=requested_cmd,
             task_callback=task_callback,
         )
 
-        if self.component_state["configuredband"] == Band.B2:
+        if self.component_state["configuredband"] == band_enum:
             if task_callback:
-                task_callback(status=TaskStatus.REJECTED, result=f"Already in band {Band.B2.name}")
-            return TaskStatus.REJECTED, f"Already in band {Band.B2.name}"
-
-        # TODO Check if ConfigureBand2 is already running
+                task_callback(
+                    status=TaskStatus.REJECTED, result=f"Already in band {band_enum.name}"
+                )
+            return TaskStatus.REJECTED, f"Already in band {band_enum.name}"
 
         status, response = self.submit_task(
-            self._command_map.configure_band2_cmd,
-            args=[synchronise],
+            self._command_map.configure_band_cmd,
+            args=[band_number, synchronise],
             task_callback=task_callback,
         )
         return status, response
@@ -574,6 +614,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_map.set_stow_mode, args=[], task_callback=task_callback
         )
         return status, response
+
+    def set_kvalue(
+        self,
+        k_value,
+    ) -> Tuple[ResultCode, str]:
+        """Set the k-value on the SPFRx"""
+        spfrx_cm = self.sub_component_managers["SPFRX"]
+        try:
+            spfrx_cm.write_attribute_value("kvalue", k_value)
+        except LostConnection:
+            return (ResultCode.REJECTED, "Lost connection to SPFRx")
+        return (ResultCode.OK, "SetKValue command completed OK")
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
