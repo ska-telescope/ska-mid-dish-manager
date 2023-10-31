@@ -140,7 +140,7 @@
       doc_in: Uninitialised
       doc_out: Uninitialised
       dtype_in: DevLong64
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: SetMaintenanceMode
       disp_level: OPERATOR
       doc_in: Uninitialised
