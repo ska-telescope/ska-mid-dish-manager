@@ -285,17 +285,13 @@ class CommandMap:
         )
         return command_id
 
-    def _is_fan_out_cmd_executing(self, task_callback, device, command_ids, running_command):
+    def _command_has_failed(self, device, command_ids):
         """Check the status of the fanned out command on the subservient device"""
         command_id = command_ids[device]
         current_status = self._command_tracker.get_command_status(command_id)
         if current_status == TaskStatus.FAILED:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=f"{running_command} failed waiting on {device}",
-            )
-            return False
-        return True
+            return True
+        return False
 
     def _report_fan_out_cmd_progress(self, task_callback, device, fan_out_args):
         """Report and update the progress of the fanned out command"""
@@ -377,6 +373,15 @@ class CommandMap:
                 if not attribute_update_reported[device]:
                     attribute_update_reported[device] = self._report_fan_out_cmd_progress(
                         task_callback, device, fan_out_args
+                    )
+
+                command_in_progress = fan_out_args["command"]
+                if self._command_has_failed(device, device_command_ids):
+                    task_callback(
+                        progress=(
+                            f"Command {command_in_progress} with ID {device_command_ids[device]}"
+                            f", failed on device {device}"
+                        )
                     )
 
             # Check on dishmanager to see whether the LRC has completed
