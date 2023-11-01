@@ -271,7 +271,7 @@ class CommandMap:
         )
 
         if response == TaskStatus.FAILED:
-            raise RuntimeError
+            raise RuntimeError(command_id)
 
         awaited_attribute = fan_out_args["awaitedAttribute"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
@@ -285,7 +285,7 @@ class CommandMap:
         )
         return command_id
 
-    def _command_has_failed(self, device, command_ids):
+    def _fanout_command_has_failed(self, device, command_ids):
         """Check the status of the fanned out command on the subservient device"""
         command_id = command_ids[device]
         current_status = self._command_tracker.get_command_status(command_id)
@@ -336,11 +336,12 @@ class CommandMap:
         for device, fan_out_args in commands_for_sub_devices.items():
             try:
                 device_command_ids[device] = self._fan_out_cmd(task_callback, device, fan_out_args)
-            except RuntimeError:
+            except RuntimeError as ex:
+                device_command_ids[device] = ex.args[0]
                 cmd_name = fan_out_args["command"]
                 task_callback(
                     progress=(
-                        f"{device} device failed executing {cmd_name} command with"
+                        f"{device} device failed to execute {cmd_name} command with"
                         f" ID {device_command_ids[device]}"
                     )
                 )
@@ -377,7 +378,7 @@ class CommandMap:
                     )
 
                 command_in_progress = fan_out_args["command"]
-                if self._command_has_failed(device, device_command_ids):
+                if self._fanout_command_has_failed(device, device_command_ids):
                     task_callback(
                         progress=(
                             f"{device} device failed executing {command_in_progress} command with"
