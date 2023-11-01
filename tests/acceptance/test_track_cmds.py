@@ -2,8 +2,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
-from tests.utils import set_configuredBand_b1
+from ska_mid_dish_manager.models.dish_enums import Band
 
 
 # pylint: disable=unused-argument,too-many-arguments
