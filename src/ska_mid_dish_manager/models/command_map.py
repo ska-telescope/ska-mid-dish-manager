@@ -262,9 +262,6 @@ class CommandMap:
 
         # fail the command immediately, if the subservient device fails
         response, command_id = command(command_name, command_argument)
-        if response == TaskStatus.FAILED:
-            raise RuntimeError
-
         # Report that the command has been called on the subservient device
         task_callback(
             progress=(
@@ -272,6 +269,9 @@ class CommandMap:
                 f"{self._key_to_output(device)}, ID {command_id}"
             )
         )
+
+        if response == TaskStatus.FAILED:
+            raise RuntimeError
 
         awaited_attribute = fan_out_args["awaitedAttribute"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
@@ -339,10 +339,11 @@ class CommandMap:
             except RuntimeError:
                 cmd_name = fan_out_args["command"]
                 task_callback(
-                    status=TaskStatus.FAILED,
-                    result=f"{running_command} failed while executing {cmd_name} on {device}",
+                    progress=(
+                        f"{device} device failed executing {cmd_name} command with"
+                        f" ID {device_command_ids[device]}"
+                    )
                 )
-                return
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 
