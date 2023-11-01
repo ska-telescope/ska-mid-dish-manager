@@ -4,7 +4,6 @@ import tango
 from ska_control_model import TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
-from tests.utils import set_configuredBand_b1
 
 
 # pylint: disable=too-many-locals,unused-argument,too-many-arguments
@@ -48,9 +47,9 @@ def test_configure_band_2(
     main_event_store.wait_for_command_id(unique_id, timeout=8)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     # make sure configureBand is not B2
-    set_configuredBand_b1(
-        dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
-    )
+    dish_manager_proxy.ConfigureBand1(True)
+    main_event_store.wait_for_value(Band.B1, timeout=8)
+
     main_event_store.clear_queue()
     progress_event_store.clear_queue()
     dishmode_event_store.clear_queue()
