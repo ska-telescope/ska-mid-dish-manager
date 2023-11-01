@@ -14,9 +14,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 @pytest.fixture
 def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
     """Undo any updates to raiseCmdException in SPF and SPFRx"""
-    # Test happens here
     yield
-    # Unset raiseCmdException
     spf_device_proxy.raiseCmdException = False
     spfrx_device_proxy.raiseCmdException = False
 
