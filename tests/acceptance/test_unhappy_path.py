@@ -76,21 +76,21 @@ def test_dish_handles_unhappy_path_in_command_execution(
     progress_msg = "SPFRX device failed executing SetStandbyMode command with ID"
     progress_event_store.wait_for_progress_update(progress_msg, timeout=5)
 
-    result_evts = result_event_store.get_queue_values(timeout=5)
+    result_event_store = result_event_store.get_queue_values(timeout=5)
     # filter out only the event values
-    result_evts = [evt_vals[1] for evt_vals in result_evts]
+    result_event_store = [evt_vals[1] for evt_vals in result_event_store]
     # join all unique ids and exceptions as one string
-    unique_ids = "".join([evts[0] for evts in result_evts])
-    raised_exceptions = "".join([evts[1] for evts in result_evts])
-    result_evts = [unique_ids, raised_exceptions]
+    unique_ids = "".join([evts[0] for evts in result_event_store])
+    raised_exceptions = "".join([evts[1] for evts in result_event_store])
+    result_event_store = [unique_ids, raised_exceptions]
 
     expected_lrc_result = [
         ("SPF_SetStandbyLPMode", "Exception: SetStandbyLPMode raised an exception"),
         ("SPFRX_SetStandbyMode", "Exception: SetStandbyMode raised an exception"),
     ]
     for unique_id, exc_raised in expected_lrc_result:
-        assert unique_id in result_evts[0]
-        assert exc_raised in result_evts[1]
+        assert unique_id in result_event_store[0]
+        assert exc_raised in result_event_store[1]
 
     # check that the mode transition to LP mode did not happen on dish manager, spf and spfrx
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
