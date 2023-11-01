@@ -379,8 +379,8 @@ class CommandMap:
                 if self._command_has_failed(device, device_command_ids):
                     task_callback(
                         progress=(
-                            f"Command {command_in_progress} with ID {device_command_ids[device]}"
-                            f", failed on device {device}"
+                            f"{device} device failed executing {command_in_progress} command with"
+                            f" ID {device_command_ids[device]}"
                         )
                     )
 
