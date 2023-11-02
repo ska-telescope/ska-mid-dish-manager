@@ -73,17 +73,18 @@ class TestTrack:
     )
     def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
         self,
-        event_store,
+        event_store_class,
         current_dish_mode,
     ):
+        dish_mode_event_store = event_store_class()
         self.device_proxy.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,
-            event_store,
+            dish_mode_event_store,
         )
 
         self.dish_manager_cm._update_component_state(dishmode=current_dish_mode)
-        event_store.wait_for_value(current_dish_mode, timeout=5)
+        dish_mode_event_store.wait_for_value(current_dish_mode, timeout=5)
         with pytest.raises(tango.DevFailed):
             _, _ = self.device_proxy.Track()
 
