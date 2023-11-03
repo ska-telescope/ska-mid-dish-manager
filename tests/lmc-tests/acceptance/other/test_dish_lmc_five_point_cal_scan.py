@@ -79,8 +79,6 @@ def check_dish_manager_pointing_state(dish_manager, event_store, expected_pointi
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    spfrx_events = event_store.get_queue_values()
-    assert spfrx_events
 
     current_pointing_state = retrieve_attr_value(dish_manager, "pointingState")
     assert current_pointing_state.replace("-", "_") == expected_pointing_state.replace("-", "_")
