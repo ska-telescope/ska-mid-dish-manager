@@ -305,9 +305,6 @@ class CommandMap:
 
         # fail the command immediately, if the subservient device fails
         response, command_id = command(command_name, command_argument)
-        if response == TaskStatus.FAILED:
-            raise RuntimeError
-
         # Report that the command has been called on the subservient device
         task_callback(
             progress=(
@@ -315,6 +312,9 @@ class CommandMap:
                 f"{self._key_to_output(device)}, ID {command_id}"
             )
         )
+
+        if response == TaskStatus.FAILED:
+            raise RuntimeError(command_id)
 
         awaited_attribute = fan_out_args["awaitedAttribute"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
@@ -329,17 +329,13 @@ class CommandMap:
             )
         return command_id
 
-    def _is_fan_out_cmd_executing(self, task_callback, device, command_ids, running_command):
+    def _fanout_command_has_failed(self, device, command_ids):
         """Check the status of the fanned out command on the subservient device"""
         command_id = command_ids[device]
         current_status = self._command_tracker.get_command_status(command_id)
         if current_status == TaskStatus.FAILED:
-            task_callback(
-                status=TaskStatus.FAILED,
-                result=f"{running_command} failed waiting on {device}",
-            )
-            return False
-        return True
+            return True
+        return False
 
     def _report_fan_out_cmd_progress(self, task_callback, device, fan_out_args):
         """Report and update the progress of the fanned out command"""
@@ -384,16 +380,16 @@ class CommandMap:
 
         for device, fan_out_args in commands_for_sub_devices.items():
             try:
-                device_command_ids[device] = self._fan_out_cmd(
-                    task_callback, device, fan_out_args, skip_progress_updates
-                )
-            except RuntimeError:
+                device_command_ids[device] = self._fan_out_cmd(task_callback, device, fan_out_args)
+            except RuntimeError as ex:
+                device_command_ids[device] = ex.args[0]
                 cmd_name = fan_out_args["command"]
                 task_callback(
-                    status=TaskStatus.FAILED,
-                    result=f"{running_command} failed while executing {cmd_name} on {device}",
+                    progress=(
+                        f"{device} device failed to execute {cmd_name} command with"
+                        f" ID {device_command_ids[device]}"
+                    )
                 )
-                return
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 
@@ -427,6 +423,15 @@ class CommandMap:
                         attribute_update_reported[device] = self._report_fan_out_cmd_progress(
                             task_callback, device, fan_out_args
                         )
+
+                command_in_progress = fan_out_args["command"]
+                if self._fanout_command_has_failed(device, device_command_ids):
+                    task_callback(
+                        progress=(
+                            f"{device} device failed executing {command_in_progress} command with"
+                            f" ID {device_command_ids[device]}"
+                        )
+                    )
 
             # Check on dishmanager to see whether the LRC has completed
             current_awaited_value = self._dish_manager_cm.component_state[awaited_event_attribute]
