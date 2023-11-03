@@ -10,8 +10,6 @@ from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
 from utils import retrieve_attr_value
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -46,7 +44,7 @@ def check_dish_manager_dish_mode(dish_mode, dish_manager, modes_helper):
     LOGGER.info(f"{dish_manager} dishMode: {current_dish_mode}")
 
 
-@then(parse("dish_manager configuredBand should report B{band_number}"))
+@then(parse("dish_manager configuredBand reports B{band_number}"))
 def check_dish_configured_band(band_number, dish_manager):
     # pylint: disable=missing-function-docstring
     configured_band = retrieve_attr_value(dish_manager, "configuredBand")
@@ -57,7 +55,7 @@ def check_dish_configured_band(band_number, dish_manager):
 @then(
     parse("I have issued programTrackTable on dish_manager"),
 )
-def desired_dish_mode(modes_helper):
+def desired_dish_mode_program_track_table(modes_helper):
     # pylint: disable=missing-function-docstring
     desired_dish_mode = "programTrackTable"
     modes_helper.dish_manager_go_to_mode(desired_dish_mode)
@@ -66,7 +64,7 @@ def desired_dish_mode(modes_helper):
 @when(
     parse("I call command {dm_command} on dish_manager"),
 )
-def desired_dish_mode(dm_command, modes_helper):
+def desired_dish_mode_dm_command(dm_command, modes_helper):
     # pylint: disable=missing-function-docstring
     desired_dish_mode = dm_command
     modes_helper.dish_manager_go_to_mode(desired_dish_mode)
