@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
+from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -25,24 +26,33 @@ LOGGER = logging.getLogger(__name__)
 class TestTrack:
     """Tests for Track"""
 
+    # pylint: disable=protected-access
     def setup_method(self):
         """Set up context"""
         with patch(
-            "ska_mid_dish_manager.component_managers.device_monitor.TangoDeviceMonitor.monitor"
+            (
+                "ska_mid_dish_manager.component_managers.tango_device_cm."
+                "TangoDeviceComponentManager.start_communicating"
+            )
         ):
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 
-        self.device_proxy = self.tango_context.device
-        class_instance = DishManager.instances.get(self.device_proxy.name())
-        self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
-        self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
-        self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
-        self.dish_manager_cm = class_instance.component_manager
+            self.device_proxy = self.tango_context.device
+            class_instance = DishManager.instances.get(self.device_proxy.name())
+            self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
+            self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
+            self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+            self.dish_manager_cm = class_instance.component_manager
 
-        self.ds_cm.update_state_from_monitored_attributes = MagicMock()
-        self.spf_cm.update_state_from_monitored_attributes = MagicMock()
-        self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+            for com_man in class_instance.component_manager.sub_component_managers.values():
+                com_man._update_communication_state(
+                    communication_state=CommunicationStatus.ESTABLISHED
+                )
+
+            self.ds_cm.update_state_from_monitored_attributes = MagicMock()
+            self.spf_cm.update_state_from_monitored_attributes = MagicMock()
+            self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
 
     def teardown_method(self):
         """Tear down context"""
@@ -63,17 +73,18 @@ class TestTrack:
     )
     def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
         self,
-        event_store,
+        event_store_class,
         current_dish_mode,
     ):
+        dish_mode_event_store = event_store_class()
         self.device_proxy.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,
-            event_store,
+            dish_mode_event_store,
         )
 
         self.dish_manager_cm._update_component_state(dishmode=current_dish_mode)
-        event_store.wait_for_value(current_dish_mode, timeout=5)
+        dish_mode_event_store.wait_for_value(current_dish_mode, timeout=5)
         with pytest.raises(tango.DevFailed):
             _, _ = self.device_proxy.Track()
 
