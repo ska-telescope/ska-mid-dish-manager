@@ -292,7 +292,7 @@ class CommandMap:
             skip_progress_updates=True,
         )
 
-    def _fan_out_cmd(self, task_callback, device, fan_out_args, skip_progress_updates=False):
+    def _fan_out_cmd(self, task_callback, device, fan_out_args, skip_progress_updates):
         """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
@@ -382,7 +382,8 @@ class CommandMap:
 
         for device, fan_out_args in commands_for_sub_devices.items():
             try:
-                device_command_ids[device] = self._fan_out_cmd(task_callback, device, fan_out_args)
+                device_command_ids[device] = self._fan_out_cmd(
+                    task_callback, device, fan_out_args, skip_progress_updates)
             except RuntimeError as ex:
                 device_command_ids[device] = ex.args[0]
                 cmd_name = fan_out_args["command"]
