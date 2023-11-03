@@ -305,8 +305,8 @@ class CommandMap:
             logger=self.logger,
         )
 
-        # fail the command immediately, if the subservient device fails
-        response, command_id = command(command_name, command_argument)
+        _, command_id = command(command_name, command_argument)
+
         # Report that the command has been called on the subservient device
         task_callback(
             progress=(
@@ -314,9 +314,6 @@ class CommandMap:
                 f"{self._key_to_output(device)}, ID {command_id}"
             )
         )
-
-        if response == TaskStatus.FAILED:
-            raise RuntimeError(command_id)
 
         awaited_attribute = fan_out_args["awaitedAttribute"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
@@ -381,18 +378,9 @@ class CommandMap:
         device_command_ids = {}
 
         for device, fan_out_args in commands_for_sub_devices.items():
-            try:
-                device_command_ids[device] = self._fan_out_cmd(
-                    task_callback, device, fan_out_args, skip_progress_updates)
-            except RuntimeError as ex:
-                device_command_ids[device] = ex.args[0]
-                cmd_name = fan_out_args["command"]
-                task_callback(
-                    progress=(
-                        f"{device} device failed to execute {cmd_name} command with"
-                        f" ID {device_command_ids[device]}"
-                    )
-                )
+            device_command_ids[device] = self._fan_out_cmd(
+                task_callback, device, fan_out_args, skip_progress_updates
+            )
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 
@@ -400,6 +388,8 @@ class CommandMap:
         if isinstance(awaited_event_value, enum.IntEnum):
             awaited_event_value_print = awaited_event_value.name
 
+        # Report which attribute and value the dish manager is waiting for
+        # e.g. Awaiting dishMode change to STANDBY_LP
         if not skip_progress_updates:
             task_callback(
                 progress=(
