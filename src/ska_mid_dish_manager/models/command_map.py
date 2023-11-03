@@ -321,7 +321,8 @@ class CommandMap:
         awaited_attribute = fan_out_args["awaitedAttribute"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
 
-        # Report which attribute and value the device is waiting for
+        # Report which attribute and value the sub device is waiting for
+        # e.g. Awaiting DS operatingmode change to [<DSOperatingMode.STANDBY_LP: 2>]
         if not skip_progress_updates:
             task_callback(
                 progress=(
@@ -444,12 +445,11 @@ class CommandMap:
                 for device in commands_for_sub_devices.keys():
                     component_manager = self._dish_manager_cm.sub_component_managers[device]
                     component_manager.update_state_from_monitored_attributes()
-            else:
-                task_callback(
-                    progress=f"{running_command} completed",
-                )
-                task_callback(
-                    status=TaskStatus.COMPLETED,
-                    result=f"{running_command} completed",
-                )
-                return
+                continue
+
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                progress=f"{running_command} completed",
+                result=f"{running_command} completed",
+            )
+            return
