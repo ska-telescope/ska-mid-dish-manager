@@ -66,14 +66,14 @@ def desired_dish_mode_program_track_table(dish_manager, modes_helper):
 @when(
     parse("I call command Track on dish_manager"),
 )
-def desired_dish_mode_dm_command(modes_helper):
+def desired_dish_mode_track(modes_helper):
     # pylint: disable=missing-function-docstring
     desired_dish_mode = "Track"
     modes_helper.dish_manager_go_to_mode(desired_dish_mode)
 
 
 @then(parse("pointingState should report Track"))
-def check_dish_manager_pointing_state(dish_manager, event_store):
+def check_dish_manager_pointing_state_track(dish_manager, event_store):
     # pylint: disable=missing-function-docstring
     # for cases that the event may not arrive early just wait a bit
     dish_manager.subscribe_event(
@@ -90,14 +90,14 @@ def check_dish_manager_pointing_state(dish_manager, event_store):
 @when(
     parse("I call command TrackStop on dish_manager"),
 )
-def desired_dish_mode_dm_command(modes_helper):
+def desired_dish_mode_track_stop(modes_helper):
     # pylint: disable=missing-function-docstring
     desired_dish_mode = "TrackStop"
     modes_helper.dish_manager_go_to_mode(desired_dish_mode)
 
 
 @then(parse("pointingState should report Ready"))
-def check_dish_manager_pointing_state(dish_manager, event_store):
+def check_dish_manager_pointing_state_track_stop(dish_manager, event_store):
     # pylint: disable=missing-function-docstring
     # for cases that the event may not arrive early just wait a bit
     dish_manager.subscribe_event(
