@@ -192,6 +192,11 @@ class TestCapabilityStates:
             self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
             self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
 
+            for com_man in [self.ds_cm, self.spf_cm, self.spfrx_cm]:
+                com_man._update_communication_state(
+                    communication_state=CommunicationStatus.ESTABLISHED
+                )
+
             self.spf_cm.write_attribute_value = mock.MagicMock()
 
             self.dish_manager_cm = class_instance.component_manager

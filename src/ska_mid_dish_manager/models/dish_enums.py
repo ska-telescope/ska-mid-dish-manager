@@ -111,8 +111,9 @@ class TrackProgramMode(enum.IntEnum):
 
 
 class TrackTableLoadMode(enum.IntEnum):
-    ADD = 0
-    NEW = 1
+    NEW = 0
+    APPEND = 1
+    RESET = 2
 
 
 class PowerState(enum.IntEnum):

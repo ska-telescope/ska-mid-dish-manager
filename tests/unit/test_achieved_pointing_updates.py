@@ -29,7 +29,6 @@ class TestAchievedPointing:
                 "TangoDeviceComponentManager.start_communicating"
             )
         ):
-
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()
 

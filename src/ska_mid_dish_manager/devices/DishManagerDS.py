@@ -18,15 +18,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import (
-    AttrWriteType,
-    Database,
-    DbDevInfo,
-    DebugIt,
-    DevFloat,
-    DevVarDoubleArray,
-    DispLevel,
-)
+from tango import AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -94,6 +86,8 @@ class DishManager(SKAController):
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
             ("SetStowMode", "set_stow_mode"),
+            ("Slew", "slew"),
+            ("TrackLoadStaticOff", "track_load_static_off"),
         ]:
             self.register_command_object(
                 command_name,
@@ -218,7 +212,7 @@ class DishManager(SKAController):
             device._program_track_table = []
             device._track_interpolation_mode = TrackInterpolationMode.NEWTON
             device._track_program_mode = TrackProgramMode.TABLEA
-            device._track_table_load_mode = TrackTableLoadMode.ADD
+            device._track_table_load_mode = TrackTableLoadMode.NEW
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -697,10 +691,10 @@ class DishManager(SKAController):
         dtype=(float,),
         max_dim_x=150,
         access=AttrWriteType.READ_WRITE,
-        doc="Timestamp of i‐th coordinate in table (max 50 coordinates) given "
-        "in milliseconds since UNIX epoch, UTC, representing time at which "
-        "Dish should track i‐th coordinate.\n Azimuth of i‐th coordinate in "
-        "table (max 50 coordinates) given in degrees.\n Elevation of i‐th "
+        doc="Timestamp of i-th coordinate in table (max 50 coordinates) given "
+        "in milliseconds since TAI epoch, representing time at which "
+        "Dish should track i-th coordinate.\n Azimuth of i-th coordinate in "
+        "table (max 50 coordinates) given in degrees.\n Elevation of i-th "
         "coordinate in table (max 50 coordinates) given in degrees",
     )
     def programTrackTable(self):
@@ -708,10 +702,25 @@ class DishManager(SKAController):
         return self._program_track_table
 
     @programTrackTable.write
-    def programTrackTable(self, value):
+    def programTrackTable(self, table):
         """Set the programTrackTable"""
         # pylint: disable=attribute-defined-outside-init
-        self._program_track_table = value
+        # Spectrum that is a multiple of 3 values:
+        # - (timestamp, azimuth coordinate, elevation coordinate)
+        # i.e. [timestamp_0, az_pos_0, el_pos_0, ..., timestamp_n, az_pos_n, el_pos_n]
+        self.logger.debug("programTrackTable write method called with table %s", table)
+        length_of_table = len(table)
+        if length_of_table > 0:
+            # Checks that the tables length is a multiple of 3
+            if length_of_table % 3 == 0:
+                sequence_length = length_of_table / 3
+                self.component_manager._track_load_table(sequence_length, table)
+                self._program_track_table = table
+            else:
+                raise ValueError(
+                    f"Length of table ({len(table)}) is not a multiple of 3 "
+                    "(timestamp, azimuth coordinate, elevation coordinate) as expected."
+                )
 
     @attribute(
         dtype=int,
@@ -1167,20 +1176,28 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @command(
-        dtype_in=DevVarDoubleArray,
-        doc_in="[0]: Azimuth\n[1]: Elevation",
-        dtype_out=None,
+        dtype_in="DevVarFloatArray",
+        doc_in="[0]: Azimuth\n[1]: Elevation,\n[2]: Azimuth Speed,\n[3]: Elevation Speed",
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def Slew(self, az_el_coordinates):  # pylint: disable=unused-argument
+    def Slew(self, values):  # pylint: disable=unused-argument
         """
-        When the Slew command is received the Dish will start moving at
-        maximum speed to the commanded (Az,El) position given as
-        command argument. No pointing accuracy requirements are
-        applicable in this state, and the pointingState attribute will report
-        SLEW.
+        Trigger the Dish to start moving at the given speeds to the commanded (Az,El) position.
+
+        :param argin: the az, el, az speed, and el speed for the pointing in stringified json
+            format
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
         """
-        raise NotImplementedError
+        if len(values) != 4:
+            raise ValueError(f"Length of argument ({len(values)}) is not as expected (4).")
+
+        handler = self.get_command_object("Slew")
+        result_code, unique_id = handler(values)
+
+        return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def Synchronise(self):
@@ -1213,7 +1230,7 @@ class DishManager(SKAController):
         interpolation, Newton (default) or Spline.
         2. programTrackTable: to load program table data
         (Az,El,timestamp sets) on selected ACU table
-        3. trackTableLoadMode: to add/append new track table data
+        3. trackTableLoadMode: to add/append/reset track table data
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -1241,6 +1258,25 @@ class DishManager(SKAController):
         handler = self.get_command_object("TrackStop")
         result_code, unique_id = handler()
 
+        return ([result_code], [unique_id])
+
+    @command(  # type: ignore[misc]
+        dtype_in="DevVarFloatArray",
+        dtype_out="DevVarLongStringArray",
+    )
+    @DebugIt()  # type: ignore[misc]
+    def TrackLoadStaticOff(self, values) -> DevVarLongStringArrayType:
+        """
+        Loads the given static pointing model offsets.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
+        """
+        if len(values) != 2:
+            raise ValueError(f"Length of argument ({len(values)}) is not as expected (2).")
+
+        handler = self.get_command_object("TrackLoadStaticOff")
+        result_code, unique_id = handler(values)
         return ([result_code], [unique_id])
 
     class SetKValueCommand(FastCommand):
