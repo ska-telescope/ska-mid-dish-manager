@@ -332,9 +332,8 @@ class CommandMap:
             )
         return command_id
 
-    def _fanout_command_has_failed(self, device, command_ids):
+    def _fanout_command_has_failed(self, command_id):
         """Check the status of the fanned out command on the subservient device"""
-        command_id = command_ids[device]
         current_status = self._command_tracker.get_command_status(command_id)
         if current_status == TaskStatus.FAILED:
             return True
@@ -429,7 +428,7 @@ class CommandMap:
                         )
 
                 command_in_progress = fan_out_args["command"]
-                if self._fanout_command_has_failed(device, device_command_ids):
+                if self._fanout_command_has_failed(device_command_ids[device]):
                     task_callback(
                         progress=(
                             f"{device} device failed executing {command_in_progress} command with"
