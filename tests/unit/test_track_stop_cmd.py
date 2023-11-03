@@ -70,17 +70,18 @@ class TestTrackStop:
     )
     def test_track_stop_cmd_fails_when_pointing_state_is_not_track(
         self,
-        event_store,
+        event_store_class,
         current_pointing_state,
     ):
+        pointing_state_event_store = event_store_class()
         self.device_proxy.subscribe_event(
             "pointingState",
             tango.EventType.CHANGE_EVENT,
-            event_store,
+            pointing_state_event_store,
         )
 
         self.ds_cm._update_component_state(pointingstate=current_pointing_state)
-        event_store.wait_for_value(current_pointing_state, timeout=5)
+        pointing_state_event_store.wait_for_value(current_pointing_state, timeout=5)
 
         with pytest.raises(tango.DevFailed):
             _, _ = self.device_proxy.TrackStop()

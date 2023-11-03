@@ -2,8 +2,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
-from tests.utils import set_configuredBand_b1
+from ska_mid_dish_manager.models.dish_enums import Band
 
 
 # pylint: disable=unused-argument,too-many-arguments
@@ -14,9 +13,6 @@ def test_track_and_track_stop_cmds(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
-    ds_device_proxy,
-    spf_device_proxy,
-    spfrx_device_proxy,
 ):
     """Test Track command"""
 
@@ -40,21 +36,17 @@ def test_track_and_track_stop_cmds(
         progress_event_store,
     )
 
-    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_command_id(unique_id, timeout=8)
-
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
-
-    set_configuredBand_b1(
-        dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
-    )
-
     dish_manager_proxy.subscribe_event(
         "configuredBand",
         tango.EventType.CHANGE_EVENT,
         band_event_store,
     )
-    assert band_event_store.wait_for_value(Band.B1, timeout=8)
+
+    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
+    main_event_store.wait_for_command_id(unique_id, timeout=8)
+
+    dish_manager_proxy.ConfigureBand1(True)
+    band_event_store.wait_for_value(Band.B1, timeout=8)
 
     [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
     main_event_store.wait_for_command_id(unique_id, timeout=8)

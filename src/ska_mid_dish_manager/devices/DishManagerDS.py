@@ -12,12 +12,12 @@ import logging
 import os
 import weakref
 from functools import reduce
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
-from ska_tango_base.commands import SlowCommand, SubmittedSlowCommand
+from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
 from tango import AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DispLevel
 from tango.server import attribute, command, device_property, run
 
@@ -104,6 +104,11 @@ class DishManager(SKAController):
         self.register_command_object(
             "AbortCommands",
             self.AbortCommandsCommand(self.component_manager, self.logger),
+        )
+
+        self.register_command_object(
+            "SetKValue",
+            self.SetKValueCommand(self.component_manager, self.logger),
         )
 
     def _update_connection_state_attrs(self, attribute_name: str):
@@ -240,6 +245,7 @@ class DishManager(SKAController):
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
+                "kvalue": "kValue",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -343,6 +349,15 @@ class DishManager(SKAController):
         self._attenuation_pol_v = value
         spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
         spfrx_cm.write_attribute_value("attenuationPolV", value)
+
+    @attribute(
+        dtype=int,
+        access=AttrWriteType.READ,
+        doc="Returns the kValue for SPFRX",
+    )
+    def kValue(self):
+        """Returns the kValue for SPFRX"""
+        return self.component_manager.component_state["kvalue"]
 
     @attribute(
         dtype=bool,
@@ -1263,6 +1278,51 @@ class DishManager(SKAController):
         handler = self.get_command_object("TrackLoadStaticOff")
         result_code, unique_id = handler(values)
         return ([result_code], [unique_id])
+
+    class SetKValueCommand(FastCommand):
+        """Class for handling the SetKValue command."""
+
+        def __init__(
+            self,
+            component_manager: DishManagerComponentManager,
+            logger: Optional[logging.Logger] = None,
+        ) -> None:
+            """
+            Initialise a new SetKValueCommand instance.
+
+            :param component_manager: the device to which this command belongs.
+            :param logger: a logger for this command to use.
+            """
+            self._component_manager = component_manager
+            super().__init__(logger)
+
+        def do(
+            self,
+            *args: Any,
+            **kwargs: Any,
+        ) -> tuple[ResultCode, str]:
+            """
+            Implement SetKValue command functionality.
+
+            :param args: k value.
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            return self._component_manager.set_kvalue(*args)
+
+    @command(
+        dtype_in="DevLong64",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    def SetKValue(self, value) -> DevVarLongStringArrayType:
+        """
+        This command sets the kValue on SPFRx
+        """
+        handler = self.get_command_object("SetKValue")
+        return_code, message = handler(value)
+        return ([return_code], [message])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StopCommunication(self):
