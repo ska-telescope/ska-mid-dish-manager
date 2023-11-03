@@ -247,7 +247,7 @@ class CommandMap:
             DishMode.STOW,
         )
 
-    def slew(self, argin: str, task_abort_event=None, task_callback: Optional[Callable] = None):
+    def slew(self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None):
         """Transition the dish to Stow mode"""
         commands_for_sub_devices = {
             "DS": {
@@ -268,7 +268,7 @@ class CommandMap:
         )
 
     def track_load_static_off(
-        self, argin: str, task_abort_event=None, task_callback: Optional[Callable] = None
+        self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None
     ):
         """Transition the dish to Stow mode"""
         commands_for_sub_devices = {

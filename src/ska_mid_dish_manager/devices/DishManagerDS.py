@@ -1163,7 +1163,7 @@ class DishManager(SKAController):
     @command(
         dtype_in="DevVarFloatArray",
         doc_in="[0]: Azimuth\n[1]: Elevation,\n[2]: Azimuth Speed,\n[3]: Elevation Speed",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def Slew(self, values):  # pylint: disable=unused-argument

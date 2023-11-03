@@ -45,12 +45,14 @@ def test_track_load_static_off(
 ) -> None:
     """Test Band2 Static Pointing Model Parameters."""
     write_values = [20.1, 0.5]
+    ca_obs_index = 11
+    e_obs_index = 19
 
     dish_manager_proxy.TrackLoadStaticOff(write_values)
 
     expected_values = [0.0] * 20
-    expected_values[11] = write_values[0]  # CAobs
-    expected_values[19] = write_values[1]  # Eobs
+    expected_values[ca_obs_index] = write_values[0]
+    expected_values[e_obs_index] = write_values[1]
 
     model_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
