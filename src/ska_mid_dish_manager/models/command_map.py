@@ -247,7 +247,9 @@ class CommandMap:
             DishMode.STOW,
         )
 
-    def slew(self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None):
+    def slew(
+        self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None
+    ):
         """Transition the dish to Stow mode"""
         commands_for_sub_devices = {
             "DS": {
