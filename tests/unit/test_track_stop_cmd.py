@@ -22,7 +22,7 @@ LOGGER = logging.getLogger(__name__)
 
 # pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
-# @pytest.mark.forked
+@pytest.mark.forked
 class TestTrackStop:
     """Tests for TrackStop"""
 
