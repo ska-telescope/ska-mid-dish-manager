@@ -291,7 +291,7 @@ class CommandMap:
             None,
         )
 
-    def _fan_out_cmd(self, task_callback, device, fan_out_args, skip_progress_updates=False):
+    def _fan_out_cmd(self, task_callback, device, fan_out_args):
         """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
@@ -304,7 +304,6 @@ class CommandMap:
             logger=self.logger,
         )
 
-        # fail the command immediately, if the subservient device fails
         response, command_id = command(command_name, command_argument)
         # Report that the command has been called on the subservient device
         task_callback(
@@ -314,14 +313,16 @@ class CommandMap:
             )
         )
 
+        # fail the command immediately, if the subservient device fails
         if response == TaskStatus.FAILED:
             raise RuntimeError(command_id)
 
         awaited_attribute = fan_out_args["awaitedAttribute"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
 
-        # Report which attribute and value the device is waiting for
-        if not skip_progress_updates:
+        # Report which attribute and value the sub device is waiting for
+        # e.g. Awaiting DS operatingmode change to [<DSOperatingMode.STANDBY_LP: 2>]
+        if awaited_values_list is not None:
             task_callback(
                 progress=(
                     f"Awaiting {self._key_to_output(device)} {awaited_attribute}"
@@ -401,13 +402,13 @@ class CommandMap:
         if not awaited_event_value:
             task_callback(
                 progress=f"{running_command} completed",
-            )
-            task_callback(
                 status=TaskStatus.COMPLETED,
                 result=f"{running_command} completed",
             )
             return
 
+        # Report which attribute and value the dish manager is waiting for
+        # e.g. Awaiting dishMode change to STANDBY_LP
         task_callback(
             progress=(
                 f"Awaiting {self._key_to_output(awaited_event_attribute)}"
@@ -453,8 +454,6 @@ class CommandMap:
             # ):
             #     task_callback(
             #         progress=f"{running_command} completed",
-            #     )
-            #     task_callback(
             #         status=TaskStatus.FAILED,
             #         result=f"{running_command} completed",
             #     )
@@ -471,8 +470,6 @@ class CommandMap:
             else:
                 task_callback(
                     progress=f"{running_command} completed",
-                )
-                task_callback(
                     status=TaskStatus.COMPLETED,
                     result=f"{running_command} completed",
                 )
