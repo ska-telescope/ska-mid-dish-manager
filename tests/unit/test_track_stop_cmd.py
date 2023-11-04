@@ -22,7 +22,7 @@ LOGGER = logging.getLogger(__name__)
 
 # pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
-@pytest.mark.forked
+# @pytest.mark.forked
 class TestTrackStop:
     """Tests for TrackStop"""
 
@@ -143,7 +143,7 @@ class TestTrackStop:
 
         expected_progress_updates = [
             "TrackStop called on DS, ID",
-            "Awaiting pointingstate change to READY",
+            "Awaiting DS pointingstate change to [<PointingState.READY: 0>]",
             "TrackStop completed",
         ]
 
