@@ -446,19 +446,19 @@ class CommandMap:
                         )
                         fan_out_args["command_has_failed"] = True
 
-            # If all three commands have failed, then bail
-            if all(
-                sub_device_command["command_has_failed"]
-                for sub_device_command in commands_for_sub_devices.values()
-            ):
-                task_callback(
-                    progress=f"{running_command} completed",
-                )
-                task_callback(
-                    status=TaskStatus.FAILED,
-                    result=f"{running_command} completed",
-                )
-                return
+            # TODO: If all three commands have failed, then bail
+            # if all(
+            #     sub_device_command["command_has_failed"]
+            #     for sub_device_command in commands_for_sub_devices.values()
+            # ):
+            #     task_callback(
+            #         progress=f"{running_command} completed",
+            #     )
+            #     task_callback(
+            #         status=TaskStatus.FAILED,
+            #         result=f"{running_command} completed",
+            #     )
+            #     return
 
             # Check on dishmanager to see whether the LRC has completed
             current_awaited_value = self._dish_manager_cm.component_state[awaited_event_attribute]
