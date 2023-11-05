@@ -12,7 +12,7 @@ import tango
 from pytest import approx
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
-from utils import retrieve_attr_value, EventStore
+from utils import EventStore, retrieve_attr_value
 
 from ska_mid_dish_manager.models.dish_enums import PointingState
 
@@ -42,9 +42,7 @@ def test_stow_command(monitor_tango_servers):
     pass
 
 
-@given(
-    "dish_manager dishMode reports any allowed dishMode for SetStowMode command"
-)
+@given("dish_manager dishMode reports any allowed dishMode for SetStowMode command")
 def dish_reports_allowed_dish_mode(dish_manager):
     # pylint: disable=missing-function-docstring
     allowed_dish_modes = [
@@ -64,9 +62,7 @@ def dish_reports_allowed_dish_mode(dish_manager):
 
 
 @when("I issue SetStowMode on dish_manager")
-def set_stow_mode(
-    dish_manager, pointing_state_event_store, initial_az, modes_helper
-):
+def set_stow_mode(dish_manager, pointing_state_event_store, initial_az, modes_helper):
     # pylint: disable=missing-function-docstring
     dish_manager.subscribe_event(
         "pointingState",
@@ -98,9 +94,7 @@ def check_ds_operating_mode(
     dish_structure,
 ):
     # pylint: disable=missing-function-docstring
-    current_operating_mode = retrieve_attr_value(
-        dish_structure, "operatingMode"
-    )
+    current_operating_mode = retrieve_attr_value(dish_structure, "operatingMode")
     assert current_operating_mode == "STOW"
     LOGGER.info(f"{dish_structure} operatingMode: {current_operating_mode}")
 
@@ -125,9 +119,7 @@ def check_dish_manager_dish_structure_el_position(
     while dish_far_from_stow_position:
         now = time.time()
         current_el = dish_manager.desiredPointing[2]
-        dish_far_from_stow_position = not (
-            stow_position == approx(current_el, rel=TOLERANCE)
-        )
+        dish_far_from_stow_position = not (stow_position == approx(current_el, rel=TOLERANCE))
         # sleep to avoid using full CPU resources
         # while waiting to arrive on target
         time.sleep(1)
@@ -145,9 +137,7 @@ def check_dish_manager_dish_structure_el_position(
     LOGGER.info(f"{dish_manager} and {dish_structure} elevation: {current_el}")
 
 
-@then(
-    "dish_manager and dish_structure azimuth should remain in the same position"
-)
+@then("dish_manager and dish_structure azimuth should remain in the same position")
 def check_dish_manager_dish_structure_az_position(
     dish_manager,
     dish_structure,
@@ -172,9 +162,7 @@ def check_pointing_state_after_stow(
     pointing_state_event_store,
 ):
     # pylint: disable=missing-function-docstring
-    pointing_state_event_store.wait_for_value(
-        PointingState[expected_pointing_state], timeout=60
-    )
+    pointing_state_event_store.wait_for_value(PointingState[expected_pointing_state], timeout=60)
     current_pointing_state = retrieve_attr_value(dish_manager, "pointingState")
     assert current_pointing_state == expected_pointing_state
     LOGGER.info(f"{dish_manager} pointingState: {current_pointing_state}")
@@ -191,10 +179,7 @@ def check_dish_state_after_stow(
     LOGGER.info(f"{dish_manager} State: {current_dish_state}")
 
 
-@then(
-    "dish_manager and dish_structure should report"
-    " the same achieved elevation position"
-)
+@then("dish_manager and dish_structure should report" " the same achieved elevation position")
 def check_el_is_same_for_dish_and_ds(
     dish_manager,
     dish_structure,
