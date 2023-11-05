@@ -35,7 +35,7 @@ def fixture_initial_az():
     return {"az": 0}
 
 
-@pytest.mark.acceptance
+@pytest.mark.lmc
 @scenario("XTP-3090.feature", "Test dish stow request")
 def test_stow_command(monitor_tango_servers):
     # pylint: disable=missing-function-docstring

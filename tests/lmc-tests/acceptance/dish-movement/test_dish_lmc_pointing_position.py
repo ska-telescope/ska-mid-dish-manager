@@ -35,7 +35,7 @@ def pointing_state_event_store():
     return EventStore()
 
 
-@pytest.mark.acceptance
+@pytest.mark.lmc
 @scenario("XTP-5414.feature", "Test dish pointing request")
 def test_dish_pointing(monitor_tango_servers):
     # pylint: disable=missing-function-docstring
