@@ -53,10 +53,6 @@ def update_program_track_table(dish_manager):
 @when("I issue Track on dish_manager")
 def issue_track_on_dish_manager(dish_manager, pointing_state_event_store):
     # pylint: disable=missing-function-docstring
-
-    # event subscription on pointing state will be needed
-    # event store should be scoped at module so that its
-    # content are available for use in the next function
     dish_manager.subscribe_event(
         "pointingState",
         tango.EventType.CHANGE_EVENT,
@@ -88,8 +84,6 @@ def check_dish_manager_pointing_state_track_stop(
     desired_pointing_state, dish_manager, pointing_state_event_store
 ):
     # pylint: disable=missing-function-docstring
-
-    # again, we can use the pointing_state_event_store to wait for value
     pointing_state_event_store.wait_for_value(desired_pointing_state)
     current_pointing_state = retrieve_attr_value(dish_manager, "pointingState")
     assert current_pointing_state == desired_pointing_state
