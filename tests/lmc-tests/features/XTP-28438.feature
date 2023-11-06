@@ -9,3 +9,4 @@ Feature: Dish LMC acceptance tests
         Then pointingState should report TRACK
         When I call command TrackStop on dish Manager 
         Then pointingState should report READY
+        
