@@ -5,6 +5,18 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.3.0
+*************
+- Charts
+  - Upgraded ska-mid-dish-simulators chart to v1.6.0
+  - Upgraded ska-mid-dish-ds-manager chart to v1.2.0
+  - Upgraded ska tango utils chart to v0.4.7
+  - Not deploying ska-tango-base by default anymore
+- Commands
+  - Implemented Slew, TrackLoadStaticOff, SetKValue
+- Attributes
+  - Implemented band2PointingModelParams, kValue, programTracktable
+
 Version 2.2.9
 *************
 - Upgrade ska-mid-dish-simulators chart to v1.3.1
