@@ -289,10 +289,9 @@ class CommandMap:
             "TrackLoadStaticOff",
             "",
             None,
-            skip_progress_updates=True,
         )
 
-    def _fan_out_cmd(self, task_callback, device, fan_out_args, skip_progress_updates=False):
+    def _fan_out_cmd(self, task_callback, device, fan_out_args):
         """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
@@ -305,7 +304,6 @@ class CommandMap:
             logger=self.logger,
         )
 
-        # fail the command immediately, if the subservient device fails
         response, command_id = command(command_name, command_argument)
         # Report that the command has been called on the subservient device
         task_callback(
@@ -315,14 +313,16 @@ class CommandMap:
             )
         )
 
+        # fail the command immediately, if the subservient device fails
         if response == TaskStatus.FAILED:
             raise RuntimeError(command_id)
 
         awaited_attribute = fan_out_args["awaitedAttribute"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
 
-        # Report which attribute and value the device is waiting for
-        if not skip_progress_updates:
+        # Report which attribute and value the sub device is waiting for
+        # e.g. Awaiting DS operatingmode change to [<DSOperatingMode.STANDBY_LP: 2>]
+        if awaited_values_list is not None:
             task_callback(
                 progress=(
                     f"Awaiting {self._key_to_output(device)} {awaited_attribute}"
@@ -331,9 +331,8 @@ class CommandMap:
             )
         return command_id
 
-    def _fanout_command_has_failed(self, device, command_ids):
+    def _fanout_command_has_failed(self, command_id):
         """Check the status of the fanned out command on the subservient device"""
-        command_id = command_ids[device]
         current_status = self._command_tracker.get_command_status(command_id)
         if current_status == TaskStatus.FAILED:
             return True
@@ -364,7 +363,6 @@ class CommandMap:
         running_command,
         awaited_event_attribute,
         awaited_event_value,
-        skip_progress_updates=False,
     ):
         """Run the long running command and track progress"""
         assert task_callback, "task_callback has to be defined"
@@ -399,15 +397,27 @@ class CommandMap:
         if isinstance(awaited_event_value, enum.IntEnum):
             awaited_event_value_print = awaited_event_value.name
 
-        if not skip_progress_updates:
+        # If we're not waiting for anything, finish up
+        if not awaited_event_value:
             task_callback(
-                progress=(
-                    f"Awaiting {self._key_to_output(awaited_event_attribute)}"
-                    f" change to {awaited_event_value_print}"
-                )
+                progress=f"{running_command} completed",
+                status=TaskStatus.COMPLETED,
+                result=f"{running_command} completed",
             )
+            return
 
-        attribute_update_reported = dict.fromkeys(commands_for_sub_devices.keys(), False)
+        # Report which attribute and value the dish manager is waiting for
+        # e.g. Awaiting dishMode change to STANDBY_LP
+        task_callback(
+            progress=(
+                f"Awaiting {self._key_to_output(awaited_event_attribute)}"
+                f" change to {awaited_event_value_print}"
+            )
+        )
+
+        for fan_out_args in commands_for_sub_devices.values():
+            fan_out_args["progress_updated"] = False
+            fan_out_args["command_has_failed"] = False
 
         while True:
             if task_abort_event.is_set():
@@ -418,27 +428,40 @@ class CommandMap:
                 )
                 return
 
-            if not skip_progress_updates:
-                for device, fan_out_args in commands_for_sub_devices.items():
-                    # Check each device and report attribute values that are in the expected state
-                    if not attribute_update_reported[device]:
-                        attribute_update_reported[device] = self._report_fan_out_cmd_progress(
-                            task_callback, device, fan_out_args
-                        )
+            for device, fan_out_args in commands_for_sub_devices.items():
+                # Check each device and report attribute values that are in the expected state
+                if not fan_out_args["progress_updated"]:
+                    fan_out_args["progress_updated"] = self._report_fan_out_cmd_progress(
+                        task_callback, device, fan_out_args
+                    )
 
                 command_in_progress = fan_out_args["command"]
-                if self._fanout_command_has_failed(device, device_command_ids):
-                    task_callback(
-                        progress=(
-                            f"{device} device failed executing {command_in_progress} command with"
-                            f" ID {device_command_ids[device]}"
+                if not fan_out_args["command_has_failed"]:
+                    if self._fanout_command_has_failed(device_command_ids[device]):
+                        task_callback(
+                            progress=(
+                                f"{device} device failed executing {command_in_progress} "
+                                f"command with ID {device_command_ids[device]}"
+                            )
                         )
-                    )
+                        fan_out_args["command_has_failed"] = True
+
+            # TODO: If all three commands have failed, then bail
+            # if all(
+            #     sub_device_command["command_has_failed"]
+            #     for sub_device_command in commands_for_sub_devices.values()
+            # ):
+            #     task_callback(
+            #         progress=f"{running_command} completed",
+            #         status=TaskStatus.FAILED,
+            #         result=f"{running_command} completed",
+            #     )
+            #     return
 
             # Check on dishmanager to see whether the LRC has completed
             current_awaited_value = self._dish_manager_cm.component_state[awaited_event_attribute]
 
-            if not skip_progress_updates and current_awaited_value != awaited_event_value:
+            if current_awaited_value != awaited_event_value:
                 task_abort_event.wait(timeout=1)
                 for device in commands_for_sub_devices.keys():
                     component_manager = self._dish_manager_cm.sub_component_managers[device]
@@ -446,8 +469,6 @@ class CommandMap:
             else:
                 task_callback(
                     progress=f"{running_command} completed",
-                )
-                task_callback(
                     status=TaskStatus.COMPLETED,
                     result=f"{running_command} completed",
                 )
