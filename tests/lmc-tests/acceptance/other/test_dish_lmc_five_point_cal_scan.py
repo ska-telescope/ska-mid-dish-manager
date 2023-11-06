@@ -47,7 +47,7 @@ def update_program_track_table(dish_manager):
     # pylint: disable=missing-function-docstring
     desired_array = [5, 15, 30]
     dish_manager.programTrackTable = [5, 15, 30]
-    assert dish_manager.programTrackTable() == desired_array
+    assert dish_manager.programTrackTable == desired_array
 
 
 @when(("I issue Track on dish_manager"))
@@ -71,28 +71,26 @@ def check_dish_manager_pointing_state_track(
     desired_pointing_state, dish_manager, pointing_state_event_store
 ):
     # pylint: disable=missing-function-docstring
-    # for cases that the event may not arrive early just wait a bit
-    current_pointing_state = pointing_state_event_store.wait_for_value(desired_pointing_state)
+    pointing_state_event_store.wait_for_value(desired_pointing_state)
+    current_pointing_state = retrieve_attr_value(dish_manager, "pointingState")
     assert current_pointing_state == desired_pointing_state
     LOGGER.info(f"{dish_manager} pointing state is: {current_pointing_state}")
 
 
 @when(("I issue TrackStop on dish_manager"))
-def desired_dish_mode_track_stop(dish_manager, modes_helper):
+def desired_dish_mode_track_stop(dish_manager):
     # pylint: disable=missing-function-docstring
-    desired_dish_mode = "TrackStop"
     dish_manager.TrackStop()
-    modes_helper.dish_manager_go_to_mode(desired_dish_mode)
 
 
-@then(parse("pointingState should report {pointing_state}"))
+@then(parse("pointingState should report {desired_pointing_state}"))
 def check_dish_manager_pointing_state_track_stop(
-    pointing_state, dish_manager, pointing_state_event_store
+    desired_pointing_state, dish_manager, pointing_state_event_store
 ):
     # pylint: disable=missing-function-docstring
 
     # again, we can use the pointing_state_event_store to wait for value
-
+    pointing_state_event_store.wait_for_value(desired_pointing_state)
     current_pointing_state = retrieve_attr_value(dish_manager, "pointingState")
-    assert current_pointing_state == pointing_state
+    assert current_pointing_state == desired_pointing_state
     LOGGER.info(f"{dish_manager} pointing state is:: {current_pointing_state}")
