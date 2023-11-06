@@ -23,8 +23,6 @@ def test_dish_lmc_succ_of_tracking_with_program_track_table():
 @given(parse("dish_manager dishMode reports {dish_mode}"))
 def check_dish_manager_dish_mode(dish_mode, dish_manager, modes_helper):
     # pylint: disable=missing-function-docstring
-    # convert dish mode to have underscore
-    # for DishMode OPERATE enum in utils
     modes_helper.ensure_dish_manager_mode(dish_mode)
     current_dish_mode = retrieve_attr_value(dish_manager, "dishMode")
     LOGGER.info(f"{dish_manager} dishMode: {current_dish_mode}")
@@ -38,9 +36,7 @@ def check_dish_configured_band(expected_band, dish_manager):
     LOGGER.info(f"{dish_manager} configuredBand: {configured_band}")
 
 
-@given(
-    parse("I write to programTrackTable on dish_manager"),
-)
+@given(("I write to programTrackTable on dish_manager"))
 def update_program_track_table(dish_manager):
     # pylint: disable=missing-function-docstring
     desired_array = [5, 15, 30]
@@ -48,7 +44,7 @@ def update_program_track_table(dish_manager):
     assert dish_manager.programTrackTable() == desired_array
 
 
-@when(parse("I issue Track on dish_manager"))
+@when(("I issue Track on dish_manager"))
 def issue_track_on_dish_manager(dish_manager, event_store):
     # pylint: disable=missing-function-docstring
 
@@ -74,9 +70,7 @@ def check_dish_manager_pointing_state_track(pointing_state, dish_manager, event_
     LOGGER.info(f"{dish_manager} pointing state is: {current_pointing_state}")
 
 
-@when(
-    parse("I issue command TrackStop on dish_manager"),
-)
+@when(("I issue TrackStop on dish_manager"))
 def desired_dish_mode_track_stop(dish_manager, modes_helper):
     # pylint: disable=missing-function-docstring
     desired_dish_mode = "TrackStop"
@@ -92,4 +86,4 @@ def check_dish_manager_pointing_state_track_stop(pointing_state, dish_manager, e
 
     current_pointing_state = retrieve_attr_value(dish_manager, "pointingState")
     assert current_pointing_state == pointing_state
-    LOGGER.info(f"{dish_manager} operatingMode: {current_pointing_state}")
+    LOGGER.info(f"{dish_manager} pointing state is:: {current_pointing_state}")

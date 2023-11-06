@@ -5,7 +5,7 @@ Feature: Dish LMC acceptance tests
         Given dish_manager dishMode reports OPERATE
         And dish_manager configuredBand reports B2
         And I write to programTrackTable on dish_manager
-        When I issue command Track on dish Manager 
+        When I issue Track on dish_manager 
         Then pointingState should report TRACK
-        When I issue command TrackStop on dish Manager 
+        When I issue TrackStop on dish_manager 
         Then pointingState should report READY
