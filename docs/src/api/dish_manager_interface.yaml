@@ -175,9 +175,13 @@
       disp_level: OPERATOR
       doc_in: '[0]: Azimuth
 
-        [1]: Elevation'
+        [1]: Elevation,
+
+        [2]: Azimuth Speed,
+
+        [3]: Elevation Speed'
       doc_out: Uninitialised
-      dtype_in: DevVarDoubleArray
+      dtype_in: DevVarFloatArray
       dtype_out: DevVoid
     - name: Standby
       disp_level: OPERATOR
@@ -226,6 +230,12 @@
       doc_in: Uninitialised
       doc_out: Uninitialised
       dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
+    - name: TrackLoadStaticOff
+      disp_level: OPERATOR
+      doc_in: Uninitialised
+      doc_out: Uninitialised
+      dtype_in: DevVarFloatArray
       dtype_out: DevVarLongStringArray
     - name: TrackStop
       disp_level: OPERATOR
@@ -1332,11 +1342,11 @@
     - name: programTrackTable
       data_format: SPECTRUM
       data_type: DevDouble
-      description: "Timestamp of i\u2010th coordinate in table (max 50 coordinates)\
-        \ given in milliseconds since UNIX epoch, UTC, representing time at which\
-        \ Dish should track i\u2010th coordinate.\n Azimuth of i\u2010th coordinate\
-        \ in table (max 50 coordinates) given in degrees.\n Elevation of i\u2010th\
-        \ coordinate in table (max 50 coordinates) given in degrees"
+      description: "Timestamp of i-th coordinate in table (max 50 coordinates) given\
+        \ in milliseconds since TAI epoch, representing time at which Dish should\
+        \ track i-th coordinate.\n Azimuth of i-th coordinate in table (max 50 coordinates)\
+        \ given in degrees.\n Elevation of i-th coordinate in table (max 50 coordinates)\
+        \ given in degrees"
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1487,8 +1497,9 @@
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
-      - ADD
       - NEW
+      - APPEND
+      - RESET
       format: '%s'
       label: trackTableLoadMode
       max_alarm: Not specified
@@ -1527,5 +1538,6 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
+    - name: __SubDevices
     - name: polled_cmd
     
