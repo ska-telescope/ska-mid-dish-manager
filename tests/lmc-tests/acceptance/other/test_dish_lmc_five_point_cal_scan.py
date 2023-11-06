@@ -1,5 +1,5 @@
 """
-Need to add in a doc string relevent to this file
+Verification test for the five point calibration scan
 """
 
 import logging
