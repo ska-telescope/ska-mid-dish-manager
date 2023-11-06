@@ -8,9 +8,15 @@ import pytest
 import tango
 from pytest_bdd import given, scenario, then, when
 from pytest_bdd.parsers import parse
-from utils import retrieve_attr_value
+from utils import EventStore, retrieve_attr_value
 
 LOGGER = logging.getLogger(__name__)
+
+
+@pytest.fixture(scope="module")
+def pointing_state_event_store():
+    """Fixture for storing events"""
+    return EventStore()
 
 
 @pytest.mark.lmc
@@ -45,27 +51,28 @@ def update_program_track_table(dish_manager):
 
 
 @when(("I issue Track on dish_manager"))
-def issue_track_on_dish_manager(dish_manager, event_store):
+def issue_track_on_dish_manager(dish_manager, pointing_state_event_store):
     # pylint: disable=missing-function-docstring
 
     # event subscription on pointing state will be needed
     # event store should be scoped at module so that its
     # content are available for use in the next function
-
-    dish_manager.Track()
     dish_manager.subscribe_event(
         "pointingState",
         tango.EventType.CHANGE_EVENT,
-        event_store,
+        pointing_state_event_store,
     )
 
+    dish_manager.Track()
 
-@then(parse("pointingState should report {pointing_state}"))
-def check_dish_manager_pointing_state_track(pointing_state, dish_manager, event_store):
+
+@then(parse("pointingState should report {desired_pointing_state}"))
+def check_dish_manager_pointing_state_track(
+    desired_pointing_state, dish_manager, pointing_state_event_store
+):
     # pylint: disable=missing-function-docstring
     # for cases that the event may not arrive early just wait a bit
-    desired_pointing_state = "Track"
-    current_pointing_state = event_store.wait_for_value(pointing_state)
+    current_pointing_state = pointing_state_event_store.wait_for_value(desired_pointing_state)
     assert current_pointing_state == desired_pointing_state
     LOGGER.info(f"{dish_manager} pointing state is: {current_pointing_state}")
 
@@ -79,10 +86,12 @@ def desired_dish_mode_track_stop(dish_manager, modes_helper):
 
 
 @then(parse("pointingState should report {pointing_state}"))
-def check_dish_manager_pointing_state_track_stop(pointing_state, dish_manager, event_store):
+def check_dish_manager_pointing_state_track_stop(
+    pointing_state, dish_manager, pointing_state_event_store
+):
     # pylint: disable=missing-function-docstring
 
-    # again, we can use the event_store to wait for value
+    # again, we can use the pointing_state_event_store to wait for value
 
     current_pointing_state = retrieve_attr_value(dish_manager, "pointingState")
     assert current_pointing_state == pointing_state
