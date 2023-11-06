@@ -42,7 +42,7 @@ def check_dish_configured_band(expected_band, dish_manager):
     LOGGER.info(f"{dish_manager} configuredBand: {configured_band}")
 
 
-@given(("I write to programTrackTable on dish_manager"))
+@given("I write to programTrackTable on dish_manager")
 def update_program_track_table(dish_manager):
     # pylint: disable=missing-function-docstring
     desired_array = [5, 15, 30]
@@ -50,7 +50,7 @@ def update_program_track_table(dish_manager):
     assert dish_manager.programTrackTable == desired_array
 
 
-@when(("I issue Track on dish_manager"))
+@when("I issue Track on dish_manager")
 def issue_track_on_dish_manager(dish_manager, pointing_state_event_store):
     # pylint: disable=missing-function-docstring
 
@@ -77,7 +77,7 @@ def check_dish_manager_pointing_state_track(
     LOGGER.info(f"{dish_manager} pointing state is: {current_pointing_state}")
 
 
-@when(("I issue TrackStop on dish_manager"))
+@when("I issue TrackStop on dish_manager")
 def desired_dish_mode_track_stop(dish_manager):
     # pylint: disable=missing-function-docstring
     dish_manager.TrackStop()
