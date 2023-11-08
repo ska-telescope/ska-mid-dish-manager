@@ -357,6 +357,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # update the bandInFocus of SPF before configuredBand
             spf_component_manager = self.sub_component_managers["SPF"]
             spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
+            spf_component_state["bandinfocus"] = band_in_focus
 
         # spfrx attenuation
         if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
