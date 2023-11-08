@@ -5,6 +5,12 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.3.1
+*************
+- Charts
+  - Upgraded ska-mid-dish-ds-manager chart to v1.2.1
+Fixed a bug where bandinfocus was not used correctly to calculate the bands
+
 Version 2.3.0
 *************
 - Charts
