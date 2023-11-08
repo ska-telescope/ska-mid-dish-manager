@@ -1,8 +1,17 @@
 """Test that DS goes into Track and dishManager reports it"""
+import time
+
 import pytest
 import tango
 
 from ska_mid_dish_manager.models.dish_enums import Band
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_write_desired_pointing(dish_manager_proxy: tango.DeviceProxy) -> None:
+    """Test desiredPointing parameters."""
+    dish_manager_proxy.desiredPointing = [time.time(), 4.2, 42]
 
 
 # pylint: disable=unused-argument,too-many-arguments
