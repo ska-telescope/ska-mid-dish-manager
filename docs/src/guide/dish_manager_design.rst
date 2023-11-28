@@ -12,8 +12,8 @@ the subservient devices through their component managers.
 
 See image below summarising the design behind the DishManager implementation:
 
-.. image:: ../images/DishManagerDesign.jpg
-  :width: 50%
+.. image:: ../images/DishManagerDesign.png
+  :width: 100%
   :alt: Dish Manager Design
 
 
@@ -26,8 +26,8 @@ captured in our model without spinning up any tango infrastructure. These unit
 tests are captured in the `python-test` job.
 
 In addition, there are tests in the pipeline which run against live tango
-devices, especially for the events and reporting of attributes. For this
-purpose, dummy devices with limited api and functionality for `SPF`, `SPFRx` and
+devices, especially for the events and reporting of attributes. These tests
+use dummy devices with limited api and functionality for `SPF`, `SPFRx` and
 `DS` devices. These acceptance tests are captured in the `k8-test` job.
 
 .. _here: https://confluence.skatelescope.org/pages/viewpage.action?pageId=188656205
