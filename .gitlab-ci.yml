@@ -67,7 +67,6 @@ stop-lmc-acceptance-test:
     name: test/$CI_COMMIT_REF_SLUG-lmc
     action: stop
 
-
 #mypy job
 mypy:
   stage: lint

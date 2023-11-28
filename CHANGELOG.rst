@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 * Use ska-ser-sphinx-theme for documentation
+* Include user guide with DishManager example usage in project docs
 
 Version 2.3.1
 *************

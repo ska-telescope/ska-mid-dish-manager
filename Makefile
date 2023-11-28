@@ -41,7 +41,7 @@ k8s-test-runner: MARK = acceptance
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
 
 ifeq ($(CI_JOB_NAME_SLUG),lmc-acceptance-test)
-MARK = lmc
+k8s-test-runner: MARK = lmc
 endif
 
 -include .make/python.mk
