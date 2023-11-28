@@ -8,4 +8,3 @@ Tango Devices
 .. toctree::
 
   DishManager Device Server<dish_manager>
-  Test Devices<test_devices/index>

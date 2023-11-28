@@ -106,3 +106,17 @@ $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
 ## Writing documentation
 
 The documentation for this project, including how to get started with it, can be found in the docs folder.
+Use the code below to generate the mode transition graph:
+```python
+from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
+from  matplotlib import pyplot as plt
+import networkx as nx
+
+model = DishModeModel()
+# create a matplotlib axis object
+ax = plt.subplot(121)
+
+# draw the transitions
+nx.draw(model.dishmode_graph, ax=axis, with_labels=True, font_weight='bold')
+plt.show()
+```
