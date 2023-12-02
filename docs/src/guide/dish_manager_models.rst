@@ -1,9 +1,9 @@
-=================
-DishManager Model
-=================
+==============
+DishMode Model
+==============
 
 Every transition is managed by DishManager's component manager through the model.
-The model has a mode transition network and rules engine working together to specify:
+The model has a dish mode transition network working with a rules engine working to specify:
 
 * the allowed modes Dish has to be in to execute a command.
 * the respective values the attributes in the underlying devices should report to
