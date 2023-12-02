@@ -80,9 +80,11 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
     "sphinx.ext.todo",
+    "sphinx_tabs.tabs",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
     "sphinxcontrib.plantuml",
+    'sphinx_copybutton',
 ]
 autoclass_content = "class"
 plantuml_syntax_error_image = True

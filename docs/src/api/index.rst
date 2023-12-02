@@ -3,14 +3,13 @@ API
 ===
 
 .. toctree::
-  :caption: Devices Interface
+  :caption: DishManager Interface
   :maxdepth: 2
 
-  DishManager and TestDevices<devices/index>
-  DishManager YAML Spec<dish_manager_interface>
+  DishManager<devices/index>
 
 .. toctree::
-  :caption: Subpackages and Other Modules
+  :caption: Models and Component Managers
   :maxdepth: 2
 
   Models<models/index>

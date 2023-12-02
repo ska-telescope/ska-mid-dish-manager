@@ -1683,6 +1683,25 @@ testing = ["covdefaults (>=2.2.2)", "coverage (>=7.2.2)", "diff-cover (>=7.5)", 
 type-comment = ["typed-ast (>=1.5.4)"]
 
 [[package]]
+name = "sphinx-copybutton"
+version = "0.5.2"
+description = "Add a copy button to each of your code cells."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "sphinx-copybutton-0.5.2.tar.gz", hash = "sha256:4cf17c82fb9646d1bc9ca92ac280813a3b605d8c421225fd9913154103ee1fbd"},
+    {file = "sphinx_copybutton-0.5.2-py3-none-any.whl", hash = "sha256:fb543fd386d917746c9a2c50360c7905b605726b9355cd26e9974857afeae06e"},
+]
+
+[package.dependencies]
+sphinx = ">=1.8"
+
+[package.extras]
+code-style = ["pre-commit (==2.12.1)"]
+rtd = ["ipython", "myst-nb", "sphinx", "sphinx-book-theme", "sphinx-examples"]
+
+[[package]]
 name = "sphinx-rtd-theme"
 version = "1.3.0"
 description = "Read the Docs theme for Sphinx"
@@ -1701,6 +1720,27 @@ sphinxcontrib-jquery = ">=4,<5"
 
 [package.extras]
 dev = ["bump2version", "sphinxcontrib-httpdomain", "transifex-client", "wheel"]
+
+[[package]]
+name = "sphinx-tabs"
+version = "3.4.4"
+description = "Tabbed views for Sphinx"
+category = "dev"
+optional = false
+python-versions = "~=3.7"
+files = [
+    {file = "sphinx-tabs-3.4.4.tar.gz", hash = "sha256:f1b72c4f23d1ba9cdcaf880fd883524bc70689f561b9785719b8b3c3c5ed0aca"},
+    {file = "sphinx_tabs-3.4.4-py3-none-any.whl", hash = "sha256:85939b689a0b0a24bf0da418b9acf14b0b0fca7a7a5cd35461ee452a2d4e716b"},
+]
+
+[package.dependencies]
+docutils = ">=0.18.0,<0.19.0"
+pygments = "*"
+sphinx = "*"
+
+[package.extras]
+code-style = ["pre-commit (==2.13.0)"]
+testing = ["bs4", "coverage", "pygments", "pytest (>=7.1,<8)", "pytest-cov", "pytest-regressions", "rinohtype"]
 
 [[package]]
 name = "sphinxcontrib-applehelp"
@@ -2057,4 +2097,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10"
-content-hash = "5555050116d70cb90b6285e524fa03ab8e7dcf461d6d7f6f153c776f825f22f9"
+content-hash = "25347d1e4c7f57261b24f16d54490920d182c58807637479d2afb73aa4f04353"

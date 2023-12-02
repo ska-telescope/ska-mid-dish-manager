@@ -16,17 +16,13 @@ those sub-element devices.
   :width: 100%
   :alt: Dish LMC diagram
 
-Developer Guide
----------------
-
 .. toctree::
   :maxdepth: 1
 
-   Design<guide/dish_manager_design>
-   Component Managers<guide/component_managers>
-   Abort Commands<guide/abort_commands>
-   Models<guide/dish_manager_models>
+   Developer Guide<guide/index>
+   User Guide<user_guide/index>
    API<api/index>
+
 
 Indices and tables
 ==================
