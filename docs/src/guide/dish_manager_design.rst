@@ -43,6 +43,9 @@ sub components using threads monitoring event subscriptions for a number of attr
 Testing
 -------
 
+python-test
+^^^^^^^^^^^
+
 Since the component managers manage the interactions with the devices, we are
 able to check the robustness of our component manager and the business rules
 captured in our model without spinning up any tango infrastructure. These
@@ -51,6 +54,9 @@ server interface is tested (using a DeviceTestContext) without having to set up
 client connections to the sub components. The necessary triggers on the sub 
 components needed to effect a transition on DishManager are manipulated from
 weak references to the sub component managers. 
+
+k8-test
+^^^^^^^
 
 The final level of testing runs with all live tango devices, to test the entire
 chain from events to callbacks on the various component managers down to the

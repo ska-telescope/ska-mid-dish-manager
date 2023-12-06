@@ -33,12 +33,78 @@ Deploy DishManager with Simulators
         $ GITLAB_CI=false make k8s-install-chart
 
 
+3. Advanced: Deploy ska-mid-dish-manager from your repository
+
+.. tabs::
+
+   .. tab:: ska-mid-dish-manager as a chart dependency
+
+      Assumption: `templates repository`_ is used to manage your deployment.
+
+      The ska-mid-dish-manager chart can be added as a chart dependency in your own repository
+      to include it as part of your own deployment process. This will also require setting some
+      additional configuration in your values file.
+
+      .. code-block:: rst
+         
+         # in chart.yaml
+         ...
+         - name: ska-mid-dish-manager
+         version: x.x.x
+         repository: https://artefact.skao.int/repository/helm-internal
+
+         - name: ska-mid-dish-simulators
+         version: x.x.x
+         repository: https://artefact.skao.int/repository/helm-internal
+         condition: ska-mid-dish-simulators.enabled
+
+
+      .. code-block:: rst
+         
+         # in values.yaml
+         ...
+         ska-mid-dish-manager:
+         enabled: true
+
+         ska-mid-dish-simulators:
+         enabled: true
+         deviceServers:
+            spfdevice:
+               enabled: true
+            spfrxdevice:
+               enabled: true
+            dsOpcuaSimulator:
+               enabled: true
+
+         ska-mid-dish-ds-manager:
+         enabled: true
+
+
+      Pass `extra variables`_ to your make target to set the parameters for deployment.
+
+      .. code-block:: console
+         
+         $ K8S_CHART_PARAMS='--set global.minikube=true \
+         --set global.operator=true \
+         --set global.dishes={001,002} \
+         --set ska-mid-dish-simulators.enabled=true \
+         --set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
+         --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
+         --set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
+         --set ska-mid-dish-ds-manager.enabled=true'
+         make k8s-install-chart
+
+      .. note:: Tango DB is not deployed by default, to deploy it add ``--set ska-tango-base.enabled=true``
+         if it's not part of your existing deployment. Also, use ``false`` for the global operator
+         flag if you're not making use of the ska tango operator in your repository.
+
+
 The deployment will constitute pods for:
 
 * Tango DB
 * DishManager
 * DSManager
-* Simulators: SPFRx, SPF simulators & OPCUA server
+* Simulators: SPF, SPFRx & OPCUA server
 
 All these pods have to be up in the ``ska-mid-dish-manager`` namespace to have a
 fully functional software to interact. The pod of particular interest will be
@@ -72,7 +138,9 @@ itango from the pod's shell.
         $ kubectl apply -f sandbox.yaml
         $ itango3
 
-The sandbox pod can be killed using ``Ctrl + k``. 
+The sandbox pod can be killed using ``Ctrl + k``.
+
+.. note:: Deploy DishManager before running itango on the sandbox pod to avoid database connection errors
 
 .. tabs::
 
@@ -91,9 +159,8 @@ The sandbox pod can be killed using ``Ctrl + k``.
         $ make k8s-uninstall-chart
 
 
-.. note:: Deploy DishManager before running itango on the sandbox pod to avoid database connection errors
-
-
 .. _set up your development environment: https://developer.skatelescope.org/en/latest/tools/tango-devenv-setup.html
 .. _k9s: https://github.com/derailed/k9s
 .. _example configuration file: https://gitlab.com/ska-telescope/ska-mid-dish-manager/-/blob/main/charts/sandbox.yaml?ref_type=heads
+.. _templates repository: https://gitlab.com/ska-telescope/templates-repository
+.. _extra variables: https://gitlab.com/ska-telescope/ska-mid-dish-manager#deploy-the-chart-with-simulators

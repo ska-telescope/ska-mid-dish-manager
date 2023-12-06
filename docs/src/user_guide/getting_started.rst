@@ -56,8 +56,10 @@ can be found in the :doc:`API section <../api/devices/dish_manager_interface>`.
 Since DishManager fans out commands to sub devices which in turn execute over a relatively "long"
 period, most of the commands are implemented to run asynchronously. The progress of a command can
 be tracked on `dedicated attributes`_ which have a ``longrunningcommand_`` suffix (this is in 
-addition to the attribute which will report the final state of the Dish). Event subscription will
-be used to monitor progress on the dishMode and configuredBand transitions in this example.
+addition to the attribute which will report the final state of the Dish).
+
+The specific attribute(s) which is updated for each command is :ref:`tabulated below <tabulated-commands-and-attributes>`.
+Event subscription will be used to monitor progress on the dishMode and configuredBand transitions in this example.
 
 .. tabs::
 
@@ -96,6 +98,35 @@ be used to monitor progress on the dishMode and configuredBand transitions in th
    various attributes which determine what the final state of the dish (it's based on what
    the sub components are reporting). This is where the custom command ``GetComponentStates``
    is especially useful.
+
+.. _tabulated-commands-and-attributes:
+
+**Commands and updated attributes**
+
++---------------------+----------------------------------------+
+| Commands            | Attributes to watch                    |
++=====================+========================================+
+|| SetStandbyLPMode   || dishMode                              |
+|| SetStandbyFPMode   ||                                       |
+|| SetOperateMode     ||                                       |
++---------------------+----------------------------------------+
+|| SetStowMode        || dishMode, desiredPointing,            |
+|| SetMaintenanceMode || achievedPointing                      |
++---------------------+----------------------------------------+
+|| ConfigureBand      || configuredBand                        |
+|| [1,2,3,4,,5a,5b]   || dishMode (transient change to CONFIG  |
+||                    || and back to previous mode)            |
++---------------------+----------------------------------------+
+| SetKValue           | kValue                                 |
++---------------------+----------------------------------------+
+|| Scan               || pointingState, desiredPointing,       |
+|| Slew               || achievedPointing, achievedTargetLock, |
+|| Track              ||                                       |
++---------------------+----------------------------------------+
+| TrackStop           | pointingState                          |
++---------------------+----------------------------------------+
+| TrackLoadStaticOff  | N/A                                    |
++---------------------+----------------------------------------+
 
 .. _set up your development environment: https://developer.skatelescope.org/en/latest/tools/tango-devenv-setup.html
 .. _dedicated attributes: https://developer.skao.int/projects/ska-tango-base/en/latest/guide/long_running_command.html
