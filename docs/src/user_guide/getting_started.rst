@@ -8,9 +8,6 @@ Prerequisites
 It is assumed here that you have `set up your development environment`_
 and a :doc:`deployed instance of DishManager <how_to>` with the simulators.
 
-[Move to DISH_LMC docs] Or you are connecting to a deployment in one of the
-integration environments using `manual jobs in the GitLab pipeline`_.
-
 
 Explore DishManager Interface from Client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
