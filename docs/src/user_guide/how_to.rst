@@ -73,8 +73,8 @@ Deploy DishManager with Simulators
                enabled: true
             spfrxdevice:
                enabled: true
-            dsOpcuaSimulator:
-               enabled: true
+         dsOpcuaSimulator:
+            enabled: true
 
          ska-mid-dish-ds-manager:
          enabled: true
