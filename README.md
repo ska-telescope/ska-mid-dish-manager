@@ -106,7 +106,13 @@ For dish mananager example usage, consult the [user guide](https://developer.ska
 
 ## Writing documentation
 
-The documentation for this project, including how to get started with it, can be found in the docs folder.
+The documentation for this project can be found in the docs folder. To generate the docs locally,
+run the command below and browse the docs from `docs/build/index.html`.
+
+```bash
+make docs-build html
+```
+
 Use the code below to generate the mode transition graph:
 
 ```python
