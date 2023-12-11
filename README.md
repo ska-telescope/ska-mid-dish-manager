@@ -107,7 +107,7 @@ For dish mananager example usage, consult the [user guide](https://developer.ska
 ## Writing documentation
 
 The documentation for this project can be found in the docs folder. To generate the docs locally,
-run the command below and browse the docs from `docs/build/index.html`.
+run the command below and browse the docs from `docs/build/html/index.html`.
 
 ```bash
 make docs-build html
