@@ -27,32 +27,22 @@ TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 # PYTHON
 #############################
 # Set the specific environment variables required for pytest
-ifeq ($(MAKECMDGOALS),python-test)
-MARK = unit
-endif
-
-ifeq ($(MAKECMDGOALS),k8s-test-runner)
-MARK = acceptance
-TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
-endif
-
-ifeq ($(MAKECMDGOALS),k8s-lmc-test)
-MARK = lmc
-TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
-endif
+PYTHON_SWITCHES_FOR_BLACK ?= --line-length 99
+PYTHON_SWITCHES_FOR_ISORT ?= -w 99
+PYTHON_SWITCHES_FOR_FLAKE8 ?= --max-line-length=99
+PYTHON_LINE_LENGTH ?= 99
 
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
-
 PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --cucumberjson=build/cucumber.json --event-storage-files-path="build/events"
 
-PYTHON_SWITCHES_FOR_BLACK ?= --line-length 99
+python-test: MARK = unit
+k8s-test-runner: MARK = acceptance
+k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
 
-PYTHON_SWITCHES_FOR_ISORT ?= -w 99
-
-PYTHON_SWITCHES_FOR_FLAKE8 ?= --max-line-length=99
-
-PYTHON_LINE_LENGTH ?= 99
+ifeq ($(CI_JOB_NAME_SLUG),lmc-acceptance-test)
+k8s-test-runner: MARK = lmc
+endif
 
 -include .make/python.mk
 
@@ -90,32 +80,3 @@ K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 
 # include your own private variables for custom deployment configuration
 -include PrivateRules.mak
-
-
-#############################
-# make targets for ci file
-#############################
-k8s-lmc-test:
-##  Cleanup
-	@rm -fr build; mkdir build
-	@find ./$(k8s_test_folder) -name "*.pyc" -type f -delete
-
-##  Install requirements
-	if [[ -f pyproject.toml ]]; then \
-		poetry config virtualenvs.create false; \
-		echo 'k8s-test: installing poetry dependencies';  \
-		poetry install; \
-	else if [[ -f $(k8s_test_folder)/requirements.txt ]]; then \
-			echo 'k8s-test: installing $(k8s_test_folder)/requirements.txt'; \
-			pip install -qUr $(k8s_test_folder)/requirements.txt; \
-		fi; \
-	fi;
-
-##  Run tests
-	export PYTHONPATH=${PYTHONPATH}:/app/src$(k8s_test_src_dirs)
-	mkdir -p build
-	cd $(K8S_RUN_TEST_FOLDER) && $(K8S_TEST_TEST_COMMAND); echo $$? > $(BASE)/build/status
-
-##  Post tests reporting
-	pip list > build/pip_list.txt
-	@echo "k8s_test_command: test command exit is: $$(cat build/status)"

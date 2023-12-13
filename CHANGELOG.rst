@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+## unreleased
+*************
+* Use ska-ser-sphinx-theme for documentation
+* Expand docs to include user guide with example usage
+
 Version 2.3.1
 *************
 - Charts

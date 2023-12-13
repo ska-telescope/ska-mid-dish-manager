@@ -6,6 +6,7 @@ DishManager Models
 
 .. toctree::
    
+   Command Map<command_map>
    DishMode Model<dish_mode_model>
    Dish Enums<dish_enums>
    Dish State Transition Computation<dish_state_transition>

@@ -17,6 +17,11 @@ subservient states. The aggregation is based on rules which have been baked
 into the model to inform what the final transition will be anytime there is a
 fresh update from the subservient devices or the DishManager requests a command.
 
+.. toctree::
+  :maxdepth: 1
+
+   AbortCommands on DishManager<abort_commands>
+
 .. note:: The fanned out command to the subservient device can fail immediately or
   at a later stage during the execution. DishManager does not bail out on the
   requested command if a failure occurs during the execution of the sub commands.

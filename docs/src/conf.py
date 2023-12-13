@@ -60,21 +60,14 @@ autodoc_default_options = {
 }
 
 
-def setup(app):
-    """
-    Initialise app.
-    """
-    app.add_css_file("css/custom.css")
-    app.add_js_file("js/gitlab.js")
-
 # -- Project information -----------------------------------------------------
 
-project = 'SKA Mid Dish Manager'
-copyright = '2023, KAROO Team'
-author = 'KAROO Team'
+project = "SKA Mid Dish Manager"
+copyright = "2023, KAROO Team"
+author = "KAROO Team"
 
 # The full version, including alpha/beta/rc tags
-release = '2.3.1'
+release = "2.3.1"
 
 
 # -- General configuration ---------------------------------------------------
@@ -86,13 +79,12 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
-    "sphinx.ext.ifconfig",
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.mathjax",
     "sphinx.ext.todo",
+    "sphinx_tabs.tabs",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
     "sphinxcontrib.plantuml",
+    'sphinx_copybutton',
 ]
 autoclass_content = "class"
 plantuml_syntax_error_image = True
@@ -117,7 +109,7 @@ exclude_patterns = []
 add_module_names = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
@@ -129,19 +121,10 @@ todo_include_todos = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "ska_ser_sphinx_theme"
 
-html_context = {
-    "display_gitlab": True,  # Integrate GitHub
-    "favicon": "img/favicon.ico",
-    "logo": "img/logo.png",
-    "theme_logo_only": True,
-    "gitlab_user": "ska-telescope",  # Username
-    "gitlab_repo": "ska-mid-dish-manager",  # Repo name
-    "gitlab_version": "main",  # Version
-    "conf_py_path": "/docs/src/",  # Path in the checkout to the docs root
-}
+html_context = {}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = []
