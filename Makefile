@@ -69,6 +69,7 @@ K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 endif
 
 K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
+	--set global.dishes="{001,100,101}" \
 	--set global.tango_host=$(TANGO_HOST) \
 	--set global.operator=$(SKA_TANGO_OPERATOR) \
 	$(CUSTOM_VALUES)

@@ -31,7 +31,7 @@ global:
   # defined in ADR-32 i.e. SKA[nnn] where nnn starts
   # from 001 to 133
   dish_devices: ["dish-manager"]
-  dishes: ["001", "100", "101"]
+  dishes: ["001"]
 
 
 dsconfig:
