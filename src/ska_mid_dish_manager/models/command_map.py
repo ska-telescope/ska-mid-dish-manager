@@ -269,19 +269,6 @@ class CommandMap:
             PointingState.SLEW,
         )
 
-    def scan(
-        self, task_abort_event=None, task_callback: Optional[Callable] = None
-    ):
-        """Transition the dish to Scan mode"""
-        self.logger.info(f"Scan command called")
-
-        if task_callback is not None:
-            task_callback(
-                progress=f"Scan completed",
-                status=TaskStatus.COMPLETED,
-                result=f"scan completed",
-            )
-
     def track_load_static_off(
         self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None
     ):
