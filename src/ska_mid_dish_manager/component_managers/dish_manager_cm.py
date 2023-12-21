@@ -642,7 +642,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Slew the dish."""
+        """Scan a target."""
         status, response = self.submit_task(
             self._command_map.scan, args=[], task_callback=task_callback
         )
