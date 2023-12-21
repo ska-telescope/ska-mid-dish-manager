@@ -87,6 +87,7 @@ class DishManager(SKAController):
             ("ConfigureBand2", "configure_band_cmd"),
             ("SetStowMode", "set_stow_mode"),
             ("Slew", "slew"),
+            ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
         ]:
             self.register_command_object(
@@ -1054,15 +1055,18 @@ class DishManager(SKAController):
         """Flushes the queue of time stamped commands."""
         raise NotImplementedError
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
-    def Scan(self):
+    @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    def Scan(self) -> DevVarLongStringArrayType:
         """
         The Dish is tracking the commanded pointing positions within the
         specified SCAN pointing accuracy. (TBC14)
         NOTE: This pointing state is currently proposed and there are
         currently no requirements for this functionality.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("Scan")
+        result_code, unique_id = handler()
+
+        return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def SetMaintenanceMode(self):
