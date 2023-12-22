@@ -9,6 +9,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 * Use ska-ser-sphinx-theme for documentation
 * Expand docs to include user guide with example usage
+* Implement placeholder long running command for scan command
 
 Version 2.3.1
 *************
