@@ -11,6 +11,7 @@ from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 
 
 # pylint:disable=attribute-defined-outside-init
+# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 class TestArchiveEvent:
