@@ -638,6 +638,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    def scan(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Scan a target."""
+        status, response = self.submit_task(
+            self._command_map.scan, args=[], task_callback=task_callback
+        )
+        return status, response
+
     def track_load_static_off(
         self,
         values: list[float],

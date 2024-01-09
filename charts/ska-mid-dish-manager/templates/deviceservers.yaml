@@ -4,7 +4,7 @@
 
 {{ if $deviceserver.enabled }}
 
-{{- $_ := set  $localchart.Values "coalesced_dishes" (coalesce $localchart.Values.global.dishes $deviceserver.instances ) }}
+{{- $_ := set  $localchart.Values "coalesced_dishes" (coalesce ($localchart.Values.global.dishes | toStrings) $deviceserver.instances ) }}
 
 {{- if hasKey $deviceserver "file"}}
 

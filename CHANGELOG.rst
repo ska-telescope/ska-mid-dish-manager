@@ -5,10 +5,12 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
-## unreleased
+Version 2.3.2
 *************
-* Use ska-ser-sphinx-theme for documentation
-* Expand docs to include user guide with example usage
+- Use ska-ser-sphinx-theme for documentation
+- Expand docs to include user guide with example usage
+- Implement placeholder long running command for scan command
+- Explicitly convert dish IDs to strings in template
 
 Version 2.3.1
 *************
