@@ -126,13 +126,25 @@ class DishManager(SKAController):
                 "spfConnectionState",
                 self.component_manager.sub_component_managers["SPF"].communication_state,
             )
+            self.push_archive_event(
+                "spfConnectionState",
+                self.component_manager.sub_component_managers["SPF"].communication_state,
+            )
         if attribute_name == "spfrxConnectionState":
             self.push_change_event(
                 "spfrxConnectionState",
                 self.component_manager.sub_component_managers["SPFRX"].communication_state,
             )
+            self.push_archive_event(
+                "spfrxConnectionState",
+                self.component_manager.sub_component_managers["SPFRX"].communication_state,
+            )
         if attribute_name == "dsConnectionState":
             self.push_change_event(
+                "dsConnectionState",
+                self.component_manager.sub_component_managers["DS"].communication_state,
+            )
+            self.push_archive_event(
                 "dsConnectionState",
                 self.component_manager.sub_component_managers["DS"].communication_state,
             )
@@ -165,6 +177,7 @@ class DishManager(SKAController):
             attribute_variable = change_case(attribute_name)
             setattr(self, attribute_variable, comp_state_value)
             self.push_change_event(attribute_name, comp_state_value)
+            self.push_archive_event(attribute_name, comp_state_value)
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """
@@ -250,6 +263,7 @@ class DishManager(SKAController):
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
+                device.set_archive_event(attr, True, False)
 
             # configure change events for the connection state attributes
             for attr in (
@@ -258,6 +272,7 @@ class DishManager(SKAController):
                 "dsConnectionState",
             ):
                 device.set_change_event(attr, True, False)
+                device.set_archive_event(attr, True, False)
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
