@@ -5,6 +5,12 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.3.3
+*************
+- Fix dish naming when dish IDs 100 or more
+- Update simulators to version v1.6.2
+- Update ds-manager to version v1.2.3
+
 Version 2.3.2
 *************
 - Use ska-ser-sphinx-theme for documentation
