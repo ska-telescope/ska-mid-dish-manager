@@ -64,7 +64,8 @@ CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
 	--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
 	--set ska-mid-dish-ds-manager.enabled=true \
-	--set ska-tango-base.enabled=true
+	--set ska-tango-base.enabled=true \
+	--set global.dishes="{001,111}"
 K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 endif
 
