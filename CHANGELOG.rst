@@ -5,6 +5,13 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Version 2.3.4
+*************
+- Update ds-manager to version v1.2.4
+- Update ska-tango-util to version v0.4.10
+- Update ska-tango-base to version v0.4.8
+- Update simulators to version v1.6.3
+
 Version 2.3.3
 *************
 - Fix dish naming when dish IDs 100 or more
