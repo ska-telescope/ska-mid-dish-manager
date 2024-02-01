@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+## unreleased
+*************
+- Include ResultCode in updates sent to longRunningCommandResult
+
 Version 2.3.4
 *************
 - Update ds-manager to version v1.2.4

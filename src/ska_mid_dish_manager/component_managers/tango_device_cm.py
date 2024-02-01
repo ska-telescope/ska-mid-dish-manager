@@ -263,7 +263,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception(err)
             if task_callback:
-                task_callback(status=TaskStatus.FAILED, exception=err)
+                task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
             return
 
         # perform another abort event check in case it was missed earlier
@@ -271,7 +271,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             task_callback(progress=f"{command_name} was aborted")
 
         if task_callback:
-            task_callback(status=TaskStatus.COMPLETED, result=str(result))
+            task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(result)))
 
     @_check_connection
     def execute_command(self, command_name: str, command_arg: Any) -> Any:

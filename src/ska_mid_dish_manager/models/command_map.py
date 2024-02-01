@@ -3,8 +3,8 @@ import enum
 import json
 from typing import Callable, Optional
 
+from ska_control_model import ResultCode, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
-from ska_tango_base.executor import TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -280,7 +280,7 @@ class CommandMap:
             task_callback(
                 progress="Scan completed",
                 status=TaskStatus.COMPLETED,
-                result="scan completed",
+                result=(ResultCode.OK, "Scan completed"),
             )
 
     def track_load_static_off(
@@ -385,7 +385,7 @@ class CommandMap:
             task_callback(
                 progress=f"{running_command} Aborted",
                 status=TaskStatus.ABORTED,
-                result=f"{running_command} Aborted",
+                result=(ResultCode.ABORTED, f"{running_command} Aborted"),
             )
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
@@ -416,7 +416,7 @@ class CommandMap:
             task_callback(
                 progress=f"{running_command} completed",
                 status=TaskStatus.COMPLETED,
-                result=f"{running_command} completed",
+                result=(ResultCode.OK, f"{running_command} completed"),
             )
             return
 
@@ -438,7 +438,7 @@ class CommandMap:
                 task_callback(
                     progress=f"{running_command} Aborted",
                     status=TaskStatus.ABORTED,
-                    result=f"{running_command} Aborted",
+                    result=(ResultCode.ABORTED, f"{running_command} Aborted"),
                 )
                 return
 
@@ -468,7 +468,7 @@ class CommandMap:
             #     task_callback(
             #         progress=f"{running_command} completed",
             #         status=TaskStatus.FAILED,
-            #         result=f"{running_command} completed",
+            #         result=(ResultCode.OK, f"{running_command} completed"),
             #     )
             #     return
 
@@ -484,6 +484,6 @@ class CommandMap:
                 task_callback(
                     progress=f"{running_command} completed",
                     status=TaskStatus.COMPLETED,
-                    result=f"{running_command} completed",
+                    result=(ResultCode.OK, f"{running_command} completed"),
                 )
                 return

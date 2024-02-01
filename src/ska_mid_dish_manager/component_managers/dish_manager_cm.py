@@ -530,7 +530,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "configuredBand can not be in " f"{Band.NONE.name} or {Band.UNKNOWN.name}",
             )
             if task_callback:
-                task_callback(status=TaskStatus.REJECTED, exception=ex)
+                task_callback(status=TaskStatus.REJECTED, exception=(ResultCode.REJECTED, ex))
             raise ex
 
         status, response = self.submit_task(
@@ -549,7 +549,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"Track command only allowed in `OPERATE` mode. Current dishMode: {dish_mode}."
             )
             if task_callback:
-                task_callback(status=TaskStatus.REJECTED, exception=ex)
+                task_callback(status=TaskStatus.REJECTED, exception=(ResultCode.REJECTED, ex))
             raise ex
 
         status, response = self.submit_task(
@@ -573,7 +573,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"pointing states. Current dishMode: {dish_mode}, pointingState: {pointing_state}"
             )
             if task_callback:
-                task_callback(status=TaskStatus.REJECTED, exception=ex)
+                task_callback(status=TaskStatus.REJECTED, exception=(ResultCode.REJECTED, ex))
             raise ex
 
         status, response = self.submit_task(
@@ -600,7 +600,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if self.component_state["configuredband"] == band_enum:
             if task_callback:
                 task_callback(
-                    status=TaskStatus.REJECTED, result=f"Already in band {band_enum.name}"
+                    status=TaskStatus.REJECTED,
+                    result=(ResultCode.REJECTED, f"Already in band {band_enum.name}"),
                 )
             return TaskStatus.REJECTED, f"Already in band {band_enum.name}"
 
