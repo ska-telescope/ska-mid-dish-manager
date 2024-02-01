@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 2.3.5
+*************
 - Include ResultCode in updates sent to longRunningCommandResult
 
 Version 2.3.4
