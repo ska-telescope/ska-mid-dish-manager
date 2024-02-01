@@ -107,15 +107,15 @@ class TestDishManager:
         # Sample events:
         # ('longrunningcommandresult',
         # ('1659015778.0797186_172264627776495_DS_SetStandbyFPMode',
-        #  '"result"'))
+        #  '[0, "result"]'))
 
         # ('longrunningcommandresult',
         # ('1659015778.0823436_222123736715640_SPF_SetOperateMode',
-        # '"result"'))
+        # '[0, "result"]'))
 
         # ('longrunningcommandresult',
         # ('1680213846.5427592_258218647656556_SetStandbyFPMode',
-        # '"SetStandbyFPMode completed"'))
+        # '[0, "SetStandbyFPMode completed"]'))
 
         events = event_store.wait_for_n_events(4)
         event_values = event_store.get_data_from_events(events)

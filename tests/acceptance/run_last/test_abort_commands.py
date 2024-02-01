@@ -2,6 +2,7 @@
 import pytest
 import tango
 
+from ska_control_model import ResultCode
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
@@ -49,7 +50,9 @@ def test_abort_commands(event_store, event_store_class, dish_manager_proxy, spf_
     dish_manager_proxy.AbortCommands()
 
     # confirm dishmanager aborted the request on lrcResult
-    event_store.wait_for_value((f"{unique_id}", "SetStandbyFPMode Aborted"))
+    event_store.wait_for_value(
+        (f"{unique_id}", f"[{ResultCode.ABORTED}, SetStandbyFPMode Aborted]")
+    )
     assert dish_manager_proxy.dishMode != DishMode.STANDBY_FP
     # ensure that the queue is cleared out
     earlier_commands_in_queue = cmds_in_queue_store.get_queue_values()
