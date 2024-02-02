@@ -7,7 +7,12 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 2.3.5
+*************
 - Include ResultCode in updates sent to longRunningCommandResult
+- Upgraded ska-mid-dish-simulators chart to v1.6.4
+- Upgraded ska-mid-dish-ds-manager chart to v1.2.5
 
 Version 2.3.4
 *************
