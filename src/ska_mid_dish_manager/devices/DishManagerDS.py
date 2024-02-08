@@ -22,6 +22,7 @@ from tango import AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DispLev
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.interface.input_validation import TrackLoadTableFormatting
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
@@ -34,6 +35,10 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
+
+# Used for input validation. Input samples to tracktable that is less that
+# TRACK_LOAD_FUTURE_THRESHOLD_MSECS in the future are logged
+TRACK_LOAD_FUTURE_THRESHOLD_MSECS = 5000
 
 
 # pylint: disable=too-many-instance-attributes
@@ -725,18 +730,21 @@ class DishManager(SKAController):
         # - (timestamp, azimuth coordinate, elevation coordinate)
         # i.e. [timestamp_0, az_pos_0, el_pos_0, ..., timestamp_n, az_pos_n, el_pos_n]
         self.logger.debug("programTrackTable write method called with table %s", table)
+
+        # perform input validation on table
+        try:
+            TrackLoadTableFormatting.check_track_table_input_valid(
+                logger=self.logger, table=table, future_time_ms=TRACK_LOAD_FUTURE_THRESHOLD_MSECS
+            )
+        except Exception as e:
+            raise e
+
         length_of_table = len(table)
-        if length_of_table > 0:
-            # Checks that the tables length is a multiple of 3
-            if length_of_table % 3 == 0:
-                sequence_length = length_of_table / 3
-                self.component_manager._track_load_table(sequence_length, table)
-                self._program_track_table = table
-            else:
-                raise ValueError(
-                    f"Length of table ({len(table)}) is not a multiple of 3 "
-                    "(timestamp, azimuth coordinate, elevation coordinate) as expected."
-                )
+        sequence_length = length_of_table / 3
+        TrackLoadTableFormatting.format_track_table_time_unixms_to_tai(table)
+        # to DS [TAI, AZ, EL, ...]
+        self.component_manager._track_load_table(sequence_length, table)
+        self._program_track_table = table
 
     @attribute(
         dtype=int,
