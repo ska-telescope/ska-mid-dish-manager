@@ -28,7 +28,9 @@ class TestTrackLoadTableFormatting:
         offset_ms = 100
         time_future = time() * 1e3 + future_time_ms + offset_ms
         table = [time_future, 2.0, 3.0]
-        TrackLoadTableFormatting.check_track_table_input_valid(self.logger, table, future_time_ms)
+        TrackLoadTableFormatting().check_track_table_input_valid(
+            self.logger, table, future_time_ms
+        )
         assert not self.logger.info.called
 
     def test_track_table_input_invalid_time(self):
@@ -37,7 +39,9 @@ class TestTrackLoadTableFormatting:
         offset_ms = -100
         time_future = time() * 1e3 + future_time_ms + offset_ms
         table = [time_future, 2.0, 3.0]
-        TrackLoadTableFormatting.check_track_table_input_valid(self.logger, table, future_time_ms)
+        TrackLoadTableFormatting().check_track_table_input_valid(
+            self.logger, table, future_time_ms
+        )
         assert self.logger.info.called
 
     def test_track_table_input_invalid_length(self):
@@ -47,7 +51,7 @@ class TestTrackLoadTableFormatting:
         time_future = time() * 1e3 + future_time_ms + offset_ms
         table = [time_future, 2.0, 3.0, 4.0]
         with pytest.raises(ValueError):
-            TrackLoadTableFormatting.check_track_table_input_valid(
+            TrackLoadTableFormatting().check_track_table_input_valid(
                 self.logger, table, future_time_ms
             )
 
@@ -55,7 +59,9 @@ class TestTrackLoadTableFormatting:
         """Test when table length is empty"""
         future_time_ms = 5000
         table = []
-        TrackLoadTableFormatting.check_track_table_input_valid(self.logger, table, future_time_ms)
+        TrackLoadTableFormatting().check_track_table_input_valid(
+            self.logger, table, future_time_ms
+        )
         assert self.logger.warn.called
 
     def test_track_table_time_unixms_to_tai_s(self):
@@ -66,7 +72,7 @@ class TestTrackLoadTableFormatting:
         unix_time_ms = now + future_time_ms + offset
         table = [unix_time_ms, 2.0, 3.0]
         astropy_time_now = Time(table[0] / 1e3, format="unix")
-        TrackLoadTableFormatting.format_track_table_time_unixms_to_tai(table)
+        TrackLoadTableFormatting().format_track_table_time_unixms_to_tai(table)
         assert table[0] == astropy_time_now
 
     def test_track_table_check_tai_computation_time(self):
@@ -79,7 +85,7 @@ class TestTrackLoadTableFormatting:
             track_table.extend([start_time_offset_ms + n, 0, 0])
 
         t1 = perf_counter()
-        TrackLoadTableFormatting.format_track_table_time_unixms_to_tai(track_table)
+        TrackLoadTableFormatting().format_track_table_time_unixms_to_tai(track_table)
         t2 = perf_counter()
         delta = t2 - t1
         assert (

@@ -733,7 +733,7 @@ class DishManager(SKAController):
 
         # perform input validation on table
         try:
-            TrackLoadTableFormatting.check_track_table_input_valid(
+            TrackLoadTableFormatting().check_track_table_input_valid(
                 logger=self.logger, table=table, future_time_ms=TRACK_LOAD_FUTURE_THRESHOLD_MSECS
             )
         except Exception as e:
@@ -741,7 +741,7 @@ class DishManager(SKAController):
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
-        TrackLoadTableFormatting.format_track_table_time_unixms_to_tai(table)
+        TrackLoadTableFormatting().format_track_table_time_unixms_to_tai(table)
         # to DS [TAI, AZ, EL, ...]
         self.component_manager._track_load_table(sequence_length, table)
         self._program_track_table = table

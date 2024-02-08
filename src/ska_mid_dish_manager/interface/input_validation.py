@@ -11,9 +11,8 @@ from astropy.time import Time
 class TrackLoadTableFormatting:
     """Class that encapsulates related validation and mapping for TrackLoadTable command"""
 
-    @staticmethod
     def check_track_table_input_valid(
-        logger: Logger, table: List[float], future_time_ms: int
+        self, logger: Logger, table: List[float], future_time_ms: int
     ) -> None:
         """Entry point for track table validation"""
         length_of_table = len(table)
@@ -26,29 +25,24 @@ class TrackLoadTableFormatting:
                     "(timestamp, azimuth coordinate, elevation coordinate) as expected."
                 )
             # log if samples are not in the future by future_time_ms
-            TrackLoadTableFormatting.check_timestamp(
-                logger, table, length_of_table, future_time_ms
-            )
+            self._check_timestamp(logger, table, length_of_table, future_time_ms)
         else:
             logger.warn("Empty track table provided.")
 
-    @staticmethod
-    def format_track_table_time_unixms_to_tai(table: List[float]) -> None:
+    def format_track_table_time_unixms_to_tai(self, table: List[float]) -> None:
         """Convert each timestamp from unix millisecond to tai seconds"""
         for i in range(0, len(table), 3):
-            tai = TrackLoadTableFormatting.get_tai_from_unix_ms(table[i])
+            tai = self._get_tai_from_unix_ms(table[i])
             table[i] = tai
 
-    @staticmethod
-    def get_tai_from_unix_ms(unix_ms: float) -> float:
+    def _get_tai_from_unix_ms(self, unix_ms: float) -> float:
         """Calculate atomic time in seconds from unix time in milliseconds"""
         unix_time_in_seconds = unix_ms / 1000.0
         astropy_time_utc = Time(unix_time_in_seconds, format="unix")
         return astropy_time_utc.tai
 
-    @staticmethod
-    def check_timestamp(
-        logger: Logger, table: List[float], length_of_table: int, future_time_ms: float
+    def _check_timestamp(
+        self, logger: Logger, table: List[float], length_of_table: int, future_time_ms: float
     ) -> None:
         """Check that the timestamps are in the future by at least future_time_ms"""
         for i in range(0, length_of_table, 3):
