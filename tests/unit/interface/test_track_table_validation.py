@@ -9,7 +9,7 @@ from astropy.time import Time
 from ska_mid_dish_manager.interface.input_validation import TrackLoadTableFormatting
 
 MAX_TRACK_LOAD_TABLE_SAMPLES = 50
-MAX_TAI_COMPUTATION_TIME_S = 0.15
+MAX_TAI_COMPUTATION_TIME_S = 0.2
 
 
 # pylint:disable=attribute-defined-outside-init
