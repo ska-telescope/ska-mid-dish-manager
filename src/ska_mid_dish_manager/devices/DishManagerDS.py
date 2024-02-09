@@ -22,7 +22,10 @@ from tango import AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DispLev
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.interface.input_validation import TrackLoadTableFormatting
+from ska_mid_dish_manager.interface.input_validation import (
+    TrackLoadTableFormatting,
+    TrackTableTimestampError,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
@@ -732,11 +735,12 @@ class DishManager(SKAController):
         self.logger.debug("programTrackTable write method called with table %s", table)
 
         # perform input validation on table
-        track_table_validation = TrackLoadTableFormatting(self.logger)
         try:
-            track_table_validation.check_track_table_input_valid(
+            TrackLoadTableFormatting().check_track_table_input_valid(
                 table, TRACK_LOAD_FUTURE_THRESHOLD_SEC
             )
+        except TrackTableTimestampError as te:
+            self.logger.info(f"TrackTableTimestampError: {te}")
         except Exception as e:
             raise e
 

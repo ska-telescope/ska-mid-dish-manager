@@ -1,18 +1,18 @@
 """Module for containing input validation and formatting needed for translation
 between DSC and DS manager."""
 
-from logging import Logger
 from time import time
 from typing import List
 
 from astropy.time import Time
 
 
+class TrackTableTimestampError(ValueError):
+    ...
+
+
 class TrackLoadTableFormatting:
     """Class that encapsulates related validation and mapping for TrackLoadTable command"""
-
-    def __init__(self, logger: Logger) -> None:
-        self._logger = logger
 
     def check_track_table_input_valid(self, table: List[float], future_time_s: int) -> None:
         """Entry point for track table validation"""
@@ -26,9 +26,10 @@ class TrackLoadTableFormatting:
                     "(timestamp, azimuth coordinate, elevation coordinate) as expected."
                 )
             # log if samples are not in the future by future_time_s
-            self._check_timestamp(table, length_of_table, future_time_s)
-        else:
-            self._logger.warn("Empty track table provided.")
+            try:
+                self._check_timestamp(table, length_of_table, future_time_s)
+            except TrackTableTimestampError as te:
+                raise te
 
     def get_tai_from_unix_s(self, unix_s: float) -> float:
         """Calculate atomic time in seconds from unix time in seconds"""
@@ -45,7 +46,7 @@ class TrackLoadTableFormatting:
         for i in range(0, length_of_table, 3):
             timestamp_tai_s = table[i]
             if timestamp_tai_s - current_time_tai_s < future_time_s:
-                self._logger.info(
+                raise TrackTableTimestampError(
                     "Check track table parameters."
                     f"Timestamps less than {future_time_s}s into the future."
                 )
