@@ -8,7 +8,7 @@ from astropy.time import Time
 
 
 class TrackTableTimestampError(ValueError):
-    ...
+    """Class that is used to represent timestamp errors in the track load table"""
 
 
 class TrackLoadTableFormatting:
@@ -28,8 +28,8 @@ class TrackLoadTableFormatting:
             # log if samples are not in the future by future_time_s
             try:
                 self._check_timestamp(table, length_of_table, future_time_s)
-            except TrackTableTimestampError as te:
-                raise te
+            except TrackTableTimestampError as timestamp_error:
+                raise timestamp_error
 
     def get_tai_from_unix_s(self, unix_s: float) -> float:
         """Calculate atomic time in seconds from unix time in seconds"""
