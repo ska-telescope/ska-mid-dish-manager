@@ -10,7 +10,7 @@ server:
       classes:
         - name: "DishManager"
           devices:
-            - name: "ska{{ printf "%01s" . }}/elt/master"
+            - name: "mid-dish/dish-manager/SKA{{ printf "%01s" ( . | toString ) }}"
               properties:
                 - name: "ReceptorNumber"
                   values:
@@ -35,21 +35,21 @@ server:
     {{ if $.Values.dishmanager.ds.fqdn }}
                     - "{{ $.Values.dishmanager.ds.fqdn}}"
     {{ else }}
-                    - "ska{{ printf "%01s" . }}/{{ $.Values.dishmanager.ds.family_name }}/{{ $.Values.dishmanager.ds.member_name }}"
+                    - "mid-dish/{{ $.Values.dishmanager.ds.family_name }}/SKA{{ printf "%01s" . }}"
     {{ end }}
                 - name: "SPFDeviceFqdn"
                   values:
     {{ if $.Values.dishmanager.spf.fqdn }}
                     - "{{ $.Values.dishmanager.spf.fqdn}}"
     {{ else }}
-                    - "ska{{ printf "%01s" . }}/{{ $.Values.dishmanager.spf.family_name }}/{{ $.Values.dishmanager.spf.member_name }}"
+                    - "mid-dish/{{ $.Values.dishmanager.spf.family_name }}/SKA{{ printf "%01s" . }}"
     {{ end }}
                 - name: "SPFRxDeviceFqdn"
                   values:
     {{ if $.Values.dishmanager.spfrx.fqdn }}
                     - "{{ $.Values.dishmanager.spfrx.fqdn}}"
     {{ else }}
-                    - "ska{{ printf "%01s" . }}/{{ $.Values.dishmanager.spfrx.family_name }}/{{ $.Values.dishmanager.spfrx.member_name }}"
+                    - "mid-dish/{{ $.Values.dishmanager.spfrx.family_name }}/SKA{{ printf "%01s" . }}"
     {{ end }}
                 - name: "DishId"
                   values:

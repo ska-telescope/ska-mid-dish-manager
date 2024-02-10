@@ -23,13 +23,13 @@ def test_dish_manager_startups_with_expected_dish_mode(monitor_tango_servers, ev
 
 
 @pytest.mark.lmc
-@pytest.mark.parametrize("domain", ["001"])
-@pytest.mark.parametrize("family_member", ["ds/manager", "spf/simulator", "spfrx/simulator"])
-def test_sub_elements_startup_with_expected_operating_mode(domain, family_member):
+@pytest.mark.parametrize("dish_number", ["001"])
+@pytest.mark.parametrize("family", ["ds-controller", "simulator-spfc", "simulator-spfrx"])
+def test_sub_elements_startup_with_expected_operating_mode(dish_number, family):
     """
     Test that dish structure, spf and spfrx
     devices report expected startup values
     """
-    tango_device_proxy = tango.DeviceProxy(f"ska{domain}/{family_member}")
-    expected_operating_mode = "STANDBY" if "spfrx" in family_member else "STANDBY_LP"
+    tango_device_proxy = tango.DeviceProxy(f"mid-dish/{family}/SKA{dish_number}")
+    expected_operating_mode = "STANDBY" if "spfrx" in family else "STANDBY_LP"
     assert tango_device_proxy.operatingMode.name.replace("-", "_") == expected_operating_mode
