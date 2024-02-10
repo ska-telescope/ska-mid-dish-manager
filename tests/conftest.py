@@ -194,7 +194,7 @@ def dish_manager_device_fqdn():
 
 @pytest.fixture
 def ds_device_fqdn():
-    return "mid-dish/ds-controller/SKA001"
+    return "mid-dish/ds-manager/SKA001"
 
 
 @pytest.fixture

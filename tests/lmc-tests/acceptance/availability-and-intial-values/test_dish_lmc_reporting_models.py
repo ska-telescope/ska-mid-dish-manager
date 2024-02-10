@@ -31,7 +31,7 @@ def test_dish_manager_supports_all_reporting_models(
 
 @pytest.mark.lmc
 @pytest.mark.parametrize("dish_number", ["001"])
-@pytest.mark.parametrize("family", ["ds-controller", "simulator-spfc", "simulator-spfrx"])
+@pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])
 def test_sub_elements_support_all_reporting_models(dish_number, family):
     """Test that dish structure, spf and spfrx devices
     support attribute reads on request and with events"""

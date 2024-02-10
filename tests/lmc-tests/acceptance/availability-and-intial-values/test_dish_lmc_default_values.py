@@ -24,7 +24,7 @@ def test_dish_manager_startups_with_expected_dish_mode(monitor_tango_servers, ev
 
 @pytest.mark.lmc
 @pytest.mark.parametrize("dish_number", ["001"])
-@pytest.mark.parametrize("family", ["ds-controller", "simulator-spfc", "simulator-spfrx"])
+@pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])
 def test_sub_elements_startup_with_expected_operating_mode(dish_number, family):
     """
     Test that dish structure, spf and spfrx

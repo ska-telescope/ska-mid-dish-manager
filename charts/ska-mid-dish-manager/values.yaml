@@ -57,7 +57,7 @@ dishmanager:
 
   ds:
     fqdn: ""
-    family_name: "ds-controller"
+    family_name: "ds-manager"
 
   spfrx:
     fqdn: ""
