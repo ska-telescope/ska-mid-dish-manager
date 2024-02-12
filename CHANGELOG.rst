@@ -7,7 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-
+- Update dish manager tango device name to conform to ADR-9 
 Version 2.3.5
 *************
 - Include ResultCode in updates sent to longRunningCommandResult
