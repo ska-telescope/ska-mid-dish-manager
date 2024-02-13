@@ -14,7 +14,6 @@ MAX_TRACK_LOAD_TABLE_SAMPLES = 50
 
 # pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
-@pytest.mark.forked
 class TestTrackLoadTableFormatting:
     """Tests for TrackLoadTableFormatting"""
 
