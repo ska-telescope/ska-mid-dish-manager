@@ -24,15 +24,15 @@ class TestTrackLoadTableFormatting:
 
     def test_track_table_input_happy(self):
         """Test happy path when length and future time is appropriate"""
-        offset_s = 0.1
-        time_future_unix = time() * 1e3 + self.future_time_s + offset_s
+        offset_s = 0.5
+        time_future_unix = time() + self.future_time_s + offset_s
         time_future_tai = self.track_table_formatter.get_tai_from_unix_s(time_future_unix)
         table = [time_future_tai, 2.0, 3.0]
         self.track_table_formatter.check_track_table_input_valid(table, self.future_time_s)
 
     def test_track_table_input_invalid_time(self):
         """Test when future time check fails"""
-        offset_s = -0.1
+        offset_s = -0.5
         time_future_unix = time() + self.future_time_s + offset_s
         time_future_tai = self.track_table_formatter.get_tai_from_unix_s(time_future_unix)
         table = [time_future_tai, 2.0, 3.0]
@@ -51,3 +51,22 @@ class TestTrackLoadTableFormatting:
         """Test when table length is empty"""
         table = []
         self.track_table_formatter.check_track_table_input_valid(table, self.future_time_s)
+
+    def test_track_table_time_monotonically_inc(self):
+        """Test when time elements are monotonically increasing"""
+        track_table = []
+        time_future_unix = time() + 30
+
+        # generate 5 samples with 1 second increment and dummy el/az
+        for n in range(0, 5):
+            timestamp_in_sec = time_future_unix + n
+            tai_time = self.track_table_formatter.get_tai_from_unix_s(timestamp_in_sec)
+            track_table.extend([tai_time, 0, 0])
+
+        # add entry with time less than previous entry
+        track_table.extend([tai_time - 1, 0, 0])
+
+        with pytest.raises(TrackTableTimestampError):
+            self.track_table_formatter.check_track_table_input_valid(
+                track_table, self.future_time_s
+            )

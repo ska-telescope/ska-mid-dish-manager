@@ -51,11 +51,12 @@ class TrackLoadTableFormatting:
         :return: atomic time (tai) in seconds
         """
         astropy_time_utc = Time(unix_s, format="unix")
-        return astropy_time_utc.tai
+        return astropy_time_utc.unix_tai
 
     def _check_timestamp(self, table: List[float], length_of_table: int, lead_time: float) -> None:
         """
-        Check that the timestamps are in the future by at least lead_time in seconds.
+        Check that the timestamps are in the future by at least lead_time in seconds and that
+        they are monotonically increasing.
 
         :param table: Track table input that is to be validated
         :param length_of_table: Length of the track table
@@ -63,17 +64,31 @@ class TrackLoadTableFormatting:
         should be ahead of
 
         :raises TrackTableTimestampError: when timestamps are less than lead_time seconds into the
-        future
+        future, or if the timestamps are not monotonically increasing.
 
         :return: None
         """
         # use current time as reference for checking all the timestamps in the array
         # as this operation should complete fast in comparison to lead_time
         current_time_tai_s = self.get_tai_from_unix_s(time())
+        prev_timestamp = -1
         for i in range(0, length_of_table, 3):
             timestamp_tai_s = table[i]
-            if timestamp_tai_s - current_time_tai_s < lead_time:
+            # check for lead_time violation
+            delta = timestamp_tai_s - current_time_tai_s
+            if delta < lead_time:
                 raise TrackTableTimestampError(
                     "Check track table parameters."
                     f"Timestamps less than {lead_time}s into the future."
                 )
+            # check for monotonically increasing
+            if i != 0:
+                row_time_delta = timestamp_tai_s - prev_timestamp
+                if row_time_delta < 0:
+                    raise TrackTableTimestampError(
+                        "Check track table parameters."
+                        "Timestamps are not monotonically increasing."
+                        f"Last two timestamps (tai) {timestamp_tai_s},{prev_timestamp},..."
+                    )
+
+            prev_timestamp = timestamp_tai_s
