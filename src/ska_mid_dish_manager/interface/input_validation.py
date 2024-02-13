@@ -19,10 +19,12 @@ class TrackLoadTableFormatting:
         Entry point for track table validation.
 
         :param table: Track table input that is to be validated
-        :param lead_time: The amount of time in seconds from the current time timestamps are allowed
+        :param lead_time: The amount of time in seconds from the current time timestamps are 
+        allowed
 
         :raises ValueError: table list is not a multiple of 3
-        :raises TrackTableTimestampError: when timestamps are less than lead_time seconds into the future
+        :raises TrackTableTimestampError: when timestamps are less than lead_time seconds into the 
+        future
 
         :return: None
         """
@@ -57,9 +59,11 @@ class TrackLoadTableFormatting:
 
         :param table: Track table input that is to be validated
         :param length_of_table: Length of the track table
-        :param lead_time: Duration in seconds ahead of the current time that table timestamps should be ahead of
+        :param lead_time: Duration in seconds ahead of the current time that table timestamps 
+        should be ahead of
 
-        :raises TrackTableTimestampError: when timestamps are less than lead_time seconds into the future
+        :raises TrackTableTimestampError: when timestamps are less than lead_time seconds into the 
+        future
 
         :return: None
         """
