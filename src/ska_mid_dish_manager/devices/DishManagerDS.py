@@ -740,9 +740,9 @@ class DishManager(SKAController):
                 table, TRACK_LOAD_FUTURE_THRESHOLD_SEC
             )
         except TrackTableTimestampError as te:
-            self.logger.info("TrackTableTimestampError: %s", te)
-        except Exception as e:
-            raise e
+            self.logger.debug("TrackTableTimestampError: %s", te)
+        except ValueError as ve:
+            raise ve
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
