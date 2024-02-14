@@ -106,7 +106,9 @@ def test_device_monitor_stress(spf_device_fqdn):
         == 9
     )
     assert (
-        all_logs.count("('Subscribed on %s to attr %s', 'mid-dish/simulator-spfc/SKA001', 'powerState')")
+        all_logs.count(
+            "('Subscribed on %s to attr %s', 'mid-dish/simulator-spfc/SKA001', 'powerState')"
+        )
         == 10
     )
 
