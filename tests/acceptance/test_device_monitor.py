@@ -101,12 +101,12 @@ def test_device_monitor_stress(spf_device_fqdn):
 
     assert (
         all_logs.count(
-            "('Unsubscribed from %s for attr %s', 'ska001/spf/simulator', 'powerState')"
+            "('Unsubscribed from %s for attr %s', 'mid-dish/simulator-spfc/SKA001', 'powerState')"
         )
         == 9
     )
     assert (
-        all_logs.count("('Subscribed on %s to attr %s', 'ska001/spf/simulator', 'powerState')")
+        all_logs.count("('Subscribed on %s to attr %s', 'mid-dish/simulator-spfc/SKA001', 'powerState')")
         == 10
     )
 

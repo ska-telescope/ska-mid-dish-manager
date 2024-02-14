@@ -11,7 +11,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 @pytest.mark.lmc
 def test_dish_manager_startups_with_expected_dish_mode(monitor_tango_servers, event_store):
     """Test that dish master starts up with the expected dishMode"""
-    dish_manager = tango.DeviceProxy("ska001/elt/master")
+    dish_manager = tango.DeviceProxy("mid-dish/dish-manager/SKA001")
     dish_manager.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
