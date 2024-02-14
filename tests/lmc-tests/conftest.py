@@ -19,22 +19,22 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.fixture(name="dish_manager", scope="module")
 def dish_manager_device_proxy():
-    return tango_dev_proxy("ska001/elt/master", LOGGER)
+    return tango_dev_proxy("mid-dish/dish-manager/SKA001", LOGGER)
 
 
 @pytest.fixture(name="dish_structure", scope="module")
 def dish_structure_device_proxy():
-    return tango_dev_proxy("ska001/ds/manager", LOGGER)
+    return tango_dev_proxy("mid-dish/ds-manager/SKA001", LOGGER)
 
 
 @pytest.fixture(name="spf", scope="module")
 def spf_device_proxy():
-    return tango_dev_proxy("ska001/spf/simulator", LOGGER)
+    return tango_dev_proxy("mid-dish/simulator-spfc/SKA001", LOGGER)
 
 
 @pytest.fixture(name="spfrx", scope="module")
 def spfrx_device_proxy():
-    return tango_dev_proxy("ska001/spfrx/simulator", LOGGER)
+    return tango_dev_proxy("mid-dish/simulator-spfc/SKA001", LOGGER)
 
 
 @pytest.fixture
