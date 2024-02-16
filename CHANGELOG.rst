@@ -7,7 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Update dish manager tango device name to conform to ADR-9 
+- Update dish manager tango device name to conform to ADR-9
+- Bumped dish simulators version to v1.6.5 
+- Bumped ds-manager version to v1.2.6
 Version 2.3.5
 *************
 - Include ResultCode in updates sent to longRunningCommandResult
