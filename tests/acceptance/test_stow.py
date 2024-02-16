@@ -2,7 +2,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
+from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
 # pylint: disable=too-many-locals,unused-argument
@@ -14,7 +14,7 @@ def test_stow_transition(
 ):
     """Test transition to STOW"""  # Get at least one device into a known state
     ds_device_proxy.SetStandbyFPMode()
-    
+
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
 
