@@ -40,6 +40,7 @@ networkx = "2.6.3"
 rule-engine = "^3.5.0"
 numpy = "1.23.0"
 typing-extensions = "^4.3.0"
+astropy = "^6.0.0"
 
 [tool.pylint.messages_control]
 disable = ["duplicate-code", "fixme"]
