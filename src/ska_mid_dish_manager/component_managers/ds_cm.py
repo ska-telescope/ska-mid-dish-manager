@@ -35,6 +35,8 @@ class DSComponentManager(TangoDeviceComponentManager):
             "pointingState",
             "indexerPosition",
             "achievedPointing",
+            "achievedPointingaz",
+            "achievedPointingel",
             "band2PointingModelParams",
         )
         super().__init__(

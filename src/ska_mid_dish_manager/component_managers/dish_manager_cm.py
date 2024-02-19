@@ -74,7 +74,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b5acapabilitystate=None,
             b5bcapabilitystate=None,
             achievedtargetlock=None,
-            achievedpointing=[0.0, 0.0, 30.0],
+            achievedpointing=[0.0, 0.0, 0.0],
+            achievedpointingaz=[0.0, 0.0, 0.0],
+            achievedpointingel=[0.0, 0.0, 0.0],
             configuredband=Band.NONE,
             attenuationpolh=0.0,
             attenuationpolv=0.0,
@@ -123,7 +125,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 achievedtargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
-                achievedpointing=[0.0, 0.0, 30.0],
+                achievedpointing=[0.0, 0.0, 0.0],
+                achievedpointingaz=[0.0, 0.0, 0.0],
+                achievedpointingel=[0.0, 0.0, 0.0],
                 band2pointingmodelparams=[],
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, "dsConnectionState"
@@ -291,14 +295,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.component_state,
         )
 
-        if "achievedpointing" in kwargs:
-            self.logger.debug(
-                ("Updating achievedPointing with DS achievedPointing [%s]"),
-                ds_component_state["achievedpointing"],
-            )
-            new_position = ds_component_state["achievedpointing"]
-            self._update_component_state(achievedpointing=new_position)
-
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs or "indexerposition" in kwargs:
             self.logger.debug(
@@ -444,6 +440,28 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(
                     **{pointing_param_name: ds_component_state[pointing_param_name]}
                 )
+
+        # Update attributes that are mapped directly from subservient devices
+        direct_mapped_attrs = {
+            "DS": ["achievedPointing", "achievedPointingAz", "achievedPointingEl"],
+        }
+
+        for device in direct_mapped_attrs:
+            for attr in direct_mapped_attrs[device]:
+                attr_lower = attr.lower()
+
+                if attr_lower in kwargs:
+                    new_value = ds_component_state[attr_lower]
+
+                    self.logger.debug(
+                        ("Updating %s with %s %s [%s]"),
+                        attr,
+                        device,
+                        attr,
+                        new_value,
+                    )
+
+                    self._update_component_state(**{attr_lower: new_value})
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
