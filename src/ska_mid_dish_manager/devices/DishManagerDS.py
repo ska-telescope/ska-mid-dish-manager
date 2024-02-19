@@ -786,7 +786,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=TrackInterpolationMode,
         access=AttrWriteType.READ_WRITE,
-        doc="Selects the type of interpolation to be used in program " "tracking.",
+        doc="Selects the type of interpolation to be used in program tracking.",
     )
     def trackInterpolationMode(self):
         """Returns the trackInterpolationMode"""
@@ -795,8 +795,7 @@ class DishManager(SKAController):
     @trackInterpolationMode.write
     def trackInterpolationMode(self, value):
         """Set the trackInterpolationMode"""
-        # pylint: disable=attribute-defined-outside-init
-        self._track_interpolation_mode = value
+        self.component_manager.set_track_interpolation_mode(value)
 
     @attribute(
         dtype=TrackProgramMode,

@@ -672,6 +672,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return (ResultCode.REJECTED, "Lost connection to SPFRx")
         return (ResultCode.OK, "SetKValue command completed OK")
 
+    def set_track_interpolation_mode(
+        self,
+        interpolation_mode,
+    ) -> None:
+        """Set the trackInterpolationMode on the DS."""
+        ds_cm = self.sub_component_managers["DS"]
+        ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
+
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
         """Disconnect from monitored devices"""
