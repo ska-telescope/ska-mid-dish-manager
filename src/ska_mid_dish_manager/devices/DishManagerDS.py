@@ -234,7 +234,7 @@ class DishManager(SKAController):
             device._program_track_table = []
             device._track_interpolation_mode = TrackInterpolationMode.NEWTON
             device._track_program_mode = TrackProgramMode.TABLEA
-            device._track_table_load_mode = TrackTableLoadMode.NEW
+            device._track_table_load_mode = TrackTableLoadMode.APPEND
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -746,7 +746,11 @@ class DishManager(SKAController):
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
-        self.component_manager._track_load_table(sequence_length, table)
+        self.component_manager._track_load_table(
+            sequence_length,
+            table,
+            self._track_table_load_mode
+        )
         self._program_track_table = table
 
     @attribute(
