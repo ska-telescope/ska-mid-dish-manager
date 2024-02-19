@@ -28,6 +28,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFPowerState,
     SPFRxCapabilityStates,
     SPFRxOperatingMode,
+    TrackInterpolationMode,
     TrackTableLoadMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
@@ -83,6 +84,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             band2pointingmodelparams=[],
+            trackinterpolationmode=None,
             **kwargs,
         )
         self.logger = logger
@@ -125,6 +127,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 powerstate=DSPowerState.UNKNOWN,
                 achievedpointing=[0.0, 0.0, 30.0],
                 band2pointingmodelparams=[],
+                trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
@@ -444,6 +447,35 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(
                     **{pointing_param_name: ds_component_state[pointing_param_name]}
                 )
+
+                # Update attributes that are mapped directly from subservient devices
+        direct_mapped_attrs = {
+            "DS": [
+                "achievedPointing",
+                "achievedPointingAz",
+                "achievedPointingEl",
+                "desiredPointingAz",
+                "desiredPointingEl",
+                "trackInterpolationMode",
+            ],
+        }
+
+        for device, attrs in direct_mapped_attrs.items():
+            for attr in attrs:
+                attr_lower = attr.lower()
+
+                if attr_lower in kwargs:
+                    new_value = ds_component_state[attr_lower]
+
+                    self.logger.debug(
+                        ("Updating %s with %s %s [%s]"),
+                        attr,
+                        device,
+                        attr,
+                        new_value,
+                    )
+
+                    self._update_component_state(**{attr_lower: new_value})
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""

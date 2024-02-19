@@ -15,6 +15,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     SPFOperatingMode,
     SPFRxOperatingMode,
+    TrackInterpolationMode,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -57,6 +58,26 @@ class TestTrack:
     def teardown_method(self):
         """Tear down context"""
         self.tango_context.stop()
+
+    def test_track_interpolation_mode_updates(self, event_store):
+        device_proxy = self.tango_context.device
+        device_proxy.subscribe_event(
+            "trackInterpolationMode",
+            tango.EventType.CHANGE_EVENT,
+            event_store,
+        )
+        test_mode = TrackInterpolationMode.NEWTON
+
+        # Check that the default is spline
+        assert device_proxy.trackInterpolationMode == TrackInterpolationMode.SPLINE
+
+        # Check that the value updates correctly
+        class_instance = DishManager.instances.get(device_proxy.name())
+        ds_cm = class_instance.component_manager.sub_component_managers["DS"]
+        ds_cm._update_component_state(trackinterpolationmode=test_mode)
+
+        event_store.wait_for_value(test_mode)
+        assert device_proxy.trackInterpolationMode == test_mode
 
     # pylint: disable=missing-function-docstring, protected-access
     @pytest.mark.parametrize(

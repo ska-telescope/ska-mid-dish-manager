@@ -232,7 +232,7 @@ class DishManager(SKAController):
             device._poly_track = []
             device._power_state = PowerState.LOW
             device._program_track_table = []
-            device._track_interpolation_mode = TrackInterpolationMode.NEWTON
+            device._track_interpolation_mode = TrackInterpolationMode.SPLINE
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.NEW
 
@@ -268,6 +268,7 @@ class DishManager(SKAController):
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
+                "trackinterpolationmode": "trackInterpolationMode",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
