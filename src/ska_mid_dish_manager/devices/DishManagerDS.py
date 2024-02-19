@@ -747,9 +747,7 @@ class DishManager(SKAController):
         length_of_table = len(table)
         sequence_length = length_of_table / 3
         self.component_manager._track_load_table(
-            sequence_length,
-            table,
-            self._track_table_load_mode
+            sequence_length, table, self._track_table_load_mode
         )
         self._program_track_table = table
 
