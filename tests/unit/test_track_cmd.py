@@ -60,6 +60,7 @@ class TestTrack:
         self.tango_context.stop()
 
     def test_track_interpolation_mode_updates(self, event_store):
+        """Test the trackInterpolationMode attribute updates on change."""
         device_proxy = self.tango_context.device
         device_proxy.subscribe_event(
             "trackInterpolationMode",
