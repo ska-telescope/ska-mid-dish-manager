@@ -72,7 +72,7 @@ class TestAchievedPointing:
             tango.EventType.CHANGE_EVENT,
             el_event_store,
         )
-        test_coordinates = (5000.0, 45.0, 234.0)
+        test_coordinates = (5000.0, 234.0, 45.0)
         test_coordinates_az = (test_coordinates[0], test_coordinates[1])
         test_coordinates_el = (test_coordinates[0], test_coordinates[2])
 
