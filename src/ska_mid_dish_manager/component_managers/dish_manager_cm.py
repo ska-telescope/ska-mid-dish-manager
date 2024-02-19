@@ -446,8 +446,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "DS": ["achievedPointing", "achievedPointingAz", "achievedPointingEl"],
         }
 
-        for device in direct_mapped_attrs:
-            for attr in direct_mapped_attrs[device]:
+        for device, attrs in direct_mapped_attrs.items():
+            for attr in attrs:
                 attr_lower = attr.lower()
 
                 if attr_lower in kwargs:
