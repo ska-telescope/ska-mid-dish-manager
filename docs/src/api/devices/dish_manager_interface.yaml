@@ -849,22 +849,38 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: controlMode
-    - name: desiredPointing
+    - name: desiredPointingAz
       data_format: SPECTRUM
       data_type: DevDouble
-      description: Returns the desiredPointing
+      description: Returns the azimuth desiredPointing.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
-      label: desiredPointing
+      label: desiredPointingAz
       max_alarm: Not specified
-      max_dim_x: 3
+      max_dim_x: 2
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ_WRITE
-      writable_attr_name: desiredPointing
+      writable: READ
+      writable_attr_name: None
+    - name: desiredPointingEl
+      data_format: SPECTRUM
+      data_type: DevDouble
+      description: Returns the elevation desiredPointing.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: desiredPointingEl
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: dishMode
       data_format: SCALAR
       data_type: DevEnum
@@ -1538,5 +1554,4 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: __SubDevices
     - name: polled_cmd

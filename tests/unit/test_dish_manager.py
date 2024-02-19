@@ -138,15 +138,3 @@ class TestDishManager:
         assert "DS" in json_string
         assert "SPFRx" in json_string
         assert "SPF" in json_string
-
-    def test_desired_pointing_write(self):
-        """Test that the write method of the desiredPointing attribute functions correctly"""
-        mocked_write = MagicMock()
-        self.ds_cm.write_attribute_value = mocked_write
-
-        write_value = (0.0, 1.0, 2.0)
-
-        self.device_proxy.desiredPointing = write_value
-
-        mocked_write.assert_called()
-        assert list(self.device_proxy.desiredPointing) == list(write_value)

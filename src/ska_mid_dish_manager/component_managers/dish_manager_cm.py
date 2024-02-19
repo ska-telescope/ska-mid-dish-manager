@@ -74,6 +74,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b5acapabilitystate=None,
             b5bcapabilitystate=None,
             achievedtargetlock=None,
+            desiredpointingaz=[0.0, 0.0],
+            desiredpointingel=[0.0, 0.0],
             achievedpointing=[0.0, 0.0, 30.0],
             configuredband=Band.NONE,
             attenuationpolh=0.0,
@@ -123,6 +125,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 achievedtargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
+                desiredpointingaz=[0.0, 0.0],
+                desiredpointingel=[0.0, 0.0],
                 achievedpointing=[0.0, 0.0, 30.0],
                 band2pointingmodelparams=[],
                 communication_state_callback=partial(
@@ -444,6 +448,34 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(
                     **{pointing_param_name: ds_component_state[pointing_param_name]}
                 )
+
+        # Update attributes that are mapped directly from subservient devices
+        direct_mapped_attrs = {
+            "DS": [
+                "achievedPointing",
+                "achievedPointingAz",
+                "achievedPointingEl",
+                "desiredPointingAz",
+                "desiredPointingEl",
+            ],
+        }
+
+        for device, attrs in direct_mapped_attrs.items():
+            for attr in attrs:
+                attr_lower = attr.lower()
+
+                if attr_lower in kwargs:
+                    new_value = ds_component_state[attr_lower]
+
+                    self.logger.debug(
+                        ("Updating %s with %s %s [%s]"),
+                        attr,
+                        device,
+                        attr,
+                        new_value,
+                    )
+
+                    self._update_component_state(**{attr_lower: new_value})
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""

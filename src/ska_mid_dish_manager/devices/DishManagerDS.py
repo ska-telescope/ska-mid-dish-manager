@@ -221,7 +221,8 @@ class DishManager(SKAController):
             device._capturing = False
             device._configured_band = Band.NONE
             device._configure_target_lock = []
-            device._desired_pointing = [0.0, 0.0, 0.0]
+            device._desired_pointing_az = [0.0, 0.0]
+            device._desired_pointing_el = [0.0, 0.0]
             device._dish_mode = DishMode.UNKNOWN
             device._dsh_max_short_term_power = 13.5
             device._dsh_power_curtailment = True
@@ -263,6 +264,8 @@ class DishManager(SKAController):
                 "b4capabilitystate": "b4CapabilityState",
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
+                "desiredpointingaz": "desiredPointingAz",
+                "desiredpointingel": "desiredPointingEl",
                 "achievedpointing": "achievedPointing",
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "attenuationpolh": "attenuationPolH",
@@ -630,18 +633,15 @@ class DishManager(SKAController):
         # pylint: disable=attribute-defined-outside-init
         self._configure_target_lock = value
 
-    @attribute(max_dim_x=3, dtype=(float,), access=AttrWriteType.READ_WRITE)
-    def desiredPointing(self):
-        """Returns the desiredPointing"""
-        return self._desired_pointing
+    @attribute(max_dim_x=2, dtype=(float,), access=AttrWriteType.READ)
+    def desiredPointingAz(self) -> list[float]:
+        """Returns the azimuth desiredPointing."""
+        return self._desired_pointing_az
 
-    @desiredPointing.write
-    def desiredPointing(self, value):
-        """Set the desiredPointing"""
-        # pylint: disable=attribute-defined-outside-init
-        self._desired_pointing = value
-        ds_cm = self.component_manager.sub_component_managers["DS"]
-        ds_cm.write_attribute_value("desiredPointing", value)
+    @attribute(max_dim_x=2, dtype=(float,), access=AttrWriteType.READ)
+    def desiredPointingEl(self) -> list[float]:
+        """Returns the elevation desiredPointing."""
+        return self._desired_pointing_el
 
     @attribute(
         dtype=DishMode,
