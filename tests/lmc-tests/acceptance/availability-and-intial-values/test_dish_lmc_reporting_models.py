@@ -30,12 +30,12 @@ def test_dish_manager_supports_all_reporting_models(
 
 
 @pytest.mark.lmc
-@pytest.mark.parametrize("domain", ["001"])
-@pytest.mark.parametrize("family_member", ["ds/manager", "spf/simulator", "spfrx/simulator"])
-def test_sub_elements_support_all_reporting_models(domain, family_member):
+@pytest.mark.parametrize("dish_number", ["001"])
+@pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])
+def test_sub_elements_support_all_reporting_models(dish_number, family):
     """Test that dish structure, spf and spfrx devices
     support attribute reads on request and with events"""
-    tango_device_proxy = tango.DeviceProxy(f"ska{domain}/{family_member}")
+    tango_device_proxy = tango.DeviceProxy(f"mid-dish/{family}/SKA{dish_number}")
     operating_mode = tango_device_proxy.operatingMode.value
     evt_ids = []
 

@@ -59,9 +59,9 @@ class DishManager(SKAController):
     # -----------------
     # these values will be overwritten by values in
     # /charts/ska-mid-dish-manager/data in k8s deployment
-    DSDeviceFqdn = device_property(dtype=str, default_value="ska001/ds/manager")
-    SPFDeviceFqdn = device_property(dtype=str, default_value="ska001/spf/simulator")
-    SPFRxDeviceFqdn = device_property(dtype=str, default_value="ska001/spfrx/simulator")
+    DSDeviceFqdn = device_property(dtype=str, default_value="mid-dish/ds-manager/SKA001")
+    SPFDeviceFqdn = device_property(dtype=str, default_value="mid-dish/simulator-spfc/SKA001")
+    SPFRxDeviceFqdn = device_property(dtype=str, default_value="mid-dish/simulator-spfrx/SKA001")
     DishId = device_property(dtype=str, default_value="SKA001")
 
     def create_component_manager(self):

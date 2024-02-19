@@ -50,19 +50,22 @@ dishmanager:
 
   # Setting fqdn assumes you are only deploying one Dish Manager
   # with custom sub devices addresses
-  # Otherwise device names will follow "ska0<N>/<family_name>/<member_name>" for N dishes
+  # Otherwise device names will follow "mid-dish/<family_name>/ska0<N>" for N dishes
   spf:
     fqdn: ""
-    family_name: "spf"
-    member_name: "simulator"
+    domain_name: "mid-dish"
+    family_name: "simulator-spfc"
+
   ds:
     fqdn: ""
-    family_name: "ds"
-    member_name: "manager"
+    domain_name: "mid-dish"
+    family_name: "ds-manager"
+
   spfrx:
     fqdn: ""
-    family_name: "spfrx"
-    member_name: "simulator"
+    domain_name: "mid-dish"
+    family_name: "simulator-spfrx"
+
 
 dev_pod:
   enabled: false

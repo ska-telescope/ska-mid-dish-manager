@@ -6,7 +6,7 @@ import pytest
 import tango
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
-from ska_mid_dish_manager.models.dish_enums import DSOperatingMode, DSPowerState
+from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
 
 LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +20,6 @@ def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
     # Get into a known state
     device_proxy.Stow()
-    device_proxy.powerState = DSPowerState.OFF
 
     state_update_lock = Lock()
 
