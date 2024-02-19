@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-dish-manager"
-version = "2.3.5"
+version = "2.3.6"
 description = "SKA Dish Manager TANGO device server"
 authors = ["Team Karoo"]
 license = "BSD-3-Clause"
@@ -40,6 +40,7 @@ networkx = "2.6.3"
 rule-engine = "^3.5.0"
 numpy = "1.23.0"
 typing-extensions = "^4.3.0"
+astropy = "^6.0.0"
 
 [tool.pylint.messages_control]
 disable = ["duplicate-code", "fixme"]

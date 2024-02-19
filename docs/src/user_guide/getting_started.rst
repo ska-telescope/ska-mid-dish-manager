@@ -24,7 +24,7 @@ can be found in the :doc:`API section <../api/devices/dish_manager_interface>`.
 
       .. code-block:: rst
 
-         In [1]: dish_manager = DeviceProxy("ska001/elt/master")
+         In [1]: dish_manager = DeviceProxy("mid-dish/dish-manager/SKA001")
 
          # ensure that the device is reachable
          In [2]: dish_manager.ping()
