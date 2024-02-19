@@ -7,10 +7,14 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 2.3.6
+*************
 - Update dish manager tango device name to conform to ADR-9
 - Updated dish simulators version to v1.6.5 
 - Updated ds-manager version to v1.2.6
 - Updated ska-tango-base to v0.4.9
+- Added track table time conversion and input validation
 
 Version 2.3.5
 *************
