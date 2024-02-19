@@ -6,7 +6,7 @@ import pytest
 import tango
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
-from ska_mid_dish_manager.models.dish_enums import DSOperatingMode, DSPowerState
+from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
 
 LOGGER = logging.getLogger(__name__)
 
