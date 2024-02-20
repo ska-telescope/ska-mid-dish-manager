@@ -450,11 +450,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
-    def _track_load_table(self, sequence_length: int, table: list[float]) -> None:
+    def _track_load_table(
+        self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
+    ) -> None:
         """Load the track table."""
         self.logger.debug("Calling track load table on DSManager.")
         device_proxy = tango.DeviceProxy(self.sub_component_managers["DS"]._tango_device_fqdn)
-        float_list = [TrackTableLoadMode.NEW, sequence_length]
+        float_list = [load_mode, sequence_length]
         float_list.extend(table)
 
         device_proxy.trackLoadTable(float_list)
