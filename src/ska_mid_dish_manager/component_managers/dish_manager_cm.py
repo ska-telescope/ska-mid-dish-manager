@@ -74,7 +74,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b5acapabilitystate=None,
             b5bcapabilitystate=None,
             achievedtargetlock=None,
-            achievedpointing=[0.0, 0.0, 30.0],
+            achievedpointing=[0.0, 0.0, 0.0],
+            achievedpointingaz=[0.0, 0.0, 0.0],
+            achievedpointingel=[0.0, 0.0, 0.0],
             configuredband=Band.NONE,
             attenuationpolh=0.0,
             attenuationpolv=0.0,
@@ -123,7 +125,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 achievedtargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
-                achievedpointing=[0.0, 0.0, 30.0],
+                achievedpointing=[0.0, 0.0, 0.0],
+                achievedpointingaz=[0.0, 0.0, 0.0],
+                achievedpointingel=[0.0, 0.0, 0.0],
                 band2pointingmodelparams=[],
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, "dsConnectionState"
@@ -178,6 +182,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_tracker,
             self.logger,
         )
+
+        self.direct_mapped_attrs = {
+            "DS": [
+                "achievedPointing",
+                "achievedPointingAz",
+                "achievedPointingEl",
+                "desiredPointingAz",
+                "desiredPointingEl",
+            ],
+        }
 
     # pylint: disable=unused-argument
     def _sub_communication_state_changed(
@@ -290,14 +304,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrx_component_state,
             self.component_state,
         )
-
-        if "achievedpointing" in kwargs:
-            self.logger.debug(
-                ("Updating achievedPointing with DS achievedPointing [%s]"),
-                ds_component_state["achievedpointing"],
-            )
-            new_position = ds_component_state["achievedpointing"]
-            self._update_component_state(achievedpointing=new_position)
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs or "indexerposition" in kwargs:
@@ -444,6 +450,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(
                     **{pointing_param_name: ds_component_state[pointing_param_name]}
                 )
+
+        # Update attributes that are mapped directly from subservient devices
+        for device, attrs in self.direct_mapped_attrs.items():
+            for attr in attrs:
+                attr_lower = attr.lower()
+
+                if attr_lower in kwargs:
+                    new_value = ds_component_state[attr_lower]
+
+                    self.logger.debug(
+                        ("Updating %s with %s %s [%s]"),
+                        attr,
+                        device,
+                        attr,
+                        new_value,
+                    )
+
+                    self._update_component_state(**{attr_lower: new_value})
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
