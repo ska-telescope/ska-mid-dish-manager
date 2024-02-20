@@ -713,6 +713,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.error("Successfully updated trackInterpolationMode on DSManager.")
         except LostConnection:
             self.logger.error("Failed to update trackInterpolationMode on DSManager.")
+            raise
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
