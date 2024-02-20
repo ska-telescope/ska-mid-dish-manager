@@ -96,14 +96,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
-        self._device_proxy_command_lock = Lock()
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
                 spf_device_fqdn,
                 logger,
                 self._state_update_lock,
-                device_proxy_command_lock=self._device_proxy_command_lock,
                 operatingmode=SPFOperatingMode.UNKNOWN,
                 powerstate=SPFPowerState.UNKNOWN,
                 healthstate=HealthState.UNKNOWN,
@@ -123,7 +121,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ds_device_fqdn,
                 logger,
                 self._state_update_lock,
-                device_proxy_command_lock=self._device_proxy_command_lock,
                 healthstate=HealthState.UNKNOWN,
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=None,
@@ -144,7 +141,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_device_fqdn,
                 logger,
                 self._state_update_lock,
-                device_proxy_command_lock=self._device_proxy_command_lock,
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
                 capturingdata=False,

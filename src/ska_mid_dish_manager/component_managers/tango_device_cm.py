@@ -3,7 +3,7 @@ import datetime
 import logging
 import typing
 from queue import Empty, PriorityQueue
-from threading import Event, Lock
+from threading import Event
 from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
@@ -82,10 +82,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if self._communication_state_callback:
             self._communication_state_callback()  # type: ignore
         self._start_event_consumer_thread()
-        if "device_proxy_command_lock" in kwargs:
-            self._device_proxy_command_lock: Lock = kwargs["device_proxy_command_lock"]
-        else:
-            self._device_proxy_command_lock = Lock()
 
     def clear_monitored_attributes(self) -> None:
         """
@@ -285,10 +281,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             command_name,
             self._tango_device_fqdn,
         )
-        result = None
-        with self._device_proxy_command_lock:
-            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = device_proxy.command_inout(command_name, command_arg)
+        device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
+        result = device_proxy.command_inout(command_name, command_arg)
         self.logger.debug(
             "Result of [%s] on [%s] is [%s]",
             command_name,
