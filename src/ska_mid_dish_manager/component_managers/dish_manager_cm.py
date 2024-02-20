@@ -710,7 +710,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_cm = self.sub_component_managers["DS"]
         try:
             ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
-            self.logger.error("Successfully updated trackInterpolationMode on DSManager.")
+            self.logger.debug("Successfully updated trackInterpolationMode on DSManager.")
         except LostConnection:
             self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
