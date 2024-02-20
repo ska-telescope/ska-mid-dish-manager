@@ -710,7 +710,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> None:
         """Set the trackInterpolationMode on the DS."""
         ds_cm = self.sub_component_managers["DS"]
-        ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
+        try:
+            ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
+            self.logger.error("Successfully updated trackInterpolationMode on DSManager.")
+        except LostConnection:
+            self.logger.error("Failed to update trackInterpolationMode on DSManager.")
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):
