@@ -202,6 +202,8 @@ class DishManager(SKAController):
             device: DishManager = self._device
             # pylint: disable=protected-access
             device._achieved_pointing = [0.0, 0.0, 0.0]
+            device._achieved_pointing_az = [0.0, 0.0]
+            device._achieved_pointing_el = [0.0, 0.0]
             device._achieved_target_lock = False
             device._attenuation_pol_h = 0.0
             device._attenuation_pol_v = 0.0
@@ -234,7 +236,7 @@ class DishManager(SKAController):
             device._program_track_table = []
             device._track_interpolation_mode = TrackInterpolationMode.SPLINE
             device._track_program_mode = TrackProgramMode.TABLEA
-            device._track_table_load_mode = TrackTableLoadMode.NEW
+            device._track_table_load_mode = TrackTableLoadMode.APPEND
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -264,6 +266,8 @@ class DishManager(SKAController):
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
                 "achievedpointing": "achievedPointing",
+                "achievedpointingaz": "achievedPointingAz",
+                "achievedpointingel": "achievedPointingEl",
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
@@ -324,10 +328,31 @@ class DishManager(SKAController):
         max_dim_x=3,
         dtype=(float,),
         doc="[0] Timestamp\n[1] Azimuth\n[2] Elevation",
+        access=AttrWriteType.READ,
     )
     def achievedPointing(self):
-        """Returns the achievedPointing"""
+        """Returns the current achieved pointing for both axis."""
         return self._achieved_pointing
+
+    @attribute(
+        max_dim_x=2,
+        dtype=(float,),
+        doc="[0] Timestamp\n[1] Azimuth",
+        access=AttrWriteType.READ,
+    )
+    def achievedPointingAz(self):
+        """Returns the current achieved pointing for the azimuth axis."""
+        return self._achieved_pointing_az
+
+    @attribute(
+        max_dim_x=2,
+        dtype=(float,),
+        doc="[0] Timestamp\n[1] Elevation",
+        access=AttrWriteType.READ,
+    )
+    def achievedPointingEl(self):
+        """Returns the current achieved pointing for the elevation axis."""
+        return self._achieved_pointing_el
 
     @attribute(
         dtype=bool,
@@ -747,7 +772,9 @@ class DishManager(SKAController):
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
-        self.component_manager._track_load_table(sequence_length, table)
+        self.component_manager._track_load_table(
+            sequence_length, table, self._track_table_load_mode
+        )
         self._program_track_table = table
 
     @attribute(
