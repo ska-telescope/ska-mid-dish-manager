@@ -182,6 +182,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger,
         )
 
+        self.direct_mapped_attrs = {
+            "DS": [
+                "achievedPointing",
+                "achievedPointingAz",
+                "achievedPointingEl",
+                "desiredPointingAz",
+                "desiredPointingEl",
+                "trackInterpolationMode",
+            ],
+        }
+
     # pylint: disable=unused-argument
     def _sub_communication_state_changed(
         self, attribute_name: str, communication_state: Optional[CommunicationStatus] = None
@@ -448,19 +459,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     **{pointing_param_name: ds_component_state[pointing_param_name]}
                 )
 
-                # Update attributes that are mapped directly from subservient devices
-        direct_mapped_attrs = {
-            "DS": [
-                "achievedPointing",
-                "achievedPointingAz",
-                "achievedPointingEl",
-                "desiredPointingAz",
-                "desiredPointingEl",
-                "trackInterpolationMode",
-            ],
-        }
-
-        for device, attrs in direct_mapped_attrs.items():
+        # Update attributes that are mapped directly from subservient devices
+        for device, attrs in self.direct_mapped_attrs.items():
             for attr in attrs:
                 attr_lower = attr.lower()
 
