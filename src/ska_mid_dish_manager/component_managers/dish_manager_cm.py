@@ -28,6 +28,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFPowerState,
     SPFRxCapabilityStates,
     SPFRxOperatingMode,
+    TrackInterpolationMode,
     TrackTableLoadMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
@@ -85,6 +86,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             band2pointingmodelparams=[],
+            trackinterpolationmode=None,
             **kwargs,
         )
         self.logger = logger
@@ -129,6 +131,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 achievedpointingaz=[0.0, 0.0, 0.0],
                 achievedpointingel=[0.0, 0.0, 0.0],
                 band2pointingmodelparams=[],
+                trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
@@ -190,6 +193,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "achievedPointingEl",
                 "desiredPointingAz",
                 "desiredPointingEl",
+                "trackInterpolationMode",
             ],
         }
 
@@ -697,6 +701,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except LostConnection:
             return (ResultCode.REJECTED, "Lost connection to SPFRx")
         return (ResultCode.OK, "SetKValue command completed OK")
+
+    def set_track_interpolation_mode(
+        self,
+        interpolation_mode,
+    ) -> None:
+        """Set the trackInterpolationMode on the DS."""
+        ds_cm = self.sub_component_managers["DS"]
+        try:
+            ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
+            self.logger.debug("Successfully updated trackInterpolationMode on DSManager.")
+        except LostConnection:
+            self.logger.error("Failed to update trackInterpolationMode on DSManager.")
+            raise
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):

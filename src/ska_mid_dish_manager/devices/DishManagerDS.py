@@ -234,7 +234,7 @@ class DishManager(SKAController):
             device._poly_track = []
             device._power_state = PowerState.LOW
             device._program_track_table = []
-            device._track_interpolation_mode = TrackInterpolationMode.NEWTON
+            device._track_interpolation_mode = TrackInterpolationMode.SPLINE
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
 
@@ -272,6 +272,7 @@ class DishManager(SKAController):
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
+                "trackinterpolationmode": "trackInterpolationMode",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -813,7 +814,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=TrackInterpolationMode,
         access=AttrWriteType.READ_WRITE,
-        doc="Selects the type of interpolation to be used in program " "tracking.",
+        doc="Selects the type of interpolation to be used in program tracking.",
     )
     def trackInterpolationMode(self):
         """Returns the trackInterpolationMode"""
@@ -822,8 +823,7 @@ class DishManager(SKAController):
     @trackInterpolationMode.write
     def trackInterpolationMode(self, value):
         """Set the trackInterpolationMode"""
-        # pylint: disable=attribute-defined-outside-init
-        self._track_interpolation_mode = value
+        self.component_manager.set_track_interpolation_mode(value)
 
     @attribute(
         dtype=TrackProgramMode,
