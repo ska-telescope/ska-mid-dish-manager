@@ -97,6 +97,7 @@ class DishManager(SKAController):
             ("Slew", "slew"),
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
+            ("EndScan", "end_scan"),
         ]:
             self.register_command_object(
                 command_name,
@@ -273,6 +274,7 @@ class DishManager(SKAController):
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
                 "trackinterpolationmode": "trackInterpolationMode",
+                "scanid": "scanID",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1127,6 +1129,16 @@ class DishManager(SKAController):
         currently no requirements for this functionality.
         """
         handler = self.get_command_object("Scan")
+        result_code, unique_id = handler(scanid)
+
+        return ([result_code], [unique_id])
+    
+    @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    def EndScan(self, scanid) -> DevVarLongStringArrayType:
+        """
+        This command clears out the scan_id
+        """
+        handler = self.get_command_object("EndScan")
         result_code, unique_id = handler(scanid)
 
         return ([result_code], [unique_id])
