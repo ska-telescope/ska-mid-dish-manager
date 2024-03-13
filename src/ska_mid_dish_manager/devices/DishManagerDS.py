@@ -1132,7 +1132,7 @@ class DishManager(SKAController):
         result_code, unique_id = handler(scanid)
 
         return ([result_code], [unique_id])
-    
+
     @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
     def EndScan(self, scanid) -> DevVarLongStringArrayType:
         """

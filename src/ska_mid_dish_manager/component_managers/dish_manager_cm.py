@@ -671,6 +671,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def scan(
         self,
+        scanid,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Scan a target."""
@@ -678,9 +679,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_map.scan, args=[scanid], task_callback=task_callback
         )
         return status, response
-    
+
     def end_scan(
         self,
+        scanid,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Unset the scanned target."""
