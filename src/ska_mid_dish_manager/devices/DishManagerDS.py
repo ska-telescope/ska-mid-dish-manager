@@ -18,7 +18,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DispLevel
+from tango import AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DispLevel, DevString
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -916,6 +916,16 @@ class DishManager(SKAController):
         """Returns the b5aCapabilityState"""
         return self._b5b_capability_state
 
+    @attribute(
+        dtype=DevString,
+        access=AttrWriteType.READ_WRITE,
+        doc="Configures the scanID for Scan",
+    )
+    def scanID(self, scanid):
+        """Set the scanID"""
+        # pylint: disable=attribute-defined-outside-init
+        self._scan_id = scanid
+
     # --------
     # Commands
     # --------
@@ -1109,7 +1119,7 @@ class DishManager(SKAController):
         raise NotImplementedError
 
     @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
-    def Scan(self) -> DevVarLongStringArrayType:
+    def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
         The Dish is tracking the commanded pointing positions within the
         specified SCAN pointing accuracy. (TBC14)
@@ -1117,7 +1127,7 @@ class DishManager(SKAController):
         currently no requirements for this functionality.
         """
         handler = self.get_command_object("Scan")
-        result_code, unique_id = handler()
+        result_code, unique_id = handler(scanid)
 
         return ([result_code], [unique_id])
 
