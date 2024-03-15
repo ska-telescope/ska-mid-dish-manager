@@ -1,5 +1,5 @@
 # pylint: disable=invalid-name
-# pylint: disable=C0302,W0212
+# pylint: disable=C0302,W0212,W0201
 """
 This module implements the dish manager device for DishLMC.
 

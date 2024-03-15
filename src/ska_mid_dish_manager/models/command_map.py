@@ -283,7 +283,6 @@ class CommandMap:
                 result=(ResultCode.OK, "Scan completed"),
             )
 
-
     def track_load_static_off(
         self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None
     ):
