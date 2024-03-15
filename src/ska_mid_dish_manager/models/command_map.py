@@ -270,18 +270,19 @@ class CommandMap:
         )
 
     # pylint: disable=unused-argument
-    def scan(self, argin: str, task_abort_event=None, task_callback: Optional[Callable] = None):
+    def scan(self, task_abort_event=None, task_callback: Optional[Callable] = None):
         """Transition the dish to Scan mode"""
         # TODO: This is a temporary workaround (Pending further implementation details)
         # to support TMC integration.
         self.logger.info("Scan command called")
 
-        self._run_long_running_command(
-            task_callback,
-            task_abort_event,
-            "Scan",
-            "scanid",
-        )
+        if task_callback is not None:
+            task_callback(
+                progress="Scan completed",
+                status=TaskStatus.COMPLETED,
+                result=(ResultCode.OK, "Scan completed"),
+            )
+
 
     def track_load_static_off(
         self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None

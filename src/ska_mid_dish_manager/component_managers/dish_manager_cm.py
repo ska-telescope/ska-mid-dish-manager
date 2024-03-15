@@ -677,17 +677,48 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Scan a target."""
         status, response = self.submit_task(
-            self._command_map.scan, args=[scanid], task_callback=task_callback
+            self._scan, args=[scanid], task_callback=task_callback
         )
         return status, response
+
+    def _scan(
+        self,
+        scanid: str,
+        task_abort_event=None,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Scan a target."""
+        task_callback(progress="Setting scanID",status=TaskStatus.IN_PROGRESS)
+        self._update_component_state(scanid=scanid)
+        task_callback(
+            progress="Scan completed",
+            status=TaskStatus.COMPLETED,
+            result=(ResultCode.OK, "Scan completed"),
+        )
 
     def end_scan(
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Unset the scanned target."""
-        scan_id = self.component_state.write_attribute_value("scanid", "")
-        self._update_component_state(scan_id)
+        """Clear the scanid."""
+        status, response = self.submit_task(
+            self._end_scan, args=[], task_callback=task_callback
+        )
+        return status, response
+
+    def _end_scan(
+        self,
+        task_abort_event=None,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Clear the scanid."""
+        task_callback(progress="Clearing scanID",status=TaskStatus.IN_PROGRESS)
+        self._update_component_state(scanid="")
+        task_callback(
+            progress="EndScan completed",
+            status=TaskStatus.COMPLETED,
+            result=(ResultCode.OK, "EndScan completed"),
+        )
 
     def track_load_static_off(
         self,
