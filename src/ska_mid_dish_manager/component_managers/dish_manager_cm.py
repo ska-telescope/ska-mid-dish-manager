@@ -82,6 +82,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             attenuationpolh=0.0,
             attenuationpolv=0.0,
             kvalue=0,
+            scanid="",
+
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
@@ -682,14 +684,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def end_scan(
         self,
-        scanid: str,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Unset the scanned target."""
-        status, response = self.submit_task(
-            self._command_map.end_scan, args=[scanid], task_callback=task_callback
-        )
-        return status, response
+        """Unset the scanned target.""" 
+        scan_id = self.component_state.write_attribute_value("scanid", "")
+        self._update_component_state(scan_id)
 
     def track_load_static_off(
         self,

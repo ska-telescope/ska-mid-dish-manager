@@ -238,6 +238,7 @@ class DishManager(SKAController):
             device._track_interpolation_mode = TrackInterpolationMode.SPLINE
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
+            device._scan_id = ""
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -921,11 +922,15 @@ class DishManager(SKAController):
     @attribute(
         dtype=DevString,
         access=AttrWriteType.READ_WRITE,
-        doc="Configures the scanID for Scan",
+        doc="Report and configures the scanID for Scan",
     )
+    def scanID(self):
+        """Returns the scanID"""
+        return self._scan_id
+    
+    @scanID.write
     def scanID(self, scanid):
-        """Set the scanID"""
-        # pylint: disable=attribute-defined-outside-init
+        """Sets the scanID"""
         self._scan_id = scanid
 
     # --------
@@ -1120,7 +1125,7 @@ class DishManager(SKAController):
         """Flushes the queue of time stamped commands."""
         raise NotImplementedError
 
-    @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    @command(dtype_in=DevString, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
     def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
         The Dish is tracking the commanded pointing positions within the
@@ -1132,14 +1137,14 @@ class DishManager(SKAController):
         result_code, unique_id = handler(scanid)
 
         return ([result_code], [unique_id])
-
+    
     @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
-    def EndScan(self, scanid) -> DevVarLongStringArrayType:
+    def EndScan(self) -> DevVarLongStringArrayType:
         """
         This command clears out the scan_id
         """
         handler = self.get_command_object("EndScan")
-        result_code, unique_id = handler(scanid)
+        result_code, unique_id = handler()
 
         return ([result_code], [unique_id])
 
