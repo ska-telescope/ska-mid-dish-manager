@@ -927,7 +927,7 @@ class DishManager(SKAController):
     def scanID(self):
         """Returns the scanID"""
         return self._scan_id
-    
+
     @scanID.write
     def scanID(self, scanid):
         """Sets the scanID"""
@@ -1125,7 +1125,9 @@ class DishManager(SKAController):
         """Flushes the queue of time stamped commands."""
         raise NotImplementedError
 
-    @command(dtype_in=DevString, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=DevString, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR
+    )
     def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
         The Dish is tracking the commanded pointing positions within the
@@ -1137,7 +1139,7 @@ class DishManager(SKAController):
         result_code, unique_id = handler(scanid)
 
         return ([result_code], [unique_id])
-    
+
     @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
     def EndScan(self) -> DevVarLongStringArrayType:
         """

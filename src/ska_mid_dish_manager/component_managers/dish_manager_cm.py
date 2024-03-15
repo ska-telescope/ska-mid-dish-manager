@@ -83,7 +83,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             attenuationpolv=0.0,
             kvalue=0,
             scanid="",
-
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
@@ -686,7 +685,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Unset the scanned target.""" 
+        """Unset the scanned target."""
         scan_id = self.component_state.write_attribute_value("scanid", "")
         self._update_component_state(scan_id)
 
