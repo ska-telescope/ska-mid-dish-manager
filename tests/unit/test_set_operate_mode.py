@@ -39,7 +39,7 @@ class TestSetOperateMode:
                 "TangoDeviceComponentManager.start_communicating"
             )
         ):
-            self.tango_context = DeviceTestContext(DishManager)
+            self.tango_context = DeviceTestContext(DishManager, daemon=True)
             self.tango_context.start()
             self.device_proxy = self.tango_context.device
             class_instance = DishManager.instances.get(self.device_proxy.name())
