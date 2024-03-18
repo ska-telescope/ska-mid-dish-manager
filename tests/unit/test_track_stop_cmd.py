@@ -27,33 +27,34 @@ class TestTrackStop:
     """Tests for TrackStop"""
 
     # pylint: disable=protected-access
-    def setup_method(self):
+    @patch(
+        (
+            "ska_mid_dish_manager.component_managers.tango_device_cm."
+            "TangoDeviceComponentManager.start_communicating"
+        )
+    )
+    @patch("ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceMonitor")
+    def setup_method(self, _test_name, _comms, _monit):
         """Set up context"""
-        with patch(
-            (
-                "ska_mid_dish_manager.component_managers.tango_device_cm."
-                "TangoDeviceComponentManager.start_communicating"
+        self.tango_context = DeviceTestContext(DishManager)
+        self.tango_context.start()
+
+        self.device_proxy = self.tango_context.device
+        class_instance = DishManager.instances.get(self.device_proxy.name())
+
+        for com_man in class_instance.component_manager.sub_component_managers.values():
+            com_man._update_communication_state(
+                communication_state=CommunicationStatus.ESTABLISHED
             )
-        ):
-            self.tango_context = DeviceTestContext(DishManager)
-            self.tango_context.start()
 
-            self.device_proxy = self.tango_context.device
-            class_instance = DishManager.instances.get(self.device_proxy.name())
+        self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
+        self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
+        self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
+        self.dish_manager_cm = class_instance.component_manager
 
-            for com_man in class_instance.component_manager.sub_component_managers.values():
-                com_man._update_communication_state(
-                    communication_state=CommunicationStatus.ESTABLISHED
-                )
-
-            self.ds_cm = class_instance.component_manager.sub_component_managers["DS"]
-            self.spf_cm = class_instance.component_manager.sub_component_managers["SPF"]
-            self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
-            self.dish_manager_cm = class_instance.component_manager
-
-            self.ds_cm.update_state_from_monitored_attributes = MagicMock()
-            self.spf_cm.update_state_from_monitored_attributes = MagicMock()
-            self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+        self.ds_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spf_cm.update_state_from_monitored_attributes = MagicMock()
+        self.spfrx_cm.update_state_from_monitored_attributes = MagicMock()
 
     def teardown_method(self):
         """Tear down context"""

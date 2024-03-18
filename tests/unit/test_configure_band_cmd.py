@@ -29,33 +29,34 @@ LOGGER = logging.getLogger(__name__)
 class TestConfigureBand:
     """Tests for ConfigureBand"""
 
-    def setup_method(self):
+    @patch(
+        (
+            "ska_mid_dish_manager.component_managers.tango_device_cm."
+            "TangoDeviceComponentManager.start_communicating"
+        )
+    )
+    @patch("ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceMonitor")
+    def setup_method(self, _test_name, _comms, _monit):
         """Set up context"""
-        with patch(
-            (
-                "ska_mid_dish_manager.component_managers.tango_device_cm."
-                "TangoDeviceComponentManager.start_communicating"
+        self.tango_context = DeviceTestContext(DishManager)
+        self.tango_context.start()
+
+        event_store = EventStore()
+        self.device_proxy = self.tango_context.device
+
+        class_instance = DishManager.instances.get(self.device_proxy.name())
+        for com_man in class_instance.component_manager.sub_component_managers.values():
+            com_man._update_communication_state(
+                communication_state=CommunicationStatus.ESTABLISHED
             )
-        ):
-            self.tango_context = DeviceTestContext(DishManager)
-            self.tango_context.start()
 
-            event_store = EventStore()
-            self.device_proxy = self.tango_context.device
-
-            class_instance = DishManager.instances.get(self.device_proxy.name())
-            for com_man in class_instance.component_manager.sub_component_managers.values():
-                com_man._update_communication_state(
-                    communication_state=CommunicationStatus.ESTABLISHED
-                )
-
-            for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
-                self.device_proxy.subscribe_event(
-                    conn_attr,
-                    tango.EventType.CHANGE_EVENT,
-                    event_store,
-                )
-                event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+        for conn_attr in ["spfConnectionState", "spfrxConnectionState", "dsConnectionState"]:
+            self.device_proxy.subscribe_event(
+                conn_attr,
+                tango.EventType.CHANGE_EVENT,
+                event_store,
+            )
+            event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
         self.device_proxy = self.tango_context.device
         class_instance = DishManager.instances.get(self.device_proxy.name())
