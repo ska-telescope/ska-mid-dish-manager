@@ -932,6 +932,7 @@ class DishManager(SKAController):
     def scanID(self, scanid):
         """Sets the scanID"""
         self._scan_i_d = scanid
+        self.push_change_event("scanID", self._scan_i_d)
 
     # --------
     # Commands
