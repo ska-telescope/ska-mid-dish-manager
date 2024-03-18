@@ -272,7 +272,6 @@ class DishManager(SKAController):
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
                 "trackinterpolationmode": "trackInterpolationMode",
-                "capturing": "capturing",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
