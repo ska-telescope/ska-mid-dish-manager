@@ -3,7 +3,7 @@ import datetime
 import logging
 import typing
 from queue import Empty, PriorityQueue
-from threading import Event
+from threading import Event, Lock
 from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
@@ -44,6 +44,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         tango_device_fqdn: str,
         logger: logging.Logger,
         monitored_attributes: Tuple[str, ...],
+        command_execution_lock: Lock,
         *args: Any,
         communication_state_callback: Any = None,
         component_state_callback: Any = None,
@@ -55,6 +56,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._events_queue: PriorityQueue = PriorityQueue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
+        self._command_execution_lock = command_execution_lock
         if not logger:
             logger = logging.getLogger()
         self.logger = logger
@@ -276,7 +278,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @_check_connection
     def execute_command(self, command_name: str, command_arg: Any) -> Any:
         """Check the connection and execute the command on the Tango device"""
-        with self._communication_state_lock:
+        with self._command_execution_lock:
             self.logger.debug(
                 "About to execute command [%s] on device [%s]",
                 command_name,
