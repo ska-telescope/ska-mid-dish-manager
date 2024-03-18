@@ -276,20 +276,21 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @_check_connection
     def execute_command(self, command_name: str, command_arg: Any) -> Any:
         """Check the connection and execute the command on the Tango device"""
-        self.logger.debug(
-            "About to execute command [%s] on device [%s]",
-            command_name,
-            self._tango_device_fqdn,
-        )
-        device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-        result = device_proxy.command_inout(command_name, command_arg)
-        self.logger.debug(
-            "Result of [%s] on [%s] is [%s]",
-            command_name,
-            self._tango_device_fqdn,
-            result,
-        )
-        return result
+        with self._component_state_lock:
+            self.logger.debug(
+                "About to execute command [%s] on device [%s]",
+                command_name,
+                self._tango_device_fqdn,
+            )
+            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
+            result = device_proxy.command_inout(command_name, command_arg)
+            self.logger.debug(
+                "Result of [%s] on [%s] is [%s]",
+                command_name,
+                self._tango_device_fqdn,
+                result,
+            )
+            return result
 
     @_check_connection
     def read_attribute_value(self, attribute_name: str) -> Any:
