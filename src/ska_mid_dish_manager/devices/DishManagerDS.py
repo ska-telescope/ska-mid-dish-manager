@@ -931,7 +931,7 @@ class DishManager(SKAController):
         This is a best effort, fire and forgot ping that is tried continually.
         Connection status is not monitored from here.
         """
-        if self.dev_state != tango.DevState.INIT:
+        if self.dev_state() != tango.DevState.INIT:
             if hasattr(self, "component_manager"):
                 if "SPFRX" in self.component_manager.sub_component_managers:
                     try:
