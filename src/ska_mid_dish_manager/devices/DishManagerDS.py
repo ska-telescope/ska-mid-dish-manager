@@ -931,13 +931,14 @@ class DishManager(SKAController):
         This is a best effort, fire and forgot ping that is tried continually.
         Connection status is not monitored from here.
         """
-        if hasattr(self, "component_manager"):
-            if "SPFRX" in self.component_manager.sub_component_managers:
-                try:
-                    spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-                    spfrx_com_man.execute_command("MonitorPing", None)
-                except tango.DevFailed:
-                    self.logger.debug("Could not reach SPFRx")
+        if self.dev_state != tango.DevState.INIT:
+            if hasattr(self, "component_manager"):
+                if "SPFRX" in self.component_manager.sub_component_managers:
+                    try:
+                        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+                        spfrx_com_man.execute_command("MonitorPing", None)
+                    except tango.DevFailed:
+                        self.logger.debug("Could not reach SPFRx")
 
     # pylint: disable=too-few-public-methods
     class AbortCommandsCommand(SlowCommand):
