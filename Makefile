@@ -67,6 +67,7 @@ CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set ska-tango-base.enabled=true \
 	--set global.dishes="{001,111}"
 K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
+K8S_TIMEOUT=600s
 endif
 
 K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
