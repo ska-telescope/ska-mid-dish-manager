@@ -276,7 +276,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @_check_connection
     def execute_command(self, command_name: str, command_arg: Any) -> Any:
         """Check the connection and execute the command on the Tango device"""
-        with self._component_state_lock:
+        with self._communication_state_lock:
             self.logger.debug(
                 "About to execute command [%s] on device [%s]",
                 command_name,
