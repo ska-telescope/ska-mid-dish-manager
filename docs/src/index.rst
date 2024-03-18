@@ -22,6 +22,7 @@ those sub-element devices.
    Developer Guide<developer_guide/index>
    User Guide<user_guide/index>
    API<api/index>
+   CHANGELOG<../../CHANGELOG>
 
 
 Indices and tables
