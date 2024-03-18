@@ -103,7 +103,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_device_fqdn,
                 logger,
                 self._state_update_lock,
-                self._command_execution_lock,
                 operatingmode=SPFOperatingMode.UNKNOWN,
                 powerstate=SPFPowerState.UNKNOWN,
                 healthstate=HealthState.UNKNOWN,
@@ -118,12 +117,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "spfConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
+                command_execution_lock=self._command_execution_lock,
             ),
             "DS": DSComponentManager(
                 ds_device_fqdn,
                 logger,
                 self._state_update_lock,
-                self._command_execution_lock,
                 healthstate=HealthState.UNKNOWN,
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=None,
@@ -139,12 +138,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
+                command_execution_lock=self._command_execution_lock,
             ),
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
                 logger,
                 self._state_update_lock,
-                self._command_execution_lock,
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
                 capturingdata=False,
@@ -162,6 +161,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "spfrxConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
+                command_execution_lock=self._command_execution_lock,
             ),
         }
         initial_component_states = {

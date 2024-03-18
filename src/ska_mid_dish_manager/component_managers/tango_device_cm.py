@@ -44,10 +44,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         tango_device_fqdn: str,
         logger: logging.Logger,
         monitored_attributes: Tuple[str, ...],
-        command_execution_lock: Lock,
         *args: Any,
         communication_state_callback: Any = None,
         component_state_callback: Any = None,
+        command_execution_lock: Lock = Lock(),
         **kwargs: Any,
     ):
         self._component_state: dict = {}  # type: ignore
