@@ -37,7 +37,7 @@ class TestConfigureBand:
                 "TangoDeviceComponentManager.start_communicating"
             )
         ):
-            self.tango_context = DeviceTestContext(DishManager)
+            self.tango_context = DeviceTestContext(DishManager, daemon=True)
             self.tango_context.start()
 
             event_store = EventStore()
