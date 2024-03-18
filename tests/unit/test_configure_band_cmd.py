@@ -35,8 +35,14 @@ class TestConfigureBand:
             "TangoDeviceComponentManager.start_communicating"
         )
     )
+    @patch(
+        (
+            "ska_mid_dish_manager.component_managers.tango_device_cm."
+            "TangoDeviceComponentManager.execute_command"
+        )
+    )
     @patch("ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceMonitor")
-    def setup_method(self, _test_name, _comms, _monit):
+    def setup_method(self, _test_name, _comms, _exec_comm, _monit):
         """Set up context"""
         self.tango_context = DeviceTestContext(DishManager)
         self.tango_context.start()
