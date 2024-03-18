@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Update docs to demonstrate running devices as nodb
 
 Version 2.3.6
 *************
