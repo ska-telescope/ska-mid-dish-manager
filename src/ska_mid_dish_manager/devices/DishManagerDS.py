@@ -922,7 +922,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=DevString,
         access=AttrWriteType.READ_WRITE,
-        doc="Report and configures the scanID for Scan",
+        doc="Report and the scanID for Scan",
     )
     def scanID(self):
         """Returns the scanID"""
@@ -1132,8 +1132,7 @@ class DishManager(SKAController):
         """
         The Dish is tracking the commanded pointing positions within the
         specified SCAN pointing accuracy. (TBC14)
-        NOTE: This pointing state is currently proposed and there are
-        currently no requirements for this functionality.
+        NOTE: This pointing state is currently proposed.
         """
         handler = self.get_command_object("Scan")
         result_code, unique_id = handler(scanid)

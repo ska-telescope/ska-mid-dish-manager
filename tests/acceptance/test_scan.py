@@ -28,9 +28,9 @@ def test_scan(dish_manager_proxy, event_store_class):
     dish_manager_proxy.subscribe_event(
         "scanID", tango.EventType.CHANGE_EVENT, dm_model_event_store
     )
-    scanid = "4"
-    [[_], [unique_id]] = dish_manager_proxy.Scan(scanid)
-    result_event_store.wait_for_command_id(unique_id, timeout=3)
+    scan_id = "4"
+    [[_], [unique_id]] = dish_manager_proxy.Scan(scan_id)
+    result_event_store.wait_for_command_id(unique_id)
 
-    progress_event_store.wait_for_progress_update("Scan completed", timeout=3)
-    dm_model_event_store.wait_for_value(scanid, timeout=3)
+    progress_event_store.wait_for_progress_update("Scan completed")
+    dm_model_event_store.wait_for_value(scan_id)
