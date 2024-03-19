@@ -12,6 +12,7 @@ Version 2.3.7
 *************
 - Updated dish simulators version to v1.6.6 
 - Updated ds-manager version to v1.2.7
+- Applies bug fix which causes intermittent failures in the test run
 
 Version 2.3.6
 *************
