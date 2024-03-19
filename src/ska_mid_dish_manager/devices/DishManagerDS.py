@@ -937,6 +937,7 @@ class DishManager(SKAController):
         """SPFRx needs to be pinged periodically to ensure it knows it is connected.
         This is a best effort, fire and forgot ping that is tried continually.
         Connection status is not monitored from here.
+        TODO: Move this into DeviceMonitor
         """
         if self.dev_state() != tango.DevState.INIT:
             if hasattr(self, "component_manager"):
