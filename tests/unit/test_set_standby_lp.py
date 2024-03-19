@@ -61,7 +61,7 @@ class TestSetStandByLPMode:
 
     def teardown_method(self):
         """Tear down context"""
-        pass
+        return
 
     def test_standbylp_cmd_fails_from_standbylp_dish_mode(self, event_store):
         """Execute tests"""

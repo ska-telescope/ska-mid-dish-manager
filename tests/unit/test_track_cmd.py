@@ -57,7 +57,7 @@ class TestTrack:
 
     def teardown_method(self):
         """Tear down context"""
-        pass
+        return
 
     def test_track_interpolation_mode_updates(self, event_store):
         """Test the trackInterpolationMode attribute updates on change."""
