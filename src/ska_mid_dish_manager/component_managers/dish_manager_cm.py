@@ -96,7 +96,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
-        self._command_execution_lock = Lock()
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
@@ -117,7 +116,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "spfConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
-                command_execution_lock=self._command_execution_lock,
             ),
             "DS": DSComponentManager(
                 ds_device_fqdn,
@@ -138,7 +136,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
-                command_execution_lock=self._command_execution_lock,
             ),
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
@@ -161,7 +158,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "spfrxConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
-                command_execution_lock=self._command_execution_lock,
             ),
         }
         initial_component_states = {
