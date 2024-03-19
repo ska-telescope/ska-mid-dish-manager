@@ -266,9 +266,8 @@ class TangoDeviceMonitor:
                         else:
                             events_queue.put(PrioritizedEventData(priority=1, item=tango_event))
 
-                    with tango.EnsureOmniThread():
-                        device_proxy = tango.DeviceProxy(tango_fqdn)
-                        device_proxy.ping()
+                    device_proxy = tango.DeviceProxy(tango_fqdn)
+                    device_proxy.ping()
                     if exit_thread_event.is_set():
                         return
                     event_reaction_cb = partial(_event_reaction, event_queue)
