@@ -217,7 +217,7 @@ class TestCapabilityStates:
 
     def teardown_method(self):
         """Tear down context"""
-        self.tango_context.stop()
+        return
 
     def test_capabilitystate_available(self):
         """Test cap state present"""
