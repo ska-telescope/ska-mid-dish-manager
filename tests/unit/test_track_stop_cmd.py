@@ -57,7 +57,7 @@ class TestTrackStop:
 
     def teardown_method(self):
         """Tear down context"""
-        self.tango_context.stop()
+        return
 
     # pylint: disable=missing-function-docstring, protected-access
     @pytest.mark.parametrize(

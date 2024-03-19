@@ -46,6 +46,7 @@ sys.path.insert(0, os.path.abspath("../../src"))
 # pylint: disable=invalid-name
 autodoc_mock_imports = [
     "numpy",
+    "astropy",
     "transitions",
     "networkx",
     "ska_control_model",
@@ -84,7 +85,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
     "sphinxcontrib.plantuml",
-    'sphinx_copybutton',
+    "sphinx_copybutton",
 ]
 autoclass_content = "class"
 plantuml_syntax_error_image = True

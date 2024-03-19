@@ -78,7 +78,7 @@ class TestConfigureBand:
 
     def teardown_method(self):
         """Tear down context"""
-        self.tango_context.stop()
+        return
 
     @pytest.mark.parametrize(
         "command,band_number",
