@@ -61,7 +61,7 @@ class TestSetOperateMode:
 
     def teardown_method(self):
         """Tear down context"""
-        self.tango_context.stop()
+        pass
 
     # pylint: disable=missing-function-docstring, protected-access
     def test_set_operate_mode_fails_when_already_in_operate_dish_mode(

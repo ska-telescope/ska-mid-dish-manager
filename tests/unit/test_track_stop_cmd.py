@@ -57,11 +57,7 @@ class TestTrackStop:
 
     def teardown_method(self):
         """Tear down context"""
-        self.ds_cm.stop_communicating()
-        self.spf_cm.stop_communicating()
-        self.spfrx_cm.stop_communicating()
-        self.dish_manager_cm.stop_communicating()
-        self.tango_context.stop()
+        pass
 
     # pylint: disable=missing-function-docstring, protected-access
     @pytest.mark.parametrize(
