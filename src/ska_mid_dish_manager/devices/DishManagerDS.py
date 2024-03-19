@@ -471,7 +471,7 @@ class DishManager(SKAController):
                 except tango.DevFailed:
                     self.logger.exception("Could not reach DS to write band2PointingModelParams")
         else:
-            self.logger.warn("No component manager to write band2PointingModelParams yet")
+            self.logger.warning("No component manager to write band2PointingModelParams yet")
 
     @attribute(
         dtype=(DevFloat,),
