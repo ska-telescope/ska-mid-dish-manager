@@ -57,7 +57,9 @@ class TestTrackStop:
 
     def teardown_method(self):
         """Tear down context"""
+        print("STOPPING TANGO CONTEXT (TestTrackStop)")
         self.tango_context.stop()
+        print("STOPPED")
 
     # pylint: disable=missing-function-docstring, protected-access
     @pytest.mark.parametrize(
@@ -90,6 +92,7 @@ class TestTrackStop:
         self,
         event_store_class,
     ):
+        print("STARTING TEST (test_track_stop_cmd_succeeds_when_pointing_state_is_track)")
         main_event_store = event_store_class()
         progress_event_store = event_store_class()
 
@@ -157,3 +160,4 @@ class TestTrackStop:
         # in the event store
         for message in expected_progress_updates:
             assert message in events_string
+        print("FINISHED TEST (test_track_stop_cmd_succeeds_when_pointing_state_is_track)")

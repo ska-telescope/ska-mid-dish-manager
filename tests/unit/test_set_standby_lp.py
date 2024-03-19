@@ -61,10 +61,13 @@ class TestSetStandByLPMode:
 
     def teardown_method(self):
         """Tear down context"""
+        print("STOPPING TANGO CONTEXT (TestSetStandByLPMode)")
         self.tango_context.stop()
+        print("STOPPED")
 
     def test_standbylp_cmd_fails_from_standbylp_dish_mode(self, event_store):
         """Execute tests"""
+        print("STARTING TEST (test_standbylp_cmd_fails_from_standbylp_dish_mode)")
         self.device_proxy.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,
@@ -74,9 +77,11 @@ class TestSetStandByLPMode:
 
         with pytest.raises(tango.DevFailed):
             _, _ = self.device_proxy.SetStandbyLPMode()
+        print("FINISHED TEST (test_standbylp_cmd_fails_from_standbylp_dish_mode)")
 
     def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(self, event_store_class):
         """Execute tests"""
+        print("STARTING TEST (test_standbylp_cmd_succeeds_from_standbyfp_dish_mode)")
         dish_mode_event_store = event_store_class()
         progress_event_store = event_store_class()
 
@@ -136,3 +141,4 @@ class TestSetStandByLPMode:
         # in the event store
         for message in expected_progress_updates:
             assert message in events_string
+        print("FINISHED TEST (test_standbylp_cmd_succeeds_from_standbyfp_dish_mode)")

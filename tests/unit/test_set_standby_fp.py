@@ -63,10 +63,13 @@ class TestSetStandByFPMode:
 
     def teardown_method(self):
         """Tear down context"""
+        print("STOPPING TANGO CONTEXT (TestSetStandByFPMode)")
         self.tango_context.stop()
+        print("STOPPED")
 
     def test_standby_fp(self, event_store_class):
         """Execute tests"""
+        print("STARTING TEST (test_standby_fp)")
         dish_mode_event_store = event_store_class()
         progress_event_store = event_store_class()
 
@@ -117,3 +120,4 @@ class TestSetStandByFPMode:
         # in the event store
         for message in expected_progress_updates:
             assert message in events_string
+        print("FINISHED TEST (test_standby_fp)")

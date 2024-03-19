@@ -61,13 +61,16 @@ class TestSetOperateMode:
 
     def teardown_method(self):
         """Tear down context"""
+        print("STOPPING TANGO CONTEXT (TestSetOperateMode)")
         self.tango_context.stop()
+        print("STOPPED")
 
     # pylint: disable=missing-function-docstring, protected-access
     def test_set_operate_mode_fails_when_already_in_operate_dish_mode(
         self,
         event_store,
     ):
+        print("STARTING TEST (test_set_operate_mode_fails_when_already_in_operate_dish_mode)")
         device_proxy = self.tango_context.device
         device_proxy.subscribe_event(
             "dishMode",
@@ -94,11 +97,13 @@ class TestSetOperateMode:
             # Transition DishManager to OPERATE issuing a command
             _, _ = device_proxy.SetOperateMode()
             assert device_proxy.pointingState == PointingState.UNKNOWN
+        print("FINISHED TEST (test_set_operate_mode_fails_when_already_in_operate_dish_mode)")
 
     def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
         self,
         event_store_class,
     ):
+        print("STARTING TEST (test_set_operate_mode_succeeds_from_standbyfp_dish_mode)")
         main_event_store = event_store_class()
         progress_event_store = event_store_class()
 
@@ -182,3 +187,5 @@ class TestSetOperateMode:
         # in the event store
         for message in expected_progress_updates:
             assert message in events_string
+
+        print("FINISHED TEST (test_set_operate_mode_succeeds_from_standbyfp_dish_mode)")

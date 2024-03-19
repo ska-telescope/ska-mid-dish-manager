@@ -78,7 +78,9 @@ class TestConfigureBand:
 
     def teardown_method(self):
         """Tear down context"""
+        print("STOPPING TANGO CONTEXT (TestConfigureBand)")
         self.tango_context.stop()
+        print("STOPPED")
 
     @pytest.mark.parametrize(
         "command,band_number",
@@ -91,6 +93,7 @@ class TestConfigureBand:
         self, command, band_number, event_store_class, caplog
     ):
         """Test ConfigureBand"""
+        print("STARTING TEST (", command, ")(", band_number, ")")
         caplog.set_level(logging.DEBUG)
 
         main_event_store = event_store_class()
@@ -153,3 +156,5 @@ class TestConfigureBand:
         # in the event store
         for message in expected_progress_updates:
             assert message in events_string
+
+        print("FINISHED TEST (", command, ")(", band_number, ")")
