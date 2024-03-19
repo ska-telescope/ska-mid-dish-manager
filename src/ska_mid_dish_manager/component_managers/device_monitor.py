@@ -163,8 +163,9 @@ class TangoDeviceMonitor:
 
         while not self._exit_thread_event.is_set():
             try:
-                proxy = tango.DeviceProxy(self._tango_fqdn)
-                proxy.ping()
+                with tango.EnsureOmniThread():
+                    proxy = tango.DeviceProxy(self._tango_fqdn)
+                    proxy.ping()
                 start_monitoring_threads()
                 return
             except tango.DevFailed:

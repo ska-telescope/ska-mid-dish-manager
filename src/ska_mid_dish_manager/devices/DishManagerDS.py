@@ -463,8 +463,15 @@ class DishManager(SKAController):
         if len(value) != 2:
             raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
 
-        ds_proxy = tango.DeviceProxy(self.DSDeviceFqdn)
-        ds_proxy.band2PointingModelParams = value
+        if hasattr(self, "component_manager"):
+            if "DS" in self.component_manager.sub_component_managers:
+                try:
+                    ds_com_man = self.component_manager.sub_component_managers["DS"]
+                    ds_com_man.write_attribute_value("band2PointingModelParams", value)
+                except tango.DevFailed:
+                    self.logger.exception("Could not reach DS to write band2PointingModelParams")
+        else:
+            self.logger.warning("No component manager to write band2PointingModelParams yet")
 
     @attribute(
         dtype=(DevFloat,),
@@ -919,6 +926,27 @@ class DishManager(SKAController):
     # --------
     # Commands
     # --------
+
+    @command(
+        dtype_in=None,
+        polling_period=30000,
+        doc_in="Called periodically with the polling thread to keep connections alive",
+        dtype_out=None,
+    )
+    def MonitoringPing(self):
+        """SPFRx needs to be pinged periodically to ensure it knows it is connected.
+        This is a best effort, fire and forgot ping that is tried continually.
+        Connection status is not monitored from here.
+        TODO: Move this into DeviceMonitor
+        """
+        if self.dev_state() != tango.DevState.INIT:
+            if hasattr(self, "component_manager"):
+                if "SPFRX" in self.component_manager.sub_component_managers:
+                    try:
+                        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+                        spfrx_com_man.execute_command("MonitorPing", None)
+                    except tango.DevFailed:
+                        self.logger.debug("Could not reach SPFRx")
 
     # pylint: disable=too-few-public-methods
     class AbortCommandsCommand(SlowCommand):

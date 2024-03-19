@@ -43,7 +43,7 @@ class TestStowMode:
 
     def teardown_method(self):
         """Tear down context"""
-        self.tango_context.stop()
+        return
 
     # pylint: disable=missing-function-docstring, protected-access
     def test_stow_mode(self, event_store_class):

@@ -111,6 +111,12 @@
       doc_out: (ResultCode, 'Command unique ID')
       dtype_in: DevVarLongStringArray
       dtype_out: DevBoolean
+    - name: MonitoringPing
+      disp_level: OPERATOR
+      doc_in: Called periodically with the polling thread to keep connections alive
+      doc_out: Uninitialised
+      dtype_in: DevVoid
+      dtype_out: DevVoid
     - name: 'Off'
       disp_level: OPERATOR
       doc_in: Uninitialised
