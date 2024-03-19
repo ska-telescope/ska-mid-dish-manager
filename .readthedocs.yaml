@@ -9,9 +9,9 @@ build:
   jobs:
     # https://docs.readthedocs.io/en/stable/build-customization.html#install-dependencies-with-poetry
     post_create_environment:
-      # Install poetry
-      # https://python-poetry.org/docs/#installing-manually
-      - pip install poetry
+      # TODO (ST 18-03-2024): Await published uniform approach to resolving
+      # build errors resulting from poetry versions 1.8.0 and higher
+      - pip install poetry==1.7.1
       # Tell poetry to not use a virtual environment
       - poetry config virtualenvs.create false
     post_install:
