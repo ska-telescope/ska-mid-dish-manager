@@ -65,7 +65,7 @@ class TestDishManager:
 
     def teardown_method(self):
         """Tear down context"""
-        self.tango_context.stop()
+        return
 
     def test_dish_manager_behaviour(self, event_store):
         """Test that SetStandbyFPMode does 3 result updates. DishManager, DS, SPF"""
