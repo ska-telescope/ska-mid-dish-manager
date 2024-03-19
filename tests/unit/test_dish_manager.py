@@ -150,3 +150,7 @@ class TestDishManager:
 
         mocked_write.assert_called()
         assert list(self.device_proxy.desiredPointing) == list(write_value)
+
+    def test_connection_ping(self):
+        "Test that the monitoring command exists and is polled"
+        assert self.device_proxy.get_command_poll_period("MonitoringPing") == 30000
