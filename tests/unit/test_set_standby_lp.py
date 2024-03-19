@@ -61,6 +61,10 @@ class TestSetStandByLPMode:
 
     def teardown_method(self):
         """Tear down context"""
+        self.ds_cm.stop_communicating()
+        self.spf_cm.stop_communicating()
+        self.spfrx_cm.stop_communicating()
+        self.dish_manager_cm.stop_communicating()
         self.tango_context.stop()
 
     def test_standbylp_cmd_fails_from_standbylp_dish_mode(self, event_store):
