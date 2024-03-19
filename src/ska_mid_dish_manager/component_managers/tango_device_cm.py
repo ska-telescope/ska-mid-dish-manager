@@ -3,7 +3,7 @@ import datetime
 import logging
 import typing
 from queue import Empty, PriorityQueue
-from threading import Event, Lock
+from threading import Event
 from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
@@ -47,7 +47,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         *args: Any,
         communication_state_callback: Any = None,
         component_state_callback: Any = None,
-        command_execution_lock: Lock = Lock(),
         **kwargs: Any,
     ):
         self._component_state: dict = {}  # type: ignore
