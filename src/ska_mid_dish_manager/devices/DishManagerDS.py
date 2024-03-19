@@ -463,8 +463,15 @@ class DishManager(SKAController):
         if len(value) != 2:
             raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
 
-        ds_proxy = tango.DeviceProxy(self.DSDeviceFqdn)
-        ds_proxy.band2PointingModelParams = value
+        if hasattr(self, "component_manager"):
+            if "DS" in self.component_manager.sub_component_managers:
+                try:
+                    ds_com_man = self.component_manager.sub_component_managers["DS"]
+                    ds_com_man.write_attribute_value("band2PointingModelParams", value)
+                except tango.DevFailed:
+                    self.logger.exception("Could not reach DS to write band2PointingModelParams")
+        else:
+            self.logger.warn("No component manager to write band2PointingModelParams yet")
 
     @attribute(
         dtype=(DevFloat,),
