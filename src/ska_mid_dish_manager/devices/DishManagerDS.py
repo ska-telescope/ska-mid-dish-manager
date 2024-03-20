@@ -17,10 +17,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-<<<<<<< HEAD
-from tango import AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DevString, DispLevel
-=======
-from tango import AttrWriteType, DebugIt, DevFloat, DispLevel
+from tango import AttrWriteType, DebugIt, DevFloat, DevString, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
