@@ -65,7 +65,7 @@ class TestDishManager:
 
     def teardown_method(self):
         """Tear down context"""
-        self.tango_context.stop()
+        return
 
     def test_dish_manager_behaviour(self, event_store):
         """Test that SetStandbyFPMode does 3 result updates. DishManager, DS, SPF"""
@@ -138,3 +138,7 @@ class TestDishManager:
         assert "DS" in json_string
         assert "SPFRx" in json_string
         assert "SPF" in json_string
+
+    def test_connection_ping(self):
+        "Test that the monitoring command exists and is polled"
+        assert self.device_proxy.get_command_poll_period("MonitoringPing") == 30000

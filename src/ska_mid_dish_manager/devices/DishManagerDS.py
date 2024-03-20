@@ -9,7 +9,6 @@ and the subservient devices
 
 import json
 import logging
-import os
 import weakref
 from functools import reduce
 from typing import Any, List, Optional, Tuple
@@ -18,7 +17,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DispLevel
+from tango import AttrWriteType, DebugIt, DevFloat, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -202,6 +201,8 @@ class DishManager(SKAController):
             device: DishManager = self._device
             # pylint: disable=protected-access
             device._achieved_pointing = [0.0, 0.0, 0.0]
+            device._achieved_pointing_az = [0.0, 0.0]
+            device._achieved_pointing_el = [0.0, 0.0]
             device._achieved_target_lock = False
             device._attenuation_pol_h = 0.0
             device._attenuation_pol_v = 0.0
@@ -233,9 +234,9 @@ class DishManager(SKAController):
             device._poly_track = []
             device._power_state = PowerState.LOW
             device._program_track_table = []
-            device._track_interpolation_mode = TrackInterpolationMode.NEWTON
+            device._track_interpolation_mode = TrackInterpolationMode.SPLINE
             device._track_program_mode = TrackProgramMode.TABLEA
-            device._track_table_load_mode = TrackTableLoadMode.NEW
+            device._track_table_load_mode = TrackTableLoadMode.APPEND
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -267,10 +268,13 @@ class DishManager(SKAController):
                 "desiredpointingaz": "desiredPointingAz",
                 "desiredpointingel": "desiredPointingEl",
                 "achievedpointing": "achievedPointing",
+                "achievedpointingaz": "achievedPointingAz",
+                "achievedpointingel": "achievedPointingEl",
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
+                "trackinterpolationmode": "trackInterpolationMode",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -326,10 +330,31 @@ class DishManager(SKAController):
         max_dim_x=3,
         dtype=(float,),
         doc="[0] Timestamp\n[1] Azimuth\n[2] Elevation",
+        access=AttrWriteType.READ,
     )
     def achievedPointing(self):
-        """Returns the achievedPointing"""
+        """Returns the current achieved pointing for both axis."""
         return self._achieved_pointing
+
+    @attribute(
+        max_dim_x=2,
+        dtype=(float,),
+        doc="[0] Timestamp\n[1] Azimuth",
+        access=AttrWriteType.READ,
+    )
+    def achievedPointingAz(self):
+        """Returns the current achieved pointing for the azimuth axis."""
+        return self._achieved_pointing_az
+
+    @attribute(
+        max_dim_x=2,
+        dtype=(float,),
+        doc="[0] Timestamp\n[1] Elevation",
+        access=AttrWriteType.READ,
+    )
+    def achievedPointingEl(self):
+        """Returns the current achieved pointing for the elevation axis."""
+        return self._achieved_pointing_el
 
     @attribute(
         dtype=bool,
@@ -440,8 +465,15 @@ class DishManager(SKAController):
         if len(value) != 2:
             raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
 
-        ds_proxy = tango.DeviceProxy(self.DSDeviceFqdn)
-        ds_proxy.band2PointingModelParams = value
+        if hasattr(self, "component_manager"):
+            if "DS" in self.component_manager.sub_component_managers:
+                try:
+                    ds_com_man = self.component_manager.sub_component_managers["DS"]
+                    ds_com_man.write_attribute_value("band2PointingModelParams", value)
+                except tango.DevFailed:
+                    self.logger.exception("Could not reach DS to write band2PointingModelParams")
+        else:
+            self.logger.warning("No component manager to write band2PointingModelParams yet")
 
     @attribute(
         dtype=(DevFloat,),
@@ -746,7 +778,9 @@ class DishManager(SKAController):
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
-        self.component_manager._track_load_table(sequence_length, table)
+        self.component_manager._track_load_table(
+            sequence_length, table, self._track_table_load_mode
+        )
         self._program_track_table = table
 
     @attribute(
@@ -786,7 +820,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=TrackInterpolationMode,
         access=AttrWriteType.READ_WRITE,
-        doc="Selects the type of interpolation to be used in program " "tracking.",
+        doc="Selects the type of interpolation to be used in program tracking.",
     )
     def trackInterpolationMode(self):
         """Returns the trackInterpolationMode"""
@@ -795,8 +829,7 @@ class DishManager(SKAController):
     @trackInterpolationMode.write
     def trackInterpolationMode(self, value):
         """Set the trackInterpolationMode"""
-        # pylint: disable=attribute-defined-outside-init
-        self._track_interpolation_mode = value
+        self.component_manager.set_track_interpolation_mode(value)
 
     @attribute(
         dtype=TrackProgramMode,
@@ -892,6 +925,27 @@ class DishManager(SKAController):
     # --------
     # Commands
     # --------
+
+    @command(
+        dtype_in=None,
+        polling_period=30000,
+        doc_in="Called periodically with the polling thread to keep connections alive",
+        dtype_out=None,
+    )
+    def MonitoringPing(self):
+        """SPFRx needs to be pinged periodically to ensure it knows it is connected.
+        This is a best effort, fire and forgot ping that is tried continually.
+        Connection status is not monitored from here.
+        TODO: Move this into DeviceMonitor
+        """
+        if self.dev_state() != tango.DevState.INIT:
+            if hasattr(self, "component_manager"):
+                if "SPFRX" in self.component_manager.sub_component_managers:
+                    try:
+                        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+                        spfrx_com_man.execute_command("MonitorPing", None)
+                    except tango.DevFailed:
+                        self.logger.debug("Could not reach SPFRx")
 
     # pylint: disable=too-few-public-methods
     class AbortCommandsCommand(SlowCommand):
@@ -1405,15 +1459,4 @@ def main(args=None, **kwargs):
 
 
 if __name__ == "__main__":
-    db = Database()
-    test_device = DbDevInfo()
-    if "DEVICE_NAME" in os.environ:
-        # DEVICE_NAME should be in the format domain/family/member
-        test_device.name = os.environ["DEVICE_NAME"]
-    else:
-        # fall back to default name
-        test_device.name = "ska001/elt/master"
-    test_device._class = "DishManager"
-    test_device.server = "DishManagerDS/01"
-    db.add_server(test_device.server, test_device, with_dserver=True)
     main()

@@ -28,6 +28,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFPowerState,
     SPFRxCapabilityStates,
     SPFRxOperatingMode,
+    TrackInterpolationMode,
     TrackTableLoadMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
@@ -76,7 +77,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achievedtargetlock=None,
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
-            achievedpointing=[0.0, 0.0, 30.0],
+            achievedpointing=[0.0, 0.0, 0.0],
+            achievedpointingaz=[0.0, 0.0, 0.0],
+            achievedpointingel=[0.0, 0.0, 0.0],
             configuredband=Band.NONE,
             attenuationpolh=0.0,
             attenuationpolv=0.0,
@@ -85,6 +88,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             band2pointingmodelparams=[],
+            trackinterpolationmode=None,
             **kwargs,
         )
         self.logger = logger
@@ -127,8 +131,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 powerstate=DSPowerState.UNKNOWN,
                 desiredpointingaz=[0.0, 0.0],
                 desiredpointingel=[0.0, 0.0],
-                achievedpointing=[0.0, 0.0, 30.0],
+                achievedpointing=[0.0, 0.0, 0.0],
+                achievedpointingaz=[0.0, 0.0, 0.0],
+                achievedpointingel=[0.0, 0.0, 0.0],
                 band2pointingmodelparams=[],
+                trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
@@ -190,6 +197,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "achievedPointingEl",
                 "desiredPointingAz",
                 "desiredPointingEl",
+                "trackInterpolationMode",
             ],
         }
 
@@ -304,14 +312,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrx_component_state,
             self.component_state,
         )
-
-        if "achievedpointing" in kwargs:
-            self.logger.debug(
-                ("Updating achievedPointing with DS achievedPointing [%s]"),
-                ds_component_state["achievedpointing"],
-            )
-            new_position = ds_component_state["achievedpointing"]
-            self._update_component_state(achievedpointing=new_position)
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs or "indexerposition" in kwargs:
@@ -482,11 +482,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
-    def _track_load_table(self, sequence_length: int, table: list[float]) -> None:
+    def _track_load_table(
+        self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
+    ) -> None:
         """Load the track table."""
         self.logger.debug("Calling track load table on DSManager.")
         device_proxy = tango.DeviceProxy(self.sub_component_managers["DS"]._tango_device_fqdn)
-        float_list = [TrackTableLoadMode.NEW, sequence_length]
+        float_list = [load_mode, sequence_length]
         float_list.extend(table)
 
         device_proxy.trackLoadTable(float_list)
@@ -703,6 +705,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except LostConnection:
             return (ResultCode.REJECTED, "Lost connection to SPFRx")
         return (ResultCode.OK, "SetKValue command completed OK")
+
+    def set_track_interpolation_mode(
+        self,
+        interpolation_mode,
+    ) -> None:
+        """Set the trackInterpolationMode on the DS."""
+        ds_cm = self.sub_component_managers["DS"]
+        try:
+            ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
+            self.logger.debug("Successfully updated trackInterpolationMode on DSManager.")
+        except LostConnection:
+            self.logger.error("Failed to update trackInterpolationMode on DSManager.")
+            raise
 
     # pylint: disable=missing-function-docstring
     def stop_communicating(self):

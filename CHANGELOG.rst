@@ -8,9 +8,18 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 2.4.0
+*************
+- Updated docs to demonstrate running devices as nodb
+- Added MonitoringPing command to the device server API
+- Implemented a workaround to fix segfault errors in python-test job
+- Updated dish simulators version to v1.6.6 
+- Updated ds-manager version to v1.2.7
+- Applies bug fix which causes intermittent failures in the test run
+
 Version 2.3.6
 *************
-- Update dish manager tango device name to conform to ADR-9
+- Updated dish manager tango device name to conform to ADR-9
 - Updated dish simulators version to v1.6.5 
 - Updated ds-manager version to v1.2.6
 - Updated ska-tango-base to v0.4.9

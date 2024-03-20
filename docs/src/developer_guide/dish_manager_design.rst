@@ -39,30 +39,4 @@ sub components using threads monitoring event subscriptions for a number of attr
   :width: 100%
   :alt: Device Monitor Design
 
-
-Testing
--------
-
-python-test
-^^^^^^^^^^^
-
-Since the component managers manage the interactions with the devices, we are
-able to check the robustness of our component manager and the business rules
-captured in our model without spinning up any tango infrastructure. These
-unit tests are captured in the ``python-test`` job. Additionally, the device
-server interface is tested (using a DeviceTestContext) without having to set up 
-client connections to the sub components. The necessary triggers on the sub 
-components needed to effect a transition on DishManager are manipulated from
-weak references to the sub component managers. 
-
-k8-test
-^^^^^^^
-
-The final level of testing runs with all live tango devices, to test the entire
-chain from events to callbacks on the various component managers down to the
-DishManager device server attribute. These tests use `simulated devices`_
-with limited api and functionality for the ``SPF Controller``, ``SPFRx Controller``
-and the ``DS Simulator``. These acceptance tests are captured in the ``k8-test`` job.
-
 .. _here: https://confluence.skatelescope.org/pages/viewpage.action?pageId=188656205
-.. _simulated devices: https://gitlab.com/ska-telescope/ska-mid-dish-simulators
