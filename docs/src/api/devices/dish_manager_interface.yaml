@@ -894,7 +894,8 @@
     - name: desiredPointingAz
       data_format: SPECTRUM
       data_type: DevDouble
-      description: Returns the azimuth desiredPointing.
+      description: Azimuth axis desired pointing as reported by the dish structure
+        controller's Tracking.TrackStatus.p_desired_Az field.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -910,7 +911,8 @@
     - name: desiredPointingEl
       data_format: SPECTRUM
       data_type: DevDouble
-      description: Returns the elevation desiredPointing.
+      description: Elevation axis desired pointing as reported by the dish structure
+        controller's Tracking.TrackStatus.p_desired_El field.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'

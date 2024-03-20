@@ -737,12 +737,24 @@ class DishManager(SKAController):
         self.push_change_event("configureTargetLock", value)
         self.push_archive_event("configureTargetLock", value)
 
-    @attribute(max_dim_x=2, dtype=(float,), access=AttrWriteType.READ)
+    @attribute(
+        max_dim_x=2,
+        dtype=(float,),
+        access=AttrWriteType.READ,
+        doc="Azimuth axis desired pointing as reported by the dish structure controller's"
+        " Tracking.TrackStatus.p_desired_Az field."
+    )
     def desiredPointingAz(self) -> list[float]:
         """Returns the azimuth desiredPointing."""
         return self._desired_pointing_az
 
-    @attribute(max_dim_x=2, dtype=(float,), access=AttrWriteType.READ)
+    @attribute(
+        max_dim_x=2,
+        dtype=(float,),
+        access=AttrWriteType.READ,
+        doc="Elevation axis desired pointing as reported by the dish structure controller's"
+        " Tracking.TrackStatus.p_desired_El field."
+    )
     def desiredPointingEl(self) -> list[float]:
         """Returns the elevation desiredPointing."""
         return self._desired_pointing_el
