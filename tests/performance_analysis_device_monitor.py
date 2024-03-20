@@ -8,6 +8,8 @@ import time
 import psutil
 import random
 
+from resource import getrusage, RUSAGE_SELF
+
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 
 LOGGER = logging.getLogger(__name__)
@@ -80,9 +82,12 @@ def test_resource_usage(device_fqdn, attributes_to_monitor):
     initial_cpu_usage = psutil.cpu_percent()
     initial_ram_usage = psutil.virtual_memory().percent
 
-    print("Initial:")
+    print("(psutil) Initial:")
     print(initial_cpu_usage)
     print(initial_ram_usage)
+
+    print("(resource) Initial:")
+    print(getrusage(RUSAGE_SELF))
 
     event_queue = Queue()
     tdm = TangoDeviceMonitor(device_fqdn, attributes_to_monitor, event_queue, LOGGER, empty_func)
@@ -93,14 +98,15 @@ def test_resource_usage(device_fqdn, attributes_to_monitor):
     for _ in attributes_to_monitor:
         event_queue.get(timeout=4)
 
-    time.sleep(1)
-
     cpu_usage = psutil.cpu_percent()
     ram_usage = psutil.virtual_memory().percent
 
-    print("After monitoring started:")
+    print("(psutil) After monitoring started:")
     print(cpu_usage)
     print(ram_usage)
+
+    print("(resource) After monitoring started:")
+    print(getrusage(RUSAGE_SELF))
 
     tdm.stop_monitoring()
     return cpu_usage-initial_cpu_usage, ram_usage-initial_ram_usage
@@ -151,8 +157,10 @@ def stress_test(device_fqdn, attributes_to_monitor, test_duration=10):
     return expected_updates, captured_events
 
 if __name__ == "__main__":
-    # device_fqdn = "ska001/spf/simulator"
-    device_fqdn = "tango://localhost:45678/ska001/spf/simulator#dbase=no"
+    logging.basicConfig(level=logging.INFO)
+
+    # device_fqdn = "mid-dish/simulator-spf/ska001"
+    device_fqdn = "tango://localhost:45678/mid-dish/simulator-spf/ska001#dbase=no"
 
     test_attributes = (
         "operatingmode",
@@ -218,21 +226,21 @@ if __name__ == "__main__":
     # print(f"\nRun C ({len(latencies_c)} attribute(s)):")
     # print_metrics(latencies_c, "Latency (ms)")
 
-    # cpu_usage_a, ram_usage_a = test_resource_usage(device_fqdn, test_attributes[:1])
-    # cpu_usage_b, ram_usage_b = test_resource_usage(device_fqdn, test_attributes[:5])
-    # cpu_usage_c, ram_usage_c = test_resource_usage(device_fqdn, test_attributes[:10])
+    cpu_usage_a, ram_usage_a = test_resource_usage(device_fqdn, test_attributes[:1])
+    cpu_usage_b, ram_usage_b = test_resource_usage(device_fqdn, test_attributes[:5])
+    cpu_usage_c, ram_usage_c = test_resource_usage(device_fqdn, test_attributes[:10])
 
-    # print("\nResource Usage")
-    # print("===============")
-    # print(f"1 Attribute: CPU ({cpu_usage_a}) RAM ({ram_usage_a})")
-    # print(f"5 Attributes: CPU ({cpu_usage_b}) RAM ({ram_usage_b})")
-    # print(f"10 Attributes: CPU ({cpu_usage_c}) RAM ({ram_usage_c})")
-
-    test_duration = 30
-    expected_updates, captured_events = stress_test(device_fqdn, test_attributes, test_duration=test_duration)
-
-    print("\nStress test")
+    print("\nResource Usage")
     print("===============")
-    print("Duration:", test_duration, "s")
-    print("Attribute writes:", expected_updates)
-    print("Captured events:", captured_events)
+    print(f"1 Attribute: CPU ({cpu_usage_a}) RAM ({ram_usage_a})")
+    print(f"5 Attributes: CPU ({cpu_usage_b}) RAM ({ram_usage_b})")
+    print(f"10 Attributes: CPU ({cpu_usage_c}) RAM ({ram_usage_c})")
+
+    # test_duration = 30
+    # expected_updates, captured_events = stress_test(device_fqdn, test_attributes, test_duration=test_duration)
+
+    # print("\nStress test")
+    # print("===============")
+    # print("Duration:", test_duration, "s")
+    # print("Attribute writes:", expected_updates)
+    # print("Captured events:", captured_events)

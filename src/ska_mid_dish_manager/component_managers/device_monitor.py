@@ -229,9 +229,7 @@ class TangoDeviceMonitor:
 
         self._start_monitoring_thread = Thread(
             target=self._verify_connection_up,
-            # args=[self._start_monitoring_threads], # start a thread per monitored attribute
-            args=[self._monitor_attributes], # start one thread to monitor all attributes
-            # args=[self._monitor_attributes_asyncio], # start asyncio event loop to monitor each attribute as a task
+            args=[self._start_monitoring_threads], # start a thread per monitored attribute
         )
         self._start_monitoring_thread.start()
 
@@ -248,9 +246,7 @@ class TangoDeviceMonitor:
 
         self._start_monitoring_thread = Thread(
             target=self._verify_connection_up,
-            # args=[self._start_monitoring_threads], # start a thread per monitored attribute
-            args=[self._monitor_attributes], # start one thread to monitor all attributes
-            # args=[self._monitor_attributes_asyncio], # start asyncio event loop to monitor each attribute as a task
+            args=[self._monitor_attributes_single_thread], # start one thread to monitor all attributes
         )
         self._start_monitoring_thread.start()
 
@@ -267,9 +263,24 @@ class TangoDeviceMonitor:
 
         self._start_monitoring_thread = Thread(
             target=self._verify_connection_up,
-            args=[self._start_monitoring_threads], # start a thread per monitored attribute
-            # args=[self._monitor_attributes], # start one thread to monitor all attributes
-            # args=[self._monitor_attributes_asyncio], # start asyncio event loop to monitor each attribute as a task
+            args=[self._monitor_attributes_asyncio], # start asyncio event loop to monitor each attribute as a task
+        )
+        self._start_monitoring_thread.start()
+
+    def monitor_main_thread(self) -> None:
+        """Kick off device monitoring
+
+        This method is idempotent. When called the existing (if any)
+        monitoring threads are removed and recreated.
+        """
+        self._run_count += 1
+
+        if self._start_monitoring_thread.is_alive() or self._executor:
+            self.stop_monitoring()
+
+        self._start_monitoring_thread = Thread(
+            target=self._verify_connection_up,
+            args=[self._monitor_attributes_main_thread], # start all subscriptions on the main thread
         )
         self._start_monitoring_thread.start()
 
@@ -356,7 +367,7 @@ class TangoDeviceMonitor:
                     )
 
     # pylint:disable=too-many-arguments
-    def _monitor_attributes(self) -> None:
+    def _monitor_attributes_single_thread(self) -> None:
         """Monitor an attribute"""
         self._logger.info("Setting up monitoring on %s", self._tango_fqdn)
 
@@ -433,6 +444,84 @@ class TangoDeviceMonitor:
                     self._logger.info(
                         "Could not unsubscribe from %s for attr %s", self._tango_fqdn, attribute_name
                     )
+
+    # pylint:disable=too-many-arguments
+    def _monitor_attributes_main_thread(self) -> None:
+        """Monitor an attribute"""
+        self._logger.info("Setting up monitoring on %s", self._tango_fqdn)
+
+        retry_counts = {name: 0 for name in self._monitored_attributes}
+        subscriptions = {name: {"proxy": None, "id": None} for name in self._monitored_attributes}
+
+        def _event_reaction(events_queue: Queue, tango_event: tango.EventData) -> None:
+            if tango_event.err:
+                self._logger.info("Got an error event on %s %s", self._tango_fqdn, tango_event)
+                events_queue.put(PrioritizedEventData(priority=2, item=tango_event))
+            else:
+                events_queue.put(PrioritizedEventData(priority=1, item=tango_event))
+
+        # set up all subscriptions
+        for attribute_name in self._monitored_attributes:
+            if self._exit_thread_event.is_set():
+                return
+
+            # Try ping and subscribe
+            try:
+                device_proxy = tango.DeviceProxy(self._tango_fqdn)
+                device_proxy.ping()
+                subscriptions[attribute_name]["proxy"] = device_proxy
+
+                if self._exit_thread_event.is_set():
+                    return
+
+                event_reaction_cb = partial(_event_reaction, self._event_queue)
+
+                subscription_id = device_proxy.subscribe_event(
+                    attribute_name,
+                    tango.EventType.CHANGE_EVENT,
+                    event_reaction_cb,
+                )
+                subscriptions[attribute_name]["id"] = subscription_id
+                self._subscription_tracker.subscription_started(attribute_name)
+
+                self._logger.info("Subscribed on %s to attr %s", self._tango_fqdn, attribute_name)
+            except tango.DevFailed:
+                self._logger.exception(
+                    (
+                        f"Tango error on {self._tango_fqdn} for attr {attribute_name}, "
+                        f"try number {retry_counts[attribute_name]}"
+                    )
+                )
+                retry_counts[attribute_name] += 1
+            except Exception:  # pylint: disable=W0703
+                self._logger.exception(
+                    (
+                        f"Error on {self._tango_fqdn} for attr {attribute_name}, "
+                        f"try number {retry_counts[attribute_name]}"
+                    )
+                )
+                retry_counts[attribute_name] += 1
+
+        self._logger.info("Monitoring threads started for %s", self._tango_fqdn)
+
+        # Just wait for events to happen
+        while not self._exit_thread_event.wait(SLEEP_BETWEEN_EVENTS):
+            pass
+
+        # Try and clean up the subscription, probably not possible
+        for attribute_name in self._monitored_attributes:
+            try:
+                if subscriptions[attribute_name]["proxy"] is not None and subscriptions[attribute_name]["id"] is not None:
+                    subscriptions[attribute_name]["proxy"].unsubscribe_event(subscriptions[attribute_name]["id"]) # type: ignore
+                    self._logger.info("Unsubscribed from %s for attr %s", self._tango_fqdn, attribute_name)
+
+                    subscriptions[attribute_name]["proxy"] = None
+                    subscriptions[attribute_name]["id"] = None
+            except tango.DevFailed as err:
+                self._logger.exception(err)
+                self._logger.info(
+                    "Could not unsubscribe from %s for attr %s", self._tango_fqdn, attribute_name
+                )
 
     async def a_sub(self, device_name, attribute, cb):
         print("a_sub", device_name, attribute, cb)
