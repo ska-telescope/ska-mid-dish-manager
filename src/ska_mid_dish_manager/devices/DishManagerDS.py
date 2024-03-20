@@ -286,6 +286,55 @@ class DishManager(SKAController):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
 
+            # Configure events for base class attributes. These are not necessary for functionality
+            # of Dish Manager but needed to suppress errors in DVS integration
+            for attr in (
+                "buildState",
+                "versionId",
+                "loggingLevel",
+                "loggingTargets",
+                "elementLoggerAddress",
+                "elementAlarmAddress",
+                "elementTelStateAddress",
+                "elementDatabaseAddress",
+            ):
+                device.set_change_event(attr, True, False)
+                device.set_archive_event(attr, True, False)
+
+            # Configure events for attributes. The events for these attributes are not pushed
+            # through callback updates
+            for attr in (
+                "maxCapabilities",
+                "availableCapabilities",
+                "azimuthOverWrap",
+                "band1PointingModelParams",
+                "band3PointingModelParams",
+                "band4PointingModelParams",
+                "band5aPointingModelParams",
+                "band5bPointingModelParams",
+                "band1SamplerFrequency",
+                "band2SamplerFrequency",
+                "band3SamplerFrequency",
+                "band4SamplerFrequency",
+                "band5aSamplerFrequency",
+                "band5bSamplerFrequency",
+                "capturing",
+                "configureTargetLock",
+                "desiredPointing",
+                "dshMaxShortTermPower",
+                "dshPowerCurtailment",
+                "frequencyResponse",
+                "noiseDiodeConfig",
+                "programTrackTable",
+                "pointingBufferSize",
+                "polyTrack",
+                "powerState",
+                "trackProgramMode",
+                "trackTableLoadMode",
+            ):
+                device.set_change_event(attr, True, False)
+                device.set_archive_event(attr, True, False)
+
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
             device.component_manager.start_communicating()
@@ -432,6 +481,8 @@ class DishManager(SKAController):
         """Set the band1PointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band1_pointing_model_params = value
+        self.push_change_event("band1PointingModelParams", value)
+        self.push_archive_event("band1PointingModelParams", value)
 
     @attribute(
         dtype=(DevFloat,),
@@ -488,6 +539,8 @@ class DishManager(SKAController):
         """Set the band3PointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band3_pointing_model_params = value
+        self.push_change_event("band3PointingModelParams", value)
+        self.push_archive_event("band3PointingModelParams", value)
 
     @attribute(
         dtype=(DevFloat,),
@@ -505,6 +558,8 @@ class DishManager(SKAController):
         """Set the band4PointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band4_pointing_model_params = value
+        self.push_change_event("band4PointingModelParams", value)
+        self.push_archive_event("band4PointingModelParams", value)
 
     @attribute(
         dtype=(DevFloat,),
@@ -522,6 +577,8 @@ class DishManager(SKAController):
         """Set the band5aPointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band5a_pointing_model_params = value
+        self.push_change_event("band5aPointingModelParams", value)
+        self.push_archive_event("band5aPointingModelParams", value)
 
     @attribute(
         dtype=(DevFloat,),
@@ -539,6 +596,8 @@ class DishManager(SKAController):
         """Set the band5bPointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band5b_pointing_model_params = value
+        self.push_change_event("band5bPointingModelParams", value)
+        self.push_archive_event("band5bPointingModelParams", value)
 
     @attribute(
         dtype=float,
@@ -554,6 +613,8 @@ class DishManager(SKAController):
         """Set the band1SamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band1_sampler_frequency = value
+        self.push_change_event("band1SamplerFrequency", value)
+        self.push_archive_event("band1SamplerFrequency", value)
 
     @attribute(
         dtype=float,
@@ -569,6 +630,8 @@ class DishManager(SKAController):
         """Set the band2SamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band2_sampler_frequency = value
+        self.push_change_event("band2SamplerFrequency", value)
+        self.push_archive_event("band2SamplerFrequency", value)
 
     @attribute(
         dtype=float,
@@ -584,6 +647,8 @@ class DishManager(SKAController):
         """Set the band3SamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band3_sampler_frequency = value
+        self.push_change_event("band3SamplerFrequency", value)
+        self.push_archive_event("band3SamplerFrequency", value)
 
     @attribute(
         dtype=float,
@@ -599,6 +664,8 @@ class DishManager(SKAController):
         """Set the band4SamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band4_sampler_frequency = value
+        self.push_change_event("band4SamplerFrequency", value)
+        self.push_archive_event("band4SamplerFrequency", value)
 
     @attribute(
         dtype=float,
@@ -614,6 +681,8 @@ class DishManager(SKAController):
         """Set the band5aSamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band5a_sampler_frequency = value
+        self.push_change_event("band5aSamplerFrequency", value)
+        self.push_archive_event("band5aSamplerFrequency", value)
 
     @attribute(
         dtype=float,
@@ -629,6 +698,8 @@ class DishManager(SKAController):
         """Set the band5bSamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band5b_sampler_frequency = value
+        self.push_change_event("band5bSamplerFrequency", value)
+        self.push_archive_event("band5bSamplerFrequency", value)
 
     @attribute(
         dtype=bool,
@@ -661,6 +732,8 @@ class DishManager(SKAController):
         """Set the configureTargetLock"""
         # pylint: disable=attribute-defined-outside-init
         self._configure_target_lock = value
+        self.push_change_event("configureTargetLock", value)
+        self.push_archive_event("configureTargetLock", value)
 
     @attribute(max_dim_x=3, dtype=(float,), access=AttrWriteType.READ_WRITE)
     def desiredPointing(self):
@@ -672,8 +745,11 @@ class DishManager(SKAController):
         """Set the desiredPointing"""
         # pylint: disable=attribute-defined-outside-init
         self._desired_pointing = value
-        ds_cm = self.component_manager.sub_component_managers["DS"]
-        ds_cm.write_attribute_value("desiredPointing", value)
+        # TODO: update call to DS when desiredPointing requirements are confirmed
+        # ds_cm = self.component_manager.sub_component_managers["DS"]
+        # ds_cm.write_attribute_value("desiredPointing", value)
+        self.push_change_event("desiredPointing", value)
+        self.push_archive_event("desiredPointing", value)
 
     @attribute(
         dtype=DishMode,
@@ -699,6 +775,8 @@ class DishManager(SKAController):
         """Set the dshMaxShortTermPower"""
         # pylint: disable=attribute-defined-outside-init
         self._dsh_max_short_term_power = value
+        self.push_change_event("dshMaxShortTermPower", value)
+        self.push_archive_event("dshMaxShortTermPower", value)
 
     @attribute(
         dtype=bool,
@@ -721,6 +799,8 @@ class DishManager(SKAController):
         """Set the dshPowerCurtailment"""
         # pylint: disable=attribute-defined-outside-init
         self._dsh_power_curtailment = value
+        self.push_change_event("dshPowerCurtailment", value)
+        self.push_archive_event("dshPowerCurtailment", value)
 
     @attribute(dtype=(((float),),), max_dim_x=1024, max_dim_y=1024)
     def frequencyResponse(self):
@@ -737,6 +817,8 @@ class DishManager(SKAController):
         """Set the noiseDiodeConfig"""
         # pylint: disable=attribute-defined-outside-init
         self._noise_diode_config = value
+        self.push_change_event("noiseDiodeConfig", value)
+        self.push_archive_event("noiseDiodeConfig", value)
 
     @attribute(dtype=PointingState)
     def pointingState(self):
@@ -782,6 +864,8 @@ class DishManager(SKAController):
             sequence_length, table, self._track_table_load_mode
         )
         self._program_track_table = table
+        self.push_change_event("programTrackTable", table)
+        self.push_archive_event("programTrackTable", table)
 
     @attribute(
         dtype=int,
@@ -811,6 +895,8 @@ class DishManager(SKAController):
         """Set the polyTrack"""
         # pylint: disable=attribute-defined-outside-init
         self._poly_track = value
+        self.push_change_event("polyTrack", value)
+        self.push_archive_event("polyTrack", value)
 
     @attribute(dtype=PowerState)
     def powerState(self):
@@ -830,6 +916,8 @@ class DishManager(SKAController):
     def trackInterpolationMode(self, value):
         """Set the trackInterpolationMode"""
         self.component_manager.set_track_interpolation_mode(value)
+        self.push_change_event("trackInterpolationMode", value)
+        self.push_archive_event("trackInterpolationMode", value)
 
     @attribute(
         dtype=TrackProgramMode,
@@ -847,6 +935,8 @@ class DishManager(SKAController):
         """Set the trackProgramMode"""
         # pylint: disable=attribute-defined-outside-init
         self._track_program_mode = value
+        self.push_change_event("trackProgramMode", value)
+        self.push_archive_event("trackProgramMode", value)
 
     @attribute(
         dtype=TrackTableLoadMode,
@@ -867,6 +957,8 @@ class DishManager(SKAController):
         """Set the trackTableLoadMode"""
         # pylint: disable=attribute-defined-outside-init
         self._track_table_load_mode = value
+        self.push_change_event("trackTableLoadMode", value)
+        self.push_archive_event("trackTableLoadMode", value)
 
     @attribute(
         dtype=CapabilityStates,
