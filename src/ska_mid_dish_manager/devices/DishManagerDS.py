@@ -864,6 +864,8 @@ class DishManager(SKAController):
             sequence_length, table, self._track_table_load_mode
         )
         self._program_track_table = table
+        self.push_change_event("programTrackTable", table)
+        self.push_archive_event("programTrackTable", table)
 
     @attribute(
         dtype=int,
@@ -893,6 +895,8 @@ class DishManager(SKAController):
         """Set the polyTrack"""
         # pylint: disable=attribute-defined-outside-init
         self._poly_track = value
+        self.push_change_event("polyTrack", value)
+        self.push_archive_event("polyTrack", value)
 
     @attribute(dtype=PowerState)
     def powerState(self):
@@ -912,6 +916,8 @@ class DishManager(SKAController):
     def trackInterpolationMode(self, value):
         """Set the trackInterpolationMode"""
         self.component_manager.set_track_interpolation_mode(value)
+        self.push_change_event("trackInterpolationMode", value)
+        self.push_archive_event("trackInterpolationMode", value)
 
     @attribute(
         dtype=TrackProgramMode,
@@ -951,6 +957,8 @@ class DishManager(SKAController):
         """Set the trackTableLoadMode"""
         # pylint: disable=attribute-defined-outside-init
         self._track_table_load_mode = value
+        self.push_change_event("trackTableLoadMode", value)
+        self.push_archive_event("trackTableLoadMode", value)
 
     @attribute(
         dtype=CapabilityStates,
