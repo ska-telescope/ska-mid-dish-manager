@@ -928,7 +928,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=DevString,
         access=AttrWriteType.READ_WRITE,
-        doc="Report and the scanID for Scan",
+        doc="Report the scanID for Scan",
     )
     def scanID(self):
         """Returns the scanID"""
