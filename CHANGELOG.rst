@@ -57,21 +57,19 @@ Version 2.3.2
 
 Version 2.3.1
 *************
-- Charts
-  - Upgraded ska-mid-dish-ds-manager chart to v1.2.1
-Fixed a bug where bandinfocus was not used correctly to calculate the bands
+- Fixed a bug where bandinfocus was not used correctly to calculate the bands
+- Upgraded ska-mid-dish-ds-manager chart to v1.2.1
 
 Version 2.3.0
 *************
-- Charts
-  - Upgraded ska-mid-dish-simulators chart to v1.6.0
-  - Upgraded ska-mid-dish-ds-manager chart to v1.2.0
-  - Upgraded ska tango utils chart to v0.4.7
-  - Not deploying ska-tango-base by default anymore
-- Commands
-  - Implemented Slew, TrackLoadStaticOff, SetKValue
-- Attributes
-  - Implemented band2PointingModelParams, kValue, programTracktable
+- Upgraded ska-mid-dish-simulators chart to v1.6.0
+- Upgraded ska-mid-dish-ds-manager chart to v1.2.0
+- Upgraded ska tango utils chart to v0.4.7
+- Not deploying ska-tango-base(Database DS) by default anymore
+- Extended device server interface
+
+   - Implemented `Slew`, `TrackLoadStaticOff`, `SetKValue` commands
+   - Implemented `band2PointingModelParams`, `kValue`, `programTracktable` attributes
 
 Version 2.2.9
 *************
@@ -98,12 +96,11 @@ Version 2.2.6
 
 Version 2.2.5
 *************
+- Manual job to run lmc test prior to dish manager release
 - Bug fixes
 
-  - Refactored capability state updates in _component_state_changed
-  - Updated tango_device_cm to use .lower() on monitored attribute names when updating component states
-
-- Manual job to run lmc test prior to dish manager release
+   - Refactored capability state updates in _component_state_changed
+   - Updated tango_device_cm to use .lower() on monitored attribute names when updating component states
 
 Version 2.2.4
 *************
@@ -168,48 +165,39 @@ Version 1.6.0
 
 Version 1.5.0
 *************
-
 - Updated helm to only deploy the DS device when specifically asked for and not by default
 
 Version 1.4.0
 *************
-
 - Updated DS device to not be asyncio based
 
 Version 1.3.0
 *************
-
 - Removed SPF and SPFRx devices from codebase and helm charts
-- Helm chart does not install SPF and SPFRx by default
-  - enable with `--set "ska-mid-dish-simulators.enabled=true"`
+- Helm chart does not install SPF and SPFRx by default (enable with `--set "ska-mid-dish-simulators.enabled=true"`)
 
 Version 1.2.0
 *************
-
 - Synced DishManager's achievedPointing reading with the DSManager's reading (same attribute name)
 - Added functionality to indicate that dish is capturing data
 - Pinned poetry to version 1.1.13
 
 Version 1.1.0
 *************
-
 - Added CapabilityState attributes
 - Added configuredBand checks when calling SetOperateMode
 
 Version 1.0.0
 *************
-
 - Implementation details for commands fleshed out
 - DishMode model updated with rules engine
 - Documentation added
 
 Version 0.0.1
 *************
+- The first release of the DishManager rewrites DishLMC DishMaster in python:
 
-The first release of the DishManager rewrites DishLMC DishMaster in
-python:
-
-- Device interface conforms to spec
-- Commands implemented as LRC with no functionality
-- Subservient devices managed by component manager
-- DishMode model to handle commands requests on DishManager
+   - Device interface conforms to spec
+   - Commands implemented as LRC with no functionality
+   - Subservient devices managed by component manager
+   - DishMode model to handle commands requests on DishManager
