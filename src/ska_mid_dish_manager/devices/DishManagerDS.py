@@ -1,5 +1,5 @@
 # pylint: disable=invalid-name
-# pylint: disable=C0302,W0212
+# pylint: disable=C0302,W0212,W0201
 """
 This module implements the dish manager device for DishLMC.
 
@@ -17,7 +17,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, DebugIt, DevFloat, DispLevel
+from tango import AttrWriteType, DebugIt, DevFloat, DevString, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -96,6 +96,7 @@ class DishManager(SKAController):
             ("Slew", "slew"),
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
+            ("EndScan", "end_scan"),
         ]:
             self.register_command_object(
                 command_name,
@@ -236,6 +237,7 @@ class DishManager(SKAController):
             device._track_interpolation_mode = TrackInterpolationMode.SPLINE
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
+            device._scan_i_d = ""
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -272,6 +274,7 @@ class DishManager(SKAController):
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
                 "trackinterpolationmode": "trackInterpolationMode",
+                "scanid": "scanID",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1014,6 +1017,22 @@ class DishManager(SKAController):
         """Returns the b5aCapabilityState"""
         return self._b5b_capability_state
 
+    @attribute(
+        dtype=DevString,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the scanID for Scan",
+    )
+    def scanID(self):
+        """Returns the scanID"""
+        return self._scan_i_d
+
+    @scanID.write
+    def scanID(self, scanid):
+        """Sets the scanID"""
+        self._scan_i_d = scanid
+        self.push_change_event("scanID", scanid)
+        self.push_archive_event("scanID", scanid)
+
     # --------
     # Commands
     # --------
@@ -1227,15 +1246,24 @@ class DishManager(SKAController):
         """Flushes the queue of time stamped commands."""
         raise NotImplementedError
 
-    @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
-    def Scan(self) -> DevVarLongStringArrayType:
+    @command(
+        dtype_in=DevString, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR
+    )
+    def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
-        The Dish is tracking the commanded pointing positions within the
-        specified SCAN pointing accuracy. (TBC14)
-        NOTE: This pointing state is currently proposed and there are
-        currently no requirements for this functionality.
+        The Dish records the scanID for an ongoing scan
         """
         handler = self.get_command_object("Scan")
+        result_code, unique_id = handler(scanid)
+
+        return ([result_code], [unique_id])
+
+    @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    def EndScan(self) -> DevVarLongStringArrayType:
+        """
+        This command clears out the scan_id
+        """
+        handler = self.get_command_object("EndScan")
         result_code, unique_id = handler()
 
         return ([result_code], [unique_id])
