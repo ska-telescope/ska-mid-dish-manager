@@ -742,7 +742,7 @@ class DishManager(SKAController):
         dtype=(float,),
         access=AttrWriteType.READ,
         doc="Azimuth axis desired pointing as reported by the dish structure controller's"
-        " Tracking.TrackStatus.p_desired_Az field."
+        " Tracking.TrackStatus.p_desired_Az field.",
     )
     def desiredPointingAz(self) -> list[float]:
         """Returns the azimuth desiredPointing."""
@@ -753,7 +753,7 @@ class DishManager(SKAController):
         dtype=(float,),
         access=AttrWriteType.READ,
         doc="Elevation axis desired pointing as reported by the dish structure controller's"
-        " Tracking.TrackStatus.p_desired_El field."
+        " Tracking.TrackStatus.p_desired_El field.",
     )
     def desiredPointingEl(self) -> list[float]:
         """Returns the elevation desiredPointing."""
