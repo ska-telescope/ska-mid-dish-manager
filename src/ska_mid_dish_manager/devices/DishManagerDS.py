@@ -938,7 +938,8 @@ class DishManager(SKAController):
     def scanID(self, scanid):
         """Sets the scanID"""
         self._scan_i_d = scanid
-        self.push_change_event("scanID", self._scan_i_d)
+        self.push_change_event("scanID", scanid)
+        self.push_archive_event("scanID", scanid)
 
     # --------
     # Commands
@@ -1158,9 +1159,7 @@ class DishManager(SKAController):
     )
     def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
-        The Dish is tracking the commanded pointing positions within the
-        specified SCAN pointing accuracy. (TBC14)
-        NOTE: This pointing state is currently proposed.
+        The Dish records the scanID for an ongoing scan
         """
         handler = self.get_command_object("Scan")
         result_code, unique_id = handler(scanid)
