@@ -41,7 +41,7 @@ class TestDesiredPointing:
 
     def teardown_method(self):
         """Tear down context"""
-        self.tango_context.stop()
+        return
 
     # pylint: disable=missing-function-docstring, protected-access
     def test_desired_pointing_in_sync_with_dish_structure_pointing(
