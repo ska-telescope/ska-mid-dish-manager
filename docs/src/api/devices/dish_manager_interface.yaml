@@ -75,12 +75,6 @@
       doc_out: The TCP port the debugger is listening on.
       dtype_in: DevVoid
       dtype_out: DevUShort
-    - name: EndScan
-      disp_level: OPERATOR
-      doc_in: Uninitialised
-      doc_out: Uninitialised
-      dtype_in: DevVoid
-      dtype_out: DevVarLongStringArray
     - name: ExecutePendingOperations
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -145,7 +139,7 @@
       disp_level: OPERATOR
       doc_in: Uninitialised
       doc_out: Uninitialised
-      dtype_in: DevString
+      dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
     - name: SetKValue
       disp_level: OPERATOR
@@ -1407,22 +1401,6 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: programTrackTable
-    - name: scanID
-      data_format: SCALAR
-      data_type: DevString
-      description: Report and configures the scanID for Scan
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%s'
-      label: scanID
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ_WRITE
-      writable_attr_name: scanID
     - name: simulationMode
       data_format: SCALAR
       data_type: DevEnum
