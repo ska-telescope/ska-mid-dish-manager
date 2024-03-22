@@ -10,7 +10,6 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Enabled change and archive events on all Dish Manager attributes
 - Removed placeholder implementation for `Scan` command
 - Extended the device server interface: added `EndScan`` command
-- Exposed desiredPointingAz and desiredPointingEl attributes
 
 Version 2.4.0
 *************
