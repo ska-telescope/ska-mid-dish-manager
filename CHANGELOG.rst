@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Enabled change and archive events on all Dish Manager attributes
+- Exposed desiredPointingAz and desiredPointingEl attributes
 
 Version 2.4.0
 *************
