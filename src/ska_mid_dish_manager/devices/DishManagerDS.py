@@ -1260,6 +1260,8 @@ class DishManager(SKAController):
     def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
         The Dish records the scanID for an ongoing scan
+
+        :param args: the scanID in string format
         """
         handler = self.get_command_object("Scan")
         result_code, unique_id = handler(scanid)
