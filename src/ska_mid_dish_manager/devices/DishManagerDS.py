@@ -223,7 +223,8 @@ class DishManager(SKAController):
             device._capturing = False
             device._configured_band = Band.NONE
             device._configure_target_lock = []
-            device._desired_pointing = [0.0, 0.0, 0.0]
+            device._desired_pointing_az = [0.0, 0.0]
+            device._desired_pointing_el = [0.0, 0.0]
             device._dish_mode = DishMode.UNKNOWN
             device._dsh_max_short_term_power = 13.5
             device._dsh_power_curtailment = True
@@ -266,6 +267,8 @@ class DishManager(SKAController):
                 "b4capabilitystate": "b4CapabilityState",
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
+                "desiredpointingaz": "desiredPointingAz",
+                "desiredpointingel": "desiredPointingEl",
                 "achievedpointing": "achievedPointing",
                 "achievedpointingaz": "achievedPointingAz",
                 "achievedpointingel": "achievedPointingEl",
@@ -323,7 +326,6 @@ class DishManager(SKAController):
                 "band5bSamplerFrequency",
                 "capturing",
                 "configureTargetLock",
-                "desiredPointing",
                 "dshMaxShortTermPower",
                 "dshPowerCurtailment",
                 "frequencyResponse",
@@ -738,21 +740,27 @@ class DishManager(SKAController):
         self.push_change_event("configureTargetLock", value)
         self.push_archive_event("configureTargetLock", value)
 
-    @attribute(max_dim_x=3, dtype=(float,), access=AttrWriteType.READ_WRITE)
-    def desiredPointing(self):
-        """Returns the desiredPointing"""
-        return self._desired_pointing
+    @attribute(
+        max_dim_x=2,
+        dtype=(float,),
+        access=AttrWriteType.READ,
+        doc="Azimuth axis desired pointing as reported by the dish structure controller's"
+        " Tracking.TrackStatus.p_desired_Az field.",
+    )
+    def desiredPointingAz(self) -> list[float]:
+        """Returns the azimuth desiredPointing."""
+        return self._desired_pointing_az
 
-    @desiredPointing.write
-    def desiredPointing(self, value):
-        """Set the desiredPointing"""
-        # pylint: disable=attribute-defined-outside-init
-        self._desired_pointing = value
-        # TODO: update call to DS when desiredPointing requirements are confirmed
-        # ds_cm = self.component_manager.sub_component_managers["DS"]
-        # ds_cm.write_attribute_value("desiredPointing", value)
-        self.push_change_event("desiredPointing", value)
-        self.push_archive_event("desiredPointing", value)
+    @attribute(
+        max_dim_x=2,
+        dtype=(float,),
+        access=AttrWriteType.READ,
+        doc="Elevation axis desired pointing as reported by the dish structure controller's"
+        " Tracking.TrackStatus.p_desired_El field.",
+    )
+    def desiredPointingEl(self) -> list[float]:
+        """Returns the elevation desiredPointing."""
+        return self._desired_pointing_el
 
     @attribute(
         dtype=DishMode,
