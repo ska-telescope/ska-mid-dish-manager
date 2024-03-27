@@ -12,7 +12,7 @@ Version 2.5.0
 *************
 - Enabled change and archive events on all Dish Manager attributes
 - Removed placeholder implementation for `Scan` command
-- Extended the device server interface: added `EndScan`` command
+- Extended the device server interface: added `EndScan` command
 - Exposed desiredPointingAz and desiredPointingEl attributes
 - Removed desiredPointing attribute
 
