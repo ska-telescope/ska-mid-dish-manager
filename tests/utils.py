@@ -351,21 +351,25 @@ def set_configuredBand_b2(
     config_band_event_store.wait_for_value(Band.B2, timeout=7)
 
 
-def set_active_devices_and_sync_component_states(dish_manager_proxy, ignore_spf, ignore_spfrx):
+def set_active_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
     """Sets active devices and restarts communication."""
-    if (
-        dish_manager_proxy.ignoreSpf != ignore_spf
-        or dish_manager_proxy.ignoreSpfrx != ignore_spfrx
-    ):
+    if dish_manager_proxy.ignoreSpf != ignore_spf:
         spf_connection_event_store = EventStore()
-        spfrx_connection_event_store = EventStore()
-        ds_connection_event_store = EventStore()
-
         dish_manager_proxy.subscribe_event(
             "spfConnectionState",
             tango.EventType.CHANGE_EVENT,
             spf_connection_event_store,
         )
+
+        dish_manager_proxy.ignoreSpf = ignore_spf
+
+        if ignore_spf:
+            spf_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
+        else:
+            spf_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+
+    if dish_manager_proxy.ignoreSpfrx != ignore_spfrx:
+        spfrx_connection_event_store = EventStore()
 
         dish_manager_proxy.subscribe_event(
             "spfrxConnectionState",
@@ -373,31 +377,9 @@ def set_active_devices_and_sync_component_states(dish_manager_proxy, ignore_spf,
             spfrx_connection_event_store,
         )
 
-        dish_manager_proxy.subscribe_event(
-            "dsConnectionState",
-            tango.EventType.CHANGE_EVENT,
-            ds_connection_event_store,
-        )
-
-        # In order to only have subscriptions for active devices, restart communication
-        dish_manager_proxy.StopCommunication()
-
-        spf_connection_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-        spfrx_connection_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-        ds_connection_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-
-        dish_manager_proxy.ignoreSpf = ignore_spf
         dish_manager_proxy.ignoreSpfrx = ignore_spfrx
 
-        dish_manager_proxy.StartCommunication()
-
-        if not ignore_spf:
-            spf_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-        if not ignore_spfrx:
+        if ignore_spfrx:
+            spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
+        else:
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-        ds_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-
-        # TODO: Implement fix for SyncComponentStates timing out and remove this sleep
-        time.sleep(1)
-
-        dish_manager_proxy.SyncComponentStates()

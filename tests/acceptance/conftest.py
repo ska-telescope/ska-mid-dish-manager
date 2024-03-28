@@ -9,7 +9,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     IndexerPosition,
     SPFOperatingMode,
 )
-from tests.utils import set_active_devices_and_sync_component_states
+from tests.utils import set_active_devices
 
 
 @pytest.fixture
@@ -64,32 +64,10 @@ def setup_and_teardown(
     assert main_event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=7)
     main_event_store.clear_queue()
 
-    spf_connection_event_store = event_store_class()
-    spfrx_connection_event_store = event_store_class()
-    ds_connection_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "spfConnectionState",
-        tango.EventType.CHANGE_EVENT,
-        spf_connection_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "spfrxConnectionState",
-        tango.EventType.CHANGE_EVENT,
-        spfrx_connection_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dsConnectionState",
-        tango.EventType.CHANGE_EVENT,
-        ds_connection_event_store,
-    )
-
     if dish_manager_proxy.ignoreSpf or dish_manager_proxy.ignoreSpfrx:
-        set_active_devices_and_sync_component_states(dish_manager_proxy, False, False)
-    else:
-        dish_manager_proxy.SyncComponentStates()
+        set_active_devices(dish_manager_proxy, False, False)
+
+    dish_manager_proxy.SyncComponentStates()
 
     dish_manager_proxy.subscribe_event(
         "dishMode",
