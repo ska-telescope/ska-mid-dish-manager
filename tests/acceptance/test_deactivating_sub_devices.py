@@ -34,7 +34,6 @@ def test_deactivating_spf(
 
     dish_manager_proxy.SetStandbyFPMode()
 
-    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     # TODO: Command calls will only complete once transition rules have been updated in KAR-864
     # result_event_store.wait_for_command_id(unique_id, timeout=8)
 
