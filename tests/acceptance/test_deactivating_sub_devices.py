@@ -1,6 +1,5 @@
 """Test deactivating subservient devices."""
 import pytest
-import tango
 
 from tests.utils import set_active_devices
 
