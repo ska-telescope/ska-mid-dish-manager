@@ -239,8 +239,8 @@ class DishManager(SKAController):
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
             device._scan_i_d = ""
-            device._ignore_spf = ""
-            device._ignore_spfrx = ""
+            device._ignore_spf = False
+            device._ignore_spfrx = False
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN

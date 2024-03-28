@@ -1,10 +1,7 @@
 """Fixtures for running ska-mid-dish-manager acceptance tests"""
 
-import time
-
 import pytest
 import tango
-from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -12,6 +9,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     IndexerPosition,
     SPFOperatingMode,
 )
+from tests.utils import set_active_devices_and_sync_component_states
 
 
 @pytest.fixture
@@ -88,24 +86,10 @@ def setup_and_teardown(
         ds_connection_event_store,
     )
 
-    dish_manager_proxy.StopCommunication()
-
-    spf_connection_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-    spfrx_connection_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-    ds_connection_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-
-    dish_manager_proxy.ignoreSpf = False
-    dish_manager_proxy.ignoreSpfrx = False
-
-    dish_manager_proxy.StartCommunication()
-
-    spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-    ds_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-
-    # TODO: Implement fix for SyncComponentStates timing out and remove this sleep
-    time.sleep(1)
-
-    dish_manager_proxy.SyncComponentStates()
+    if dish_manager_proxy.ignoreSpf or dish_manager_proxy.ignoreSpfrx:
+        set_active_devices_and_sync_component_states(dish_manager_proxy, False, False)
+    else:
+        dish_manager_proxy.SyncComponentStates()
 
     dish_manager_proxy.subscribe_event(
         "dishMode",
