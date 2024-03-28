@@ -1,5 +1,7 @@
 """Fixtures for running ska-mid-dish-manager acceptance tests"""
 
+import time
+
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
@@ -101,8 +103,6 @@ def setup_and_teardown(
     ds_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
     # TODO: Implement fix for SyncComponentStates timing out and remove this sleep
-    import time
-
     time.sleep(1)
 
     dish_manager_proxy.SyncComponentStates()

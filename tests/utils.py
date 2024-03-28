@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name,possibly-unused-variable
 """General utils for test devices"""
 import queue
+import time
 from typing import Any, List, Tuple
 
 import numpy as np
@@ -393,8 +394,6 @@ def set_active_devices_and_sync_component_states(dish_manager_proxy, ignore_spf,
     ds_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
     # TODO: Implement fix for SyncComponentStates timing out and remove this sleep
-    import time
-
     time.sleep(1)
 
     dish_manager_proxy.SyncComponentStates()

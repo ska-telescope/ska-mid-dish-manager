@@ -527,14 +527,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     component_manager.update_state_from_monitored_attributes()
 
     def set_spf_device_ignored(self, ignored: bool):
+        """Set the SPF device ignored boolean."""
         self._ignore_spf = ignored
         self._command_map.set_spf_device_ignored(ignored)
 
     def set_spfrx_device_ignored(self, ignored: bool):
+        """Set the SPFRx device ignored boolean."""
         self._ignore_spfrx = ignored
         self._command_map.set_spfrx_device_ignored(ignored)
 
     def is_device_enabled(self, device: str):
+        """Check whether the given device is enabled."""
         if device == "SPF":
             return not self._ignore_spf
         if device == "SPFRX":

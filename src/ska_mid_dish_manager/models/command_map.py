@@ -428,7 +428,7 @@ class CommandMap:
                         )
                     )
             else:
-                task_callback(progress=(f"{device} device is disabled. {cmd_name} call ignored"))
+                task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 
