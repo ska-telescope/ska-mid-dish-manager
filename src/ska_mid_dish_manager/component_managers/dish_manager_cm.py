@@ -99,6 +99,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
+        self._ignore_spf = False
+        self._ignore_spfrx = False
+
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
@@ -189,6 +192,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self,
             self._command_tracker,
             self.logger,
+            self._ignore_spf,
+            self._ignore_spfrx,
         )
 
         self.direct_mapped_attrs = {
@@ -220,12 +225,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Update the DM component communication states
         with self._sub_communication_state_change_lock:
             if self.sub_component_managers:
-                self._update_component_state(
-                    spfconnectionstate=self.sub_component_managers["SPF"].communication_state
-                )
-                self._update_component_state(
-                    spfrxconnectionstate=self.sub_component_managers["SPFRX"].communication_state
-                )
+                if self.is_device_enabled("SPF"):
+                    self._update_component_state(
+                        spfconnectionstate=self.sub_component_managers["SPF"].communication_state
+                    )
+                if self.is_device_enabled("SPFRX"):
+                    self._update_component_state(
+                        spfrxconnectionstate=self.sub_component_managers[
+                            "SPFRX"
+                        ].communication_state
+                    )
                 self._update_component_state(
                     dsconnectionstate=self.sub_component_managers["DS"].communication_state
                 )
@@ -364,7 +373,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(achievedtargetlock=True)
 
         # spf bandInFocus
-        if "indexerposition" in kwargs or "configuredband" in kwargs:
+        if self.is_device_enabled("SPF") and (
+            "indexerposition" in kwargs or "configuredband" in kwargs
+        ):
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
                 ds_component_state, spfrx_component_state
             )
@@ -466,7 +477,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 attr_lower = attr.lower()
 
                 if attr_lower in kwargs:
-                    new_value = ds_component_state[attr_lower]
+                    new_value = None
+                    if device == "DS":
+                        new_value = ds_component_state[attr_lower]
+                    elif device == "SPF":
+                        new_value = spf_component_state[attr_lower]
+                    elif device == "SPFRX":
+                        new_value = spfrx_component_state[attr_lower]
 
                     self.logger.debug(
                         ("Updating %s with %s %s [%s]"),
@@ -502,16 +519,34 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         then re-read all the monitored attributes from their respective tango device
         to force dishManager to recalculate its attributes.
         """
+        self.logger.debug("Syncing component states")
         if self.sub_component_managers:
-            for component_manager in self.sub_component_managers.values():
-                component_manager.clear_monitored_attributes()
-                component_manager.update_state_from_monitored_attributes()
+            for device, component_manager in self.sub_component_managers.items():
+                if self.is_device_enabled(device):
+                    component_manager.clear_monitored_attributes()
+                    component_manager.update_state_from_monitored_attributes()
+
+    def set_spf_device_ignored(self, ignored: bool):
+        self._ignore_spf = ignored
+        self._command_map.set_spf_device_ignored(ignored)
+
+    def set_spfrx_device_ignored(self, ignored: bool):
+        self._ignore_spfrx = ignored
+        self._command_map.set_spfrx_device_ignored(ignored)
+
+    def is_device_enabled(self, device: str):
+        if device == "SPF":
+            return not self._ignore_spf
+        if device == "SPFRX":
+            return not self._ignore_spfrx
+        return True
 
     def start_communicating(self):
         """Connect from monitored devices"""
         if self.sub_component_managers:
-            for component_manager in self.sub_component_managers.values():
-                component_manager.start_communicating()
+            for device_name, component_manager in self.sub_component_managers.items():
+                if self.is_device_enabled(device_name):
+                    component_manager.start_communicating()
 
     def set_standby_lp_mode(
         self,

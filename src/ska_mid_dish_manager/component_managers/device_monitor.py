@@ -82,9 +82,17 @@ class SubscriptionTracker:
         """
         return any(self._subscribed_attrs.values())
 
+    def all_subscribed(self) -> bool:
+        """Check if any attributes has been subscribed
+
+        :return: any attributes subscribed
+        :rtype: bool
+        """
+        return all(self._subscribed_attrs.values())
+
     def update_subscription_status(self) -> None:
         """Update Communication Status"""
-        if self.any_subscribed():
+        if self.all_subscribed():
             self._logger.info("Updating CommunicationStatus as ESTABLISHED")
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
         else:

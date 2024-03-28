@@ -129,7 +129,7 @@ class DishManager(SKAController):
         if not hasattr(self, "component_manager"):
             self.logger.warning("Init not completed, but communication state is being updated")
             return
-        if attribute_name == "spfConnectionState":
+        if attribute_name == "spfConnectionState" and not self._ignore_spf:
             self.push_change_event(
                 "spfConnectionState",
                 self.component_manager.sub_component_managers["SPF"].communication_state,
@@ -138,7 +138,7 @@ class DishManager(SKAController):
                 "spfConnectionState",
                 self.component_manager.sub_component_managers["SPF"].communication_state,
             )
-        if attribute_name == "spfrxConnectionState":
+        if attribute_name == "spfrxConnectionState" and not self._ignore_spfrx:
             self.push_change_event(
                 "spfrxConnectionState",
                 self.component_manager.sub_component_managers["SPFRX"].communication_state,
@@ -239,6 +239,8 @@ class DishManager(SKAController):
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
             device._scan_i_d = ""
+            device._ignore_spf = ""
+            device._ignore_spfrx = ""
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -336,6 +338,8 @@ class DishManager(SKAController):
                 "powerState",
                 "trackProgramMode",
                 "trackTableLoadMode",
+                "ignoreSpf",
+                "ignoreSpfrx",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
@@ -1041,6 +1045,44 @@ class DishManager(SKAController):
         self.push_change_event("scanID", scanid)
         self.push_archive_event("scanID", scanid)
 
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Flag to disable SPF device communication.",
+        memorized=True,
+    )
+    def ignoreSpf(self):
+        """Returns ignoreSpf"""
+        return self._ignore_spf
+
+    @ignoreSpf.write
+    def ignoreSpf(self, value):
+        """Sets ignoreSpf"""
+        self.logger.debug("Write to ignoreSpf, %s", value)
+        self._ignore_spf = value
+        self.component_manager.set_spf_device_ignored(self._ignore_spf)
+        self.push_change_event("ignoreSpf", value)
+        self.push_archive_event("ignoreSpf", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Flag to disable SPFRx device communication.",
+        memorized=True,
+    )
+    def ignoreSpfrx(self):
+        """Returns ignoreSpfrx"""
+        return self._ignore_spfrx
+
+    @ignoreSpfrx.write
+    def ignoreSpfrx(self, value):
+        """Sets ignoreSpfrx"""
+        self.logger.debug("Write to ignoreSpfrx, %s", value)
+        self._ignore_spfrx = value
+        self.component_manager.set_spfrx_device_ignored(self._ignore_spfrx)
+        self.push_change_event("ignoreSpfrx", value)
+        self.push_archive_event("ignoreSpfrx", value)
+
     # --------
     # Commands
     # --------
@@ -1057,7 +1099,7 @@ class DishManager(SKAController):
         Connection status is not monitored from here.
         TODO: Move this into DeviceMonitor
         """
-        if self.dev_state() != tango.DevState.INIT:
+        if not self._ignore_spfrx and self.dev_state() != tango.DevState.INIT:
             if hasattr(self, "component_manager"):
                 if "SPFRX" in self.component_manager.sub_component_managers:
                     try:
@@ -1546,6 +1588,8 @@ class DishManager(SKAController):
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StartCommunication(self):
         """Start communicating with monitored devices"""
+        self.component_manager.set_spf_device_ignored(self._ignore_spf)
+        self.component_manager.set_spfrx_device_ignored(self._ignore_spfrx)
         self.component_manager.start_communicating()
 
     @command(

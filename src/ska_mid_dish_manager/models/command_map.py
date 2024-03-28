@@ -29,10 +29,14 @@ class CommandMap:
         dish_manager_cm,
         command_tracker,
         logger,
+        ignore_spf,
+        ignore_spfrx,
     ):
         self._dish_manager_cm = dish_manager_cm
         self._command_tracker = command_tracker
         self.logger = logger
+        self._ignore_spf = ignore_spf
+        self._ignore_spfrx = ignore_spfrx
 
         self._keys_to_output_map = {
             "dishmode": "dishMode",
@@ -46,6 +50,22 @@ class CommandMap:
             output = key
 
         return output
+
+    def set_spf_device_ignored(self, ignored: bool):
+        """Set the SPF device ignored boolean."""
+        self._ignore_spf = ignored
+
+    def set_spfrx_device_ignored(self, ignored: bool):
+        """Set the SPFRx device ignored boolean."""
+        self._ignore_spfrx = ignored
+
+    def is_device_enabled(self, device: str):
+        """Check whether the given device is enabled."""
+        if device == "SPF":
+            return not self._ignore_spf
+        if device == "SPFRX":
+            return not self._ignore_spfrx
+        return True
 
     def set_standby_lp_mode(self, task_callback: Optional[Callable] = None, task_abort_event=None):
         """Transition the dish to STANDBY_LP mode"""
@@ -393,17 +413,22 @@ class CommandMap:
         device_command_ids = {}
 
         for device, fan_out_args in commands_for_sub_devices.items():
-            try:
-                device_command_ids[device] = self._fan_out_cmd(task_callback, device, fan_out_args)
-            except RuntimeError as ex:
-                device_command_ids[device] = ex.args[0]
-                cmd_name = fan_out_args["command"]
-                task_callback(
-                    progress=(
-                        f"{device} device failed to execute {cmd_name} command with"
-                        f" ID {device_command_ids[device]}"
+            cmd_name = fan_out_args["command"]
+            if self.is_device_enabled(device):
+                try:
+                    device_command_ids[device] = self._fan_out_cmd(
+                        task_callback, device, fan_out_args
                     )
-                )
+                except RuntimeError as ex:
+                    device_command_ids[device] = ex.args[0]
+                    task_callback(
+                        progress=(
+                            f"{device} device failed to execute {cmd_name} command with"
+                            f" ID {device_command_ids[device]}"
+                        )
+                    )
+            else:
+                task_callback(progress=(f"{device} device is disabled. {cmd_name} call ignored"))
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 
@@ -443,22 +468,23 @@ class CommandMap:
                 return
 
             for device, fan_out_args in commands_for_sub_devices.items():
-                # Check each device and report attribute values that are in the expected state
-                if not fan_out_args["progress_updated"]:
-                    fan_out_args["progress_updated"] = self._report_fan_out_cmd_progress(
-                        task_callback, device, fan_out_args
-                    )
-
-                command_in_progress = fan_out_args["command"]
-                if not fan_out_args["command_has_failed"]:
-                    if self._fanout_command_has_failed(device_command_ids[device]):
-                        task_callback(
-                            progress=(
-                                f"{device} device failed executing {command_in_progress} "
-                                f"command with ID {device_command_ids[device]}"
-                            )
+                if self.is_device_enabled(device):
+                    # Check each device and report attribute values that are in the expected state
+                    if not fan_out_args["progress_updated"]:
+                        fan_out_args["progress_updated"] = self._report_fan_out_cmd_progress(
+                            task_callback, device, fan_out_args
                         )
-                        fan_out_args["command_has_failed"] = True
+
+                    command_in_progress = fan_out_args["command"]
+                    if not fan_out_args["command_has_failed"]:
+                        if self._fanout_command_has_failed(device_command_ids[device]):
+                            task_callback(
+                                progress=(
+                                    f"{device} device failed executing {command_in_progress} "
+                                    f"command with ID {device_command_ids[device]}"
+                                )
+                            )
+                            fan_out_args["command_has_failed"] = True
 
             # TODO: If all three commands have failed, then bail
             # if all(
@@ -478,8 +504,9 @@ class CommandMap:
             if current_awaited_value != awaited_event_value:
                 task_abort_event.wait(timeout=1)
                 for device in commands_for_sub_devices.keys():
-                    component_manager = self._dish_manager_cm.sub_component_managers[device]
-                    component_manager.update_state_from_monitored_attributes()
+                    if self.is_device_enabled(device):
+                        component_manager = self._dish_manager_cm.sub_component_managers[device]
+                        component_manager.update_state_from_monitored_attributes()
             else:
                 task_callback(
                     progress=f"{running_command} completed",
