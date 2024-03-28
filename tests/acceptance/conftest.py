@@ -102,6 +102,7 @@ def setup_and_teardown(
 
     # TODO: Implement fix for SyncComponentStates timing out and remove this sleep
     import time
+
     time.sleep(1)
 
     dish_manager_proxy.SyncComponentStates()
