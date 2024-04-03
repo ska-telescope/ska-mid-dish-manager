@@ -29,8 +29,6 @@ class CommandMap:
         dish_manager_cm,
         command_tracker,
         logger,
-        ignore_spf,
-        ignore_spfrx,
     ):
         self._dish_manager_cm = dish_manager_cm
         self._command_tracker = command_tracker
@@ -51,20 +49,12 @@ class CommandMap:
 
         return output
 
-    def set_spf_device_ignored(self, ignored: bool):
-        """Set the SPF device ignored boolean."""
-        self._ignore_spf = ignored
-
-    def set_spfrx_device_ignored(self, ignored: bool):
-        """Set the SPFRx device ignored boolean."""
-        self._ignore_spfrx = ignored
-
     def is_device_enabled(self, device: str):
         """Check whether the given device is enabled."""
         if device == "SPF":
-            return not self._ignore_spf
+            return not self._dish_manager_cm._ignore_spf
         if device == "SPFRX":
-            return not self._ignore_spfrx
+            return not self._dish_manager_cm._ignore_spfrx
         return True
 
     def set_standby_lp_mode(self, task_callback: Optional[Callable] = None, task_abort_event=None):

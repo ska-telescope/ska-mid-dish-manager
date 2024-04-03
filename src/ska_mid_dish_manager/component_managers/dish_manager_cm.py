@@ -192,8 +192,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self,
             self._command_tracker,
             self.logger,
-            self._ignore_spf,
-            self._ignore_spfrx,
         )
 
         self.direct_mapped_attrs = {
@@ -529,7 +527,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def set_spf_device_ignored(self, ignored: bool):
         """Set the SPF device ignored boolean."""
         self._ignore_spf = ignored
-        self._command_map.set_spf_device_ignored(ignored)
+        
         if ignored:
             if "SPF" in self.sub_component_managers:
                 self.sub_component_managers["SPF"].stop_communicating()
@@ -546,7 +544,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def set_spfrx_device_ignored(self, ignored: bool):
         """Set the SPFRx device ignored boolean."""
         self._ignore_spfrx = ignored
-        self._command_map.set_spfrx_device_ignored(ignored)
+
         if ignored:
             if "SPFRX" in self.sub_component_managers:
                 self.sub_component_managers["SPFRX"].stop_communicating()
