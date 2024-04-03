@@ -33,8 +33,8 @@ class CommandMap:
         self._dish_manager_cm = dish_manager_cm
         self._command_tracker = command_tracker
         self.logger = logger
-        self._ignore_spf = ignore_spf
-        self._ignore_spfrx = ignore_spfrx
+        self._ignore_spf = False
+        self._ignore_spfrx = False
 
         self._keys_to_output_map = {
             "dishmode": "dishMode",
