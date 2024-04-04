@@ -22,7 +22,7 @@ git clone git@gitlab.com:ska-telescope/ska-mid-dish-manager.git
 - Install poetry
 
 ```bash
-pip install poetry
+pip install poetry==1.71.
 ```
 
 Install the dependencies and the package.
@@ -60,6 +60,10 @@ $ helm upgrade --install to k8s-helm-repository/ska-tango-operator -n ska-tango-
 ### Deploy the chart with simulators
 
 - Deploy the chart with simulator devices
+  
+```bash
+kubectl create namespace dish-manager
+```
 
 ```bash
 $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \

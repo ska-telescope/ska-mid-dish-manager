@@ -2,6 +2,7 @@
 import pytest
 
 from tests.utils import set_active_devices
+from src.ska_mid_dish_manager.models.command_map import CommandMap
 
 
 @pytest.mark.acceptance
@@ -12,7 +13,7 @@ def test_deactivating_spf(
 ):
     """Test deactivating SPF device."""
     set_active_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False)
-
+    
     # TODO: Uncomment below and complete in KAR-864 as without those changes dishMode is stuck
     # in UNKNOWN
     # result_event_store = event_store_class()

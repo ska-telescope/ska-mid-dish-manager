@@ -352,7 +352,7 @@ def set_configuredBand_b2(
 
 def set_active_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
     """Sets active devices and restarts communication."""
-    if dish_manager_proxy.ignoreSpf != ignore_spf:
+    if dish_manager_proxy.component_manager.is_device_enabled("SPF"):
         spf_connection_event_store = EventStore()
         dish_manager_proxy.subscribe_event(
             "spfConnectionState",
@@ -360,14 +360,14 @@ def set_active_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
             spf_connection_event_store,
         )
 
-        dish_manager_proxy.ignoreSpf = ignore_spf
+        dish_manager_proxy.component_manager.set_spf_device_ignored(ignore_spf)
 
         if ignore_spf:
             spf_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
         else:
             spf_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
-    if dish_manager_proxy.ignoreSpfrx != ignore_spfrx:
+    if dish_manager_proxy.component_manager.is_device_enabled("SPFRX"):
         spfrx_connection_event_store = EventStore()
 
         dish_manager_proxy.subscribe_event(
@@ -376,7 +376,7 @@ def set_active_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
             spfrx_connection_event_store,
         )
 
-        dish_manager_proxy.ignoreSpfrx = ignore_spfrx
+        dish_manager_proxy.component_manager.set_spfrx_device_ignored(ignore_spfrx)
 
         if ignore_spfrx:
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
