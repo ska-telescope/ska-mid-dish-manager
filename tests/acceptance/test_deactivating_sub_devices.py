@@ -2,7 +2,6 @@
 import pytest
 
 from tests.utils import set_active_devices
-from src.ska_mid_dish_manager.models.command_map import CommandMap
 
 
 @pytest.mark.acceptance
