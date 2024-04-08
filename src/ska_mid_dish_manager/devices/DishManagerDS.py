@@ -280,6 +280,8 @@ class DishManager(SKAController):
                 "kvalue": "kValue",
                 "trackinterpolationmode": "trackInterpolationMode",
                 "scanid": "scanID",
+                "ignorespf": "ignoreSpf",
+                "ignorespfrx": "ignoreSpfrx",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1059,10 +1061,7 @@ class DishManager(SKAController):
     def ignoreSpf(self, value):
         """Sets ignoreSpf"""
         self.logger.debug("Write to ignoreSpf, %s", value)
-        self._ignore_spf = value
-        self.component_manager.set_spf_device_ignored(self._ignore_spf)
-        self.push_change_event("ignoreSpf", value)
-        self.push_archive_event("ignoreSpf", value)
+        self.component_manager.set_spf_device_ignored(value)
 
     @attribute(
         dtype=bool,
@@ -1078,10 +1077,7 @@ class DishManager(SKAController):
     def ignoreSpfrx(self, value):
         """Sets ignoreSpfrx"""
         self.logger.debug("Write to ignoreSpfrx, %s", value)
-        self._ignore_spfrx = value
-        self.component_manager.set_spfrx_device_ignored(self._ignore_spfrx)
-        self.push_change_event("ignoreSpfrx", value)
-        self.push_archive_event("ignoreSpfrx", value)
+        self.component_manager.set_spfrx_device_ignored(value)
 
     # --------
     # Commands

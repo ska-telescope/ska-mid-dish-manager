@@ -101,8 +101,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
-        self._ignore_spf = False
-        self._ignore_spfrx = False
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -528,9 +526,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_spf_device_ignored(self, ignored: bool):
         """Set the SPF device ignored boolean."""
-        self._ignore_spf = ignored
-        self._update_component_state(ignorespf=ignored)
-
         if ignored:
             if "SPF" in self.sub_component_managers:
                 self.sub_component_managers["SPF"].stop_communicating()
@@ -540,11 +535,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED)
             self.sub_component_managers["SPF"].start_communicating()
 
+        self._update_component_state(ignorespf=ignored)
+
     def set_spfrx_device_ignored(self, ignored: bool):
         """Set the SPFRx device ignored boolean."""
-        self._ignore_spfrx = ignored
-        self._update_component_state(ignorespfrx=ignored)
-
         if ignored:
             if "SPFRX" in self.sub_component_managers:
                 self.sub_component_managers["SPFRX"].stop_communicating()
@@ -554,12 +548,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED)
             self.sub_component_managers["SPFRX"].start_communicating()
 
+        self._update_component_state(ignorespfrx=ignored)
+
     def is_device_enabled(self, device: str):
         """Check whether the given device is enabled."""
         if device == "SPF":
-            return not self._ignore_spf
+            return not self.component_state["ignorespf"]
         if device == "SPFRX":
-            return not self._ignore_spfrx
+            return not self.component_state["ignorespfrx"]
         return True
 
     def start_communicating(self):
