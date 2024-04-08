@@ -16,7 +16,7 @@ The system used for development needs to have Python 3 and `pip` installed.
 - Clone the repo
 
 ```bash
-git clone git@gitlab.com:ska-telescope/ska-mid-dish-manager.git
+git clone --recursive git@gitlab.com:ska-telescope/ska-mid-dish-manager.git
 ```
 
 - Install poetry
