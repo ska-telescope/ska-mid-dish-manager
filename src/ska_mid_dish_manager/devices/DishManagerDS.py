@@ -9,6 +9,7 @@ and the subservient devices
 
 import json
 import logging
+import os
 import weakref
 from functools import reduce
 from typing import Any, List, Optional, Tuple
@@ -282,17 +283,11 @@ class DishManager(SKAController):
                 "scanid": "scanID",
                 "ignorespf": "ignoreSpf",
                 "ignorespfrx": "ignoreSpfrx",
+                "spfconnectionstate": "spfConnectionState",
+                "spfrxconnectionstate": "spfrxConnectionState",
+                "dsconnectionstate": "dsConnectionState",
             }
             for attr in device._component_state_attr_map.values():
-                device.set_change_event(attr, True, False)
-                device.set_archive_event(attr, True, False)
-
-            # configure change events for the connection state attributes
-            for attr in (
-                "spfConnectionState",
-                "spfrxConnectionState",
-                "dsConnectionState",
-            ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
 
@@ -346,6 +341,42 @@ class DishManager(SKAController):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
 
+            # Update memorized attributes if TANGO_HOST is set
+            if "TANGO_HOST" in os.environ:
+                self.logger.debug("Updating memorized attributes. Reading from database.")
+                db = tango.Database()
+                device_name = device.get_name()
+
+                def get_device_attribute_property_value(db, attribute):
+                    self.logger.debug("Getting attribute property value for %s.")
+                    # Read "ignoreSpf" attribute property
+                    attr_property = db.get_device_attribute_property(device_name, attribute)
+                    attr_property_value = attr_property[attribute]
+                    if len(attr_property_value) > 0:  # If the returned dict is not empty
+                        return attr_property_value["__value"][0]
+                    return None
+
+                # ignoreSpf
+                ignore_spf_value = get_device_attribute_property_value(db, "ignoreSpf")
+
+                if ignore_spf_value is not None:
+                    self.logger.debug(
+                        "Updating ignoreSpf value with value from database %s.", ignore_spf_value
+                    )
+                    device._ignore_spf = bool(ignore_spf_value)
+                    device.component_manager.set_spf_device_ignored(device._ignore_spf)
+
+                # ignoreSpfrx
+                ignore_spfrx_value = get_device_attribute_property_value(db, "ignoreSpfrx")
+
+                if ignore_spfrx_value is not None:
+                    self.logger.debug(
+                        "Updating ignoreSpfrx value with value from database %s.",
+                        ignore_spfrx_value,
+                    )
+                    device._ignore_spfrx = bool(ignore_spfrx_value)
+                    device.component_manager.set_spfrx_device_ignored(device._ignore_spfrx)
+
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
             device.component_manager.start_communicating()
@@ -363,7 +394,7 @@ class DishManager(SKAController):
     )
     def spfConnectionState(self):
         """Returns the spf connection state"""
-        return self.component_manager.sub_component_managers["SPF"].communication_state
+        return self._spf_connection_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -372,7 +403,7 @@ class DishManager(SKAController):
     )
     def spfrxConnectionState(self):
         """Returns the spfrx connection state"""
-        return self.component_manager.sub_component_managers["SPFRX"].communication_state
+        return self._spfrx_connection_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -381,7 +412,7 @@ class DishManager(SKAController):
     )
     def dsConnectionState(self):
         """Returns the ds connection state"""
-        return self.component_manager.sub_component_managers["DS"].communication_state
+        return self._ds_connection_state
 
     @attribute(
         max_dim_x=3,
@@ -1584,8 +1615,6 @@ class DishManager(SKAController):
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def StartCommunication(self):
         """Start communicating with monitored devices"""
-        self.component_manager.set_spf_device_ignored(self._ignore_spf)
-        self.component_manager.set_spfrx_device_ignored(self._ignore_spfrx)
         self.component_manager.start_communicating()
 
     @command(

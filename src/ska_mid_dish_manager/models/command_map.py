@@ -50,11 +50,7 @@ class CommandMap:
     # pylint: disable=protected-access
     def is_device_enabled(self, device: str):
         """Check whether the given device is enabled."""
-        if device == "SPF":
-            return not self._dish_manager_cm._ignore_spf
-        if device == "SPFRX":
-            return not self._dish_manager_cm._ignore_spfrx
-        return True
+        return self._dish_manager_cm.is_device_enabled(device)
 
     def set_standby_lp_mode(self, task_callback: Optional[Callable] = None, task_abort_event=None):
         """Transition the dish to STANDBY_LP mode"""

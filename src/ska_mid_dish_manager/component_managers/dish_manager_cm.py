@@ -90,8 +90,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             band2pointingmodelparams=[],
             trackinterpolationmode=None,
-            ignorespf=False,
-            ignorespfrx=False,
+            ignorespf=None,
+            ignorespfrx=None,
             **kwargs,
         )
         self.logger = logger
@@ -184,6 +184,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "spfrxconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
             "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
             "band2pointingmodelparams": [],
+            "ignorespf": False,
+            "ignorespfrx": False,
         }
         self._update_component_state(**initial_component_states)
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
