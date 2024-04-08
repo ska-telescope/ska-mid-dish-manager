@@ -348,7 +348,7 @@ class DishManager(SKAController):
                 device_name = device.get_name()
 
                 def get_device_attribute_property_value(db, attribute_name):
-                    self.logger.debug("Getting attribute property value for %s.")
+                    self.logger.debug("Getting attribute property value for %s.", attribute_name)
                     attr_property = db.get_device_attribute_property(device_name, attribute_name)
                     attr_property_value = attr_property[attribute_name]
                     if len(attr_property_value) > 0:  # If the returned dict is not empty
@@ -362,7 +362,7 @@ class DishManager(SKAController):
                     self.logger.debug(
                         "Updating ignoreSpf value with value from database %s.", ignore_spf_value
                     )
-                    device._ignore_spf = bool(ignore_spf_value)
+                    device._ignore_spf = ignore_spf_value.lower() == "true"
                     device.component_manager.set_spf_device_ignored(device._ignore_spf)
 
                 # ignoreSpfrx
@@ -373,7 +373,7 @@ class DishManager(SKAController):
                         "Updating ignoreSpfrx value with value from database %s.",
                         ignore_spfrx_value,
                     )
-                    device._ignore_spfrx = bool(ignore_spfrx_value)
+                    device._ignore_spfrx = ignore_spfrx_value.lower() == "true"
                     device.component_manager.set_spfrx_device_ignored(device._ignore_spfrx)
 
             device.instances[device.get_name()] = device

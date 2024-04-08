@@ -528,6 +528,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_spf_device_ignored(self, ignored: bool):
         """Set the SPF device ignored boolean."""
+        self.logger.debug("Setting SPF ignored to %s", ignored)
         if ignored:
             if "SPF" in self.sub_component_managers:
                 self.sub_component_managers["SPF"].stop_communicating()
@@ -541,6 +542,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_spfrx_device_ignored(self, ignored: bool):
         """Set the SPFRx device ignored boolean."""
+        self.logger.debug("Setting SPFRx ignored to %s", ignored)
         if ignored:
             if "SPFRX" in self.sub_component_managers:
                 self.sub_component_managers["SPFRX"].stop_communicating()
