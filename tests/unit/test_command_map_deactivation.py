@@ -9,6 +9,7 @@ from ska_mid_dish_manager.models.command_map import CommandMap
 
 LOGGER = logging.getLogger(__name__)
 
+
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.models.command_map.SubmittedSlowCommand")
 def test_deactivating_subdevice(patched_slow_command):
