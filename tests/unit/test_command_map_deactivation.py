@@ -14,7 +14,6 @@ LOGGER = logging.getLogger(__name__)
 @mock.patch("ska_mid_dish_manager.models.command_map.SubmittedSlowCommand")
 def test_deactivating_subdevice(patched_slow_command):
     """Test deactivating subservient devices in command map."""
-    # pylint: disable=no-member
     mock_command_instance = mock.MagicMock()
     mock_command_instance.return_value = (None, None)
 

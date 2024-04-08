@@ -22,7 +22,7 @@ def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
 
 @pytest.fixture(autouse=True)
 def setup_and_teardown(
-    event_store_class,
+    event_store,
     dish_manager_proxy,
     ds_device_proxy,
     spf_device_proxy,
@@ -32,37 +32,35 @@ def setup_and_teardown(
     spfrx_device_proxy.ResetToDefault()
     spf_device_proxy.ResetToDefault()
 
-    main_event_store = event_store_class()
-
     ds_device_proxy.subscribe_event(
         "operatingMode",
         tango.EventType.CHANGE_EVENT,
-        main_event_store,
+        event_store,
     )
     ds_device_proxy.subscribe_event(
         "indexerPosition",
         tango.EventType.CHANGE_EVENT,
-        main_event_store,
+        event_store,
     )
 
     if ds_device_proxy.operatingMode != DSOperatingMode.STOW:
         ds_device_proxy.Stow()
-        assert main_event_store.wait_for_value(DSOperatingMode.STOW, timeout=9)
+        assert event_store.wait_for_value(DSOperatingMode.STOW, timeout=9)
 
     ds_device_proxy.SetStandbyLPMode()
-    assert main_event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=9)
+    assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=9)
 
     if ds_device_proxy.indexerPosition != IndexerPosition.B1:
         ds_device_proxy.SetIndexPosition(IndexerPosition.B1)
-        assert main_event_store.wait_for_value(IndexerPosition.B1, timeout=9)
+        assert event_store.wait_for_value(IndexerPosition.B1, timeout=9)
 
     spf_device_proxy.subscribe_event(
         "operatingMode",
         tango.EventType.CHANGE_EVENT,
-        main_event_store,
+        event_store,
     )
-    assert main_event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=7)
-    main_event_store.clear_queue()
+    assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=7)
+    event_store.clear_queue()
 
     if dish_manager_proxy.ignoreSpf or dish_manager_proxy.ignoreSpfrx:
         set_active_devices(dish_manager_proxy, False, False)
@@ -72,11 +70,11 @@ def setup_and_teardown(
     dish_manager_proxy.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
-        main_event_store,
+        event_store,
     )
 
     try:
-        main_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=7)
+        event_store.wait_for_value(DishMode.STANDBY_LP, timeout=7)
     except RuntimeError as err:
         component_states = dish_manager_proxy.GetComponentStates()
         raise RuntimeError(f"DishManager not in STANDBY_LP:\n {component_states}\n") from err
