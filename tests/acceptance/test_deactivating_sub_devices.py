@@ -12,7 +12,7 @@ def test_deactivating_spf(
 ):
     """Test deactivating SPF device."""
     set_active_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False)
-    
+
     # TODO: Uncomment below and complete in KAR-864 as without those changes dishMode is stuck
     # in UNKNOWN
     # result_event_store = event_store_class()
@@ -89,7 +89,7 @@ def test_deactivating_spfrx(
     #     "SetStandbyLPMode called on SPF",
     #     "SPFRX device is disabled. SetStandbyMode call ignored",
     #     "Awaiting dishMode change to STANDBY_LP",
-    #     "SetStandbyFPMode completed",
+    #     "SetStandbyLPMode completed",
     # ]
 
     # events = progress_event_store.wait_for_progress_update(
@@ -141,7 +141,7 @@ def test_deactivating_all(
     #     "SPF device is disabled. SetStandbyLPMode call ignored",
     #     "SPFRX device is disabled. SetStandbyMode call ignored",
     #     "Awaiting dishMode change to STANDBY_LP",
-    #     "SetStandbyFPMode completed",
+    #     "SetStandbyLPMode completed",
     # ]
 
     # events = progress_event_store.wait_for_progress_update(

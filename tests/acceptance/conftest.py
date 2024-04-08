@@ -64,7 +64,7 @@ def setup_and_teardown(
     assert main_event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=7)
     main_event_store.clear_queue()
 
-    if dish_manager_proxy.component_manager.is_device_enabled("SPF") or dish_manager_proxy.component_manager.is_device_enabled("SPFRX"):
+    if dish_manager_proxy.ignoreSpf or dish_manager_proxy.ignoreSpfrx:
         set_active_devices(dish_manager_proxy, False, False)
 
     dish_manager_proxy.SyncComponentStates()

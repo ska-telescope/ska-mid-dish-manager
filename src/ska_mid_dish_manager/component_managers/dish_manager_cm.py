@@ -527,7 +527,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def set_spf_device_ignored(self, ignored: bool):
         """Set the SPF device ignored boolean."""
         self._ignore_spf = ignored
-        
+
         if ignored:
             if "SPF" in self.sub_component_managers:
                 self.sub_component_managers["SPF"].stop_communicating()
@@ -535,11 +535,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(spfconnectionstate=CommunicationStatus.DISABLED)
         else:
             self._update_component_state(spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED)
-
-            # If communication is already established with DS then start communicating for the
-            # SPF as well
-            if self.is_ds_communication_established() and "SPF" in self.sub_component_managers:
-                self.sub_component_managers["SPF"].start_communicating()
+            self.sub_component_managers["SPF"].start_communicating()
 
     def set_spfrx_device_ignored(self, ignored: bool):
         """Set the SPFRx device ignored boolean."""
@@ -552,11 +548,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(spfrxconnectionstate=CommunicationStatus.DISABLED)
         else:
             self._update_component_state(spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED)
-
-            # If communication is already established with DS then start communicating for the
-            # SPFRx as well
-            if self.is_ds_communication_established() and "SPFRX" in self.sub_component_managers:
-                self.sub_component_managers["SPFRX"].start_communicating()
+            self.sub_component_managers["SPFRX"].start_communicating()
 
     def is_device_enabled(self, device: str):
         """Check whether the given device is enabled."""
@@ -565,16 +557,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if device == "SPFRX":
             return not self._ignore_spfrx
         return True
-
-    def is_ds_communication_established(self):
-        """Check whether communication with the DSManager device is ESTABLISHED."""
-        if "DS" in self.sub_component_managers:
-            if (
-                self.sub_component_managers["DS"].communication_state
-                == CommunicationStatus.ESTABLISHED
-            ):
-                return True
-        return False
 
     def start_communicating(self):
         """Connect from monitored devices"""
