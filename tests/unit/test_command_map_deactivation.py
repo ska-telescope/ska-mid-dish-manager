@@ -9,7 +9,7 @@ from ska_mid_dish_manager.models.command_map import CommandMap
 
 LOGGER = logging.getLogger(__name__)
 
-
+# pylint: disable=protected-access
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.models.command_map.SubmittedSlowCommand")
 def test_deactivating_subdevice(patched_slow_command):
@@ -39,6 +39,7 @@ def test_deactivating_subdevice(patched_slow_command):
     # Save any progress calls
     progress_calls = []
 
+    # pylint: disable=unused-argument
     def my_task_callback(progress=None, status=None, result=None):
         if progress is not None:
             progress_calls.append(progress)

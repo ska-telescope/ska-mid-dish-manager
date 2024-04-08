@@ -47,6 +47,7 @@ class CommandMap:
 
         return output
 
+    # pylint: disable=protected-access
     def is_device_enabled(self, device: str):
         """Check whether the given device is enabled."""
         if device == "SPF":
