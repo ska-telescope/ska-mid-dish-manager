@@ -9,7 +9,6 @@ from ska_mid_dish_manager.models.command_map import CommandMap
 
 LOGGER = logging.getLogger(__name__)
 
-# pylint: disable=protected-access
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.models.command_map.SubmittedSlowCommand")
 def test_deactivating_subdevice(patched_slow_command):
@@ -31,6 +30,7 @@ def test_deactivating_subdevice(patched_slow_command):
     }
     dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
 
+    # pylint: disable=protected-access
     dish_manager_cm_mock._ignore_spf.return_value = True
     dish_manager_cm_mock._ignore_spfrx.return_value = True
 
