@@ -129,7 +129,7 @@ class DishManager(SKAController):
         if not hasattr(self, "component_manager"):
             self.logger.warning("Init not completed, but communication state is being updated")
             return
-        if attribute_name == "spfConnectionState" and not self._ignore_spf:
+        if attribute_name == "spfConnectionState":
             self.push_change_event(
                 "spfConnectionState",
                 self.component_manager.sub_component_managers["SPF"].communication_state,
@@ -138,7 +138,7 @@ class DishManager(SKAController):
                 "spfConnectionState",
                 self.component_manager.sub_component_managers["SPF"].communication_state,
             )
-        if attribute_name == "spfrxConnectionState" and not self._ignore_spfrx:
+        if attribute_name == "spfrxConnectionState":
             self.push_change_event(
                 "spfrxConnectionState",
                 self.component_manager.sub_component_managers["SPFRX"].communication_state,

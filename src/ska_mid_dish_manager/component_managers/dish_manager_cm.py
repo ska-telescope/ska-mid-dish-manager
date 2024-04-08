@@ -90,6 +90,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             band2pointingmodelparams=[],
             trackinterpolationmode=None,
+            ignorespf=False,
+            ignorespfrx=False,
             **kwargs,
         )
         self.logger = logger
@@ -527,6 +529,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def set_spf_device_ignored(self, ignored: bool):
         """Set the SPF device ignored boolean."""
         self._ignore_spf = ignored
+        self._update_component_state(ignorespf=ignored)
 
         if ignored:
             if "SPF" in self.sub_component_managers:
@@ -540,6 +543,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def set_spfrx_device_ignored(self, ignored: bool):
         """Set the SPFRx device ignored boolean."""
         self._ignore_spfrx = ignored
+        self._update_component_state(ignorespfrx=ignored)
 
         if ignored:
             if "SPFRX" in self.sub_component_managers:
