@@ -27,8 +27,18 @@ class TestCommandMapDeactivateDevices:
         self.dish_manager_cm_mock = mock.MagicMock(component_state={"dishmode": 2})
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
 
-        self.dish_manager_cm_mock._ignore_spf = False
-        self.dish_manager_cm_mock._ignore_spfrx = False
+        def is_device_enabled(device: str):
+            """Check whether the given device is enabled."""
+            if device == "SPF":
+                return not self.dish_manager_cm_mock.component_state["ignorespf"]
+            if device == "SPFRX":
+                return not self.dish_manager_cm_mock.component_state["ignorespfrx"]
+            return True
+
+        self.dish_manager_cm_mock.is_device_enabled = is_device_enabled
+
+        self.dish_manager_cm_mock.component_state["ignorespf"] = False
+        self.dish_manager_cm_mock.component_state["ignorespfrx"] = False
         command_tracker_mock = mock.MagicMock()
 
         self.command_map = CommandMap(self.dish_manager_cm_mock, command_tracker_mock, LOGGER)
@@ -39,9 +49,8 @@ class TestCommandMapDeactivateDevices:
 
     def set_devices_ignored(self, spf_ignored, spfrx_ignored):
         """Set subservient device ignore values."""
-        # pylint: disable=protected-access
-        self.dish_manager_cm_mock._ignore_spf = spf_ignored
-        self.dish_manager_cm_mock._ignore_spfrx = spfrx_ignored
+        self.dish_manager_cm_mock.component_state["ignorespf"] = spf_ignored
+        self.dish_manager_cm_mock.component_state["ignorespfrx"] = spfrx_ignored
 
     @pytest.mark.unit
     @mock.patch("ska_mid_dish_manager.models.command_map.SubmittedSlowCommand")

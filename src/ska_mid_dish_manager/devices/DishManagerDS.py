@@ -347,11 +347,10 @@ class DishManager(SKAController):
                 db = tango.Database()
                 device_name = device.get_name()
 
-                def get_device_attribute_property_value(db, attribute):
+                def get_device_attribute_property_value(db, attribute_name):
                     self.logger.debug("Getting attribute property value for %s.")
-                    # Read "ignoreSpf" attribute property
-                    attr_property = db.get_device_attribute_property(device_name, attribute)
-                    attr_property_value = attr_property[attribute]
+                    attr_property = db.get_device_attribute_property(device_name, attribute_name)
+                    attr_property_value = attr_property[attribute_name]
                     if len(attr_property_value) > 0:  # If the returned dict is not empty
                         return attr_property_value["__value"][0]
                     return None
