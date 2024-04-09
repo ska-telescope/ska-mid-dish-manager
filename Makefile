@@ -13,6 +13,7 @@ DOCKER_FILE_PATH=Dockerfile
 MINIKUBE ?= true ## Minikube or not
 SKA_TANGO_OPERATOR = true
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
+CLUSTER_DOMAIN ?= cluster.local## Domain used for naming Tango Device Servers
 
 -include .make/base.mk
 
@@ -65,8 +66,7 @@ CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
 	--set ska-mid-dish-ds-manager.enabled=true \
 	--set ska-tango-base.enabled=true \
-	--set global.dishes="{001,111}" \
-	--set global.cluster_domain=techops.internal.skao.int
+	--set global.dishes="{001,111}"
 K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 K8S_TIMEOUT=600s
 endif
@@ -74,6 +74,7 @@ endif
 K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 	--set global.tango_host=$(TANGO_HOST) \
 	--set global.operator=$(SKA_TANGO_OPERATOR) \
+	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
 	$(CUSTOM_VALUES)
 
 -include .make/oci.mk
