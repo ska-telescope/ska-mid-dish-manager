@@ -13,7 +13,7 @@ DOCKER_FILE_PATH=Dockerfile
 MINIKUBE ?= true ## Minikube or not
 SKA_TANGO_OPERATOR = true
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
-CLUSTER_DOMAIN ?= cluster.local## Domain used for naming Tango Device Servers
+CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
 
 -include .make/base.mk
 
