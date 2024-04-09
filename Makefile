@@ -65,7 +65,8 @@ CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
 	--set ska-mid-dish-ds-manager.enabled=true \
 	--set ska-tango-base.enabled=true \
-	--set global.dishes="{001,111}"
+	--set global.dishes="{001,111}" \
+	--set global.cluster_domain=techops.internal.skao.int
 K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 K8S_TIMEOUT=600s
 endif
