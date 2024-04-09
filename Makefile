@@ -13,6 +13,7 @@ DOCKER_FILE_PATH=Dockerfile
 MINIKUBE ?= true ## Minikube or not
 SKA_TANGO_OPERATOR = true
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
+CLUSTER_DOMAIN ?= cluster.local## Domain used for naming Tango Device Servers
 
 -include .make/base.mk
 
@@ -38,7 +39,7 @@ PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-fi
 
 python-test: MARK = unit
 k8s-test-runner: MARK = acceptance
-k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.cluster.local:10000
+k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
 ifeq ($(CI_JOB_NAME_SLUG),lmc-acceptance-test)
 k8s-test-runner: MARK = lmc
@@ -73,6 +74,7 @@ endif
 K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
 	--set global.tango_host=$(TANGO_HOST) \
 	--set global.operator=$(SKA_TANGO_OPERATOR) \
+	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
 	$(CUSTOM_VALUES)
 
 -include .make/oci.mk
