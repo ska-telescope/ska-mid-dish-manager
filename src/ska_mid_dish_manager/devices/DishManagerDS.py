@@ -1037,7 +1037,6 @@ class DishManager(SKAController):
     @scanID.write
     def scanID(self, scanid):
         """Sets the scanID"""
-        self._scan_i_d = scanid
         self.component_manager._update_component_state(scanid=scanid)
 
     # --------
