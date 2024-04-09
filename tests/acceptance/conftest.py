@@ -29,8 +29,6 @@ def setup_and_teardown(
     spfrx_device_proxy,
 ):
     """Reset the tango devices to a fresh state before each test"""
-    # Ensure both devices are active
-    # This happens first as some time needs to pass before calling SyncComponentStates
     if dish_manager_proxy.ignoreSpf or dish_manager_proxy.ignoreSpfrx:
         set_active_devices(dish_manager_proxy, False, False)
 

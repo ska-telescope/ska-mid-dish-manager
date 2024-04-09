@@ -528,31 +528,33 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_spf_device_ignored(self, ignored: bool):
         """Set the SPF device ignored boolean."""
-        self.logger.debug("Setting SPF ignored to %s", ignored)
-        if ignored:
-            if "SPF" in self.sub_component_managers:
-                self.sub_component_managers["SPF"].stop_communicating()
-                self.sub_component_managers["SPF"].clear_monitored_attributes()
-            self._update_component_state(spfconnectionstate=CommunicationStatus.DISABLED)
-        else:
-            self._update_component_state(spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED)
-            self.sub_component_managers["SPF"].start_communicating()
+        if ignored != self.component_state["ignorespf"]:
+            self.logger.debug("Setting ignore SPF device as %s", ignored)
+            if ignored:
+                if "SPF" in self.sub_component_managers:
+                    self.sub_component_managers["SPF"].stop_communicating()
+                    self.sub_component_managers["SPF"].clear_monitored_attributes()
+                self._update_component_state(spfconnectionstate=CommunicationStatus.DISABLED)
+            else:
+                self._update_component_state(spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED)
+                self.sub_component_managers["SPF"].start_communicating()
 
-        self._update_component_state(ignorespf=ignored)
+            self._update_component_state(ignorespf=ignored)
 
     def set_spfrx_device_ignored(self, ignored: bool):
         """Set the SPFRx device ignored boolean."""
-        self.logger.debug("Setting SPFRx ignored to %s", ignored)
-        if ignored:
-            if "SPFRX" in self.sub_component_managers:
-                self.sub_component_managers["SPFRX"].stop_communicating()
-                self.sub_component_managers["SPFRX"].clear_monitored_attributes()
-            self._update_component_state(spfrxconnectionstate=CommunicationStatus.DISABLED)
-        else:
-            self._update_component_state(spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED)
-            self.sub_component_managers["SPFRX"].start_communicating()
+        if ignored != self.component_state["ignorespfrx"]:
+            self.logger.debug("Setting ignore SPFRx device as %s", ignored)
+            if ignored:
+                if "SPFRX" in self.sub_component_managers:
+                    self.sub_component_managers["SPFRX"].stop_communicating()
+                    self.sub_component_managers["SPFRX"].clear_monitored_attributes()
+                self._update_component_state(spfrxconnectionstate=CommunicationStatus.DISABLED)
+            else:
+                self._update_component_state(spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED)
+                self.sub_component_managers["SPFRX"].start_communicating()
 
-        self._update_component_state(ignorespfrx=ignored)
+            self._update_component_state(ignorespfrx=ignored)
 
     def is_device_enabled(self, device: str):
         """Check whether the given device is enabled."""
