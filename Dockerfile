@@ -8,6 +8,8 @@ RUN rm -rf /home/tango/.cache/pypoetry/virtualenvs/*
 
 COPY pyproject.toml poetry.lock* ./
 # install runtime dependencies and the app
+
+RUN poetry lock --no-update
 RUN poetry config virtualenvs.create false && poetry install
 
 USER tango
