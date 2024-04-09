@@ -1121,6 +1121,38 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: ignoreSpf
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Flag to disable SPF device communication.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: ignoreSpf
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: ignoreSpf
+    - name: ignoreSpfrx
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Flag to disable SPFRx device communication.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: ignoreSpfrx
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: ignoreSpfrx
     - name: kValue
       data_format: SCALAR
       data_type: DevLong64
