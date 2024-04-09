@@ -536,7 +536,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self.sub_component_managers["SPF"].clear_monitored_attributes()
                 self._update_component_state(spfconnectionstate=CommunicationStatus.DISABLED)
             else:
-                self._update_component_state(spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED)
+                self._update_component_state(
+                    spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED
+                )
                 self.sub_component_managers["SPF"].start_communicating()
 
             self._update_component_state(ignorespf=ignored)
@@ -551,7 +553,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self.sub_component_managers["SPFRX"].clear_monitored_attributes()
                 self._update_component_state(spfrxconnectionstate=CommunicationStatus.DISABLED)
             else:
-                self._update_component_state(spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED)
+                self._update_component_state(
+                    spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED
+                )
                 self.sub_component_managers["SPFRX"].start_communicating()
 
             self._update_component_state(ignorespfrx=ignored)
