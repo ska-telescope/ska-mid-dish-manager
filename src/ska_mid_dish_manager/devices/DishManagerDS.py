@@ -335,8 +335,6 @@ class DishManager(SKAController):
                 "powerState",
                 "trackProgramMode",
                 "trackTableLoadMode",
-                "ignoreSpf",
-                "ignoreSpfrx",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
