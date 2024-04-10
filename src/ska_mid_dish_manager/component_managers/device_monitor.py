@@ -96,7 +96,7 @@ class SubscriptionTracker:
         :return: none of the attributes have been subscribed
         :rtype: bool
         """
-        return all([not val for val in self._subscribed_attrs.values()])
+        return all(not val for val in self._subscribed_attrs.values())
 
     def update_subscription_status(self) -> None:
         """Update Communication Status"""
