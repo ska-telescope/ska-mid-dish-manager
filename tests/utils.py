@@ -350,8 +350,8 @@ def set_configuredBand_b2(
     config_band_event_store.wait_for_value(Band.B2, timeout=7)
 
 
-def set_active_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
-    """Sets active devices and restarts communication."""
+def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
+    """Sets ignored devices on DishManager."""
     if dish_manager_proxy.ignoreSpf != ignore_spf:
         spf_connection_event_store = EventStore()
         dish_manager_proxy.subscribe_event(

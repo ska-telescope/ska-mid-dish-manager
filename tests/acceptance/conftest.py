@@ -9,7 +9,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     IndexerPosition,
     SPFOperatingMode,
 )
-from tests.utils import set_active_devices
 
 
 @pytest.fixture
@@ -29,9 +28,6 @@ def setup_and_teardown(
     spfrx_device_proxy,
 ):
     """Reset the tango devices to a fresh state before each test"""
-    if dish_manager_proxy.ignoreSpf or dish_manager_proxy.ignoreSpfrx:
-        set_active_devices(dish_manager_proxy, False, False)
-
     spfrx_device_proxy.ResetToDefault()
     spf_device_proxy.ResetToDefault()
 

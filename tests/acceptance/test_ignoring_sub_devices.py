@@ -1,17 +1,17 @@
-"""Test deactivating subservient devices."""
+"""Test ignoring subservient devices."""
 import pytest
 
-from tests.utils import set_active_devices
+from tests.utils import set_ignored_devices
 
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_deactivating_spf(
+def test_ignoring_spf(
     dish_manager_proxy,
 ):
-    """Test deactivating SPF device."""
-    set_active_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False)
+    """Test ignoring SPF device."""
+    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False)
 
     # TODO: Uncomment below and complete in KAR-864 as without those changes dishMode is stuck
     # in UNKNOWN
@@ -51,15 +51,19 @@ def test_deactivating_spf(
     # for message in expected_progress_updates:
     #     assert message in events_string
 
+    set_ignored_devices(
+        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
+    )
+
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_deactivating_spfrx(
+def test_ignoring_spfrx(
     dish_manager_proxy,
 ):
-    """Test deactivating SPFRX device."""
-    set_active_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=True)
+    """Test ignoring SPFRX device."""
+    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=True)
 
     # TODO: Uncomment below and complete in KAR-864 as without those changes dishMode is stuck
     # in UNKNOWN
@@ -103,15 +107,19 @@ def test_deactivating_spfrx(
     # for message in expected_progress_updates:
     #     assert message in events_string
 
+    set_ignored_devices(
+        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
+    )
+
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_deactivating_all(
+def test_ignoring_all(
     dish_manager_proxy,
 ):
-    """Test deactivating both SPF and SPFRx devices."""
-    set_active_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=True)
+    """Test ignoring both SPF and SPFRx devices."""
+    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=True)
 
     # TODO: Uncomment below and complete in KAR-864 as without those changes dishMode is stuck
     # in UNKNOWN
@@ -154,3 +162,6 @@ def test_deactivating_all(
     # # in the event store
     # for message in expected_progress_updates:
     #     assert message in events_string
+    set_ignored_devices(
+        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
+    )
