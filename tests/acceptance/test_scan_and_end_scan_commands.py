@@ -41,6 +41,7 @@ def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     progress_event_store.wait_for_progress_update("EndScan completed")
     assert dish_manager_proxy.read_attribute("scanID").value == ""
 
+    # exercising scanID using the write method and EndScan command
     scan_id = "5"
     dish_manager_proxy.write_attribute("scanID", scan_id)
     attribute_event_store.wait_for_value(scan_id)
