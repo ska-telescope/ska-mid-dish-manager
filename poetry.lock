@@ -1729,7 +1729,7 @@ transitions = "^0.9.0"
 type = "git"
 url = "https://gitlab.com/ska-telescope/ska-tango-base.git"
 reference = "kar-878-revert-max-workers-deprecation"
-resolved_reference = "d99eeb257201cc93be692a22ee70d4559b31e922"
+resolved_reference = "2d69999a487b09c6020bc48b2d0909ab2a0ea2ae"
 
 [[package]]
 name = "ska-tango-testing"
