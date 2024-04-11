@@ -39,7 +39,7 @@ def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     [[_], [unique_id]] = dish_manager_proxy.EndScan()
     result_event_store.wait_for_command_id(unique_id)
     progress_event_store.wait_for_progress_update("EndScan completed")
-    assert dish_manager_proxy.read_attribute("scanID").value == ''
+    assert dish_manager_proxy.read_attribute("scanID").value == ""
 
     scan_id = "5"
     dish_manager_proxy.write_attribute("scanID", scan_id)
@@ -48,4 +48,4 @@ def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     [[_], [unique_id]] = dish_manager_proxy.EndScan()
     result_event_store.wait_for_command_id(unique_id)
     progress_event_store.wait_for_progress_update("EndScan completed")
-    assert dish_manager_proxy.read_attribute("scanID").value == ''
+    assert dish_manager_proxy.read_attribute("scanID").value == ""
