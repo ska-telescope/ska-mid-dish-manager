@@ -1728,8 +1728,8 @@ transitions = "^0.9.0"
 [package.source]
 type = "git"
 url = "https://gitlab.com/ska-telescope/ska-tango-base.git"
-reference = "wom-320-fix-omnithread-deadlock"
-resolved_reference = "67194d6d6e6b3d9ab0705bb387a8077385fc6935"
+reference = "kar-878-revert-max-workers-deprecation"
+resolved_reference = "d99eeb257201cc93be692a22ee70d4559b31e922"
 
 [[package]]
 name = "ska-tango-testing"
@@ -2233,4 +2233,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10"
-content-hash = "71b517deb50e33879517a1bfaab9ee4ca6770144b068f91e75718a810f1ae321"
+content-hash = "56ed03cf7057c7462a89de81888f3d6738ba5b95df553c3ce7f4292ac98ee8d1"
