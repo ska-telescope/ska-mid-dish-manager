@@ -92,7 +92,7 @@ class CommandMap:
                 "DS": {
                     "command": "SetStandbyFPMode",
                     "awaitedAttribute": "operatingmode",
-                    "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
+                    "awaitedValuesList": [DSOperatingMode.STANDBY_FP],
                 }
             }
         else:
@@ -105,7 +105,7 @@ class CommandMap:
                 "DS": {
                     "command": "SetStandbyFPMode",
                     "awaitedAttribute": "operatingmode",
-                    "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
+                    "awaitedValuesList": [DSOperatingMode.STANDBY_FP],
                 },
             }
 
