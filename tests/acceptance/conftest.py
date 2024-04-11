@@ -2,7 +2,6 @@
 
 import pytest
 import tango
-from utils import set_ignored_devices
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -10,6 +9,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     IndexerPosition,
     SPFOperatingMode,
 )
+from tests.utils import set_ignored_devices
 
 
 @pytest.fixture
