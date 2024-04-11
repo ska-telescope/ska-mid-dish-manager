@@ -326,3 +326,4 @@ class TangoDeviceMonitor:
                     logger.info(
                         "Could not unsubscribe from %s for attr %s", tango_fqdn, attribute_name
                     )
+                subscription_tracker.subscription_stopped(attribute_name)

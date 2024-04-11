@@ -51,10 +51,6 @@ def test_ignoring_spf(
     # for message in expected_progress_updates:
     #     assert message in events_string
 
-    set_ignored_devices(
-        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
-    )
-
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
@@ -107,10 +103,6 @@ def test_ignoring_spfrx(
     # for message in expected_progress_updates:
     #     assert message in events_string
 
-    set_ignored_devices(
-        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
-    )
-
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
@@ -162,6 +154,3 @@ def test_ignoring_all(
     # # in the event store
     # for message in expected_progress_updates:
     #     assert message in events_string
-    set_ignored_devices(
-        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
-    )
