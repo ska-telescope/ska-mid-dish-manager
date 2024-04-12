@@ -1,5 +1,4 @@
 """Test AbortCommands"""
-import logging
 import time
 
 import pytest
