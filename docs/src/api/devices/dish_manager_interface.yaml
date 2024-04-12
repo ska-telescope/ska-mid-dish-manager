@@ -373,7 +373,7 @@
       enum_labels:
       - ONLINE
       - OFFLINE
-      - MAINTENANCE
+      - ENGINEERING
       - NOT_FITTED
       - RESERVED
       format: '%s'
@@ -1124,7 +1124,9 @@
     - name: ignoreSpf
       data_format: SCALAR
       data_type: DevBoolean
-      description: Flag to disable SPF device communication.
+      description: Flag to disable SPF device communication. When ignored, no commands
+        will be issued to the device, it will be excluded from state aggregation, and
+        no device relatedattributes will be updated.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
@@ -1140,7 +1142,9 @@
     - name: ignoreSpfrx
       data_format: SCALAR
       data_type: DevBoolean
-      description: Flag to disable SPFRx device communication.
+      description: Flag to disable SPFRx device communication. When ignored, no commands
+        will be issued to the device, it will be excluded from state aggregation, and
+        no device relatedattributes will be updated.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified

@@ -1046,7 +1046,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Flag to disable SPF device communication. When ignored, no commands will be issued"
+        doc="Flag to disable SPF device communication. When ignored, no commands will be issued "
         "to the device, it will be excluded from state aggregation, and no device related"
         "attributes will be updated.",
         memorized=True,
@@ -1064,7 +1064,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Flag to disable SPFRx device communication. When ignored, no commands will be issued"
+        doc="Flag to disable SPFRx device communication. When ignored, no commands will be issued "
         "to the device, it will be excluded from state aggregation, and no device related"
         "attributes will be updated.",
         memorized=True,

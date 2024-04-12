@@ -90,20 +90,12 @@ class SubscriptionTracker:
         """
         return all(self._subscribed_attrs.values())
 
-    def none_subscribed(self) -> bool:
-        """Check if none of the attributes have been subscribed
-
-        :return: none of the attributes have been subscribed
-        :rtype: bool
-        """
-        return all(not val for val in self._subscribed_attrs.values())
-
     def update_subscription_status(self) -> None:
         """Update Communication Status"""
         if self.all_subscribed():
             self._logger.info("Updating CommunicationStatus as ESTABLISHED")
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
-        elif self.none_subscribed():
+        else:
             self._logger.info("Updating CommunicationStatus as NOT_ESTABLISHED")
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
