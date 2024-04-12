@@ -844,7 +844,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def try_update_memorized_attributes(self):
         """Read memorized attributes values from TangoDB and update device attributes."""
-        if not "TANGO_HOST" in os.environ:
+        if "TANGO_HOST" not in os.environ:
             self.logger.debug("Not updating memorized attributes. TANGO_HOST is not set.")
             return
 
