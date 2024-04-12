@@ -23,7 +23,7 @@ def turn_on_spf_attribute_update(request, spf_device_proxy):
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_abort_commands(
-    event_store, event_store_class, dish_manager_proxy, spf_device_proxy, ds_device_proxy
+    event_store, event_store_class, dish_manager_proxy, spf_device_proxy
 ):
     """Test AbortCommands aborts the executing long running command"""
     # Set a flag on SPF to skip attribute updates
@@ -31,8 +31,8 @@ def test_abort_commands(
     # does not finish executing before AbortCommands is triggered
     spf_device_proxy.skipAttributeUpdates = True
     # Create a logger
-    logger = logging.getLogger("example_logger")
-    logger.setLevel(logging.INFO)
+    # logger = logging.getLogger("example_logger")
+    # logger.setLevel(logging.INFO)
 
     for attr in [
         "longRunningCommandResult",
@@ -51,7 +51,7 @@ def test_abort_commands(
         cmds_in_queue_store,
     )
 
-    logger.info(f": {dish_manager_proxy.dishMode}")
+    # logger.info(f": {dish_manager_proxy.dishMode}")
 
     # Transition to FP mode
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
@@ -60,31 +60,31 @@ def test_abort_commands(
     dish_manager_proxy.AbortCommands()
 
     time.sleep(1)
-    logger.info(f"longRunningCommandProgress: {dish_manager_proxy.longRunningCommandProgress}")
+    # logger.info(f"longRunningCommandProgress: {dish_manager_proxy.longRunningCommandProgress}")
     assert dish_manager_proxy.longRunningCommandProgress == (
         f"{unique_id}",
         "SetStandbyFPMode Aborted",
     )
     time.sleep(1)
-    logger.info(f"longRunningCommandProgress: {dish_manager_proxy.longRunningCommandProgress}")
+    # logger.info(f"longRunningCommandProgress: {dish_manager_proxy.longRunningCommandProgress}")
     assert dish_manager_proxy.longRunningCommandProgress == (
         f"{unique_id}",
         "SetStandbyFPMode Aborted",
     )
     time.sleep(1)
-    logger.info(f"longRunningCommandProgress: {dish_manager_proxy.longRunningCommandProgress}")
+    # logger.info(f"longRunningCommandProgress: {dish_manager_proxy.longRunningCommandProgress}")
     assert dish_manager_proxy.longRunningCommandProgress == (
         f"{unique_id}",
         "SetStandbyFPMode Aborted",
     )
     time.sleep(1)
-    logger.info(f"longRunningCommandProgress: {dish_manager_proxy.longRunningCommandProgress}")
+    # logger.info(f"longRunningCommandProgress: {dish_manager_proxy.longRunningCommandProgress}")
     assert dish_manager_proxy.longRunningCommandProgress == (
         f"{unique_id}",
         "SetStandbyFPMode Aborted",
     )
     time.sleep(1)
-    logger.info(f"longRunningCommandResult: {dish_manager_proxy.longRunningCommandResult}")
+    # logger.info(f"longRunningCommandResult: {dish_manager_proxy.longRunningCommandResult}")
 
     assert dish_manager_proxy.longRunningCommandResult == (
         f"{unique_id}",
@@ -101,7 +101,7 @@ def test_abort_commands(
     earlier_commands_in_queue = cmds_in_queue_store.get_queue_values()
     assert earlier_commands_in_queue
 
-    logger.info(f"Queue Values: {earlier_commands_in_queue}")
+    # logger.info(f"Queue Values: {earlier_commands_in_queue}")
 
     # assert not dish_manager_proxy.longRunningCommandsInQueue
-    logger.info(f"longRunningCommandsInQueue: {dish_manager_proxy.longRunningCommandsInQueue}")
+    # logger.info(f"longRunningCommandsInQueue: {dish_manager_proxy.longRunningCommandsInQueue}")
