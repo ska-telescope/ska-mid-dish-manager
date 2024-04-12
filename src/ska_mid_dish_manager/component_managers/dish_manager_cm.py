@@ -51,6 +51,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         logger: logging.Logger,
         command_tracker,
         connection_state_callback,
+        tango_device_name: str,
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
@@ -60,6 +61,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ):
         """"""
         # pylint: disable=useless-super-delegation
+        self.tango_device_name = tango_device_name
         self.sub_component_managers = None
         super().__init__(
             logger,
@@ -819,45 +821,56 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
 
-    def try_update_memorized_attributes(self, device):
+    def get_device_attribute_property_value(self, database, attribute_name):
+        """
+        Read memorized attributes values from TangoDB.
+
+        :param: database: Tango database object
+        :type database: Any
+        :param: attribute_name: Tango attribute name
+        :type attribute_name: str
+        :return: value for the given attribute
+        :rtype: Optional[Any]
+        """
+        self.logger.debug("Getting attribute property value for %s.", attribute_name)
+        attr_property = database.get_device_attribute_property(
+            self.tango_device_name, attribute_name
+        )
+        attr_property_value = attr_property[attribute_name]
+        if len(attr_property_value) > 0:  # If the returned dict is not empty
+            return attr_property_value["__value"][0]
+        return None
+
+    def try_update_memorized_attributes(self):
         """Read memorized attributes values from TangoDB and update device attributes."""
         if "TANGO_HOST" in os.environ:
             self.logger.debug("Updating memorized attributes. Trying to read from database.")
             try:
                 database = tango.Database()
-                device_name = device.get_name()
-
-                def get_device_attribute_property_value(database, attribute_name):
-                    self.logger.debug("Getting attribute property value for %s.", attribute_name)
-                    attr_property = database.get_device_attribute_property(
-                        device_name, attribute_name
-                    )
-                    attr_property_value = attr_property[attribute_name]
-                    if len(attr_property_value) > 0:  # If the returned dict is not empty
-                        return attr_property_value["__value"][0]
-                    return None
 
                 # ignoreSpf
-                ignore_spf_value = get_device_attribute_property_value(database, "ignoreSpf")
+                ignore_spf_value = self.get_device_attribute_property_value(database, "ignoreSpf")
 
                 if ignore_spf_value is not None:
                     self.logger.debug(
                         "Updating ignoreSpf value with value from database %s.",
                         ignore_spf_value,
                     )
-                    device._ignore_spf = ignore_spf_value.lower() == "true"
-                    device.component_manager.set_spf_device_ignored(device._ignore_spf)
+                    ignore_spf = ignore_spf_value.lower() == "true"
+                    self.set_spf_device_ignored(ignore_spf)
 
                 # ignoreSpfrx
-                ignore_spfrx_value = get_device_attribute_property_value(database, "ignoreSpfrx")
+                ignore_spfrx_value = self.get_device_attribute_property_value(
+                    database, "ignoreSpfrx"
+                )
 
                 if ignore_spfrx_value is not None:
                     self.logger.debug(
                         "Updating ignoreSpfrx value with value from database %s.",
                         ignore_spfrx_value,
                     )
-                    device._ignore_spfrx = ignore_spfrx_value.lower() == "true"
-                    device.component_manager.set_spfrx_device_ignored(device._ignore_spfrx)
+                    ignore_spfrx = ignore_spfrx_value.lower() == "true"
+                    self.set_spfrx_device_ignored(ignore_spfrx)
             except tango.DevFailed:
                 self.logger.debug(
                     "Could not update memorized attributes. Failed to connect to database."
