@@ -821,7 +821,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
 
-    def get_device_attribute_property_value(self, database, attribute_name):
+    def _get_device_attribute_property_value(self, database, attribute_name):
         """
         Read memorized attributes values from TangoDB.
 
@@ -849,7 +849,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 database = tango.Database()
 
                 # ignoreSpf
-                ignore_spf_value = self.get_device_attribute_property_value(database, "ignoreSpf")
+                ignore_spf_value = self._get_device_attribute_property_value(database, "ignoreSpf")
 
                 if ignore_spf_value is not None:
                     self.logger.debug(
@@ -860,7 +860,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self.set_spf_device_ignored(ignore_spf)
 
                 # ignoreSpfrx
-                ignore_spfrx_value = self.get_device_attribute_property_value(
+                ignore_spfrx_value = self._get_device_attribute_property_value(
                     database, "ignoreSpfrx"
                 )
 
