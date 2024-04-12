@@ -29,6 +29,10 @@ DishManagerDS = 'ska_mid_dish_manager.devices.DishManagerDS:main'
 name = 'ska-nexus'
 url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 
+[[tool.poetry.source]]
+name = "PyPI-public"
+url = 'https://pypi.org/simple'
+
 [tool.poetry.dependencies]
 python = "~3.10"
 pytango = "9.4.2"

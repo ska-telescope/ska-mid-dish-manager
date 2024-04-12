@@ -11,13 +11,11 @@ build:
     post_create_environment:
       # TODO (ST 18-03-2024): Await published uniform approach to resolving
       # build errors resulting from poetry versions 1.8.0 and higher
-      - pip install poetry==1.7.1
-      # Tell poetry to not use a virtual environment
-      - poetry config virtualenvs.create false
+      - pip install poetry
     post_install:
       # Install dependencies with 'docs' dependency group. If you do not have docs group, please omit it
       # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
-      - poetry install --only docs
+      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --only docs
 
 sphinx:
   configuration: docs/src/conf.py

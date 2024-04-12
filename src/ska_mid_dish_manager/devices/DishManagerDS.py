@@ -9,7 +9,6 @@ and the subservient devices
 
 import json
 import logging
-import os
 import weakref
 from functools import reduce
 from typing import Any, List, Optional, Tuple
@@ -340,49 +339,7 @@ class DishManager(SKAController):
                 device.set_archive_event(attr, True, False)
 
             # Try to connect to DB and update memorized attributes if TANGO_HOST is set
-            if "TANGO_HOST" in os.environ:
-                self.logger.debug("Updating memorized attributes. Trying to read from database.")
-                try:
-                    db = tango.Database()
-                    device_name = device.get_name()
-
-                    def get_device_attribute_property_value(db, attribute_name):
-                        self.logger.debug(
-                            "Getting attribute property value for %s.", attribute_name
-                        )
-                        attr_property = db.get_device_attribute_property(
-                            device_name, attribute_name
-                        )
-                        attr_property_value = attr_property[attribute_name]
-                        if len(attr_property_value) > 0:  # If the returned dict is not empty
-                            return attr_property_value["__value"][0]
-                        return None
-
-                    # ignoreSpf
-                    ignore_spf_value = get_device_attribute_property_value(db, "ignoreSpf")
-
-                    if ignore_spf_value is not None:
-                        self.logger.debug(
-                            "Updating ignoreSpf value with value from database %s.",
-                            ignore_spf_value,
-                        )
-                        device._ignore_spf = ignore_spf_value.lower() == "true"
-                        device.component_manager.set_spf_device_ignored(device._ignore_spf)
-
-                    # ignoreSpfrx
-                    ignore_spfrx_value = get_device_attribute_property_value(db, "ignoreSpfrx")
-
-                    if ignore_spfrx_value is not None:
-                        self.logger.debug(
-                            "Updating ignoreSpfrx value with value from database %s.",
-                            ignore_spfrx_value,
-                        )
-                        device._ignore_spfrx = ignore_spfrx_value.lower() == "true"
-                        device.component_manager.set_spfrx_device_ignored(device._ignore_spfrx)
-                except tango.DevFailed:
-                    self.logger.debug(
-                        "Could not update memorized attributes. Failed to connect to database."
-                    )
+            device.component_manager.try_update_memorized_attributes(device=device)
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
@@ -1088,7 +1045,9 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Flag to disable SPF device communication.",
+        doc="Flag to disable SPF device communication. When ignored, no commands will be issued"
+        "to the device, it will be excluded from state aggregation, and no device related"
+        "attributes will be updated.",
         memorized=True,
     )
     def ignoreSpf(self):
@@ -1104,7 +1063,9 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Flag to disable SPFRx device communication.",
+        doc="Flag to disable SPFRx device communication. When ignored, no commands will be issued"
+        "to the device, it will be excluded from state aggregation, and no device related"
+        "attributes will be updated.",
         memorized=True,
     )
     def ignoreSpfrx(self):

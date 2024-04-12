@@ -22,7 +22,7 @@ git clone --recursive git@gitlab.com:ska-telescope/ska-mid-dish-manager.git
 - Install poetry
 
 ```bash
-pip install poetry==1.71.
+pip install poetry
 ```
 
 Install the dependencies and the package.

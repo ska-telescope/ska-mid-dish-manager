@@ -399,7 +399,9 @@ class CommandMap:
 
         for device, fan_out_args in commands_for_sub_devices.items():
             cmd_name = fan_out_args["command"]
-            if self.is_device_enabled(device):
+            if not self.is_device_enabled(device):
+                task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
+            else:
                 try:
                     device_command_ids[device] = self._fan_out_cmd(
                         task_callback, device, fan_out_args
@@ -412,8 +414,6 @@ class CommandMap:
                             f" ID {device_command_ids[device]}"
                         )
                     )
-            else:
-                task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 

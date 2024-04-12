@@ -1,4 +1,4 @@
-"""Tests for deactivating devices in CommandMap"."""
+"""Tests for ignoring devices in CommandMap"."""
 import logging
 from threading import Event
 from unittest import mock
@@ -6,25 +6,33 @@ from unittest import mock
 import pytest
 
 from ska_mid_dish_manager.models.command_map import CommandMap
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 
 LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.unit
 @pytest.mark.forked
-class TestCommandMapDeactivateDevices:
-    """Tests for deactivating devices in CommandMap"""
+class TestCommandMapIgnoringDevices:
+    """Tests for ignoring devices in CommandMap"""
 
     # pylint: disable=protected-access,attribute-defined-outside-init
     def setup_method(self):
         """Set up context"""
         sub_component_managers_mock = {
-            "DS": mock.MagicMock(component_state={"operatingmode": 2}),
-            "SPF": mock.MagicMock(component_state={"operatingmode": 2}),
-            "SPFRX": mock.MagicMock(component_state={"operatingmode": 2}),
+            "DS": mock.MagicMock(component_state={"operatingmode": DSOperatingMode.STANDBY_LP}),
+            "SPF": mock.MagicMock(component_state={"operatingmode": SPFOperatingMode.STANDBY_LP}),
+            "SPFRX": mock.MagicMock(component_state={"operatingmode": SPFRxOperatingMode.STANDBY}),
         }
 
-        self.dish_manager_cm_mock = mock.MagicMock(component_state={"dishmode": 2})
+        self.dish_manager_cm_mock = mock.MagicMock(
+            component_state={"dishmode": DishMode.STANDBY_LP}
+        )
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
 
         def is_device_enabled(device: str):
@@ -54,8 +62,8 @@ class TestCommandMapDeactivateDevices:
 
     @pytest.mark.unit
     @mock.patch("ska_mid_dish_manager.models.command_map.SubmittedSlowCommand")
-    def test_deactivating_spf(self, patched_slow_command):
-        """Test deactivating SPF device in command map."""
+    def test_ignoring_spf(self, patched_slow_command):
+        """Test ignoring SPF device in command map."""
         mock_command_instance = mock.MagicMock()
         mock_command_instance.return_value = (None, None)
 
@@ -96,8 +104,8 @@ class TestCommandMapDeactivateDevices:
 
     @pytest.mark.unit
     @mock.patch("ska_mid_dish_manager.models.command_map.SubmittedSlowCommand")
-    def test_deactivating_spfrx(self, patched_slow_command):
-        """Test deactivating SPFRx device in command map."""
+    def test_ignoring_spfrx(self, patched_slow_command):
+        """Test ignoring SPFRx device in command map."""
         mock_command_instance = mock.MagicMock()
         mock_command_instance.return_value = (None, None)
 
@@ -138,8 +146,8 @@ class TestCommandMapDeactivateDevices:
 
     @pytest.mark.unit
     @mock.patch("ska_mid_dish_manager.models.command_map.SubmittedSlowCommand")
-    def test_deactivating_both_sub(self, patched_slow_command):
-        """Test deactivating both subservient devices in command map."""
+    def test_ignoring_both_sub(self, patched_slow_command):
+        """Test ignoring both subservient devices in command map."""
         mock_command_instance = mock.MagicMock()
         mock_command_instance.return_value = (None, None)
 
