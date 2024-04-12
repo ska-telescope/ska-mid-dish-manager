@@ -52,7 +52,9 @@ def test_abort_commands(event_store, event_store_class, dish_manager_proxy, spf_
 
     # Transition to FP mode
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-    event_store.wait_for_value((f"{unique_id}", "Awaiting dishMode change to STANDBY_FP"),timeout=6)
+    event_store.wait_for_value(
+        (f"{unique_id}", "Awaiting dishMode change to STANDBY_FP"), timeout=6
+    )
 
     dish_manager_proxy.AbortCommands()
 
