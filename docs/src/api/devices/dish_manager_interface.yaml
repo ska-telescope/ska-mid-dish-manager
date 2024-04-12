@@ -1126,7 +1126,7 @@
       data_type: DevBoolean
       description: Flag to disable SPF device communication. When ignored, no commands
         will be issued to the device, it will be excluded from state aggregation, and
-        no device relatedattributes will be updated.
+        no device related attributes will be updated.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
@@ -1144,7 +1144,7 @@
       data_type: DevBoolean
       description: Flag to disable SPFRx device communication. When ignored, no commands
         will be issued to the device, it will be excluded from state aggregation, and
-        no device relatedattributes will be updated.
+        no device related attributes will be updated.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
