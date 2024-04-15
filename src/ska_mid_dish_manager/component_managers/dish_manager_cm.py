@@ -210,6 +210,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
+    def _get_active_sub_component_managers(self) -> dict:
+        active_component_managers = [self.sub_component_managers["DS"]]
+
+        if self.is_device_enabled("SPF"):
+            active_component_managers.append(self.sub_component_managers["SPF"])
+
+        if self.is_device_enabled("SPFRX"):
+            active_component_managers.append(self.sub_component_managers["SPFRX"])
+
+        return active_component_managers
+
     # pylint: disable=unused-argument
     def _sub_communication_state_changed(
         self, attribute_name: str, communication_state: Optional[CommunicationStatus] = None
@@ -243,26 +254,35 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
             if self.sub_component_managers:
+                active_sub_component_managers = self._get_active_sub_component_managers()
+
+                # Have all the component states been created
                 if not all(
-                    (
-                        self.sub_component_managers["DS"].component_state,
-                        self.sub_component_managers["SPF"].component_state,
-                        self.sub_component_managers["SPFRX"].component_state,
-                    )
+                    sub_component_manager.component_state
+                    for sub_component_manager in active_sub_component_managers
                 ):
                     self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                     self._update_component_state(healthstate=HealthState.UNKNOWN)
                     return
 
-            if self.sub_component_managers:
+                # Are all the CommunicationStatus ESTABLISHED
                 if all(
                     sub_component_manager.communication_state == CommunicationStatus.ESTABLISHED
-                    for sub_component_manager in self.sub_component_managers.values()
+                    for sub_component_manager in active_sub_component_managers
                 ):
                     self._update_communication_state(CommunicationStatus.ESTABLISHED)
+
                     ds_component_state = self.sub_component_managers["DS"].component_state
-                    spf_component_state = self.sub_component_managers["SPF"].component_state
-                    spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
+                    spf_component_state = (
+                        self.sub_component_managers["SPF"].component_state
+                        if self.is_device_enabled("SPF")
+                        else None
+                    )
+                    spfrx_component_state = (
+                        self.sub_component_managers["SPFRX"].component_state
+                        if self.is_device_enabled("SPFRX")
+                        else None
+                    )
 
                     new_health_state = self._state_transition.compute_dish_health_state(
                         ds_component_state, spfrx_component_state, spf_component_state

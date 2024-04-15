@@ -9,7 +9,10 @@ from ska_mid_dish_manager.models.transition_rules import (
     band_focus_rules,
     cap_state_rules,
     config_rules,
-    dish_mode_rules,
+    dish_mode_rules_all_devices,
+    dish_mode_rules_ds_only,
+    dish_mode_rules_spf_ignored,
+    dish_mode_rules_spfrx_ignored,
     health_state_rules,
 )
 
@@ -20,8 +23,8 @@ class StateTransition:
     def compute_dish_mode(
         self,
         ds_component_state: dict,  # type: ignore
-        spfrx_component_state: dict,  # type: ignore
-        spf_component_state: dict,  # type: ignore
+        spfrx_component_state: Optional[dict] = None,  # type: ignore
+        spf_component_state: Optional[dict] = None,  # type: ignore
     ) -> DishMode:
         """Compute the dishMode based off component_states
 
@@ -38,7 +41,15 @@ class StateTransition:
             ds_component_state, spfrx_component_state, spf_component_state
         )
 
-        for mode, rule in dish_mode_rules.items():
+        rules_to_use = dish_mode_rules_ds_only
+        if spfrx_component_state and spf_component_state:
+            rules_to_use = dish_mode_rules_all_devices
+        elif spf_component_state:
+            rules_to_use = dish_mode_rules_spf_ignored
+        elif spfrx_component_state:
+            rules_to_use = dish_mode_rules_spfrx_ignored
+
+        for mode, rule in rules_to_use.items():
             if rule.matches(dish_manager_states):
                 return DishMode[mode]
         return DishMode.UNKNOWN
@@ -46,8 +57,8 @@ class StateTransition:
     def compute_dish_health_state(
         self,
         ds_component_state: dict,  # type: ignore
-        spfrx_component_state: dict,  # type: ignore
-        spf_component_state: dict,  # type: ignore
+        spfrx_component_state: Optional[dict],  # type: ignore
+        spf_component_state: Optional[dict],  # type: ignore
     ) -> HealthState:
         """Compute the HealthState based off component_states
 
@@ -183,7 +194,7 @@ class StateTransition:
     def _collapse(
         cls,
         ds_component_state: dict,  # type: ignore
-        spfrx_component_state: dict,
+        spfrx_component_state: Optional[dict] = None,
         spf_component_state: Optional[dict] = None,  # type: ignore
         dish_manager_component_state: Optional[dict] = None,  # type: ignore
     ) -> dict:  # type: ignore
@@ -193,8 +204,9 @@ class StateTransition:
         for key, val in ds_component_state.items():
             dish_manager_states["DS"][key] = str(val)
 
-        for key, val in spfrx_component_state.items():
-            dish_manager_states["SPFRX"][key] = str(val)
+        if spfrx_component_state:
+            for key, val in spfrx_component_state.items():
+                dish_manager_states["SPFRX"][key] = str(val)
 
         if spf_component_state:
             for key, val in spf_component_state.items():
