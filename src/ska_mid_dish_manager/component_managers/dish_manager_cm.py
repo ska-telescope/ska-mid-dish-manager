@@ -825,8 +825,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         Read memorized attributes values from TangoDB.
 
-        :param: database: Tango database object
-        :type database: Any
         :param: attribute_name: Tango attribute name
         :type attribute_name: str
         :return: value for the given attribute
