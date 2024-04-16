@@ -14,7 +14,9 @@ def turn_on_spf_attribute_update(request, spf_device_proxy):
 
     def toggle_attribute_update():
         spf_device_proxy.skipAttributeUpdates = False
+
     request.addfinalizer(toggle_attribute_update)
+
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
@@ -25,7 +27,7 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
     # This is useful to ensure that the long running command
     # does not finish executing before AbortCommands is triggered
     spf_device_proxy.skipAttributeUpdates = True
-    
+
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
 
@@ -43,7 +45,6 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
         result_event_store,
     )
 
-
     cmds_in_queue_store = event_store_class()
     dish_manager_proxy.subscribe_event(
         "longRunningCommandsInQueue",
@@ -56,7 +57,7 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
 
     # Check that Dish Manager doesn't actually transition to FP
     progress_event_store.wait_for_value((f"{unique_id}", "Awaiting dishMode change to STANDBY_FP"))
-    
+
     # Abort the LRC
     dish_manager_proxy.AbortCommands()
 
@@ -68,7 +69,7 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
     assert dish_manager_proxy.dishMode != DishMode.STANDBY_FP
 
     # Get earlier queue values
-    earlier_commands_in_queue = cmds_in_queue_store.get_queue_values()   
+    earlier_commands_in_queue = cmds_in_queue_store.get_queue_values()
     assert earlier_commands_in_queue
 
     # Ensure that the queue is cleared out
@@ -76,4 +77,3 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
         if not dish_manager_proxy.longRunningCommandIDsInQueue:
             assert not dish_manager_proxy.longRunningCommandIDsInQueue
             break
-
