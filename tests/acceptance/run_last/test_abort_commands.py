@@ -1,6 +1,4 @@
 """Test AbortCommands"""
-import time
-
 import pytest
 import tango
 from ska_control_model import ResultCode
