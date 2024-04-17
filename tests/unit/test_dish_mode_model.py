@@ -198,6 +198,7 @@ def test_compute_dish_mode(
     )
     assert expected_dish_mode == actual_dish_mode
 
+
 # Order DS, SPF, SPFRX
 # pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
@@ -299,6 +300,43 @@ def test_compute_dish_mode_with_ignored_devices(
     ],
 )
 def test_compute_dish_healthstate(
+    ds_comp_state,
+    spf_comp_state,
+    spfrx_comp_state,
+    expected_dish_healthstate,
+    state_transition,
+):
+    actual_dish_healthstate = state_transition.compute_dish_health_state(
+        ds_comp_state, spfrx_comp_state, spf_comp_state
+    )
+    assert expected_dish_healthstate == actual_dish_healthstate
+
+
+# pylint: disable=use-dict-literal
+@pytest.mark.parametrize(
+    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
+    [
+        (
+            dict(healthstate=HealthState.OK),
+            None,
+            dict(healthstate=HealthState.OK),
+            HealthState.OK,
+        ),
+        (
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.OK),
+            None,
+            HealthState.OK,
+        ),
+        (
+            dict(healthstate=HealthState.OK),
+            None,
+            None,
+            HealthState.OK,
+        ),
+    ],
+)
+def test_compute_dish_healthstate_ignoring_devices(
     ds_comp_state,
     spf_comp_state,
     spfrx_comp_state,
