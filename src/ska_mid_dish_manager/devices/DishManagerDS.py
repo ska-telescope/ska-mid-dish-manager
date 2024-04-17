@@ -340,7 +340,7 @@ class DishManager(SKAController):
                 device.set_archive_event(attr, True, False)
 
             # Try to connect to DB and update memorized attributes if TANGO_HOST is set
-            device.component_manager.try_update_memorized_attributes()
+            device.component_manager.try_update_memorized_attributes_from_db()
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()

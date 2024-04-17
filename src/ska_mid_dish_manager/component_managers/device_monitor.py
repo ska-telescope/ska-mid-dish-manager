@@ -74,14 +74,6 @@ class SubscriptionTracker:
                 self._subscribed_attrs[key] = False
             self.update_subscription_status()
 
-    def any_subscribed(self) -> bool:
-        """Check if any attributes have been subscribed
-
-        :return: any attributes subscribed
-        :rtype: bool
-        """
-        return any(self._subscribed_attrs.values())
-
     def all_subscribed(self) -> bool:
         """Check if all attributes have been subscribed
 

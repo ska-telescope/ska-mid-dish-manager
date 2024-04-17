@@ -228,11 +228,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Update the DM component communication states
         with self._sub_communication_state_change_lock:
             if self.sub_component_managers:
-                if self.is_device_enabled("SPF"):
+                if not self.is_device_ignored("SPF"):
                     self._update_component_state(
                         spfconnectionstate=self.sub_component_managers["SPF"].communication_state
                     )
-                if self.is_device_enabled("SPFRX"):
+                if not self.is_device_ignored("SPFRX"):
                     self._update_component_state(
                         spfrxconnectionstate=self.sub_component_managers[
                             "SPFRX"
@@ -376,7 +376,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(achievedtargetlock=True)
 
         # spf bandInFocus
-        if self.is_device_enabled("SPF") and (
+        if not self.is_device_ignored("SPF") and (
             "indexerposition" in kwargs or "configuredband" in kwargs
         ):
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
@@ -525,7 +525,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Syncing component states")
         if self.sub_component_managers:
             for device, component_manager in self.sub_component_managers.items():
-                if self.is_device_enabled(device):
+                if not self.is_device_ignored(device):
                     component_manager.clear_monitored_attributes()
                     component_manager.update_state_from_monitored_attributes()
 
@@ -563,19 +563,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
             self._update_component_state(ignorespfrx=ignored)
 
-    def is_device_enabled(self, device: str):
-        """Check whether the given device is enabled."""
+    def is_device_ignored(self, device: str):
+        """Check whether the given device is ignored."""
         if device == "SPF":
-            return not self.component_state["ignorespf"]
+            return self.component_state["ignorespf"]
         if device == "SPFRX":
-            return not self.component_state["ignorespfrx"]
+            return self.component_state["ignorespfrx"]
         return True
 
     def start_communicating(self):
         """Connect from monitored devices"""
         if self.sub_component_managers:
             for device_name, component_manager in self.sub_component_managers.items():
-                if self.is_device_enabled(device_name):
+                if not self.is_device_ignored(device_name):
                     component_manager.start_communicating()
 
     def set_standby_lp_mode(
@@ -821,14 +821,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
 
-    def _get_device_attribute_property_value(self, attribute_name):
+    def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
         """
         Read memorized attributes values from TangoDB.
 
         :param: attribute_name: Tango attribute name
         :type attribute_name: str
         :return: value for the given attribute
-        :rtype: Optional[Any]
+        :rtype: Optional[str]
         """
         self.logger.debug("Getting attribute property value for %s.", attribute_name)
         database = tango.Database()
@@ -840,7 +840,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return attr_property_value["__value"][0]
         return None
 
-    def try_update_memorized_attributes(self):
+    def try_update_memorized_attributes_from_db(self):
         """Read memorized attributes values from TangoDB and update device attributes."""
         if "TANGO_HOST" not in os.environ:
             self.logger.debug("Not updating memorized attributes. TANGO_HOST is not set.")
