@@ -237,6 +237,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status attributes.
         """
         # Update the DM component communication states
+        self.logger.debug("Sub communication state changed")
+
         with self._sub_communication_state_change_lock:
             if self.sub_component_managers:
                 if self.is_device_enabled("SPF"):
@@ -256,6 +258,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if self.sub_component_managers:
                 active_sub_component_managers = self._get_active_sub_component_managers()
 
+                self.logger.debug(
+                    ("Active component managers [%s]"), active_sub_component_managers
+                )
+
                 # Have all the component states been created
                 if not all(
                     sub_component_manager.component_state
@@ -270,6 +276,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     sub_component_manager.communication_state == CommunicationStatus.ESTABLISHED
                     for sub_component_manager in active_sub_component_managers
                 ):
+                    self.logger.debug("Calculating new HealthState and DishMode")
                     self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
                     ds_component_state = self.sub_component_managers["DS"].component_state
@@ -558,6 +565,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Set the SPF device ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespf"]:
             self.logger.debug("Setting ignore SPF device as %s", ignored)
+            self._update_component_state(ignorespf=ignored)
             if ignored:
                 if "SPF" in self.sub_component_managers:
                     self.sub_component_managers["SPF"].stop_communicating()
@@ -569,12 +577,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 self.sub_component_managers["SPF"].start_communicating()
 
-            self._update_component_state(ignorespf=ignored)
-
     def set_spfrx_device_ignored(self, ignored: bool):
         """Set the SPFRxdevice ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespfrx"]:
             self.logger.debug("Setting ignore SPFRx device as %s", ignored)
+            self._update_component_state(ignorespfrx=ignored)
             if ignored:
                 if "SPFRX" in self.sub_component_managers:
                     self.sub_component_managers["SPFRX"].stop_communicating()
@@ -585,8 +592,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED
                 )
                 self.sub_component_managers["SPFRX"].start_communicating()
-
-            self._update_component_state(ignorespfrx=ignored)
 
     def is_device_enabled(self, device: str):
         """Check whether the given device is enabled."""
