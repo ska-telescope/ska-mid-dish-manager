@@ -38,9 +38,9 @@ class TestCommandMapIgnoringDevices:
         def is_device_ignored(device: str):
             """Check whether the given device is ignored."""
             if device == "SPF":
-                return not self.dish_manager_cm_mock.component_state["ignorespf"]
+                return self.dish_manager_cm_mock.component_state["ignorespf"]
             if device == "SPFRX":
-                return not self.dish_manager_cm_mock.component_state["ignorespfrx"]
+                return self.dish_manager_cm_mock.component_state["ignorespfrx"]
             return False
 
         self.dish_manager_cm_mock.is_device_ignored = is_device_ignored
