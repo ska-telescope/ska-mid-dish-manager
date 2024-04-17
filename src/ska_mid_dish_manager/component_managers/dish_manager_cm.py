@@ -321,19 +321,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         if not self.sub_component_managers:
             return
+        active_sub_component_managers = self._get_active_sub_component_managers()
         if not all(
-            (
-                self.sub_component_managers["DS"].component_state,
-                self.sub_component_managers["SPF"].component_state,
-                self.sub_component_managers["SPFRX"].component_state,
-            )
+            sub_component_manager.component_state
+            for sub_component_manager in active_sub_component_managers
         ):
             return
 
         ds_component_state = self.sub_component_managers["DS"].component_state
-        spf_component_state = self.sub_component_managers["SPF"].component_state
-        spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
-
+        spf_component_state = (
+            self.sub_component_managers["SPF"].component_state
+            if self.is_device_enabled("SPF")
+            else None
+        )
+        spfrx_component_state = (
+            self.sub_component_managers["SPFRX"].component_state
+            if self.is_device_enabled("SPFRX")
+            else None
+        )
         self.logger.debug(
             (
                 "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
@@ -350,9 +355,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "operatingmode" in kwargs or "indexerposition" in kwargs:
             self.logger.debug(
                 ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
-                ds_component_state["operatingmode"],
-                spf_component_state["operatingmode"],
-                spfrx_component_state["operatingmode"],
+                ds_component_state["operatingmode"] if ds_component_state else None,
+                spf_component_state["operatingmode"] if spf_component_state else None,
+                spfrx_component_state["operatingmode"]if spfrx_component_state else None,
             )
             new_dish_mode = self._state_transition.compute_dish_mode(
                 ds_component_state,
@@ -369,9 +374,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ):
             self.logger.debug(
                 ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
-                ds_component_state["healthstate"],
-                spf_component_state["healthstate"],
-                spfrx_component_state["healthstate"],
+                ds_component_state["healthstate"] if ds_component_state else None,
+                spf_component_state["healthstate"] if spf_component_state else None,
+                spfrx_component_state["healthstate"] if spfrx_component_state else None,
             )
             new_health_state = self._state_transition.compute_dish_health_state(
                 ds_component_state,
@@ -458,9 +463,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 new_state = self._state_transition.compute_capability_state(
                     band,
                     ds_component_state,
+                    self.component_state,
                     spfrx_component_state,
                     spf_component_state,
-                    self.component_state,
+                    
                 )
                 cap_state_updates[cap_state_name] = new_state
             self._update_component_state(**cap_state_updates)
@@ -473,9 +479,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 new_state = self._state_transition.compute_capability_state(
                     band,
                     ds_component_state,
+                    self.component_state,
                     spfrx_component_state,
                     spf_component_state,
-                    self.component_state,
+                    
                 )
                 self._update_component_state(**{cap_state_name: new_state})
 
