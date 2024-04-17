@@ -357,7 +357,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
                 ds_component_state["operatingmode"] if ds_component_state else None,
                 spf_component_state["operatingmode"] if spf_component_state else None,
-                spfrx_component_state["operatingmode"]if spfrx_component_state else None,
+                spfrx_component_state["operatingmode"] if spfrx_component_state else None,
             )
             new_dish_mode = self._state_transition.compute_dish_mode(
                 ds_component_state,
@@ -466,7 +466,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self.component_state,
                     spfrx_component_state,
                     spf_component_state,
-                    
                 )
                 cap_state_updates[cap_state_name] = new_state
             self._update_component_state(**cap_state_updates)
@@ -482,7 +481,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self.component_state,
                     spfrx_component_state,
                     spf_component_state,
-                    
                 )
                 self._update_component_state(**{cap_state_name: new_state})
 

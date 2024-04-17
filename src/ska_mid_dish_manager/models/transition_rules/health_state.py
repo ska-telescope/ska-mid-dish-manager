@@ -83,16 +83,13 @@ HEALTH_STATE_RULES_SPF_IGNORED = {
         ")"
     ),
     "FAILED": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.FAILED' or "
-        "SPFRX.healthstate == 'HealthState.FAILED'"
+        "DS.healthstate == 'HealthState.FAILED' or " "SPFRX.healthstate == 'HealthState.FAILED'"
     ),
     "OK": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.OK' and "
-        "SPFRX.healthstate == 'HealthState.OK'"
+        "DS.healthstate == 'HealthState.OK' and " "SPFRX.healthstate == 'HealthState.OK'"
     ),
     "UNKNOWN": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.UNKNOWN' or "
-        "SPFRX.healthstate == 'HealthState.UNKNOWN'"
+        "DS.healthstate == 'HealthState.UNKNOWN' or " "SPFRX.healthstate == 'HealthState.UNKNOWN'"
     ),
 }
 
@@ -116,30 +113,19 @@ HEALTH_STATE_RULES_SPFRX_IGNORED = {
         ")"
     ),
     "FAILED": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.FAILED' or "
-        "SPF.healthstate == 'HealthState.FAILED'"
+        "DS.healthstate == 'HealthState.FAILED' or " "SPF.healthstate == 'HealthState.FAILED'"
     ),
     "OK": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.OK' and "
-        "SPF.healthstate == 'HealthState.OK'"
+        "DS.healthstate == 'HealthState.OK' and " "SPF.healthstate == 'HealthState.OK'"
     ),
     "UNKNOWN": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.UNKNOWN' or "
-        "SPF.healthstate == 'HealthState.UNKNOWN'"
+        "DS.healthstate == 'HealthState.UNKNOWN' or " "SPF.healthstate == 'HealthState.UNKNOWN'"
     ),
 }
 
 HEALTH_STATE_RULES_DS_ONLY = {
-    "DEGRADED": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.DEGRADED'"
-    ),
-    "FAILED": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.FAILED'"
-    ),
-    "OK": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.OK'"
-    ),
-    "UNKNOWN": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.UNKNOWN'"
-    ),
+    "DEGRADED": rule_engine.Rule("DS.healthstate == 'HealthState.DEGRADED'"),
+    "FAILED": rule_engine.Rule("DS.healthstate == 'HealthState.FAILED'"),
+    "OK": rule_engine.Rule("DS.healthstate == 'HealthState.OK'"),
+    "UNKNOWN": rule_engine.Rule("DS.healthstate == 'HealthState.UNKNOWN'"),
 }
