@@ -206,7 +206,7 @@ CAPABILITY_STATE_RULES_DS_ONLY = {
         "DS.operatingmode  == 'DSOperatingMode.ESTOP')"
     ),
     "STANDBY_1": rule_engine.Rule(
-        "DM.dishmode in " "    ['DishMode.STANDBY_LP', " "     'DishMode.STANDBY_FP']"
+        "DM.dishmode in ['DishMode.STANDBY_LP', 'DishMode.STANDBY_FP']"
     ),
     "STANDBY_2": rule_engine.Rule(
         "( "
