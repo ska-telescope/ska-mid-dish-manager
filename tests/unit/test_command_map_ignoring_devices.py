@@ -41,7 +41,7 @@ class TestCommandMapIgnoringDevices:
                 return not self.dish_manager_cm_mock.component_state["ignorespf"]
             if device == "SPFRX":
                 return not self.dish_manager_cm_mock.component_state["ignorespfrx"]
-            return True
+            return False
 
         self.dish_manager_cm_mock.is_device_ignored = is_device_ignored
 

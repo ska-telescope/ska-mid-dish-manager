@@ -569,7 +569,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return self.component_state["ignorespf"]
         if device == "SPFRX":
             return self.component_state["ignorespfrx"]
-        return True
+        return False
 
     def start_communicating(self):
         """Connect from monitored devices"""
