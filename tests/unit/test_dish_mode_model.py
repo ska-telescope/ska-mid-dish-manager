@@ -198,6 +198,33 @@ def test_compute_dish_mode(
     )
     assert expected_dish_mode == actual_dish_mode
 
+# Order DS, SPF, SPFRX
+# pylint: disable=use-dict-literal
+@pytest.mark.parametrize(
+    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
+    [
+        (
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+            ),
+            None,
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.STANDBY_LP,
+        ),
+    ],
+)
+def test_compute_dish_mode_with_ignored_devices(
+    ds_comp_state,
+    spf_comp_state,
+    spfrx_comp_state,
+    expected_dish_mode,
+    state_transition,
+):
+    actual_dish_mode = state_transition.compute_dish_mode(
+        ds_comp_state, spfrx_comp_state, spf_comp_state
+    )
+    assert expected_dish_mode == actual_dish_mode
+
 
 # pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
