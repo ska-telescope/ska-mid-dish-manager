@@ -73,6 +73,7 @@ class DishManager(SKAController):
             self.logger,
             self._command_tracker,
             self._update_connection_state_attrs,
+            self.get_name(),
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
@@ -239,6 +240,8 @@ class DishManager(SKAController):
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
             device._scan_i_d = ""
+            device._ignore_spf = False
+            device._ignore_spfrx = False
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -278,17 +281,13 @@ class DishManager(SKAController):
                 "kvalue": "kValue",
                 "trackinterpolationmode": "trackInterpolationMode",
                 "scanid": "scanID",
+                "ignorespf": "ignoreSpf",
+                "ignorespfrx": "ignoreSpfrx",
+                "spfconnectionstate": "spfConnectionState",
+                "spfrxconnectionstate": "spfrxConnectionState",
+                "dsconnectionstate": "dsConnectionState",
             }
             for attr in device._component_state_attr_map.values():
-                device.set_change_event(attr, True, False)
-                device.set_archive_event(attr, True, False)
-
-            # configure change events for the connection state attributes
-            for attr in (
-                "spfConnectionState",
-                "spfrxConnectionState",
-                "dsConnectionState",
-            ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
 
@@ -340,6 +339,9 @@ class DishManager(SKAController):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
 
+            # Try to connect to DB and update memorized attributes if TANGO_HOST is set
+            device.component_manager.try_update_memorized_attributes_from_db()
+
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
             device.component_manager.start_communicating()
@@ -357,7 +359,7 @@ class DishManager(SKAController):
     )
     def spfConnectionState(self):
         """Returns the spf connection state"""
-        return self.component_manager.sub_component_managers["SPF"].communication_state
+        return self._spf_connection_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -366,7 +368,7 @@ class DishManager(SKAController):
     )
     def spfrxConnectionState(self):
         """Returns the spfrx connection state"""
-        return self.component_manager.sub_component_managers["SPFRX"].communication_state
+        return self._spfrx_connection_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -375,7 +377,7 @@ class DishManager(SKAController):
     )
     def dsConnectionState(self):
         """Returns the ds connection state"""
-        return self.component_manager.sub_component_managers["DS"].communication_state
+        return self._ds_connection_state
 
     @attribute(
         max_dim_x=3,
@@ -1039,6 +1041,42 @@ class DishManager(SKAController):
         """Sets the scanID"""
         self.component_manager._update_component_state(scanid=scanid)
 
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Flag to disable SPF device communication. When ignored, no commands will be issued "
+        "to the device, it will be excluded from state aggregation, and no device related "
+        "attributes will be updated.",
+        memorized=True,
+    )
+    def ignoreSpf(self):
+        """Returns ignoreSpf"""
+        return self._ignore_spf
+
+    @ignoreSpf.write
+    def ignoreSpf(self, value):
+        """Sets ignoreSpf"""
+        self.logger.debug("Write to ignoreSpf, %s", value)
+        self.component_manager.set_spf_device_ignored(value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Flag to disable SPFRx device communication. When ignored, no commands will be issued "
+        "to the device, it will be excluded from state aggregation, and no device related "
+        "attributes will be updated.",
+        memorized=True,
+    )
+    def ignoreSpfrx(self):
+        """Returns ignoreSpfrx"""
+        return self._ignore_spfrx
+
+    @ignoreSpfrx.write
+    def ignoreSpfrx(self, value):
+        """Sets ignoreSpfrx"""
+        self.logger.debug("Write to ignoreSpfrx, %s", value)
+        self.component_manager.set_spfrx_device_ignored(value)
+
     # --------
     # Commands
     # --------
@@ -1055,7 +1093,7 @@ class DishManager(SKAController):
         Connection status is not monitored from here.
         TODO: Move this into DeviceMonitor
         """
-        if self.dev_state() != tango.DevState.INIT:
+        if not self._ignore_spfrx and self.dev_state() != tango.DevState.INIT:
             if hasattr(self, "component_manager"):
                 if "SPFRX" in self.component_manager.sub_component_managers:
                     try:

@@ -58,6 +58,8 @@ def test_dish_handles_unhappy_path_in_command_execution(
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
     dish_manager_proxy.ConfigureBand1(True)
+    dish_mode_event_store.wait_for_value(DishMode.CONFIG)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
     dish_manager_proxy.SetOperateMode()

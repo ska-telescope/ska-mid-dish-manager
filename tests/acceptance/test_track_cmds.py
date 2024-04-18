@@ -2,7 +2,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import Band
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 
 # pylint: disable=unused-argument,too-many-arguments
@@ -46,6 +46,8 @@ def test_track_and_track_stop_cmds(
     main_event_store.wait_for_command_id(unique_id, timeout=8)
 
     dish_manager_proxy.ConfigureBand1(True)
+    main_event_store.wait_for_value(DishMode.CONFIG)
+    main_event_store.wait_for_value(DishMode.STANDBY_FP)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
     [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
