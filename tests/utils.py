@@ -68,7 +68,7 @@ class EventStore:
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 
     # pylint:disable=inconsistent-return-statements
-    def wait_for_command_result(self, command_id: str, command_result: Any, timeout: int = 5):
+    def wait_for_command_result(self, command_id: str, command_result: Any, timeout: int = 3):
         """Wait for a long running command result
 
         Wait `timeout` seconds for each fetch.
@@ -180,7 +180,7 @@ class EventStore:
         """
         return [event for event in events if unique_id in str(event.attr_value.value)]
 
-    def wait_for_n_events(self, event_count: int, timeout: int = 5):
+    def wait_for_n_events(self, event_count: int, timeout: int = 3):
         """Wait for N number of events
 
         Wait `timeout` seconds for each fetch.
