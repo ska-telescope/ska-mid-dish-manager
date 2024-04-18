@@ -31,7 +31,7 @@ class EventStore:
         self._queue.put(event)
 
     def wait_for_value(  # pylint:disable=inconsistent-return-statements
-        self, value: Any, timeout: int = 3, queue_event: bool = False
+        self, value: Any, timeout: int = 3
     ):
         """Wait for a value to arrive
 
