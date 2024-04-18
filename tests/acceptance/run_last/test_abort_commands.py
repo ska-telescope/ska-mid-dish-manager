@@ -60,7 +60,7 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
     dish_manager_proxy.AbortCommands()
 
     # Confirm Dish Manager aborted the request on lRC
-    result_event_store.wait_for_command_id(unique_id)
+    result_event_store.wait_for_command_id(unique_id, 6)
     progress_event_store.wait_for_progress_update("SetStandbyFPMode Aborted")
 
     # Check that the Dish Manager did not transition to FP
