@@ -96,7 +96,7 @@ class EventStore:
         except queue.Empty as err:
             raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
 
-    def wait_for_command_id(self, command_id: str, timeout: int = 5):
+    def wait_for_command_id(self, command_id: str, timeout: int = 3):
         """Wait for a long running command to complete
 
         Wait `timeout` seconds for each fetch.
@@ -130,14 +130,14 @@ class EventStore:
                 f" but got [{event_info}]",
             ) from err
 
-    def wait_for_progress_update(self, progress_message: str, timeout: int = 5):
+    def wait_for_progress_update(self, progress_message: str, timeout: int = 3):
         """Wait for a long running command progress update
 
         Wait `timeout` seconds for each fetch.
 
         :param progress_message: The progress message to wait for
         :type progress_message: str
-        :param timeout: the get timeout, defaults to 5
+        :param timeout: the get timeout, defaults to 3
         :type timeout: int, optional
         :raises RuntimeError: If none are found
         :return: The result of the long running command
