@@ -174,7 +174,7 @@ class EventStore:
 
         :param progress_message: The progress message to wait for
         :type progress_message: str
-        :param timeout: the get timeout, defaults to 3
+        :param timeout: the get timeout, defaults to 5
         :type timeout: int, optional
         :raises RuntimeError: If none are found
         :return: The result of the long running command
