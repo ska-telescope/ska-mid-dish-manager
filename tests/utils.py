@@ -54,53 +54,31 @@ class EventStore:
         """
         logging.debug("Value as it gets in")
         logging.debug(value)
+        i = 0
         try:
             events = []
             while True:
+                i = i + 1
+                logging.debug(f"The count is: {i}")
                 event = self._queue.get(timeout=timeout)
                 events.append(event)
+                logging.debug("Value")
+                logging.debug(event)
                 if event.attr_value in [None, False]:
-                    logging.debug("Made it here 1")
-                    logging.debug("The log........")
-                    logging.debug(event.attr_value.value)
-                    logging.debug("The value.......")
-                    logging.debug(value)
                     continue
                 if isinstance(event.attr_value.value, np.ndarray):
                     if (event.attr_value.value == value).all():
-                        logging.debug("Made it here 1a")
-                        logging.debug("The log........")
-                        logging.debug(event.attr_value.value)
-                        logging.debug("The value.......")
                         return True
+                    logging.debug("Got to Line 72")
                     if np.isclose(event.attr_value.value, value).all():
-                        logging.debug("Made it here 1b")
-                        logging.debug("The log........")
-                        logging.debug(event.attr_value.value)
-                        logging.debug("The value.......")
                         return True
-                    logging.debug("Made it here 2")
-                    logging.debug("The log........")
-                    logging.debug(event.attr_value.value)
-                    logging.debug("The value.......")
-                    logging.debug(value)
                     continue
-
                 if event.attr_value.value != value:
-                    logging.debug("Made it here 3")
-                    logging.debug("The log........")
-                    logging.debug(event.attr_value.value)
-                    logging.debug("The value.......")
-                    logging.debug(value)
                     continue
                 if event.attr_value.value == value:
-                    logging.debug("Made it here 3a")
-                    logging.debug("The log........")
-                    logging.debug(event.attr_value.value)
-                    logging.debug("The value.......")
-                    logging.debug(value)
                     return True
         except queue.Empty as err:
+            logging.debug(f"The error count is: {i}")
             ev_vals = self.extract_event_values(events)
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 
