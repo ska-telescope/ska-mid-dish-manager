@@ -66,7 +66,7 @@ class EventStore:
                     return True
         except queue.Empty as err:
             ev_vals = self.extract_event_values(events)
-            if ev_vals == value and queue_event == True:
+            if ev_vals == value and queue_event:
                 return True
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 
