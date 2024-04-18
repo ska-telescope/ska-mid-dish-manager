@@ -27,12 +27,10 @@ CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
 #############################
 # PYTHON
 #############################
-# Set the specific environment variables required for pytest
-PYTHON_SWITCHES_FOR_BLACK ?= --line-length 99
-PYTHON_SWITCHES_FOR_ISORT ?= -w 99
-PYTHON_SWITCHES_FOR_FLAKE8 ?= --max-line-length=99
-PYTHON_LINE_LENGTH ?= 99
+# set line length for all linters
+PYTHON_LINE_LENGTH = 99
 
+# Set the specific environment variables required for pytest
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
 PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --cucumberjson=build/cucumber.json --event-storage-files-path="build/events"
