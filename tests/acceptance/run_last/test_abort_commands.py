@@ -18,29 +18,25 @@ def turn_on_spf_attribute_update(request, spf_device_proxy):
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy):
+def test_abort_commands(event_store, event_store_class, dish_manager_proxy, spf_device_proxy):
     """Test AbortCommands aborts the executing long running command"""
     # Set a flag on SPF to skip attribute updates
     # This is useful to ensure that the long running command
     # does not finish executing before AbortCommands is triggered
     spf_device_proxy.skipAttributeUpdates = True
 
-    progress_event_store = event_store_class()
-    result_event_store = event_store_class()
+    # progress_event_store = event_store_class()
+    # result_event_store = event_store_class()
 
-    # Tango subcription to LRC Progress
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    # Tango subcription to LRC Result
-    dish_manager_proxy.subscribe_event(
+    for attr in [
         "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
+        "longRunningCommandProgress",
+    ]:
+        dish_manager_proxy.subscribe_event(
+            attr,
+            tango.EventType.CHANGE_EVENT,
+            event_store,
+        )
 
     cmds_in_queue_store = event_store_class()
     dish_manager_proxy.subscribe_event(
@@ -53,14 +49,14 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
 
     # Check that Dish Manager doesn't actually transition to FP
-    progress_event_store.wait_for_value((f"{unique_id}", "Awaiting dishMode change to STANDBY_FP"))
+    event_store.wait_for_value((f"{unique_id}", "Awaiting dishMode change to STANDBY_FP"))
 
     # Abort the LRC
     dish_manager_proxy.AbortCommands()
 
     # Confirm Dish Manager aborted the request on lRC
-    result_event_store.wait_for_command_id(unique_id, timeout=5)
-    progress_event_store.wait_for_value((f"{unique_id}", "SetStandbyFPMode Aborted"))
+    event_store.wait_for_command_id(unique_id, timeout=5)
+    event_store.wait_for_value((f"{unique_id}", "SetStandbyFPMode Aborted"))
 
     # Check that the Dish Manager did not transition to FP
     assert dish_manager_proxy.dishMode != DishMode.STANDBY_FP
