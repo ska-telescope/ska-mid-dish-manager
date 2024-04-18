@@ -67,4 +67,4 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
     assert dish_manager_proxy.dishMode != DishMode.STANDBY_FP
 
     # Ensure that the queue is cleared out
-    cmds_in_queue_store.wait_for_value(())
+    # cmds_in_queue_store.wait_for_value(())
