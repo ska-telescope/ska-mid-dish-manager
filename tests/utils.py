@@ -17,6 +17,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 class EventStore:
     """Store events with useful functionality"""
+
     def __init__(self) -> None:
         """Init Store"""
         self._queue = queue.Queue()
