@@ -4,18 +4,6 @@ import pytest
 from tests.utils import set_ignored_devices
 
 
-@pytest.fixture(autouse=True, scope="module")
-def restore_subservient_devices_communication(request, dish_manager_proxy):
-    """A teardown function to ensure that communication is restored to both subservient devices."""
-
-    def set_ignored_subservient_devices_to_false():
-        set_ignored_devices(
-            dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
-        )
-
-    request.addfinalizer(set_ignored_subservient_devices_to_false)
-
-
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
