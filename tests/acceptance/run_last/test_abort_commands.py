@@ -1,4 +1,6 @@
 """Test AbortCommands"""
+import time
+
 import pytest
 import tango
 
@@ -65,6 +67,8 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
 
     # Check that the Dish Manager did not transition to FP
     assert dish_manager_proxy.dishMode != DishMode.STANDBY_FP
+
+    time.sleep(6)
 
     # Ensure that the queue is cleared out
     cmds_in_queue_store.wait_for_value(())
