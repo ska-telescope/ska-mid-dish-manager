@@ -70,7 +70,4 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
     assert earlier_commands_in_queue
 
     # Ensure that the queue is cleared out
-    while True:
-        if not dish_manager_proxy.longRunningCommandIDsInQueue:
-            assert not dish_manager_proxy.longRunningCommandIDsInQueue
-            break
+    cmds_in_queue_store.wait_for_value([], queue_event=True)
