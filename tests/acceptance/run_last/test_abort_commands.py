@@ -63,10 +63,5 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
     # Check that the Dish Manager did not transition to FP
     assert dish_manager_proxy.dishMode != DishMode.STANDBY_FP
 
-    # Get earlier queue values
-    earlier_commands_in_queue = cmds_in_queue_store.get_queue_values()
-    assert earlier_commands_in_queue
-
     # Ensure that the queue is cleared out
-    # cmds_in_queue_store.get_queue_events()
-    # cmds_in_queue_store.wait_for_value([])
+    cmds_in_queue_store.wait_for_value(())

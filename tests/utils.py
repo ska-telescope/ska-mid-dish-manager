@@ -1,6 +1,5 @@
 # pylint: disable=invalid-name,possibly-unused-variable
 """General utils for test devices"""
-import logging
 import queue
 from typing import Any, List, Tuple
 
@@ -52,25 +51,17 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
-        logging.debug("Value as it gets in")
-        logging.debug(value)
-        i = 0
+
         try:
             events = []
             while True:
-                i = i + 1
-                # logging.debug(f"The count is: {i}")
                 event = self._queue.get(timeout=timeout)
-                # logging.debug(f"Event is: {event}")
                 events.append(event)
-                # logging.debug("Value")
-                # logging.debug(event)
-                if event.attr_value in [None, False]:
+                if event.attr_value is None:
                     continue
                 if isinstance(event.attr_value.value, np.ndarray):
                     if (event.attr_value.value == value).all():
                         return True
-                    # logging.debug("Got to Line 72")
                     if np.isclose(event.attr_value.value, value).all():
                         return True
                     continue
@@ -79,7 +70,6 @@ class EventStore:
                 if event.attr_value.value == value:
                     return True
         except queue.Empty as err:
-            # logging.debug(f"The error count is: {i}")
             ev_vals = self.extract_event_values(events)
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 
