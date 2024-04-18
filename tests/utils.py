@@ -17,13 +17,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 class EventStore:
     """Store events with useful functionality"""
-
-    # Configure the logging
-    logging.basicConfig(level=logging.DEBUG)
-
-    # Create a logger
-    logger = logging.getLogger(__name__)
-
     def __init__(self) -> None:
         """Init Store"""
         self._queue = queue.Queue()
