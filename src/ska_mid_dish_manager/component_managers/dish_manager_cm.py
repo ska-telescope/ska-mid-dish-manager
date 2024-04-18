@@ -371,6 +371,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 PointingState.SLEW,
                 PointingState.READY,
             ]:
+                # TODO ST (04/2024) achievedtargetlock needs to be determined
+                # from configured threshold, see configureTargetLock
                 self._update_component_state(achievedtargetlock=False)
             elif ds_component_state["pointingstate"] == PointingState.TRACK:
                 self._update_component_state(achievedtargetlock=True)
