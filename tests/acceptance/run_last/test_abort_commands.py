@@ -49,7 +49,7 @@ def test_abort_commands(event_store, event_store_class, dish_manager_proxy, spf_
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
 
     # Check that Dish Manager doesn't actually transition to FP
-    event_store.wait_for_value("Awaiting dishMode change to STANDBY_FP")
+    event_store.wait_for_value(value=(f"{unique_id}", "Awaiting dishMode change to STANDBY_FP"))
 
     # Abort the LRC
     dish_manager_proxy.AbortCommands()

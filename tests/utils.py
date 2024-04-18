@@ -1,5 +1,6 @@
 # pylint: disable=invalid-name,possibly-unused-variable
 """General utils for test devices"""
+import logging
 import queue
 from typing import Any, List, Tuple
 
@@ -17,6 +18,12 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 class EventStore:
     """Store events with useful functionality"""
+
+    # Configure the logging
+    logging.basicConfig(level=logging.DEBUG)
+
+    # Create a logger
+    logger = logging.getLogger(__name__)
 
     def __init__(self) -> None:
         """Init Store"""
@@ -45,24 +52,53 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
-
+        logging.debug("Value as it gets in")
+        logging.debug(value)
         try:
             events = []
             while True:
                 event = self._queue.get(timeout=timeout)
                 events.append(event)
                 if event.attr_value in [None, False]:
+                    logging.debug("Made it here 1")
+                    logging.debug("The log........")
+                    logging.debug(event.attr_value.value)
+                    logging.debug("The value.......")
+                    logging.debug(value)
                     continue
                 if isinstance(event.attr_value.value, np.ndarray):
                     if (event.attr_value.value == value).all():
+                        logging.debug("Made it here 1a")
+                        logging.debug("The log........")
+                        logging.debug(event.attr_value.value)
+                        logging.debug("The value.......")
                         return True
                     if np.isclose(event.attr_value.value, value).all():
+                        logging.debug("Made it here 1b")
+                        logging.debug("The log........")
+                        logging.debug(event.attr_value.value)
+                        logging.debug("The value.......")
                         return True
+                    logging.debug("Made it here 2")
+                    logging.debug("The log........")
+                    logging.debug(event.attr_value.value)
+                    logging.debug("The value.......")
+                    logging.debug(value)
                     continue
 
                 if event.attr_value.value != value:
+                    logging.debug("Made it here 3")
+                    logging.debug("The log........")
+                    logging.debug(event.attr_value.value)
+                    logging.debug("The value.......")
+                    logging.debug(value)
                     continue
                 if event.attr_value.value == value:
+                    logging.debug("Made it here 3a")
+                    logging.debug("The log........")
+                    logging.debug(event.attr_value.value)
+                    logging.debug("The value.......")
+                    logging.debug(value)
                     return True
         except queue.Empty as err:
             ev_vals = self.extract_event_values(events)
