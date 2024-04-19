@@ -51,21 +51,13 @@ class StateTransition:
             ds_component_state, spfrx_component_state, spf_component_state
         )
 
-        print("AAAAAA")
-        print(dish_manager_states)
-
         rules_to_use = dish_mode_rules_ds_only
         if spfrx_component_state and spf_component_state:
-            print("Using all devices rules")
             rules_to_use = dish_mode_rules_all_devices
         elif spf_component_state:
-            print("Using spfrx ignored rules")
             rules_to_use = dish_mode_rules_spfrx_ignored
         elif spfrx_component_state:
-            print("Using spf ignored rules")
             rules_to_use = dish_mode_rules_spf_ignored
-
-        print(rules_to_use)
 
         for mode, rule in rules_to_use.items():
             if rule.matches(dish_manager_states):
@@ -93,23 +85,13 @@ class StateTransition:
             ds_component_state, spfrx_component_state, spf_component_state
         )
 
-        print("AAAAAA")
-        print(dish_manager_states)
-        print("SPFRX", spfrx_component_state)
-        print("SPF", spf_component_state)
-
         rules_to_use = health_state_rules_ds_only
         if spfrx_component_state and spf_component_state:
-            print("Using all devices rules")
             rules_to_use = health_state_rules_all_devices
         elif spf_component_state:
-            print("Using spfrx ignored rules")
             rules_to_use = health_state_rules_spfrx_ignored
         elif spfrx_component_state:
-            print("Using spf ignored rules")
             rules_to_use = health_state_rules_spf_ignored
-
-        print(rules_to_use)
 
         for healthstate, rule in rules_to_use.items():
             if rule.matches(dish_manager_states):
