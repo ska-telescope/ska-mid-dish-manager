@@ -4,24 +4,46 @@ import time
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import DishMode, SPFOperatingMode
 
 
-@pytest.fixture(autouse=True)
-def turn_on_spf_attribute_update(request, spf_device_proxy):
-    """Ensure that attribute updates on spf is restored"""
+@pytest.fixture
+def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_class):
+    spf_device_proxy.skipAttributeUpdates = True
+    yield
+    # The test does not allow SPF to go to FP, while the others do.
+    # We need to get it back to a consistent state
+    spf_device_proxy.skipAttributeUpdates = False
 
-    def toggle_attribute_update():
-        spf_device_proxy.skipAttributeUpdates = False
+    result_event_store = event_store_class()
+    operating_mode_event_store = event_store_class()
 
-    request.addfinalizer(toggle_attribute_update)
+    spf_device_proxy.subscribe_event(
+        "operatingMode",
+        tango.EventType.CHANGE_EVENT,
+        operating_mode_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        result_event_store,
+    )
+
+    spf_device_proxy.SetOperateMode()
+    operating_mode_event_store.wait_for_value(SPFOperatingMode.OPERATE, timeout=9)
+
+    [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
+    result_event_store.wait_for_command_id(unique_id)
+
+    [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
+    result_event_store.wait_for_command_id(unique_id)
 
 
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-@pytest.mark.skip("Trying this test last")
-def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy):
+def test_abort_commands(event_store_class, dish_manager_proxy, toggle_skip_attributes):
     """Test AbortCommands aborts the executing long running command"""
     # Set a flag on SPF to skip attribute updates
     # This is useful to ensure that the long running command
@@ -48,9 +70,6 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
         tango.EventType.CHANGE_EVENT,
         cmds_in_queue_store,
     )
-    spf_device_proxy.skipAttributeUpdates = True
-
-    time.sleep(3)
 
     # Transition to FP mode
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
@@ -69,4 +88,4 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
     assert dish_manager_proxy.dishMode != DishMode.STANDBY_FP
 
     # Ensure that the queue is cleared out
-    cmds_in_queue_store.wait_for_value(())
+    cmds_in_queue_store.wait_for_value((), timeout=30)
