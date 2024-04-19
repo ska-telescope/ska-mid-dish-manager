@@ -1,5 +1,5 @@
 """Unit tests verifying model against dishMode transitions."""
-
+# pylint: disable=too-many-lines
 import pytest
 from ska_control_model import HealthState
 
@@ -110,78 +110,81 @@ def test_model_dish_mode_transition_accuracy(
             )
 
 
-dishmode_parametrize_list = [
-    (
-        dict(operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN),
-        dict(operatingmode=SPFOperatingMode.STARTUP),
-        dict(operatingmode=SPFRxOperatingMode.STANDBY),
-        DishMode.STARTUP,
-    ),
-    (
-        dict(indexerposition=IndexerPosition.MOVING),
-        dict(operatingmode=SPFOperatingMode.STANDBY_LP),
-        dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
-        DishMode.CONFIG,
-    ),
-    (
-        dict(operatingmode=DSOperatingMode.STOW),
-        dict(operatingmode=SPFOperatingMode.STANDBY_LP),
-        dict(operatingmode=SPFRxOperatingMode.CONFIGURE),
-        DishMode.CONFIG,
-    ),
-    (
-        dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
-        dict(operatingmode=SPFOperatingMode.OPERATE),
-        dict(operatingmode=SPFRxOperatingMode.STANDBY),
-        DishMode.CONFIG,
-    ),
-    (
-        dict(operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN),
-        dict(operatingmode=SPFOperatingMode.STANDBY_LP),
-        dict(operatingmode=SPFRxOperatingMode.STANDBY),
-        DishMode.STANDBY_LP,
-    ),
-    (
-        dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN),
-        dict(operatingmode=SPFOperatingMode.OPERATE),
-        dict(operatingmode=SPFRxOperatingMode.STANDBY),
-        DishMode.STANDBY_FP,
-    ),
-    (
-        dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN),
-        dict(operatingmode=SPFOperatingMode.OPERATE),
-        dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
-        DishMode.STANDBY_FP,
-    ),
-    (
-        dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
-        dict(operatingmode=SPFOperatingMode.OPERATE),
-        dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
-        DishMode.OPERATE,
-    ),
-    # Any other random combo goes to UNKNOWN
-    (
-        dict(operatingmode=DSOperatingMode.UNKNOWN, indexerposition=IndexerPosition.UNKNOWN),
-        dict(operatingmode=SPFOperatingMode.ERROR),
-        dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
-        DishMode.UNKNOWN,
-    ),
-    (
-        dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
-        dict(operatingmode=SPFOperatingMode.ERROR),
-        dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
-        DishMode.STOW,
-    ),
-]
-
-# dishmode_parametrize_list_ignore_spf = [(a, None, c, d) for a, _, c, d in dishmode_parametrize_list]
-# dishmode_parametrize_list_ignore_spfrx = [(a, b, None, d) for a, b, _, d in dishmode_parametrize_list]
-
 # Order DS, SPF, SPFRX
 # pylint: disable=use-dict-literal
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
-    dishmode_parametrize_list,
+    [
+        (
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+            ),
+            dict(operatingmode=SPFOperatingMode.STARTUP),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.STARTUP,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.MOVING),
+            dict(operatingmode=SPFOperatingMode.STANDBY_LP),
+            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            DishMode.CONFIG,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW),
+            dict(operatingmode=SPFOperatingMode.STANDBY_LP),
+            dict(operatingmode=SPFRxOperatingMode.CONFIGURE),
+            DishMode.CONFIG,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.CONFIG,
+        ),
+        (
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+            ),
+            dict(operatingmode=SPFOperatingMode.STANDBY_LP),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.STANDBY_LP,
+        ),
+        (
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+            ),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.STANDBY_FP,
+        ),
+        (
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+            ),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            DishMode.STANDBY_FP,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            DishMode.OPERATE,
+        ),
+        # Any other random combo goes to UNKNOWN
+        (
+            dict(operatingmode=DSOperatingMode.UNKNOWN, indexerposition=IndexerPosition.UNKNOWN),
+            dict(operatingmode=SPFOperatingMode.ERROR),
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
+            DishMode.UNKNOWN,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(operatingmode=SPFOperatingMode.ERROR),
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
+            DishMode.STOW,
+        ),
+    ],
 )
 def test_compute_dish_mode(
     ds_comp_state,
@@ -214,7 +217,7 @@ def test_compute_dish_mode(
             DishMode.MAINTENANCE,
         ),
         (
-            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.MOVING),
+            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
             None,
             dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
             DishMode.OPERATE,
