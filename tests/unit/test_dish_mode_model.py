@@ -266,7 +266,7 @@ def test_compute_dish_mode(
         ),
         (
             dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
-            dict(operatingmode=SPFOperatingMode.CONFIGURE),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
             None,
             DishMode.CONFIG,
         ),
