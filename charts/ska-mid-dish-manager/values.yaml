@@ -3,6 +3,9 @@ enabled: true
 ska-mid-dish-simulators:
   enabled: false
 
+ska-mid-dish-ds-manager:
+  enabled: false
+
 system: SW-infrastructure
 subsystem: ska-dish-lmc
 telescope: SKA-mid
