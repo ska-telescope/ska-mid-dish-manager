@@ -46,9 +46,9 @@ def test_capability_state_rule_unavailable(state_transition):
         state_transition.compute_capability_state(
             "b5b",
             ds_component_state,
+            dish_manager_component_state,
             spfrx_component_state,
             spf_component_state,
-            dish_manager_component_state,
         )
         == CapabilityStates.UNAVAILABLE
     )
@@ -68,9 +68,9 @@ def test_capability_state_rule_standby(state_transition):
         state_transition.compute_capability_state(
             "b5a",
             ds_component_state,
+            dish_manager_component_state,
             spfrx_component_state,
             spf_component_state,
-            dish_manager_component_state,
         )
         == CapabilityStates.STANDBY
     )
@@ -90,9 +90,9 @@ def test_capability_state_rule_configuring(state_transition):
         state_transition.compute_capability_state(
             "b4",
             ds_component_state,
+            dish_manager_component_state,
             spfrx_component_state,
             spf_component_state,
-            dish_manager_component_state,
         )
         == CapabilityStates.CONFIGURING
     )
@@ -115,9 +115,9 @@ def test_capability_state_rule_degraded(state_transition):
         state_transition.compute_capability_state(
             "b3",
             ds_component_state,
+            dish_manager_component_state,
             spfrx_component_state,
             spf_component_state,
-            dish_manager_component_state,
         )
         == CapabilityStates.OPERATE_DEGRADED
     )
@@ -140,9 +140,9 @@ def test_capability_state_rule_operate(state_transition):
         state_transition.compute_capability_state(
             "b1",
             ds_component_state,
+            dish_manager_component_state,
             spfrx_component_state,
             spf_component_state,
-            dish_manager_component_state,
         )
         == CapabilityStates.OPERATE_FULL
     )
@@ -162,9 +162,9 @@ def test_capability_state_rule_unknown(state_transition):
         state_transition.compute_capability_state(
             "b2",
             ds_component_state,
+            dish_manager_component_state,
             spfrx_component_state,
             spf_component_state,
-            dish_manager_component_state,
         )
         == CapabilityStates.UNKNOWN
     )
