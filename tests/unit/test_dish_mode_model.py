@@ -2,9 +2,7 @@
 # pylint: disable=too-many-lines
 import pytest
 
-from ska_mid_dish_manager.models.dish_enums import (
-    DishMode,
-)
+from ska_mid_dish_manager.models.dish_enums import DishMode
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
 
 
