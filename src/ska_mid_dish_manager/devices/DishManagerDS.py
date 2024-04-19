@@ -1579,7 +1579,9 @@ class DishManager(SKAController):
         Sync each subservient device component state with its tango device
         to refresh the dish manager component state.
         """
+        logging.debug("In the SyncComponentStates func")
         if hasattr(self, "component_manager"):
+            logging.debug("Inif statement")
             self.component_manager.sync_component_states()
 
 
