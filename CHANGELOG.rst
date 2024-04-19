@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Removed lmc tests and its manual job trigger
 
 Version 2.5.0
 *************

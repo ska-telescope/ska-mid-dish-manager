@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
     - name: sandbox-pod
-      image: artefact.skao.int/ska-tango-images-tango-itango:9.3.4
+      image: artefact.skao.int/ska-tango-images-tango-itango:9.5.0
       imagePullPolicy: IfNotPresent
       stdin: true
       stdinOnce: true
@@ -15,7 +15,7 @@ spec:
       workingDir: "/home/tango"
       env:
         - name: TANGO_HOST
-          value: databaseds-tango-base-test:10000
+          value: tango-databaseds.ska-mid-dish-manager.svc.cluster.local:10000
       ports:
         - containerPort: 22
           name: ssh
