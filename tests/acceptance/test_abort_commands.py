@@ -20,7 +20,7 @@ def turn_on_spf_attribute_update(request, spf_device_proxy):
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-@pytest.mark.skip(reason=("Testing pipline failures. "))
+@pytest.mark.skip(reason="Testing pipline failures. ")
 def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy):
     """Test AbortCommands aborts the executing long running command"""
     # Set a flag on SPF to skip attribute updates
