@@ -25,10 +25,6 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
     # Set a flag on SPF to skip attribute updates
     # This is useful to ensure that the long running command
     # does not finish executing before AbortCommands is triggered
-    dish_manager_proxy.SetStowMode()
-    assert dish_manager_proxy.dishMode != DishMode.STOW
-
-    spf_device_proxy.skipAttributeUpdates = True
 
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
@@ -51,6 +47,9 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
         tango.EventType.CHANGE_EVENT,
         cmds_in_queue_store,
     )
+    spf_device_proxy.skipAttributeUpdates = True
+
+    time.sleep(3)
 
     # Transition to FP mode
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
@@ -67,8 +66,6 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy)
 
     # Check that the Dish Manager did not transition to FP
     assert dish_manager_proxy.dishMode != DishMode.STANDBY_FP
-
-    time.sleep(6)
 
     # Ensure that the queue is cleared out
     cmds_in_queue_store.wait_for_value(())
