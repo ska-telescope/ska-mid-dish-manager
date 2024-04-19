@@ -7,6 +7,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Removed lmc tests and its manual job trigger
+- Disabled default deployment of DSManager to use helm flag
 
 Version 2.5.0
 *************

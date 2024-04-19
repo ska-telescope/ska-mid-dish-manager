@@ -5,6 +5,7 @@ from typing import Any, List, Tuple
 
 import numpy as np
 import tango
+from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -346,3 +347,37 @@ def set_configuredBand_b2(
     spfrx_device_proxy.operatingMode = SPFRxOperatingMode.DATA_CAPTURE
 
     config_band_event_store.wait_for_value(Band.B2, timeout=7)
+
+
+def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
+    """Sets ignored devices on DishManager."""
+    if dish_manager_proxy.ignoreSpf != ignore_spf:
+        spf_connection_event_store = EventStore()
+        dish_manager_proxy.subscribe_event(
+            "spfConnectionState",
+            tango.EventType.CHANGE_EVENT,
+            spf_connection_event_store,
+        )
+
+        dish_manager_proxy.ignoreSpf = ignore_spf
+
+        if ignore_spf:
+            spf_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
+        else:
+            spf_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+
+    if dish_manager_proxy.ignoreSpfrx != ignore_spfrx:
+        spfrx_connection_event_store = EventStore()
+
+        dish_manager_proxy.subscribe_event(
+            "spfrxConnectionState",
+            tango.EventType.CHANGE_EVENT,
+            spfrx_connection_event_store,
+        )
+
+        dish_manager_proxy.ignoreSpfrx = ignore_spfrx
+
+        if ignore_spfrx:
+            spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
+        else:
+            spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)

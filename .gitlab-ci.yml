@@ -46,27 +46,6 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
-# trigger this test before any release of dish-manager to give confidence tests will pass in dish-lmc repo
-lmc-acceptance-test:
-  extends: k8s-test-runner
-  when: manual
-  artifacts: null
-  variables:
-    KUBE_NAMESPACE: 'ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-lmc'
-  environment:
-    name: test/$CI_COMMIT_REF_SLUG-lmc
-    on_stop: stop-lmc-acceptance-test
-    auto_stop_in: 1 minute
-
-stop-lmc-acceptance-test:
-  extends: stop-k8s-test-runner
-  when: manual
-  variables:
-    KUBE_NAMESPACE: 'ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-lmc'
-  environment:
-    name: test/$CI_COMMIT_REF_SLUG-lmc
-    action: stop
-
 #mypy job
 mypy:
   stage: lint

@@ -54,6 +54,18 @@ server:
                 - name: "DishId"
                   values:
                     - "SKA{{ printf "%01s" . }}"
+
+              attribute_properties:
+              - attribute: "ignoreSpf"
+                properties:
+                  - name: "__value"
+                    values:
+                      - "{{ $.Values.dishmanager.spf.ignored}}"
+              - attribute: "ignoreSpfrx"
+                properties:
+                  - name: "__value"
+                    values:
+                      - "{{ $.Values.dishmanager.spfrx.ignored}}"
   {{- end }}
 depends_on:
   - device: sys/database/2
