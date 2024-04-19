@@ -5,8 +5,10 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import DishMode, SPFOperatingMode
 
 
+# pylint: disable=invalid-name, redefined-outer-name
 @pytest.fixture
 def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_class):
+    """Ensure that attribute updates on spf is restored"""
     spf_device_proxy.skipAttributeUpdates = True
     yield
     # The test does not allow SPF to go to FP, while the others do.
@@ -38,6 +40,7 @@ def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_cla
     result_event_store.wait_for_command_id(unique_id)
 
 
+# pylint: disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
