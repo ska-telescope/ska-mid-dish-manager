@@ -205,12 +205,148 @@ def test_compute_dish_mode(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
+            dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
+            None,
+            dict(operatingmode=SPFRxOperatingMode.CONFIGURE),
+            DishMode.CONFIG,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            None,
+            dict(operatingmode=SPFRxOperatingMode.MAINTENANCE),
+            DishMode.MAINTENANCE,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.MOVING),
+            None,
+            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            DishMode.OPERATE,
+        ),
+        (
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+            ),
+            None,
+            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            DishMode.STANDBY_FP,
+        ),
+        (
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+            ),
+            None,
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.STANDBY_FP,
+        ),
+        (
             dict(
                 operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
             ),
             None,
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STANDBY_LP,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            None,
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
+            DishMode.STOW,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=IndexerPosition.UNKNOWN),
+            None,
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
+            DishMode.STARTUP,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.UNKNOWN, indexerposition=IndexerPosition.UNKNOWN),
+            None,
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
+            DishMode.UNKNOWN,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
+            dict(operatingmode=SPFOperatingMode.CONFIGURE),
+            None,
+            DishMode.CONFIG,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(operatingmode=SPFOperatingMode.MAINTENANCE),
+            None,
+            DishMode.MAINTENANCE,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.MOVING),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            None,
+            DishMode.OPERATE,
+        ),
+        (
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+            ),
+            dict(operatingmode=SPFOperatingMode.OPERATE),
+            None,
+            DishMode.STANDBY_FP,
+        ),
+        (
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+            ),
+            dict(operatingmode=SPFOperatingMode.STANDBY_LP),
+            None,
+            DishMode.STANDBY_LP,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(operatingmode=SPFOperatingMode.ERROR),
+            None,
+            DishMode.STOW,
+        ),
+        (
+            dict(
+                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+            ),
+            dict(operatingmode=SPFOperatingMode.STARTUP),
+            None,
+            DishMode.STARTUP,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.MOVING),
+            None,
+            None,
+            DishMode.CONFIG,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
+            None,
+            None,
+            DishMode.OPERATE,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STANDBY_FP),
+            None,
+            None,
+            DishMode.STANDBY_FP,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STANDBY_LP),
+            None,
+            None,
+            DishMode.STANDBY_LP,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            None,
+            None,
+            DishMode.STOW,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=IndexerPosition.UNKNOWN),
+            None,
+            None,
+            DishMode.STARTUP,
         ),
     ],
 )
@@ -316,11 +452,114 @@ def test_compute_dish_healthstate(
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
+        # Spf_ignore = true
+        (
+            dict(healthstate=HealthState.DEGRADED),
+            None,
+            dict(healthstate=HealthState.OK),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.DEGRADED),
+            None,
+            dict(healthstate=HealthState.UNKNOWN),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.DEGRADED),
+            None,
+            dict(healthstate=HealthState.DEGRADED),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.OK),
+            None,
+            dict(healthstate=HealthState.DEGRADED),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            None,
+            dict(healthstate=HealthState.DEGRADED),
+            HealthState.DEGRADED,
+        ),
         (
             dict(healthstate=HealthState.OK),
             None,
             dict(healthstate=HealthState.OK),
             HealthState.OK,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED),
+            None,
+            dict(healthstate=HealthState.OK),
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED),
+            None,
+            dict(healthstate=HealthState.FAILED),
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.OK),
+            None,
+            dict(healthstate=HealthState.FAILED),
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            None,
+            dict(healthstate=HealthState.UNKNOWN),
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            None,
+            dict(healthstate=HealthState.OK),
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.OK),
+            None,
+            dict(healthstate=HealthState.UNKNOWN),
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            None.dict(healthstate=HealthState.UNKNOWN),
+            HealthState.UNKNOWN,
+        ),
+        # Spfrx_ignore = true
+        (
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.OK),
+            None,
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.UNKNOWN),
+            None,
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.DEGRADED),
+            dict(healthstate=HealthState.DEGRADED),
+            None,
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.DEGRADED),
+            None,
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.DEGRADED),
+            None,
+            HealthState.DEGRADED,
         ),
         (
             dict(healthstate=HealthState.OK),
@@ -329,10 +568,67 @@ def test_compute_dish_healthstate(
             HealthState.OK,
         ),
         (
+            dict(healthstate=HealthState.FAILED),
             dict(healthstate=HealthState.OK),
             None,
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED),
+            dict(healthstate=HealthState.FAILED),
             None,
-            HealthState.OK,
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.FAILED),
+            None,
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.UNKNOWN),
+            None,
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.OK),
+            None,
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.OK),
+            dict(healthstate=HealthState.UNKNOWN),
+            None,
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(healthstate=HealthState.UNKNOWN),
+            None,
+            HealthState.UNKNOWN,
+        ),
+        # ignore both devices
+        (
+            dict(healthstate=HealthState.DEGRADED),
+            None,
+            None.HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.OK),
+            None,
+            None.HealthState.OK,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED),
+            None,
+            None.HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN),
+            None,
+            None.HealthState.UNKNOWN,
         ),
     ],
 )
