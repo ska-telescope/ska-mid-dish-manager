@@ -210,6 +210,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
+    def _get_active_sub_component_managers(self) -> dict:
+        """Get a list of subservient device component managers which are not being ignored."""
+        active_component_managers = [self.sub_component_managers["DS"]]
+
+        if not self.is_device_ignored("SPF"):
+            active_component_managers.append(self.sub_component_managers["SPF"])
+
+        if not self.is_device_ignored("SPFRX"):
+            active_component_managers.append(self.sub_component_managers["SPFRX"])
+
+        return active_component_managers
+
     # pylint: disable=unused-argument
     def _sub_communication_state_changed(
         self, attribute_name: str, communication_state: Optional[CommunicationStatus] = None
@@ -226,6 +238,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status attributes.
         """
         # Update the DM component communication states
+        self.logger.debug("Sub communication state changed")
+
         with self._sub_communication_state_change_lock:
             if self.sub_component_managers:
                 if not self.is_device_ignored("SPF"):
@@ -243,32 +257,42 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
             if self.sub_component_managers:
+                active_sub_component_managers = self._get_active_sub_component_managers()
+
+                self.logger.debug(
+                    ("Active component managers [%s]"), active_sub_component_managers
+                )
+
+                # Have all the component states been created
                 if not all(
-                    (
-                        self.sub_component_managers["DS"].component_state,
-                        self.sub_component_managers["SPF"].component_state,
-                        self.sub_component_managers["SPFRX"].component_state,
-                    )
+                    sub_component_manager.component_state
+                    for sub_component_manager in active_sub_component_managers
                 ):
                     self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                     self._update_component_state(healthstate=HealthState.UNKNOWN)
                     return
 
-            if self.sub_component_managers:
+                # Are all the CommunicationStatus ESTABLISHED
                 if all(
                     sub_component_manager.communication_state == CommunicationStatus.ESTABLISHED
-                    for sub_component_manager in self.sub_component_managers.values()
+                    for sub_component_manager in active_sub_component_managers
                 ):
+                    self.logger.debug("Calculating new HealthState and DishMode")
                     self._update_communication_state(CommunicationStatus.ESTABLISHED)
+
                     ds_component_state = self.sub_component_managers["DS"].component_state
                     spf_component_state = self.sub_component_managers["SPF"].component_state
                     spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
                     new_health_state = self._state_transition.compute_dish_health_state(
-                        ds_component_state, spfrx_component_state, spf_component_state
+                        ds_component_state,
+                        spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                        spf_component_state if not self.is_device_ignored("SPF") else None,
                     )
                     new_dish_mode = self._state_transition.compute_dish_mode(
-                        ds_component_state, spfrx_component_state, spf_component_state
+                        ds_component_state,
+                        spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                        spf_component_state if not self.is_device_ignored("SPF") else None,
                     )
 
                     self._update_component_state(
@@ -301,12 +325,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         if not self.sub_component_managers:
             return
+        active_sub_component_managers = self._get_active_sub_component_managers()
         if not all(
-            (
-                self.sub_component_managers["DS"].component_state,
-                self.sub_component_managers["SPF"].component_state,
-                self.sub_component_managers["SPFRX"].component_state,
-            )
+            sub_component_manager.component_state
+            for sub_component_manager in active_sub_component_managers
         ):
             return
 
@@ -336,8 +358,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             new_dish_mode = self._state_transition.compute_dish_mode(
                 ds_component_state,
-                spfrx_component_state,
-                spf_component_state,
+                spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                spf_component_state if not self.is_device_ignored("SPF") else None,
             )
             self._update_component_state(dishmode=new_dish_mode)
 
@@ -355,8 +377,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             new_health_state = self._state_transition.compute_dish_health_state(
                 ds_component_state,
-                spfrx_component_state,
-                spf_component_state,
+                spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                spf_component_state if not self.is_device_ignored("SPF") else None,
             )
             self._update_component_state(healthstate=new_health_state)
 
@@ -382,7 +404,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "indexerposition" in kwargs or "configuredband" in kwargs
         ):
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
-                ds_component_state, spfrx_component_state
+                ds_component_state,
+                spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
             )
             self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
             # update the bandInFocus of SPF before configuredBand
@@ -417,8 +440,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
             configured_band = self._state_transition.compute_configured_band(
                 ds_component_state,
-                spfrx_component_state,
-                spf_component_state,
+                spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                spf_component_state if not self.is_device_ignored("SPF") else None,
             )
             self._update_component_state(configuredband=configured_band)
 
@@ -440,9 +463,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 new_state = self._state_transition.compute_capability_state(
                     band,
                     ds_component_state,
-                    spfrx_component_state,
-                    spf_component_state,
                     self.component_state,
+                    spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                    spf_component_state if not self.is_device_ignored("SPF") else None,
                 )
                 cap_state_updates[cap_state_name] = new_state
             self._update_component_state(**cap_state_updates)
@@ -455,9 +478,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 new_state = self._state_transition.compute_capability_state(
                     band,
                     ds_component_state,
-                    spfrx_component_state,
-                    spf_component_state,
                     self.component_state,
+                    spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                    spf_component_state if not self.is_device_ignored("SPF") else None,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
 
@@ -535,6 +558,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Set the SPF device ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespf"]:
             self.logger.debug("Setting ignore SPF device as %s", ignored)
+            self._update_component_state(ignorespf=ignored)
             if ignored:
                 if "SPF" in self.sub_component_managers:
                     self.sub_component_managers["SPF"].stop_communicating()
@@ -546,12 +570,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 self.sub_component_managers["SPF"].start_communicating()
 
-            self._update_component_state(ignorespf=ignored)
-
     def set_spfrx_device_ignored(self, ignored: bool):
         """Set the SPFRxdevice ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespfrx"]:
             self.logger.debug("Setting ignore SPFRx device as %s", ignored)
+            self._update_component_state(ignorespfrx=ignored)
             if ignored:
                 if "SPFRX" in self.sub_component_managers:
                     self.sub_component_managers["SPFRX"].stop_communicating()

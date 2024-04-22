@@ -1,6 +1,6 @@
 """CapabilityState checks"""
-# pylint: disable=protected-access
-# pylint: disable=attribute-defined-outside-init
+# pylint: disable=protected-access,use-dict-literal,too-many-arguments
+# pylint: disable=attribute-defined-outside-init,missing-function-docstring
 from unittest.mock import patch
 
 import mock
@@ -29,144 +29,357 @@ def state_transition():
     return StateTransition()
 
 
-@pytest.mark.unit
-@pytest.mark.forked
-def test_capability_state_rule_unavailable(state_transition):
-    """Test the capabilityState rules"""
-
-    ds_component_state = {
-        "operatingmode": DSOperatingMode.STARTUP,
-        "indexerposition": None,
-    }
-    spf_component_state = {"b5bcapabilitystate": SPFCapabilityStates.UNAVAILABLE}
-    spfrx_component_state = {"b5bcapabilitystate": SPFRxCapabilityStates.UNAVAILABLE}
-    dish_manager_component_state = {"dishmode": None}
-
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=None),
+            dict(dishmode=None),
+            dict(b5bcapabilitystate=SPFRxCapabilityStates.UNAVAILABLE),
+            dict(b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE),
+            CapabilityStates.UNAVAILABLE,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=None),
+            dict(dishmode=None),
+            None,
+            dict(b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE),
+            CapabilityStates.UNAVAILABLE,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=None),
+            dict(dishmode=None),
+            dict(b5bcapabilitystate=SPFRxCapabilityStates.UNAVAILABLE),
+            None,
+            CapabilityStates.UNAVAILABLE,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=None),
+            dict(dishmode=None),
+            None,
+            None,
+            CapabilityStates.UNAVAILABLE,
+        ),
+    ],
+)
+def test_capability_state_rules_unavailable(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
     assert (
         state_transition.compute_capability_state(
             "b5b",
-            ds_component_state,
-            spfrx_component_state,
-            spf_component_state,
-            dish_manager_component_state,
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
         )
-        == CapabilityStates.UNAVAILABLE
+        == cap_state
     )
 
 
-@pytest.mark.unit
-@pytest.mark.forked
-def test_capability_state_rule_standby(state_transition):
-    """Test the capabilityState rules"""
-
-    ds_component_state = {"operatingmode": None, "indexerposition": None}
-    spf_component_state = {"b5acapabilitystate": SPFCapabilityStates.STANDBY}
-    spfrx_component_state = {"b5acapabilitystate": SPFRxCapabilityStates.STANDBY}
-    dish_manager_component_state = {"dishmode": DishMode.STANDBY_LP}
-
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.STANDBY_LP),
+            dict(b5bcapabilitystate=SPFRxCapabilityStates.STANDBY),
+            dict(b5bcapabilitystate=SPFCapabilityStates.STANDBY),
+            CapabilityStates.STANDBY,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.STANDBY_LP),
+            None,
+            dict(b5bcapabilitystate=SPFCapabilityStates.STANDBY),
+            CapabilityStates.STANDBY,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.STANDBY_LP),
+            dict(b5bcapabilitystate=SPFRxCapabilityStates.STANDBY),
+            None,
+            CapabilityStates.STANDBY,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.STANDBY_LP),
+            None,
+            None,
+            CapabilityStates.STANDBY,
+        ),
+    ],
+)
+def test_capability_state_rules_standby(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
     assert (
         state_transition.compute_capability_state(
-            "b5a",
-            ds_component_state,
-            spfrx_component_state,
-            spf_component_state,
-            dish_manager_component_state,
+            "b5b",
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
         )
-        == CapabilityStates.STANDBY
+        == cap_state
     )
 
 
-@pytest.mark.unit
-@pytest.mark.forked
-def test_capability_state_rule_configuring(state_transition):
-    """Test the capabilityState rules"""
-
-    ds_component_state = {"operatingmode": None, "indexerposition": None}
-    spf_component_state = {"b4capabilitystate": SPFCapabilityStates.OPERATE_DEGRADED}
-    spfrx_component_state = {"b4capabilitystate": SPFRxCapabilityStates.CONFIGURE}
-    dish_manager_component_state = {"dishmode": DishMode.CONFIG}
-
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.CONFIG),
+            dict(b4capabilitystate=SPFRxCapabilityStates.CONFIGURE),
+            dict(b4capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED),
+            CapabilityStates.CONFIGURING,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.CONFIG),
+            None,
+            dict(b4capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED),
+            CapabilityStates.CONFIGURING,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.CONFIG),
+            dict(b4capabilitystate=SPFRxCapabilityStates.CONFIGURE),
+            None,
+            CapabilityStates.CONFIGURING,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.CONFIG),
+            None,
+            None,
+            CapabilityStates.CONFIGURING,
+        ),
+    ],
+)
+def test_capability_state_rules_configuring(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
     assert (
         state_transition.compute_capability_state(
             "b4",
-            ds_component_state,
-            spfrx_component_state,
-            spf_component_state,
-            dish_manager_component_state,
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
         )
-        == CapabilityStates.CONFIGURING
+        == cap_state
     )
 
 
-@pytest.mark.unit
-@pytest.mark.forked
-def test_capability_state_rule_degraded(state_transition):
-    """Test the capabilityState rules"""
-
-    ds_component_state = {
-        "indexerposition": IndexerPosition.B1,
-        "operatingmode": DSOperatingMode.STOW,
-    }
-    spf_component_state = {"b3capabilitystate": SPFCapabilityStates.OPERATE_DEGRADED}
-    spfrx_component_state = {"b3capabilitystate": SPFRxCapabilityStates.OPERATE}
-    dish_manager_component_state = {"dishmode": None}
-
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.B1),
+            dict(dishmode=None),
+            dict(b3capabilitystate=SPFRxCapabilityStates.OPERATE),
+            dict(b3capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED),
+            CapabilityStates.OPERATE_DEGRADED,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.B1),
+            dict(dishmode=None),
+            None,
+            dict(b3capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED),
+            CapabilityStates.OPERATE_DEGRADED,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.B1),
+            dict(dishmode=None),
+            dict(b3capabilitystate=SPFRxCapabilityStates.OPERATE),
+            None,
+            CapabilityStates.OPERATE_DEGRADED,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.B1),
+            dict(dishmode=None),
+            None,
+            None,
+            CapabilityStates.OPERATE_DEGRADED,
+        ),
+    ],
+)
+def test_capability_state_rules_degraded(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
     assert (
         state_transition.compute_capability_state(
             "b3",
-            ds_component_state,
-            spfrx_component_state,
-            spf_component_state,
-            dish_manager_component_state,
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
         )
-        == CapabilityStates.OPERATE_DEGRADED
+        == cap_state
     )
 
 
-@pytest.mark.unit
-@pytest.mark.forked
-def test_capability_state_rule_operate(state_transition):
-    """Test the capabilityState rules"""
-
-    ds_component_state = {
-        "indexerposition": IndexerPosition.MOVING,
-        "operatingmode": None,
-    }
-    spf_component_state = {"b1capabilitystate": SPFCapabilityStates.OPERATE_FULL}
-    spfrx_component_state = {"b1capabilitystate": SPFRxCapabilityStates.OPERATE}
-    dish_manager_component_state = {"dishmode": DishMode.STOW}
-
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(dishmode=DishMode.STOW),
+            dict(b1capabilitystate=SPFRxCapabilityStates.OPERATE),
+            dict(b1capabilitystate=SPFCapabilityStates.OPERATE_FULL),
+            CapabilityStates.OPERATE_FULL,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(dishmode=DishMode.STOW),
+            None,
+            dict(b1capabilitystate=SPFCapabilityStates.OPERATE_FULL),
+            CapabilityStates.OPERATE_FULL,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(dishmode=DishMode.STOW),
+            dict(b1capabilitystate=SPFRxCapabilityStates.OPERATE),
+            None,
+            CapabilityStates.OPERATE_FULL,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(dishmode=DishMode.STOW),
+            None,
+            None,
+            CapabilityStates.OPERATE_FULL,
+        ),
+    ],
+)
+def test_capability_state_rules_operate(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
     assert (
         state_transition.compute_capability_state(
             "b1",
-            ds_component_state,
-            spfrx_component_state,
-            spf_component_state,
-            dish_manager_component_state,
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
         )
-        == CapabilityStates.OPERATE_FULL
+        == cap_state
     )
 
 
-@pytest.mark.unit
-@pytest.mark.forked
-def test_capability_state_rule_unknown(state_transition):
-    """Test the capabilityState rules"""
-
-    ds_component_state = {"operatingmode": None, "indexerposition": None}
-    spf_component_state = {"b2capabilitystate": None}
-    spfrx_component_state = {"b2capabilitystate": None}
-    dish_manager_component_state = {"dishmode": None}
-
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=None),
+            dict(b1capabilitystate=None),
+            dict(b1capabilitystate=None),
+            CapabilityStates.UNKNOWN,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=None),
+            None,
+            dict(b1capabilitystate=None),
+            CapabilityStates.UNKNOWN,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=None),
+            dict(b1capabilitystate=None),
+            None,
+            CapabilityStates.UNKNOWN,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=None),
+            None,
+            None,
+            CapabilityStates.UNKNOWN,
+        ),
+    ],
+)
+def test_capability_state_rules_unknown(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
     assert (
         state_transition.compute_capability_state(
-            "b2",
-            ds_component_state,
-            spfrx_component_state,
-            spf_component_state,
-            dish_manager_component_state,
+            "b1",
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
         )
-        == CapabilityStates.UNKNOWN
+        == cap_state
     )
 
 
