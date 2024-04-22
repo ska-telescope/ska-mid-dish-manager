@@ -36,17 +36,15 @@ def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_cla
     )
 
     spf_device_proxy.SetOperateMode()
-    operating_mode_event_store.wait_for_value(SPFOperatingMode.OPERATE, 10)
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, 10)
+    operating_mode_event_store.wait_for_value(SPFOperatingMode.OPERATE, timeout=10)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
 
 
 # pylint: disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_abort_commands(
-    event_store_class, dish_manager_proxy, spf_device_proxy, ds_device_proxy
-):
+def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy, ds_device_proxy):
     """Test AbortCommands aborts the executing long running command"""
     # Set a flag on SPF to skip attribute updates
     # This is useful to ensure that the long running command
