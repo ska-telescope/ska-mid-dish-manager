@@ -6,7 +6,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
     SPFOperatingMode,
-    SPFRxOperatingMode,
 )
 
 
@@ -96,7 +95,7 @@ def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy,
     progress_event_store.wait_for_progress_update("SetStandbyFPMode Aborted")
 
     # Check that the Dish Manager did not transition to FP
-    assert spf_device_proxy.operatingMode == SPFRxOperatingMode.STANDBY_LP
+    assert spf_device_proxy.operatingMode == SPFOperatingMode.STANDBY_LP
     assert ds_device_proxy.operatingMode == DSOperatingMode.STANDBY_FP
     assert dish_manager_proxy.dishMode != DishMode.STANDBY_FP
 
