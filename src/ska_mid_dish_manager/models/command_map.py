@@ -48,9 +48,9 @@ class CommandMap:
         return output
 
     # pylint: disable=protected-access
-    def is_device_enabled(self, device: str):
-        """Check whether the given device is enabled."""
-        return self._dish_manager_cm.is_device_enabled(device)
+    def is_device_ignored(self, device: str):
+        """Check whether the given device is ignored."""
+        return self._dish_manager_cm.is_device_ignored(device)
 
     def set_standby_lp_mode(self, task_callback: Optional[Callable] = None, task_abort_event=None):
         """Transition the dish to STANDBY_LP mode"""
@@ -399,7 +399,7 @@ class CommandMap:
 
         for device, fan_out_args in commands_for_sub_devices.items():
             cmd_name = fan_out_args["command"]
-            if not self.is_device_enabled(device):
+            if self.is_device_ignored(device):
                 task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
             else:
                 try:
@@ -453,7 +453,7 @@ class CommandMap:
                 return
 
             for device, fan_out_args in commands_for_sub_devices.items():
-                if self.is_device_enabled(device):
+                if not self.is_device_ignored(device):
                     # Check each device and report attribute values that are in the expected state
                     if not fan_out_args["progress_updated"]:
                         fan_out_args["progress_updated"] = self._report_fan_out_cmd_progress(
@@ -489,7 +489,7 @@ class CommandMap:
             if current_awaited_value != awaited_event_value:
                 task_abort_event.wait(timeout=1)
                 for device in commands_for_sub_devices.keys():
-                    if self.is_device_enabled(device):
+                    if not self.is_device_ignored(device):
                         component_manager = self._dish_manager_cm.sub_component_managers[device]
                         component_manager.update_state_from_monitored_attributes()
             else:

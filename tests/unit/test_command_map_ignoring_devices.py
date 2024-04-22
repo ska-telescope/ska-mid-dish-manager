@@ -35,15 +35,15 @@ class TestCommandMapIgnoringDevices:
         )
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
 
-        def is_device_enabled(device: str):
-            """Check whether the given device is enabled."""
+        def is_device_ignored(device: str):
+            """Check whether the given device is ignored."""
             if device == "SPF":
-                return not self.dish_manager_cm_mock.component_state["ignorespf"]
+                return self.dish_manager_cm_mock.component_state["ignorespf"]
             if device == "SPFRX":
-                return not self.dish_manager_cm_mock.component_state["ignorespfrx"]
-            return True
+                return self.dish_manager_cm_mock.component_state["ignorespfrx"]
+            return False
 
-        self.dish_manager_cm_mock.is_device_enabled = is_device_enabled
+        self.dish_manager_cm_mock.is_device_ignored = is_device_ignored
 
         self.dish_manager_cm_mock.component_state["ignorespf"] = False
         self.dish_manager_cm_mock.component_state["ignorespfrx"] = False
@@ -82,8 +82,8 @@ class TestCommandMapIgnoringDevices:
 
         self.set_devices_ignored(spf_ignored=True, spfrx_ignored=False)
 
-        assert not self.command_map.is_device_enabled("SPF")
-        assert self.command_map.is_device_enabled("SPFRX")
+        assert self.command_map.is_device_ignored("SPF")
+        assert not self.command_map.is_device_ignored("SPFRX")
 
         self.command_map.set_standby_lp_mode(
             task_callback=my_task_callback, task_abort_event=task_abort_event
@@ -124,8 +124,8 @@ class TestCommandMapIgnoringDevices:
 
         self.set_devices_ignored(spf_ignored=False, spfrx_ignored=True)
 
-        assert self.command_map.is_device_enabled("SPF")
-        assert not self.command_map.is_device_enabled("SPFRX")
+        assert not self.command_map.is_device_ignored("SPF")
+        assert self.command_map.is_device_ignored("SPFRX")
 
         self.command_map.set_standby_lp_mode(
             task_callback=my_task_callback, task_abort_event=task_abort_event
@@ -166,8 +166,8 @@ class TestCommandMapIgnoringDevices:
 
         self.set_devices_ignored(spf_ignored=True, spfrx_ignored=True)
 
-        assert not self.command_map.is_device_enabled("SPF")
-        assert not self.command_map.is_device_enabled("SPFRX")
+        assert self.command_map.is_device_ignored("SPF")
+        assert self.command_map.is_device_ignored("SPFRX")
 
         self.command_map.set_standby_lp_mode(
             task_callback=my_task_callback, task_abort_event=task_abort_event
