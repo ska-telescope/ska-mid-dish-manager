@@ -2,7 +2,12 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, SPFOperatingMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 
 
 # pylint: disable=invalid-name, redefined-outer-name
@@ -31,15 +36,17 @@ def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_cla
     )
 
     spf_device_proxy.SetOperateMode()
-    operating_mode_event_store.wait_for_value(SPFOperatingMode.OPERATE)
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
+    operating_mode_event_store.wait_for_value(SPFOperatingMode.OPERATE, 10)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, 10)
 
 
 # pylint: disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_abort_commands(event_store_class, dish_manager_proxy, toggle_skip_attributes):
+def test_abort_commands(
+    event_store_class, dish_manager_proxy, spfrx_device_proxy, ds_device_proxy
+):
     """Test AbortCommands aborts the executing long running command"""
     # Set a flag on SPF to skip attribute updates
     # This is useful to ensure that the long running command
@@ -82,6 +89,8 @@ def test_abort_commands(event_store_class, dish_manager_proxy, toggle_skip_attri
 
     # Check that the Dish Manager did not transition to FP
     assert dish_manager_proxy.dishMode != DishMode.STANDBY_FP
+    assert spfrx_device_proxy.operatingMode == SPFRxOperatingMode.STANDBY
+    assert ds_device_proxy.operatingMode == DSOperatingMode.STANDBY_FP
 
     # Ensure that the queue is cleared out
     cmds_in_queue_store.wait_for_value((), timeout=30)
