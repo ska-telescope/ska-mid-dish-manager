@@ -34,7 +34,7 @@ def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_cla
     operating_mode_event_store.wait_for_value(SPFOperatingMode.OPERATE, timeout=10)
     # TODO DishManager does not react appropriately after it executes abort commands
     # Investigate if further action is required on dish manager's TaskExecutor after
-    # abort is requested.
+    # abort is requested. DishMode reflects UNKNOWN not STANDBY_FP
     # dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
 
 
@@ -47,7 +47,6 @@ def test_abort_commands(
     dish_manager_proxy,
     spf_device_proxy,
     ds_device_proxy,
-    toggle_skip_attributes,
 ):
     """Test AbortCommands aborts the executing long running command"""
     # Set a flag on SPF to skip attribute updates.
