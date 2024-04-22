@@ -314,7 +314,6 @@ def test_capability_state_rule_unavailable_ignoring_spfrx(state_transition):
     )
 
 
-
 @pytest.mark.unit
 @pytest.mark.forked
 def test_capability_state_rule_standby_ignoring_spfrx(state_transition):
@@ -411,7 +410,7 @@ def test_capability_state_rule_degraded_ignoring_spfrx(state_transition):
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_capability_state_rule_unavailable_ignoring_spfrx(state_transition):
+def test_capability_state_rule_unavailable_ignoring_spf_and_spfrx(state_transition):
     """Test the capabilityState rules"""
 
     ds_component_state = {
@@ -432,7 +431,6 @@ def test_capability_state_rule_unavailable_ignoring_spfrx(state_transition):
         )
         == CapabilityStates.UNAVAILABLE
     )
-
 
 
 @pytest.mark.unit
@@ -533,7 +531,7 @@ def test_capability_state_rule_degraded_ignoring_spf_and_spfrx(state_transition)
 # pylint: disable=use-dict-literal
 # TODO Refactor the capability state tests
 # @pytest.mark.parametrize(
-#     ("ds_comp_state, dish_mode_comp_state, spfrx_comp_state, spf_comp_state, expected_capability_state"),
+#     ("ds_comp_state, dm_comp_state, spfrx_comp_state, spf_comp_state, expected_cap_state"),
 #     [
 #         (
 #             dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=IndexerPosition.B5),
@@ -576,20 +574,22 @@ def test_capability_state_rule_degraded_ignoring_spf_and_spfrx(state_transition)
 #         ),
 #     ]
 # )
-# def test_capability_state_rules_ignoring_spf(
+# def test_capability_state_rules_ignoring_sub_device(
 #     ds_comp_state,
-#     dish_mode_comp_state,
+#     dm_comp_state,
 #     spfrx_comp_state,
 #     spf_comp_state,
-#     expected_capability_state,
+#     expected_cap_state,
 #     state_transition
 # ):
 #     actual_capability_state = state_transition.compute_capability_state(
-#         "b5b", ds_comp_state, dish_mode_comp_state, spfrx_comp_state, spf_comp_state,
+#         "b5b", ds_comp_state, dm_comp_state,
+#          spfrx_comp_state, spf_comp_state,
 #     )
 #     print(state_transition)
 #     print(actual_capability_state)
-#     assert expected_capability_state == actual_capability_state
+#     assert expected_cap_state == actual_capability_state
+
 
 @pytest.mark.unit
 @pytest.mark.forked
