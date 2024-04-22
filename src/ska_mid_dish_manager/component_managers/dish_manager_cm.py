@@ -286,12 +286,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     new_health_state = self._state_transition.compute_dish_health_state(
                         ds_component_state,
                         spfrx_component_state if self.is_device_enabled("SPFRX") else None,
-                        spf_component_state if self.is_device_enabled("SPF") else None
+                        spf_component_state if self.is_device_enabled("SPF") else None,
                     )
                     new_dish_mode = self._state_transition.compute_dish_mode(
                         ds_component_state,
                         spfrx_component_state if self.is_device_enabled("SPFRX") else None,
-                        spf_component_state if self.is_device_enabled("SPF") else None
+                        spf_component_state if self.is_device_enabled("SPF") else None,
                     )
 
                     self._update_component_state(
@@ -402,7 +402,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ):
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
                 ds_component_state,
-                spfrx_component_state if self.is_device_enabled("SPFRX") else None
+                spfrx_component_state if self.is_device_enabled("SPFRX") else None,
             )
             self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
             # update the bandInFocus of SPF before configuredBand
