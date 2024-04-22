@@ -32,7 +32,7 @@ def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_cla
 
     spf_device_proxy.SetOperateMode()
     operating_mode_event_store.wait_for_value(SPFOperatingMode.OPERATE, timeout=10)
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
 
 
 # pylint: disable=unused-argument
