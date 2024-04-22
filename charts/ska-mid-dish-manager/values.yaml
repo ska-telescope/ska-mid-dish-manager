@@ -3,6 +3,9 @@ enabled: true
 ska-mid-dish-simulators:
   enabled: false
 
+ska-mid-dish-ds-manager:
+  enabled: false
+
 system: SW-infrastructure
 subsystem: ska-dish-lmc
 telescope: SKA-mid
@@ -52,6 +55,7 @@ dishmanager:
   # with custom sub devices addresses
   # Otherwise device names will follow "mid-dish/<family_name>/ska0<N>" for N dishes
   spf:
+    ignored: False
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "simulator-spfc"
@@ -62,6 +66,7 @@ dishmanager:
     family_name: "ds-manager"
 
   spfrx:
+    ignored: False
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"

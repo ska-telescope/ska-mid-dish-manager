@@ -115,6 +115,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
+            monitored_attribute_values = {}
             for monitored_attribute in self._monitored_attributes:
                 monitored_attribute = monitored_attribute.lower()
 
@@ -125,7 +126,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 value = device_proxy.read_attribute(monitored_attribute).value
                 if isinstance(value, np.ndarray):
                     value = list(value)
-                self._update_component_state(**{monitored_attribute: value})
+                monitored_attribute_values[monitored_attribute] = value
+            self._update_component_state(**monitored_attribute_values)
 
     def _update_state_from_event(self, event_data: tango.EventData) -> None:
         """Update component state as the change events come in.
