@@ -47,6 +47,7 @@ def test_abort_commands(
     dish_manager_proxy,
     spf_device_proxy,
     ds_device_proxy,
+    toggle_skip_attributes,
 ):
     """Test AbortCommands aborts the executing long running command"""
     # Set a flag on SPF to skip attribute updates.
