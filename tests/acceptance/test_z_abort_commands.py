@@ -2,11 +2,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import (
-    DishMode,
-    DSOperatingMode,
-    SPFOperatingMode,
-)
+from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SPFOperatingMode
 
 
 # pylint: disable=invalid-name, redefined-outer-name
