@@ -56,7 +56,9 @@
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
-        (Should be default to False).
+        (Should be default to False). Note when ignoring SPFRx, the configuredband
+        on Dish.LMC will always report band B5a when the DS indexerposition is in
+        B5.
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVoid
@@ -65,7 +67,9 @@
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
-        (Should be default to False).
+        (Should be default to False). Note when ignoring SPFRx, the configuredband
+        on Dish.LMC will always report band B5a when the DS indexerposition is in
+        B5.
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVoid
@@ -1125,8 +1129,8 @@
       data_format: SCALAR
       data_type: DevBoolean
       description: Flag to disable SPF device communication. When ignored, no commands
-        will be issued to the device, it will be excluded from state aggregation, and
-        no device related attributes will be updated.
+        will be issued to the device, it will be excluded from state aggregation,
+        and no device related attributes will be updated.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
@@ -1143,8 +1147,8 @@
       data_format: SCALAR
       data_type: DevBoolean
       description: Flag to disable SPFRx device communication. When ignored, no commands
-        will be issued to the device, it will be excluded from state aggregation, and
-        no device related attributes will be updated.
+        will be issued to the device, it will be excluded from state aggregation,
+        and no device related attributes will be updated.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
