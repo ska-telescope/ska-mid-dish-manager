@@ -45,7 +45,7 @@ def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_cla
 @pytest.mark.forked
 def test_abort_commands(event_store_class, dish_manager_proxy, spf_device_proxy, ds_device_proxy):
     """Test AbortCommands aborts the executing long running command"""
-    # Set a flag on SPF to skip attribute updates
+    # Set a flag on SPF to skip attribute updates.
     # This is useful to ensure that the long running command
     # does not finish executing before AbortCommands is triggered
 
