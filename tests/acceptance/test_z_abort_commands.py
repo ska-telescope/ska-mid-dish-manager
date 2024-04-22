@@ -15,7 +15,7 @@ def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_cla
     # We need to get it back to a consistent state
     spf_device_proxy.skipAttributeUpdates = False
 
-    result_event_store = event_store_class()
+    dish_mode_event_store = event_store_class()
     operating_mode_event_store = event_store_class()
 
     spf_device_proxy.subscribe_event(
@@ -25,19 +25,14 @@ def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_cla
     )
 
     dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
+        "dishMode",
         tango.EventType.CHANGE_EVENT,
-        result_event_store,
+        dish_mode_event_store,
     )
 
     spf_device_proxy.SetOperateMode()
-    operating_mode_event_store.wait_for_value(SPFOperatingMode.OPERATE, timeout=9)
-
-    [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    result_event_store.wait_for_command_id(unique_id)
-
-    [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
-    result_event_store.wait_for_command_id(unique_id)
+    operating_mode_event_store.wait_for_value(SPFOperatingMode.OPERATE)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
 
 # pylint: disable=unused-argument
