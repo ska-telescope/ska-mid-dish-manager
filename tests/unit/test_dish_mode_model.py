@@ -11,6 +11,7 @@ from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishM
 def dish_mode_model():
     return DishModeModel()
 
+
 @pytest.mark.unit
 @pytest.mark.forked
 def test_model_node_matches_dish_mode_enums(dish_mode_model):
@@ -20,6 +21,7 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
 
     for dish_mode_enum in DishMode:
         assert dish_mode_enum.name in dish_mode_model.dishmode_graph.nodes
+
 
 @pytest.mark.unit
 @pytest.mark.forked
