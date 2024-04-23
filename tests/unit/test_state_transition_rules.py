@@ -24,6 +24,8 @@ def state_transition():
 
 # Order DS, SPF, SPFRX
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
@@ -113,6 +115,8 @@ def test_compute_dish_mode(
 
 # Order DS, SPF, SPFRX
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
@@ -193,6 +197,8 @@ def test_compute_dish_mode_ignoring_spf(
 
 # Order DS, SPF, SPFRX
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
@@ -261,6 +267,8 @@ def test_compute_dish_mode_ignoring_spfrx(
 
 # Order DS, SPF, SPFRX
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
@@ -320,6 +328,8 @@ def test_compute_dish_mode_ignoring_spf_and_spfrx(
 
 
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
@@ -405,6 +415,8 @@ def test_compute_dish_healthstate(
 
 
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
@@ -502,6 +514,8 @@ def test_compute_dish_healthstate_ignoring_spf(
 
 
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
@@ -599,6 +613,8 @@ def test_compute_dish_healthstate_ignoring_spfrx(
 
 
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
@@ -642,6 +658,8 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
 
 
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -715,6 +733,8 @@ def test_compute_configured_band(
 
 
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -788,6 +808,8 @@ def test_compute_configured_band_ignoring_spf(
 
 
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -855,6 +877,8 @@ def test_compute_configured_band_ignoring_spfrx(
 
 
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -917,6 +941,8 @@ def test_compute_configured_band_ignoring_spf_and_spfrx(
 
 
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -976,6 +1002,8 @@ def test_compute_spf_band_in_focus(
 
 
 # pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spfrx_comp_state, expected_band_number"),
     [
