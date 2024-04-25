@@ -70,7 +70,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         super().__init__(
             logger,
             *args,
-            max_workers=20,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
             **kwargs,

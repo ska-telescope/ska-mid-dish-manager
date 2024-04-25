@@ -6,11 +6,10 @@ state of the device to decide if the requested state is a nearby node to allow o
 from dataclasses import dataclass, field
 
 # pylint: disable=too-few-public-methods
-from typing import Any, Callable, Optional
+from typing import Any
 
 import networkx as nx
 import tango
-from ska_control_model import ResultCode, TaskStatus
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -32,10 +31,6 @@ DISH_MODE_NODES = (
     "OPERATE",
     "UNKNOWN",
 )
-
-
-class CommandNotAllowed(Exception):
-    """Exception for illegal transitions"""
 
 
 class DishModeModel:
@@ -105,12 +100,7 @@ class DishModeModel:
 
         return dishmode_graph
 
-    def is_command_allowed(
-        self,
-        dishmode: Optional[str] = None,
-        command_name: Optional[str] = None,
-        task_callback: Optional[Callable] = None,
-    ) -> bool:
+    def is_command_allowed(self, dishmode: str, command_name: str) -> bool:
         """Determine if requested tango command is allowed based on current dish mode"""
         allowed_commands = []
         for from_node, to_node in self.dishmode_graph.edges(dishmode):
@@ -120,16 +110,7 @@ class DishModeModel:
 
         if command_name in allowed_commands:
             return True
-
-        ex = CommandNotAllowed(
-            (
-                f"Command [{command_name}] not allowed in dishMode "
-                f"[{dishmode}], only allowed to do {allowed_commands}"
-            )
-        )
-        if task_callback:
-            task_callback(status=TaskStatus.REJECTED, exception=(ResultCode.REJECTED, ex))
-        raise ex
+        return False
 
 
 @dataclass(order=True)
