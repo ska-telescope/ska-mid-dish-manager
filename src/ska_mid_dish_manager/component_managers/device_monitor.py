@@ -1,21 +1,19 @@
 """This module contains TangoDeviceMonitor that monitors attributes on Tango devices
 If an error event is received the DeviceProxy and subscription will be recreated
 """
+import asyncio
 import logging
+import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from functools import partial
 from queue import Queue
-from threading import Event, Lock, Thread, Condition
+from threading import Condition, Event, Lock, Thread
 from typing import Callable, List, Optional, Tuple
 
-import asyncio
-import time
-
 import tango
-from tango.asyncio import DeviceProxy as AsyncDP
-
 from ska_control_model import CommunicationStatus
+from tango.asyncio import DeviceProxy as AsyncDP
 
 from ska_mid_dish_manager.models.dish_mode_model import PrioritizedEventData
 
@@ -229,7 +227,7 @@ class TangoDeviceMonitor:
 
         self._start_monitoring_thread = Thread(
             target=self._verify_connection_up,
-            args=[self._start_monitoring_threads], # start a thread per monitored attribute
+            args=[self._start_monitoring_threads],  # start a thread per monitored attribute
         )
         self._start_monitoring_thread.start()
 
@@ -246,7 +244,9 @@ class TangoDeviceMonitor:
 
         self._start_monitoring_thread = Thread(
             target=self._verify_connection_up,
-            args=[self._monitor_attributes_single_thread], # start one thread to monitor all attributes
+            args=[
+                self._monitor_attributes_single_thread
+            ],  # start one thread to monitor all attributes
         )
         self._start_monitoring_thread.start()
 
@@ -263,7 +263,9 @@ class TangoDeviceMonitor:
 
         self._start_monitoring_thread = Thread(
             target=self._verify_connection_up,
-            args=[self._monitor_attributes_asyncio], # start asyncio event loop to monitor each attribute as a task
+            args=[
+                self._monitor_attributes_asyncio
+            ],  # start asyncio event loop to monitor each attribute as a task
         )
         self._start_monitoring_thread.start()
 
@@ -280,7 +282,9 @@ class TangoDeviceMonitor:
 
         self._start_monitoring_thread = Thread(
             target=self._verify_connection_up,
-            args=[self._monitor_attributes_main_thread], # start all subscriptions on the main thread
+            args=[
+                self._monitor_attributes_main_thread
+            ],  # start all subscriptions on the main thread
         )
         self._start_monitoring_thread.start()
 
@@ -374,7 +378,9 @@ class TangoDeviceMonitor:
 
         with tango.EnsureOmniThread():
             retry_counts = {name: 0 for name in self._monitored_attributes}
-            subscriptions = {name: {"proxy": None, "id": None} for name in self._monitored_attributes}
+            subscriptions = {
+                name: {"proxy": None, "id": None} for name in self._monitored_attributes
+            }
 
             def _event_reaction(events_queue: Queue, tango_event: tango.EventData) -> None:
                 if tango_event.err:
@@ -407,7 +413,9 @@ class TangoDeviceMonitor:
                     subscriptions[attribute_name]["id"] = subscription_id
                     self._subscription_tracker.subscription_started(attribute_name)
 
-                    self._logger.info("Subscribed on %s to attr %s", self._tango_fqdn, attribute_name)
+                    self._logger.info(
+                        "Subscribed on %s to attr %s", self._tango_fqdn, attribute_name
+                    )
                 except tango.DevFailed:
                     self._logger.exception(
                         (
@@ -434,16 +442,23 @@ class TangoDeviceMonitor:
             # Try and clean up the subscription, probably not possible
             for attribute_name in self._monitored_attributes:
                 try:
-                    if subscriptions[attribute_name]["proxy"] is not None and subscriptions[attribute_name]["id"] is not None:
-                        subscriptions[attribute_name]["proxy"].unsubscribe_event(subscriptions[attribute_name]["id"]) # type: ignore
-                        self._logger.info("Unsubscribed from %s for attr %s", self._tango_fqdn, attribute_name)
+                    if (
+                        subscriptions[attribute_name]["proxy"] is not None
+                        and subscriptions[attribute_name]["id"] is not None
+                    ):
+                        subscriptions[attribute_name]["proxy"].unsubscribe_event(subscriptions[attribute_name]["id"])  # type: ignore
+                        self._logger.info(
+                            "Unsubscribed from %s for attr %s", self._tango_fqdn, attribute_name
+                        )
 
                         subscriptions[attribute_name]["proxy"] = None
                         subscriptions[attribute_name]["id"] = None
                 except tango.DevFailed as err:
                     self._logger.exception(err)
                     self._logger.info(
-                        "Could not unsubscribe from %s for attr %s", self._tango_fqdn, attribute_name
+                        "Could not unsubscribe from %s for attr %s",
+                        self._tango_fqdn,
+                        attribute_name,
                     )
 
     # pylint:disable=too-many-arguments
@@ -512,9 +527,14 @@ class TangoDeviceMonitor:
         # Try and clean up the subscription, probably not possible
         for attribute_name in self._monitored_attributes:
             try:
-                if subscriptions[attribute_name]["proxy"] is not None and subscriptions[attribute_name]["id"] is not None:
-                    subscriptions[attribute_name]["proxy"].unsubscribe_event(subscriptions[attribute_name]["id"]) # type: ignore
-                    self._logger.info("Unsubscribed from %s for attr %s", self._tango_fqdn, attribute_name)
+                if (
+                    subscriptions[attribute_name]["proxy"] is not None
+                    and subscriptions[attribute_name]["id"] is not None
+                ):
+                    subscriptions[attribute_name]["proxy"].unsubscribe_event(subscriptions[attribute_name]["id"])  # type: ignore
+                    self._logger.info(
+                        "Unsubscribed from %s for attr %s", self._tango_fqdn, attribute_name
+                    )
 
                     subscriptions[attribute_name]["proxy"] = None
                     subscriptions[attribute_name]["id"] = None
@@ -610,8 +630,11 @@ class TangoDeviceMonitor:
                 except tango.DevFailed as err:
                     self._logger.exception(err)
                     self._logger.info(
-                        "Could not unsubscribe from %s for attr %s", self._tango_fqdn, attribute_name
+                        "Could not unsubscribe from %s for attr %s",
+                        self._tango_fqdn,
+                        attribute_name,
                     )
+
 
 class ThreadLoop(Thread):
     def __init__(self, timeout: Optional[float] = 120) -> None:
@@ -686,6 +709,6 @@ if __name__ == "__main__":
     def empty_func(*args, **kwargs):  # pylint: disable=unused-argument
         """An empty function"""
         pass  # pylint:disable=unnecessary-pass
-    
-    tdm = TangoDeviceMonitor(spf_device_fqdn, ["powerState"], event_queue, logging.getLogger(__name__), empty_func) # type: ignore
+
+    tdm = TangoDeviceMonitor(spf_device_fqdn, ["powerState"], event_queue, logging.getLogger(__name__), empty_func)  # type: ignore
     tdm.monitor()
