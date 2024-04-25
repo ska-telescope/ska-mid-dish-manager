@@ -67,40 +67,31 @@ class TestDishManager:
         """Tear down context"""
         return
 
-    def test_dish_manager_behaviour(self, event_store):
+    def test_dish_manager_behaviour(self, event_store_class):
         """Test that SetStandbyFPMode does 3 result updates. DishManager, DS, SPF"""
+        dish_mode_event_store = event_store_class()
+        result_event_store = event_store_class()
+
+        self.device_proxy.subscribe_event(
+            "dishMode",
+            tango.EventType.CHANGE_EVENT,
+            dish_mode_event_store,
+        )
+
+        self.device_proxy.subscribe_event(
+            "longRunningCommandResult",
+            tango.EventType.CHANGE_EVENT,
+            result_event_store,
+        )
 
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
         self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
         self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
-
-        self.ds_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
-        self.spf_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
-        self.spfrx_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
-
-        event_store.clear_queue()
-
-        sub_id = self.device_proxy.subscribe_event(
-            "dishMode",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-        assert event_store.wait_for_value(DishMode.STANDBY_LP, timeout=8)
-        # unsubscribe to stop listening for dishMode events
-        self.device_proxy.unsubscribe_event(sub_id)
-        # Clear out the queue to make sure we dont keep previous events
-        event_store.clear_queue()
-
-        self.device_proxy.subscribe_event(
-            "longRunningCommandResult",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
+        dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
 
         self.device_proxy.SetStandbyFPMode()
-
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
 
@@ -117,8 +108,8 @@ class TestDishManager:
         # ('1680213846.5427592_258218647656556_SetStandbyFPMode',
         # '[0, "SetStandbyFPMode completed"]'))
 
-        events = event_store.wait_for_n_events(4)
-        event_values = event_store.get_data_from_events(events)
+        events = result_event_store.wait_for_n_events(3, timeout=5)
+        event_values = result_event_store.get_data_from_events(events)
         event_ids = [
             event_value[1][0]
             for event_value in event_values

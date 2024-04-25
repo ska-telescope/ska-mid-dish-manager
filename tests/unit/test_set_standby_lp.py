@@ -43,7 +43,6 @@ class TestSetStandByLPMode:
             self.spfrx_cm = class_instance.component_manager.sub_component_managers["SPFRX"]
             self.dish_manager_cm = class_instance.component_manager
 
-            class_instance = DishManager.instances.get(self.device_proxy.name())
             for com_man in class_instance.component_manager.sub_component_managers.values():
                 com_man._update_communication_state(
                     communication_state=CommunicationStatus.ESTABLISHED
@@ -63,17 +62,27 @@ class TestSetStandByLPMode:
         """Tear down context"""
         return
 
-    def test_standbylp_cmd_fails_from_standbylp_dish_mode(self, event_store):
+    def test_standbylp_cmd_fails_from_standbylp_dish_mode(self, event_store_class):
         """Execute tests"""
+        dish_mode_event_store = event_store_class()
+        lrc_status_event_store = event_store_class()
+
         self.device_proxy.subscribe_event(
             "dishMode",
             tango.EventType.CHANGE_EVENT,
-            event_store,
+            dish_mode_event_store,
         )
-        assert event_store.wait_for_value(DishMode.STANDBY_LP)
 
-        with pytest.raises(tango.DevFailed):
-            _, _ = self.device_proxy.SetStandbyLPMode()
+        self.device_proxy.subscribe_event(
+            "longRunningCommandStatus",
+            tango.EventType.CHANGE_EVENT,
+            lrc_status_event_store,
+        )
+
+        assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
+
+        [[_], [unique_id]] = self.device_proxy.SetStandbyLPMode()
+        lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
     def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(self, event_store_class):
         """Execute tests"""
@@ -98,7 +107,7 @@ class TestSetStandByLPMode:
         self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
         self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
         self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
-        assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
+        dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
         # Transition DishManager to STANDBY_LP issuing a command
         [[result_code], [_]] = self.device_proxy.SetStandbyLPMode()

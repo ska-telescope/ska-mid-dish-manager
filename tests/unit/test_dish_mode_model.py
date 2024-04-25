@@ -3,7 +3,7 @@
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
-from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowed, DishModeModel
+from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
 
 # pylint: disable=missing-function-docstring, redefined-outer-name
@@ -12,6 +12,8 @@ def dish_mode_model():
     return DishModeModel()
 
 
+@pytest.mark.unit
+@pytest.mark.forked
 def test_model_node_matches_dish_mode_enums(dish_mode_model):
     assert dish_mode_model.dishmode_graph.number_of_nodes() == len(
         DishMode
@@ -21,8 +23,10 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
         assert dish_mode_enum.name in dish_mode_model.dishmode_graph.nodes
 
 
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
-    "current_mode,requested_command,is_allowed",
+    "current_mode,requested_command,expected_response",
     [
         ("STANDBY_LP", "SetStandbyFPMode", True),
         ("MAINTENANCE", "SetStandbyFPMode", True),
@@ -77,17 +81,9 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
     ],
 )
 def test_model_dish_mode_transition_accuracy(
-    dish_mode_model, current_mode, requested_command, is_allowed
+    dish_mode_model, current_mode, requested_command, expected_response
 ):
-    if is_allowed:
-        assert (
-            dish_mode_model.is_command_allowed(
-                dishmode=current_mode, command_name=requested_command
-            )
-            == is_allowed
-        )
-    else:
-        with pytest.raises(CommandNotAllowed):
-            dish_mode_model.is_command_allowed(
-                dishmode=current_mode, command_name=requested_command
-            )
+    actual_response = dish_mode_model.is_command_allowed(
+        dishmode=current_mode, command_name=requested_command
+    )
+    assert actual_response == expected_response
