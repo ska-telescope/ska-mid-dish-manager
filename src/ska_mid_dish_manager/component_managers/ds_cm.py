@@ -34,8 +34,13 @@ class DSComponentManager(TangoDeviceComponentManager):
             "healthState",
             "pointingState",
             "indexerPosition",
+            "desiredPointingAz",
+            "desiredPointingEl",
             "achievedPointing",
+            "achievedPointingaz",
+            "achievedPointingel",
             "band2PointingModelParams",
+            "trackInterpolationMode",
         )
         super().__init__(
             tango_device_fqdn,

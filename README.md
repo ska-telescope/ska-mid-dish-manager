@@ -16,7 +16,7 @@ The system used for development needs to have Python 3 and `pip` installed.
 - Clone the repo
 
 ```bash
-git clone git@gitlab.com:ska-telescope/ska-mid-dish-manager.git
+git clone --recursive git@gitlab.com:ska-telescope/ska-mid-dish-manager.git
 ```
 
 - Install poetry
@@ -60,6 +60,10 @@ $ helm upgrade --install to k8s-helm-repository/ska-tango-operator -n ska-tango-
 ### Deploy the chart with simulators
 
 - Deploy the chart with simulator devices
+  
+```bash
+kubectl create namespace dish-manager
+```
 
 ```bash
 $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \

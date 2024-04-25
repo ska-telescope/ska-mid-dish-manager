@@ -10,7 +10,7 @@ from typing import Any, Callable, Optional
 
 import networkx as nx
 import tango
-from ska_control_model import TaskStatus
+from ska_control_model import ResultCode, TaskStatus
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -128,7 +128,7 @@ class DishModeModel:
             )
         )
         if task_callback:
-            task_callback(status=TaskStatus.REJECTED, exception=ex)
+            task_callback(status=TaskStatus.REJECTED, exception=(ResultCode.REJECTED, ex))
         raise ex
 
 

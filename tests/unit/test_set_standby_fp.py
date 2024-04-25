@@ -63,7 +63,7 @@ class TestSetStandByFPMode:
 
     def teardown_method(self):
         """Tear down context"""
-        self.tango_context.stop()
+        return
 
     def test_standby_fp(self, event_store_class):
         """Execute tests"""

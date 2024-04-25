@@ -3,6 +3,9 @@ enabled: true
 ska-mid-dish-simulators:
   enabled: false
 
+ska-mid-dish-ds-manager:
+  enabled: false
+
 system: SW-infrastructure
 subsystem: ska-dish-lmc
 telescope: SKA-mid
@@ -45,24 +48,29 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 2.3.1
+    tag: 2.5.0
     pullPolicy: IfNotPresent
 
   # Setting fqdn assumes you are only deploying one Dish Manager
   # with custom sub devices addresses
-  # Otherwise device names will follow "ska0<N>/<family_name>/<member_name>" for N dishes
+  # Otherwise device names will follow "mid-dish/<family_name>/ska0<N>" for N dishes
   spf:
+    ignored: False
     fqdn: ""
-    family_name: "spf"
-    member_name: "simulator"
+    domain_name: "mid-dish"
+    family_name: "simulator-spfc"
+
   ds:
     fqdn: ""
-    family_name: "ds"
-    member_name: "manager"
+    domain_name: "mid-dish"
+    family_name: "ds-manager"
+
   spfrx:
+    ignored: False
     fqdn: ""
-    family_name: "spfrx"
-    member_name: "simulator"
+    domain_name: "mid-dish"
+    family_name: "simulator-spfrx"
+
 
 dev_pod:
   enabled: false

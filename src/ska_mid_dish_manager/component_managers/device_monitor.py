@@ -79,17 +79,17 @@ class SubscriptionTracker:
                 self._subscribed_attrs[key] = False
             self.update_subscription_status()
 
-    def any_subscribed(self) -> bool:
-        """Check if any attributes has been subscribed
+    def all_subscribed(self) -> bool:
+        """Check if all attributes have been subscribed
 
-        :return: any attributes subscribed
+        :return: all attributes subscribed
         :rtype: bool
         """
-        return any(self._subscribed_attrs.values())
+        return all(self._subscribed_attrs.values())
 
     def update_subscription_status(self) -> None:
         """Update Communication Status"""
-        if self.any_subscribed():
+        if self.all_subscribed():
             self._logger.info("Updating CommunicationStatus as ESTABLISHED")
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
         else:
@@ -365,6 +365,7 @@ class TangoDeviceMonitor:
                     logger.info(
                         "Could not unsubscribe from %s for attr %s", tango_fqdn, attribute_name
                     )
+                subscription_tracker.subscription_stopped(attribute_name)
 
     # pylint:disable=too-many-arguments
     def _monitor_attributes_single_thread(self) -> None:

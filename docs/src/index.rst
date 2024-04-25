@@ -19,9 +19,10 @@ those sub-element devices.
 .. toctree::
   :maxdepth: 1
 
-   Developer Guide<guide/index>
+   Developer Guide<developer_guide/index>
    User Guide<user_guide/index>
    API<api/index>
+   CHANGELOG<CHANGELOG>
 
 
 Indices and tables

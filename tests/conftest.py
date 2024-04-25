@@ -189,22 +189,22 @@ def component_state_store():
 
 @pytest.fixture
 def dish_manager_device_fqdn():
-    return "ska001/elt/master"
+    return "mid-dish/dish-manager/SKA001"
 
 
 @pytest.fixture
 def ds_device_fqdn():
-    return "ska001/ds/manager"
+    return "mid-dish/ds-manager/SKA001"
 
 
 @pytest.fixture
 def spf_device_fqdn():
-    return "ska001/spf/simulator"
+    return "mid-dish/simulator-spfc/SKA001"
 
 
 @pytest.fixture
 def spfrx_device_fqdn():
-    return "ska001/spfrx/simulator"
+    return "mid-dish/simulator-spfrx/SKA001"
 
 
 @pytest.fixture
@@ -303,6 +303,8 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             "b5bcapabilitystate",
             "achievedtargetlock",
             "achievedpointing",
+            "achievedpointingaz",
+            "achievedpointingel",
             "configuredband",
             "spfconnectionstate",
             "spfrxconnectionstate",
@@ -321,6 +323,8 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             "pointingState",
             "indexerPosition",
             "achievedPointing",
+            "achievedPointingaz",
+            "achievedPointingel",
         ),
     )
 

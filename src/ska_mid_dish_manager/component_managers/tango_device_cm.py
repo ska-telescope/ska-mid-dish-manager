@@ -113,18 +113,21 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         This is a convenience method that can be called to sync up the
         monitored attributes on the device and the component state.
         """
-        device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-        for monitored_attribute in self._monitored_attributes:
-            monitored_attribute = monitored_attribute.lower()
+        with tango.EnsureOmniThread():
+            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
+            monitored_attribute_values = {}
+            for monitored_attribute in self._monitored_attributes:
+                monitored_attribute = monitored_attribute.lower()
 
-            # Add it to component state if not there
-            if monitored_attribute not in self._component_state:
-                self._component_state[monitored_attribute] = None
+                # Add it to component state if not there
+                if monitored_attribute not in self._component_state:
+                    self._component_state[monitored_attribute] = None
 
-            value = device_proxy.read_attribute(monitored_attribute).value
-            if isinstance(value, np.ndarray):
-                value = list(value)
-            self._update_component_state(**{monitored_attribute: value})
+                value = device_proxy.read_attribute(monitored_attribute).value
+                if isinstance(value, np.ndarray):
+                    value = list(value)
+                monitored_attribute_values[monitored_attribute] = value
+            self._update_component_state(**monitored_attribute_values)
 
     def _update_state_from_event(self, event_data: tango.EventData) -> None:
         """Update component state as the change events come in.
@@ -263,7 +266,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception(err)
             if task_callback:
-                task_callback(status=TaskStatus.FAILED, exception=err)
+                task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
             return
 
         # perform another abort event check in case it was missed earlier
@@ -271,7 +274,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             task_callback(progress=f"{command_name} was aborted")
 
         if task_callback:
-            task_callback(status=TaskStatus.COMPLETED, result=str(result))
+            task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(result)))
 
     @_check_connection
     def execute_command(self, command_name: str, command_arg: Any) -> Any:
@@ -281,14 +284,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             command_name,
             self._tango_device_fqdn,
         )
-        device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-        result = device_proxy.command_inout(command_name, command_arg)
-        self.logger.debug(
-            "Result of [%s] on [%s] is [%s]",
-            command_name,
-            self._tango_device_fqdn,
-            result,
-        )
+        with tango.EnsureOmniThread():
+            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
+            result = device_proxy.command_inout(command_name, command_arg)
+            self.logger.debug(
+                "Result of [%s] on [%s] is [%s]",
+                command_name,
+                self._tango_device_fqdn,
+                result,
+            )
         return result
 
     @_check_connection
@@ -299,15 +303,16 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attribute_name,
             self._tango_device_fqdn,
         )
-        device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-        result = getattr(device_proxy, attribute_name)
-        self.logger.debug(
-            "Result of reading [%s] on [%s] is [%s]",
-            attribute_name,
-            self._tango_device_fqdn,
-            result,
-        )
-        return result
+        with tango.EnsureOmniThread():
+            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
+            result = getattr(device_proxy, attribute_name)
+            self.logger.debug(
+                "Result of reading [%s] on [%s] is [%s]",
+                attribute_name,
+                self._tango_device_fqdn,
+                result,
+            )
+            return result
 
     @_check_connection
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
@@ -320,15 +325,16 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         # Note: If this function is called at a high rate then re-creating the device proxy
         # here will be inefficient. Consider moving the declaration out of this function.
-        device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-        result = device_proxy.write_attribute(attribute_name, attribute_value)
-        self.logger.debug(
-            "Result of writing [%s] on [%s] is [%s]",
-            attribute_name,
-            self._tango_device_fqdn,
-            result,
-        )
-        return result
+        with tango.EnsureOmniThread():
+            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
+            result = device_proxy.write_attribute(attribute_name, attribute_value)
+            self.logger.debug(
+                "Result of writing [%s] on [%s] is [%s]",
+                attribute_name,
+                self._tango_device_fqdn,
+                result,
+            )
+            return result
 
     @typing.no_type_check
     def start_communicating(self) -> None:

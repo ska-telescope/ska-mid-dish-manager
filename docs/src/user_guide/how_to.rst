@@ -109,7 +109,7 @@ The deployment will constitute pods for:
 All these pods have to be up in the ``ska-mid-dish-manager`` namespace to have a
 fully functional software to interact. The pod of particular interest will be
 ``ds-manager-001-0``. The device name which connects to the DishManager server is
-``ska001/elt/master``: this may change, and can be looked up in the deployment on
+``mid-dish/dish-manager/SKA001``: this may change, and can be looked up in the deployment on
 the ``deviceserver`` namespace by inspecting the ``Config`` value on the
 ``dishmanager-001`` pod (see the image below).
 

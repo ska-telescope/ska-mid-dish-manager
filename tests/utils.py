@@ -5,6 +5,7 @@ from typing import Any, List, Tuple
 
 import numpy as np
 import tango
+from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -51,7 +52,7 @@ class EventStore:
             while True:
                 event = self._queue.get(timeout=timeout)
                 events.append(event)
-                if not event.attr_value:
+                if event.attr_value is None:
                     continue
                 if isinstance(event.attr_value.value, np.ndarray):
                     if (event.attr_value.value == value).all():
@@ -59,7 +60,6 @@ class EventStore:
                     if np.isclose(event.attr_value.value, value).all():
                         return True
                     continue
-
                 if event.attr_value.value != value:
                     continue
                 if event.attr_value.value == value:
@@ -69,7 +69,7 @@ class EventStore:
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 
     # pylint:disable=inconsistent-return-statements
-    def wait_for_command_result(self, command_id: str, command_result: Any, timeout: int = 5):
+    def wait_for_command_result(self, command_id: str, command_result: Any, timeout: int = 3):
         """Wait for a long running command result
 
         Wait `timeout` seconds for each fetch.
@@ -97,7 +97,7 @@ class EventStore:
         except queue.Empty as err:
             raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
 
-    def wait_for_command_id(self, command_id: str, timeout: int = 5):
+    def wait_for_command_id(self, command_id: str, timeout: int = 3):
         """Wait for a long running command to complete
 
         Wait `timeout` seconds for each fetch.
@@ -131,7 +131,7 @@ class EventStore:
                 f" but got [{event_info}]",
             ) from err
 
-    def wait_for_progress_update(self, progress_message: str, timeout: int = 5):
+    def wait_for_progress_update(self, progress_message: str, timeout: int = 3):
         """Wait for a long running command progress update
 
         Wait `timeout` seconds for each fetch.
@@ -181,7 +181,7 @@ class EventStore:
         """
         return [event for event in events if unique_id in str(event.attr_value.value)]
 
-    def wait_for_n_events(self, event_count: int, timeout: int = 5):
+    def wait_for_n_events(self, event_count: int, timeout: int = 3):
         """Wait for N number of events
 
         Wait `timeout` seconds for each fetch.
@@ -347,3 +347,37 @@ def set_configuredBand_b2(
     spfrx_device_proxy.operatingMode = SPFRxOperatingMode.DATA_CAPTURE
 
     config_band_event_store.wait_for_value(Band.B2, timeout=7)
+
+
+def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
+    """Sets ignored devices on DishManager."""
+    if dish_manager_proxy.ignoreSpf != ignore_spf:
+        spf_connection_event_store = EventStore()
+        dish_manager_proxy.subscribe_event(
+            "spfConnectionState",
+            tango.EventType.CHANGE_EVENT,
+            spf_connection_event_store,
+        )
+
+        dish_manager_proxy.ignoreSpf = ignore_spf
+
+        if ignore_spf:
+            spf_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
+        else:
+            spf_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+
+    if dish_manager_proxy.ignoreSpfrx != ignore_spfrx:
+        spfrx_connection_event_store = EventStore()
+
+        dish_manager_proxy.subscribe_event(
+            "spfrxConnectionState",
+            tango.EventType.CHANGE_EVENT,
+            spfrx_connection_event_store,
+        )
+
+        dish_manager_proxy.ignoreSpfrx = ignore_spfrx
+
+        if ignore_spfrx:
+            spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
+        else:
+            spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
