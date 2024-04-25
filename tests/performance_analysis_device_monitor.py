@@ -1,15 +1,13 @@
 """Test device Monitor"""
 import logging
-from queue import Empty, Queue
-
-import statistics
-import tango
-import time
-import psutil
 import random
+import statistics
+import time
+from queue import Empty, Queue
+from resource import RUSAGE_SELF, getrusage
 
-from resource import getrusage, RUSAGE_SELF
-
+import psutil
+import tango
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 
 LOGGER = logging.getLogger(__name__)
@@ -71,10 +69,11 @@ def test_latency(device_fqdn, attributes_to_monitor, test_per_attribute=3):
             # print(end_time - start_time)
 
             # Wait for things to settle
-            time.sleep(.2)
+            time.sleep(0.2)
 
     tdm.stop_monitoring()
     return time_to_respond
+
 
 def test_resource_usage(device_fqdn, attributes_to_monitor):
     """Test that connection is retried"""
@@ -109,7 +108,8 @@ def test_resource_usage(device_fqdn, attributes_to_monitor):
     print(getrusage(RUSAGE_SELF))
 
     tdm.stop_monitoring()
-    return cpu_usage-initial_cpu_usage, ram_usage-initial_ram_usage
+    return cpu_usage - initial_cpu_usage, ram_usage - initial_ram_usage
+
 
 def stress_test(device_fqdn, attributes_to_monitor, test_duration=10):
     """Test that all events are captured"""
@@ -156,6 +156,7 @@ def stress_test(device_fqdn, attributes_to_monitor, test_duration=10):
 
     return expected_updates, captured_events
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
@@ -177,14 +178,14 @@ if __name__ == "__main__":
 
     def print_metrics(metrics, title, table_width=125):
         def get_padding(word, max_length=25):
-            padding = ' ' * (max_length - len(word))
+            padding = " " * (max_length - len(word))
             return padding
 
         p = get_padding("attribute")
 
-        print('-'*table_width)
+        print("-" * table_width)
         print(f"Attribute{p} | {title}")
-        print('-'*table_width)
+        print("-" * table_width)
 
         overall_min = 0
         overall_max = 0
@@ -204,12 +205,16 @@ if __name__ == "__main__":
             overall_mean += latency_sum
             overall_stdev += statistics.stdev(metrics[attribute])
 
-            print(f"{attribute}{padding} | (Min={min(metrics[attribute]):.10f}), (Max={max(metrics[attribute]):.10f}), (Mean={latency_sum:.10f}), (Stdev={statistics.stdev(metrics[attribute]):.10f})")
+            print(
+                f"{attribute}{padding} | (Min={min(metrics[attribute]):.10f}), (Max={max(metrics[attribute]):.10f}), (Mean={latency_sum:.10f}), (Stdev={statistics.stdev(metrics[attribute]):.10f})"
+            )
 
         p = get_padding("Average overall")
-        print('-'*table_width)
-        print(f"Average overall{p} | (Min={overall_min/len(metrics):.10f}), (Max={overall_max/len(metrics):.10f}), (Mean={overall_mean/len(metrics):.10f}), (Stdev={overall_stdev/len(metrics):.10f})")
-        print('-'*table_width)
+        print("-" * table_width)
+        print(
+            f"Average overall{p} | (Min={overall_min/len(metrics):.10f}), (Max={overall_max/len(metrics):.10f}), (Mean={overall_mean/len(metrics):.10f}), (Stdev={overall_stdev/len(metrics):.10f})"
+        )
+        print("-" * table_width)
 
     # latencies_a = test_latency(device_fqdn, test_attributes[:1], test_per_attribute=10)
     # latencies_b = test_latency(device_fqdn, test_attributes[:5], test_per_attribute=10)

@@ -13,9 +13,8 @@ from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus
-from tango.asyncio import DeviceProxy as AsyncDP
-
 from ska_mid_dish_manager.models.dish_mode_model import PrioritizedEventData
+from tango.asyncio import DeviceProxy as AsyncDP
 
 TEST_CONNECTION_PERIOD = 2
 SLEEP_BETWEEN_EVENTS = 0.5
