@@ -191,11 +191,7 @@
       disp_level: OPERATOR
       doc_in: '[0]: Azimuth
 
-        [1]: Elevation,
-
-        [2]: Azimuth Speed,
-
-        [3]: Elevation Speed'
+        [1]: Elevation'
       doc_out: Uninitialised
       dtype_in: DevVarFloatArray
       dtype_out: DevVarLongStringArray
@@ -1661,3 +1657,4 @@
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
     - name: polled_cmd
+
