@@ -1431,22 +1431,21 @@ class DishManager(SKAController):
 
     @command(
         dtype_in="DevVarFloatArray",
-        doc_in="[0]: Azimuth\n[1]: Elevation,\n[2]: Azimuth Speed,\n[3]: Elevation Speed",
+        doc_in="[0]: Azimuth\n[1]: Elevation",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def Slew(self, values):  # pylint: disable=unused-argument
         """
-        Trigger the Dish to start moving at the given speeds to the commanded (Az,El) position.
+        Trigger the Dish to start moving to the commanded (Az,El) position.
 
-        :param argin: the az, el, az speed, and el speed for the pointing in stringified json
-            format
+        :param argin: the az, el for the pointing in stringified json format
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        if len(values) != 4:
-            raise ValueError(f"Length of argument ({len(values)}) is not as expected (4).")
+        if len(values) != 2:
+            raise ValueError(f"Length of argument ({len(values)}) is not as expected (2).")
 
         handler = self.get_command_object("Slew")
         result_code, unique_id = handler(values)
