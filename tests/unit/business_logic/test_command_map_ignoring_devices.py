@@ -17,7 +17,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.unit
-@pytest.mark.forked
 class TestCommandMapIgnoringDevices:
     """Tests for ignoring devices in CommandMap"""
 

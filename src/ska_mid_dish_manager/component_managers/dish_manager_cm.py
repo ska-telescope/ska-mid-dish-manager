@@ -645,17 +645,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to OPERATE mode"""
 
-        def _is_set_operate_mode_allowed():
-            dish_has_configured_band = not self.component_state["configuredband"] in [
-                Band.NONE,
-                Band.UNKNOWN,
-            ]
-            dish_mode_satisfied = self._dish_mode_model.is_command_allowed(
-                dishmode=DishMode(self.component_state["dishmode"]).name,
-                command_name="SetOperateMode",
-            )
-            return dish_has_configured_band and dish_mode_satisfied
-
+        _is_set_operate_mode_allowed = partial(
+            self._dish_mode_model.is_command_allowed,
+            DishMode(self.component_state["dishmode"]).name,
+            "SetOperateMode",
+        )
         status, response = self.submit_task(
             self._command_map.set_operate_mode,
             args=[],
@@ -713,16 +707,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Configure frequency band"""
-        req_band = Band[f"B{band_number}"]
         req_cmd = f"ConfigureBand{band_number}"
 
-        def _is_configure_band_cmd_allowed():
-            dish_in_requested_band = self.component_state["configuredband"] == req_band
-            dish_mode_satisfied = self._dish_mode_model.is_command_allowed(
-                dishmode=DishMode(self.component_state["dishmode"]).name,
-                command_name=req_cmd,
-            )
-            return not dish_in_requested_band and dish_mode_satisfied
+        _is_configure_band_cmd_allowed = partial(
+            self._dish_mode_model.is_command_allowed,
+            DishMode(self.component_state["dishmode"]).name,
+            req_cmd,
+        )
 
         status, response = self.submit_task(
             self._command_map.configure_band_cmd,

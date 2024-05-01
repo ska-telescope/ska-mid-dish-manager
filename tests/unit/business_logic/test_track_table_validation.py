@@ -4,7 +4,7 @@ from time import time
 
 import pytest
 
-from ska_mid_dish_manager.interface.input_validation import (
+from ska_mid_dish_manager.utils.input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
 )

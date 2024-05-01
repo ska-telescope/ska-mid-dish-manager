@@ -13,7 +13,6 @@ def dish_mode_model():
 
 
 @pytest.mark.unit
-@pytest.mark.forked
 def test_model_node_matches_dish_mode_enums(dish_mode_model):
     assert dish_mode_model.dishmode_graph.number_of_nodes() == len(
         DishMode
@@ -24,7 +23,6 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
 
 
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     "current_mode,requested_command,expected_response",
     [

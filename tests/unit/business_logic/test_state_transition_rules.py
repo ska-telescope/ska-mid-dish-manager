@@ -5,11 +5,14 @@ from ska_control_model import HealthState
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
+    CapabilityStates,
     DishMode,
     DSOperatingMode,
     IndexerPosition,
     SPFBandInFocus,
+    SPFCapabilityStates,
     SPFOperatingMode,
+    SPFRxCapabilityStates,
     SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
@@ -25,7 +28,6 @@ def state_transition():
 # Order DS, SPF, SPFRX
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
@@ -116,7 +118,6 @@ def test_compute_dish_mode(
 # Order DS, SPF, SPFRX
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
@@ -198,7 +199,6 @@ def test_compute_dish_mode_ignoring_spf(
 # Order DS, SPF, SPFRX
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
@@ -268,7 +268,6 @@ def test_compute_dish_mode_ignoring_spfrx(
 # Order DS, SPF, SPFRX
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
@@ -329,7 +328,6 @@ def test_compute_dish_mode_ignoring_spf_and_spfrx(
 
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
@@ -416,7 +414,6 @@ def test_compute_dish_healthstate(
 
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
@@ -515,7 +512,6 @@ def test_compute_dish_healthstate_ignoring_spf(
 
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
@@ -614,7 +610,6 @@ def test_compute_dish_healthstate_ignoring_spfrx(
 
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
     [
@@ -659,7 +654,6 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
 
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -734,7 +728,6 @@ def test_compute_configured_band(
 
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -809,7 +802,6 @@ def test_compute_configured_band_ignoring_spf(
 
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -878,7 +870,6 @@ def test_compute_configured_band_ignoring_spfrx(
 
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -942,7 +933,6 @@ def test_compute_configured_band_ignoring_spf_and_spfrx(
 
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -1003,7 +993,6 @@ def test_compute_spf_band_in_focus(
 
 # pylint: disable=use-dict-literal
 @pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("ds_comp_state, spfrx_comp_state, expected_band_number"),
     [
@@ -1051,3 +1040,364 @@ def test_compute_spf_band_in_focus_ignoring_spfrx(
         spfrx_comp_state,
     )
     assert expected_band_number == actual_band_number
+
+
+# TODO add ignored scenarios for capability state
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=None),
+            dict(dishmode=None),
+            dict(b5bcapabilitystate=SPFRxCapabilityStates.UNAVAILABLE),
+            dict(b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE),
+            CapabilityStates.UNAVAILABLE,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=None),
+            dict(dishmode=None),
+            None,
+            dict(b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE),
+            CapabilityStates.UNAVAILABLE,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=None),
+            dict(dishmode=None),
+            dict(b5bcapabilitystate=SPFRxCapabilityStates.UNAVAILABLE),
+            None,
+            CapabilityStates.UNAVAILABLE,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=None),
+            dict(dishmode=None),
+            None,
+            None,
+            CapabilityStates.UNAVAILABLE,
+        ),
+    ],
+)
+def test_capability_state_rules_unavailable(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
+    assert (
+        state_transition.compute_capability_state(
+            "b5b",
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
+        )
+        == cap_state
+    )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.STANDBY_LP),
+            dict(b5bcapabilitystate=SPFRxCapabilityStates.STANDBY),
+            dict(b5bcapabilitystate=SPFCapabilityStates.STANDBY),
+            CapabilityStates.STANDBY,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.STANDBY_LP),
+            None,
+            dict(b5bcapabilitystate=SPFCapabilityStates.STANDBY),
+            CapabilityStates.STANDBY,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.STANDBY_LP),
+            dict(b5bcapabilitystate=SPFRxCapabilityStates.STANDBY),
+            None,
+            CapabilityStates.STANDBY,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.STANDBY_LP),
+            None,
+            None,
+            CapabilityStates.STANDBY,
+        ),
+    ],
+)
+def test_capability_state_rules_standby(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
+    assert (
+        state_transition.compute_capability_state(
+            "b5b",
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
+        )
+        == cap_state
+    )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.CONFIG),
+            dict(b4capabilitystate=SPFRxCapabilityStates.CONFIGURE),
+            dict(b4capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED),
+            CapabilityStates.CONFIGURING,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.CONFIG),
+            None,
+            dict(b4capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED),
+            CapabilityStates.CONFIGURING,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.CONFIG),
+            dict(b4capabilitystate=SPFRxCapabilityStates.CONFIGURE),
+            None,
+            CapabilityStates.CONFIGURING,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=DishMode.CONFIG),
+            None,
+            None,
+            CapabilityStates.CONFIGURING,
+        ),
+    ],
+)
+def test_capability_state_rules_configuring(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
+    assert (
+        state_transition.compute_capability_state(
+            "b4",
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
+        )
+        == cap_state
+    )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.B1),
+            dict(dishmode=None),
+            dict(b3capabilitystate=SPFRxCapabilityStates.OPERATE),
+            dict(b3capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED),
+            CapabilityStates.OPERATE_DEGRADED,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.B1),
+            dict(dishmode=None),
+            None,
+            dict(b3capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED),
+            CapabilityStates.OPERATE_DEGRADED,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.B1),
+            dict(dishmode=None),
+            dict(b3capabilitystate=SPFRxCapabilityStates.OPERATE),
+            None,
+            CapabilityStates.OPERATE_DEGRADED,
+        ),
+        (
+            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.B1),
+            dict(dishmode=None),
+            None,
+            None,
+            CapabilityStates.OPERATE_DEGRADED,
+        ),
+    ],
+)
+def test_capability_state_rules_degraded(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
+    assert (
+        state_transition.compute_capability_state(
+            "b3",
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
+        )
+        == cap_state
+    )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(dishmode=DishMode.STOW),
+            dict(b1capabilitystate=SPFRxCapabilityStates.OPERATE),
+            dict(b1capabilitystate=SPFCapabilityStates.OPERATE_FULL),
+            CapabilityStates.OPERATE_FULL,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(dishmode=DishMode.STOW),
+            None,
+            dict(b1capabilitystate=SPFCapabilityStates.OPERATE_FULL),
+            CapabilityStates.OPERATE_FULL,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(dishmode=DishMode.STOW),
+            dict(b1capabilitystate=SPFRxCapabilityStates.OPERATE),
+            None,
+            CapabilityStates.OPERATE_FULL,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(dishmode=DishMode.STOW),
+            None,
+            None,
+            CapabilityStates.OPERATE_FULL,
+        ),
+    ],
+)
+def test_capability_state_rules_operate(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
+    assert (
+        state_transition.compute_capability_state(
+            "b1",
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
+        )
+        == cap_state
+    )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    (
+        "ds_comp_state",
+        "dish_manager_comp_state",
+        "spfrx_comp_state",
+        "spf_comp_state",
+        "cap_state",
+    ),
+    [
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=None),
+            dict(b1capabilitystate=None),
+            dict(b1capabilitystate=None),
+            CapabilityStates.UNKNOWN,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=None),
+            None,
+            dict(b1capabilitystate=None),
+            CapabilityStates.UNKNOWN,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=None),
+            dict(b1capabilitystate=None),
+            None,
+            CapabilityStates.UNKNOWN,
+        ),
+        (
+            dict(operatingmode=None, indexerposition=None),
+            dict(dishmode=None),
+            None,
+            None,
+            CapabilityStates.UNKNOWN,
+        ),
+    ],
+)
+def test_capability_state_rules_unknown(
+    ds_comp_state,
+    dish_manager_comp_state,
+    spfrx_comp_state,
+    spf_comp_state,
+    cap_state,
+    state_transition,
+):
+    assert (
+        state_transition.compute_capability_state(
+            "b1",
+            ds_comp_state,
+            dish_manager_comp_state,
+            spfrx_comp_state,
+            spf_comp_state,
+        )
+        == cap_state
+    )

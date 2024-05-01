@@ -16,7 +16,6 @@ LOGGER = logging.getLogger(__name__)
 
 # pylint: disable=invalid-name, missing-function-docstring
 @pytest.mark.timeout(10)
-@pytest.mark.forked
 @pytest.mark.unit
 def test_component_manager_continues_reconnecting_when_device_is_unreachable(
     caplog, mock_tango_device_proxy_instance

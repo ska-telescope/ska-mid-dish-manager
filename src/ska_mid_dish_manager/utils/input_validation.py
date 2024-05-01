@@ -1,5 +1,7 @@
-"""Module for containing input validation and formatting needed for translation
-between DSC and DS manager."""
+"""
+Module for containing input validation and formatting needed for translation
+between DSC and DS manager.
+"""
 
 from time import time
 from typing import List
