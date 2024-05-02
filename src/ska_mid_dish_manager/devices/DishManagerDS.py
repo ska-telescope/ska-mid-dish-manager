@@ -414,6 +414,7 @@ class DishManager(SKAController):
         doc="Indicates whether the Dish is on target or not based on the "
         "pointing error and time period parameters defined in "
         "configureTargetLock.",
+        access=AttrWriteType.READ,
     )
     def achievedTargetLock(self):
         """Returns the achievedTargetLock"""
@@ -737,6 +738,8 @@ class DishManager(SKAController):
     @configureTargetLock.write
     def configureTargetLock(self, value):
         """Set the configureTargetLock"""
+        ds_com_man = self.component_manager.sub_component_managers["DS"]
+        ds_com_man.write_attribute_value("configureTargetLock", value)
         # pylint: disable=attribute-defined-outside-init
         self._configure_target_lock = value
         self.push_change_event("configureTargetLock", value)
