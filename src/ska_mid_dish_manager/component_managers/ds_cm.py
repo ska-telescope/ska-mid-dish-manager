@@ -42,6 +42,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "band2PointingModelParams",
             "trackInterpolationMode",
             "achievedTargetLock",
+            "configureTargetLock",
         )
         super().__init__(
             tango_device_fqdn,
