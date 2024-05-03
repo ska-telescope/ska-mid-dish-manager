@@ -36,7 +36,3 @@ note left of DishManager: Signifies the ignored device and disregards \nthe comm
 Client -> DishManager: dishMode
 DishManager --> Client: dishMode = STANDBY_LP
 @enduml
-
-
-
- 
