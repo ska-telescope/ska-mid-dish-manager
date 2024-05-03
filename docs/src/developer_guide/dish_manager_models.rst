@@ -9,30 +9,26 @@ The model has a dish mode transition network working with a rules engine working
 * the respective values the attributes in the underlying devices should report to
   reflect a particular value on the aggregated attributes on Dish.
 
-The image below is a dishMode transition diagram showing **ALL** possible mode
-transitions generated from the DishModeModel.
+The dish mode transition diagram from the `Dish States and Modes ICD`_ summarises
+the transitions with their pre and post-conditions detailed in the `command fanout page`_. 
+All the mode transitions are abstracted in the dish `DishModeModel`.
+
 
 .. image:: ../images/DishModeTransition.png
   :width: 60%
   :height: 400
   :alt: Dish Mode Transitions
 
-The dish mode transition diagram in the `Dish States and Modes ICD` captures
-less interactions with annotations for easier comprehension. A miniature graph
-from the graph above has been added for easy comparison with the diagram from 
-the ICD.
+.. note::
+  OFF is no longer a mode transitioned from.
 
-.. image:: ../images/DishModeTransitionMin.png
-  :width: 60%
-  :height: 400
-  :alt: Dish Mode Transitions Abridged
+The sequence diagram below illustrates the transition to STANDBY_LP DishMode showing the sequence of
+events that take place (i.e. pre-condition, trigger, event and post-condition).
 
-
-.. image:: ../images/DishModeTransitionICD.png
-  :width: 60%
-  :height: 400
-  :alt: Dish Mode Transitions Abridged
+.. uml:: command_map_sequence_diagram.uml
 
 .. note::
-  OFF is no longer a mode transitioned from. This is why it's not in the
-  generated model.
+  Sequence diagram takes into account changes in ADR-93. 
+
+.. _Dish States and Modes ICD: https://confluence.skatelescope.org/display/SWSI/Dish+States+and+Modes
+.. _command fanout page: https://confluence.skatelescope.org/pages/viewpage.action?pageId=188656205
