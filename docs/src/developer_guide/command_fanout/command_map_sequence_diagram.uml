@@ -40,4 +40,3 @@ else Command not allowed
 DishManager --> Client: Error: Command not allowed
 end
 @enduml
-
