@@ -22,17 +22,22 @@ Client -> DishManager: Subscribe to LRC Progress
 Client -> DishManager: SetStandbyLPMode()
 
 DishManager -> DishManager: is_device_ignored()
+alt Command allowed
+	DishManager -> DS: SetStandbyLPMode()
 
-DishManager -> DS: SetStandbyLPMode()
+	DishManager -x SPF: SetStandbyLPMode command ignored
+	note left of SPF: Since the device is ignored \nNo command is sent to SPF
 
-DishManager -x SPF: SetStandbyLPMode command ignored
-note left of SPF: Since the device is ignored \nNo command is sent to SPF
+	DishManager -> SPFRx: SetStandbyMode()
 
-DishManager -> SPFRx: SetStandbyMode()
+	DishManager --> Client: Change event with progress (progress updates)
+	note left of DishManager: Signifies the ignored device and disregards \nthe command on the ignored device.\nInitiates command on other devices.\nReports command completed.
 
-DishManager --> Client: Change event with progress (progress updates)
-note left of DishManager: Signifies the ignored device and disregards \nthe command on the ignored device.\nInitiates command on other devices.\nReports command completed.
+	Client -> DishManager: read dishMode
 
-Client -> DishManager: dishMode
-DishManager --> Client: dishMode = STANDBY_LP
+	DishManager --> Client: dishMode = STANDBY_LP
+else Command not allowed
+DishManager --> Client: Error: Command not allowed
+end
 @enduml
+
