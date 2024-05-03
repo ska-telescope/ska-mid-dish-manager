@@ -25,6 +25,7 @@ All the mode transitions are abstracted in the dish `DishModeModel`.
 The sequence diagram below illustrates the transition to STANDBY_LP DishMode showing the sequence of
 events that take place (i.e. pre-condition, trigger, event and post-condition).
 
+.. uml:: setstandbyfp_sequence_diagram.uml
 .. uml:: command_map_sequence_diagram.uml
 
 .. note::
