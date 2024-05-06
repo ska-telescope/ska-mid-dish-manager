@@ -122,9 +122,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._component_state[monitored_attribute] = None
 
             value = device_proxy.read_attribute(monitored_attribute).value
+            attribute_quality = device_proxy.read_attribute(monitored_attribute).quality
+
             if isinstance(value, np.ndarray):
                 value = list(value)
-            self._update_component_state(**{monitored_attribute: value})
+            self._update_component_state(**{monitored_attribute: [value, attribute_quality]})
 
     def _update_state_from_event(self, event_data: tango.EventData) -> None:
         """Update component state as the change events come in.
@@ -132,7 +134,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: Tango event
         :type event_data: tango.EventData
         """
-
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
@@ -143,9 +144,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         try:
             value = event_data.attr_value.value
+            attribute_quality = event_data.attr_value.quality
+
             if isinstance(value, np.ndarray):
                 value = list(value)
-            self._update_component_state(**{attr_name: value})
+            self._update_component_state(**{attr_name: [value, attribute_quality]})
         # Catch any errors and log it otherwise it remains hidden
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error updating component state")
