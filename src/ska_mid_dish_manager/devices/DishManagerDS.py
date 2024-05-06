@@ -180,6 +180,35 @@ class DishManager(SKAController):
             # pylint: disable=line-too-long
             return f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
 
+        # Map the attribute names to the attribute object
+        attribute_object_map = {
+            "spfConnectionState": self.spfConnectionState,
+            "spfrxConnectionState": self.spfrxConnectionState,
+            "dsConnectionState": self.dsConnectionState,
+            "achievedPointing": self.achievedPointing,
+            "achievedPointingAz": self.achievedPointingAz,
+            "achievedPointingEl": self.achievedPointingEl,
+            "achievedTargetLock": self.achievedTargetLock,
+            "attenuationPolH": self.attenuationPolH,
+            "attenuationPolV": self.attenuationPolV,
+            "kValue": self.kValue,
+            "band2PointingModelParams": self.band2PointingModelParams,
+            "capturing": self.capturing,
+            "configuredBand": self.configuredBand,
+            "dishMode": self.dishMode,
+            "pointingState": self.pointingState,
+            "trackInterpolationMode": self.trackInterpolationMode,
+            "b1CapabilityState": self.b1CapabilityState,
+            "b2CapabilityState": self.b2CapabilityState,
+            "b3CapabilityState": self.b3CapabilityState,
+            "b4CapabilityState": self.b4CapabilityState,
+            "b5aCapabilityState": self.b5aCapabilityState,
+            "b5bCapabilityState": self.b5bCapabilityState,
+            "spfconnectionstate": self.spfConnectionState,
+            "spfrxconnectionstate": self.spfrxConnectionState,
+            "dsconnectionstate": self.dsConnectionState,
+        }
+
         for comp_state_name, comp_state_value in kwargs.items():
             attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
             attribute_variable = change_case(attribute_name)
