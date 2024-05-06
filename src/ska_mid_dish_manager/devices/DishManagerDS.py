@@ -18,7 +18,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DispLevel
+from tango import AttrQuality, AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -212,9 +212,22 @@ class DishManager(SKAController):
         for comp_state_name, comp_state_value in kwargs.items():
             attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
             attribute_variable = change_case(attribute_name)
-            setattr(self, attribute_variable, comp_state_value)
-            self.push_change_event(attribute_name, comp_state_value)
-            self.push_archive_event(attribute_name, comp_state_value)
+
+            setattr(self, attribute_variable, comp_state_value[0])
+            self.push_archive_event(attribute_name, comp_state_value[0])
+
+            # TODO: Need to account for (1) Attr name not in map (2) Component state without quality set
+
+            # Push change event on attribute depending on the quality factor of the attribute
+            if (
+                attribute_object_map[attribute_name].get_quality() is AttrQuality.ATTR_INVALID
+            ) and (comp_state_value[1] is AttrQuality.ATTR_VALID):
+                attribute_object_map[attribute_name].set_quality(AttrQuality.ATTR_VALID, False)
+                self.push_change_event(attribute_name, comp_state_value[0])
+            else:
+                attribute_object_map[attribute_name].set_quality(comp_state_value[1], True)
+
+            # self.push_change_event(attribute_name, comp_state_value[0])
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """
