@@ -1,28 +1,42 @@
 @startuml
 
-Client -> DishManager: dishMode
-DishManager --> Client: get current dishMode
+Client -> DishManager: ignorespf
+DishManager --> Client: False
 note right 
-	Checking the current dishMode 
-	Pre-condition dishMode = STANDBY_LP.
+	Checking if SPF ignored 
+	Initially no device is ignored.
 end note
+
+Client -> DishManager: getcomponentstates()
+
+DishManager --> Client: String "{DM}, {SPF},{SPFRx}, {DS}" 
+note left of DishManager: States of SPF, SPFRx, and DS with \nspfconnectionstate: ESTABLISHED\nspfrxconnectonstate: ESTABLISHED\ndsconectionstate: ESTABLISHED
+
+Client -> DishManager: ignorespf = True
+Client -> DishManager: getcomponentstates()
+DishManager --> Client: String "{DM}, {SPF},{SPFRx}, {DS}"
+note left of DishManager: String that has dictionary states of devices\nwith ignorespf: True\nspfconnectionstate: DISABLED
 
 Client -> DishManager: Subscribe to LRC Progress
 
-Client -> DishManager: SetStandbyFPMode()
+Client -> DishManager: SetStandbyLPMode()
 
-  DishManager -> DishManager: is_command_allowed()
-  alt Allowed
-      DishManager -> DS: SetStandbyFPMode()
-      DishManager -> SPF: SetOperateMode()
-      DishManager -x SPFRx
-      note left of SPFRx: No command is sent to SPFRx
-      DishManager --> Client: Change event with progress (progress updates)
-      note left of DishManager: Signifies the command called on each device \nInitiates command on the devices.\nReports command completed.
-      Client -> DishManager: read dishMode
-      DishManager --> Client: dishMode = STANDBY_FP
-      note left of DishManager: Checking the current dishMode \nPost-condition dishMode = STANDBY_FP.
-  else Not Allowed
-      DishManager --> Client: Error: Command not allowed
-  end
+DishManager -> DishManager: is_device_ignored()
+alt Command allowed
+	DishManager -> DS: SetStandbyLPMode()
+
+	DishManager -x SPF: SetStandbyLPMode command ignored
+	note left of SPF: Since the device is ignored \nNo command is sent to SPF
+
+	DishManager -> SPFRx: SetStandbyMode()
+
+	DishManager --> Client: Change event with progress (progress updates)
+	note left of DishManager: Signifies the ignored device and disregards \nthe command on the ignored device.\nInitiates command on other devices.\nReports command completed.
+
+	Client -> DishManager: read dishMode
+
+	DishManager --> Client: dishMode = STANDBY_LP
+else Command not allowed
+DishManager --> Client: Error: Command not allowed
+end
 @enduml
