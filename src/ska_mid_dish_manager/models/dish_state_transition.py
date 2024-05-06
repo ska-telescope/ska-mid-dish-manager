@@ -1,8 +1,8 @@
 """State transition computation"""
-
 from typing import Optional
 
 from ska_control_model import HealthState
+from tango import AttrQuality
 
 from ska_mid_dish_manager.models.dish_enums import Band, CapabilityStates, DishMode, SPFBandInFocus
 from ska_mid_dish_manager.models.transition_rules import (
@@ -190,18 +190,33 @@ class StateTransition:
         """Collapse multiple state dicts into one"""
         dish_manager_states = {"DS": {}, "SPF": {}, "SPFRX": {}, "DM": {}}  # type: ignore
 
+        # TODO: Account for the instance where the value is a list, but of 1 entry. Because the if check will throw and array out of bounds error if that is the input
+        # TODO: Review, there is probably a much better way to check for correct component state formatting than putting 3 conditional checks in a if statement
+
         for key, val in ds_component_state.items():
-            dish_manager_states["DS"][key] = str(val)
+            if isinstance(val, list) and len(val) == 2 and type(val[1]) is AttrQuality:
+                dish_manager_states["DS"][key] = str(val[0])
+            else:
+                dish_manager_states["DS"][key] = str(val)
 
         for key, val in spfrx_component_state.items():
-            dish_manager_states["SPFRX"][key] = str(val)
+            if isinstance(val, list) and len(val) == 2 and type(val[1]) is AttrQuality:
+                dish_manager_states["SPFRX"][key] = str(val[0])
+            else:
+                dish_manager_states["SPFRX"][key] = str(val)
 
         if spf_component_state:
             for key, val in spf_component_state.items():
-                dish_manager_states["SPF"][key] = str(val)
+                if isinstance(val, list) and len(val) == 2 and type(val[1]) is AttrQuality:
+                    dish_manager_states["SPF"][key] = str(val[0])
+                else:
+                    dish_manager_states["SPF"][key] = str(val)
 
         if dish_manager_component_state:
             for key, val in dish_manager_component_state.items():
-                dish_manager_states["DM"][key] = str(val)
+                if isinstance(val, list) and len(val) == 2 and type(val[1]) is AttrQuality:
+                    dish_manager_states["DM"][key] = str(val[0])
+                else:
+                    dish_manager_states["DM"][key] = str(val)
 
         return dish_manager_states
