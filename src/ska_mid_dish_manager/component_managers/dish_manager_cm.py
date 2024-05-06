@@ -74,7 +74,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b4capabilitystate=None,
             b5acapabilitystate=None,
             b5bcapabilitystate=None,
-            achievedtargetlock=None,
+            achievedtargetlock=[None, tango.AttrQuality.ATTR_INVALID],
             achievedpointing=[0.0, 0.0, 0.0],
             achievedpointingaz=[0.0, 0.0, 0.0],
             achievedpointingel=[0.0, 0.0, 0.0],
@@ -124,7 +124,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 healthstate=HealthState.UNKNOWN,
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=None,
-                achievedtargetlock=None,
+                achievedtargetlock=[None, tango.AttrQuality.ATTR_INVALID],
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
                 achievedpointing=[0.0, 0.0, 0.0],
@@ -161,21 +161,30 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ),
         }
         initial_component_states = {
-            "dishmode": DishMode.UNKNOWN,
-            "healthstate": HealthState.UNKNOWN,
-            "configuredband": Band.NONE,
-            "capturing": False,
-            "pointingstate": PointingState.UNKNOWN,
-            "b1capabilitystate": CapabilityStates.UNKNOWN,
-            "b2capabilitystate": CapabilityStates.UNKNOWN,
-            "b3capabilitystate": CapabilityStates.UNKNOWN,
-            "b4capabilitystate": CapabilityStates.UNKNOWN,
-            "b5acapabilitystate": CapabilityStates.UNKNOWN,
-            "b5bcapabilitystate": CapabilityStates.UNKNOWN,
-            "spfconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
-            "spfrxconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
-            "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
-            "band2pointingmodelparams": [],
+            "dishmode": [DishMode.UNKNOWN, tango.AttrQuality.ATTR_VALID],
+            "healthstate": [HealthState.UNKNOWN, tango.AttrQuality.ATTR_VALID],
+            "configuredband": [Band.NONE, tango.AttrQuality.ATTR_VALID],
+            "capturing": [False, tango.AttrQuality.ATTR_VALID],
+            "pointingstate": [PointingState.UNKNOWN, tango.AttrQuality.ATTR_VALID],
+            "b1capabilitystate": [CapabilityStates.UNKNOWN, tango.AttrQuality.ATTR_VALID],
+            "b2capabilitystate": [CapabilityStates.UNKNOWN, tango.AttrQuality.ATTR_VALID],
+            "b3capabilitystate": [CapabilityStates.UNKNOWN, tango.AttrQuality.ATTR_VALID],
+            "b4capabilitystate": [CapabilityStates.UNKNOWN, tango.AttrQuality.ATTR_VALID],
+            "b5acapabilitystate": [CapabilityStates.UNKNOWN, tango.AttrQuality.ATTR_VALID],
+            "b5bcapabilitystate": [CapabilityStates.UNKNOWN, tango.AttrQuality.ATTR_VALID],
+            "spfconnectionstate": [
+                CommunicationStatus.NOT_ESTABLISHED,
+                tango.AttrQuality.ATTR_VALID,
+            ],
+            "spfrxconnectionstate": [
+                CommunicationStatus.NOT_ESTABLISHED,
+                tango.AttrQuality.ATTR_VALID,
+            ],
+            "dsconnectionstate": [
+                CommunicationStatus.NOT_ESTABLISHED,
+                tango.AttrQuality.ATTR_VALID,
+            ],
+            "band2pointingmodelparams": [[], tango.AttrQuality.ATTR_VALID],
         }
         self._update_component_state(**initial_component_states)
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -216,13 +225,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         with self._sub_communication_state_change_lock:
             if self.sub_component_managers:
                 self._update_component_state(
-                    spfconnectionstate=self.sub_component_managers["SPF"].communication_state
+                    spfconnectionstate=[
+                        self.sub_component_managers["SPF"].communication_state,
+                        tango.AttrQuality.ATTR_VALID,
+                    ]
                 )
                 self._update_component_state(
-                    spfrxconnectionstate=self.sub_component_managers["SPFRX"].communication_state
+                    spfrxconnectionstate=[
+                        self.sub_component_managers["SPFRX"].communication_state,
+                        tango.AttrQuality.ATTR_VALID,
+                    ]
                 )
                 self._update_component_state(
-                    dsconnectionstate=self.sub_component_managers["DS"].communication_state
+                    dsconnectionstate=[
+                        self.sub_component_managers["DS"].communication_state,
+                        tango.AttrQuality.ATTR_VALID,
+                    ]
                 )
 
             if self.sub_component_managers:
@@ -234,7 +252,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     )
                 ):
                     self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                    self._update_component_state(healthstate=HealthState.UNKNOWN)
+                    self._update_component_state(
+                        healthstate=[HealthState.UNKNOWN, tango.AttrQuality.ATTR_VALID]
+                    )
                     return
 
             if self.sub_component_managers:
@@ -255,12 +275,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     )
 
                     self._update_component_state(
-                        healthstate=new_health_state, dishmode=new_dish_mode
+                        healthstate=[new_health_state, tango.AttrQuality.ATTR_VALID],
+                        dishmode=[new_dish_mode, tango.AttrQuality.ATTR_VALID],
                     )
                 else:
                     self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                     self._update_component_state(
-                        healthstate=HealthState.UNKNOWN, dishmode=DishMode.UNKNOWN
+                        healthstate=[HealthState.UNKNOWN, tango.AttrQuality.ATTR_VALID],
+                        dishmode=[DishMode.UNKNOWN, tango.AttrQuality.ATTR_VALID],
                     )
 
             self._component_state_changed()
@@ -322,7 +344,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_component_state,
                 spf_component_state,
             )
-            self._update_component_state(dishmode=new_dish_mode)
+            self._update_component_state(dishmode=[new_dish_mode, tango.AttrQuality.ATTR_VALID])
 
         if (
             "healthstate" in kwargs
@@ -330,7 +352,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             and "healthstate" in spf_component_state
             and "healthstate" in spfrx_component_state
         ):
-            self.logger.debug(
+            self.logger.info(
                 ("Updating healthState with healthstate DS [%s], SPF [%s], SPFRX [%s]"),
                 ds_component_state["healthstate"],
                 spf_component_state["healthstate"],
@@ -341,7 +363,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_component_state,
                 spf_component_state,
             )
-            self._update_component_state(healthstate=new_health_state)
+            self._update_component_state(
+                healthstate=[new_health_state, tango.AttrQuality.ATTR_VALID]
+            )
 
         if "pointingstate" in kwargs:
             self.logger.debug(
@@ -354,9 +378,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 PointingState.SLEW,
                 PointingState.READY,
             ]:
-                self._update_component_state(achievedtargetlock=False)
+                self._update_component_state(
+                    achievedtargetlock=[False, tango.AttrQuality.ATTR_VALID]
+                )
             elif ds_component_state["pointingstate"] == PointingState.TRACK:
-                self._update_component_state(achievedtargetlock=True)
+                self._update_component_state(
+                    achievedtargetlock=[True, tango.AttrQuality.ATTR_VALID]
+                )
 
         # spf bandInFocus
         if "indexerposition" in kwargs or "configuredband" in kwargs:
@@ -367,7 +395,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # update the bandInFocus of SPF before configuredBand
             spf_component_manager = self.sub_component_managers["SPF"]
             spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
-            spf_component_state["bandinfocus"] = band_in_focus
+            spf_component_state["bandinfocus"] = [band_in_focus, tango.AttrQuality.ATTR_VALID]
 
         # spfrx attenuation
         if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
@@ -399,7 +427,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_component_state,
                 spf_component_state,
             )
-            self._update_component_state(configuredband=configured_band)
+            self._update_component_state(
+                configuredband=[configured_band, tango.AttrQuality.ATTR_VALID]
+            )
 
         # update capturing attribute when SPFRx captures data
         if "capturingdata" in kwargs:
@@ -423,7 +453,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     spf_component_state,
                     self.component_state,
                 )
-                cap_state_updates[cap_state_name] = new_state
+                cap_state_updates[cap_state_name] = [new_state, tango.AttrQuality.ATTR_VALID]
             self._update_component_state(**cap_state_updates)
 
         # Update individual CapabilityStates if it changes
@@ -438,7 +468,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     spf_component_state,
                     self.component_state,
                 )
-                self._update_component_state(**{cap_state_name: new_state})
+                self._update_component_state(
+                    **{cap_state_name: [new_state, tango.AttrQuality.ATTR_VALID]}
+                )
 
         # Update the pointing model params if they change
         for band in ["1", "2", "3", "4", "5a", "5b"]:
