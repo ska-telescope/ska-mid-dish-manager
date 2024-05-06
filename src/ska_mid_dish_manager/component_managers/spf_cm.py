@@ -69,7 +69,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:
-                kwargs[attr] = enum_(kwargs[attr])
+                kwargs[attr][0] = enum_(kwargs[attr][0])
 
         super()._update_component_state(**kwargs)
 
