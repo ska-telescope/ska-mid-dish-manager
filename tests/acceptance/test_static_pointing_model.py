@@ -16,7 +16,7 @@ import tango
         ("band4PointingModelParams"),
     ],
 )
-def test_read_band2_static_pointing_model_parameters(
+def test_read_band_static_pointing_model_parameters(
     tango_attribute: str, dish_manager_proxy: tango.DeviceProxy
 ) -> None:
     """Test BandN Static Pointing Model Parameters."""
