@@ -91,7 +91,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            band1pointingmodelparams=[],
             band2pointingmodelparams=[],
+            band3pointingmodelparams=[],
+            band4pointingmodelparams=[],
             trackinterpolationmode=None,
             ignorespf=None,
             ignorespfrx=None,
@@ -141,7 +144,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 achievedpointing=[0.0, 0.0, 0.0],
                 achievedpointingaz=[0.0, 0.0, 0.0],
                 achievedpointingel=[0.0, 0.0, 0.0],
+                band1pointingmodelparams=[],
                 band2pointingmodelparams=[],
+                band3pointingmodelparams=[],
+                band4pointingmodelparams=[],
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, "dsConnectionState"
@@ -186,7 +192,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "spfconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
             "spfrxconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
             "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
+            "band1pointingmodelparams": [],
             "band2pointingmodelparams": [],
+            "band3pointingmodelparams": [],
+            "band4pointingmodelparams": [],
             "ignorespf": False,
             "ignorespfrx": False,
         }
