@@ -214,20 +214,25 @@ class DishManager(SKAController):
             attribute_variable = change_case(attribute_name)
 
             setattr(self, attribute_variable, comp_state_value[0])
-            self.push_archive_event(attribute_name, comp_state_value[0])
 
-            # TODO: Need to account for (1) Attr name not in map (2) Component state without quality set
-
-            # Push change event on attribute depending on the quality factor of the attribute
+            # Push change event on attribute differently depending on the quality factor of the attribute
             if (
                 attribute_object_map[attribute_name].get_quality() is AttrQuality.ATTR_INVALID
             ) and (comp_state_value[1] is AttrQuality.ATTR_VALID):
                 attribute_object_map[attribute_name].set_quality(AttrQuality.ATTR_VALID, False)
                 self.push_change_event(attribute_name, comp_state_value[0])
             else:
-                attribute_object_map[attribute_name].set_quality(comp_state_value[1], True)
+                if attribute_object_map[attribute_name].get_quality() != comp_state_value[1]:
+                    attribute_object_map[attribute_name].set_quality(comp_state_value[1], True)
+                    self.push_change_event(attribute_name, comp_state_value[0])
+                else:
+                    self.push_change_event(attribute_name, comp_state_value[0])
 
-            # self.push_change_event(attribute_name, comp_state_value[0])
+            # Push the archive event only if the the value is not none
+            if comp_state_value[0] != None:
+                self.push_archive_event(attribute_name, comp_state_value[0])
+
+            
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """
