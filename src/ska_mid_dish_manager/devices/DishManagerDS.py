@@ -1172,7 +1172,7 @@ class DishManager(SKAController):
                 if "SPFRX" in self.component_manager.sub_component_managers:
                     try:
                         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-                        spfrx_com_man.execute_command("MonitorPing", None)
+                        spfrx_com_man.execute_command("MonitorPing", None, log_command=False)
                     except tango.DevFailed:
                         if not self._monitor_ping_log_sent:
                             self.logger.exception("Could not reach SPFRx")
