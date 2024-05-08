@@ -4,7 +4,6 @@ import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
-import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from tango.test_context import DeviceTestContext
 
