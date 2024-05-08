@@ -737,21 +737,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    def set_stow_mode(
-        self,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
+    def set_stow_mode(self) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode"""
 
         self._dish_mode_model.is_command_allowed(
-            dishmode=DishMode(self.component_state["dishmode"]).name,
-            command_name="SetStowMode",
-            task_callback=task_callback,
+            dishmode=DishMode(self.component_state["dishmode"]).name, command_name="SetStowMode"
         )
-        status, response = self.submit_task(
-            self._command_map.set_stow_mode, args=[], task_callback=task_callback
-        )
-        return status, response
+
+        ds_cm = self.sub_component_managers["DS"]
+        try:
+            ds_cm.execute_command("Stow", None)
+        except LostConnection:
+            return (ResultCode.REJECTED, "Lost connection to DS")
+        return (ResultCode.OK, "SetStowMode command completed OK")
 
     def slew(
         self,

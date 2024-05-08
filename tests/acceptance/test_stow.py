@@ -16,7 +16,6 @@ def test_stow_transition(
     ds_device_proxy.SetStandbyFPMode()
 
     main_event_store = event_store_class()
-    progress_event_store = event_store_class()
 
     dish_manager_proxy.subscribe_event(
         "dishMode",
@@ -24,26 +23,6 @@ def test_stow_transition(
         main_event_store,
     )
 
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
     dish_manager_proxy.SetStowMode()
 
     assert main_event_store.wait_for_value(DishMode.STOW, timeout=6)
-
-    expected_progress_updates = [
-        "Stow called on DS",
-        "Awaiting dishMode change to STOW",
-        "Stow completed",
-    ]
-
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
-
-    events_string = "".join([str(event) for event in events])
-    for message in expected_progress_updates:
-        assert message in events_string

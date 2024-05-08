@@ -1,7 +1,10 @@
 """Test ignoring subservient devices."""
+import time
+
 import pytest
 import tango
 
+from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import set_ignored_devices
 
 
@@ -64,6 +67,7 @@ def test_ignoring_spfrx(
 
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
+    dish_mode_event_store = event_store_class()
 
     dish_manager_proxy.subscribe_event(
         "longrunningCommandResult",
@@ -77,8 +81,14 @@ def test_ignoring_spfrx(
         progress_event_store,
     )
 
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        dish_mode_event_store,
+    )
+
     [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    dish_mode_event_store.wait_for_value(DishMode.STOW)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -115,6 +125,7 @@ def test_ignoring_all(
 
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
+    dish_mode_event_store = event_store_class()
 
     dish_manager_proxy.subscribe_event(
         "longrunningCommandResult",
@@ -128,8 +139,14 @@ def test_ignoring_all(
         progress_event_store,
     )
 
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        dish_mode_event_store,
+    )
+
     [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    dish_mode_event_store.wait_for_value(DishMode.STOW)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)

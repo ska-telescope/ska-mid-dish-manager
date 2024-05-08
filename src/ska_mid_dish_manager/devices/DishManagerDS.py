@@ -93,7 +93,6 @@ class DishManager(SKAController):
             ("TrackStop", "track_stop_cmd"),
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
-            ("SetStowMode", "set_stow_mode"),
             ("Slew", "slew"),
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
@@ -119,6 +118,11 @@ class DishManager(SKAController):
         self.register_command_object(
             "SetKValue",
             self.SetKValueCommand(self.component_manager, self.logger),
+        )
+
+        self.register_command_object(
+            "SetStowMode",
+            self.SetStowModeCommand(self.component_manager, self.logger),
         )
 
     def _update_connection_state_attrs(self, attribute_name: str):
@@ -1413,7 +1417,7 @@ class DishManager(SKAController):
     )
     def SetStowMode(self) -> DevVarLongStringArrayType:
         """
-        Implemented as a Long Running Command
+        Implemented as a Fast Command
 
         This command triggers the Dish to transition to the STOW Dish Element
         Mode, and returns to the caller. To point the dish in a direction that
@@ -1564,6 +1568,38 @@ class DishManager(SKAController):
                 information purpose only.
             """
             return self._component_manager.set_kvalue(*args)
+
+    class SetStowModeCommand(FastCommand):
+        """Class for handling the SetStowMode command."""
+
+        def __init__(
+            self,
+            component_manager: DishManagerComponentManager,
+            logger: Optional[logging.Logger] = None,
+        ) -> None:
+            """
+            Initialise a new SetStowModeCommand instance.
+
+            :param component_manager: the device to which this command belongs.
+            :param logger: a logger for this command to use.
+            """
+            self._component_manager = component_manager
+            super().__init__(logger)
+
+        def do(
+            self,
+            *args: Any,
+            **kwargs: Any,
+        ) -> tuple[ResultCode, str]:
+            """
+            Implement SetStowMode command functionality.
+
+            :param args: k value.
+            :return: A tuple containing a return code and a string
+                message indicating status. The message is for
+                information purpose only.
+            """
+            return self._component_manager.set_stow_mode()
 
     @command(
         dtype_in="DevLong64",
