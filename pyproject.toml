@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-dish-manager"
-version = "2.3.6"
+version = "2.5.0"
 description = "SKA Dish Manager TANGO device server"
 authors = ["Team Karoo"]
 license = "BSD-3-Clause"
@@ -29,11 +29,15 @@ DishManagerDS = 'ska_mid_dish_manager.devices.DishManagerDS:main'
 name = 'ska-nexus'
 url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 
+[[tool.poetry.source]]
+name = "PyPI-public"
+url = 'https://pypi.org/simple'
+
 [tool.poetry.dependencies]
 python = "~3.10"
 pytango = "9.4.2"
 ska-ser-logging = "^0.4.1"
-ska-tango-base = "0.19.1"
+ska-tango-base = { git = "https://gitlab.com/ska-telescope/ska-tango-base.git", branch = "kar-878-revert-max-workers-deprecation" }
 ska-tango-testing = "0.2.0"
 pytest-timeout = "^2.1.0"
 networkx = "2.6.3"
@@ -88,36 +92,6 @@ markers = [
     "unit",
     "SKA_mid",
     "acceptance",
-    "lmc",
-    "XTP-813",
-    "VTS-226",
-    "XTP-811",
-    "XTP-3090",
-    "XTP-5414",
-    "XTP-5703",
-    "XTP-6269",
-    "XTP-6270",
-    "XTP-6271",
-    "XTP-6439",
-    "XTP-5773",
-    "XTP-3392",
-    "XTP-3310",
-    "XTP-14050",
-    "XTP-15464",
-    "XTP-15465",
-    "XTP-15466",
-    "XTP-15467",
-    "XTP-15468",
-    "XTP-15469",
-    "XTP-15470",
-    "XTP-15471",
-    "XTP-16286",
-    "L2-4699",
-    "L2-4700",
-    "L2-4697",
-    "L2-4698",
-    "L2-4621",
-    "L2-5125",
 ]
 
 [tool.isort]

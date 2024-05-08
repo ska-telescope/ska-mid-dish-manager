@@ -1,5 +1,5 @@
 # pylint: disable=invalid-name
-# pylint: disable=C0302,W0212
+# pylint: disable=C0302,W0212,W0201
 """
 This module implements the dish manager device for DishLMC.
 
@@ -9,7 +9,6 @@ and the subservient devices
 
 import json
 import logging
-import os
 import weakref
 from functools import reduce
 from typing import Any, List, Optional, Tuple
@@ -18,7 +17,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrQuality, AttrWriteType, Database, DbDevInfo, DebugIt, DevFloat, DispLevel
+from tango import AttrWriteType, DebugIt, DevFloat, DevString, DispLevel, AttrQuality
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -74,6 +73,7 @@ class DishManager(SKAController):
             self.logger,
             self._command_tracker,
             self._update_connection_state_attrs,
+            self.get_name(),
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
@@ -97,6 +97,7 @@ class DishManager(SKAController):
             ("Slew", "slew"),
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
+            ("EndScan", "end_scan"),
         ]:
             self.register_command_object(
                 command_name,
@@ -268,7 +269,8 @@ class DishManager(SKAController):
             device._capturing = False
             device._configured_band = Band.NONE
             device._configure_target_lock = []
-            device._desired_pointing = [0.0, 0.0, 0.0]
+            device._desired_pointing_az = [0.0, 0.0]
+            device._desired_pointing_el = [0.0, 0.0]
             device._dish_mode = DishMode.UNKNOWN
             device._dsh_max_short_term_power = 13.5
             device._dsh_power_curtailment = True
@@ -282,6 +284,9 @@ class DishManager(SKAController):
             device._track_interpolation_mode = TrackInterpolationMode.SPLINE
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
+            device._scan_i_d = ""
+            device._ignore_spf = False
+            device._ignore_spfrx = False
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -310,6 +315,8 @@ class DishManager(SKAController):
                 "b4capabilitystate": "b4CapabilityState",
                 "b5acapabilitystate": "b5aCapabilityState",
                 "b5bcapabilitystate": "b5bCapabilityState",
+                "desiredpointingaz": "desiredPointingAz",
+                "desiredpointingel": "desiredPointingEl",
                 "achievedpointing": "achievedPointing",
                 "achievedpointingaz": "achievedPointingAz",
                 "achievedpointingel": "achievedPointingEl",
@@ -318,19 +325,67 @@ class DishManager(SKAController):
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
                 "trackinterpolationmode": "trackInterpolationMode",
+                "scanid": "scanID",
+                "ignorespf": "ignoreSpf",
+                "ignorespfrx": "ignoreSpfrx",
+                "spfconnectionstate": "spfConnectionState",
+                "spfrxconnectionstate": "spfrxConnectionState",
+                "dsconnectionstate": "dsConnectionState",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
 
-            # configure change events for the connection state attributes
+            # Configure events for base class attributes. These are not necessary for functionality
+            # of Dish Manager but needed to suppress errors in DVS integration
             for attr in (
-                "spfConnectionState",
-                "spfrxConnectionState",
-                "dsConnectionState",
+                "buildState",
+                "versionId",
+                "loggingLevel",
+                "loggingTargets",
+                "elementLoggerAddress",
+                "elementAlarmAddress",
+                "elementTelStateAddress",
+                "elementDatabaseAddress",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
+
+            # Configure events for attributes. The events for these attributes are not pushed
+            # through callback updates
+            for attr in (
+                "maxCapabilities",
+                "availableCapabilities",
+                "azimuthOverWrap",
+                "band1PointingModelParams",
+                "band3PointingModelParams",
+                "band4PointingModelParams",
+                "band5aPointingModelParams",
+                "band5bPointingModelParams",
+                "band1SamplerFrequency",
+                "band2SamplerFrequency",
+                "band3SamplerFrequency",
+                "band4SamplerFrequency",
+                "band5aSamplerFrequency",
+                "band5bSamplerFrequency",
+                "capturing",
+                "configureTargetLock",
+                "dshMaxShortTermPower",
+                "dshPowerCurtailment",
+                "frequencyResponse",
+                "noiseDiodeConfig",
+                "programTrackTable",
+                "pointingBufferSize",
+                "polyTrack",
+                "powerState",
+                "trackProgramMode",
+                "trackTableLoadMode",
+            ):
+                device.set_change_event(attr, True, False)
+                device.set_archive_event(attr, True, False)
+
+            # Try to connect to DB and update memorized attributes if TANGO_HOST is set
+            device.component_manager.try_update_memorized_attributes_from_db()
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
@@ -349,7 +404,7 @@ class DishManager(SKAController):
     )
     def spfConnectionState(self):
         """Returns the spf connection state"""
-        return self.component_manager.sub_component_managers["SPF"].communication_state
+        return self._spf_connection_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -358,7 +413,7 @@ class DishManager(SKAController):
     )
     def spfrxConnectionState(self):
         """Returns the spfrx connection state"""
-        return self.component_manager.sub_component_managers["SPFRX"].communication_state
+        return self._spfrx_connection_state
 
     @attribute(
         dtype=CommunicationStatus,
@@ -367,7 +422,7 @@ class DishManager(SKAController):
     )
     def dsConnectionState(self):
         """Returns the ds connection state"""
-        return self.component_manager.sub_component_managers["DS"].communication_state
+        return self._ds_connection_state
 
     @attribute(
         max_dim_x=3,
@@ -478,6 +533,8 @@ class DishManager(SKAController):
         """Set the band1PointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band1_pointing_model_params = value
+        self.push_change_event("band1PointingModelParams", value)
+        self.push_archive_event("band1PointingModelParams", value)
 
     @attribute(
         dtype=(DevFloat,),
@@ -508,8 +565,15 @@ class DishManager(SKAController):
         if len(value) != 2:
             raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
 
-        ds_proxy = tango.DeviceProxy(self.DSDeviceFqdn)
-        ds_proxy.band2PointingModelParams = value
+        if hasattr(self, "component_manager"):
+            if "DS" in self.component_manager.sub_component_managers:
+                try:
+                    ds_com_man = self.component_manager.sub_component_managers["DS"]
+                    ds_com_man.write_attribute_value("band2PointingModelParams", value)
+                except tango.DevFailed:
+                    self.logger.exception("Could not reach DS to write band2PointingModelParams")
+        else:
+            self.logger.warning("No component manager to write band2PointingModelParams yet")
 
     @attribute(
         dtype=(DevFloat,),
@@ -527,6 +591,8 @@ class DishManager(SKAController):
         """Set the band3PointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band3_pointing_model_params = value
+        self.push_change_event("band3PointingModelParams", value)
+        self.push_archive_event("band3PointingModelParams", value)
 
     @attribute(
         dtype=(DevFloat,),
@@ -544,6 +610,8 @@ class DishManager(SKAController):
         """Set the band4PointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band4_pointing_model_params = value
+        self.push_change_event("band4PointingModelParams", value)
+        self.push_archive_event("band4PointingModelParams", value)
 
     @attribute(
         dtype=(DevFloat,),
@@ -561,6 +629,8 @@ class DishManager(SKAController):
         """Set the band5aPointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band5a_pointing_model_params = value
+        self.push_change_event("band5aPointingModelParams", value)
+        self.push_archive_event("band5aPointingModelParams", value)
 
     @attribute(
         dtype=(DevFloat,),
@@ -578,6 +648,8 @@ class DishManager(SKAController):
         """Set the band5bPointingModelParams"""
         # pylint: disable=attribute-defined-outside-init
         self._band5b_pointing_model_params = value
+        self.push_change_event("band5bPointingModelParams", value)
+        self.push_archive_event("band5bPointingModelParams", value)
 
     @attribute(
         dtype=float,
@@ -593,6 +665,8 @@ class DishManager(SKAController):
         """Set the band1SamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band1_sampler_frequency = value
+        self.push_change_event("band1SamplerFrequency", value)
+        self.push_archive_event("band1SamplerFrequency", value)
 
     @attribute(
         dtype=float,
@@ -608,6 +682,8 @@ class DishManager(SKAController):
         """Set the band2SamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band2_sampler_frequency = value
+        self.push_change_event("band2SamplerFrequency", value)
+        self.push_archive_event("band2SamplerFrequency", value)
 
     @attribute(
         dtype=float,
@@ -623,6 +699,8 @@ class DishManager(SKAController):
         """Set the band3SamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band3_sampler_frequency = value
+        self.push_change_event("band3SamplerFrequency", value)
+        self.push_archive_event("band3SamplerFrequency", value)
 
     @attribute(
         dtype=float,
@@ -638,6 +716,8 @@ class DishManager(SKAController):
         """Set the band4SamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band4_sampler_frequency = value
+        self.push_change_event("band4SamplerFrequency", value)
+        self.push_archive_event("band4SamplerFrequency", value)
 
     @attribute(
         dtype=float,
@@ -653,6 +733,8 @@ class DishManager(SKAController):
         """Set the band5aSamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band5a_sampler_frequency = value
+        self.push_change_event("band5aSamplerFrequency", value)
+        self.push_archive_event("band5aSamplerFrequency", value)
 
     @attribute(
         dtype=float,
@@ -668,6 +750,8 @@ class DishManager(SKAController):
         """Set the band5bSamplerFrequency"""
         # pylint: disable=attribute-defined-outside-init
         self._band5b_sampler_frequency = value
+        self.push_change_event("band5bSamplerFrequency", value)
+        self.push_archive_event("band5bSamplerFrequency", value)
 
     @attribute(
         dtype=bool,
@@ -700,19 +784,30 @@ class DishManager(SKAController):
         """Set the configureTargetLock"""
         # pylint: disable=attribute-defined-outside-init
         self._configure_target_lock = value
+        self.push_change_event("configureTargetLock", value)
+        self.push_archive_event("configureTargetLock", value)
 
-    @attribute(max_dim_x=3, dtype=(float,), access=AttrWriteType.READ_WRITE)
-    def desiredPointing(self):
-        """Returns the desiredPointing"""
-        return self._desired_pointing
+    @attribute(
+        max_dim_x=2,
+        dtype=(float,),
+        access=AttrWriteType.READ,
+        doc="Azimuth axis desired pointing as reported by the dish structure controller's"
+        " Tracking.TrackStatus.p_desired_Az field.",
+    )
+    def desiredPointingAz(self) -> list[float]:
+        """Returns the azimuth desiredPointing."""
+        return self._desired_pointing_az
 
-    @desiredPointing.write
-    def desiredPointing(self, value):
-        """Set the desiredPointing"""
-        # pylint: disable=attribute-defined-outside-init
-        self._desired_pointing = value
-        ds_cm = self.component_manager.sub_component_managers["DS"]
-        ds_cm.write_attribute_value("desiredPointing", value)
+    @attribute(
+        max_dim_x=2,
+        dtype=(float,),
+        access=AttrWriteType.READ,
+        doc="Elevation axis desired pointing as reported by the dish structure controller's"
+        " Tracking.TrackStatus.p_desired_El field.",
+    )
+    def desiredPointingEl(self) -> list[float]:
+        """Returns the elevation desiredPointing."""
+        return self._desired_pointing_el
 
     @attribute(
         dtype=DishMode,
@@ -738,6 +833,8 @@ class DishManager(SKAController):
         """Set the dshMaxShortTermPower"""
         # pylint: disable=attribute-defined-outside-init
         self._dsh_max_short_term_power = value
+        self.push_change_event("dshMaxShortTermPower", value)
+        self.push_archive_event("dshMaxShortTermPower", value)
 
     @attribute(
         dtype=bool,
@@ -760,6 +857,8 @@ class DishManager(SKAController):
         """Set the dshPowerCurtailment"""
         # pylint: disable=attribute-defined-outside-init
         self._dsh_power_curtailment = value
+        self.push_change_event("dshPowerCurtailment", value)
+        self.push_archive_event("dshPowerCurtailment", value)
 
     @attribute(dtype=(((float),),), max_dim_x=1024, max_dim_y=1024)
     def frequencyResponse(self):
@@ -776,6 +875,8 @@ class DishManager(SKAController):
         """Set the noiseDiodeConfig"""
         # pylint: disable=attribute-defined-outside-init
         self._noise_diode_config = value
+        self.push_change_event("noiseDiodeConfig", value)
+        self.push_archive_event("noiseDiodeConfig", value)
 
     @attribute(dtype=PointingState)
     def pointingState(self):
@@ -821,6 +922,8 @@ class DishManager(SKAController):
             sequence_length, table, self._track_table_load_mode
         )
         self._program_track_table = table
+        self.push_change_event("programTrackTable", table)
+        self.push_archive_event("programTrackTable", table)
 
     @attribute(
         dtype=int,
@@ -850,6 +953,8 @@ class DishManager(SKAController):
         """Set the polyTrack"""
         # pylint: disable=attribute-defined-outside-init
         self._poly_track = value
+        self.push_change_event("polyTrack", value)
+        self.push_archive_event("polyTrack", value)
 
     @attribute(dtype=PowerState)
     def powerState(self):
@@ -869,6 +974,8 @@ class DishManager(SKAController):
     def trackInterpolationMode(self, value):
         """Set the trackInterpolationMode"""
         self.component_manager.set_track_interpolation_mode(value)
+        self.push_change_event("trackInterpolationMode", value)
+        self.push_archive_event("trackInterpolationMode", value)
 
     @attribute(
         dtype=TrackProgramMode,
@@ -886,6 +993,8 @@ class DishManager(SKAController):
         """Set the trackProgramMode"""
         # pylint: disable=attribute-defined-outside-init
         self._track_program_mode = value
+        self.push_change_event("trackProgramMode", value)
+        self.push_archive_event("trackProgramMode", value)
 
     @attribute(
         dtype=TrackTableLoadMode,
@@ -906,6 +1015,8 @@ class DishManager(SKAController):
         """Set the trackTableLoadMode"""
         # pylint: disable=attribute-defined-outside-init
         self._track_table_load_mode = value
+        self.push_change_event("trackTableLoadMode", value)
+        self.push_archive_event("trackTableLoadMode", value)
 
     @attribute(
         dtype=CapabilityStates,
@@ -961,9 +1072,80 @@ class DishManager(SKAController):
         """Returns the b5aCapabilityState"""
         return self._b5b_capability_state
 
+    @attribute(
+        dtype=DevString,
+        access=AttrWriteType.READ_WRITE,
+        doc="Report the scanID for Scan",
+    )
+    def scanID(self):
+        """Returns the scanID"""
+        return self._scan_i_d
+
+    @scanID.write
+    def scanID(self, scanid):
+        """Sets the scanID"""
+        self.component_manager._update_component_state(scanid=scanid)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Flag to disable SPF device communication. When ignored, no commands will be issued "
+        "to the device, it will be excluded from state aggregation, and no device related "
+        "attributes will be updated.",
+        memorized=True,
+    )
+    def ignoreSpf(self):
+        """Returns ignoreSpf"""
+        return self._ignore_spf
+
+    @ignoreSpf.write
+    def ignoreSpf(self, value):
+        """Sets ignoreSpf"""
+        self.logger.debug("Write to ignoreSpf, %s", value)
+        self.component_manager.set_spf_device_ignored(value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Flag to disable SPFRx device communication. When ignored, no commands will be issued "
+        "to the device, it will be excluded from state aggregation, and no device related "
+        "attributes will be updated.",
+        memorized=True,
+    )
+    def ignoreSpfrx(self):
+        """Returns ignoreSpfrx"""
+        return self._ignore_spfrx
+
+    @ignoreSpfrx.write
+    def ignoreSpfrx(self, value):
+        """Sets ignoreSpfrx"""
+        self.logger.debug("Write to ignoreSpfrx, %s", value)
+        self.component_manager.set_spfrx_device_ignored(value)
+
     # --------
     # Commands
     # --------
+
+    @command(
+        dtype_in=None,
+        polling_period=30000,
+        doc_in="Called periodically with the polling thread to keep connections alive",
+        dtype_out=None,
+    )
+    def MonitoringPing(self):
+        """SPFRx needs to be pinged periodically to ensure it knows it is connected.
+        This is a best effort, fire and forgot ping that is tried continually.
+        Connection status is not monitored from here.
+        TODO: Move this into DeviceMonitor
+        """
+        if not self._ignore_spfrx and self.dev_state() != tango.DevState.INIT:
+            if hasattr(self, "component_manager"):
+                if "SPFRX" in self.component_manager.sub_component_managers:
+                    try:
+                        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+                        spfrx_com_man.execute_command("MonitorPing", None)
+                    except tango.DevFailed:
+                        self.logger.debug("Could not reach SPFRx")
 
     # pylint: disable=too-few-public-methods
     class AbortCommandsCommand(SlowCommand):
@@ -1116,7 +1298,9 @@ class DishManager(SKAController):
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
-        "being configured, and the band counters are reset. (Should be default to False).",
+        "being configured, and the band counters are reset. (Should be default to False). "
+        "Note when ignoring SPFRx, the configuredband on Dish.LMC will always report band B5a "
+        "when the DS indexerposition is in B5.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -1134,7 +1318,9 @@ class DishManager(SKAController):
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
-        "being configured, and the band counters are reset. (Should be default to False).",
+        "being configured, and the band counters are reset. (Should be default to False). "
+        "Note when ignoring SPFRx, the configuredband on Dish.LMC will always report band B5a "
+        "when the DS indexerposition is in B5.",
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
@@ -1153,15 +1339,26 @@ class DishManager(SKAController):
         """Flushes the queue of time stamped commands."""
         raise NotImplementedError
 
-    @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
-    def Scan(self) -> DevVarLongStringArrayType:
+    @command(
+        dtype_in=DevString, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR
+    )
+    def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
-        The Dish is tracking the commanded pointing positions within the
-        specified SCAN pointing accuracy. (TBC14)
-        NOTE: This pointing state is currently proposed and there are
-        currently no requirements for this functionality.
+        The Dish records the scanID for an ongoing scan
+
+        :param args: the scanID in string format
         """
         handler = self.get_command_object("Scan")
+        result_code, unique_id = handler(scanid)
+
+        return ([result_code], [unique_id])
+
+    @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    def EndScan(self) -> DevVarLongStringArrayType:
+        """
+        This command clears out the scan_id
+        """
+        handler = self.get_command_object("EndScan")
         result_code, unique_id = handler()
 
         return ([result_code], [unique_id])
@@ -1477,15 +1674,4 @@ def main(args=None, **kwargs):
 
 
 if __name__ == "__main__":
-    db = Database()
-    test_device = DbDevInfo()
-    if "DEVICE_NAME" in os.environ:
-        # DEVICE_NAME should be in the format domain/family/member
-        test_device.name = os.environ["DEVICE_NAME"]
-    else:
-        # fall back to default name
-        test_device.name = "ska001/elt/master"
-    test_device._class = "DishManager"
-    test_device.server = "DishManagerDS/01"
-    db.add_server(test_device.server, test_device, with_dserver=True)
     main()

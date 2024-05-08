@@ -5,7 +5,7 @@
 
 import json
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import tango
@@ -65,7 +65,7 @@ class TestDishManager:
 
     def teardown_method(self):
         """Tear down context"""
-        self.tango_context.stop()
+        return
 
     def test_dish_manager_behaviour(self, event_store):
         """Test that SetStandbyFPMode does 3 result updates. DishManager, DS, SPF"""
@@ -139,14 +139,6 @@ class TestDishManager:
         assert "SPFRx" in json_string
         assert "SPF" in json_string
 
-    def test_desired_pointing_write(self):
-        """Test that the write method of the desiredPointing attribute functions correctly"""
-        mocked_write = MagicMock()
-        self.ds_cm.write_attribute_value = mocked_write
-
-        write_value = (0.0, 1.0, 2.0)
-
-        self.device_proxy.desiredPointing = write_value
-
-        mocked_write.assert_called()
-        assert list(self.device_proxy.desiredPointing) == list(write_value)
+    def test_connection_ping(self):
+        "Test that the monitoring command exists and is polled"
+        assert self.device_proxy.get_command_poll_period("MonitoringPing") == 30000
