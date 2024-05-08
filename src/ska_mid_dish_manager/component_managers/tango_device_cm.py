@@ -115,7 +115,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            monitored_attribute_values = {}
             for monitored_attribute in self._monitored_attributes:
                 monitored_attribute = monitored_attribute.lower()
 
