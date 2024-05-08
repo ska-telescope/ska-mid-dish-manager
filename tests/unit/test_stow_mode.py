@@ -8,7 +8,6 @@ from ska_control_model import CommunicationStatus, ResultCode
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
-from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
 
 LOGGER = logging.getLogger(__name__)
 
