@@ -1594,7 +1594,6 @@ class DishManager(SKAController):
             """
             Implement SetStowMode command functionality.
 
-            :param args: k value.
             :return: A tuple containing a return code and a string
                 message indicating status. The message is for
                 information purpose only.
