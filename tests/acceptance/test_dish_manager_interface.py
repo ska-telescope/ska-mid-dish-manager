@@ -23,7 +23,6 @@ SPEC_URLS = {
 
 
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_wide_spec(dish_manager_proxy):
     """Test that the interface conforms to the base tango interface"""
@@ -36,7 +35,6 @@ def test_dish_manager_conforms_to_ska_wide_spec(dish_manager_proxy):
 
 
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.xfail(reason="Pending changes on telescope model to dtype_out")
 def test_dish_manager_conforms_to_dish_master_spec(dish_manager_proxy):
     """Test that the device interface conforms to the Dish Manager interface"""
@@ -49,7 +47,6 @@ def test_dish_manager_conforms_to_dish_master_spec(dish_manager_proxy):
 
 
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_controller_spec(dish_manager_proxy):
     """Test that the device interface conforms to the Dish Manager interface"""
@@ -62,7 +59,6 @@ def test_dish_manager_conforms_to_ska_controller_spec(dish_manager_proxy):
 
 
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_tango_base_spec(dish_manager_proxy):
     """Test that the device interface conforms to the Dish Manager interface"""

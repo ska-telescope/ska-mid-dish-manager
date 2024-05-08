@@ -5,7 +5,6 @@ import tango
 
 # pylint: disable=too-many-locals,unused-argument
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     """Test Scan and EndScan command"""
@@ -32,7 +31,6 @@ def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     scan_id = "4"
     [[_], [unique_id]] = dish_manager_proxy.Scan(scan_id)
     result_event_store.wait_for_command_id(unique_id)
-
     progress_event_store.wait_for_progress_update("Scan completed")
     attribute_event_store.wait_for_value(scan_id)
 

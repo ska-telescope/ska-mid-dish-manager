@@ -6,7 +6,6 @@ from tests.utils import set_ignored_devices
 
 
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_ignoring_spf(
     event_store_class,
@@ -53,7 +52,6 @@ def test_ignoring_spf(
 
 
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_ignoring_spfrx(
     event_store_class,
@@ -104,7 +102,6 @@ def test_ignoring_spfrx(
 
 
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_ignoring_all(
     event_store_class,

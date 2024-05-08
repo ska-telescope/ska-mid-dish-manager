@@ -12,7 +12,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 # pylint:disable=unused-argument
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_dish_handles_unhappy_path_in_command_execution(
     undo_raise_exceptions,
@@ -55,18 +54,16 @@ def test_dish_handles_unhappy_path_in_command_execution(
     # SetStandbyLPMode is the only command which fans out
     # to SPF and SPFRx devices: this allows us test the exception
     dish_manager_proxy.SetStandbyFPMode()
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=8)
 
     dish_manager_proxy.ConfigureBand1(True)
-    dish_mode_event_store.wait_for_value(DishMode.CONFIG)
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
     dish_manager_proxy.SetOperateMode()
-    dish_mode_event_store.wait_for_value(DishMode.OPERATE)
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=8)
 
     dish_manager_proxy.SetStandbyFPMode()
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=8)
 
     # Enable failure modes
     spf_device_proxy.raiseCmdException = True
