@@ -227,6 +227,7 @@ class StateTransition:
                 return SPFBandInFocus[band_number]
         return SPFBandInFocus.UNKNOWN
 
+    # pylint: disable=too-many-branches
     @classmethod
     def _collapse(
         cls,
@@ -264,7 +265,7 @@ class StateTransition:
         if dish_manager_component_state:
             dish_manager_states["DM"] = {}
             for key, val in dish_manager_component_state.items():
-                if isinstance(val, list) and len(val) == 2 and type(val[1]) is AttrQuality:
+                if isinstance(val, list) and len(val) == 2 and isinstance(val[1], AttrQuality):
                     dish_manager_states["DM"][key] = str(val[0])
                 else:
                     dish_manager_states["DM"][key] = str(val)
