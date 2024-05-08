@@ -238,15 +238,16 @@ class StateTransition:
         """Collapse multiple state dicts into one"""
         dish_manager_states = {"DS": {}}  # type: ignore
 
+        # Checking methodology could be improved
         for key, val in ds_component_state.items():
-            if isinstance(val, list) and len(val) == 2 and type(val[1]) is AttrQuality:
+            if isinstance(val, list) and len(val) == 2 and isinstance(val[1], AttrQuality):
                 dish_manager_states["DS"][key] = str(val[0])
             else:
                 dish_manager_states["DS"][key] = str(val)
 
         if spfrx_component_state:
             for key, val in spfrx_component_state.items():
-                if isinstance(val, list) and len(val) == 2 and type(val[1]) is AttrQuality:
+                if isinstance(val, list) and len(val) == 2 and isinstance(val[1], AttrQuality):
                     dish_manager_states["SPFRX"][key] = str(val[0])
                 else:
                     dish_manager_states["SPFRX"][key] = str(val)
@@ -255,7 +256,7 @@ class StateTransition:
         if spf_component_state:
             dish_manager_states["SPF"] = {}
             for key, val in spf_component_state.items():
-                if isinstance(val, list) and len(val) == 2 and type(val[1]) is AttrQuality:
+                if isinstance(val, list) and len(val) == 2 and isinstance(val[1], AttrQuality):
                     dish_manager_states["SPF"][key] = str(val[0])
                 else:
                     dish_manager_states["SPF"][key] = str(val)
