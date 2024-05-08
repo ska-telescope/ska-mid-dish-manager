@@ -254,6 +254,8 @@ class DishManager(SKAController):
             device._spfrx_connection_state = CommunicationStatus.NOT_ESTABLISHED
             device._ds_connection_state = CommunicationStatus.NOT_ESTABLISHED
 
+            device._monitor_ping_log_sent = False
+
             device.op_state_model.perform_action("component_standby")
 
             # push change events, needed to use testing library
@@ -1100,7 +1102,12 @@ class DishManager(SKAController):
                         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
                         spfrx_com_man.execute_command("MonitorPing", None)
                     except tango.DevFailed:
-                        self.logger.debug("Could not reach SPFRx")
+                        if not self._monitor_ping_log_sent:
+                            self.logger.exception("Could not reach SPFRx")
+                            self._monitor_ping_log_sent = True
+                    else:
+                        # Reset after successful ping so if it fails in future it logs again
+                        self._monitor_ping_log_sent = False
 
     # pylint: disable=too-few-public-methods
     class AbortCommandsCommand(SlowCommand):
