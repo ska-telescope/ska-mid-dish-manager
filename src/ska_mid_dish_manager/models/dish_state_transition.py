@@ -190,9 +190,6 @@ class StateTransition:
         """Collapse multiple state dicts into one"""
         dish_manager_states = {"DS": {}, "SPF": {}, "SPFRX": {}, "DM": {}}  # type: ignore
 
-        # TODO: Account for the instance where the value is a list, but of 1 entry. Because the if check will throw and array out of bounds error if that is the input
-        # TODO: Review, there is probably a much better way to check for correct component state formatting than putting 3 conditional checks in a if statement
-
         for key, val in ds_component_state.items():
             if isinstance(val, list) and len(val) == 2 and type(val[1]) is AttrQuality:
                 dish_manager_states["DS"][key] = str(val[0])

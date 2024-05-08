@@ -215,7 +215,7 @@ class DishManager(SKAController):
 
             setattr(self, attribute_variable, comp_state_value[0])
 
-            # Push change event on attribute differently depending on the quality factor of the attribute
+            # Push change event on attribute depending on the quality factor of the attribute
             if (
                 attribute_object_map[attribute_name].get_quality() is AttrQuality.ATTR_INVALID
             ) and (comp_state_value[1] is AttrQuality.ATTR_VALID):
@@ -229,10 +229,8 @@ class DishManager(SKAController):
                     self.push_change_event(attribute_name, comp_state_value[0])
 
             # Push the archive event only if the the value is not none
-            if comp_state_value[0] != None:
+            if comp_state_value[0] is not None:
                 self.push_archive_event(attribute_name, comp_state_value[0])
-
-            
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """
