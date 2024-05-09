@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import tango
 from ska_control_model import CommunicationStatus, ResultCode
-from tango.test_context import DeviceTestContext
 from tango import AttrQuality
+from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -56,9 +56,15 @@ class TestSetStandByLPMode:
 
             # trigger transition to StandbyLP mode to
             # mimic automatic transition after startup
-            self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID])
-            self.spfrx_cm._update_component_state(operatingmode=[SPFRxOperatingMode.STANDBY, AttrQuality.ATTR_VALID])
-            self.spf_cm._update_component_state(operatingmode=[SPFOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID])
+            self.ds_cm._update_component_state(
+                operatingmode=[DSOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID]
+            )
+            self.spfrx_cm._update_component_state(
+                operatingmode=[SPFRxOperatingMode.STANDBY, AttrQuality.ATTR_VALID]
+            )
+            self.spf_cm._update_component_state(
+                operatingmode=[SPFOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID]
+            )
 
     def teardown_method(self):
         """Tear down context"""
@@ -96,9 +102,15 @@ class TestSetStandByLPMode:
         assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
 
         # Force dishManager dishMode to go to STANDBY-FP
-        self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STANDBY_FP, AttrQuality.ATTR_VALID])
-        self.spf_cm._update_component_state(operatingmode=[SPFOperatingMode.OPERATE, AttrQuality.ATTR_VALID])
-        self.spfrx_cm._update_component_state(operatingmode=[SPFRxOperatingMode.STANDBY, AttrQuality.ATTR_VALID])
+        self.ds_cm._update_component_state(
+            operatingmode=[DSOperatingMode.STANDBY_FP, AttrQuality.ATTR_VALID]
+        )
+        self.spf_cm._update_component_state(
+            operatingmode=[SPFOperatingMode.OPERATE, AttrQuality.ATTR_VALID]
+        )
+        self.spfrx_cm._update_component_state(
+            operatingmode=[SPFRxOperatingMode.STANDBY, AttrQuality.ATTR_VALID]
+        )
         assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
 
         # Transition DishManager to STANDBY_LP issuing a command
@@ -112,9 +124,13 @@ class TestSetStandByLPMode:
         # and observe that DishManager transitions dishMode to LP mode. No
         # need to change the component state of SPFRX since it's in the
         # expected operating mode
-        self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID])
+        self.ds_cm._update_component_state(
+            operatingmode=[DSOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID]
+        )
 
-        self.spf_cm._update_component_state(operatingmode=[SPFOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(
+            operatingmode=[SPFOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID]
+        )
 
         # we can now expect dishMode to transition to STANDBY_LP
         assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=6)

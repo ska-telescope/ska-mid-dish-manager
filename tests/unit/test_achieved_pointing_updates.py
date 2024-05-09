@@ -7,8 +7,8 @@ from unittest.mock import patch
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
-from tango.test_context import DeviceTestContext
 from tango import AttrQuality
+from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 
@@ -85,8 +85,12 @@ class TestAchievedPointing:
         ds_cm = class_instance.component_manager.sub_component_managers["DS"]
 
         ds_cm._update_component_state(achievedpointing=[test_coordinates, AttrQuality.ATTR_VALID])
-        ds_cm._update_component_state(achievedpointingaz=[test_coordinates_az, AttrQuality.ATTR_VALID])
-        ds_cm._update_component_state(achievedpointingel=[test_coordinates_el, AttrQuality.ATTR_VALID])
+        ds_cm._update_component_state(
+            achievedpointingaz=[test_coordinates_az, AttrQuality.ATTR_VALID]
+        )
+        ds_cm._update_component_state(
+            achievedpointingel=[test_coordinates_el, AttrQuality.ATTR_VALID]
+        )
 
         main_event_store.wait_for_value(test_coordinates)
         az_event_store.wait_for_value(test_coordinates_az)

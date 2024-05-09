@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
-from tango.test_context import DeviceTestContext
 from tango import AttrQuality
+from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
@@ -58,7 +58,9 @@ class TestStowMode:
 
         self.ds_cm.update_state_from_monitored_attributes = MagicMock()
         self.device_proxy.SetStowMode()
-        self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STOW, AttrQuality.ATTR_VALID])
+        self.ds_cm._update_component_state(
+            operatingmode=[DSOperatingMode.STOW, AttrQuality.ATTR_VALID]
+        )
 
         expected_progress_updates = [
             "Stow called on DS",
