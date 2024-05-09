@@ -13,7 +13,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import get_tai_from_unix_s
 
 
-# pylint: disable=unused-argument,too-many-arguments
+# pylint: disable=unused-argument,too-many-arguments,too-many-locals,too-many-statements
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
