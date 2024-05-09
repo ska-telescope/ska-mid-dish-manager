@@ -1,5 +1,4 @@
 """Test ignoring subservient devices."""
-
 import pytest
 import tango
 
