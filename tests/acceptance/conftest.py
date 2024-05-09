@@ -20,28 +20,6 @@ def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
     spfrx_device_proxy.raiseCmdException = False
 
 
-@pytest.fixture
-def clear_lrc_in_queue(event_store_class, dish_manager_proxy):
-    class _ClearLRCinQueue:
-        def clear(self):
-            # Ensure no LRC queued
-            if len(dish_manager_proxy.longrunningcommandidsinqueue) != 0:
-                lrc_event_store = event_store_class()
-                dish_manager_proxy.subscribe_event(
-                    "longRunningCommandIdsInQueue",
-                    tango.EventType.CHANGE_EVENT,
-                    lrc_event_store,
-                )
-                lrc_event_store.clear_queue()
-                # clear the LRC queue by issuing AbortCommands
-                dish_manager_proxy.AbortCommands()
-                # Fail here if no change after 15 seconds
-                while len(dish_manager_proxy.longrunningcommandidsinqueue):
-                    lrc_event_store.get_queue_values(timeout=15)
-
-    return _ClearLRCinQueue()
-
-
 @pytest.fixture(autouse=True)
 def setup_and_teardown(
     event_store,
@@ -104,5 +82,20 @@ def setup_and_teardown(
     except RuntimeError as err:
         component_states = dish_manager_proxy.GetComponentStates()
         raise RuntimeError(f"DishManager not in STANDBY_LP:\n {component_states}\n") from err
+
+    # Clean up LRC in the queue
+    if len(dish_manager_proxy.longrunningcommandidsinqueue) != 0:
+        lrc_event_store = event_store_class()
+        dish_manager_proxy.subscribe_event(
+            "longRunningCommandIdsInQueue",
+            tango.EventType.CHANGE_EVENT,
+            lrc_event_store,
+        )
+        lrc_event_store.clear_queue()
+        # clear the LRC queue by issuing AbortCommands
+        dish_manager_proxy.AbortCommands()
+        # Fail here if no change after 15 seconds
+        while len(dish_manager_proxy.longrunningcommandidsinqueue):
+            lrc_event_store.get_queue_values(timeout=15)
 
     yield

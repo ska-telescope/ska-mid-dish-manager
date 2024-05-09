@@ -11,20 +11,11 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
 @pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_stow_transition(
-    monitor_tango_servers,
-    event_store_class,
-    dish_manager_proxy,
-    ds_device_proxy,
-    spf_device_proxy,
-    clear_lrc_in_queue,
+    monitor_tango_servers, event_store_class, dish_manager_proxy, ds_device_proxy, spf_device_proxy
 ):
     """Test transition to STOW"""
     main_event_store = event_store_class()
     ds_event_store = event_store_class()
-
-    # # check no LRC queued
-    # clear_lrc_in_queue.clear()
-    # assert len(dish_manager_proxy.longrunningcommandidsinqueue) == 0
 
     # Halt StandbyFp transition to check Stow is executed on DS despite dish manager waiting
     spf_device_proxy.skipAttributeUpdates = True
@@ -56,7 +47,3 @@ def test_stow_transition(
     assert ResultCode(result_code) == ResultCode.OK
 
     assert ds_event_store.wait_for_value(DSOperatingMode.STOW, timeout=5)
-
-    # # check no LRC queued
-    # clear_lrc_in_queue.clear()
-    # assert len(dish_manager_proxy.longrunningcommandidsinqueue) == 0
