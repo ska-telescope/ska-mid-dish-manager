@@ -747,7 +747,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_cm = self.sub_component_managers["DS"]
         try:
             ds_cm.execute_command("Stow", None)
-        except LostConnection:
+        except tango.DevFailed:
             return (ResultCode.REJECTED, "Lost connection to DS")
         return (ResultCode.OK, "SetStowMode command completed OK")
 
