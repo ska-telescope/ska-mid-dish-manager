@@ -216,8 +216,6 @@ class DishManager(SKAController):
             attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
             attribute_variable = change_case(attribute_name)
 
-            self.logger.info("Attribute name: " + attribute_name)
-            self.logger.info("Attribute value and quality list: " + str(comp_state_value))
             setattr(self, attribute_variable, comp_state_value[0])
 
             # Push change event on attribute depending on the quality factor of the attribute
