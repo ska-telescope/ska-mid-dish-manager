@@ -586,7 +586,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_spf_device_ignored(self, ignored: bool):
         """Set the SPF device ignored boolean and update device communication."""
-        if ignored != self.component_state["ignorespf"]:
+        if ignored != self.component_state["ignorespf"][0]:
             self.logger.debug("Setting ignore SPF device as %s", ignored)
             self._update_component_state(ignorespf=ignored)
             if ignored:
@@ -602,7 +602,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_spfrx_device_ignored(self, ignored: bool):
         """Set the SPFRxdevice ignored boolean and update device communication."""
-        if ignored != self.component_state["ignorespfrx"]:
+        if ignored != self.component_state["ignorespfrx"][0]:
             self.logger.debug("Setting ignore SPFRx device as %s", ignored)
             self._update_component_state(ignorespfrx=ignored)
             if ignored:
@@ -640,7 +640,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to STANDBY_LP mode"""
 
         self._dish_mode_model.is_command_allowed(
-            dishmode=DishMode(self.component_state["dishmode"]).name,
+            dishmode=DishMode(self.component_state["dishmode"][0]).name,
             command_name="SetStandbyLPMode",
             task_callback=task_callback,
         )
@@ -655,7 +655,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STANDBY_FP mode"""
         self._dish_mode_model.is_command_allowed(
-            dishmode=DishMode(self.component_state["dishmode"]).name,
+            dishmode=DishMode(self.component_state["dishmode"][0]).name,
             command_name="SetStandbyFPMode",
             task_callback=task_callback,
         )
@@ -672,12 +672,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to OPERATE mode"""
 
         self._dish_mode_model.is_command_allowed(
-            dishmode=DishMode(self.component_state["dishmode"]).name,
+            dishmode=DishMode(self.component_state["dishmode"][0]).name,
             command_name="SetOperateMode",
             task_callback=task_callback,
         )
 
-        if self.component_state["configuredband"] in [
+        if self.component_state["configuredband"][0] in [
             Band.NONE,
             Band.UNKNOWN,
         ]:
@@ -698,7 +698,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the pointing state"""
-        dish_mode = self.component_state["dishmode"].name
+        dish_mode = self.component_state["dishmode"][0].name
         if dish_mode != "OPERATE":
             ex = CommandNotAllowed(
                 f"Track command only allowed in `OPERATE` mode. Current dishMode: {dish_mode}."
@@ -717,8 +717,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Stop tracking"""
-        dish_mode = self.component_state["dishmode"]
-        pointing_state = self.component_state["pointingstate"]
+        dish_mode = self.component_state["dishmode"][0]
+        pointing_state = self.component_state["pointingstate"][0]
         if dish_mode != DishMode.OPERATE or pointing_state not in [
             PointingState.TRACK,
             PointingState.SLEW,
@@ -747,12 +747,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         requested_cmd = f"ConfigureBand{band_number}"
 
         self._dish_mode_model.is_command_allowed(
-            dishmode=DishMode(self.component_state["dishmode"]).name,
+            dishmode=DishMode(self.component_state["dishmode"][0]).name,
             command_name=requested_cmd,
             task_callback=task_callback,
         )
 
-        if self.component_state["configuredband"] == band_enum:
+        if self.component_state["configuredband"][0] == band_enum:
             if task_callback:
                 task_callback(
                     status=TaskStatus.REJECTED,
@@ -774,7 +774,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to STOW mode"""
 
         self._dish_mode_model.is_command_allowed(
-            dishmode=DishMode(self.component_state["dishmode"]).name,
+            dishmode=DishMode(self.component_state["dishmode"][0]).name,
             command_name="SetStowMode",
             task_callback=task_callback,
         )
