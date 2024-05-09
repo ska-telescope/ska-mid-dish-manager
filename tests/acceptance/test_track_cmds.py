@@ -34,6 +34,7 @@ def test_track_and_track_stop_cmds(
     for attr in [
         "dishMode",
         "longRunningCommandResult",
+        "pointingState",
     ]:
         dish_manager_proxy.subscribe_event(
             attr,
