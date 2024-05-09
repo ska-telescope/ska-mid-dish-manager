@@ -35,7 +35,7 @@ def test_stow_transition(
     # check for LRC queued
     assert len(dish_manager_proxy.longrunningcommandidsinqueue) != 0
 
-    # Call dish mode while LRC in progress
+    # Call SetStowMode while LRC in progress
     ds_device_proxy.subscribe_event(
         "operatingMode",
         tango.EventType.CHANGE_EVENT,
