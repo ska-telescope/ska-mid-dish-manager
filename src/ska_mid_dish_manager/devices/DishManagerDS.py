@@ -227,11 +227,10 @@ class DishManager(SKAController):
             else:
                 if attribute_object_map[attribute_name].get_quality() != comp_state_value[1]:
                     attribute_object_map[attribute_name].set_quality(comp_state_value[1], True)
-                    self.push_change_event(attribute_name, comp_state_value[0])
                 else:
                     self.push_change_event(attribute_name, comp_state_value[0])
 
-            # Push the archive event only if the the value is not none
+            # Pushing archive event on for attr value None throws an error
             if comp_state_value[0] is not None:
                 self.push_archive_event(attribute_name, comp_state_value[0])
 
