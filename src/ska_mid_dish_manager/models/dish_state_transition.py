@@ -1,5 +1,4 @@
 """State transition computation"""
-import logging
 from typing import Optional
 
 from ska_control_model import HealthState
@@ -85,8 +84,6 @@ class StateTransition:
         dish_manager_states = self._collapse(
             ds_component_state, spfrx_component_state, spf_component_state
         )
-
-        logging.info("Compute health state dish manager states: " + str(dish_manager_states))
 
         rules_to_use = health_state_rules_ds_only
         if spfrx_component_state and spf_component_state:
@@ -250,8 +247,8 @@ class StateTransition:
                 dish_manager_states["DS"][key] = str(val)
 
         if spfrx_component_state:
+            dish_manager_states["SPFRX"] = {}
             for key, val in spfrx_component_state.items():
-                dish_manager_states["SPFRX"] = {}
                 if isinstance(val, list) and len(val) == 2 and isinstance(val[1], AttrQuality):
                     dish_manager_states["SPFRX"][key] = str(val[0])
                 else:
