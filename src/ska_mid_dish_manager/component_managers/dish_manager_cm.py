@@ -621,9 +621,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def is_device_ignored(self, device: str):
         """Check whether the given device is ignored."""
         if device == "SPF":
-            return self.component_state["ignorespf"]
+            return self.component_state["ignorespf"][0]
         if device == "SPFRX":
-            return self.component_state["ignorespfrx"]
+            return self.component_state["ignorespfrx"][0]
         return False
 
     def start_communicating(self):
