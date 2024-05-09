@@ -87,7 +87,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             attenuationpolh=0.0,
             attenuationpolv=0.0,
             kvalue=0,
-            scanid="",
+            scanid=["", tango.AttrQuality.ATTR_VALID],
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
