@@ -3,6 +3,7 @@ This model enforces the legal transitions when a command is triggered. It assess
 state of the device to decide if the requested state is a nearby node to allow or reject a command.
 """
 
+import typing
 from dataclasses import dataclass, field
 
 # pylint: disable=too-few-public-methods
@@ -10,6 +11,8 @@ from typing import Any
 
 import networkx as nx
 import tango
+
+from ska_mid_dish_manager.models.dish_enums import DishMode
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -100,15 +103,46 @@ class DishModeModel:
 
         return dishmode_graph
 
-    def is_command_allowed(self, dishmode: str, command_name: str) -> bool:
-        """Determine if requested tango command is allowed based on current dish mode"""
+    @typing.no_type_check
+    def is_command_allowed(
+        self, cmd_name: str, dish_mode: str | None = None, component_manager: Any | None = None
+    ) -> bool:
+        """
+        Determine if requested tango command is allowed based on current dish mode
+
+        This method is used by the executor to evaluate the command pre-condition after it's
+        taken off the queue. To ensure the evaluation is always performed using an updated
+        component state (and not the old state used when the command is queued), the component
+        manager should be passed for the enqueue operation. In testing scenarios for example,
+        function can be evoked directly with dishmode passed to evaluate the pre-condition.
+
+        NOTE: Though the function signature has only one required argument, it still needs either
+        the dish_mode or component_manager passed to it to perform the evaluation.
+
+        :param cmd_name: the requested command
+        :param dish_mode: the current dishMode reported by the component state
+        :param component_manager: the component manager containing the component state
+
+        :raises TypeError: when no dish_mode or component_manager is provided to function call
+
+        :return: boolean indicating the function execution is allowed
+        """
+        try:
+            current_dish_mode = (
+                dish_mode or DishMode(component_manager.component_state["dishmode"]).name
+            )
+        except AttributeError as exc:
+            raise TypeError(
+                "is_command_allowed() is missing either the dish_mode or component_manager"
+            ) from exc
+
         allowed_commands = []
-        for from_node, to_node in self.dishmode_graph.edges(dishmode):
+        for from_node, to_node in self.dishmode_graph.edges(current_dish_mode):
             commands = self.dishmode_graph.get_edge_data(from_node, to_node).get("commands", None)
             if commands:
                 allowed_commands.extend(commands)
 
-        if command_name in allowed_commands:
+        if cmd_name in allowed_commands:
             return True
         return False
 

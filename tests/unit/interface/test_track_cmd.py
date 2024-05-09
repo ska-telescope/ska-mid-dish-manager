@@ -128,6 +128,8 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
 
     # Request Track on Dish
     device_proxy.Track()
+    # wait a bit before forcing the updates on the subcomponents
+    main_event_store.get_queue_values()
 
     # transition DS pointingState to TRACK
     ds_cm._update_component_state(pointingstate=PointingState.SLEW)

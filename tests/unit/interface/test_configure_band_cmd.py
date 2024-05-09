@@ -53,12 +53,13 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         progress_event_store,
     )
 
-    assert main_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=5)
+    assert device_proxy.dishMode == DishMode.STANDBY_LP
 
     # Clear out the queue to make sure we don't catch old events
     main_event_store.clear_queue()
 
     [[_], [unique_id]] = device_proxy.SetStandbyFPMode()
+    progress_event_store.wait_for_progress_update("Awaiting dishMode change to STANDBY_FP")
 
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
@@ -67,7 +68,9 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     assert main_event_store.wait_for_command_id(unique_id, timeout=6)
     assert device_proxy.dishMode == DishMode.STANDBY_FP
 
-    [[_], [unique_id]] = device_proxy.command_inout(command, False)
+    [[_], [unique_id]] = device_proxy.command_inout(command, True)
+    # wait a bit before forcing the updates on the subcomponents
+    main_event_store.get_queue_values()
 
     spfrx_cm._update_component_state(configuredband=Band[band_number])
     ds_cm._update_component_state(indexerposition=IndexerPosition[band_number])

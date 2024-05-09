@@ -608,8 +608,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to STANDBY_LP mode"""
         _is_set_standby_lp_allowed = partial(
             self._dish_mode_model.is_command_allowed,
-            DishMode(self.component_state["dishmode"]).name,
             "SetStandbyLPMode",
+            component_manager=self,
         )
 
         status, response = self.submit_task(
@@ -627,8 +627,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to STANDBY_FP mode"""
         _is_set_standby_fp_allowed = partial(
             self._dish_mode_model.is_command_allowed,
-            DishMode(self.component_state["dishmode"]).name,
             "SetStandbyFPMode",
+            component_manager=self,
         )
 
         status, response = self.submit_task(
@@ -647,8 +647,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         _is_set_operate_mode_allowed = partial(
             self._dish_mode_model.is_command_allowed,
-            DishMode(self.component_state["dishmode"]).name,
             "SetOperateMode",
+            component_manager=self,
         )
         status, response = self.submit_task(
             self._command_map.set_operate_mode,
@@ -711,8 +711,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         _is_configure_band_cmd_allowed = partial(
             self._dish_mode_model.is_command_allowed,
-            DishMode(self.component_state["dishmode"]).name,
             req_cmd,
+            component_manager=self,
         )
 
         status, response = self.submit_task(
@@ -730,8 +730,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to STOW mode"""
         _is_set_stow_mode_allowed = partial(
             self._dish_mode_model.is_command_allowed,
-            DishMode(self.component_state["dishmode"]).name,
             "SetStowMode",
+            component_manager=self,
         )
         status, response = self.submit_task(
             self._command_map.set_stow_mode,

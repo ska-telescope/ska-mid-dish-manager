@@ -53,7 +53,7 @@ def test_b1capabilitystate_change(
     )
 
     # Mimic capabilitystatechanges on sub devices
-    event_store.wait_for_value(DishMode.STANDBY_LP)
+    assert device_proxy.dishMode == DishMode.STANDBY_LP
     spfrx_cm._update_component_state(b1capabilitystate=SPFRxCapabilityStates.STANDBY)
     spf_cm._update_component_state(b1capabilitystate=SPFCapabilityStates.STANDBY)
 

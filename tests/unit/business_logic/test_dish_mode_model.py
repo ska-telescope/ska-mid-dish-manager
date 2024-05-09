@@ -82,6 +82,7 @@ def test_model_dish_mode_transition_accuracy(
     dish_mode_model, current_mode, requested_command, expected_response
 ):
     actual_response = dish_mode_model.is_command_allowed(
-        dishmode=current_mode, command_name=requested_command
+        requested_command,
+        dish_mode=current_mode,
     )
     assert actual_response == expected_response

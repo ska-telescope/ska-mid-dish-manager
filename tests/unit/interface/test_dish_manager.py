@@ -10,7 +10,6 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SPFOperatingMode
 
 
-@pytest.mark.xfail(reason="All events expected on lrc_result dont arrive in test context")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
@@ -19,23 +18,26 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
 
-    dish_mode_event_store = event_store_class()
     result_event_store = event_store_class()
-
-    device_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
+    progress_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "longRunningCommandResult",
         tango.EventType.CHANGE_EVENT,
         result_event_store,
     )
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
+    result_event_store.clear_queue()
 
+    device_proxy.subscribe_event(
+        "longRunningCommandProgress",
+        tango.EventType.CHANGE_EVENT,
+        progress_event_store,
+    )
+
+    assert device_proxy.dishMode == DishMode.STANDBY_LP
     device_proxy.SetStandbyFPMode()
+    progress_event_store.wait_for_progress_update("Awaiting dishMode change to STANDBY_FP")
+
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
 
@@ -52,7 +54,7 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     # ('1680213846.5427592_258218647656556_SetStandbyFPMode',
     # '[0, "SetStandbyFPMode completed"]'))
 
-    events = result_event_store.wait_for_n_events(4, timeout=5)
+    events = result_event_store.wait_for_n_events(3, timeout=5)
     event_values = result_event_store.get_data_from_events(events)
     event_ids = [
         event_value[1][0] for event_value in event_values if event_value[1] and event_value[1][0]

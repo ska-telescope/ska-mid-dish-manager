@@ -67,20 +67,20 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
         progress_event_store,
     )
 
-    assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
-
+    assert device_proxy.dishMode == DishMode.STANDBY_LP
     # Force dishManager dishMode to go to STANDBY-FP
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
+    assert device_proxy.dishMode == DishMode.STANDBY_FP
 
     # Transition DishManager to STANDBY_LP issuing a command
     [[result_code], [_]] = device_proxy.SetStandbyLPMode()
     assert ResultCode(result_code) == ResultCode.QUEUED
-
-    # Clear out the queue to make sure we don't catch old events
-    dish_mode_event_store.clear_queue()
+    # wait a bit before forcing the updates on the subcomponents
+    # this will also clear the queue of any existing events
+    dish_mode_event_store.get_queue_values()
 
     # transition subservient devices to their respective operatingMode
     # and observe that DishManager transitions dishMode to LP mode. No
@@ -90,7 +90,8 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 
     # we can now expect dishMode to transition to STANDBY_LP
-    assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=6)
+    assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
+    assert device_proxy.dishMode == DishMode.STANDBY_LP
 
     expected_progress_updates = [
         "SetStandbyLPMode called on DS",

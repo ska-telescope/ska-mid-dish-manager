@@ -14,6 +14,7 @@ def test_stow_mode(dish_manager_resources, event_store_class):
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
 
     progress_event_store = event_store_class()
+    result_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "longRunningCommandProgress",
@@ -21,7 +22,15 @@ def test_stow_mode(dish_manager_resources, event_store_class):
         progress_event_store,
     )
 
+    device_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        result_event_store,
+    )
+
     device_proxy.SetStowMode()
+    # wait a bit before forcing the updates on the subcomponents
+    result_event_store.get_queue_values()
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
 
     expected_progress_updates = [

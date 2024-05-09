@@ -30,10 +30,10 @@ def test_standby_fp(dish_manager_resources, event_store_class):
         progress_event_store,
     )
 
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
-
-    # Transition DishManager to STANDBY_FP mode
+    assert device_proxy.dishMode == DishMode.STANDBY_LP
     device_proxy.SetStandbyFPMode()
+    # wait a bit before forcing the updates on the subcomponents
+    dish_mode_event_store.get_queue_values()
 
     # transition subservient devices to FP mode and observe that
     # DishManager transitions dishMode to FP mode after all

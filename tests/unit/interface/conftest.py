@@ -1,9 +1,9 @@
 """Contains pytest fixtures for tango unit tests setup"""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import Mock, patch
 
 import pytest
-from ska_control_model import CommunicationStatus
+from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -14,7 +14,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-function-docstring, protected-access
 @pytest.fixture
 def dish_manager_resources():
     with patch(
@@ -39,13 +39,28 @@ def dish_manager_resources():
                 communication_state=CommunicationStatus.ESTABLISHED
             )
 
-        # set up mocks for used methods accessing a device in the sub component managers
-        ds_cm.write_attribute_value = MagicMock()
-        spf_cm.write_attribute_value = MagicMock()
-        spfrx_cm.write_attribute_value = MagicMock()
-        ds_cm.update_state_from_monitored_attributes = MagicMock()
-        spf_cm.update_state_from_monitored_attributes = MagicMock()
-        spfrx_cm.update_state_from_monitored_attributes = MagicMock()
+        # patch run method which spawns a thread
+        def _simulate_lrc_callbacks(*args, **kwargs):
+            task_callback = args[-1]
+            task_callback(status=TaskStatus.IN_PROGRESS)
+            task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(None)))
+            return TaskStatus.QUEUED, "message"
+
+        for com_man in [ds_cm, spf_cm, spfrx_cm]:
+            com_man.run_device_command = Mock(side_effect=_simulate_lrc_callbacks)
+
+        # set up mocks for methods creating a device proxy to the sub component
+        candidate_stub_methods = [
+            "_start_event_consumer_thread",
+            "update_state_from_monitored_attributes",
+            "write_attribute_value",
+            "read_attribute_value",
+            "execute_command",
+        ]
+        for method_name in candidate_stub_methods:
+            setattr(ds_cm, method_name, Mock())
+            setattr(spf_cm, method_name, Mock())
+            setattr(spfrx_cm, method_name, Mock())
 
         # trigger transition to StandbyLP mode
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
