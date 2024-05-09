@@ -1,7 +1,6 @@
 """Unit tests verifying model against DS_SetStowMode transition."""
 
 import logging
-import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -46,9 +45,10 @@ class TestStowMode:
 
     # pylint: disable=missing-function-docstring, protected-access
     def test_stow_mode(self):
-        self.ds_cm._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
-
+        self.ds_cm.execute_command = MagicMock()
         self.ds_cm.update_state_from_monitored_attributes = MagicMock()
-        time.sleep(2)  # add delay
+
         [[result_code], [_]] = self.device_proxy.SetStowMode()
         assert ResultCode(result_code) == ResultCode.OK
+        # Check that call goes straight through to ds device proxy
+        self.ds_cm.execute_command.assert_called_once_with("Stow", None)
