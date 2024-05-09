@@ -1,6 +1,7 @@
 """Unit tests verifying model against DS_SetStowMode transition."""
 
 import logging
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -8,7 +9,6 @@ from ska_control_model import CommunicationStatus, ResultCode
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
-import time
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,6 +49,6 @@ class TestStowMode:
         self.ds_cm._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
 
         self.ds_cm.update_state_from_monitored_attributes = MagicMock()
-        time.sleep(2) # add delay
+        time.sleep(2)  # add delay
         [[result_code], [_]] = self.device_proxy.SetStowMode()
         assert ResultCode(result_code) == ResultCode.OK

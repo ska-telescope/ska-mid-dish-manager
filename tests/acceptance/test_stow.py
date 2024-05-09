@@ -1,6 +1,7 @@
 """Test that DS goes into STOW and dishManager reports it"""
 import pytest
 import tango
+from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
@@ -24,5 +25,7 @@ def test_stow_transition(
     )
 
     dish_manager_proxy.SetStowMode()
+    [[result_code], [_]] = dish_manager_proxy.SetStowMode()
+    assert ResultCode(result_code) == ResultCode.OK
 
     assert main_event_store.wait_for_value(DishMode.STOW, timeout=6)
