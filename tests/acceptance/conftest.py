@@ -1,3 +1,4 @@
+# pylint: disable=R0913
 """Fixtures for running ska-mid-dish-manager acceptance tests"""
 
 import pytest
