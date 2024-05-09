@@ -11,6 +11,7 @@ import pytest
 import tango
 from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
+from tango import AttrQuality
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -72,9 +73,9 @@ class TestDishManager:
 
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
-        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
-        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
-        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
+        self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID])
+        self.spfrx_cm._update_component_state(operatingmode=[SPFRxOperatingMode.STANDBY, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(operatingmode=[SPFOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID])
 
         self.ds_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
         self.spf_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
@@ -101,8 +102,8 @@ class TestDishManager:
 
         self.device_proxy.SetStandbyFPMode()
 
-        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
-        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+        self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STANDBY_FP, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(operatingmode=[SPFOperatingMode.OPERATE, AttrQuality.ATTR_VALID])
 
         # Sample events:
         # ('longrunningcommandresult',

@@ -6,6 +6,7 @@ import pytest
 import tango
 from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
+from tango import AttrQuality
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -72,9 +73,9 @@ class TestConfigureBand:
 
         # trigger transition to StandbyLP mode to
         # mimic automatic transition after startup
-        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
-        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
-        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
+        self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID])
+        self.spfrx_cm._update_component_state(operatingmode=[SPFRxOperatingMode.STANDBY, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(operatingmode=[SPFOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID])
 
     def teardown_method(self):
         """Tear down context"""
@@ -120,18 +121,18 @@ class TestConfigureBand:
 
         [[_], [unique_id]] = self.device_proxy.SetStandbyFPMode()
 
-        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
-        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
+        self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STANDBY_FP, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(operatingmode=[SPFOperatingMode.OPERATE, AttrQuality.ATTR_VALID])
+        self.spfrx_cm._update_component_state(operatingmode=[SPFRxOperatingMode.DATA_CAPTURE, AttrQuality.ATTR_VALID])
 
         assert main_event_store.wait_for_command_id(unique_id, timeout=6)
         assert self.device_proxy.dishMode == DishMode.STANDBY_FP
 
         [[_], [unique_id]] = self.device_proxy.command_inout(command, False)
 
-        self.spfrx_cm._update_component_state(configuredband=Band[band_number])
-        self.ds_cm._update_component_state(indexerposition=IndexerPosition[band_number])
-        self.spf_cm._update_component_state(bandinfocus=BandInFocus[band_number])
+        self.spfrx_cm._update_component_state(configuredband=[Band[band_number], AttrQuality.ATTR_VALID])
+        self.ds_cm._update_component_state(indexerposition=[IndexerPosition[band_number], AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(bandinfocus=[BandInFocus[band_number], AttrQuality.ATTR_VALID])
 
         assert main_event_store.wait_for_command_id(unique_id, timeout=5)
         assert self.device_proxy.configuredBand == Band[band_number]

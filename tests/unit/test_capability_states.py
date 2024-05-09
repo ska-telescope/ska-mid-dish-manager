@@ -8,6 +8,7 @@ import pytest
 import tango
 from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
+from tango import AttrQuality
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -455,9 +456,9 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.dish_manager_cm._update_component_state(dishmode=DishMode.STANDBY_LP)
-        self.spfrx_cm._update_component_state(b1capabilitystate=SPFRxCapabilityStates.STANDBY)
-        self.spf_cm._update_component_state(b1capabilitystate=SPFCapabilityStates.STANDBY)
+        self.dish_manager_cm._update_component_state(dishmode=[DishMode.STANDBY_LP, AttrQuality.ATTR_VALID])
+        self.spfrx_cm._update_component_state(b1capabilitystate=[SPFRxCapabilityStates.STANDBY, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(b1capabilitystate=[SPFCapabilityStates.STANDBY, AttrQuality.ATTR_VALID])
 
         event_store.wait_for_value(CapabilityStates.STANDBY, timeout=7)
 
@@ -476,9 +477,9 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STARTUP)
-        self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.UNAVAILABLE)
-        self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.UNAVAILABLE)
+        self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STARTUP, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(b2capabilitystate=[SPFCapabilityStates.UNAVAILABLE, AttrQuality.ATTR_VALID])
+        self.spfrx_cm._update_component_state(b2capabilitystate=[SPFRxCapabilityStates.UNAVAILABLE, AttrQuality.ATTR_VALID])
 
         event_store.wait_for_value(CapabilityStates.UNAVAILABLE, timeout=7)
 
@@ -497,9 +498,9 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.dish_manager_cm._update_component_state(dishmode=DishMode.STOW)
-        self.spf_cm._update_component_state(b3capabilitystate=SPFCapabilityStates.OPERATE_FULL)
-        self.spfrx_cm._update_component_state(b3capabilitystate=SPFRxCapabilityStates.OPERATE)
+        self.dish_manager_cm._update_component_state(dishmode=[DishMode.STOW, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(b3capabilitystate=[SPFCapabilityStates.OPERATE_FULL, AttrQuality.ATTR_VALID])
+        self.spfrx_cm._update_component_state(b3capabilitystate=[SPFRxCapabilityStates.OPERATE, AttrQuality.ATTR_VALID])
 
         event_store.wait_for_value(CapabilityStates.OPERATE_FULL, timeout=7)
 
@@ -518,10 +519,10 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.dish_manager_cm._update_component_state(dishmode=DishMode.CONFIG)
-        self.ds_cm._update_component_state(indexerposition=IndexerPosition.MOVING)
-        self.spf_cm._update_component_state(b4capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED)
-        self.spfrx_cm._update_component_state(b4capabilitystate=SPFRxCapabilityStates.CONFIGURE)
+        self.dish_manager_cm._update_component_state(dishmode=[DishMode.CONFIG, AttrQuality.ATTR_VALID])
+        self.ds_cm._update_component_state(indexerposition=[IndexerPosition.MOVING, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(b4capabilitystate=[SPFCapabilityStates.OPERATE_DEGRADED, AttrQuality.ATTR_VALID])
+        self.spfrx_cm._update_component_state(b4capabilitystate=[SPFRxCapabilityStates.CONFIGURE, AttrQuality.ATTR_VALID])
 
         event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=7)
 
@@ -541,13 +542,13 @@ class TestCapabilityStates:
 
         # Mimic capabilitystatechanges on sub devices
         self.ds_cm._update_component_state(
-            indexerposition=IndexerPosition.B1,
-            operatingmode=DSOperatingMode.STOW,
+            indexerposition=[IndexerPosition.B1, AttrQuality.ATTR_VALID],
+            operatingmode=[DSOperatingMode.STOW, AttrQuality.ATTR_VALID],
         )
         self.spf_cm._update_component_state(
-            b5acapabilitystate=SPFCapabilityStates.OPERATE_DEGRADED
+            b5acapabilitystate=[SPFCapabilityStates.OPERATE_DEGRADED, AttrQuality.ATTR_VALID]
         )
-        self.spfrx_cm._update_component_state(b5acapabilitystate=SPFRxCapabilityStates.OPERATE)
+        self.spfrx_cm._update_component_state(b5acapabilitystate=[SPFRxCapabilityStates.OPERATE, AttrQuality.ATTR_VALID])
 
         event_store.wait_for_value(CapabilityStates.OPERATE_DEGRADED, timeout=7)
 
@@ -566,8 +567,8 @@ class TestCapabilityStates:
         event_store.clear_queue()
 
         # Mimic capabilitystatechanges on sub devices
-        self.dish_manager_cm._update_component_state(dishmode=DishMode.CONFIG)
-        self.spf_cm._update_component_state(b2capabilitystate=SPFCapabilityStates.OPERATE_FULL)
-        self.spfrx_cm._update_component_state(b2capabilitystate=SPFRxCapabilityStates.CONFIGURE)
+        self.dish_manager_cm._update_component_state(dishmode=[DishMode.CONFIG, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(b2capabilitystate=[SPFCapabilityStates.OPERATE_FULL, AttrQuality.ATTR_VALID])
+        self.spfrx_cm._update_component_state(b2capabilitystate=[SPFRxCapabilityStates.CONFIGURE, AttrQuality.ATTR_VALID])
 
         event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=7)

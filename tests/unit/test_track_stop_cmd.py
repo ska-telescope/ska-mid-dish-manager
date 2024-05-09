@@ -7,6 +7,7 @@ import pytest
 import tango
 from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
+from tango import AttrQuality
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -80,7 +81,7 @@ class TestTrackStop:
             pointing_state_event_store,
         )
 
-        self.ds_cm._update_component_state(pointingstate=current_pointing_state)
+        self.ds_cm._update_component_state(pointingstate=[current_pointing_state, AttrQuality.ATTR_VALID])
         pointing_state_event_store.wait_for_value(current_pointing_state, timeout=5)
 
         with pytest.raises(tango.DevFailed):
@@ -112,11 +113,11 @@ class TestTrackStop:
         )
 
         # Force dishManager dishMode to go to OPERATE
-        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-        self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
+        self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.POINT, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(operatingmode=[SPFOperatingMode.OPERATE, AttrQuality.ATTR_VALID])
+        self.spfrx_cm._update_component_state(operatingmode=[SPFRxOperatingMode.DATA_CAPTURE, AttrQuality.ATTR_VALID])
         main_event_store.wait_for_value(DishMode.OPERATE)
-        self.ds_cm._update_component_state(pointingstate=PointingState.READY)
+        self.ds_cm._update_component_state(pointingstate=[PointingState.READY, AttrQuality.ATTR_VALID])
         main_event_store.wait_for_value(PointingState.READY)
 
         # Clear out the queue to make sure we don't catch old events
@@ -126,10 +127,10 @@ class TestTrackStop:
         [[_], [unique_id]] = self.device_proxy.Track()
 
         # transition DS pointingState to TRACK
-        self.ds_cm._update_component_state(pointingstate=PointingState.SLEW)
+        self.ds_cm._update_component_state(pointingstate=[PointingState.SLEW, AttrQuality.ATTR_VALID])
         main_event_store.wait_for_value(PointingState.SLEW)
 
-        self.ds_cm._update_component_state(pointingstate=PointingState.TRACK)
+        self.ds_cm._update_component_state(pointingstate=[PointingState.TRACK, AttrQuality.ATTR_VALID])
         main_event_store.wait_for_value(PointingState.TRACK)
 
         main_event_store.wait_for_command_id(unique_id, timeout=6)
@@ -138,7 +139,7 @@ class TestTrackStop:
         self.device_proxy.TrackStop()
 
         # transition DS pointingState to TRACK
-        self.ds_cm._update_component_state(pointingstate=PointingState.READY)
+        self.ds_cm._update_component_state(pointingstate=[PointingState.READY, AttrQuality.ATTR_VALID])
         main_event_store.wait_for_value(PointingState.READY)
 
         expected_progress_updates = [

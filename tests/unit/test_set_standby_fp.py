@@ -7,6 +7,7 @@ import pytest
 import tango
 from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
+from tango import AttrQuality
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -57,9 +58,9 @@ class TestSetStandByFPMode:
 
             # trigger transition to StandbyLP mode to
             # mimic automatic transition after startup
-            self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
-            self.spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
-            self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
+            self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID])
+            self.spfrx_cm._update_component_state(operatingmode=[SPFRxOperatingMode.STANDBY, AttrQuality.ATTR_VALID])
+            self.spf_cm._update_component_state(operatingmode=[SPFOperatingMode.STANDBY_LP, AttrQuality.ATTR_VALID])
 
     def teardown_method(self):
         """Tear down context"""
@@ -93,10 +94,10 @@ class TestSetStandByFPMode:
         # transition subservient devices to FP mode and observe that
         # DishManager transitions dishMode to FP mode after all
         # subservient devices are in FP
-        self.ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
-        self.ds_cm._update_component_state(powerstate=DSPowerState.FULL_POWER)
-        self.spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-        self.spf_cm._update_component_state(powerstate=SPFPowerState.FULL_POWER)
+        self.ds_cm._update_component_state(operatingmode=[DSOperatingMode.STANDBY_FP, AttrQuality.ATTR_VALID])
+        self.ds_cm._update_component_state(powerstate=[DSPowerState.FULL_POWER, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(operatingmode=[SPFOperatingMode.OPERATE, AttrQuality.ATTR_VALID])
+        self.spf_cm._update_component_state(powerstate=[SPFPowerState.FULL_POWER, AttrQuality.ATTR_VALID])
         #  we can now expect dishMode to transition to STANDBY_FP
         assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
 

@@ -7,6 +7,7 @@ import pytest
 import tango
 from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
+from tango import AttrQuality
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -85,9 +86,9 @@ class TestSetOperateMode:
         spfrx_cm.update_state_from_monitored_attributes = MagicMock()
 
         # Force dishManager dishMode to go to OPERATE
-        ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-        spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-        spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
+        ds_cm._update_component_state(operatingmode=[DSOperatingMode.POINT, AttrQuality.ATTR_VALID])
+        spf_cm._update_component_state(operatingmode=[SPFOperatingMode.OPERATE, AttrQuality.ATTR_VALID])
+        spfrx_cm._update_component_state(operatingmode=[SPFRxOperatingMode.DATA_CAPTURE, AttrQuality.ATTR_VALID])
         event_store.wait_for_value(DishMode.OPERATE)
 
         with pytest.raises(tango.DevFailed):
@@ -133,9 +134,9 @@ class TestSetOperateMode:
         spf_cm.write_attribute_value = MagicMock()
 
         # Force dishManager dishMode to go to STANDBY_FP
-        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
-        spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-        spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+        ds_cm._update_component_state(operatingmode=[DSOperatingMode.STANDBY_FP, AttrQuality.ATTR_VALID])
+        spf_cm._update_component_state(operatingmode=[SPFOperatingMode.OPERATE, AttrQuality.ATTR_VALID])
+        spfrx_cm._update_component_state(operatingmode=[SPFRxOperatingMode.STANDBY, AttrQuality.ATTR_VALID])
         main_event_store.wait_for_value(DishMode.STANDBY_FP)
 
         # Clear out the queue to make sure we don't catch old events
@@ -147,11 +148,11 @@ class TestSetOperateMode:
             device_proxy.SetOperateMode()
 
         # Set configuredBand and try again
-        ds_cm._update_component_state(indexerposition=IndexerPosition.B1)
-        spf_cm._update_component_state(bandinfocus=BandInFocus.B1)
-        spfrx_cm._update_component_state(configuredband=Band.B1)
+        ds_cm._update_component_state(indexerposition=[IndexerPosition.B1, AttrQuality.ATTR_VALID])
+        spf_cm._update_component_state(bandinfocus=[BandInFocus.B1, AttrQuality.ATTR_VALID])
+        spfrx_cm._update_component_state(configuredband=[Band.B1, AttrQuality.ATTR_VALID])
         # spfrx operating mode transitions to Data Capture after successful band configuration
-        spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
+        spfrx_cm._update_component_state(operatingmode=[SPFRxOperatingMode.DATA_CAPTURE, AttrQuality.ATTR_VALID])
         main_event_store.wait_for_value(Band.B1)
 
         device_proxy.SetOperateMode()
@@ -159,10 +160,10 @@ class TestSetOperateMode:
         # transition subservient devices to their respective operatingMode
         # and observe that DishManager transitions dishMode to OPERATE mode
         # SPF are already in the expected operatingMode
-        ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+        ds_cm._update_component_state(operatingmode=[DSOperatingMode.POINT, AttrQuality.ATTR_VALID])
         # we can now expect dishMode to transition to OPERATE
         main_event_store.wait_for_value(DishMode.OPERATE)
-        ds_cm._update_component_state(pointingstate=PointingState.READY)
+        ds_cm._update_component_state(pointingstate=[PointingState.READY, AttrQuality.ATTR_VALID])
         main_event_store.wait_for_value(PointingState.READY)
 
         expected_progress_updates = [
