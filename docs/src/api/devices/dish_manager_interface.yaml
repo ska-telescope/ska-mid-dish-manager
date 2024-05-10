@@ -249,7 +249,16 @@
       dtype_out: DevVarLongStringArray
     - name: TrackLoadStaticOff
       disp_level: OPERATOR
-      doc_in: Uninitialised
+      doc_in: "\n            Load the static offsets for the currently selected band\
+        \ for correction.\n\n            Pointing model parameters are:\n        \
+        \    [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC,\
+        \ [8] ACES,\n            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC,\
+        \ [14] ECES, [15] HECE4,\n            [16] HESE4, [17] HECE8, [18] HESE8,\
+        \ [19] Eobs\n\n            Note: To change the currently selected band for\
+        \ correction to B<N>, write to the\n            band<N>PointingModelParams\
+        \ attribute.\n\n            When writing we expect a list of 2 values. Namely,\
+        \ CAobs and Eobs. Only those two\n            values will be updated.\n  \
+        \      "
       doc_out: Uninitialised
       dtype_in: DevVarFloatArray
       dtype_out: DevVarLongStringArray
@@ -598,14 +607,21 @@
     - name: band1PointingModelParams
       data_format: SPECTRUM
       data_type: DevFloat
-      description: Parameters for (local) Band 1 pointing models used by Dish to do
-        pointing corrections.
+      description: "\n            Parameters for (local) Band 1 pointing models used\
+        \ by Dish to do pointing corrections.\n\n            When writing to this\
+        \ attribute, the selected band for correction will be set to B1.\n\n     \
+        \       Band 1 pointing model parameters are:\n            [0] IA, [1] CA,\
+        \ [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n      \
+        \      [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15]\
+        \ HECE4,\n            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs\n\n  \
+        \          When writing we expect a list of 2 values. Namely, CAobs and Eobs.\
+        \ Only those two\n            values will be updated.\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
       label: band1PointingModelParams
       max_alarm: Not specified
-      max_dim_x: 5
+      max_dim_x: 20
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -632,13 +648,14 @@
       data_format: SPECTRUM
       data_type: DevFloat
       description: "\n            Parameters for (local) Band 2 pointing models used\
-        \ by Dish to do pointing corrections.\n\n            Band 2 pointing model\
-        \ parameters are:\n            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0,\
-        \ [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n            [9] ABA, [10] ABphi, [11]\
-        \ CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,\n            [16] HESE4,\
-        \ [17] HECE8, [18] HESE8, [19] Eobs\n\n            When writing we expect\
-        \ a list of 2 values. Namely, CAobs and Eobs. Only those two\n           \
-        \ values will be updated.\n        "
+        \ by Dish to do pointing corrections.\n\n            When writing to this\
+        \ attribute, the selected band for correction will be set to B2.\n\n     \
+        \       Band 2 pointing model parameters are:\n            [0] IA, [1] CA,\
+        \ [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n      \
+        \      [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15]\
+        \ HECE4,\n            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs\n\n  \
+        \          When writing we expect a list of 2 values. Namely, CAobs and Eobs.\
+        \ Only those two\n            values will be updated.\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -670,14 +687,21 @@
     - name: band3PointingModelParams
       data_format: SPECTRUM
       data_type: DevFloat
-      description: Parameters for (local) Band 3 pointing models used by Dish to do
-        pointing corrections.
+      description: "\n            Parameters for (local) Band 3 pointing models used\
+        \ by Dish to do pointing corrections.\n\n            When writing to this\
+        \ attribute, the selected band for correction will be set to B3.\n\n     \
+        \       Band 3 pointing model parameters are:\n            [0] IA, [1] CA,\
+        \ [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n      \
+        \      [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15]\
+        \ HECE4,\n            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs\n\n  \
+        \          When writing we expect a list of 2 values. Namely, CAobs and Eobs.\
+        \ Only those two\n            values will be updated.\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
       label: band3PointingModelParams
       max_alarm: Not specified
-      max_dim_x: 5
+      max_dim_x: 20
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -703,14 +727,21 @@
     - name: band4PointingModelParams
       data_format: SPECTRUM
       data_type: DevFloat
-      description: Parameters for (local) Band 4 pointing models used by Dish to do
-        pointing corrections.
+      description: "\n            Parameters for (local) Band 4 pointing models used\
+        \ by Dish to do pointing corrections.\n\n            When writing to this\
+        \ attribute, the selected band for correction will be set to B4.\n\n     \
+        \       Band 4 pointing model parameters are:\n            [0] IA, [1] CA,\
+        \ [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n      \
+        \      [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15]\
+        \ HECE4,\n            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs\n\n  \
+        \          When writing we expect a list of 2 values. Namely, CAobs and Eobs.\
+        \ Only those two\n            values will be updated.\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
       label: band4PointingModelParams
       max_alarm: Not specified
-      max_dim_x: 5
+      max_dim_x: 20
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1660,4 +1691,5 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
+    - name: __SubDevices
     - name: polled_cmd
