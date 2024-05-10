@@ -7,9 +7,9 @@ dependencies:
   version: 0.4.9
 - name: ska-mid-dish-simulators
   repository: https://artefact.skao.int/repository/helm-internal
-  version: 2.0.1
+  version: 2.0.2
 - name: ska-mid-dish-ds-manager
   repository: https://artefact.skao.int/repository/helm-internal
   version: 1.3.0
-digest: sha256:e23166b83da73fb06a030e5ea649fe844843dd3cf936b81437b24378b4124d4a
-generated: "2024-05-09T16:26:08.98093195+02:00"
+digest: sha256:57f310b24d79b51561ebd982d612cf5c66aea7a63ba58adaabd66c84df351069
+generated: "2024-05-09T17:23:20.07368294+02:00"

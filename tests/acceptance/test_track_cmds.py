@@ -93,8 +93,6 @@ def test_track_and_track_stop_cmds(
     el_dir = 1 if current_el < 80 else -1
 
     track_table = [
-        TrackTableLoadMode.NEW,
-        5,  # Number of entries
         current_time_tai_s + 2,
         current_az + 1 * az_dir,
         current_el + 1 * el_dir,
@@ -111,15 +109,17 @@ def test_track_and_track_stop_cmds(
         current_az + 5 * az_dir,
         current_el + 5 * el_dir,
     ]
-    first_table_entry = [track_table[2], track_table[3], track_table[4]]
-    second_table_entry = [track_table[5], track_table[6], track_table[7]]
-    third_table_entry = [track_table[8], track_table[9], track_table[10]]
+    first_table_entry = [track_table[0], track_table[1], track_table[2]]
+    second_table_entry = [track_table[3], track_table[4], track_table[5]]
+    third_table_entry = [track_table[6], track_table[7], track_table[8]]
 
-    dish_manager_proxy.TrackLoadTable(track_table)
+    dish_manager_proxy.programTrackTable = track_table
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
 
     main_event_store.wait_for_command_id(unique_id, timeout=8)
+    main_event_store.wait_for_value(PointingState.SLEW, timeout=6)
+    main_event_store.wait_for_value(PointingState.TRACK, timeout=6)
 
     expected_progress_updates = [
         "Track called on DS, ID",
@@ -138,13 +138,6 @@ def test_track_and_track_stop_cmds(
 
     for message in expected_progress_updates:
         assert message in events_string
-
-    main_event_store.wait_for_value(PointingState.SLEW, timeout=6)
-    main_event_store.wait_for_value(PointingState.TRACK, timeout=6)
-
-    achieved_pointing_event_store.clear_queue()
-    achieved_pointing_az_event_store.clear_queue()
-    achieved_pointing_el_event_store.clear_queue()
 
     # Ensure that we pass through the first three points
     for table_entry in [first_table_entry, second_table_entry, third_table_entry]:
