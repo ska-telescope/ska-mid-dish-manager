@@ -211,12 +211,6 @@ class DishManager(SKAController):
             if comp_state_value is not None:
                 self.push_change_event(attribute_name, comp_state_value)
                 self.push_archive_event(attribute_name, comp_state_value)
-            else:
-                self.logger.info(
-                    "Not pushing change and archive event for "
-                    + attribute_name
-                    + " due to attr value None"
-                )
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """
