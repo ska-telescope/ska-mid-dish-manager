@@ -88,19 +88,19 @@ def test_track_and_track_stop_cmds(
     el_dir = 1 if current_el < 80 else -1
 
     track_table = [
-        current_time_tai_s + 2,
+        current_time_tai_s + 3,
         current_az + 1 * az_dir,
         current_el + 1 * el_dir,
-        current_time_tai_s + 4,
+        current_time_tai_s + 5,
         current_az + 2 * az_dir,
         current_el + 2 * el_dir,
-        current_time_tai_s + 6,
+        current_time_tai_s + 7,
         current_az + 3 * az_dir,
         current_el + 3 * el_dir,
-        current_time_tai_s + 8,
+        current_time_tai_s + 9,
         current_az + 4 * az_dir,
         current_el + 4 * el_dir,
-        current_time_tai_s + 10,
+        current_time_tai_s + 11,
         current_az + 5 * az_dir,
         current_el + 5 * el_dir,
     ]
