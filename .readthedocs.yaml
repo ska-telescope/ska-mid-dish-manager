@@ -4,8 +4,8 @@ build:
   os: "ubuntu-22.04"
   tools:
     python: "3.10"
-  # apt_packages:
-  # - plantuml # Add apt packages that you need present in the container here, for example plantuml
+  apt_packages:
+    - plantuml
   jobs:
     # https://docs.readthedocs.io/en/stable/build-customization.html#install-dependencies-with-poetry
     post_create_environment:
