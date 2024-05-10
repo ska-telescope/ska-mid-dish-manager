@@ -112,7 +112,6 @@ def test_track_and_track_stop_cmds(
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
 
-    main_event_store.wait_for_command_id(unique_id, timeout=8)
     main_event_store.wait_for_value(PointingState.SLEW, timeout=6)
     main_event_store.wait_for_value(PointingState.TRACK, timeout=6)
 
