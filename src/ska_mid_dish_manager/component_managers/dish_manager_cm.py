@@ -51,6 +51,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         logger: logging.Logger,
         command_tracker,
         connection_state_callback,
+        quality_state_callback,
         tango_device_name: str,
         ds_device_fqdn: str,
         spf_device_fqdn: str,
@@ -99,6 +100,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self.logger = logger
         self._connection_state_callback = connection_state_callback
+        self._quality_state_callback = quality_state_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
@@ -125,6 +127,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "spfConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
+                quality_state_callback=self._component_quality_update,
             ),
             "DS": DSComponentManager(
                 ds_device_fqdn,
@@ -147,6 +150,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
+                quality_state_callback=self._component_quality_update,
             ),
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
@@ -169,6 +173,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "spfrxConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
+                quality_state_callback=self._component_quality_update,
             ),
         }
         initial_component_states = {
@@ -208,6 +213,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "desiredPointingEl",
                 "trackInterpolationMode",
             ],
+        }
+
+        # List of the only attributes whose qualities need to be tracked, otherwise
+        self.quality_tracked_attrs = {
+            "attenuationpolh",
+            "attenuationpolv",
         }
 
     def _get_active_sub_component_managers(self) -> dict:
@@ -308,6 +319,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
             # push change events for the connection state attributes
             self._connection_state_callback(attribute_name)
+
+    def _component_quality_update(self, attr_name, quality):
+        # To be called by the subservient device. 
+        # Here we will check whether the quality of this particular attribute needs to be changed based on whether it part of a quality_monitored_attribute list
+        # If so, pass it to dish manager, where the quality will be updated if needed and a change event pushed
+        if attr_name in self.quality_tracked_attrs:
+            self._quality_state_callback(attr_name, quality)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _component_state_changed(self, *args, **kwargs):

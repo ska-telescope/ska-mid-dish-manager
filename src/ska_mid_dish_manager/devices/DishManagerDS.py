@@ -17,7 +17,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, DebugIt, DevFloat, DevString, DispLevel
+from tango import AttrQuality, AttrWriteType, DebugIt, DevFloat, DevString, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -73,6 +73,7 @@ class DishManager(SKAController):
             self.logger,
             self._command_tracker,
             self._update_connection_state_attrs,
+            self._attr_quality_state_changed,
             self.get_name(),
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
@@ -158,6 +159,23 @@ class DishManager(SKAController):
                 self.component_manager.sub_component_managers["DS"].communication_state,
             )
 
+    def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
+        # Do not modify or push quality changes before initialization complete
+        if not hasattr(self, "_component_state_attr_map"):
+            self.logger.warning("Init not completed, rejecting attribute quality update")
+            return
+        
+        # Map of attribute names whose qualities are tracked to the attr object
+        attribute_object_map = {
+            "attenuationpolv" : self.attenuationPolV,
+            "attenuationpolh" : self.attenuationPolH,
+        }
+
+        if (attribute_object_map[attribute_name].get_quality() is AttrQuality.ATTR_INVALID) and (new_attribute_quality is AttrQuality.ATTR_VALID):
+            attribute_object_map[attribute_name].set_quality(new_attribute_quality, False) # Change event will be pushed by component state change due to value change from None to VAL 
+        elif attribute_object_map[attribute_name].get_quality() != new_attribute_quality:
+            attribute_object_map[attribute_name].set_quality(new_attribute_quality, True)
+
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
         if not hasattr(self, "_component_state_attr_map"):
@@ -185,8 +203,11 @@ class DishManager(SKAController):
             attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
             attribute_variable = change_case(attribute_name)
             setattr(self, attribute_variable, comp_state_value)
-            self.push_change_event(attribute_name, comp_state_value)
-            self.push_archive_event(attribute_name, comp_state_value)
+            if comp_state_value is not None:
+                self.push_change_event(attribute_name, comp_state_value)
+                self.push_archive_event(attribute_name, comp_state_value)
+            else:
+                self.logger.info("Not pushing change and archive event for " + attribute_name + " due to attr value None")
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """

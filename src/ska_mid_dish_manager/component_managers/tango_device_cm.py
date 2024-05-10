@@ -47,11 +47,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         *args: Any,
         communication_state_callback: Any = None,
         component_state_callback: Any = None,
+        quality_state_callback: Any = None,
         **kwargs: Any,
     ):
         self._component_state: dict = {}  # type: ignore
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
+        self._quality_state_callback = quality_state_callback
         self._events_queue: PriorityQueue = PriorityQueue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
@@ -73,6 +75,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             max_workers=20,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
+            quality_state_callback=quality_state_callback,
             **kwargs,
         )
 
@@ -146,9 +149,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         try:
             value = event_data.attr_value.value
+            quality = event_data.attr_value.quality
+
             if isinstance(value, np.ndarray):
                 value = list(value)
             self._update_component_state(**{attr_name: value})
+            self._quality_state_callback(attr_name, quality)
         # Catch any errors and log it otherwise it remains hidden
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error updating component state")
