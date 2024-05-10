@@ -4,12 +4,7 @@ import time
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import (
-    Band,
-    DishMode,
-    PointingState,
-    TrackTableLoadMode,
-)
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode, PointingState
 from tests.utils import get_tai_from_unix_s
 
 
