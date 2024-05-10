@@ -321,9 +321,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._connection_state_callback(attribute_name)
 
     def _component_quality_update(self, attr_name, quality):
-        # To be called by the subservient device. 
-        # Here we will check whether the quality of this particular attribute needs to be changed based on whether it part of a quality_monitored_attribute list
-        # If so, pass it to dish manager, where the quality will be updated if needed and a change event pushed
+        # To be called by the subservient device.
+        # Here we will check whether the quality of this particular attribute
+        # needs to be changed based on whether it part of a quality_monitored_attribute list
+        # If so, pass it to dish manager, where the quality will be updated if needed and
+        # a change event pushed
         if attr_name in self.quality_tracked_attrs:
             self._quality_state_callback(attr_name, quality)
 
