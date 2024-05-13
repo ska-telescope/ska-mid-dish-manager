@@ -215,7 +215,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
-        # List of the only attributes whose qualities need to be tracked, otherwise
+        # List of the only attributes whose qualities need to be tracked
         self.quality_tracked_attrs = {
             "attenuationpolh",
             "attenuationpolv",
@@ -321,11 +321,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._connection_state_callback(attribute_name)
 
     def _component_quality_update(self, attr_name, quality):
-        # To be called by the subservient device.
-        # Here we will check whether the quality of this particular attribute
-        # needs to be changed based on whether it part of a quality_monitored_attribute list
-        # If so, pass it to dish manager, where the quality will be updated if needed and
-        # a change event pushed
+        """
+        Callback triggered by Tango device cm instance for each subservient
+
+        This method utilizes the "quality_tracked_attrs" list to filter out
+        change events for only a specific list of attributes whose attribute
+        qualities may need to be updated.
+
+        If an attribute is contained within the list, the change event is
+        passed to dish manager, where dish manager will then change the
+        attribute quality and pushes the change event containing the quality update
+        """
         if attr_name in self.quality_tracked_attrs:
             self._quality_state_callback(attr_name, quality)
 

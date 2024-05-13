@@ -138,7 +138,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: Tango event
         :type event_data: tango.EventData
         """
-
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
@@ -149,15 +148,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         try:
             value = event_data.attr_value.value
-            quality = event_data.attr_value.quality
-
             if isinstance(value, np.ndarray):
                 value = list(value)
             self._update_component_state(**{attr_name: value})
-            self._quality_state_callback(attr_name, quality)
         # Catch any errors and log it otherwise it remains hidden
         except Exception:  # pylint:disable=broad-except
-            self.logger.exception("Error updating component state")
+            self.logger.exception("Error updating component state or")
+
+        try:
+            quality = event_data.attr_value.quality
+            self._quality_state_callback(attr_name, quality)
+        except Exception:  # pylint:disable=broad-except
+            self.logger.exception("Error occurred on attribute quality state update")
 
     def _start_event_consumer_thread(self) -> None:
         self.submit_task(
