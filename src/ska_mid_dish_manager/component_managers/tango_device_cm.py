@@ -153,7 +153,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._update_component_state(**{attr_name: value})
         # Catch any errors and log it otherwise it remains hidden
         except Exception:  # pylint:disable=broad-except
-            self.logger.exception("Error updating component state or")
+            self.logger.exception("Error updating component state")
 
         try:
             quality = event_data.attr_value.quality

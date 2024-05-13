@@ -177,7 +177,7 @@ class DishManager(SKAController):
             attribute_object_map[attribute_name].set_quality(
                 new_attribute_quality, False
             )  # Change event will be pushed by component state change due to value change
-            # from None to VAL
+            # from None to a value
         elif attribute_object_map[attribute_name].get_quality() != new_attribute_quality:
             attribute_object_map[attribute_name].set_quality(new_attribute_quality, True)
 
