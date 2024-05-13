@@ -1659,7 +1659,7 @@ class DishManager(SKAController):
         """
         This command sets the kValue on SPFRx.
         Note that it will only take effect after
-        the next SPFRx restart.
+        SPFRx has been restarted.
         """
         handler = self.get_command_object("SetKValue")
         return_code, message = handler(value)
