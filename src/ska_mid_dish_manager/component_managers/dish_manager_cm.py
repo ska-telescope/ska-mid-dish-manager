@@ -825,7 +825,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         k_value,
     ) -> Tuple[ResultCode, str]:
-        """Set the k-value on the SPFRx"""
+        """Set the k-value on the SPFRx
+        but it will not take effect until
+        the next restart of the SPFRx.
+        """
         spfrx_cm = self.sub_component_managers["SPFRX"]
         try:
             result = spfrx_cm.execute_command("SetKValue", k_value)
