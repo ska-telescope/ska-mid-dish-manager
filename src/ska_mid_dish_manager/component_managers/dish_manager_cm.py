@@ -588,15 +588,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Set the SPF device ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespf"][0]:
             self.logger.debug("Setting ignore SPF device as %s", ignored)
-            self._update_component_state(ignorespf=ignored)
+            self._update_component_state(ignorespf=[ignored, tango.AttrQuality.ATTR_VALID])
             if ignored:
                 if "SPF" in self.sub_component_managers:
                     self.sub_component_managers["SPF"].stop_communicating()
                     self.sub_component_managers["SPF"].clear_monitored_attributes()
-                self._update_component_state(spfconnectionstate=CommunicationStatus.DISABLED)
+                self._update_component_state(spfconnectionstate=[CommunicationStatus.DISABLED, tango.AttrQuality.ATTR_VALID])
             else:
                 self._update_component_state(
-                    spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED
+                    spfconnectionstate=[CommunicationStatus.NOT_ESTABLISHED, tango.AttrQuality.ATTR_VALID]
                 )
                 self.sub_component_managers["SPF"].start_communicating()
 
@@ -604,19 +604,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Set the SPFRxdevice ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespfrx"][0]:
             self.logger.debug("Setting ignore SPFRx device as %s", ignored)
-            self._update_component_state(ignorespfrx=ignored)
+            self._update_component_state(ignorespfrx=[ignored, tango.AttrQuality.ATTR_VALID])
             if ignored:
                 if "SPFRX" in self.sub_component_managers:
                     self.sub_component_managers["SPFRX"].stop_communicating()
                     self.sub_component_managers["SPFRX"].clear_monitored_attributes()
-                self._update_component_state(spfrxconnectionstate=CommunicationStatus.DISABLED)
+                self._update_component_state(spfrxconnectionstate=[CommunicationStatus.DISABLED, tango.AttrQuality.ATTR_VALID])
             else:
                 self._update_component_state(
-                    spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED
+                    spfrxconnectionstate=[CommunicationStatus.NOT_ESTABLISHED, tango.AttrQuality.ATTR_VALID]
                 )
                 self.sub_component_managers["SPFRX"].start_communicating()
 
-            self._update_component_state(ignorespfrx=ignored)
+            self._update_component_state(ignorespfrx=[ignored, tango.AttrQuality.ATTR_VALID])
 
     def is_device_ignored(self, device: str):
         """Check whether the given device is ignored."""
