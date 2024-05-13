@@ -593,10 +593,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if "SPF" in self.sub_component_managers:
                     self.sub_component_managers["SPF"].stop_communicating()
                     self.sub_component_managers["SPF"].clear_monitored_attributes()
-                self._update_component_state(spfconnectionstate=[CommunicationStatus.DISABLED, tango.AttrQuality.ATTR_VALID])
+                self._update_component_state(
+                    spfconnectionstate=[CommunicationStatus.DISABLED, tango.AttrQuality.ATTR_VALID]
+                )
             else:
                 self._update_component_state(
-                    spfconnectionstate=[CommunicationStatus.NOT_ESTABLISHED, tango.AttrQuality.ATTR_VALID]
+                    spfconnectionstate=[
+                        CommunicationStatus.NOT_ESTABLISHED,
+                        tango.AttrQuality.ATTR_VALID,
+                    ]
                 )
                 self.sub_component_managers["SPF"].start_communicating()
 
@@ -609,10 +614,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if "SPFRX" in self.sub_component_managers:
                     self.sub_component_managers["SPFRX"].stop_communicating()
                     self.sub_component_managers["SPFRX"].clear_monitored_attributes()
-                self._update_component_state(spfrxconnectionstate=[CommunicationStatus.DISABLED, tango.AttrQuality.ATTR_VALID])
+                self._update_component_state(
+                    spfrxconnectionstate=[
+                        CommunicationStatus.DISABLED,
+                        tango.AttrQuality.ATTR_VALID,
+                    ]
+                )
             else:
                 self._update_component_state(
-                    spfrxconnectionstate=[CommunicationStatus.NOT_ESTABLISHED, tango.AttrQuality.ATTR_VALID]
+                    spfrxconnectionstate=[
+                        CommunicationStatus.NOT_ESTABLISHED,
+                        tango.AttrQuality.ATTR_VALID,
+                    ]
                 )
                 self.sub_component_managers["SPFRX"].start_communicating()
 

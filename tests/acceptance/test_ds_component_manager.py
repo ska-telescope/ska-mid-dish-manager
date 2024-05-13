@@ -32,10 +32,14 @@ def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     com_man.start_communicating()
 
     device_proxy.SetStandbyFPMode()
-    component_state_store.wait_for_value("operatingmode", [DSOperatingMode.STANDBY_FP, tango.AttrQuality.ATTR_VALID])
+    component_state_store.wait_for_value(
+        "operatingmode", [DSOperatingMode.STANDBY_FP, tango.AttrQuality.ATTR_VALID]
+    )
 
     device_proxy.SetStandbyLPMode()
-    component_state_store.wait_for_value("operatingmode", [DSOperatingMode.STANDBY_LP, tango.AttrQuality.ATTR_VALID])
+    component_state_store.wait_for_value(
+        "operatingmode", [DSOperatingMode.STANDBY_LP, tango.AttrQuality.ATTR_VALID]
+    )
 
     assert "achievedPointing" in device_proxy.get_attribute_list()
 
