@@ -1572,9 +1572,9 @@ class DishManager(SKAController):
     )
     def SetKValue(self, value) -> DevVarLongStringArrayType:
         """
-        This command sets the kValue on SPFRx
-        but it will not take effect until the
-        next restart of the SPFRx.
+        This command sets the kValue on SPFRx.
+        Note, it will only take effect after
+        the next SPFRx restart.
         """
         handler = self.get_command_object("SetKValue")
         return_code, message = handler(value)
