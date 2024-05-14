@@ -277,7 +277,10 @@ class DishManager(SKAController):
                 "achievedpointing": "achievedPointing",
                 "achievedpointingaz": "achievedPointingAz",
                 "achievedpointingel": "achievedPointingEl",
+                "band1pointingmodelparams": "band1PointingModelParams",
                 "band2pointingmodelparams": "band2PointingModelParams",
+                "band3pointingmodelparams": "band3PointingModelParams",
+                "band4pointingmodelparams": "band4PointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
@@ -476,10 +479,21 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(DevFloat,),
-        max_dim_x=5,
+        max_dim_x=20,
         access=AttrWriteType.READ_WRITE,
-        doc="Parameters for (local) Band 1 pointing models used by Dish to do "
-        "pointing corrections.",
+        doc="""
+            Parameters for (local) Band 1 pointing models used by Dish to do pointing corrections.
+
+            When writing to this attribute, the selected band for correction will be set to B1.
+
+            Band 1 pointing model parameters are:
+            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
+            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
+            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
+
+            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
+            values will be updated.
+        """,
     )
     def band1PointingModelParams(self):
         """Returns the band1PointingModelParams"""
@@ -488,10 +502,21 @@ class DishManager(SKAController):
     @band1PointingModelParams.write
     def band1PointingModelParams(self, value):
         """Set the band1PointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band1_pointing_model_params = value
-        self.push_change_event("band1PointingModelParams", value)
-        self.push_archive_event("band1PointingModelParams", value)
+        self.logger.debug("band1PointingModelParams write method called with params %s", value)
+
+        # The argument value is a list of two floats: [off_xel, off_el]
+        if len(value) != 2:
+            raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
+
+        if hasattr(self, "component_manager"):
+            if "DS" in self.component_manager.sub_component_managers:
+                try:
+                    ds_com_man = self.component_manager.sub_component_managers["DS"]
+                    ds_com_man.write_attribute_value("band1PointingModelParams", value)
+                except tango.DevFailed:
+                    self.logger.exception("Could not reach DS to write band1PointingModelParams")
+        else:
+            self.logger.warning("No component manager to write band1PointingModelParams yet")
 
     @attribute(
         dtype=(DevFloat,),
@@ -499,6 +524,8 @@ class DishManager(SKAController):
         access=AttrWriteType.READ_WRITE,
         doc="""
             Parameters for (local) Band 2 pointing models used by Dish to do pointing corrections.
+
+            When writing to this attribute, the selected band for correction will be set to B2.
 
             Band 2 pointing model parameters are:
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
@@ -534,10 +561,21 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(DevFloat,),
-        max_dim_x=5,
+        max_dim_x=20,
         access=AttrWriteType.READ_WRITE,
-        doc="Parameters for (local) Band 3 pointing models used by Dish to do "
-        "pointing corrections.",
+        doc="""
+            Parameters for (local) Band 3 pointing models used by Dish to do pointing corrections.
+
+            When writing to this attribute, the selected band for correction will be set to B3.
+
+            Band 3 pointing model parameters are:
+            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
+            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
+            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
+
+            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
+            values will be updated.
+        """,
     )
     def band3PointingModelParams(self):
         """Returns the band3PointingModelParams"""
@@ -546,17 +584,39 @@ class DishManager(SKAController):
     @band3PointingModelParams.write
     def band3PointingModelParams(self, value):
         """Set the band3PointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band3_pointing_model_params = value
-        self.push_change_event("band3PointingModelParams", value)
-        self.push_archive_event("band3PointingModelParams", value)
+        self.logger.debug("band3PointingModelParams write method called with params %s", value)
+
+        # The argument value is a list of two floats: [off_xel, off_el]
+        if len(value) != 2:
+            raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
+
+        if hasattr(self, "component_manager"):
+            if "DS" in self.component_manager.sub_component_managers:
+                try:
+                    ds_com_man = self.component_manager.sub_component_managers["DS"]
+                    ds_com_man.write_attribute_value("band3PointingModelParams", value)
+                except tango.DevFailed:
+                    self.logger.exception("Could not reach DS to write band3PointingModelParams")
+        else:
+            self.logger.warning("No component manager to write band3PointingModelParams yet")
 
     @attribute(
         dtype=(DevFloat,),
-        max_dim_x=5,
+        max_dim_x=20,
         access=AttrWriteType.READ_WRITE,
-        doc="Parameters for (local) Band 4 pointing models used by Dish to do "
-        "pointing corrections.",
+        doc="""
+            Parameters for (local) Band 4 pointing models used by Dish to do pointing corrections.
+
+            When writing to this attribute, the selected band for correction will be set to B4.
+
+            Band 4 pointing model parameters are:
+            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
+            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
+            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
+
+            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
+            values will be updated.
+        """,
     )
     def band4PointingModelParams(self):
         """Returns the band4PointingModelParams"""
@@ -565,10 +625,21 @@ class DishManager(SKAController):
     @band4PointingModelParams.write
     def band4PointingModelParams(self, value):
         """Set the band4PointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band4_pointing_model_params = value
-        self.push_change_event("band4PointingModelParams", value)
-        self.push_archive_event("band4PointingModelParams", value)
+        self.logger.debug("band4PointingModelParams write method called with params %s", value)
+
+        # The argument value is a list of two floats: [off_xel, off_el]
+        if len(value) != 2:
+            raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
+
+        if hasattr(self, "component_manager"):
+            if "DS" in self.component_manager.sub_component_managers:
+                try:
+                    ds_com_man = self.component_manager.sub_component_managers["DS"]
+                    ds_com_man.write_attribute_value("band4PointingModelParams", value)
+                except tango.DevFailed:
+                    self.logger.exception("Could not reach DS to write band4PointingModelParams")
+        else:
+            self.logger.warning("No component manager to write band4PointingModelParams yet")
 
     @attribute(
         dtype=(DevFloat,),
@@ -1524,6 +1595,20 @@ class DishManager(SKAController):
     @command(  # type: ignore[misc]
         dtype_in="DevVarFloatArray",
         dtype_out="DevVarLongStringArray",
+        doc_in="""
+            Load the static offsets for the currently selected band for correction.
+
+            Pointing model parameters are:
+            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
+            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
+            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
+
+            Note: To change the currently selected band for correction to B<N>, write to the
+            band<N>PointingModelParams attribute.
+
+            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
+            values will be updated.
+        """,
     )
     @DebugIt()  # type: ignore[misc]
     def TrackLoadStaticOff(self, values) -> DevVarLongStringArrayType:
