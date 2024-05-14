@@ -6,7 +6,7 @@ state of the device to decide if the requested state is a nearby node to allow o
 import typing
 from dataclasses import dataclass, field
 
-# pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods,protected-access
 from typing import Any
 
 import networkx as nx
@@ -144,6 +144,19 @@ class DishModeModel:
 
         if cmd_name in allowed_commands:
             return True
+
+        if component_manager:
+            msg = (
+                f"{cmd_name} not allowed in {current_dish_mode} dishMode."
+                f" Commands allowed from {current_dish_mode} are: {allowed_commands}."
+            )
+            logger = component_manager.logger
+            task_callback = component_manager._command_tracker
+
+            # report the reason for the command rejection to logs and lrc attribute
+            task_callback(progress=msg)  # status and result are handled in executor
+            logger.debug(msg)
+
         return False
 
 
