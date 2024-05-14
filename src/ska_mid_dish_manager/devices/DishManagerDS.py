@@ -21,6 +21,7 @@ from tango import AttrWriteType, DebugIt, DevFloat, DevString, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.interface.input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
@@ -253,8 +254,6 @@ class DishManager(SKAController):
             device._spf_connection_state = CommunicationStatus.NOT_ESTABLISHED
             device._spfrx_connection_state = CommunicationStatus.NOT_ESTABLISHED
             device._ds_connection_state = CommunicationStatus.NOT_ESTABLISHED
-
-            device._monitor_ping_log_sent = False
 
             device.op_state_model.perform_action("component_standby")
 
@@ -1172,14 +1171,9 @@ class DishManager(SKAController):
                 if "SPFRX" in self.component_manager.sub_component_managers:
                     try:
                         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-                        spfrx_com_man.execute_command("MonitorPing", None, log_command=False)
-                    except tango.DevFailed:
-                        if not self._monitor_ping_log_sent:
-                            self.logger.exception("Could not reach SPFRx")
-                            self._monitor_ping_log_sent = True
-                    else:
-                        # Reset after successful ping so if it fails in future it logs again
-                        self._monitor_ping_log_sent = False
+                        spfrx_com_man.execute_command("MonitorPing", None)
+                    except (LostConnection, tango.DevFailed):
+                        self.logger.exception("Could not command SPFRx")
 
     # pylint: disable=too-few-public-methods
     class AbortCommandsCommand(SlowCommand):

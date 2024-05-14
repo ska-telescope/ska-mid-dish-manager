@@ -277,26 +277,32 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(result)))
 
     @_check_connection
-    def execute_command(
-        self, command_name: str, command_arg: Any, log_command: bool = True
-    ) -> Any:
+    def execute_command(self, command_name: str, command_arg: Any) -> Any:
         """Check the connection and execute the command on the Tango device"""
-        if log_command:
-            self.logger.debug(
-                "About to execute command [%s] on device [%s]",
-                command_name,
-                self._tango_device_fqdn,
-            )
+        self.logger.debug(
+            "About to execute command [%s] on device [%s]",
+            command_name,
+            self._tango_device_fqdn,
+        )
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = device_proxy.command_inout(command_name, command_arg)
-            if log_command:
-                self.logger.debug(
-                    "Result of [%s] on [%s] is [%s]",
+            result = None
+            try:
+                result = device_proxy.command_inout(command_name, command_arg)
+            except tango.DevFailed:
+                self.logger.exception(
+                    "Could not execute command [%s] with arg [%s] on [%s]",
                     command_name,
+                    command_arg,
                     self._tango_device_fqdn,
-                    result,
                 )
+                raise
+            self.logger.debug(
+                "Result of [%s] on [%s] is [%s]",
+                command_name,
+                self._tango_device_fqdn,
+                result,
+            )
         return result
 
     @_check_connection
