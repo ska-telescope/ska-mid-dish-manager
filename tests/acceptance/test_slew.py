@@ -5,9 +5,8 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 ELEV_MECHANICAL_LIMIT_MAX = 85.0
-ELEV_DRIVE_RATE = 1.0
 AZIM_MECHANICAL_LIMIT_MAX = 360.0
-AZIM_DRIVE_RATE = 3.0
+
 
 # pylint: disable=too-many-locals,unused-argument
 @pytest.mark.acceptance
