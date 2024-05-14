@@ -1984,13 +1984,13 @@ reference = "ska-nexus"
 
 [[package]]
 name = "ska-tango-base"
-version = "0.19.3"
+version = "0.19.1"
 description = "SKA Tango base classes"
 optional = false
 python-versions = ">=3.8.1,<4.0.0"
 files = [
-    {file = "ska_tango_base-0.19.3-py3-none-any.whl", hash = "sha256:b5a7e8fb9e9ab55189d0e8e3def30436b2fe5ac8b40b46510d3a5e8d7e495c10"},
-    {file = "ska_tango_base-0.19.3.tar.gz", hash = "sha256:914cfc09f1ebb3054a952434d751649804c3a2500785bd2e15f60d9aad0b57ce"},
+    {file = "ska_tango_base-0.19.1-py3-none-any.whl", hash = "sha256:d36aa5ecc7b8541fd43cbce5eaab8a1c5cd22730c32a7cd5c8ca992f2af5bcf6"},
+    {file = "ska_tango_base-0.19.1.tar.gz", hash = "sha256:b1348d16303f00cef340ba3c53dbeb2d227c11e60e019e6ce33cb986301b5cad"},
 ]
 
 [package.dependencies]
@@ -2596,4 +2596,4 @@ reference = "PyPI-public"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10"
-content-hash = "081c262b940013648440d6da04ef13de4673956be3432fd4bc1f5770c027aef9"
+content-hash = "8329a3c0ae3e96ec145a8a4afd84b463919049f0f3989c936cb612cd5020c960"
