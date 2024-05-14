@@ -750,17 +750,23 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STOW mode"""
+        """Transition the dish to STOW mode. Skipping the queue"""
 
         self._dish_mode_model.is_command_allowed(
             dishmode=DishMode(self.component_state["dishmode"]).name,
             command_name="SetStowMode",
             task_callback=task_callback,
         )
-        status, response = self.submit_task(
-            self._command_map.set_stow_mode, args=[], task_callback=task_callback
-        )
-        return status, response
+
+        ds_cm = self.sub_component_managers["DS"]
+        try:
+            result = ds_cm.execute_command("Stow", None)
+            task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(result)))
+            return TaskStatus.COMPLETED, "Stow called on DS Manager"
+        except (tango.DevFailed, LostConnection) as err:
+            self.logger.exception("Error calling Stow on DS Manager")
+            task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
+            return TaskStatus.FAILED, f"{err}"
 
     def slew(
         self,

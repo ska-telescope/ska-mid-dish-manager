@@ -229,29 +229,6 @@ class CommandMap:
             band_enum,
         )
 
-    def set_stow_mode(
-        self,
-        task_abort_event=None,
-        task_callback: Optional[Callable] = None,
-    ):
-        """Transition the dish to Stow mode"""
-        commands_for_sub_devices = {
-            "DS": {
-                "command": "Stow",
-                "awaitedAttribute": "operatingmode",
-                "awaitedValuesList": [DSOperatingMode.STOW],
-            },
-        }
-
-        self._run_long_running_command(
-            task_callback,
-            task_abort_event,
-            commands_for_sub_devices,
-            "Stow",
-            "dishmode",
-            DishMode.STOW,
-        )
-
     def slew(
         self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None
     ):
