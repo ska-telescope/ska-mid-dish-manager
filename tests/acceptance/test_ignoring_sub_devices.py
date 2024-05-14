@@ -1,19 +1,46 @@
 """Test ignoring subservient devices."""
+# pylint: disable=invalid-name, redefined-outer-name
 import pytest
 import tango
 
 from tests.utils import set_ignored_devices
 
 
+@pytest.fixture
+def toggle_ignore_spfrx(dish_manager_proxy):
+    """Ignore SPFRx"""
+    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=True)
+    yield
+    set_ignored_devices(
+        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
+    )
+
+
+@pytest.fixture
+def toggle_ignore_spf(dish_manager_proxy):
+    """Ignore SPF"""
+    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False)
+    yield
+    set_ignored_devices(
+        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
+    )
+
+
+@pytest.fixture
+def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
+    """Ignore SPF and SPFRx"""
+    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=True)
+    yield
+    set_ignored_devices(
+        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
+    )
+
+
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_ignoring_spf(
-    event_store_class,
-    dish_manager_proxy,
-):
+def test_ignoring_spf(toggle_ignore_spf, event_store_class, dish_manager_proxy):
     """Test ignoring SPF device."""
-    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False)
 
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -55,12 +82,8 @@ def test_ignoring_spf(
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_ignoring_spfrx(
-    event_store_class,
-    dish_manager_proxy,
-):
+def test_ignoring_spfrx(toggle_ignore_spfrx, event_store_class, dish_manager_proxy):
     """Test ignoring SPFRX device."""
-    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=True)
 
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -106,13 +129,8 @@ def test_ignoring_spfrx(
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
-def test_ignoring_all(
-    event_store_class,
-    dish_manager_proxy,
-):
+def test_ignoring_all(toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy):
     """Test ignoring both SPF and SPFRx devices."""
-    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=True)
-
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
 
