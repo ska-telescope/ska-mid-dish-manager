@@ -37,7 +37,7 @@ url = 'https://pypi.org/simple'
 python = "~3.10"
 pytango = "9.4.2"
 ska-ser-logging = "^0.4.1"
-ska-tango-base = { git = "https://gitlab.com/ska-telescope/ska-tango-base.git", branch = "kar-878-revert-max-workers-deprecation" }
+ska-tango-base = "0.19.3"
 ska-tango-testing = "0.2.0"
 pytest-timeout = "^2.1.0"
 networkx = "2.6.3"
