@@ -1,6 +1,6 @@
 """Unit tests verifying model against dishMode transitions."""
 
-# pylint: disable=too-many-lines,missing-function-docstring
+# pylint: disable=too-many-lines,missing-function-docstring,C0302
 import pytest
 from ska_control_model import HealthState
 
