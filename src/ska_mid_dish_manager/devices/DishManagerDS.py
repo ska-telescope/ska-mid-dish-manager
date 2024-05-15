@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,access-member-before-definition
 # pylint: disable=C0302,W0212,W0201
 """
 This module implements the dish manager device for DishLMC.
@@ -21,6 +21,7 @@ from tango import AttrWriteType, DebugIt, DevFloat, DevString, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.interface.input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
@@ -1170,8 +1171,12 @@ class DishManager(SKAController):
                     try:
                         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
                         spfrx_com_man.execute_command("MonitorPing", None)
+                    except LostConnection:
+                        self.logger.error(
+                            "Could not connect to [%s] for MonitorPing", self.SPFRxDeviceFqdn
+                        )
                     except tango.DevFailed:
-                        self.logger.debug("Could not reach SPFRx")
+                        pass
 
     # pylint: disable=too-few-public-methods
     class AbortCommandsCommand(SlowCommand):

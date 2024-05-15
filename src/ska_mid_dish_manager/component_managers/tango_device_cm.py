@@ -286,7 +286,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = device_proxy.command_inout(command_name, command_arg)
+            result = None
+            try:
+                result = device_proxy.command_inout(command_name, command_arg)
+            except tango.DevFailed:
+                self.logger.exception(
+                    "Could not execute command [%s] with arg [%s] on [%s]",
+                    command_name,
+                    command_arg,
+                    self._tango_device_fqdn,
+                )
+                raise
             self.logger.debug(
                 "Result of [%s] on [%s] is [%s]",
                 command_name,
@@ -327,7 +337,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # here will be inefficient. Consider moving the declaration out of this function.
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = device_proxy.write_attribute(attribute_name, attribute_value)
+            result = None
+            try:
+                result = device_proxy.write_attribute(attribute_name, attribute_value)
+            except tango.DevFailed:
+                self.logger.exception(
+                    "Could not write to attribute [%s] with [%s] on [%s]",
+                    attribute_name,
+                    attribute_value,
+                    self._tango_device_fqdn,
+                )
+                raise
             self.logger.debug(
                 "Result of writing [%s] on [%s] is [%s]",
                 attribute_name,
