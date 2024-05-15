@@ -35,7 +35,7 @@ def test_ignoring_spf(
     expected_progress_updates = [
         "SetStandbyFPMode called on DS",
         "SPF device is disabled. SetOperateMode call ignored",
-        "Awaiting dishMode change to STANDBY_FP",
+        "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
 
@@ -85,7 +85,7 @@ def test_ignoring_spfrx(
         "SetStandbyLPMode called on DS",
         "SetStandbyLPMode called on SPF",
         "SPFRX device is disabled. SetStandbyMode call ignored",
-        "Awaiting dishMode change to STANDBY_LP",
+        "Awaiting dishmode change to STANDBY_LP",
         "SetStandbyLPMode completed",
     ]
 
@@ -135,7 +135,7 @@ def test_ignoring_all(
         "SetStandbyLPMode called on DS",
         "SPF device is disabled. SetStandbyLPMode call ignored",
         "SPFRX device is disabled. SetStandbyMode call ignored",
-        "Awaiting dishMode change to STANDBY_LP",
+        "Awaiting dishmode change to STANDBY_LP",
         "SetStandbyLPMode completed",
     ]
 
