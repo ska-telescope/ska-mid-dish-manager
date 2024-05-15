@@ -398,16 +398,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             self._update_component_state(pointingstate=ds_component_state["pointingstate"])
 
-            if ds_component_state["pointingstate"] in [
-                PointingState.SLEW,
-                PointingState.READY,
-            ]:
-                # TODO ST (04/2024) achievedtargetlock needs to be determined
-                # from configured threshold, see configureTargetLock
-                self._update_component_state(achievedtargetlock=False)
-            elif ds_component_state["pointingstate"] == PointingState.TRACK:
-                self._update_component_state(achievedtargetlock=True)
-
         # spf bandInFocus
         if not self.is_device_ignored("SPF") and (
             "indexerposition" in kwargs or "configuredband" in kwargs

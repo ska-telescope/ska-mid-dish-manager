@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,access-member-before-definition
 # pylint: disable=C0302,W0212,W0201
 """
 This module implements the dish manager device for DishLMC.
@@ -21,6 +21,7 @@ from tango import AttrWriteType, DebugIt, DevFloat, DevString, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.interface.input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
@@ -263,6 +264,7 @@ class DishManager(SKAController):
                 "pointingstate": "pointingState",
                 "configuredband": "configuredBand",
                 "achievedtargetlock": "achievedTargetLock",
+                "configuretargetlock": "configureTargetLock",
                 "healthstate": "healthState",
                 "b1capabilitystate": "b1CapabilityState",
                 "b2capabilitystate": "b2CapabilityState",
@@ -327,7 +329,6 @@ class DishManager(SKAController):
                 "band5aSamplerFrequency",
                 "band5bSamplerFrequency",
                 "capturing",
-                "configureTargetLock",
                 "dshMaxShortTermPower",
                 "dshPowerCurtailment",
                 "frequencyResponse",
@@ -417,6 +418,7 @@ class DishManager(SKAController):
         doc="Indicates whether the Dish is on target or not based on the "
         "pointing error and time period parameters defined in "
         "configureTargetLock.",
+        access=AttrWriteType.READ,
     )
     def achievedTargetLock(self):
         """Returns the achievedTargetLock"""
@@ -810,8 +812,8 @@ class DishManager(SKAController):
         """Set the configureTargetLock"""
         # pylint: disable=attribute-defined-outside-init
         self._configure_target_lock = value
-        self.push_change_event("configureTargetLock", value)
-        self.push_archive_event("configureTargetLock", value)
+        ds_com_man = self.component_manager.sub_component_managers["DS"]
+        ds_com_man.write_attribute_value("configureTargetLock", value)
 
     @attribute(
         max_dim_x=2,
@@ -1170,8 +1172,12 @@ class DishManager(SKAController):
                     try:
                         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
                         spfrx_com_man.execute_command("MonitorPing", None)
+                    except LostConnection:
+                        self.logger.error(
+                            "Could not connect to [%s] for MonitorPing", self.SPFRxDeviceFqdn
+                        )
                     except tango.DevFailed:
-                        self.logger.debug("Could not reach SPFRx")
+                        pass
 
     # pylint: disable=too-few-public-methods
     class AbortCommandsCommand(SlowCommand):
@@ -1502,22 +1508,21 @@ class DishManager(SKAController):
 
     @command(
         dtype_in="DevVarFloatArray",
-        doc_in="[0]: Azimuth\n[1]: Elevation,\n[2]: Azimuth Speed,\n[3]: Elevation Speed",
+        doc_in="[0]: Azimuth\n[1]: Elevation",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def Slew(self, values):  # pylint: disable=unused-argument
         """
-        Trigger the Dish to start moving at the given speeds to the commanded (Az,El) position.
+        Trigger the Dish to start moving to the commanded (Az,El) position.
 
-        :param argin: the az, el, az speed, and el speed for the pointing in stringified json
-            format
+        :param argin: the az, el for the pointing in stringified json format
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        if len(values) != 4:
-            raise ValueError(f"Length of argument ({len(values)}) is not as expected (4).")
+        if len(values) != 2:
+            raise ValueError(f"Length of argument ({len(values)}) is not as expected (2).")
 
         handler = self.get_command_object("Slew")
         result_code, unique_id = handler(values)
