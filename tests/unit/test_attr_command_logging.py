@@ -1,3 +1,5 @@
+"Test log of command and attribute write failures"
+# pylint: disable=no-member,protected-access
 import logging
 
 import mock
@@ -14,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 @mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_log_command_inout(patched_tango, caplog):
     """Check that exceptions for command_inout is logged"""
-    # pylint: disable=no-member
+
     patched_tango.DevFailed = tango.DevFailed
     caplog.set_level(logging.DEBUG)
 
@@ -37,16 +39,16 @@ def test_log_command_inout(patched_tango, caplog):
 
     assert "Traceback" in caplog.text
     assert "Failure Message" in caplog.text
+    assert "Could not execute command [Stow] with arg [None] on [a/b/c]" in caplog.text
 
     # Check that at least one exception is logged
-    assert any([i.exc_info for i in caplog.records])
+    assert any(i.exc_info for i in caplog.records)
 
 
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
 def test_log_write_attribute(patched_tango, caplog):
     """Check that exceptions for write_attribute_value is logged"""
-    # pylint: disable=no-member
     patched_tango.DevFailed = tango.DevFailed
     caplog.set_level(logging.DEBUG)
 
@@ -69,6 +71,7 @@ def test_log_write_attribute(patched_tango, caplog):
 
     assert "Traceback" in caplog.text
     assert "Failure Message" in caplog.text
+    assert "Could not write to attribute [attr] with [val] on [a/b/c]" in caplog.text
 
     # Check that at least one exception is logged
-    assert any([i.exc_info for i in caplog.records])
+    assert any(i.exc_info for i in caplog.records)
