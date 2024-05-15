@@ -46,6 +46,9 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
+python-test-business-logic:
+  extends: python-test
+
 #mypy job
 mypy:
   stage: lint
