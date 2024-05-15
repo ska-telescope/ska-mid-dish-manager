@@ -1172,8 +1172,12 @@ class DishManager(SKAController):
                     try:
                         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
                         spfrx_com_man.execute_command("MonitorPing", None)
-                    except (LostConnection, tango.DevFailed):
-                        self.logger.exception("Could not command SPFRx")
+                    except LostConnection:
+                        self.logger.error(
+                            "Could not connect to [%s] for MonitorPing", self.SPFRxDeviceFqdn
+                        )
+                    except tango.DevFailed:
+                        pass
 
     # pylint: disable=too-few-public-methods
     class AbortCommandsCommand(SlowCommand):
