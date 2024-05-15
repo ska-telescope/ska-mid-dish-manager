@@ -147,19 +147,21 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._component_state[attr_name] = None
 
         try:
-            value = event_data.attr_value.value
-            if isinstance(value, np.ndarray):
-                value = list(value)
-            self._update_component_state(**{attr_name: value})
-        # Catch any errors and log it otherwise it remains hidden
-        except Exception:  # pylint:disable=broad-except
-            self.logger.exception("Error updating component state")
-
-        try:
             quality = event_data.attr_value.quality
             self._quality_state_callback(attr_name, quality)
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error occurred on attribute quality state update")
+
+        if quality is not tango.AttrQuality.ATTR_INVALID:
+            try:
+                value = event_data.attr_value.value
+                if isinstance(value, np.ndarray):
+                    value = list(value)
+                self._update_component_state(**{attr_name: value})
+            # Catch any errors and log it otherwise it remains hidden
+            except Exception:  # pylint:disable=broad-except
+                self.logger.exception("Error updating component state")
+
 
     def _start_event_consumer_thread(self) -> None:
         self.submit_task(
