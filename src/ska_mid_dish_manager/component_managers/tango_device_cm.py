@@ -35,7 +35,7 @@ class LostConnection(Exception):
     """Exception for losing connection to the Tango device"""
 
 
-# pylint: disable=abstract-method, too-many-instance-attributes, no-member
+# pylint: disable=abstract-method, too-many-instance-attributes, no-member, too-many-arguments
 class TangoDeviceComponentManager(TaskExecutorComponentManager):
     """A component manager for a Tango device"""
 
@@ -161,7 +161,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             # Catch any errors and log it otherwise it remains hidden
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error updating component state")
-
 
     def _start_event_consumer_thread(self) -> None:
         self.submit_task(
