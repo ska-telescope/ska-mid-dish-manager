@@ -151,10 +151,10 @@ class DishModeModel:
                 f" Commands allowed from {current_dish_mode} are: {allowed_commands}."
             )
             logger = component_manager.logger
-            task_callback = component_manager._command_tracker
+            # task_callback = component_manager._command_tracker
 
             # report the reason for the command rejection to logs and lrc attribute
-            task_callback(progress=msg)  # status and result are handled in executor
+            # task_callback(progress=msg)  # status and result are handled in executor
             logger.debug(msg)
 
         return False
