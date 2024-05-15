@@ -264,6 +264,7 @@ class DishManager(SKAController):
                 "pointingstate": "pointingState",
                 "configuredband": "configuredBand",
                 "achievedtargetlock": "achievedTargetLock",
+                "configuretargetlock": "configureTargetLock",
                 "healthstate": "healthState",
                 "b1capabilitystate": "b1CapabilityState",
                 "b2capabilitystate": "b2CapabilityState",
@@ -328,7 +329,6 @@ class DishManager(SKAController):
                 "band5aSamplerFrequency",
                 "band5bSamplerFrequency",
                 "capturing",
-                "configureTargetLock",
                 "dshMaxShortTermPower",
                 "dshPowerCurtailment",
                 "frequencyResponse",
@@ -418,6 +418,7 @@ class DishManager(SKAController):
         doc="Indicates whether the Dish is on target or not based on the "
         "pointing error and time period parameters defined in "
         "configureTargetLock.",
+        access=AttrWriteType.READ,
     )
     def achievedTargetLock(self):
         """Returns the achievedTargetLock"""
@@ -811,8 +812,8 @@ class DishManager(SKAController):
         """Set the configureTargetLock"""
         # pylint: disable=attribute-defined-outside-init
         self._configure_target_lock = value
-        self.push_change_event("configureTargetLock", value)
-        self.push_archive_event("configureTargetLock", value)
+        ds_com_man = self.component_manager.sub_component_managers["DS"]
+        ds_com_man.write_attribute_value("configureTargetLock", value)
 
     @attribute(
         max_dim_x=2,
