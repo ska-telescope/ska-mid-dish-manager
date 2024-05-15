@@ -688,6 +688,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             pointing_state = self.component_state["pointingstate"]
             if dish_mode != DishMode.OPERATE and pointing_state not in [
                 PointingState.TRACK,
+                PointingState.SLEW,
             ]:
                 return False
             return True
@@ -819,7 +820,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrx_cm.write_attribute_value("kvalue", k_value)
         except LostConnection:
             return (ResultCode.REJECTED, "Lost connection to SPFRx")
-        return (ResultCode.OK, "SetKValue command completed OK")
+        return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
 
     def set_track_interpolation_mode(
         self,
@@ -833,6 +834,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except LostConnection:
             self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
+        return (ResultCode.OK, "Successfully updated trackInterpolationMode on DSManager")
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
         """

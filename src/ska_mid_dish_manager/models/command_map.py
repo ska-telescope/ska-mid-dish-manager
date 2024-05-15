@@ -264,7 +264,7 @@ class CommandMap:
             "DS": {
                 "command": "Slew",
                 "commandArgument": argin,
-                "awaitedAttribute": "pointingState",
+                "awaitedAttribute": "pointingstate",
                 "awaitedValuesList": [PointingState.SLEW],
             },
         }
@@ -418,7 +418,7 @@ class CommandMap:
             awaited_event_value_print = awaited_event_value.name
 
         # If we're not waiting for anything, finish up
-        if not awaited_event_value:
+        if awaited_event_value is None:
             task_callback(
                 progress=f"{running_command} completed",
                 status=TaskStatus.COMPLETED,
