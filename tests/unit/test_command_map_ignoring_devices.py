@@ -4,6 +4,7 @@ import logging
 from threading import Event
 from unittest import mock
 
+# pylint: disable=too-many-lines
 import pytest
 
 from ska_mid_dish_manager.models.command_map import CommandMap
