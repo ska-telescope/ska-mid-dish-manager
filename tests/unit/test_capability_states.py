@@ -1,4 +1,5 @@
 """CapabilityState checks"""
+
 # pylint: disable=protected-access,use-dict-literal,too-many-arguments
 # pylint: disable=attribute-defined-outside-init,missing-function-docstring
 from unittest.mock import patch

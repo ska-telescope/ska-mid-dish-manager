@@ -846,9 +846,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "SetKValue",
                 result,
             )
-        except LostConnection:
-            return (ResultCode.FAILED, "Lost connection to SPFRx")
-        return (ResultCode.OK, "SetKValue command completed OK")
+        except (LostConnection, tango.DevFailed) as err:
+            self.logger.exception("SetKvalue on SPFRx failed")
+            return (ResultCode.FAILED, err)
+        return (ResultCode.OK, "SetKValue command succesfully sumitted to SPFRx")
 
     def set_track_interpolation_mode(
         self,

@@ -1,4 +1,5 @@
 """Test StandbyLP"""
+
 import pytest
 import tango
 

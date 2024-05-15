@@ -1,4 +1,5 @@
 """Test ignoring subservient devices."""
+
 # pylint: disable=invalid-name,redefined-outer-name,unused-argument
 import pytest
 import tango

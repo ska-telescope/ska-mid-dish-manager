@@ -1,4 +1,5 @@
 """Tests for ignoring devices in CommandMap"."""
+
 import logging
 from threading import Event
 from unittest import mock

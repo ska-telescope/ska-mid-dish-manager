@@ -1,6 +1,5 @@
 """This subpackage implements the rules for reacting to component change."""
 
-
 __all__ = [
     "config_rules_all_devices",
     "config_rules_spf_ignored",

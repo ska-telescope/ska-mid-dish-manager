@@ -1,4 +1,5 @@
 """Test AbortCommands"""
+
 import pytest
 import tango
 
