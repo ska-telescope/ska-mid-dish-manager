@@ -686,10 +686,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         def _is_track_stop_cmd_allowed():
             dish_mode = self.component_state["dishmode"]
             pointing_state = self.component_state["pointingstate"]
-            if dish_mode != DishMode.OPERATE and pointing_state not in [
-                PointingState.TRACK,
-                PointingState.SLEW,
-            ]:
+            if dish_mode != DishMode.OPERATE and pointing_state != PointingState.TRACK:
                 return False
             return True
 
