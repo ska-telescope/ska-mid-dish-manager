@@ -35,7 +35,7 @@ def test_stow_mode(dish_manager_resources, event_store_class):
 
     expected_progress_updates = [
         "Stow called on DS",
-        "Awaiting dishMode change to STOW",
+        "Awaiting dishmode change to STOW",
         "Stow completed",
     ]
 

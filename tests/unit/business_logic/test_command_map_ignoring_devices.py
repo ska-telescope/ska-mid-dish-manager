@@ -91,8 +91,8 @@ class TestCommandMapIgnoringDevices:
         expected_progress_updates = [
             "SetStandbyLPMode called on DS",
             "SPF device is disabled. SetStandbyLPMode call ignored",
-            "SetStandbyMode called on SPFRx",
-            "Awaiting dishMode change to STANDBY_LP",
+            "SetStandbyMode called on SPFRX",
+            "Awaiting dishmode change to STANDBY_LP",
             "SetStandbyLPMode completed",
         ]
 
@@ -134,7 +134,7 @@ class TestCommandMapIgnoringDevices:
             "SetStandbyLPMode called on DS",
             "SetStandbyLPMode called on SPF",
             "SPFRX device is disabled. SetStandbyMode call ignored",
-            "Awaiting dishMode change to STANDBY_LP",
+            "Awaiting dishmode change to STANDBY_LP",
             "SetStandbyLPMode completed",
         ]
 
@@ -176,7 +176,7 @@ class TestCommandMapIgnoringDevices:
             "SetStandbyLPMode called on DS",
             "SPF device is disabled. SetStandbyLPMode call ignored",
             "SPFRX device is disabled. SetStandbyMode call ignored",
-            "Awaiting dishMode change to STANDBY_LP",
+            "Awaiting dishmode change to STANDBY_LP",
             "SetStandbyLPMode completed",
         ]
 

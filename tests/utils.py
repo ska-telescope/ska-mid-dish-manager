@@ -16,6 +16,68 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
+class ComponentStateStore:
+    """Store component state changes with useful functionality"""
+
+    def __init__(self) -> None:
+        self._queue = queue.Queue()
+
+    def __call__(self, *args, **kwargs):
+        """Store the update component_state
+
+        :param event: latest_state
+        :type event: dict
+        """
+        self._queue.put(kwargs)
+
+    def get_queue_values(self, timeout: int = 3):
+        """Get the values from the queue"""
+        items = []
+        try:
+            while True:
+                component_state = self._queue.get(timeout=timeout)
+                items.append(component_state)
+        except queue.Empty:
+            return items
+
+    def wait_for_value(  # pylint:disable=inconsistent-return-statements
+        self, key: str, value: Any, timeout: int = 3
+    ):
+        """Wait for a value to arrive
+
+        Wait `timeout` seconds for each fetch.
+
+        :param key: The value key
+        :type value: str
+        :param value: The value to check for
+        :type value: Any
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If None are found
+        :return: True if found
+        :rtype: bool
+        """
+        try:
+            component_state = []
+            while True:
+                state = self._queue.get(timeout=timeout)
+                if state.get(key) == value:
+                    return True
+                component_state.append(state)
+        except queue.Empty as err:
+            raise RuntimeError(
+                (
+                    f"Never got a state with key [{key}], value "
+                    f"[{value}], got [{component_state}]"
+                )
+            ) from err
+
+    def clear_queue(self):
+        """Clear out the queue"""
+        while not self._queue.empty():
+            self._queue.get()
+
+
 class EventStore:
     """Store events with useful functionality"""
 

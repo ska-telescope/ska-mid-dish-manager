@@ -46,7 +46,7 @@ def test_standby_fp(dish_manager_resources, event_store_class):
     expected_progress_updates = [
         "SetStandbyFPMode called on DS",
         "SetOperateMode called on SPF",
-        "Awaiting dishMode change to STANDBY_FP",
+        "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
 
