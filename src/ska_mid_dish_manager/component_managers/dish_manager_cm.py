@@ -824,13 +824,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         k_value,
     ) -> Tuple[ResultCode, str]:
-        """Set the k-value on the SPFRx"""
+        """Set the k-value on the SPFRx.
+        Note that it will only take effect after
+        SPFRx has been restarted.
+        """
         spfrx_cm = self.sub_component_managers["SPFRX"]
         try:
-            spfrx_cm.write_attribute_value("kvalue", k_value)
-        except LostConnection:
-            return (ResultCode.REJECTED, "Lost connection to SPFRx")
-        return (ResultCode.OK, "SetKValue command completed OK")
+            result = spfrx_cm.execute_command("SetKValue", k_value)
+            self.logger.debug(
+                "Result of the call to [%s] on SPFRx is [%s]",
+                "SetKValue",
+                result,
+            )
+        except (LostConnection, tango.DevFailed) as err:
+            self.logger.exception("SetKvalue on SPFRx failed")
+            return (ResultCode.FAILED, err)
+        return (ResultCode.OK, "SetKValue command succesfully sumitted to SPFRx")
 
     def set_track_interpolation_mode(
         self,

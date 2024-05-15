@@ -1,4 +1,5 @@
 """Unit tests checking DishManager behaviour."""
+
 # pylint: disable=protected-access
 # pylint: disable=attribute-defined-outside-init
 

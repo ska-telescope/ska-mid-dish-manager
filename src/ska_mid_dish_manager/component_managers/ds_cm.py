@@ -1,4 +1,5 @@
 """Specialization for DS functionality"""
+
 import logging
 from threading import Lock
 from typing import Any, Callable, Optional

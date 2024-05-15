@@ -1,4 +1,5 @@
 """Generic component manager for a subservient tango device"""
+
 import datetime
 import logging
 import typing

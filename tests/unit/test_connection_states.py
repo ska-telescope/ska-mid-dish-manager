@@ -1,4 +1,5 @@
 """Unit tests for subservient device connection states."""
+
 from unittest.mock import patch
 
 import pytest

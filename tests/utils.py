@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,possibly-unused-variable
+# pylint: disable=invalid-name,possibly-unused-variable,no-value-for-parameter
 """General utils for test devices"""
 import queue
 from typing import Any, List, Tuple
@@ -352,6 +352,7 @@ def set_configuredBand_b2(
 
 def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
     """Sets ignored devices on DishManager."""
+
     if dish_manager_proxy.ignoreSpf != ignore_spf:
         spf_connection_event_store = EventStore()
         dish_manager_proxy.subscribe_event(
