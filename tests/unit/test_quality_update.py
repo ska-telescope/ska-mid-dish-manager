@@ -2,7 +2,7 @@
 
 import itertools
 import logging
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import tango
@@ -65,7 +65,7 @@ class TestTrack:
         ),  # Just the first 10 for now
     )
     def test_change(self, event_store, qual_before, qual_after):
-        """Test the trackInterpolationMode attribute updates on change."""
+        """Test the change events on the dish manager cm level"""
         device_proxy = self.tango_context.device
         event_store.clear_queue()
         device_proxy.subscribe_event(
@@ -78,3 +78,34 @@ class TestTrack:
         event_store.wait_for_quality(qual_before)
         self.dish_manager_cm._component_quality_update("attenuationpolv", qual_after)
         event_store.wait_for_quality(qual_after)
+
+    def test_event_handling(self, event_store):
+        """Test the change events on the tango device cm level"""
+        device_proxy = self.tango_context.device
+        event_store.clear_queue()
+        device_proxy.subscribe_event(
+            "attenuationPolV",
+            tango.EventType.CHANGE_EVENT,
+            event_store,
+        )
+
+        valid_event = MagicMock()
+        valid_event.attr_value = MagicMock()
+        valid_event.attr_value.name = "attenuationPolV"
+        valid_event.attr_value.quality = AttrQuality.ATTR_VALID
+        valid_event.attr_value.value = 1000
+
+        invalid_event = MagicMock()
+        invalid_event.attr_value = MagicMock()
+        invalid_event.attr_value.name = "attenuationPolV"
+        invalid_event.attr_value.quality = AttrQuality.ATTR_INVALID
+        invalid_event.attr_value.value = None
+
+        self.spfrx_cm._update_state_from_event(valid_event)
+        event_store.wait_for_quality(AttrQuality.ATTR_VALID)
+
+        self.spfrx_cm._update_state_from_event(invalid_event)
+        event_store.wait_for_quality(AttrQuality.ATTR_INVALID)
+
+        self.spfrx_cm._update_state_from_event(valid_event)
+        event_store.wait_for_quality(AttrQuality.ATTR_VALID)
