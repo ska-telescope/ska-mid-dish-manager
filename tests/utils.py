@@ -1,10 +1,11 @@
-# pylint: disable=invalid-name,possibly-unused-variable
+# pylint: disable=invalid-name,possibly-unused-variable,no-value-for-parameter
 """General utils for test devices"""
 import queue
 from typing import Any, List, Tuple
 
 import numpy as np
 import tango
+from astropy.time import Time
 from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
@@ -351,6 +352,7 @@ def set_configuredBand_b2(
 
 def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
     """Sets ignored devices on DishManager."""
+
     if dish_manager_proxy.ignoreSpf != ignore_spf:
         spf_connection_event_store = EventStore()
         dish_manager_proxy.subscribe_event(
@@ -381,3 +383,15 @@ def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
         else:
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+
+
+def get_tai_from_unix_s(unix_s: float) -> float:
+    """
+    Calculate atomic time in seconds from unix time in seconds.
+
+    :param unix_s: Unix time in seconds
+
+    :return: atomic time (tai) in seconds
+    """
+    astropy_time_utc = Time(unix_s, format="unix")
+    return astropy_time_utc.unix_tai

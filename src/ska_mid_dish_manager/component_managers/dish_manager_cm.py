@@ -92,7 +92,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            band1pointingmodelparams=[],
             band2pointingmodelparams=[],
+            band3pointingmodelparams=[],
+            band4pointingmodelparams=[],
             trackinterpolationmode=None,
             ignorespf=None,
             ignorespfrx=None,
@@ -144,7 +147,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 achievedpointing=[0.0, 0.0, 0.0],
                 achievedpointingaz=[0.0, 0.0, 0.0],
                 achievedpointingel=[0.0, 0.0, 0.0],
+                band1pointingmodelparams=[],
                 band2pointingmodelparams=[],
+                band3pointingmodelparams=[],
+                band4pointingmodelparams=[],
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, "dsConnectionState"
@@ -191,7 +197,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "spfconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
             "spfrxconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
             "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
+            "band1pointingmodelparams": [],
             "band2pointingmodelparams": [],
+            "band3pointingmodelparams": [],
+            "band4pointingmodelparams": [],
             "ignorespf": False,
             "ignorespfrx": False,
         }
@@ -414,16 +423,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ds_component_state["pointingstate"],
             )
             self._update_component_state(pointingstate=ds_component_state["pointingstate"])
-
-            if ds_component_state["pointingstate"] in [
-                PointingState.SLEW,
-                PointingState.READY,
-            ]:
-                # TODO ST (04/2024) achievedtargetlock needs to be determined
-                # from configured threshold, see configureTargetLock
-                self._update_component_state(achievedtargetlock=False)
-            elif ds_component_state["pointingstate"] == PointingState.TRACK:
-                self._update_component_state(achievedtargetlock=True)
 
         # spf bandInFocus
         if not self.is_device_ignored("SPF") and (
@@ -851,13 +850,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         k_value,
     ) -> Tuple[ResultCode, str]:
-        """Set the k-value on the SPFRx"""
+        """Set the k-value on the SPFRx.
+        Note that it will only take effect after
+        SPFRx has been restarted.
+        """
         spfrx_cm = self.sub_component_managers["SPFRX"]
         try:
-            spfrx_cm.write_attribute_value("kvalue", k_value)
-        except LostConnection:
-            return (ResultCode.REJECTED, "Lost connection to SPFRx")
-        return (ResultCode.OK, "SetKValue command completed OK")
+            result = spfrx_cm.execute_command("SetKValue", k_value)
+            self.logger.debug(
+                "Result of the call to [%s] on SPFRx is [%s]",
+                "SetKValue",
+                result,
+            )
+        except (LostConnection, tango.DevFailed) as err:
+            self.logger.exception("SetKvalue on SPFRx failed")
+            return (ResultCode.FAILED, err)
+        return (ResultCode.OK, "SetKValue command succesfully sumitted to SPFRx")
 
     def set_track_interpolation_mode(
         self,

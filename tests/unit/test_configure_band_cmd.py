@@ -1,4 +1,5 @@
 """Unit tests for the ConfigureBand2 command on dish manager."""
+
 import logging
 from unittest.mock import MagicMock, patch
 

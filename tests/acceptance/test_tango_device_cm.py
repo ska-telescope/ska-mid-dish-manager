@@ -1,4 +1,5 @@
 """Tango device component manager tests"""
+
 import logging
 
 import pytest

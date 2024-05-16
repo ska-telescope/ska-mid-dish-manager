@@ -1,4 +1,5 @@
 """Specialization for DS functionality"""
+
 import logging
 from threading import Lock
 from typing import Any, Callable, Optional
@@ -39,8 +40,13 @@ class DSComponentManager(TangoDeviceComponentManager):
             "achievedPointing",
             "achievedPointingaz",
             "achievedPointingel",
+            "band1PointingModelParams",
             "band2PointingModelParams",
+            "band3PointingModelParams",
+            "band4PointingModelParams",
             "trackInterpolationMode",
+            "achievedTargetLock",
+            "configureTargetLock",
         )
         super().__init__(
             tango_device_fqdn,
