@@ -49,6 +49,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         communication_state_callback: Any = None,
         component_state_callback: Any = None,
         quality_state_callback: Any = None,
+        quality_monitored_attributes: Tuple[str, ...] = (),
         **kwargs: Any,
     ):
         self._component_state: dict = {}  # type: ignore
@@ -58,6 +59,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._events_queue: PriorityQueue = PriorityQueue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
+        self._quality_monitored_attributes = quality_monitored_attributes
         if not logger:
             logger = logging.getLogger()
         self.logger = logger
@@ -76,7 +78,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             max_workers=20,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
-            quality_state_callback=quality_state_callback,
+            # quality_state_callback=quality_state_callback,
             **kwargs,
         )
 
@@ -149,7 +151,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         try:
             quality = event_data.attr_value.quality
-            self._quality_state_callback(attr_name, quality)
+            if attr_name in self._quality_monitored_attributes:
+                self._quality_state_callback(attr_name, quality)
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error occurred on attribute quality state update")
 

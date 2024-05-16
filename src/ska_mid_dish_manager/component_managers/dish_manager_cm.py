@@ -224,12 +224,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
-        # List of the only attributes whose qualities need to be tracked
-        self.quality_tracked_attrs = {
-            "attenuationpolh",
-            "attenuationpolv",
-        }
-
     def _get_active_sub_component_managers(self) -> dict:
         """Get a list of subservient device component managers which are not being ignored."""
         active_component_managers = [self.sub_component_managers["DS"]]
@@ -333,16 +327,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         Callback triggered by Tango device cm instance for each subservient
 
-        This method utilizes the "quality_tracked_attrs" list to filter out
+        This method utilizes the "quality_monitored_attributes" list defined in each specialized component manager to filter out
         change events for only a specific list of attributes whose attribute
-        qualities may need to be updated.
+        qualities will need to be updated.
 
-        If an attribute is contained within the list, the change event is
+        If an attribute is contained within either of these lists, the change event is
         passed to dish manager, where dish manager will then change the
-        attribute quality and pushes the change event containing the quality update
+        attribute quality and push the change event containing the quality update
         """
-        if attr_name in self.quality_tracked_attrs:
-            self._quality_state_callback(attr_name, quality)
+        self._quality_state_callback(attr_name, quality)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _component_state_changed(self, *args, **kwargs):
