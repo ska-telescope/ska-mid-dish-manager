@@ -200,9 +200,8 @@ class DishManager(SKAController):
             attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
             attribute_variable = change_case(attribute_name)
             setattr(self, attribute_variable, comp_state_value)
-            if comp_state_value is not None:
-                self.push_change_event(attribute_name, comp_state_value)
-                self.push_archive_event(attribute_name, comp_state_value)
+            self.push_change_event(attribute_name, comp_state_value)
+            self.push_archive_event(attribute_name, comp_state_value)
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """
