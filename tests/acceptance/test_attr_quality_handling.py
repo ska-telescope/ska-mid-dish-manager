@@ -26,6 +26,8 @@ from tests.utils import EventStore
     ],  # Just the first 10 for now
 )
 def test_transitions(dish_manager_proxy, spfrx_device_proxy, qual_before, qual_after):
+    """Test quality of dishmanager exposed attribute mirrors the quality of the underlying
+    subservient device attribute"""
     dm_event_store = EventStore()
     spfrx_event_store = EventStore()
 
