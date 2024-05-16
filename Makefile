@@ -35,9 +35,21 @@ PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
 PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events"
 
+PYTHON_TEST_FILE = tests/unit/business_logic
+
 python-test: MARK = unit
 k8s-test-runner: MARK = acceptance
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
+
+ifeq ($(CI_JOB_NAME_SLUG),python-test-interface-tango-context)
+PYTHON_TEST_FILE = tests/unit/interface/tango
+endif
+
+ifeq ($(CI_JOB_NAME_SLUG),python-test-interface-no-tango)
+PYTHON_VARS_AFTER_PYTEST += --count=3
+PYTHON_TEST_FILE = tests/unit/interface/no_tango
+endif
+
 
 -include .make/python.mk
 
