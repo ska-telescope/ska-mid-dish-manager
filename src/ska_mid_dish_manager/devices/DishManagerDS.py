@@ -17,7 +17,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrQuality, AttrWriteType, DebugIt, DevFloat, DevString, DispLevel
+from tango import AttrWriteType, DebugIt, DevFloat, DevString, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -170,14 +170,7 @@ class DishManager(SKAController):
         if device_attribute_name:
             attribute_object = getattr(self, device_attribute_name, None)
             if attribute_object:
-                if (attribute_object.get_quality() is AttrQuality.ATTR_INVALID) and (
-                    new_attribute_quality is AttrQuality.ATTR_VALID
-                ):
-                    attribute_object.set_quality(
-                        new_attribute_quality, False
-                    )  # Change event will be pushed by component state change due to value change
-                    # from None to a value
-                elif attribute_object.get_quality() != new_attribute_quality:
+                if attribute_object.get_quality() is not new_attribute_quality:
                     attribute_object.set_quality(new_attribute_quality, True)
 
     # pylint: disable=unused-argument
