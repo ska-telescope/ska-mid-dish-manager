@@ -69,6 +69,37 @@ class EventStore:
             ev_vals = self.extract_event_values(events)
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 
+    def wait_for_quality(  # pylint:disable=inconsistent-return-statements
+        self, value: tango.AttrQuality, timeout: int = 3
+    ):
+        """Wait for a quality value to arrive
+
+        Wait `timeout` seconds for each fetch.
+
+        :param value: The value to check for
+        :type value: tango.AttrQuality
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If None are found
+        :return: True if found
+        :rtype: bool
+        """
+
+        try:
+            events = []
+            while True:
+                event = self._queue.get(timeout=timeout)
+                events.append(event)
+                if event.attr_value is None:
+                    continue
+                if event.attr_value.quality == value:
+                    return event
+        except queue.Empty as err:
+            event_str = "\n".join([str(i) for i in events])
+            raise RuntimeError(
+                f"Never got an event with quality [{value}] got [{event_str}]"
+            ) from err
+
     # pylint:disable=inconsistent-return-statements
     def wait_for_command_result(self, command_id: str, command_result: Any, timeout: int = 3):
         """Wait for a long running command result
