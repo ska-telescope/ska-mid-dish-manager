@@ -149,8 +149,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if attr_name not in self._component_state:
             self._component_state[attr_name] = None
 
+        quality = event_data.attr_value.quality
         try:
-            quality = event_data.attr_value.quality
             if attr_name in self._quality_monitored_attributes:
                 self._quality_state_callback(attr_name, quality)
         except Exception:  # pylint:disable=broad-except
