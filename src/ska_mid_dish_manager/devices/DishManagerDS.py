@@ -166,21 +166,19 @@ class DishManager(SKAController):
             self.logger.warning("Init not completed, rejecting attribute quality update")
             return
 
-        # Map of attribute names whose qualities are tracked to the attr object
-        attribute_object_map = {
-            "attenuationpolv": self.attenuationPolV,
-            "attenuationpolh": self.attenuationPolH,
-        }
-
-        if (attribute_object_map[attribute_name].get_quality() is AttrQuality.ATTR_INVALID) and (
-            new_attribute_quality is AttrQuality.ATTR_VALID
-        ):
-            attribute_object_map[attribute_name].set_quality(
-                new_attribute_quality, False
-            )  # Change event will be pushed by component state change due to value change
-            # from None to a value
-        elif attribute_object_map[attribute_name].get_quality() != new_attribute_quality:
-            attribute_object_map[attribute_name].set_quality(new_attribute_quality, True)
+        device_attribute_name = self._component_state_attr_map.get(attribute_name, None)
+        if device_attribute_name:
+            attribute_object = getattr(self, device_attribute_name, None)
+            if attribute_object:
+                if (attribute_object.get_quality() is AttrQuality.ATTR_INVALID) and (
+                    new_attribute_quality is AttrQuality.ATTR_VALID
+                ):
+                    attribute_object.set_quality(
+                        new_attribute_quality, False
+                    )  # Change event will be pushed by component state change due to value change
+                    # from None to a value
+                elif attribute_object.get_quality() != new_attribute_quality:
+                    attribute_object.set_quality(new_attribute_quality, True)
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):

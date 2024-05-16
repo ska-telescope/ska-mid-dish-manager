@@ -327,8 +327,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         Callback triggered by Tango device cm instance for each subservient
 
-        This method utilizes the "quality_monitored_attributes" list defined in each specialized component manager to filter out
-        change events for only a specific list of attributes whose attribute
+        This method utilizes the "quality_monitored_attributes" list defined in
+        each specialized component manager to filter out change events
+        for only a specific list of attributes whose attribute
         qualities will need to be updated.
 
         If an attribute is contained within either of these lists, the change event is
