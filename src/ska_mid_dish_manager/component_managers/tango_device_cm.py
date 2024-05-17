@@ -78,7 +78,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             max_workers=20,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
-            # quality_state_callback=quality_state_callback,
             **kwargs,
         )
 

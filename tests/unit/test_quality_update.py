@@ -62,7 +62,7 @@ class TestTrack:
                 ],
                 2,
             )
-        ),  # Just the first 10 for now
+        ),
     )
     def test_change(self, event_store, qual_before, qual_after):
         """Test the change events on the dish manager cm level"""
