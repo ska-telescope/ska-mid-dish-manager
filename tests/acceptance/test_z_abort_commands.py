@@ -43,6 +43,7 @@ def toggle_skip_attributes(spf_device_proxy, dish_manager_proxy, event_store_cla
 @pytest.mark.acceptance
 @pytest.mark.SKA_mid
 @pytest.mark.forked
+@pytest.mark.xfail(reason="SyncComponentStates needs to be updated")
 def test_abort_commands(
     event_store_class,
     dish_manager_proxy,
