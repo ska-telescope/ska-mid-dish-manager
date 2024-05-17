@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 2.6.0
+*************
 - Removed lmc tests and its manual job trigger
 - Disabled default deployment of DSManager to use helm flag
 - Added ignoreSpf and ignoreSpfrx attributes to conform to ADR-93
