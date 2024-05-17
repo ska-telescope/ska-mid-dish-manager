@@ -8,6 +8,11 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 2.6.1
+*************
+- Updated dish simulators version to v2.0.4
+- Updated ds-manager version to v1.3.1
+
 Version 2.6.0
 *************
 - Removed lmc tests and its manual job trigger
