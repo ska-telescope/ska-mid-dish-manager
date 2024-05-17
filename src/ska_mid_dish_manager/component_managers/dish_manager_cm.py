@@ -130,7 +130,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "spfConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
-                quality_state_callback=self._component_quality_update,
+                quality_state_callback=self._quality_state_callback,
             ),
             "DS": DSComponentManager(
                 ds_device_fqdn,
@@ -156,7 +156,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
-                quality_state_callback=self._component_quality_update,
+                quality_state_callback=self._quality_state_callback,
             ),
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
@@ -179,7 +179,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "spfrxConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
-                quality_state_callback=self._component_quality_update,
+                quality_state_callback=self._quality_state_callback,
             ),
         }
         initial_component_states = {
@@ -322,21 +322,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
             # push change events for the connection state attributes
             self._connection_state_callback(attribute_name)
-
-    def _component_quality_update(self, attr_name, quality):
-        """
-        Callback triggered by Tango device cm instance for each subservient
-
-        This method utilizes the "quality_monitored_attributes" list defined in
-        each specialized component manager to filter out change events
-        for only a specific list of attributes whose attribute
-        qualities will need to be updated.
-
-        If an attribute is contained within either of these lists, the change event is
-        passed to dish manager, where dish manager will then change the
-        attribute quality and push the change event containing the quality update
-        """
-        self._quality_state_callback(attr_name, quality)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _component_state_changed(self, *args, **kwargs):

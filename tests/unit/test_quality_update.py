@@ -74,9 +74,9 @@ class TestTrack:
             event_store,
         )
 
-        self.dish_manager_cm._component_quality_update("attenuationpolv", qual_before)
+        self.dish_manager_cm._quality_state_callback("attenuationpolv", qual_before)
         event_store.wait_for_quality(qual_before)
-        self.dish_manager_cm._component_quality_update("attenuationpolv", qual_after)
+        self.dish_manager_cm._quality_state_callback("attenuationpolv", qual_after)
         event_store.wait_for_quality(qual_after)
 
     def test_event_handling(self, event_store):
