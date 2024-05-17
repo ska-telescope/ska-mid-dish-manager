@@ -74,6 +74,7 @@ class DishManager(SKAController):
             self.logger,
             self._command_tracker,
             self._update_connection_state_attrs,
+            self._attr_quality_state_changed,
             self.get_name(),
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
@@ -158,6 +159,19 @@ class DishManager(SKAController):
                 "dsConnectionState",
                 self.component_manager.sub_component_managers["DS"].communication_state,
             )
+
+    def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
+        # Do not modify or push quality changes before initialization complete
+        if not hasattr(self, "_component_state_attr_map"):
+            self.logger.warning("Init not completed, rejecting attribute quality update")
+            return
+
+        device_attribute_name = self._component_state_attr_map.get(attribute_name, None)
+        if device_attribute_name:
+            attribute_object = getattr(self, device_attribute_name, None)
+            if attribute_object:
+                if attribute_object.get_quality() is not new_attribute_quality:
+                    attribute_object.set_quality(new_attribute_quality, True)
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):

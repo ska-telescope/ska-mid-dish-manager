@@ -36,7 +36,7 @@ class LostConnection(Exception):
     """Exception for losing connection to the Tango device"""
 
 
-# pylint: disable=abstract-method, too-many-instance-attributes, no-member
+# pylint: disable=abstract-method, too-many-instance-attributes, no-member, too-many-arguments
 class TangoDeviceComponentManager(TaskExecutorComponentManager):
     """A component manager for a Tango device"""
 
@@ -48,14 +48,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         *args: Any,
         communication_state_callback: Any = None,
         component_state_callback: Any = None,
+        quality_state_callback: Any = None,
+        quality_monitored_attributes: Tuple[str, ...] = (),
         **kwargs: Any,
     ):
         self._component_state: dict = {}  # type: ignore
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
+        self._quality_state_callback = quality_state_callback
         self._events_queue: PriorityQueue = PriorityQueue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
+        self._quality_monitored_attributes = quality_monitored_attributes
         if not logger:
             logger = logging.getLogger()
         self.logger = logger
@@ -136,7 +140,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: Tango event
         :type event_data: tango.EventData
         """
-
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
@@ -145,14 +148,22 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if attr_name not in self._component_state:
             self._component_state[attr_name] = None
 
+        quality = event_data.attr_value.quality
         try:
-            value = event_data.attr_value.value
-            if isinstance(value, np.ndarray):
-                value = list(value)
-            self._update_component_state(**{attr_name: value})
-        # Catch any errors and log it otherwise it remains hidden
+            if attr_name in self._quality_monitored_attributes:
+                self._quality_state_callback(attr_name, quality)
         except Exception:  # pylint:disable=broad-except
-            self.logger.exception("Error updating component state")
+            self.logger.exception("Error occurred on attribute quality state update")
+
+        if quality is not tango.AttrQuality.ATTR_INVALID:
+            try:
+                value = event_data.attr_value.value
+                if isinstance(value, np.ndarray):
+                    value = list(value)
+                self._update_component_state(**{attr_name: value})
+            # Catch any errors and log it otherwise it remains hidden
+            except Exception:  # pylint:disable=broad-except
+                self.logger.exception("Error updating component state")
 
     def _start_event_consumer_thread(self) -> None:
         self.submit_task(

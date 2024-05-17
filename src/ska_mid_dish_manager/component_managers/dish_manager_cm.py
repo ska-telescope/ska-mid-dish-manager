@@ -51,6 +51,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         logger: logging.Logger,
         command_tracker,
         connection_state_callback,
+        quality_state_callback,
         tango_device_name: str,
         ds_device_fqdn: str,
         spf_device_fqdn: str,
@@ -102,6 +103,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self.logger = logger
         self._connection_state_callback = connection_state_callback
+        self._quality_state_callback = quality_state_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
@@ -128,6 +130,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "spfConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
+                quality_state_callback=self._quality_state_callback,
             ),
             "DS": DSComponentManager(
                 ds_device_fqdn,
@@ -153,6 +156,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
+                quality_state_callback=self._quality_state_callback,
             ),
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
@@ -175,6 +179,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_communication_state_changed, "spfrxConnectionState"
                 ),
                 component_state_callback=self._component_state_changed,
+                quality_state_callback=self._quality_state_callback,
             ),
         }
         initial_component_states = {
