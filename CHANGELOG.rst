@@ -7,10 +7,24 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 2.6.1
+*************
+- Updated dish simulators version to v2.0.4
+- Updated ds-manager version to v1.3.1
+
+Version 2.6.0
+*************
 - Removed lmc tests and its manual job trigger
 - Disabled default deployment of DSManager to use helm flag
 - Added ignoreSpf and ignoreSpfrx attributes to conform to ADR-93
 - Updated command map and transition state rules for when ignoring spf/spfrx to conform to ADR-93
+- Removed azimuth and elevation speed arguments from Slew command
+- Added quality state callback to publish change event on subservient device attribute quality changes
+- Resolved a bug raised on setting the kValue on the SPFRx
+- Added configureTargetLock implementation
+- Updated implementation of pointing model parameters for bands 1, 3 and 4
+- Added testing of aborting of long running commands 
 
 Version 2.5.0
 *************

@@ -1,4 +1,5 @@
 """Test DS component manager"""
+
 import logging
 from threading import Lock
 

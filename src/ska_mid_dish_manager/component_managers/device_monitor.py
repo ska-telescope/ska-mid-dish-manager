@@ -1,6 +1,7 @@
 """This module contains TangoDeviceMonitor that monitors attributes on Tango devices
 If an error event is received the DeviceProxy and subscription will be recreated
 """
+
 import logging
 from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial

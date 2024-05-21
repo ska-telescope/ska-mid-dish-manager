@@ -1,4 +1,5 @@
 """Test CapabilityState"""
+
 import pytest
 import tango
 
