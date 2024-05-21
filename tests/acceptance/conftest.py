@@ -19,7 +19,7 @@ def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
     spfrx_device_proxy.raiseCmdException = False
 
 
-# @pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)
 def setup_and_teardown(
     event_store,
     dish_manager_proxy,

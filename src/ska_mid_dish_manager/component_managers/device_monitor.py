@@ -268,7 +268,9 @@ class TangoDeviceMonitor:
                         subscriptions[attribute_name]["proxy"] is not None
                         and subscriptions[attribute_name]["id"] is not None
                     ):
-                        subscriptions[attribute_name]["proxy"].unsubscribe_event(subscriptions[attribute_name]["id"])  # type: ignore
+                        subscriptions[attribute_name]["proxy"].unsubscribe_event(
+                            subscriptions[attribute_name]["id"]
+                        )
                         self._logger.info(
                             "Unsubscribed from %s for attr %s", self._tango_fqdn, attribute_name
                         )
@@ -285,12 +287,14 @@ class TangoDeviceMonitor:
 
 
 if __name__ == "__main__":
-    event_queue = Queue()
+    event_queue: Queue = Queue()
     spf_device_fqdn = "tango://localhost:45678/ska001/spf/simulator"
 
-    def empty_func(*args, **kwargs):  # pylint: disable=unused-argument
+    def empty_func(*args, **kwargs) -> None:  # pylint: disable=unused-argument
         """An empty function"""
         pass  # pylint:disable=unnecessary-pass
 
-    tdm = TangoDeviceMonitor(spf_device_fqdn, ["powerState"], event_queue, logging.getLogger(__name__), empty_func)  # type: ignore
+    tdm = TangoDeviceMonitor(
+        spf_device_fqdn, ["powerState"], event_queue, logging.getLogger(__name__), empty_func
+    )
     tdm.monitor()
