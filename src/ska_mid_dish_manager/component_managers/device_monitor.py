@@ -287,14 +287,17 @@ class TangoDeviceMonitor:
 
 
 if __name__ == "__main__":
-    event_queue: Queue = Queue()
-    spf_device_fqdn = "tango://localhost:45678/ska001/spf/simulator"
+    logging.basicConfig(level=logging.INFO)
 
     def empty_func(*args, **kwargs) -> None:  # pylint: disable=unused-argument
         """An empty function"""
         pass  # pylint:disable=unnecessary-pass
 
     tdm = TangoDeviceMonitor(
-        spf_device_fqdn, ["powerState"], event_queue, logging.getLogger(__name__), empty_func
+        "tango://localhost:45678/mid-dish/simulator-spf/ska001#dbase=no",
+        ["powerState"],
+        Queue(),
+        logging.getLogger(__name__),
+        empty_func,
     )
     tdm.monitor()
