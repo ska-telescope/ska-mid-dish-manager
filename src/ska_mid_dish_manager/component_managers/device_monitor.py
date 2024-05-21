@@ -277,6 +277,7 @@ class TangoDeviceMonitor:
 
                         subscriptions[attribute_name]["proxy"] = None
                         subscriptions[attribute_name]["id"] = None
+                    self._subscription_tracker.subscription_stopped(attribute_name)
                 except tango.DevFailed as err:
                     self._logger.exception(err)
                     self._logger.info(
