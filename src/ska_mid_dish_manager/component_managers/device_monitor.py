@@ -157,6 +157,11 @@ class TangoDeviceMonitor:
         """
         Verify connection to the device by pinging it
         Starts attribute monitoring threads once the connection is verified
+
+        :param on_verified_callback: Callback for when connection is verified
+        :type on_verified_callback: Callable
+        :param exit_thread_event: Signals when to exit the thread
+        :type exit_thread_event: Event
         """
         self._logger.info("Check %s is up", self._tango_fqdn)
         try_count = 0
@@ -199,7 +204,11 @@ class TangoDeviceMonitor:
 
     # pylint:disable=too-many-arguments
     def _monitor_attributes_single_thread(self, exit_thread_event: Event) -> None:
-        """Monitor an attribute"""
+        """Monitor all attributes
+
+        :param exit_thread_event: Signals when to exit the thread
+        :type exit_thread_event: Event
+        """
         self._logger.info("Setting up monitoring on %s", self._tango_fqdn)
 
         with tango.EnsureOmniThread():
