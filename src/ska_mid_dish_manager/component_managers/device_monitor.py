@@ -7,7 +7,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial
 from queue import Queue
 from threading import Event, Lock, Thread
-from typing import Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus
@@ -268,7 +268,7 @@ class TangoDeviceMonitor:
                         subscriptions[attribute_name]["proxy"] is not None
                         and subscriptions[attribute_name]["id"] is not None
                     ):
-                        subscriptions[attribute_name]["proxy"].unsubscribe_event(
+                        subscriptions[attribute_name]["proxy"].unsubscribe_event(  # type: ignore
                             subscriptions[attribute_name]["id"]
                         )
                         self._logger.info(
@@ -290,13 +290,13 @@ class TangoDeviceMonitor:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    def empty_func(*args, **kwargs) -> None:  # pylint: disable=unused-argument
+    def empty_func(*args: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
         """An empty function"""
         pass  # pylint:disable=unnecessary-pass
 
     tdm = TangoDeviceMonitor(
         "tango://localhost:45678/mid-dish/simulator-spf/ska001#dbase=no",
-        ["powerState"],
+        ("powerState",),
         Queue(),
         logging.getLogger(__name__),
         empty_func,
