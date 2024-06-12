@@ -27,13 +27,22 @@ class SPFOperatingMode(enum.IntEnum):
 
 
 class SPFRxOperatingMode(enum.IntEnum):
-    # enums are from ICD
-    UNKNOWN = 0
+    # Workaround for ICD inconsistencies
+    # ENUMS:
+    # 0 : OFF
+    # 1 : STARTUP
+    # 2 : STANDBY
+    # 3 : CONFIGURE
+    # 4 : DATA_CAPTURE
+    # 5 : MAINTENANCE
+    # 6 : UNKNOWN
+    OFF = 0
     STARTUP = 1
     STANDBY = 2
-    DATA_CAPTURE = 3
-    CONFIGURE = 4
+    CONFIGURE = 3
+    DATA_CAPTURE = 5
     MAINTENANCE = 5
+    UNKNOWN = 6
 
 
 class DSOperatingMode(enum.IntEnum):
