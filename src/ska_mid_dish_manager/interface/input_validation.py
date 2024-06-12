@@ -1,6 +1,7 @@
 """Module for containing input validation and formatting needed for translation
 between DSC and DS manager."""
 
+# pylint: disable=unreachable
 from time import time
 from typing import List
 
