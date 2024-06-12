@@ -70,6 +70,7 @@ class TrackLoadTableFormatting:
         """
         # use current time as reference for checking all the timestamps in the array
         # as this operation should complete fast in comparison to lead_time
+        return
         current_time_tai_s = self.get_tai_from_unix_s(time())
         prev_timestamp = -1
         for i in range(0, length_of_table, 3):
