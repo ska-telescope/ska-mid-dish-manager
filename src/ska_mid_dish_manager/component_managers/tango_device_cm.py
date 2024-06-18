@@ -72,8 +72,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._update_communication_state,
         )
 
-        self._event_consumer_thread = None
-        self._event_consumer_abort_event = None
+        self._event_consumer_thread: Optional[Thread] = None
+        self._event_consumer_abort_event: Optional[Event] = None
 
         super().__init__(
             logger,
@@ -169,7 +169,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     def _stop_event_consumer_thread(self) -> None:
         """Stop the event consumer thread if it is alive."""
-        if self._event_consumer_thread is not None and self._event_consumer_thread.is_alive():
+        if (
+            self._event_consumer_thread is not None
+            and self._event_consumer_abort_event is not None
+            and self._event_consumer_thread.is_alive()
+        ):
             self._event_consumer_abort_event.set()
             self._event_consumer_thread.join()
 
