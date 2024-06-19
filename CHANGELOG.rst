@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Implement dedicated thread for tango_device_cm event_handler
 
 Version 2.6.1
 *************

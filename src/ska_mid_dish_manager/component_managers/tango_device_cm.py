@@ -4,7 +4,7 @@ import datetime
 import logging
 import typing
 from queue import Empty, PriorityQueue
-from threading import Event
+from threading import Event, Thread
 from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
@@ -72,6 +72,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._update_communication_state,
         )
 
+        self._event_consumer_thread: Optional[Thread] = None
+        self._event_consumer_abort_event: Optional[Event] = None
+
         super().__init__(
             logger,
             *args,
@@ -86,7 +89,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # Default to NOT_ESTABLISHED
         if self._communication_state_callback:
             self._communication_state_callback()  # type: ignore
-        self._start_event_consumer_thread()
 
     def clear_monitored_attributes(self) -> None:
         """
@@ -165,15 +167,35 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error updating component state")
 
+    def _stop_event_consumer_thread(self) -> None:
+        """Stop the event consumer thread if it is alive."""
+        if (
+            self._event_consumer_thread is not None
+            and self._event_consumer_abort_event is not None
+            and self._event_consumer_thread.is_alive()
+        ):
+            self._event_consumer_abort_event.set()
+            self._event_consumer_thread.join()
+
     def _start_event_consumer_thread(self) -> None:
-        self.submit_task(
-            self._event_consumer,
+        """Start the event consumer thread.
+
+        This method is idempotent. When called the existing (if any)
+        event consumer thread is removed and recreated.
+        """
+        self._stop_event_consumer_thread()
+
+        self._event_consumer_abort_event = Event()
+        self._event_consumer_thread = Thread(
+            target=self._event_consumer,
             args=[
                 self._events_queue,
                 self._update_state_from_event,
+                self._event_consumer_abort_event,
+                self._event_consumer_cb,
             ],
-            task_callback=self._event_consumer_cb,
         )
+        self._event_consumer_thread.start()
 
     # pylint: disable=too-many-arguments
     @classmethod
@@ -374,8 +396,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # pylint: disable=no-member
         self.logger.info("start_communicating")
         self._tango_device_monitor.monitor()
+        self._start_event_consumer_thread()
 
     def stop_communicating(self) -> None:
         """Stop communication with the device"""
         # pylint: disable=no-member
         self._tango_device_monitor.stop_monitoring()
+        self._stop_event_consumer_thread()
