@@ -11,7 +11,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Disabled default deployment of DSManager to use helm flag
 - Added ignoreSpf and ignoreSpfrx attributes to conform to ADR-93
 - Updated command map and transition state rules for when ignoring spf/spfrx to conform to ADR-93
-- Upgraded base class dependency to v0.20.2
+- Updated ska-tango-base to v1.0.0
+- Updated PyTango to v9.5.0
 - Updated commands to check precondition before command execution in the component manager
 
 Version 2.5.0
