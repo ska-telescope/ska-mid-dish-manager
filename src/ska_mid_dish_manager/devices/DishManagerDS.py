@@ -369,17 +369,6 @@ class DishManager(SKAController):
     # Attributes
     # ----------
 
-    # pylint: disable=arguments-differ
-    # overwrite longRunningCommandInProgress attribute to not have max dim
-    @attribute(
-        dtype=(str,),
-        access=AttrWriteType.READ,
-        doc="the name(s) of the currently executing long running command(s)",
-        max_dim_x=8,  # should be self.component_manager.sub_component_managers.items(),
-    )
-    def longRunningCommandInProgress(self):
-        return self._commands_in_progress
-
     # pylint: disable=invalid-name
     @attribute(
         dtype=CommunicationStatus,
