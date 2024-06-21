@@ -22,6 +22,7 @@ def callbacks() -> dict:
     """Return a dictionary of callbacks."""
     return {
         "conn_state_cb": Mock(),
+        "quality_state_cb": Mock(),
         "comm_state_cb": Mock(),
         "comp_state_cb": ComponentStateStore(),
         "task_cb": Mock(),
@@ -54,6 +55,7 @@ def component_manager(mock_command_tracker: Mock, callbacks: dict) -> Generator:
             LOGGER,
             mock_command_tracker,
             callbacks["conn_state_cb"],
+            callbacks["quality_state_cb"],
             "device-1",
             "sub-device-1",
             "sub-device-2",
