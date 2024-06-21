@@ -614,6 +614,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             "SetStandbyLPMode",
             component_manager=self,
+            task_callback=task_callback,
         )
 
         status, response = self.submit_task(
@@ -633,6 +634,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             "SetStandbyFPMode",
             component_manager=self,
+            task_callback=task_callback,
         )
 
         status, response = self.submit_task(
@@ -653,6 +655,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             "SetOperateMode",
             component_manager=self,
+            task_callback=task_callback,
         )
         status, response = self.submit_task(
             self._command_map.set_operate_mode,
@@ -690,9 +693,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         def _is_track_stop_cmd_allowed():
             dish_mode = self.component_state["dishmode"]
             pointing_state = self.component_state["pointingstate"]
-            if dish_mode != DishMode.OPERATE and pointing_state not in [
-                PointingState.TRACK,
-            ]:
+            if dish_mode != DishMode.OPERATE and pointing_state != PointingState.TRACK:
                 return False
             return True
 
@@ -717,6 +718,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             req_cmd,
             component_manager=self,
+            task_callback=task_callback,
         )
 
         status, response = self.submit_task(
@@ -736,6 +738,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             "SetStowMode",
             component_manager=self,
+            task_callback=task_callback,
         )
         status, response = self.submit_task(
             self._command_map.set_stow_mode,
@@ -832,7 +835,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception("SetKvalue on SPFRx failed")
             return (ResultCode.FAILED, err)
-        return (ResultCode.OK, "SetKValue command succesfully sumitted to SPFRx")
+        return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
 
     def set_track_interpolation_mode(
         self,
@@ -846,6 +849,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except LostConnection:
             self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
+        return (ResultCode.OK, "Successfully updated trackInterpolationMode on DSManager")
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
         """
