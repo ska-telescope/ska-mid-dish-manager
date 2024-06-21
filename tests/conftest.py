@@ -1,4 +1,5 @@
 """Contains pytest fixtures for other tests setup"""
+
 # pylint: disable=too-many-statements,invalid-name,missing-function-docstring,redefined-outer-name
 
 import os
@@ -182,6 +183,7 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             "b5acapabilitystate",
             "b5bcapabilitystate",
             "achievedtargetlock",
+            "configuretargetlock",
             "achievedpointing",
             "achievedpointingaz",
             "achievedpointingel",
@@ -205,6 +207,8 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             "achievedPointing",
             "achievedPointingaz",
             "achievedPointingel",
+            "achievedTargetLock",
+            "configureTargetLock",
         ),
     )
 

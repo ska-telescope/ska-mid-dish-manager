@@ -1,4 +1,5 @@
 """Specialization for SPFRx functionality"""
+
 import logging
 from threading import Lock
 from typing import Any, Callable
@@ -45,6 +46,10 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
+            quality_monitored_attributes=(
+                "attenuationpolv",
+                "attenuationpolh",
+            ),
             **kwargs
         )
         self._communication_state_lock = state_update_lock

@@ -1,4 +1,5 @@
 """Test Operate"""
+
 import pytest
 import tango
 
@@ -42,16 +43,14 @@ def test_set_operate(
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     main_event_store.wait_for_command_id(unique_id, timeout=8)
-
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
 
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
     dish_manager_proxy.SetOperateMode()
-
-    # Wait for the operate command to complete
-    assert main_event_store.wait_for_value(DishMode.OPERATE)
+    main_event_store.wait_for_value(DishMode.OPERATE)
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     expected_progress_updates = [
         "SetPointMode called on DS",

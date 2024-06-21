@@ -1,4 +1,5 @@
 """Tests that check that the Dish Manager conforms to the ICD"""
+
 import pytest
 from tango_simlib.utilities.validate_device import validate_device_from_url
 

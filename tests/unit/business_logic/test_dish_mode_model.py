@@ -1,4 +1,5 @@
 """Unit tests verifying model against dishMode transitions."""
+
 # pylint: disable=too-many-lines
 import pytest
 

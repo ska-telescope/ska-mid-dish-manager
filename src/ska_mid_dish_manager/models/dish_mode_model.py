@@ -6,8 +6,8 @@ state of the device to decide if the requested state is a nearby node to allow o
 import typing
 from dataclasses import dataclass, field
 
-# pylint: disable=too-few-public-methods,protected-access
-from typing import Any
+# pylint: disable=too-few-public-methods
+from typing import Any, Callable
 
 import networkx as nx
 import tango
@@ -105,7 +105,11 @@ class DishModeModel:
 
     @typing.no_type_check
     def is_command_allowed(
-        self, cmd_name: str, dish_mode: str | None = None, component_manager: Any | None = None
+        self,
+        cmd_name: str,
+        dish_mode: str | None = None,
+        component_manager: Any | None = None,
+        task_callback: Callable | None = None,
     ) -> bool:
         """
         Determine if requested tango command is allowed based on current dish mode
@@ -114,7 +118,7 @@ class DishModeModel:
         taken off the queue. To ensure the evaluation is always performed using an updated
         component state (and not the old state used when the command is queued), the component
         manager should be passed for the enqueue operation. In testing scenarios for example,
-        function can be evoked directly with dishmode passed to evaluate the pre-condition.
+        the function can be evoked directly with the dishmode parameter.
 
         NOTE: Though the function signature has only one required argument, it still needs either
         the dish_mode or component_manager passed to it to perform the evaluation.
@@ -122,6 +126,7 @@ class DishModeModel:
         :param cmd_name: the requested command
         :param dish_mode: the current dishMode reported by the component state
         :param component_manager: the component manager containing the component state
+        :param task_callback: callback to update the command info
 
         :raises TypeError: when no dish_mode or component_manager is provided to function call
 
@@ -133,7 +138,8 @@ class DishModeModel:
             )
         except AttributeError as exc:
             raise TypeError(
-                "is_command_allowed() is missing either the dish_mode or component_manager"
+                "is_command_allowed() requires either the dish_mode or"
+                " the component_manager to be specified"
             ) from exc
 
         allowed_commands = []
@@ -145,17 +151,17 @@ class DishModeModel:
         if cmd_name in allowed_commands:
             return True
 
+        # report the reason for the command rejection to logs and lrc attribute
+        msg = (
+            f"{cmd_name} not allowed in {current_dish_mode} dishMode."
+            f" Commands allowed from {current_dish_mode} are: {allowed_commands}."
+        )
         if component_manager:
-            msg = (
-                f"{cmd_name} not allowed in {current_dish_mode} dishMode."
-                f" Commands allowed from {current_dish_mode} are: {allowed_commands}."
-            )
             logger = component_manager.logger
-            # task_callback = component_manager._command_tracker
-
-            # report the reason for the command rejection to logs and lrc attribute
-            # task_callback(progress=msg)  # status and result are handled in executor
             logger.debug(msg)
+
+        if task_callback:
+            task_callback(progress=msg)  # status and result are handled in executor
 
         return False
 

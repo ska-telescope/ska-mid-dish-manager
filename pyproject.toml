@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-dish-manager"
-version = "2.5.0"
+version = "2.6.1"
 description = "SKA Dish Manager TANGO device server"
 authors = ["Team Karoo"]
 license = "BSD-3-Clause"
@@ -34,15 +34,15 @@ name = "PyPI-public"
 url = 'https://pypi.org/simple'
 
 [tool.poetry.dependencies]
-python = "~3.10"
-pytango = "9.4.2"
+python = "^3.10"
+pytango = "9.5.0"
 ska-ser-logging = "^0.4.1"
-ska-tango-base = "0.20.2"
+ska-tango-base = "1.0.0"
 ska-tango-testing = "0.2.0"
 pytest-timeout = "^2.1.0"
 networkx = "2.6.3"
 rule-engine = "^3.5.0"
-numpy = "1.23.0"
+numpy = "^1.23.0"
 typing-extensions = "^4.3.0"
 astropy = "^6.0.0"
 

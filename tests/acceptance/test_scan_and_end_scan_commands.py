@@ -1,4 +1,5 @@
 """Test the Scan and EndScan command"""
+
 import pytest
 import tango
 

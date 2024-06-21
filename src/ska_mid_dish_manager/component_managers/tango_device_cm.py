@@ -1,9 +1,10 @@
 """Generic component manager for a subservient tango device"""
+
 import datetime
 import logging
 import typing
 from queue import Empty, PriorityQueue
-from threading import Event
+from threading import Event, Thread
 from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
@@ -35,7 +36,7 @@ class LostConnection(Exception):
     """Exception for losing connection to the Tango device"""
 
 
-# pylint: disable=abstract-method, too-many-instance-attributes, no-member
+# pylint: disable=abstract-method, too-many-instance-attributes, no-member, too-many-arguments
 class TangoDeviceComponentManager(TaskExecutorComponentManager):
     """A component manager for a Tango device"""
 
@@ -47,14 +48,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         *args: Any,
         communication_state_callback: Any = None,
         component_state_callback: Any = None,
+        quality_state_callback: Any = None,
+        quality_monitored_attributes: Tuple[str, ...] = (),
         **kwargs: Any,
     ):
         self._component_state: dict = {}  # type: ignore
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
+        self._quality_state_callback = quality_state_callback
         self._events_queue: PriorityQueue = PriorityQueue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
+        self._quality_monitored_attributes = quality_monitored_attributes
         if not logger:
             logger = logging.getLogger()
         self.logger = logger
@@ -66,6 +71,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             logger,
             self._update_communication_state,
         )
+
+        self._event_consumer_thread: Optional[Thread] = None
+        self._event_consumer_abort_event: Optional[Event] = None
 
         super().__init__(
             logger,
@@ -80,7 +88,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # Default to NOT_ESTABLISHED
         if self._communication_state_callback:
             self._communication_state_callback()  # type: ignore
-        self._start_event_consumer_thread()
 
     def clear_monitored_attributes(self) -> None:
         """
@@ -134,7 +141,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: Tango event
         :type event_data: tango.EventData
         """
-
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
@@ -143,24 +149,52 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if attr_name not in self._component_state:
             self._component_state[attr_name] = None
 
+        quality = event_data.attr_value.quality
         try:
-            value = event_data.attr_value.value
-            if isinstance(value, np.ndarray):
-                value = list(value)
-            self._update_component_state(**{attr_name: value})
-        # Catch any errors and log it otherwise it remains hidden
+            if attr_name in self._quality_monitored_attributes:
+                self._quality_state_callback(attr_name, quality)
         except Exception:  # pylint:disable=broad-except
-            self.logger.exception("Error updating component state")
+            self.logger.exception("Error occurred on attribute quality state update")
+
+        if quality is not tango.AttrQuality.ATTR_INVALID:
+            try:
+                value = event_data.attr_value.value
+                if isinstance(value, np.ndarray):
+                    value = list(value)
+                self._update_component_state(**{attr_name: value})
+            # Catch any errors and log it otherwise it remains hidden
+            except Exception:  # pylint:disable=broad-except
+                self.logger.exception("Error updating component state")
+
+    def _stop_event_consumer_thread(self) -> None:
+        """Stop the event consumer thread if it is alive."""
+        if (
+            self._event_consumer_thread is not None
+            and self._event_consumer_abort_event is not None
+            and self._event_consumer_thread.is_alive()
+        ):
+            self._event_consumer_abort_event.set()
+            self._event_consumer_thread.join()
 
     def _start_event_consumer_thread(self) -> None:
-        self.submit_task(
-            self._event_consumer,
+        """Start the event consumer thread.
+
+        This method is idempotent. When called the existing (if any)
+        event consumer thread is removed and recreated.
+        """
+        self._stop_event_consumer_thread()
+
+        self._event_consumer_abort_event = Event()
+        self._event_consumer_thread = Thread(
+            target=self._event_consumer,
             args=[
                 self._events_queue,
                 self._update_state_from_event,
+                self._event_consumer_abort_event,
+                self._event_consumer_cb,
             ],
-            task_callback=self._event_consumer_cb,
         )
+        self._event_consumer_thread.start()
 
     # pylint: disable=too-many-arguments
     @classmethod
@@ -285,7 +319,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = device_proxy.command_inout(command_name, command_arg)
+            result = None
+            try:
+                result = device_proxy.command_inout(command_name, command_arg)
+            except tango.DevFailed:
+                self.logger.exception(
+                    "Could not execute command [%s] with arg [%s] on [%s]",
+                    command_name,
+                    command_arg,
+                    self._tango_device_fqdn,
+                )
+                raise
             self.logger.debug(
                 "Result of [%s] on [%s] is [%s]",
                 command_name,
@@ -326,7 +370,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # here will be inefficient. Consider moving the declaration out of this function.
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = device_proxy.write_attribute(attribute_name, attribute_value)
+            result = None
+            try:
+                result = device_proxy.write_attribute(attribute_name, attribute_value)
+            except tango.DevFailed:
+                self.logger.exception(
+                    "Could not write to attribute [%s] with [%s] on [%s]",
+                    attribute_name,
+                    attribute_value,
+                    self._tango_device_fqdn,
+                )
+                raise
             self.logger.debug(
                 "Result of writing [%s] on [%s] is [%s]",
                 attribute_name,
@@ -341,8 +395,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # pylint: disable=no-member
         self.logger.info("start_communicating")
         self._tango_device_monitor.monitor()
+        self._start_event_consumer_thread()
 
     def stop_communicating(self) -> None:
         """Stop communication with the device"""
         # pylint: disable=no-member
         self._tango_device_monitor.stop_monitoring()
+        self._stop_event_consumer_thread()

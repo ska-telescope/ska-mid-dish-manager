@@ -1,0 +1,42 @@
+@startuml
+
+Client -> DishManager: ignorespf
+DishManager --> Client: False
+note right 
+	Checking if SPF ignored 
+	Initially no device is ignored.
+end note
+
+Client -> DishManager: getcomponentstates()
+
+DishManager --> Client: String "{DM}, {SPF},{SPFRx}, {DS}" 
+note left of DishManager: States of SPF, SPFRx, and DS with \nspfconnectionstate: ESTABLISHED\nspfrxconnectonstate: ESTABLISHED\ndsconectionstate: ESTABLISHED
+
+Client -> DishManager: ignorespf = True
+Client -> DishManager: getcomponentstates()
+DishManager --> Client: String "{DM}, {SPF},{SPFRx}, {DS}"
+note left of DishManager: String that has dictionary states of devices\nwith ignorespf: True\nspfconnectionstate: DISABLED
+
+Client -> DishManager: Subscribe to LRC Progress
+
+Client -> DishManager: SetStandbyLPMode()
+
+DishManager -> DishManager: is_device_ignored()
+alt Command allowed
+	DishManager -> DS: SetStandbyLPMode()
+
+	DishManager -x SPF: SetStandbyLPMode command ignored
+	note left of SPF: Since the device is ignored \nNo command is sent to SPF
+
+	DishManager -> SPFRx: SetStandbyMode()
+
+	DishManager --> Client: Change event with progress (progress updates)
+	note left of DishManager: Signifies the ignored device and disregards \nthe command on the ignored device.\nInitiates command on other devices.\nReports command completed.
+
+	Client -> DishManager: read dishMode
+
+	DishManager --> Client: dishMode = STANDBY_LP
+else Command not allowed
+DishManager --> Client: Error: Command not allowed
+end
+@enduml

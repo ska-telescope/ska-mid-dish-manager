@@ -1,6 +1,6 @@
 /assign_reviewer @jventer @samueltwum1 @yreddi1 @phelokazi_dube @DevonPetrie @barbsapili @alethole @ucsilere @Mpumelelo_Nzama
 
-## Describe your changes
+### Describe your changes
 
 A description of the merge request including _why_ is this change being made and _what_ does it do? Mention if there are any important changes to how things used to work (e.g. breaks compatibility, requires a schema update). Are there changes in any other repos that need to be merged at the same time? If there are lots of formatting changes (e.g. PEP8), point reviewers to the interesting bits that changed. If it would make sense to review the files in a certain order, then mention that.
 
