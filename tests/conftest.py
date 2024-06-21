@@ -1,4 +1,5 @@
 """Contains pytest fixtures for other tests setup"""
+
 # pylint: disable=too-many-statements,invalid-name,missing-function-docstring,redefined-outer-name
 
 import os

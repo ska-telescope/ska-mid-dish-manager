@@ -1,4 +1,5 @@
 """CapabilityState checks"""
+
 # pylint: disable=protected-access,use-dict-literal,too-many-arguments
 # pylint: disable=protected-access,missing-function-docstring
 
