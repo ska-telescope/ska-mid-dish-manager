@@ -50,6 +50,7 @@ def component_manager(mock_command_tracker: Mock, callbacks: dict) -> Generator:
         run_device_command=Mock(side_effect=_simulate_lrc_callbacks),
         update_state_from_monitored_attributes=Mock(),
         write_attribute_value=Mock(),
+        execute_command=Mock(),
     ):
         yield DishManagerComponentManager(
             LOGGER,
