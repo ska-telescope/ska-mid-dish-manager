@@ -11,7 +11,6 @@ AZIM_MECHANICAL_LIMIT_MAX = 360.0
 
 # pylint: disable=too-many-locals,unused-argument
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_slew_transition(event_store_class, dish_manager_proxy):
     """Test transition to SLEW"""
@@ -21,7 +20,6 @@ def test_slew_transition(event_store_class, dish_manager_proxy):
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
-    main_event_store.clear_queue()
     dish_manager_proxy.SetStandbyFPMode()
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
 

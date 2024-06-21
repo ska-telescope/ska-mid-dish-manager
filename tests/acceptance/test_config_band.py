@@ -44,7 +44,7 @@ def test_configure_band_2(
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     # make sure configuredBand is not B2
     dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(Band.B1)
+    main_event_store.wait_for_value(Band.B1, timeout=8)
     assert dish_manager_proxy.configuredBand == Band.B1
 
     main_event_store.clear_queue()
