@@ -23,10 +23,5 @@ def test_set_kvalue(
     spfrx_device_proxy.subscribe_event("kValue", tango.EventType.CHANGE_EVENT, spfrx_event_store)
     spfrx_event_store.wait_for_value(k_value, timeout=7)
 
-    # FIXME this is a workaround to force updates to be bubbled up to DishManager
-    # It's not clear why attribute writes to sub component managers do not get
-    # events flowing all through until this intervention is actioned
-    dish_manager_proxy.SyncComponentStates()
-
     dish_manager_proxy.subscribe_event("kValue", tango.EventType.CHANGE_EVENT, dm_event_store)
     dm_event_store.wait_for_value(k_value, timeout=7)

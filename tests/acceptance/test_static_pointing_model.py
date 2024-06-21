@@ -58,12 +58,6 @@ def test_write_bands_static_pointing_model_parameters(
     dish_manager_proxy.subscribe_event(
         tango_attribute, tango.EventType.CHANGE_EVENT, dm_event_store
     )
-
-    # FIXME this is a workaround to force updates to be bubbled up to DishManager
-    # It's not clear why attribute writes to sub component managers do not get
-    # events flowing all through until this intervention is actioned
-    # and trigger the update to the dish manager component manager
-    dish_manager_proxy.SyncComponentStates()
     dm_event_store.wait_for_value(pointing_model_params)
 
 
@@ -97,10 +91,4 @@ def test_track_load_static_off(
     dish_manager_proxy.subscribe_event(
         tango_attribute, tango.EventType.CHANGE_EVENT, dm_event_store
     )
-
-    # FIXME this is a workaround to force updates to be bubbled up to DishManager
-    # It's not clear why attribute writes to sub component managers do not get
-    # events flowing all through until this intervention is actioned
-    # and trigger the update to the dish manager component manager
-    dish_manager_proxy.SyncComponentStates()
     dm_event_store.wait_for_value(expected_values)
