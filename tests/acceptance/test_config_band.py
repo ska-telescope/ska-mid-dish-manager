@@ -1,4 +1,5 @@
 """Test ConfigureBand2"""
+
 import pytest
 import tango
 

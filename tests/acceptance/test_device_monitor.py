@@ -1,4 +1,5 @@
 """Test device Monitor"""
+
 import logging
 from functools import partial
 from queue import Empty, Queue

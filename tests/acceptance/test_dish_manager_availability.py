@@ -1,4 +1,5 @@
 """Test that the Dish Manager devices are available on startup"""
+
 import pytest
 from tango import DeviceProxy, DevState
 

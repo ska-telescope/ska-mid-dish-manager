@@ -1,10 +1,11 @@
-# pylint: disable=invalid-name,possibly-unused-variable
+# pylint: disable=invalid-name,possibly-unused-variable,no-value-for-parameter
 """General utils for test devices"""
 import queue
 from typing import Any, List, Tuple
 
 import numpy as np
 import tango
+from astropy.time import Time
 from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
@@ -67,6 +68,37 @@ class EventStore:
         except queue.Empty as err:
             ev_vals = self.extract_event_values(events)
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
+
+    def wait_for_quality(  # pylint:disable=inconsistent-return-statements
+        self, value: tango.AttrQuality, timeout: int = 3
+    ):
+        """Wait for a quality value to arrive
+
+        Wait `timeout` seconds for each fetch.
+
+        :param value: The value to check for
+        :type value: tango.AttrQuality
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If None are found
+        :return: True if found
+        :rtype: bool
+        """
+
+        try:
+            events = []
+            while True:
+                event = self._queue.get(timeout=timeout)
+                events.append(event)
+                if event.attr_value is None:
+                    continue
+                if event.attr_value.quality == value:
+                    return event
+        except queue.Empty as err:
+            event_str = "\n".join([str(i) for i in events])
+            raise RuntimeError(
+                f"Never got an event with quality [{value}] got [{event_str}]"
+            ) from err
 
     # pylint:disable=inconsistent-return-statements
     def wait_for_command_result(self, command_id: str, command_result: Any, timeout: int = 3):
@@ -351,6 +383,7 @@ def set_configuredBand_b2(
 
 def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
     """Sets ignored devices on DishManager."""
+
     if dish_manager_proxy.ignoreSpf != ignore_spf:
         spf_connection_event_store = EventStore()
         dish_manager_proxy.subscribe_event(
@@ -381,3 +414,15 @@ def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
         else:
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+
+
+def get_tai_from_unix_s(unix_s: float) -> float:
+    """
+    Calculate atomic time in seconds from unix time in seconds.
+
+    :param unix_s: Unix time in seconds
+
+    :return: atomic time (tai) in seconds
+    """
+    astropy_time_utc = Time(unix_s, format="unix")
+    return astropy_time_utc.unix_tai

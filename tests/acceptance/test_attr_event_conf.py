@@ -1,4 +1,5 @@
 """Test that all dish manager attributes are configured for events"""
+
 import pytest
 import tango
 

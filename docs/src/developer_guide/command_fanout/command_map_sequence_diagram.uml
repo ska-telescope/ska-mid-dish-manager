@@ -1,0 +1,28 @@
+@startuml
+
+Client -> DishManager: dishMode
+DishManager --> Client: get current dishMode
+note right 
+	Checking the current dishMode 
+	Pre-condition dishMode = STANDBY_LP.
+end note
+
+Client -> DishManager: Subscribe to LRC Progress
+
+Client -> DishManager: SetStandbyFPMode()
+
+  DishManager -> DishManager: is_command_allowed()
+  alt Allowed
+      DishManager -> DS: SetStandbyFPMode()
+      DishManager -> SPF: SetOperateMode()
+      DishManager -x SPFRx
+      note left of SPFRx: No command is sent to SPFRx
+      DishManager --> Client: Change event with progress (progress updates)
+      note left of DishManager: Signifies the command called on each device \nInitiates command on the devices.\nReports command completed.
+      Client -> DishManager: read dishMode
+      DishManager --> Client: dishMode = STANDBY_FP
+      note left of DishManager: Checking the current dishMode \nPost-condition dishMode = STANDBY_FP.
+  else Not Allowed
+      DishManager --> Client: Error: Command not allowed
+  end
+@enduml

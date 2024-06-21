@@ -1,4 +1,5 @@
 """Test StandbyFP"""
+
 import pytest
 import tango
 

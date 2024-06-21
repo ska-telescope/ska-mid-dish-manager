@@ -1,4 +1,5 @@
 """Module to manage the mapping of commands to subservient devices"""
+
 import enum
 import json
 from typing import Callable, Optional
