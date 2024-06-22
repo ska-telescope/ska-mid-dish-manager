@@ -317,7 +317,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             "About to execute command [%s] on device [%s] with param [%s]",
             command_name,
             self._tango_device_fqdn,
-            command_arg
+            command_arg,
         )
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
