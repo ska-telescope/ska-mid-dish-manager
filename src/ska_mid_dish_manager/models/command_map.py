@@ -325,13 +325,13 @@ class CommandMap:
         )
 
         response, command_id = command(command_name, command_argument)
-        log_message = (
-            f"{command_name} called on "
-            f"{self._key_to_output(device)}, ID {command_id}, param {command_argument}"
-        )
-        self.logger.info(log_message)
         # Report that the command has been called on the subservient device
-        task_callback(progress=log_message)
+        task_callback(
+            progress=(
+                f"{fan_out_args['command']} called on "
+                f"{self._key_to_output(device)}, ID {command_id}"
+            )
+        )
 
         # fail the command immediately, if the subservient device fails
         if response == TaskStatus.FAILED:
