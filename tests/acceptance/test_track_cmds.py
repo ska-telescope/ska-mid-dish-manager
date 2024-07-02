@@ -1,12 +1,10 @@
 """Test that DS goes into Track and dishManager reports it"""
 
-import time
-
 import pytest
 import tango
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode, PointingState
-from tests.utils import get_tai_from_unix_s
+from ska_mid_dish_manager.utils import get_current_tai_timestamp
 
 
 # pylint: disable=unused-argument,too-many-arguments,too-many-locals,too-many-statements
@@ -82,7 +80,7 @@ def test_track_and_track_stop_cmds(
     current_az = current_pointing[1]
     current_el = current_pointing[2]
 
-    current_time_tai_s = get_tai_from_unix_s(time.time())
+    current_time_tai_s = get_current_tai_timestamp()
 
     # Directions to move values
     az_dir = 1 if current_az < 350 else -1
