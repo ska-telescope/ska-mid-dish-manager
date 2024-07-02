@@ -313,9 +313,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def execute_command(self, command_name: str, command_arg: Any) -> Any:
         """Check the connection and execute the command on the Tango device"""
         self.logger.debug(
-            "About to execute command [%s] on device [%s]",
+            "About to execute command [%s] on device [%s] with param [%s]",
             command_name,
             self._tango_device_fqdn,
+            command_arg,
         )
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
