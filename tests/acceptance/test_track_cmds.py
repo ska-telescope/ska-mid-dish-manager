@@ -4,7 +4,7 @@ import pytest
 import tango
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode, PointingState
-from ska_mid_dish_manager.utils import get_current_tai_timestamp
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
 # pylint: disable=unused-argument,too-many-arguments,too-many-locals,too-many-statements

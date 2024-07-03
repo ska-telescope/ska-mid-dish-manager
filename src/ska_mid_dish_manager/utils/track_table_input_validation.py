@@ -2,7 +2,7 @@
 
 from typing import List
 
-from ska_epoch_to_tai import get_current_tai_timestamp
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
 class TrackTableTimestampError(ValueError):
