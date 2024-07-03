@@ -12,6 +12,7 @@ Version 2.7.0
 *************
 - Implement dedicated thread for tango_device_cm event_handler
 - Added more exhaustive per command logging
+- Updated to use SKA epoch for TAI timestamps
 
 Version 2.6.1
 *************
