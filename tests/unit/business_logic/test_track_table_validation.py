@@ -4,10 +4,11 @@ from time import time
 
 import pytest
 
-from ska_mid_dish_manager.utils.input_validation import (
+from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
 )
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_tai_timestamp_from_unix_s
 
 MAX_TRACK_LOAD_TABLE_SAMPLES = 50
 
@@ -26,7 +27,7 @@ class TestTrackLoadTableFormatting:
         """Test happy path when length and future time is appropriate"""
         offset_s = 1.0
         time_future_unix = time() + self.future_time_s + offset_s
-        time_future_tai = self.track_table_formatter.get_tai_from_unix_s(time_future_unix)
+        time_future_tai = get_tai_timestamp_from_unix_s(time_future_unix)
         table = [time_future_tai, 2.0, 3.0]
         self.track_table_formatter.check_track_table_input_valid(table, self.future_time_s)
 
@@ -34,7 +35,7 @@ class TestTrackLoadTableFormatting:
         """Test when future time check fails"""
         offset_s = -0.5
         time_future_unix = time() + self.future_time_s + offset_s
-        time_future_tai = self.track_table_formatter.get_tai_from_unix_s(time_future_unix)
+        time_future_tai = get_tai_timestamp_from_unix_s(time_future_unix)
         table = [time_future_tai, 2.0, 3.0]
         with pytest.raises(TrackTableTimestampError):
             self.track_table_formatter.check_track_table_input_valid(table, self.future_time_s)
@@ -60,7 +61,7 @@ class TestTrackLoadTableFormatting:
         # generate 5 samples with 1 second increment and dummy el/az
         for n in range(0, 5):
             timestamp_in_sec = time_future_unix + n
-            tai_time = self.track_table_formatter.get_tai_from_unix_s(timestamp_in_sec)
+            tai_time = get_tai_timestamp_from_unix_s(timestamp_in_sec)
             track_table.extend([tai_time, 0, 0])
 
         # add entry with time less than previous entry
