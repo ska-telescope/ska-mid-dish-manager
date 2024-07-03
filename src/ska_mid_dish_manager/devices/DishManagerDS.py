@@ -22,10 +22,6 @@ from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
-from ska_mid_dish_manager.interface.input_validation import (
-    TrackLoadTableFormatting,
-    TrackTableTimestampError,
-)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
@@ -35,6 +31,10 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackInterpolationMode,
     TrackProgramMode,
     TrackTableLoadMode,
+)
+from ska_mid_dish_manager.utils.input_validation import (
+    TrackLoadTableFormatting,
+    TrackTableTimestampError,
 )
 
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
