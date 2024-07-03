@@ -1,0 +1,1 @@
+"""Shared methods in package."""

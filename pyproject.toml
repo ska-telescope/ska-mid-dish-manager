@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-mid-dish-manager"
-version = "2.6.1"
+version = "2.7.0"
 description = "SKA Dish Manager TANGO device server"
 authors = ["Team Karoo"]
 license = "BSD-3-Clause"
@@ -37,7 +37,7 @@ url = 'https://pypi.org/simple'
 python = "^3.10"
 pytango = "9.5.0"
 ska-ser-logging = "^0.4.1"
-ska-tango-base = "1.0.0"
+ska-tango-base = { git = "https://gitlab.com/ska-telescope/ska-tango-base.git", branch = "kar-995-increase-size-of-lrc-in-progress" }
 ska-tango-testing = "0.2.0"
 pytest-timeout = "^2.1.0"
 networkx = "2.6.3"

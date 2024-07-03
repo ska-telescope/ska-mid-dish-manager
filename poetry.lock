@@ -1930,29 +1930,28 @@ name = "ska-tango-base"
 version = "1.0.0"
 description = "SKA Tango base classes"
 optional = false
-python-versions = ">=3.10,<4.0"
-files = [
-    {file = "ska_tango_base-1.0.0-py3-none-any.whl", hash = "sha256:edb86c02f7de36b8b8b8ea379e986de7885e48feb2b6aa4210233ff163f4ae0c"},
-    {file = "ska_tango_base-1.0.0.tar.gz", hash = "sha256:20636bb3b3966caa37c53a972ac4031c3d6cf7eebb0bce4e99064f90a76fb5a5"},
-]
+python-versions = "^3.10"
+files = []
+develop = false
 
 [package.dependencies]
-debugpy = ">=1.6.2,<2.0.0"
-jsonschema = ">=4.17.3,<5.0.0"
+debugpy = "^1.6.2"
+jsonschema = "^4.17.3"
 numpy = [
     {version = ">=1.21.6", markers = "python_version == \"3.10\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
     {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
 ]
-pytango = ">=9.4.2,<10.0.0"
-ska-control-model = ">=1.0.0,<2.0.0"
-ska-ser-logging = ">=0.4.3,<0.5.0"
-transitions = ">=0.9.0,<0.10.0"
+pytango = "^9.4.2"
+ska-control-model = "^1.0.0"
+ska-ser-logging = "^0.4.3"
+transitions = "^0.9.0"
 
 [package.source]
-type = "legacy"
-url = "https://artefact.skao.int/repository/pypi-internal/simple"
-reference = "ska-nexus"
+type = "git"
+url = "https://gitlab.com/ska-telescope/ska-tango-base.git"
+reference = "kar-995-increase-size-of-lrc-in-progress"
+resolved_reference = "186236607dc724432fc5ab713766ff8315aafbf2"
 
 [[package]]
 name = "ska-tango-testing"
@@ -2551,4 +2550,4 @@ reference = "PyPI-public"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "7dbbcf44ebd2314e2182f9d03df6bb62c7bb8037b5ac55f88a93e60d9a2411a2"
+content-hash = "ec99d57dc1e20dcdab9c854d4fb18a09baf7db40a8b08a631ec44dfb5130253c"

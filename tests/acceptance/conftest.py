@@ -28,17 +28,17 @@ def setup_and_teardown(
     spfrx_device_proxy,
 ):
     """Reset the tango devices to a fresh state before each test"""
-    # FIXME weirdly, the thread spawned by the component manager hangs
-    # on initial deployment. Calling abortCommands and continuing seems
-    # to resolve this issue. Investigate why this is the case later
-    dish_manager_proxy.AbortCommands()
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandsInQueue",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    event_store.wait_for_value((), timeout=30)
-    event_store.clear_queue()
+    # this wait is very important for our AUTOMATED tests!!!
+    # wait for task status updates to finish before resetting the
+    # sub devices to a clean state for the next test. Reasons are:
+    # [*] your command map may never evaluate true for the
+    # awaited value to report the final task status of the LRC.
+    # [*] the base classes needs this final task status to allow the
+    # subsequently issued commands to be moved from queued to in progress
+
+    # another approach will be to ensure that all tests check the
+    # command status for every issued command as part of its assert
+    event_store.get_queue_events(timeout=5)
 
     spfrx_device_proxy.ResetToDefault()
     spf_device_proxy.ResetToDefault()
