@@ -28,16 +28,6 @@ def setup_and_teardown(
     spfrx_device_proxy,
 ):
     """Reset the tango devices to a fresh state before each test"""
-    # FIXME weirdly, the thread spawned by the component manager hangs
-    # on initial deployment. Calling abortCommands and continuing seems
-    # to resolve this issue. Investigate why this is the case later
-    dish_manager_proxy.AbortCommands()
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandsInQueue",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    event_store.wait_for_value((), timeout=30)
     event_store.clear_queue()
 
     spfrx_device_proxy.ResetToDefault()
