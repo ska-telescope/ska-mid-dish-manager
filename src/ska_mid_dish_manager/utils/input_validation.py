@@ -3,16 +3,16 @@ Module for containing input validation and formatting needed for translation
 between DSC and DS manager.
 """
 
+from time import time
 from typing import List
 
-from ska_mid_dish_manager.utils import get_current_tai_timestamp
+from astropy.time import Time
 
 
 class TrackTableTimestampError(ValueError):
     """Class that is used to represent timestamp errors in the track load table"""
 
 
-# pylint: disable=too-few-public-methods
 class TrackLoadTableFormatting:
     """Class that encapsulates related validation and mapping for TrackLoadTable command"""
 
@@ -44,6 +44,17 @@ class TrackLoadTableFormatting:
             except TrackTableTimestampError as timestamp_error:
                 raise timestamp_error
 
+    def get_tai_from_unix_s(self, unix_s: float) -> float:
+        """
+        Calculate atomic time in seconds from unix time in seconds.
+
+        :param unix_s: Unix time in seconds
+
+        :return: atomic time (tai) in seconds
+        """
+        astropy_time_utc = Time(unix_s, format="unix")
+        return astropy_time_utc.unix_tai
+
     def _check_timestamp(self, table: List[float], length_of_table: int, lead_time: float) -> None:
         """
         Check that the timestamps are in the future by at least lead_time in seconds and that
@@ -61,7 +72,7 @@ class TrackLoadTableFormatting:
         """
         # use current time as reference for checking all the timestamps in the array
         # as this operation should complete fast in comparison to lead_time
-        current_time_tai_s = get_current_tai_timestamp()
+        current_time_tai_s = self.get_tai_from_unix_s(time())
         prev_timestamp = -1
         for i in range(0, length_of_table, 3):
             timestamp_tai_s = table[i]
