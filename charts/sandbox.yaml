@@ -15,7 +15,7 @@ spec:
       workingDir: "/home/tango"
       env:
         - name: TANGO_HOST
-          value: tango-databaseds.ska-mid-dish-manager.svc.cluster.local:10000
+          value: databaseds-tango-base-test.ska-mid-dish-manager.svc.cluster.local:10000
       ports:
         - containerPort: 22
           name: ssh

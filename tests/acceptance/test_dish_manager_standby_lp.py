@@ -8,7 +8,6 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 
 # pylint:disable=unused-argument
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test transition to Standby_LP"""

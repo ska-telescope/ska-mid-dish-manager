@@ -5,6 +5,9 @@ from typing import Any
 import pytest
 import tango
 
+CA_OBS_INDEX = 11
+E_OBS_INDEX = 19
+
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -45,19 +48,17 @@ def test_write_bands_static_pointing_model_parameters(
     event_store_class: Any,
 ) -> None:
     """Test Band Static Pointing Model Parameters."""
-    current_values = dish_manager_proxy.read_attribute(tango_attribute).value
-
+    pointing_model_params = dish_manager_proxy.read_attribute(tango_attribute).value
     dish_manager_proxy.write_attribute(tango_attribute, write_values)
 
-    expected_values = current_values
-    expected_values[11] = write_values[0]  # CAobs
-    expected_values[19] = write_values[1]  # Eobs
+    pointing_model_params[CA_OBS_INDEX] = write_values[0]
+    pointing_model_params[E_OBS_INDEX] = write_values[1]
 
-    model_event_store = event_store_class()
+    dm_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
-        tango_attribute, tango.EventType.CHANGE_EVENT, model_event_store
+        tango_attribute, tango.EventType.CHANGE_EVENT, dm_event_store
     )
-    model_event_store.wait_for_value(expected_values, timeout=7)
+    dm_event_store.wait_for_value(pointing_model_params)
 
 
 @pytest.mark.acceptance
@@ -80,15 +81,14 @@ def test_track_load_static_off(
     dish_manager_proxy.write_attribute(tango_attribute, [0.0, 0.0])
 
     write_values = [20.1, 0.5]
-
     dish_manager_proxy.TrackLoadStaticOff(write_values)
 
     expected_values = [0.0] * 20
-    expected_values[11] = write_values[0]  # CAobs
-    expected_values[19] = write_values[1]  # Eobs
+    expected_values[CA_OBS_INDEX] = write_values[0]
+    expected_values[E_OBS_INDEX] = write_values[1]
 
-    model_event_store = event_store_class()
+    dm_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
-        tango_attribute, tango.EventType.CHANGE_EVENT, model_event_store
+        tango_attribute, tango.EventType.CHANGE_EVENT, dm_event_store
     )
-    model_event_store.wait_for_value(expected_values, timeout=7)
+    dm_event_store.wait_for_value(expected_values)

@@ -14,7 +14,6 @@ LOGGER = logging.getLogger(__name__)
 
 # pylint:disable=unused-argument
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates"""

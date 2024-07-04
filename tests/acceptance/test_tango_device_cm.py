@@ -14,7 +14,6 @@ LOGGER = logging.getLogger(__name__)
 
 # pylint:disable=protected-access,unused-argument
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_tango_device_component_manager_state(
     monitor_tango_servers, component_state_store, ds_device_fqdn
@@ -55,7 +54,6 @@ def test_tango_device_component_manager_state(
 
 
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_stress_component_monitor(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates"""

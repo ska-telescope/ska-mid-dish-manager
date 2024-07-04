@@ -1,4 +1,5 @@
-"""Shared methods in package."""
+"""Shared methods handling timestamp conversion to tai."""
+
 import datetime
 import time
 

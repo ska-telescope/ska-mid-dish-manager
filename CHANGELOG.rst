@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated ska-tango-base to v1.0.0
+- Updated PyTango to v9.5.0
+- Updated commands to check precondition before command execution in the component manager
 
 Version 2.7.0
 *************

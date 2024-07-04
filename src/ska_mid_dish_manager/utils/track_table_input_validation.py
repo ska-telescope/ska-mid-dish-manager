@@ -1,9 +1,8 @@
-"""Module for containing input validation and formatting needed for translation
-between DSC and DS manager."""
+"""Input validation and formatting needed for translation between DSC and DS manager."""
 
 from typing import List
 
-from ska_mid_dish_manager.utils import get_current_tai_timestamp
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
 class TrackTableTimestampError(ValueError):

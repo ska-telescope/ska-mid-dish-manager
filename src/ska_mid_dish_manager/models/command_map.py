@@ -125,6 +125,14 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Transition the dish to OPERATE mode"""
+        if self._dish_manager_cm.component_state["configuredband"] in [Band.NONE, Band.UNKNOWN]:
+            task_callback(
+                progress="No configured band: SetOperateMode execution not allowed",
+                status=TaskStatus.REJECTED,
+                result=(ResultCode.NOT_ALLOWED, "SetOperateMode requires a configured band"),
+            )
+            return
+
         commands_for_sub_devices = {
             "SPF": {
                 "command": "SetOperateMode",
@@ -204,6 +212,15 @@ class CommandMap:
         band_enum = Band[f"B{band_number}"]
         indexer_enum = IndexerPosition[f"B{band_number}"]
         requested_cmd = f"ConfigureBand{band_number}"
+
+        if self._dish_manager_cm.component_state["configuredband"] == band_enum:
+            task_callback(
+                progress=f"Already in band {band_enum}",
+                status=TaskStatus.COMPLETED,
+                result=(ResultCode.OK, f"{requested_cmd} completed"),
+            )
+            return
+
         self.logger.info(f"{requested_cmd} called with synchronise = {synchronise}")
 
         commands_for_sub_devices = {
@@ -261,7 +278,7 @@ class CommandMap:
             "DS": {
                 "command": "Slew",
                 "commandArgument": argin,
-                "awaitedAttribute": "pointingState",
+                "awaitedAttribute": "pointingstate",
                 "awaitedValuesList": [PointingState.SLEW],
             },
         }
@@ -423,7 +440,7 @@ class CommandMap:
             awaited_event_value_print = awaited_event_value.name
 
         # If we're not waiting for anything, finish up
-        if not awaited_event_value:
+        if awaited_event_value is None:
             task_callback(
                 progress=f"{running_command} completed",
                 status=TaskStatus.COMPLETED,

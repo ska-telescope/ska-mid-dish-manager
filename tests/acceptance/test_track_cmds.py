@@ -4,12 +4,11 @@ import pytest
 import tango
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode, PointingState
-from ska_mid_dish_manager.utils import get_current_tai_timestamp
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
 # pylint: disable=unused-argument,too-many-arguments,too-many-locals,too-many-statements
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_track_and_track_stop_cmds(
     monitor_tango_servers,
@@ -17,29 +16,37 @@ def test_track_and_track_stop_cmds(
     dish_manager_proxy,
 ):
     """Test Track command"""
-
-    main_event_store = event_store_class()
     band_event_store = event_store_class()
+    dish_mode_event_store = event_store_class()
+    pointing_state_event_store = event_store_class()
+    result_event_store = event_store_class()
     progress_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
     achieved_pointing_az_event_store = event_store_class()
     achieved_pointing_el_event_store = event_store_class()
 
-    for attr in [
-        "dishMode",
-        "longRunningCommandResult",
-        "pointingState",
-    ]:
-        dish_manager_proxy.subscribe_event(
-            attr,
-            tango.EventType.CHANGE_EVENT,
-            main_event_store,
-        )
-
     dish_manager_proxy.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
         progress_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        result_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        dish_mode_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        pointing_state_event_store,
     )
 
     dish_manager_proxy.subscribe_event(
@@ -65,15 +72,15 @@ def test_track_and_track_stop_cmds(
     )
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_command_id(unique_id, timeout=8)
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(DishMode.CONFIG)
-    main_event_store.wait_for_value(DishMode.STANDBY_FP)
+    dish_mode_event_store.wait_for_value(DishMode.CONFIG)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
     [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
-    main_event_store.wait_for_command_id(unique_id, timeout=8)
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     # Load a track table
     current_pointing = dish_manager_proxy.achievedPointing
@@ -110,9 +117,9 @@ def test_track_and_track_stop_cmds(
     dish_manager_proxy.programTrackTable = track_table
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
-
-    main_event_store.wait_for_value(PointingState.SLEW, timeout=6)
-    main_event_store.wait_for_value(PointingState.TRACK, timeout=6)
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=6)
+    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=6)
 
     expected_progress_updates = [
         "Track called on DS, ID",
@@ -146,9 +153,8 @@ def test_track_and_track_stop_cmds(
 
     # Call TrackStop on DishManager
     [[_], [unique_id]] = dish_manager_proxy.TrackStop()
-
-    main_event_store.wait_for_command_id(unique_id, timeout=8)
-    main_event_store.wait_for_value(PointingState.READY, timeout=4)
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=4)
 
     expected_progress_updates = [
         "TrackStop called on DS, ID",
