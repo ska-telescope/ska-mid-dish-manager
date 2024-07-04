@@ -43,6 +43,11 @@ DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 # TRACK_LOAD_FUTURE_THRESHOLD_SEC in the future are logged
 TRACK_LOAD_FUTURE_THRESHOLD_SEC = 5
 
+# provision same variable from base classes
+_MAXIMUM_STATUS_QUEUE_SIZE = 32
+
+_DISH_SUB_COMPONENTS_CONTROLLED = 3
+
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-public-methods
@@ -63,6 +68,55 @@ class DishManager(SKAController):
     SPFDeviceFqdn = device_property(dtype=str, default_value="mid-dish/simulator-spfc/SKA001")
     SPFRxDeviceFqdn = device_property(dtype=str, default_value="mid-dish/simulator-spfrx/SKA001")
     DishId = device_property(dtype=str, default_value="SKA001")
+
+    def _create_lrc_attributes(self) -> None:
+        """
+        Create attributes for the long running commands.
+
+        This is an override to update the max_dim_x of longRunningCommandInProgress.
+        DishManager reports progress from its running command and from the sub devices
+        commands were fanned out to.
+
+        :raises AssertionError: if max_queued_tasks or max_executing_tasks is not
+            equal to or greater than 0 or 1 respectively.
+        """
+        assert (
+            self.component_manager.max_queued_tasks >= 0
+        ), "max_queued_tasks property must be equal to or greater than 0."
+        assert (
+            self.component_manager.max_executing_tasks >= 1
+        ), "max_executing_tasks property must be equal to or greater than 1."
+        self._status_queue_size = max(
+            self.component_manager.max_queued_tasks * 2
+            + self.component_manager.max_executing_tasks,
+            _MAXIMUM_STATUS_QUEUE_SIZE,
+        )
+        self._create_attribute(
+            "longRunningCommandStatus",
+            self._status_queue_size * 2,  # 2 per command
+            self.longRunningCommandStatus,
+        )
+        self._create_attribute(
+            "longRunningCommandsInQueue",
+            self._status_queue_size,
+            self.longRunningCommandsInQueue,
+        )
+        self._create_attribute(
+            "longRunningCommandIDsInQueue",
+            self._status_queue_size,
+            self.longRunningCommandIDsInQueue,
+        )
+        self._create_attribute(
+            "longRunningCommandInProgress",
+            self.component_manager.max_executing_tasks + _DISH_SUB_COMPONENTS_CONTROLLED,
+            self.longRunningCommandInProgress,
+        )
+        self._create_attribute(
+            "longRunningCommandProgress",
+            self.component_manager.max_executing_tasks
+            * 2,  # cmd name and progress for each command
+            self.longRunningCommandProgress,
+        )
 
     def create_component_manager(self):
         """Create the component manager for DishManager
