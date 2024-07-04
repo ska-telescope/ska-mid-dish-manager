@@ -44,7 +44,7 @@ DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 TRACK_LOAD_FUTURE_THRESHOLD_SEC = 5
 
 # provision same variable from base classes
-_MINIMUM_STATUS_QUEUE_SIZE = 32
+_MAXIMUM_STATUS_QUEUE_SIZE = 32
 
 _DISH_SUB_COMPONENTS_CONTROLLED = 3
 
@@ -89,7 +89,7 @@ class DishManager(SKAController):
         self._status_queue_size = max(
             self.component_manager.max_queued_tasks * 2
             + self.component_manager.max_executing_tasks,
-            _MINIMUM_STATUS_QUEUE_SIZE,
+            _MAXIMUM_STATUS_QUEUE_SIZE,
         )
         self._create_attribute(
             "longRunningCommandStatus",
