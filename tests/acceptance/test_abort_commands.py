@@ -90,7 +90,7 @@ def test_abort_commands(
     operating_mode_event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=10)
 
     # Check that Dish Manager doesn't actually transition to FP
-    progress_event_store.wait_for_progress_update("Awaiting dishMode change to STANDBY_FP")
+    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
 
     # Abort the LRC
     dish_manager_proxy.AbortCommands()

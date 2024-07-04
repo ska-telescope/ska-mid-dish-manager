@@ -55,7 +55,7 @@ def test_set_operate(
     expected_progress_updates = [
         "SetPointMode called on DS",
         "SetOperateMode called on SPF",
-        "Awaiting dishMode change to OPERATE",
+        "Awaiting dishmode change to OPERATE",
         "SetOperateMode completed",
     ]
 

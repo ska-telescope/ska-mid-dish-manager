@@ -92,7 +92,7 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
 
     # Force dishManager dishMode to go to STANDBY_FP
     device_proxy.SetStandbyFPMode()
-    progress_event_store.wait_for_progress_update("Awaiting dishMode change to STANDBY_FP")
+    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     main_event_store.wait_for_value(DishMode.STANDBY_FP)
@@ -124,7 +124,7 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     expected_progress_updates = [
         "SetPointMode called on DS",
         "SetOperateMode called on SPF",
-        "Awaiting dishMode change to OPERATE",
+        "Awaiting dishmode change to OPERATE",
         "SetOperateMode completed",
     ]
 

@@ -3,16 +3,15 @@
 # pylint: disable=too-many-statements,invalid-name,missing-function-docstring,redefined-outer-name
 
 import os
-import queue
 import socket
 from dataclasses import dataclass, field
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 import pytest
 import tango
 from tango.test_context import get_host_ip
 
-from tests.utils import EventStore
+from tests.utils import ComponentStateStore, EventStore
 
 
 def pytest_addoption(parser):
@@ -66,58 +65,6 @@ def event_store_class():
 @pytest.fixture(scope="function")
 def component_state_store():
     """Fixture for storing component state changes over time"""
-
-    class ComponentStateStore:
-        """Store component state changes with useful functionality"""
-
-        def __init__(self) -> None:
-            self._queue = queue.Queue()
-
-        def __call__(self, *args, **kwargs):
-            """Store the update component_state
-
-            :param event: latest_state
-            :type event: dict
-            """
-            self._queue.put(kwargs)
-
-        def wait_for_value(  # pylint:disable=inconsistent-return-statements
-            self, key: str, value: Any, timeout: int = 3
-        ):
-            """Wait for a value to arrive
-
-            Wait `timeout` seconds for each fetch.
-
-            :param key: The value key
-            :type value: str
-            :param value: The value to check for
-            :type value: Any
-            :param timeout: the get timeout, defaults to 3
-            :type timeout: int, optional
-            :raises RuntimeError: If None are found
-            :return: True if found
-            :rtype: bool
-            """
-            try:
-                found_events = []
-                while True:
-                    state = self._queue.get(timeout=timeout)
-                    if key in state:
-                        if state[key] == value:
-                            return True
-                    found_events.append(state)
-            except queue.Empty as err:
-                raise RuntimeError(
-                    (
-                        f"Never got a state with key [{key}], value "
-                        f"[{value}], got [{found_events}]"
-                    )
-                ) from err
-
-        def clear_queue(self):
-            while not self._queue.empty():
-                self._queue.get()
-
     return ComponentStateStore()
 
 

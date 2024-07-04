@@ -59,7 +59,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     main_event_store.clear_queue()
 
     [[_], [unique_id]] = device_proxy.SetStandbyFPMode()
-    progress_event_store.wait_for_progress_update("Awaiting dishMode change to STANDBY_FP")
+    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
 
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
@@ -81,7 +81,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
 
     expected_progress_updates = [
         "SetIndexPosition called on DS",
-        f"{command} called on SPFRx, ID",
+        f"{command} called on SPFRX, ID",
         f"Awaiting configuredband change to {band_number}",
         f"{command} completed",
     ]

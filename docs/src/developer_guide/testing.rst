@@ -7,13 +7,27 @@ Unit Tests
 
 Since the component managers handle the interactions with the devices, we are
 able to check the robustness of our component manager and the business rules
-captured in our model without spinning up any tango infrastructure. 
+captured in our model without spinning up any tango infrastructure. All tests
+exercising only objects with no tango are executed under the
 
-These unit tests are captured in the ``python-test`` job. Additionally, the device
-server interface is tested (using a `DeviceTestContext`_) without having to set up 
-client connections to the sub components. The necessary triggers on the sub 
-components needed to effect a transition on DishManager are manipulated from
-weak references to the sub component managers.
+* ``python-test`` job: primarily running tests exercising the business logic
+* ``python-test-interface-no-tango`` job: primarily running exercising the command handlers of the component manager
+ 
+ See diagram below explaining the test setup in the ``python-test-interface-no-tango`` job.
+
+.. image:: ../images/python_test_interface_no_tango.png
+  :width: 100%
+
+Additionally, the device server interface is tested (using a `DeviceTestContext`_)
+without having to set up  client connections to the sub component devices. The
+necessary triggers on the sub components needed to effect a transition on DishManager
+are manipulated from weak references to the sub component managers. This test runs in
+the ``python-test-interface-tango`` job.
+
+See diagram below explaining the test setup in the ``python-test-interface-tango`` job.
+
+.. image:: ../images/python_test_interface_tango.png
+  :width: 100%
 
 Acceptance Tests
 ^^^^^^^^^^^^^^^^
@@ -22,14 +36,18 @@ This deploys the entire tango infrastructure (devices, database, etc) in a kuber
 cluster to test the entire chain from events to callbacks on the various component
 managers down to the DishManager device server attribute. These tests use `simulated devices`_
 with limited api and functionality for the ``SPF Controller``, ``SPFRx Controller``
-and the ``DS Simulator``. These acceptance tests are captured in the ``k8-test`` job.
+and the ``DS Simulator``. These acceptance tests are captured in the ``k8-test-runner`` job.
 
+See diagram below explaining the test setup in the ``k8-test-runner`` job.
+
+.. image:: ../images/k8s_test_setup.png
+  :width: 100%
 
 Testing Locally without Kubernetes
 ----------------------------------
 
 DishManager is packaged as a helm chart to be deployed in a kubernetes cluster. Beyond verifying
-changes based on pipeline outputs from ``python-test`` and ``k8s-test`` jobs, it's beneficial (in some cases)
+changes based on pipeline outputs from ``python-test*`` and ``k8s-test-runner`` jobs, it's beneficial (in some cases)
 to be able to deploy the devices locally without needing to spin up a kubernetes cluster to quickly verify
 changes. This is not meant to rival our deployment process in the project but rather, provide alternatives
 for the developer to verify their changes locally before pushing them upstream.

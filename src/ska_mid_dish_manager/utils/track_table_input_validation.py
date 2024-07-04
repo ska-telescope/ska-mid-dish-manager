@@ -19,11 +19,11 @@ class TrackLoadTableFormatting:
 
         :param table: Track table input that is to be validated
         :param lead_time: The amount of time in seconds from the current time timestamps are
-        allowed
+            allowed
 
         :raises ValueError: table list is not a multiple of 3
         :raises TrackTableTimestampError: when timestamps are less than lead_time seconds into the
-        future
+            future
 
         :return: None
         """
