@@ -46,12 +46,6 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
-python-test-interface-tango:
-  extends: python-test
-
-python-test-interface-no-tango:
-  extends: python-test
-
 #mypy job
 mypy:
   stage: lint
