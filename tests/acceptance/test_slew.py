@@ -50,6 +50,6 @@ def test_slew_transition(event_store_class, dish_manager_proxy):
     # returned data is an array of tuple consisting of attribute name and value
     last_az_el = data_points[-1][1]
     # check last az and el received and compare with reference
-    az, el = last_az_el[1], last_az_el[2]
-    assert az == pytest.approx(slew_azimuth)
-    assert el == pytest.approx(slew_elevation)
+    achieved_az, achieved_el = last_az_el[1], last_az_el[2]
+    assert achieved_az == pytest.approx(slew_azimuth)
+    assert achieved_el == pytest.approx(slew_elevation)
