@@ -12,5 +12,6 @@ API
   :caption: Models and Component Managers
   :maxdepth: 2
 
+  Utils<utils/index>
   Models<models/index>
   Component Managers<component_managers/index>

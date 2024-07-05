@@ -17,15 +17,11 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, DebugIt, DevFloat, DevString, DispLevel
+from tango import AttrWriteType, DevFloat, DevString, DispLevel, InfoIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
-from ska_mid_dish_manager.interface.input_validation import (
-    TrackLoadTableFormatting,
-    TrackTableTimestampError,
-)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
@@ -36,12 +32,21 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackProgramMode,
     TrackTableLoadMode,
 )
+from ska_mid_dish_manager.utils.track_table_input_validation import (
+    TrackLoadTableFormatting,
+    TrackTableTimestampError,
+)
 
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 
 # Used for input validation. Input samples to tracktable that is less that
 # TRACK_LOAD_FUTURE_THRESHOLD_SEC in the future are logged
 TRACK_LOAD_FUTURE_THRESHOLD_SEC = 5
+
+# provision same variable from base classes
+_MAXIMUM_STATUS_QUEUE_SIZE = 32
+
+_DISH_SUB_COMPONENTS_CONTROLLED = 3
 
 
 # pylint: disable=too-many-instance-attributes
@@ -63,6 +68,55 @@ class DishManager(SKAController):
     SPFDeviceFqdn = device_property(dtype=str, default_value="mid-dish/simulator-spfc/SKA001")
     SPFRxDeviceFqdn = device_property(dtype=str, default_value="mid-dish/simulator-spfrx/SKA001")
     DishId = device_property(dtype=str, default_value="SKA001")
+
+    def _create_lrc_attributes(self) -> None:
+        """
+        Create attributes for the long running commands.
+
+        This is an override to update the max_dim_x of longRunningCommandInProgress.
+        DishManager reports progress from its running command and from the sub devices
+        commands were fanned out to.
+
+        :raises AssertionError: if max_queued_tasks or max_executing_tasks is not
+            equal to or greater than 0 or 1 respectively.
+        """
+        assert (
+            self.component_manager.max_queued_tasks >= 0
+        ), "max_queued_tasks property must be equal to or greater than 0."
+        assert (
+            self.component_manager.max_executing_tasks >= 1
+        ), "max_executing_tasks property must be equal to or greater than 1."
+        self._status_queue_size = max(
+            self.component_manager.max_queued_tasks * 2
+            + self.component_manager.max_executing_tasks,
+            _MAXIMUM_STATUS_QUEUE_SIZE,
+        )
+        self._create_attribute(
+            "longRunningCommandStatus",
+            self._status_queue_size * 2,  # 2 per command
+            self.longRunningCommandStatus,
+        )
+        self._create_attribute(
+            "longRunningCommandsInQueue",
+            self._status_queue_size,
+            self.longRunningCommandsInQueue,
+        )
+        self._create_attribute(
+            "longRunningCommandIDsInQueue",
+            self._status_queue_size,
+            self.longRunningCommandIDsInQueue,
+        )
+        self._create_attribute(
+            "longRunningCommandInProgress",
+            self.component_manager.max_executing_tasks + _DISH_SUB_COMPONENTS_CONTROLLED,
+            self.longRunningCommandInProgress,
+        )
+        self._create_attribute(
+            "longRunningCommandProgress",
+            self.component_manager.max_executing_tasks
+            * 2,  # cmd name and progress for each command
+            self.longRunningCommandProgress,
+        )
 
     def create_component_manager(self):
         """Create the component manager for DishManager
@@ -954,7 +1008,7 @@ class DishManager(SKAController):
                 table, TRACK_LOAD_FUTURE_THRESHOLD_SEC
             )
         except TrackTableTimestampError as te:
-            self.logger.error("TrackTableTimestampError: %s", te)
+            self.logger.warning("Track table timestamp warning: %s", te)
         except ValueError as ve:
             raise ve
 
@@ -1241,7 +1295,7 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
         dtype_out="DevVarLongStringArray",
     )
-    @DebugIt()
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def AbortCommands(self) -> DevVarLongStringArrayType:
         """
         Empty out long running commands in queue.
@@ -1262,6 +1316,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand1(self, synchronise) -> DevVarLongStringArrayType:
         """
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1286,6 +1341,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand2(self, synchronise) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1312,6 +1368,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand3(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1330,6 +1387,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand4(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1350,6 +1408,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand5a(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1370,6 +1429,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand5b(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1388,6 +1448,7 @@ class DishManager(SKAController):
     @command(
         dtype_in=DevString, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
         The Dish records the scanID for an ongoing scan
@@ -1400,6 +1461,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def EndScan(self) -> DevVarLongStringArrayType:
         """
         This command clears out the scan_id
@@ -1410,6 +1472,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetMaintenanceMode(self):
         """
         This command triggers the Dish to transition to the MAINTENANCE
@@ -1427,6 +1490,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetOperateMode(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1450,6 +1514,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetStandbyLPMode(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1480,6 +1545,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetStandbyFPMode(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1502,6 +1568,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetStowMode(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1526,6 +1593,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Slew(self, values):  # pylint: disable=unused-argument
         """
         Trigger the Dish to start moving to the commanded (Az,El) position.
@@ -1556,6 +1624,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Track(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1589,6 +1658,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def TrackStop(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1622,7 +1692,7 @@ class DishManager(SKAController):
             values will be updated.
         """,
     )
-    @DebugIt()  # type: ignore[misc]
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def TrackLoadStaticOff(self, values) -> DevVarLongStringArrayType:
         """
         Loads the given static pointing model offsets.
@@ -1674,6 +1744,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetKValue(self, value) -> DevVarLongStringArrayType:
         """
         This command sets the kValue on SPFRx.
@@ -1685,11 +1756,13 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def StopCommunication(self):
         """Stop communicating with monitored devices"""
         self.component_manager.stop_communicating()
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def StartCommunication(self):
         """Start communicating with monitored devices"""
         self.component_manager.start_communicating()
@@ -1700,6 +1773,7 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
         doc_out=("Retrieve the states of SPF, SPFRx" " and DS as DishManager sees it."),
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def GetComponentStates(self):
         """
         Get the current component states of subservient devices.
@@ -1720,6 +1794,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SyncComponentStates(self) -> None:
         """
         Sync each subservient device component state with its tango device

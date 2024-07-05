@@ -35,19 +35,6 @@ class CommandMap:
         self._command_tracker = command_tracker
         self.logger = logger
 
-        self._keys_to_output_map = {
-            "dishmode": "dishMode",
-            "SPFRX": "SPFRx",
-        }
-
-    def _key_to_output(self, key):
-        output = self._keys_to_output_map.get(key)
-
-        if not output:
-            output = key
-
-        return output
-
     # pylint: disable=protected-access
     def is_device_ignored(self, device: str):
         """Check whether the given device is ignored."""
@@ -125,6 +112,14 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Transition the dish to OPERATE mode"""
+        if self._dish_manager_cm.component_state["configuredband"] in [Band.NONE, Band.UNKNOWN]:
+            task_callback(
+                progress="No configured band: SetOperateMode execution not allowed",
+                status=TaskStatus.REJECTED,
+                result=(ResultCode.NOT_ALLOWED, "SetOperateMode requires a configured band"),
+            )
+            return
+
         commands_for_sub_devices = {
             "SPF": {
                 "command": "SetOperateMode",
@@ -204,6 +199,15 @@ class CommandMap:
         band_enum = Band[f"B{band_number}"]
         indexer_enum = IndexerPosition[f"B{band_number}"]
         requested_cmd = f"ConfigureBand{band_number}"
+
+        if self._dish_manager_cm.component_state["configuredband"] == band_enum:
+            task_callback(
+                progress=f"Already in band {band_enum}",
+                status=TaskStatus.COMPLETED,
+                result=(ResultCode.OK, f"{requested_cmd} completed"),
+            )
+            return
+
         self.logger.info(f"{requested_cmd} called with synchronise = {synchronise}")
 
         commands_for_sub_devices = {
@@ -261,7 +265,7 @@ class CommandMap:
             "DS": {
                 "command": "Slew",
                 "commandArgument": argin,
-                "awaitedAttribute": "pointingState",
+                "awaitedAttribute": "pointingstate",
                 "awaitedValuesList": [PointingState.SLEW],
             },
         }
@@ -326,12 +330,7 @@ class CommandMap:
 
         response, command_id = command(command_name, command_argument)
         # Report that the command has been called on the subservient device
-        task_callback(
-            progress=(
-                f"{fan_out_args['command']} called on "
-                f"{self._key_to_output(device)}, ID {command_id}"
-            )
-        )
+        task_callback(progress=f"{fan_out_args['command']} called on {device}, ID {command_id}")
 
         # fail the command immediately, if the subservient device fails
         if response == TaskStatus.FAILED:
@@ -344,10 +343,7 @@ class CommandMap:
         # e.g. Awaiting DS operatingmode change to [<DSOperatingMode.STANDBY_LP: 2>]
         if awaited_values_list is not None:
             task_callback(
-                progress=(
-                    f"Awaiting {self._key_to_output(device)} {awaited_attribute}"
-                    f" change to {awaited_values_list}"
-                )
+                progress=(f"Awaiting {device} {awaited_attribute} change to {awaited_values_list}")
             )
         return command_id
 
@@ -423,7 +419,7 @@ class CommandMap:
             awaited_event_value_print = awaited_event_value.name
 
         # If we're not waiting for anything, finish up
-        if not awaited_event_value:
+        if awaited_event_value is None:
             task_callback(
                 progress=f"{running_command} completed",
                 status=TaskStatus.COMPLETED,
@@ -432,12 +428,9 @@ class CommandMap:
             return
 
         # Report which attribute and value the dish manager is waiting for
-        # e.g. Awaiting dishMode change to STANDBY_LP
+        # e.g. Awaiting dishmode change to STANDBY_LP
         task_callback(
-            progress=(
-                f"Awaiting {self._key_to_output(awaited_event_attribute)}"
-                f" change to {awaited_event_value_print}"
-            )
+            progress=(f"Awaiting {awaited_event_attribute} change to {awaited_event_value_print}")
         )
 
         for fan_out_args in commands_for_sub_devices.values():

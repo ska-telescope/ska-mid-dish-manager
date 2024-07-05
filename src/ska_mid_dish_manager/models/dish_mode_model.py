@@ -3,14 +3,16 @@ This model enforces the legal transitions when a command is triggered. It assess
 state of the device to decide if the requested state is a nearby node to allow or reject a command.
 """
 
+import typing
 from dataclasses import dataclass, field
 
 # pylint: disable=too-few-public-methods
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import networkx as nx
 import tango
-from ska_control_model import ResultCode, TaskStatus
+
+from ska_mid_dish_manager.models.dish_enums import DishMode
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -32,10 +34,6 @@ DISH_MODE_NODES = (
     "OPERATE",
     "UNKNOWN",
 )
-
-
-class CommandNotAllowed(Exception):
-    """Exception for illegal transitions"""
 
 
 class DishModeModel:
@@ -105,31 +103,67 @@ class DishModeModel:
 
         return dishmode_graph
 
+    @typing.no_type_check
     def is_command_allowed(
         self,
-        dishmode: Optional[str] = None,
-        command_name: Optional[str] = None,
-        task_callback: Optional[Callable] = None,
+        cmd_name: str,
+        dish_mode: str | None = None,
+        component_manager: Any | None = None,
+        task_callback: Callable | None = None,
     ) -> bool:
-        """Determine if requested tango command is allowed based on current dish mode"""
+        """
+        Determine if requested tango command is allowed based on current dish mode
+
+        This method is used by the executor to evaluate the command pre-condition after it's
+        taken off the queue. To ensure the evaluation is always performed using an updated
+        component state (and not the old state used when the command is queued), the component
+        manager should be passed for the enqueue operation. In testing scenarios for example,
+        the function can be evoked directly with the dishmode parameter.
+
+        NOTE: Though the function signature has only one required argument, it still needs either
+        the dish_mode or component_manager passed to it to perform the evaluation.
+
+        :param cmd_name: the requested command
+        :param dish_mode: the current dishMode reported by the component state
+        :param component_manager: the component manager containing the component state
+        :param task_callback: callback to update the command info
+
+        :raises TypeError: when no dish_mode or component_manager is provided to function call
+
+        :return: boolean indicating the function execution is allowed
+        """
+        try:
+            current_dish_mode = (
+                dish_mode or DishMode(component_manager.component_state["dishmode"]).name
+            )
+        except AttributeError as exc:
+            raise TypeError(
+                "is_command_allowed() requires either the dish_mode or"
+                " the component_manager to be specified"
+            ) from exc
+
         allowed_commands = []
-        for from_node, to_node in self.dishmode_graph.edges(dishmode):
+        for from_node, to_node in self.dishmode_graph.edges(current_dish_mode):
             commands = self.dishmode_graph.get_edge_data(from_node, to_node).get("commands", None)
             if commands:
                 allowed_commands.extend(commands)
 
-        if command_name in allowed_commands:
+        if cmd_name in allowed_commands:
             return True
 
-        ex = CommandNotAllowed(
-            (
-                f"Command [{command_name}] not allowed in dishMode "
-                f"[{dishmode}], only allowed to do {allowed_commands}"
-            )
+        # report the reason for the command rejection to logs and lrc attribute
+        msg = (
+            f"{cmd_name} not allowed in {current_dish_mode} dishMode."
+            f" Commands allowed from {current_dish_mode} are: {allowed_commands}."
         )
+        if component_manager:
+            logger = component_manager.logger
+            logger.debug(msg)
+
         if task_callback:
-            task_callback(status=TaskStatus.REJECTED, exception=(ResultCode.REJECTED, ex))
-        raise ex
+            task_callback(progress=msg)  # status and result are handled in executor
+
+        return False
 
 
 @dataclass(order=True)

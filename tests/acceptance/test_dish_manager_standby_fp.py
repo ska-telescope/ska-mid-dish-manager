@@ -6,7 +6,6 @@ import tango
 
 # pylint:disable=unused-argument
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test transition to Standby_FP"""
@@ -31,7 +30,7 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
     expected_progress_updates = [
         "SetStandbyFPMode called on DS",
         "SetOperateMode called on SPF",
-        "Awaiting dishMode change to STANDBY_FP",
+        "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
 

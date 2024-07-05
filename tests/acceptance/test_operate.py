@@ -8,15 +8,11 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 # pylint: disable=too-many-locals,unused-argument,too-many-arguments
 @pytest.mark.acceptance
-@pytest.mark.SKA_mid
 @pytest.mark.forked
 def test_set_operate(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
-    ds_device_proxy,
-    spf_device_proxy,
-    spfrx_device_proxy,
 ):
     """Test transition to OPERATE"""
     main_event_store = event_store_class()
@@ -47,23 +43,19 @@ def test_set_operate(
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     main_event_store.wait_for_command_id(unique_id, timeout=8)
-
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
 
     dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(DishMode.CONFIG)
-    main_event_store.wait_for_value(DishMode.STANDBY_FP)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
     dish_manager_proxy.SetOperateMode()
-
-    # Wait for the operate command to complete
-    assert main_event_store.wait_for_value(DishMode.OPERATE)
+    main_event_store.wait_for_value(DishMode.OPERATE)
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     expected_progress_updates = [
         "SetPointMode called on DS",
         "SetOperateMode called on SPF",
-        "Awaiting dishMode change to OPERATE",
+        "Awaiting dishmode change to OPERATE",
         "SetOperateMode completed",
     ]
 

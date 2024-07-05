@@ -1,4 +1,5 @@
 """Test dish manager handles and publishes change events on attribute quality update"""
+
 import itertools
 
 import pytest

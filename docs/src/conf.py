@@ -23,6 +23,7 @@ import sphinx.ext.autodoc
 # see https://github.com/sphinx-doc/sphinx/issues/6709
 from sphinx.ext.autodoc.mock import _MockObject
 
+
 def call_mock(self, *args, **kw):
     from types import FunctionType, MethodType
 
@@ -31,6 +32,7 @@ def call_mock(self, *args, **kw):
         args[0].write = lambda x: x
         return args[0]
     return self
+
 
 _MockObject.__call__ = call_mock
 # hack end
@@ -52,7 +54,7 @@ autodoc_mock_imports = [
     "ska_control_model",
     "ska_tango_base",
     "tango",
-    "rule_engine"
+    "rule_engine",
 ]
 
 autodoc_default_options = {
@@ -68,7 +70,7 @@ copyright = "2023, KAROO Team"
 author = "KAROO Team"
 
 # The full version, including alpha/beta/rc tags
-release = "2.6.1"
+release = "2.7.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -91,7 +93,7 @@ autoclass_content = "class"
 plantuml_syntax_error_image = True
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -114,7 +116,6 @@ pygments_style = "sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-
 
 
 # -- Options for HTML output -------------------------------------------------

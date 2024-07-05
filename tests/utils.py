@@ -5,7 +5,6 @@ from typing import Any, List, Tuple
 
 import numpy as np
 import tango
-from astropy.time import Time
 from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
@@ -15,6 +14,68 @@ from ska_mid_dish_manager.models.dish_enums import (
     IndexerPosition,
     SPFRxOperatingMode,
 )
+
+
+class ComponentStateStore:
+    """Store component state changes with useful functionality"""
+
+    def __init__(self) -> None:
+        self._queue = queue.Queue()
+
+    def __call__(self, *args, **kwargs):
+        """Store the update component_state
+
+        :param event: latest_state
+        :type event: dict
+        """
+        self._queue.put(kwargs)
+
+    def get_queue_values(self, timeout: int = 3):
+        """Get the values from the queue"""
+        items = []
+        try:
+            while True:
+                component_state = self._queue.get(timeout=timeout)
+                items.append(component_state)
+        except queue.Empty:
+            return items
+
+    def wait_for_value(  # pylint:disable=inconsistent-return-statements
+        self, key: str, value: Any, timeout: int = 3
+    ):
+        """Wait for a value to arrive
+
+        Wait `timeout` seconds for each fetch.
+
+        :param key: The value key
+        :type value: str
+        :param value: The value to check for
+        :type value: Any
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If None are found
+        :return: True if found
+        :rtype: bool
+        """
+        try:
+            component_state = []
+            while True:
+                state = self._queue.get(timeout=timeout)
+                if state.get(key) == value:
+                    return True
+                component_state.append(state)
+        except queue.Empty as err:
+            raise RuntimeError(
+                (
+                    f"Never got a state with key [{key}], value "
+                    f"[{value}], got [{component_state}]"
+                )
+            ) from err
+
+    def clear_queue(self):
+        """Clear out the queue"""
+        while not self._queue.empty():
+            self._queue.get()
 
 
 class EventStore:
@@ -414,15 +475,3 @@ def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
         else:
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-
-
-def get_tai_from_unix_s(unix_s: float) -> float:
-    """
-    Calculate atomic time in seconds from unix time in seconds.
-
-    :param unix_s: Unix time in seconds
-
-    :return: atomic time (tai) in seconds
-    """
-    astropy_time_utc = Time(unix_s, format="unix")
-    return astropy_time_utc.unix_tai
