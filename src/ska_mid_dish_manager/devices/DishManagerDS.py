@@ -1682,7 +1682,6 @@ class DishManager(SKAController):
             message indicating status.
         """
 
-
         handler = self.get_command_object("TrackLoadStaticOff")
         result_code, unique_id = handler(values)
         return ([result_code], [unique_id])
