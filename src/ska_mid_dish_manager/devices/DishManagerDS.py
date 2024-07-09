@@ -1603,9 +1603,6 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        if len(values) != 2:
-            raise ValueError(f"Length of argument ({len(values)}) is not as expected (2).")
-
         handler = self.get_command_object("Slew")
         result_code, unique_id = handler(values)
 
