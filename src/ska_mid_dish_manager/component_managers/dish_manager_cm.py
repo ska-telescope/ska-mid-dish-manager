@@ -756,7 +756,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Slew the dish."""
         if len(values) != 2:
             raise ValueError(f"Length of argument ({len(values)}) is not as expected (2).")
-            
+
         status, response = self.submit_task(
             self._command_map.slew, args=[values], task_callback=task_callback
         )
@@ -816,7 +816,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Load the static pointing model offsets."""
         if len(values) != 2:
             raise ValueError(f"Length of argument ({len(values)}) is not as expected (2).")
-            
+
         status, response = self.submit_task(
             self._command_map.track_load_static_off, args=[values], task_callback=task_callback
         )
