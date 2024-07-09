@@ -572,10 +572,6 @@ class DishManager(SKAController):
         """Set the band1PointingModelParams"""
         self.logger.debug("band1PointingModelParams write method called with params %s", value)
 
-        # The argument value is a list of two floats: [off_xel, off_el]
-        if len(value) != 2:
-            raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
-
         if hasattr(self, "component_manager"):
             if "DS" in self.component_manager.sub_component_managers:
                 try:
@@ -612,10 +608,6 @@ class DishManager(SKAController):
     def band2PointingModelParams(self, value):
         """Set the band2PointingModelParams"""
         self.logger.debug("band2PointingModelParams write method called with params %s", value)
-
-        # The argument value is a list of two floats: [off_xel, off_el]
-        if len(value) != 2:
-            raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
 
         if hasattr(self, "component_manager"):
             if "DS" in self.component_manager.sub_component_managers:
@@ -654,10 +646,6 @@ class DishManager(SKAController):
         """Set the band3PointingModelParams"""
         self.logger.debug("band3PointingModelParams write method called with params %s", value)
 
-        # The argument value is a list of two floats: [off_xel, off_el]
-        if len(value) != 2:
-            raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
-
         if hasattr(self, "component_manager"):
             if "DS" in self.component_manager.sub_component_managers:
                 try:
@@ -694,10 +682,6 @@ class DishManager(SKAController):
     def band4PointingModelParams(self, value):
         """Set the band4PointingModelParams"""
         self.logger.debug("band4PointingModelParams write method called with params %s", value)
-
-        # The argument value is a list of two floats: [off_xel, off_el]
-        if len(value) != 2:
-            raise ValueError(f"Length of argument ({len(value)}) is not as expected (2).")
 
         if hasattr(self, "component_manager"):
             if "DS" in self.component_manager.sub_component_managers:
@@ -1697,8 +1681,7 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        if len(values) != 2:
-            raise ValueError(f"Length of argument ({len(values)}) is not as expected (2).")
+
 
         handler = self.get_command_object("TrackLoadStaticOff")
         result_code, unique_id = handler(values)
