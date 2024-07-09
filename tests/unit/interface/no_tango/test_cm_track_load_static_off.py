@@ -23,12 +23,11 @@ def test_track_load_static_off_handler(
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
-    # slew has no pre-condition
+    # slew has a pre-condition
     component_manager.track_load_static_off(
         [
             1.0,
             2.0,
-            1.0,
         ],
         callbacks["task_cb"],
     )
