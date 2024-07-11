@@ -322,7 +322,7 @@ class CommandMap:
         command_argument = fan_out_args.get("commandArgument")
 
         command_class = SubmittedSlowCommand
-        function_to_execute="run_device_command"
+        function_to_execute = "run_device_command"
         # stow requested will not be queued on the ds component manager either
         if "stow" in command_name.lower():
             function_to_execute = "run_device_command_in_dedicated_thread"
