@@ -270,13 +270,28 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def run_device_command(
         self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore
     ) -> Any:
-        """Execute the command in a thread"""
+        """Execute the command in a thread provisioned by the task executor"""
         task_status, response = self.submit_task(
             self._run_device_command,
             args=[command_name, command_arg],
             task_callback=task_callback,
         )
         return task_status, response
+
+    def run_device_command_in_dedicated_thread(
+        self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore
+    ) -> Any:
+        """Execute the command in a separate thread from the task executor"""
+        # dont use the existing abort event for this thread i.e. self._task_executor.abort_event
+        # if abort is called, that object is will be recreated, create a new one for this thread
+
+        Thread(
+            target=self._run_device_command,
+            args=[command_name, command_arg],
+            kwargs={"task_callback": task_callback, "task_abort_event": Event()},
+        ).start()
+
+        return TaskStatus.IN_PROGRESS, f"{command_name} request has been processed"
 
     @typing.no_type_check
     def _run_device_command(

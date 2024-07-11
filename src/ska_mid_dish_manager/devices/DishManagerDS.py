@@ -32,6 +32,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackProgramMode,
     TrackTableLoadMode,
 )
+from ska_mid_dish_manager.utils.command_class import DishLMCSubmittedSlowCommand
 from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
@@ -149,7 +150,6 @@ class DishManager(SKAController):
             ("TrackStop", "track_stop_cmd"),
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
-            ("SetStowMode", "set_stow_mode"),
             ("Slew", "slew"),
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
@@ -167,6 +167,17 @@ class DishManager(SKAController):
                 ),
             )
 
+        self.register_command_object(
+            "SetStowMode",
+            DishLMCSubmittedSlowCommand(
+                "SetStowMode",
+                self._command_tracker,
+                self.component_manager,
+                "set_stow_mode",
+                callback=None,
+                logger=self.logger,
+            ),
+        )
         self.register_command_object(
             "AbortCommands",
             self.AbortCommandsCommand(self.component_manager, self.logger),
@@ -1282,10 +1293,56 @@ class DishManager(SKAController):
             # abort the task on dish manager
             self._component_manager.abort_commands()
             # abort the task on the subservient devices
-            for cm in self._component_manager.sub_component_managers.values():
-                cm.abort_commands()
+            sub_component_managers = self._component_manager._get_active_sub_component_managers()
+            for component_mgr in sub_component_managers:
+                component_mgr.abort_commands()
 
             return (ResultCode.STARTED, "Aborting commands")
+
+    # class SetStowMode(DishLMCSubmittedSlowCommand):
+    #     """A class for the DishManager's SetStowMode command."""
+
+    #     def __init__(
+    #         self,
+    #         command_tracker,
+    #         component_manager: DishManagerComponentManager,
+    #         logger: Optional[logging.Logger] = None,
+    #     ) -> None:
+    #         """
+    #         Initialise a new SetStowMode instance.
+
+    #         :param command_tracker: the device's command tracker
+    #         :param component_manager: the device's component manager
+    #         :param logger: a logger for this command object to yuse
+    #         """
+    #         self._command_tracker = command_tracker
+    #         self._component_manager = component_manager
+    #         super().__init__(None, logger=logger)
+
+    #     def do(
+    #         self,
+    #         *args: Any,
+    #         **kwargs: Any,
+    #     ) -> Tuple[ResultCode, str]:
+    #         """
+    #         Stateless hook for SetStowMode() command functionality.
+
+    #         :param args: positional arguments to this do method
+    #         :param kwargs: keyword arguments to this do method
+
+    #         :return: A tuple containing a return code and a string
+    #             message indicating status. The message is for
+    #             information purpose only.
+    #         """
+    #         command_id = self._command_tracker.new_command("SetStowMode")
+    #         status, message = self._component_manager.set_stow_mode(
+    #             partial(self._command_tracker.update_command_info, command_id)
+    #         )
+
+    #         if status == TaskStatus.REJECTED:
+    #             return ResultCode.REJECTED, message
+
+    #         return ResultCode.STARTED, command_id
 
     @command(
         doc_in="Abort currently executing long running command on "

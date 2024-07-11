@@ -3,8 +3,8 @@
 import logging
 import os
 from functools import partial
-from threading import Lock
-from typing import Callable, Optional, Tuple
+from threading import Event, Lock, Thread
+from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -222,7 +222,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
-    def _get_active_sub_component_managers(self) -> dict:
+    def _get_active_sub_component_managers(self) -> List:
         """Get a list of subservient device component managers which are not being ignored."""
         active_component_managers = [self.sub_component_managers["DS"]]
 
@@ -734,19 +734,29 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode"""
-        _is_set_stow_mode_allowed = partial(
-            self._dish_mode_model.is_command_allowed,
-            "SetStowMode",
-            component_manager=self,
-            task_callback=task_callback,
+        _is_stow_cmd_allowed = self._dish_mode_model.is_command_allowed(
+            "SetStowMode", component_manager=self, task_callback=task_callback
         )
-        status, response = self.submit_task(
-            self._command_map.set_stow_mode,
+        if not _is_stow_cmd_allowed:
+            return TaskStatus.REJECTED, "Request to stow dish is rejected"
+
+        # dont use the existing abort event for this thread i.e. self._task_executor.abort_event
+        # if abort is called, that object is will be recreated, create a new one for this thread
+
+        Thread(
+            target=self._command_map.set_stow_mode,
             args=[],
-            is_cmd_allowed=_is_set_stow_mode_allowed,
-            task_callback=task_callback,
-        )
-        return status, response
+            kwargs={"task_callback": task_callback, "task_abort_event": Event()},
+        ).start()
+
+        # abort queued tasks on the task executor's threadpoolexecutor
+        self.abort_commands()
+        # abort the task on the subservient devices
+        sub_component_mgrs = self._get_active_sub_component_managers()
+        for component_mgr in sub_component_mgrs:
+            component_mgr.abort_commands()
+
+        return TaskStatus.IN_PROGRESS, "Stow request has been processed"
 
     def slew(
         self,

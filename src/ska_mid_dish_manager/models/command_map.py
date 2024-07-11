@@ -16,6 +16,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from ska_mid_dish_manager.utils.command_class import DishLMCSubmittedSlowCommand
 
 
 # pylint: disable=too-few-public-methods
@@ -319,11 +320,19 @@ class CommandMap:
         """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
-        command = SubmittedSlowCommand(
+
+        command_class = SubmittedSlowCommand
+        function_to_execute="run_device_command"
+        # stow requested will not be queued on the ds component manager either
+        if "stow" in command_name.lower():
+            function_to_execute = "run_device_command_in_dedicated_thread"
+            command_class = DishLMCSubmittedSlowCommand
+
+        command = command_class(
             f"{device}_{command_name}",
             self._command_tracker,
             self._dish_manager_cm.sub_component_managers[device],
-            "run_device_command",
+            function_to_execute,
             callback=None,
             logger=self.logger,
         )
@@ -383,6 +392,7 @@ class CommandMap:
         """Run the long running command and track progress"""
         assert task_callback, "task_callback has to be defined"
 
+        # TODO we can skip this check for stow command across this function: should we?
         if task_abort_event.is_set():
             task_callback(
                 progress=f"{running_command} Aborted",
