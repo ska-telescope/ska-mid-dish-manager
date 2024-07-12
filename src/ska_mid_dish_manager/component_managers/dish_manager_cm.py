@@ -4,7 +4,7 @@ import logging
 import os
 from functools import partial
 from threading import Event, Lock, Thread
-from typing import Callable, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -222,7 +222,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
-    def _get_active_sub_component_managers(self) -> dict:
+    def _get_active_sub_component_managers(self) -> List:
         """Get a list of subservient device component managers which are not being ignored."""
         active_component_managers = [self.sub_component_managers["DS"]]
 

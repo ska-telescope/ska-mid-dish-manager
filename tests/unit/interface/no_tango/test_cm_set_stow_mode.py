@@ -34,7 +34,6 @@ def test_set_stow_mode_handler(
     component_state_cb.get_queue_values()
 
     expected_call_kwargs = (
-        {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"Stow called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting DS operatingmode change to [<DSOperatingMode.STOW: 5>]"},
