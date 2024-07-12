@@ -747,6 +747,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             kwargs={"task_callback": task_callback, "task_abort_event": Event()},
         ).start()
 
+        # abort queued tasks on the task executor's threadpoolexecutor
+        self.abort_commands()
+        # abort the task on the subservient devices
+        sub_component_mgrs = self._get_active_sub_component_managers()
+        for component_mgr in sub_component_mgrs:
+            component_mgr.abort_commands()
+
         return TaskStatus.IN_PROGRESS, "Request to stow dish has been processed"
 
     def slew(
