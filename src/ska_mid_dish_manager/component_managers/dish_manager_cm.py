@@ -3,7 +3,7 @@
 import logging
 import os
 from functools import partial
-from threading import Lock
+from threading import Event, Lock, Thread
 from typing import Callable, Optional, Tuple
 
 import tango
@@ -734,19 +734,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode"""
-        _is_set_stow_mode_allowed = partial(
-            self._dish_mode_model.is_command_allowed,
-            "SetStowMode",
-            component_manager=self,
-            task_callback=task_callback,
+        _is_set_stow_mode_allowed = self._dish_mode_model.is_command_allowed(
+            "SetStowMode", component_manager=self, task_callback=task_callback
         )
-        status, response = self.submit_task(
-            self._command_map.set_stow_mode,
+
+        if not _is_set_stow_mode_allowed:
+            return TaskStatus.REJECTED, "Request to stow dish is rejected"
+
+        Thread(
+            target=self._command_map.set_stow_mode,
             args=[],
-            is_cmd_allowed=_is_set_stow_mode_allowed,
-            task_callback=task_callback,
-        )
-        return status, response
+            kwargs={"task_callback": task_callback, "task_abort_event": Event()},
+        ).start()
+
+        return TaskStatus.IN_PROGRESS, "Request to stow dish has been processed"
 
     def slew(
         self,

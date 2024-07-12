@@ -22,6 +22,7 @@ from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
+from ska_mid_dish_manager.models.command_class import DishLMCSubmittedSlowCommand
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
@@ -149,7 +150,6 @@ class DishManager(SKAController):
             ("TrackStop", "track_stop_cmd"),
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
-            ("SetStowMode", "set_stow_mode"),
             ("Slew", "slew"),
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
@@ -167,6 +167,17 @@ class DishManager(SKAController):
                 ),
             )
 
+            self.register_command_object(
+                "SetStowMode",
+                DishLMCSubmittedSlowCommand(
+                    "SetStowMode",
+                    self._command_tracker,
+                    self.component_manager,
+                    "set_stow_mode",
+                    callback=None,
+                    logger=self.logger,
+                ),
+            )
         self.register_command_object(
             "AbortCommands",
             self.AbortCommandsCommand(self.component_manager, self.logger),

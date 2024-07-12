@@ -7,6 +7,7 @@ from typing import Callable, Optional
 from ska_control_model import ResultCode, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
 
+from ska_mid_dish_manager.models.command_class import DishLMCSubmittedSlowCommand
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
@@ -319,11 +320,18 @@ class CommandMap:
         """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
-        command = SubmittedSlowCommand(
+
+        command_class = SubmittedSlowCommand
+        sub_function_to_execute = "run_device_command"
+        if "stow" in command_name.lower():
+            command_class = DishLMCSubmittedSlowCommand
+            sub_function_to_execute = "run_device_command_in_dedicated_thread"
+
+        command = command_class(
             f"{device}_{command_name}",
             self._command_tracker,
             self._dish_manager_cm.sub_component_managers[device],
-            "run_device_command",
+            sub_function_to_execute,
             callback=None,
             logger=self.logger,
         )

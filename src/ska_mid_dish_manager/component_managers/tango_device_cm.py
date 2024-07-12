@@ -278,6 +278,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         return task_status, response
 
+    def run_device_command_in_dedicated_thread(
+        self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore
+    ) -> Any:
+        """Execute the command in a separate thread from the Task Executor"""
+        Thread(
+            target=self._command_map.set_stow_mode,
+            args=[command_name, command_arg],
+            kwargs={"task_callback": task_callback, "task_abort_event": Event()},
+        ).start()
+
+        return TaskStatus.IN_PROGRESS, f"{command_name} request has been processed"
+
     @typing.no_type_check
     def _run_device_command(
         self,
