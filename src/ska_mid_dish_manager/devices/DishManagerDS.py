@@ -1293,8 +1293,9 @@ class DishManager(SKAController):
             # abort the task on dish manager
             self._component_manager.abort_commands()
             # abort the task on the subservient devices
-            for cm in self._component_manager.sub_component_managers.values():
-                cm.abort_commands()
+            sub_component_managers = self._component_manager._get_active_sub_component_managers()
+            for component_mgr in sub_component_managers:
+                component_mgr.abort_commands()
 
             return (ResultCode.STARTED, "Aborting commands")
 
