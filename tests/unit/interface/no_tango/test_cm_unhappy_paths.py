@@ -1,6 +1,4 @@
-"""Tests dish manager component manager slew command handler"""
-
-from unittest.mock import Mock
+"""Tests dish manager component manager slew and trackloadstaticoff."""
 
 import pytest
 from ska_control_model import ResultCode
