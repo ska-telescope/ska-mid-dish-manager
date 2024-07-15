@@ -24,4 +24,13 @@ diagram below shows a transition to STANDBY-LP (using the ignored attributes).
 
 .. uml:: command_map_sequence_diagram_adr93.uml
 
+Set Stow Mode Warning
+^^^^^^^^^^^^^^^^^^^^^
+This command immediately triggers the Dish to transition to STOW Mode.
+It susequently aborts all queued LRC tasks and then returns to the caller.
+This is done because the Set Stow command is time critical and should take presidence
+over all other commands hence the LRC tasks being cleared after Set Stow is implemented.
+The clearing of the queue assures that the dish stows and doesn't continue executing tasks
+thereby nullifying Set Stow command's action.
+
 .. _command fanout page: https://confluence.skatelescope.org/pages/viewpage.action?pageId=188656205

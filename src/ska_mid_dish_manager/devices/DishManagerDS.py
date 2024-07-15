@@ -1585,11 +1585,11 @@ class DishManager(SKAController):
         """
         Implemented as a Long Running Command
 
-        This command triggers the Dish to transition to the STOW Dish Element
-        Mode, and returns to the caller. To point the dish in a direction that
-        minimises the wind loads on the structure, for survival in strong wind
-        conditions. The Dish is able to observe in the STOW position, for the
-        purpose of transient detection.
+        This command immediately triggers the Dish to transition to STOW Dish Element
+        Mode. It susequently aborts all queued LRC tasks and then returns to the caller.
+        To point the dish in a direction that minimises the wind loads on the structure,
+        for survival in strong wind conditions. The Dish is able to observe in the STOW
+        position, for the purpose of transient detection.
 
         :return: A tuple containing a return code and a string
             message indicating status.
