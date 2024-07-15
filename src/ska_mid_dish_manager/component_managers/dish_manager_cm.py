@@ -757,7 +757,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if len(values) != 2:
             return (
                 TaskStatus.REJECTED,
-                f"Length of argument ({len(values)}) is not as expected (2).",
+                f"Expected 2 arguments (az, el) but got {len(values)} arg(s).",
             )
 
         status, response = self.submit_task(
@@ -820,7 +820,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if len(values) != 2:
             return (
                 TaskStatus.REJECTED,
-                f"Length of argument ({len(values)}) is not as expected (2).",
+                f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s).",
             )
 
         status, response = self.submit_task(

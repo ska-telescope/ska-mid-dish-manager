@@ -1,7 +1,7 @@
 """Tests dish manager component manager slew and trackloadstaticoff"""
 
 import pytest
-from ska_control_model import ResultCode
+from ska_control_model import TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 
@@ -19,8 +19,8 @@ def test_slew_with_invalid_input(
         the command tracker under test
     """
     result_code, message = component_manager.slew([22.0], callbacks["task_cb"])
-    assert result_code == ResultCode.REJECTED
-    assert message == "Length of argument (1) is not as expected (2)."
+    assert result_code == TaskStatus.REJECTED
+    assert message == "Expected 2 arguments (az, el) but got 1 arg(s)."
 
 
 @pytest.mark.unit
@@ -38,5 +38,5 @@ def test_track_load_static_off_with_invalid_input(
     result_code, message = component_manager.track_load_static_off(
         [10.0, 20.0, 10.0], callbacks["task_cb"]
     )
-    assert result_code == ResultCode.REJECTED
-    assert message == "Length of argument (3) is not as expected (2)."
+    assert result_code == TaskStatus.REJECTED
+    assert message == f"Expected 2 arguments (off_xel, off_el) but got 3 arg(s)."
