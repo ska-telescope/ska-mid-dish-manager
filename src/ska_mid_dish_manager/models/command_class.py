@@ -1,4 +1,4 @@
-""""A submitted slow command witj do() overridden"""
+""""A submitted slow command with do() overridden"""
 
 import functools
 from typing import Any
