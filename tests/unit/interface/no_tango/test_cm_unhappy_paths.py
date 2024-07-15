@@ -39,4 +39,4 @@ def test_track_load_static_off_with_invalid_input(
         [10.0, 20.0, 10.0], callbacks["task_cb"]
     )
     assert result_code == TaskStatus.REJECTED
-    assert message == f"Expected 2 arguments (off_xel, off_el) but got 3 arg(s)."
+    assert message == "Expected 2 arguments (off_xel, off_el) but got 3 arg(s)."
