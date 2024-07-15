@@ -1,4 +1,4 @@
-"""Tests dish manager component manager slew and trackloadstaticoff."""
+"""Tests dish manager component manager slew and trackloadstaticoff"""
 
 import pytest
 from ska_control_model import ResultCode
@@ -18,7 +18,7 @@ def test_slew_with_invalid_input(
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
-    [[result_code], [message]] = component_manager.slew([22.0], callbacks["task_cb"])
+    result_code, message = component_manager.slew([22.0], callbacks["task_cb"])
     assert result_code == ResultCode.REJECTED
     assert message == "Length of argument (1) is not as expected (2)."
 
@@ -35,7 +35,7 @@ def test_track_load_static_off_with_invalid_input(
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
-    [[result_code], [message]] = component_manager.track_load_static_off(
+    result_code, message = component_manager.track_load_static_off(
         [10.0, 20.0, 10.0], callbacks["task_cb"]
     )
     assert result_code == ResultCode.REJECTED
