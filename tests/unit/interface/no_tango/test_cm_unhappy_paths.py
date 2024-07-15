@@ -27,7 +27,6 @@ def test_slew_with_invalid_input(
 
 @pytest.mark.unit
 def test_track_load_static_off_with_invalid_input(
-    band: IndexerPosition,
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
