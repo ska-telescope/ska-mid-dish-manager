@@ -9,6 +9,7 @@ CA_OBS_INDEX = 11
 E_OBS_INDEX = 19
 
 
+@pytest.mark.skip(reason="ICD v0.0.7 does not expose StaticPmParameters correctly from server.")
 @pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -30,6 +31,7 @@ def test_read_band_static_pointing_model_parameters(
     assert band_pointing_model_params.dtype.name == "float32"  # type: ignore
 
 
+@pytest.mark.skip(reason="ICD v0.0.7 does not expose StaticPmParameters correctly from server.")
 @pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -61,6 +63,7 @@ def test_write_bands_static_pointing_model_parameters(
     dm_event_store.wait_for_value(pointing_model_params)
 
 
+@pytest.mark.skip(reason="Fix test for new ICD CA_OBS and E_OBS not applicable anymore.")
 @pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize(
