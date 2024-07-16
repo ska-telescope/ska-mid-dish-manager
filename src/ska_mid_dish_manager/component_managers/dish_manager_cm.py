@@ -598,7 +598,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return self.component_state["ignorespfrx"]
         return False
 
-    def validate_band_x_pointing_model_params(self, values):
+    def _validate_band_x_pointing_model_params(self, values):
         """Validate the args passed on all bandXPointingModelParams."""
         # The argument value is a list of two floats: [off_xel, off_el]
         if len(values) != 2:

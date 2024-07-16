@@ -54,6 +54,6 @@ def test_validate_band_x_pointing_model_params_with_invalid_input(
     with pytest.raises(
         ValueError, match="Expected 2 arguments (off_xel, off_el) but got 3 arg(s)."
     ):
-        component_manager.validate_band_x_pointing_model_params(
+        component_manager._validate_band_x_pointing_model_params(
             [10.0, 20.0, 10.0],
         )
