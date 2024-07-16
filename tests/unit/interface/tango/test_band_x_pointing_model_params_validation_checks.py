@@ -26,9 +26,7 @@ def test_band_X_pointing_model_params_validation_checks(
     write_values,
     dish_manager_resources,
 ):
-    """
-    Test bandxPointingModelParams rejects invalid input.
-    """
+    """Test bandxPointingModelParams rejects invalid input."""
     device_proxy, _ = dish_manager_resources
     try:
         device_proxy.write_attribute(tango_attribute, write_values)
