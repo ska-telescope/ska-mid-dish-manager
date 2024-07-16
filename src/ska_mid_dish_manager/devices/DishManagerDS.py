@@ -482,6 +482,24 @@ class DishManager(SKAController):
         return self._achieved_pointing_el
 
     @attribute(
+        dtype=(float),
+        doc="Azimuth",
+        access=AttrWriteType.READ,
+    )
+    def achievedPointingAz_value(self):
+        """Returns the current achieved pointing for the azimuth axis."""
+        return self._achieved_pointing_az[1]
+
+    @attribute(
+        dtype=(float),
+        doc="Elevation",
+        access=AttrWriteType.READ,
+    )
+    def achievedPointingEl_value(self):
+        """Returns the current achieved pointing for the elevation axis."""
+        return self._achieved_pointing_el[1]
+
+    @attribute(
         dtype=bool,
         doc="Indicates whether the Dish is on target or not based on the "
         "pointing error and time period parameters defined in "
