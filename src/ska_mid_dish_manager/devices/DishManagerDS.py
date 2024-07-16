@@ -256,6 +256,14 @@ class DishManager(SKAController):
             setattr(self, attribute_variable, comp_state_value)
             self.push_change_event(attribute_name, comp_state_value)
             self.push_archive_event(attribute_name, comp_state_value)
+            if attribute_name == "achievedpointingaz":
+                self._achieved_pointing_az_value = comp_state_value[1]
+                self.push_change_event("achievedPointingAzValue", comp_state_value[1])
+                self.push_archive_event("achievedPointingAzValue", comp_state_value[1])
+            if attribute_name == "achievedpointingel":
+                self._achieved_pointing_el_value = comp_state_value[1]
+                self.push_change_event("achievedPointingElValue", comp_state_value[1])
+                self.push_archive_event("achievedPointingElValue", comp_state_value[1])
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """
@@ -311,6 +319,8 @@ class DishManager(SKAController):
             device._scan_i_d = ""
             device._ignore_spf = False
             device._ignore_spfrx = False
+            device._achieved_pointing_az_value = 0.0
+            device._achieved_pointing_el_value = 0.0
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -375,6 +385,8 @@ class DishManager(SKAController):
                 "elementAlarmAddress",
                 "elementTelStateAddress",
                 "elementDatabaseAddress",
+                "achievedPointingAz_value",
+                "achievedPointingEl_value",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
@@ -486,18 +498,18 @@ class DishManager(SKAController):
         doc="Azimuth",
         access=AttrWriteType.READ,
     )
-    def achievedPointingAz_value(self):
+    def achievedPointingAzValue(self):
         """Returns the current achieved pointing for the azimuth axis."""
-        return self._achieved_pointing_az[1]
+        return self._achieved_pointing_az_value
 
     @attribute(
         dtype=(float),
         doc="Elevation",
         access=AttrWriteType.READ,
     )
-    def achievedPointingEl_value(self):
+    def achievedPointingElValue(self):
         """Returns the current achieved pointing for the elevation axis."""
-        return self._achieved_pointing_el[1]
+        return self._achieved_pointing_el_value
 
     @attribute(
         dtype=bool,
