@@ -1587,7 +1587,7 @@ class DishManager(SKAController):
 
         This command immediately triggers the Dish to transition to STOW Dish Element
         Mode. It susequently aborts all queued LRC tasks and then returns to the caller.
-        It points the dish in a direction that minimises the wind loads on the structure, 
+        It points the dish in a direction that minimises the wind loads on the structure,
         for survival in strong wind conditions. The Dish is able to observe in the STOW
         position, for the purpose of transient detection.
 
