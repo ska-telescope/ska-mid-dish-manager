@@ -34,12 +34,10 @@ def test_stow_transition(
 
     assert main_event_store.wait_for_value(DishMode.STOW, timeout=6)
 
-    expected_progress_updates = [
-        "Stow called, monitor dishmode for LRC completed",
-    ]
+    expected_progress_update = "Stow called, monitor dishmode for LRC completed"
 
-    events = progress_event_store.wait_for_progress_update(expected_progress_updates[-1])
+    events = progress_event_store.wait_for_progress_update(expected_progress_update)
 
     events_string = "".join([str(event) for event in events])
-    for message in expected_progress_updates:
+    for message in expected_progress_update:
         assert message in events_string
