@@ -33,5 +33,5 @@ def test_band_X_pointing_model_params_validation_checks(
     except tango.DevFailed as err:
         assert (
             (err.args[0].desc)
-            == f"ValueError: Expected 2 arguments (off_xel, off_el) but got {write_values} arg(s)."
+            == f"ValueError: Expected 2 arguments (off_xel, off_el) but got {len(write_values)} arg(s)."
         )
