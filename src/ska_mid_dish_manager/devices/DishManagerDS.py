@@ -580,7 +580,7 @@ class DishManager(SKAController):
                     ds_com_man.write_attribute_value("band1PointingModelParams", value)
                 except (tango.DevFailed, ValueError) as err:
                     self.logger.exception(
-                        f"Could not reach DS to write band1PointingModelParams:{err}"
+                        "Could not reach DS to write band1PointingModelParams %s", err
                     )
         else:
             self.logger.warning("No component manager to write band1PointingModelParams yet")
@@ -620,7 +620,7 @@ class DishManager(SKAController):
                     ds_com_man.write_attribute_value("band2PointingModelParams", value)
                 except (tango.DevFailed, ValueError) as err:
                     self.logger.exception(
-                        f"Could not reach DS to write band2PointingModelParams:{err}"
+                        "Could not reach DS to write band2PointingModelParams %s", err
                     )
         else:
             self.logger.warning("No component manager to write band2PointingModelParams yet")
@@ -660,7 +660,7 @@ class DishManager(SKAController):
                     ds_com_man.write_attribute_value("band3PointingModelParams", value)
                 except (tango.DevFailed, ValueError) as err:
                     self.logger.exception(
-                        f"Could not reach DS to write band3PointingModelParams:{err}"
+                        "Could not reach DS to write band3PointingModelParams %s", err
                     )
         else:
             self.logger.warning("No component manager to write band3PointingModelParams yet")
@@ -700,7 +700,7 @@ class DishManager(SKAController):
                     ds_com_man.write_attribute_value("band4PointingModelParams", value)
                 except (tango.DevFailed, ValueError) as err:
                     self.logger.exception(
-                        f"Could not reach DS to write band4PointingModelParams:{err}"
+                        "Could not reach DS to write band4PointingModelParams %s", err
                     )
         else:
             self.logger.warning("No component manager to write band1PointingModelParams yet")
