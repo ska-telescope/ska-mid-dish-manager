@@ -385,8 +385,8 @@ class DishManager(SKAController):
                 "elementAlarmAddress",
                 "elementTelStateAddress",
                 "elementDatabaseAddress",
-                "achievedPointingAz_value",
-                "achievedPointingEl_value",
+                "achievedPointingAzValue",
+                "achievedPointingElValue",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
