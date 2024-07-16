@@ -582,6 +582,7 @@ class DishManager(SKAController):
                     self.logger.exception(
                         "Could not reach DS to write band1PointingModelParams %s", err
                     )
+                    raise err
         else:
             self.logger.warning("No component manager to write band1PointingModelParams yet")
 
@@ -622,6 +623,7 @@ class DishManager(SKAController):
                     self.logger.exception(
                         "Could not reach DS to write band2PointingModelParams %s", err
                     )
+                    raise err
         else:
             self.logger.warning("No component manager to write band2PointingModelParams yet")
 
@@ -662,6 +664,8 @@ class DishManager(SKAController):
                     self.logger.exception(
                         "Could not reach DS to write band3PointingModelParams %s", err
                     )
+                    raise err
+
         else:
             self.logger.warning("No component manager to write band3PointingModelParams yet")
 
@@ -702,6 +706,7 @@ class DishManager(SKAController):
                     self.logger.exception(
                         "Could not reach DS to write band4PointingModelParams %s", err
                     )
+                    raise err
         else:
             self.logger.warning("No component manager to write band1PointingModelParams yet")
 
