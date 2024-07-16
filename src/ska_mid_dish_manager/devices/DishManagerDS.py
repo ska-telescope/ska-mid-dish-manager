@@ -256,11 +256,11 @@ class DishManager(SKAController):
             setattr(self, attribute_variable, comp_state_value)
             self.push_change_event(attribute_name, comp_state_value)
             self.push_archive_event(attribute_name, comp_state_value)
-            if attribute_name == "achievedPointingAz" or attribute_name == "achievedpointingaz":
+            if attribute_name.lower() == "achievedpointingaz":
                 self._achieved_pointing_az_value = comp_state_value[1]
                 self.push_change_event("achievedPointingAzValue", comp_state_value[1])
                 self.push_archive_event("achievedPointingAzValue", comp_state_value[1])
-            if attribute_name == "achievedPointingEl" or attribute_name == "achievedpointingel":
+            if attribute_name.lower() == "achievedpointingel":
                 self._achieved_pointing_el_value = comp_state_value[1]
                 self.push_change_event("achievedPointingElValue", comp_state_value[1])
                 self.push_archive_event("achievedPointingElValue", comp_state_value[1])
