@@ -1,4 +1,5 @@
 """Tests dish manager component manager slew and trackloadstaticoff"""
+import re
 
 import pytest
 from ska_control_model import TaskStatus
@@ -52,7 +53,7 @@ def test_validate_band_x_pointing_model_params_with_invalid_input(
     :param component_manager: the component manager under test
     """
     with pytest.raises(
-        ValueError, match="Expected 2 arguments (off_xel, off_el) but got 3 arg(s)."
+        ValueError, match=re.escape("Expected 2 arguments (off_xel, off_el) but got 3 arg(s).")
     ):
         component_manager._validate_band_x_pointing_model_params(
             [10.0, 20.0, 10.0],
