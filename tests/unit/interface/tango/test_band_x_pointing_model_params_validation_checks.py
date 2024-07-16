@@ -31,7 +31,8 @@ def test_band_X_pointing_model_params_validation_checks(
     try:
         device_proxy.write_attribute(tango_attribute, write_values)
     except tango.DevFailed as err:
-        assert (
-            (err.args[0].desc) == "ValueError: Expected 2 arguments (off_xel, off_el)",
-            f" but got {len(write_values)} arg(s).",
+        expected_desc = (
+            "ValueError: Expected 2 arguments (off_xel, off_el) "
+            f"but got {len(write_values)} arg(s)."
         )
+        assert (err.args[0].desc) == expected_desc
