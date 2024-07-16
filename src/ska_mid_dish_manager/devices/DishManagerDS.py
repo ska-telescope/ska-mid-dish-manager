@@ -575,10 +575,13 @@ class DishManager(SKAController):
         if hasattr(self, "component_manager"):
             if "DS" in self.component_manager.sub_component_managers:
                 try:
+                    self.component_manager._validate_band_x_pointing_model_params(value)
                     ds_com_man = self.component_manager.sub_component_managers["DS"]
                     ds_com_man.write_attribute_value("band1PointingModelParams", value)
-                except tango.DevFailed:
-                    self.logger.exception("Could not reach DS to write band1PointingModelParams")
+                except (tango.DevFailed, ValueError) as err:
+                    self.logger.exception(
+                        f"Could not reach DS to write band1PointingModelParams:{err}"
+                    )
         else:
             self.logger.warning("No component manager to write band1PointingModelParams yet")
 
@@ -612,10 +615,13 @@ class DishManager(SKAController):
         if hasattr(self, "component_manager"):
             if "DS" in self.component_manager.sub_component_managers:
                 try:
+                    self.component_manager._validate_band_x_pointing_model_params(value)
                     ds_com_man = self.component_manager.sub_component_managers["DS"]
                     ds_com_man.write_attribute_value("band2PointingModelParams", value)
-                except tango.DevFailed:
-                    self.logger.exception("Could not reach DS to write band2PointingModelParams")
+                except (tango.DevFailed, ValueError) as err:
+                    self.logger.exception(
+                        f"Could not reach DS to write band2PointingModelParams:{err}"
+                    )
         else:
             self.logger.warning("No component manager to write band2PointingModelParams yet")
 
@@ -649,10 +655,13 @@ class DishManager(SKAController):
         if hasattr(self, "component_manager"):
             if "DS" in self.component_manager.sub_component_managers:
                 try:
+                    self.component_manager._validate_band_x_pointing_model_params(value)
                     ds_com_man = self.component_manager.sub_component_managers["DS"]
                     ds_com_man.write_attribute_value("band3PointingModelParams", value)
-                except tango.DevFailed:
-                    self.logger.exception("Could not reach DS to write band3PointingModelParams")
+                except (tango.DevFailed, ValueError) as err:
+                    self.logger.exception(
+                        f"Could not reach DS to write band3PointingModelParams:{err}"
+                    )
         else:
             self.logger.warning("No component manager to write band3PointingModelParams yet")
 
@@ -686,12 +695,15 @@ class DishManager(SKAController):
         if hasattr(self, "component_manager"):
             if "DS" in self.component_manager.sub_component_managers:
                 try:
+                    self.component_manager._validate_band_x_pointing_model_params(value)
                     ds_com_man = self.component_manager.sub_component_managers["DS"]
                     ds_com_man.write_attribute_value("band4PointingModelParams", value)
-                except tango.DevFailed:
-                    self.logger.exception("Could not reach DS to write band4PointingModelParams")
+                except (tango.DevFailed, ValueError) as err:
+                    self.logger.exception(
+                        f"Could not reach DS to write band4PointingModelParams:{err}"
+                    )
         else:
-            self.logger.warning("No component manager to write band4PointingModelParams yet")
+            self.logger.warning("No component manager to write band1PointingModelParams yet")
 
     @attribute(
         dtype=(DevFloat,),
