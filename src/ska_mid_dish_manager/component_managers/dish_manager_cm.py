@@ -3,7 +3,7 @@
 import logging
 import os
 from functools import partial
-from threading import Event, Lock, Thread
+from threading import Lock
 from typing import Callable, List, Optional, Tuple
 
 import tango
@@ -734,19 +734,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode"""
-        _is_set_stow_mode_allowed = self._dish_mode_model.is_command_allowed(
-            "SetStowMode", component_manager=self, task_callback=task_callback
+        # Not....
+        ds_cm = self.sub_component_managers["DS"]
+        try:
+            ds_cm.execute_command("SetStowMode", None)
+
+        except (LostConnection, tango.DevFailed) as err:
+            task_callback(status=TaskStatus.FAILED, exception=err)
+            return TaskStatus.FAILED, f"{err}"
+        task_callback(
+            progress="Stow called, monitor dishmode for LRC completed", status=TaskStatus.COMPLETED
         )
-
-        if not _is_set_stow_mode_allowed:
-            return TaskStatus.REJECTED, "Request to stow dish is rejected"
-
-        Thread(
-            target=self._command_map.set_stow_mode,
-            args=[],
-            kwargs={"task_callback": task_callback, "task_abort_event": Event()},
-        ).start()
-
         # abort queued tasks on the task executor's threadpoolexecutor
         self.abort_commands()
         # abort the task on the subservient devices
@@ -754,7 +752,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         for component_mgr in sub_component_mgrs:
             component_mgr.abort_commands()
 
-        return TaskStatus.IN_PROGRESS, "Request to stow dish has been processed"
+        return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
 
     def slew(
         self,

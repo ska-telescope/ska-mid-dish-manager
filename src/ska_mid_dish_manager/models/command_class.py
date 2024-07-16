@@ -7,7 +7,7 @@ from ska_control_model import ResultCode, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
 
 
-class DishLMCSubmittedSlowCommand(SubmittedSlowCommand):
+class ImmediateSlowCommand(SubmittedSlowCommand):
     """A custom class for Dish Manager's Submitted Slow Command"""
 
     def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
@@ -17,8 +17,8 @@ class DishLMCSubmittedSlowCommand(SubmittedSlowCommand):
         :param args: positional args to the component manager method
         :param kwargs: keyword args to the component manager method
 
-        :return: A tuple containing the task status (e.g. IN_PROGRESS or
-            REJECTED), and a string message containing a command_id (if
+        :return: A tuple containing the task status (e.g. COMPLETED)
+            and a string message containing a command_id (if
             the command has been accepted) or an informational message
             (if the command was rejected)
         """
@@ -32,12 +32,10 @@ class DishLMCSubmittedSlowCommand(SubmittedSlowCommand):
             **kwargs,
         )
 
-        if status == TaskStatus.REJECTED:
-            return ResultCode.REJECTED, message
-        if status == TaskStatus.IN_PROGRESS:
+        if status == TaskStatus.COMPLETED:
             return ResultCode.STARTED, command_id
         return (
             ResultCode.FAILED,
-            f"Expected IN_PROGRESS or REJECTED task status, but {status.name} was returned "
+            f"Expected COMPLETED task status, but {status.name} was returned "
             f"by command method with message: {message}",
         )

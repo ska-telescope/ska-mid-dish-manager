@@ -22,7 +22,7 @@ from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
-from ska_mid_dish_manager.models.command_class import DishLMCSubmittedSlowCommand
+from ska_mid_dish_manager.models.command_class import ImmediateSlowCommand
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
@@ -169,7 +169,7 @@ class DishManager(SKAController):
 
             self.register_command_object(
                 "SetStowMode",
-                DishLMCSubmittedSlowCommand(
+                ImmediateSlowCommand(
                     "SetStowMode",
                     self._command_tracker,
                     self.component_manager,
@@ -1586,7 +1586,7 @@ class DishManager(SKAController):
         Implemented as a Long Running Command
 
         This command immediately triggers the Dish to transition to STOW Dish Element
-        Mode. It susequently aborts all queued LRC tasks and then returns to the caller.
+        Mode. It subsequently aborts all queued LRC tasks and then returns to the caller.
         It points the dish in a direction that minimises the wind loads on the structure,
         for survival in strong wind conditions. The Dish is able to observe in the STOW
         position, for the purpose of transient detection.

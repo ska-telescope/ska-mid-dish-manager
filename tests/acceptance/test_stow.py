@@ -10,7 +10,9 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_stow_transition(
-    monitor_tango_servers, event_store_class, dish_manager_proxy, ds_device_proxy
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
 ):
     """Test transition to STOW"""
     main_event_store = event_store_class()
@@ -33,14 +35,10 @@ def test_stow_transition(
     assert main_event_store.wait_for_value(DishMode.STOW, timeout=6)
 
     expected_progress_updates = [
-        "Stow called on DS",
-        "Awaiting dishmode change to STOW",
-        "Stow completed",
+        "Stow called, monitor dishmode for LRC completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = progress_event_store.wait_for_progress_update(expected_progress_updates[-1])
 
     events_string = "".join([str(event) for event in events])
     for message in expected_progress_updates:
