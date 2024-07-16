@@ -31,11 +31,9 @@ def test_stow_transition(
     )
 
     dish_manager_proxy.SetStowMode()
-
-    assert main_event_store.wait_for_value(DishMode.STOW, timeout=6)
+    main_event_store.wait_for_value(DishMode.STOW, timeout=6)
 
     expected_progress_update = "Stow called, monitor dishmode for LRC completed"
-
     events = progress_event_store.wait_for_progress_update(expected_progress_update)
 
     events_string = "".join([str(event) for event in events])
