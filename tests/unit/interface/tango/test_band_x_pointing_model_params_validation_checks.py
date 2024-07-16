@@ -1,4 +1,4 @@
-"""Test that the DishManager bandXPointingModelParams attributes 
+"""Test that the DishManager bandXPointingModelParams attributes
 rejects invalid input."""
 
 import pytest
