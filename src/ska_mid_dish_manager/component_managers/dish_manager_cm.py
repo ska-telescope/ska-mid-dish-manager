@@ -601,7 +601,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def validate_band_x_pointing_model_params(self, values):
         """Validate the args passed on all bandXPointingModelParams."""
         # The argument value is a list of two floats: [off_xel, off_el]
-        if len(value) != 2:
+        if len(values) != 2:
             raise ValueError(
                 f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s)."
             )
