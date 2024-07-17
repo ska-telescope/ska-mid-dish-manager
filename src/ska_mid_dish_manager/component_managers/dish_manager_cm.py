@@ -735,7 +735,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode
 
-        Note: To expediate the command the command does not
+        Note: To expedite the command, it does not
         implement _is_track_stow_cmd_allowed() because by
         default it is allowed to run at all states.
         """
