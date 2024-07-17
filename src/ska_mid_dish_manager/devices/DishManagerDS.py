@@ -578,9 +578,12 @@ class DishManager(SKAController):
                     self.component_manager._validate_band_x_pointing_model_params(value)
                     ds_com_man = self.component_manager.sub_component_managers["DS"]
                     ds_com_man.write_attribute_value("band1PointingModelParams", value)
-                except (tango.DevFailed, ValueError) as err:
+                except (tango.DevFailed):
                     self.logger.exception("Could not reach DS to write band1PointingModelParams")
-                    raise err
+                    raise
+                except (ValueError):
+                    self.logger.exception("Incorrect params for band1PointingModelParams")
+                    raise
         else:
             self.logger.warning("No component manager to write band1PointingModelParams yet")
 
@@ -617,9 +620,12 @@ class DishManager(SKAController):
                     self.component_manager._validate_band_x_pointing_model_params(value)
                     ds_com_man = self.component_manager.sub_component_managers["DS"]
                     ds_com_man.write_attribute_value("band2PointingModelParams", value)
-                except (tango.DevFailed, ValueError) as err:
+                except (tango.DevFailed):
                     self.logger.exception("Could not reach DS to write band2PointingModelParams")
-                    raise err
+                    raise
+                except (ValueError):
+                    self.logger.exception("Incorrect params for band2PointingModelParams")
+                    raise
         else:
             self.logger.warning("No component manager to write band2PointingModelParams yet")
 
@@ -656,9 +662,12 @@ class DishManager(SKAController):
                     self.component_manager._validate_band_x_pointing_model_params(value)
                     ds_com_man = self.component_manager.sub_component_managers["DS"]
                     ds_com_man.write_attribute_value("band3PointingModelParams", value)
-                except (tango.DevFailed, ValueError) as err:
+                except (tango.DevFailed):
                     self.logger.exception("Could not reach DS to write band3PointingModelParams")
-                    raise err
+                    raise
+                except (ValueError):
+                    self.logger.exception("Incorrect params for band3PointingModelParams")
+                    raise
 
         else:
             self.logger.warning("No component manager to write band3PointingModelParams yet")
@@ -696,11 +705,14 @@ class DishManager(SKAController):
                     self.component_manager._validate_band_x_pointing_model_params(value)
                     ds_com_man = self.component_manager.sub_component_managers["DS"]
                     ds_com_man.write_attribute_value("band4PointingModelParams", value)
-                except (tango.DevFailed, ValueError) as err:
+                except (tango.DevFailed):
                     self.logger.exception("Could not reach DS to write band4PointingModelParams")
-                    raise err
+                    raise
+                except (ValueError):
+                    self.logger.exception("Incorrect params for band4PointingModelParams")
+                    raise
         else:
-            self.logger.warning("No component manager to write band1PointingModelParams yet")
+            self.logger.warning("No component manager to write band4PointingModelParams yet")
 
     @attribute(
         dtype=(DevFloat,),

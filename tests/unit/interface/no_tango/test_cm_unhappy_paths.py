@@ -1,4 +1,4 @@
-"""Tests dish manager component manager slew and trackloadstaticoff"""
+"""Tests dish manager component manager unhappy paths for command handlers"""
 import re
 
 import pytest
