@@ -733,8 +733,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STOW mode"""
-        # Not....
+        """Transition the dish to STOW mode
+
+        Note: To expediate the command the command does not
+        implement _is_track_stow_cmd_allowed() because by
+        default it is allowed to run at all states.
+        """
         ds_cm = self.sub_component_managers["DS"]
         try:
             ds_cm.execute_command("Stow", None)
