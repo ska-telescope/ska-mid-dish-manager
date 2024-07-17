@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated the Stow Command to execute immediately when triggered and to abort all queued LRC tasks afterwards
 
 Version 3.0.0
 *************

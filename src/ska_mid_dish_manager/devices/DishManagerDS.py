@@ -22,6 +22,7 @@ from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
+from ska_mid_dish_manager.models.command_class import ImmediateSlowCommand
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
@@ -149,7 +150,6 @@ class DishManager(SKAController):
             ("TrackStop", "track_stop_cmd"),
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
-            ("SetStowMode", "set_stow_mode"),
             ("Slew", "slew"),
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
@@ -167,6 +167,17 @@ class DishManager(SKAController):
                 ),
             )
 
+            self.register_command_object(
+                "SetStowMode",
+                ImmediateSlowCommand(
+                    "SetStowMode",
+                    self._command_tracker,
+                    self.component_manager,
+                    "set_stow_mode",
+                    callback=None,
+                    logger=self.logger,
+                ),
+            )
         self.register_command_object(
             "AbortCommands",
             self.AbortCommandsCommand(self.component_manager, self.logger),
@@ -1287,8 +1298,9 @@ class DishManager(SKAController):
             # abort the task on dish manager
             self._component_manager.abort_commands()
             # abort the task on the subservient devices
-            for cm in self._component_manager.sub_component_managers.values():
-                cm.abort_commands()
+            sub_component_managers = self._component_manager._get_active_sub_component_managers()
+            for component_mgr in sub_component_managers:
+                component_mgr.abort_commands()
 
             return (ResultCode.STARTED, "Aborting commands")
 
@@ -1578,11 +1590,11 @@ class DishManager(SKAController):
         """
         Implemented as a Long Running Command
 
-        This command triggers the Dish to transition to the STOW Dish Element
-        Mode, and returns to the caller. To point the dish in a direction that
-        minimises the wind loads on the structure, for survival in strong wind
-        conditions. The Dish is able to observe in the STOW position, for the
-        purpose of transient detection.
+        This command immediately triggers the Dish to transition to STOW Dish Element
+        Mode. It subsequently aborts all queued LRC tasks and then returns to the caller.
+        It points the dish in a direction that minimises the wind loads on the structure,
+        for survival in strong wind conditions. The Dish is able to observe in the STOW
+        position, for the purpose of transient detection.
 
         :return: A tuple containing a return code and a string
             message indicating status.

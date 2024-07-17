@@ -860,6 +860,26 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: commandedState
+      data_format: SCALAR
+      data_type: DevString
+      description: "\n        Read the last commanded operating state of the device.\n\
+        \n        Initial string is \"None\". Only other strings it can change to\
+        \ is \"OFF\",\n        \"STANDBY\" or \"ON\", following the start of the Off(),\
+        \ Standby(), On() or Reset()\n        long running commands.\n\n        :return:\
+        \ commanded operating state string.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: commandedState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: configureTargetLock
       data_format: SPECTRUM
       data_type: DevDouble
@@ -1253,15 +1273,35 @@
       data_type: DevString
       description: "\n        Read the IDs of the long running commands in the queue.\n\
         \n        Every client that executes a command will receive a command ID as\
-        \ response.\n        Keep track of IDs in the queue. Pop off from front as\
-        \ they complete.\n\n        :return: unique ids for the enqueued commands\n\
+        \ response.\n        Keep track of IDs currently allocated.\n        Entries\
+        \ are removed `self._command_tracker._removal_time` seconds\n        after\
+        \ they have finished.\n\n        :param attr: Tango attribute being read\n\
         \        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
       label: longRunningCommandIDsInQueue
       max_alarm: Not specified
-      max_dim_x: 64
+      max_dim_x: 65
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: longRunningCommandInProgress
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read the name(s) of the currently executing long running\
+        \ command(s).\n\n        Name(s) of command and possible abort in progress\
+        \ or empty string(s).\n        :param attr: Tango attribute being read\n \
+        \       "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: longRunningCommandInProgress
+      max_alarm: Not specified
+      max_dim_x: 4
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1272,16 +1312,16 @@
       data_format: SPECTRUM
       data_type: DevString
       description: "\n        Read the progress of the currently executing long running\
-        \ command.\n\n        ID, progress of the currently executing command.\n \
-        \       Clients can subscribe to on_change event and wait\n        for the\
-        \ ID they are interested in.\n\n        :return: ID, progress of the currently\
-        \ executing command.\n        "
+        \ command(s).\n\n        ID, progress of the currently executing command(s).\n\
+        \        Clients can subscribe to on_change event and wait\n        for the\
+        \ ID they are interested in.\n\n        :param attr: Tango attribute being\
+        \ read\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
       label: longRunningCommandProgress
       max_alarm: Not specified
-      max_dim_x: 32
+      max_dim_x: 2
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1311,16 +1351,16 @@
       data_format: SPECTRUM
       data_type: DevString
       description: "\n        Read the status of the currently executing long running\
-        \ commands.\n\n        ID, status pair of the currently executing command.\n\
+        \ commands.\n\n        ID, status pairs of the currently executing commands.\n\
         \        Clients can subscribe to on_change event and wait for the\n     \
-        \   ID they are interested in.\n\n        :return: ID, status pairs of the\
-        \ currently executing commands\n        "
+        \   ID they are interested in.\n\n        :param attr: Tango attribute being\
+        \ read\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
       label: longRunningCommandStatus
       max_alarm: Not specified
-      max_dim_x: 32
+      max_dim_x: 130
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1331,14 +1371,16 @@
       data_format: SPECTRUM
       data_type: DevString
       description: "\n        Read the long running commands in the queue.\n\n   \
-        \      Keep track of which commands are in the queue.\n         Pop off from\
-        \ front as they complete.\n\n        :return: tasks in the queue\n        "
+        \      Keep track of which commands are that are currently known about.\n\
+        \         Entries are removed `self._command_tracker._removal_time` seconds\n\
+        \         after they have finished.\n\n        :param attr: Tango attribute\
+        \ being read\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
       label: longRunningCommandsInQueue
       max_alarm: Not specified
-      max_dim_x: 64
+      max_dim_x: 65
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1687,6 +1729,4 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: __SubDevices
     - name: polled_cmd
-

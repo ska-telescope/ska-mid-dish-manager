@@ -3,7 +3,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from ska_control_model import ResultCode, TaskStatus
+from ska_control_model import TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.dish_enums import DishMode
@@ -34,12 +34,10 @@ def test_set_stow_mode_handler(
     component_state_cb.get_queue_values()
 
     expected_call_kwargs = (
-        {"status": TaskStatus.QUEUED},
-        {"status": TaskStatus.IN_PROGRESS},
-        {"progress": f"Stow called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS operatingmode change to [<DSOperatingMode.STOW: 5>]"},
-        {"progress": "Commands: mocked sub-device-command-ids"},
-        {"progress": "Awaiting dishmode change to STOW"},
+        {
+            "status": TaskStatus.COMPLETED,
+            "progress": "Stow called, monitor dishmode for LRC completed",
+        },
     )
 
     # check that the initial lrc updates come through
@@ -51,13 +49,3 @@ def test_set_stow_mode_handler(
     # check that the component state reports the requested command
     component_manager._update_component_state(dishmode=DishMode.STOW)
     component_state_cb.wait_for_value("dishmode", DishMode.STOW)
-
-    # wait a bit for the lrc updates to come through
-    component_state_cb.get_queue_values()
-    # check that the final lrc updates come through
-    task_cb = callbacks["task_cb"]
-    task_cb.assert_called_with(
-        progress="Stow completed",
-        status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "Stow completed"),
-    )
