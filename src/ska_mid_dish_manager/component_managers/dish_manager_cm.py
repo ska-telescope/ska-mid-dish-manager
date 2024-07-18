@@ -598,6 +598,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return self.component_state["ignorespfrx"]
         return False
 
+    def _validate_band_x_pointing_model_params(self, values):
+        """Validate the args passed on all bandXPointingModelParams."""
+        # The argument value is a list of two floats: [off_xel, off_el]
+        if len(values) != 2:
+            raise ValueError(
+                f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s)."
+            )
+
     def start_communicating(self):
         """Connect from monitored devices"""
         if self.sub_component_managers:
@@ -764,6 +772,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Slew the dish."""
+        if len(values) != 2:
+            return (
+                TaskStatus.REJECTED,
+                f"Expected 2 arguments (az, el) but got {len(values)} arg(s).",
+            )
+
         status, response = self.submit_task(
             self._command_map.slew, args=[values], task_callback=task_callback
         )
@@ -821,6 +835,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Load the static pointing model offsets."""
+        if len(values) != 2:
+            return (
+                TaskStatus.REJECTED,
+                f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s).",
+            )
+
         status, response = self.submit_task(
             self._command_map.track_load_static_off, args=[values], task_callback=task_callback
         )

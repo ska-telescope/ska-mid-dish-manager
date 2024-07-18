@@ -25,7 +25,7 @@ def test_slew_handler(
         the command tracker under test
     """
     # slew has no pre-condition
-    component_manager.slew([20.0, 30.0, 40.0], callbacks["task_cb"])
+    component_manager.slew([20.0, 30.0], callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
     component_state_cb = callbacks["comp_state_cb"]
     component_state_cb.get_queue_values()
