@@ -754,7 +754,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except (LostConnection, tango.DevFailed) as err:
             task_callback(status=TaskStatus.FAILED, exception=err)
             self.logger.exception("DishManager has failed to execute Stow DSManager")
-            return TaskStatus.FAILED, f"DishManager has failed to execute Stow DSManager"
+            return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
         task_callback(
             progress="Stow called, monitor dishmode for LRC completed", status=TaskStatus.COMPLETED
         )
