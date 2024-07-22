@@ -14,6 +14,8 @@ Version 3.0.1
 - Upgraded ska-mid-dish-simulators chart to v3.1.0
 - Upgraded ska-mid-dish-ds-manager chart to v1.5.0
 
+   - Expected regression on tests exercising static pointing model params due to ongoing changes
+
 Version 3.0.0
 *************
 - Updated PyTango to v9.5.0
