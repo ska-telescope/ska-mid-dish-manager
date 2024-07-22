@@ -7,7 +7,12 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 3.0.1
+*************
 - Updated the Stow Command to execute immediately when triggered and to abort all queued LRC tasks afterwards
+- Upgraded ska-mid-dish-simulators chart to v3.1.0
+- Upgraded ska-mid-dish-ds-manager chart to v1.5.0
 
 Version 3.0.0
 *************
