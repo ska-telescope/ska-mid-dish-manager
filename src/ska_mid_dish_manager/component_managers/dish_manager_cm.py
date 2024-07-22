@@ -4,7 +4,7 @@ import logging
 import os
 from functools import partial
 from threading import Lock
-from typing import Callable, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -222,7 +222,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
-    def _get_active_sub_component_managers(self) -> dict:
+    def _get_active_sub_component_managers(self) -> List:
         """Get a list of subservient device component managers which are not being ignored."""
         active_component_managers = [self.sub_component_managers["DS"]]
 
@@ -598,6 +598,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return self.component_state["ignorespfrx"]
         return False
 
+    def _validate_band_x_pointing_model_params(self, values):
+        """Validate the args passed on all bandXPointingModelParams."""
+        # The argument value is a list of two floats: [off_xel, off_el]
+        if len(values) != 2:
+            raise ValueError(
+                f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s)."
+            )
+
     def start_communicating(self):
         """Connect from monitored devices"""
         if self.sub_component_managers:
@@ -733,20 +741,31 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STOW mode"""
-        _is_set_stow_mode_allowed = partial(
-            self._dish_mode_model.is_command_allowed,
-            "SetStowMode",
-            component_manager=self,
-            task_callback=task_callback,
+        """Transition the dish to STOW mode
+
+        Note: To expedite the command, it does not
+        implement _is_track_stow_cmd_allowed() because by
+        default it is allowed to run at all states.
+        """
+        ds_cm = self.sub_component_managers["DS"]
+        try:
+            ds_cm.execute_command("Stow", None)
+
+        except (LostConnection, tango.DevFailed) as err:
+            task_callback(status=TaskStatus.FAILED, exception=err)
+            self.logger.exception("DishManager has failed to execute Stow DSManager")
+            return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
+        task_callback(
+            progress="Stow called, monitor dishmode for LRC completed", status=TaskStatus.COMPLETED
         )
-        status, response = self.submit_task(
-            self._command_map.set_stow_mode,
-            args=[],
-            is_cmd_allowed=_is_set_stow_mode_allowed,
-            task_callback=task_callback,
-        )
-        return status, response
+        # abort queued tasks on the task executor's threadpoolexecutor
+        self.abort_commands()
+        # abort the task on the subservient devices
+        sub_component_mgrs = self._get_active_sub_component_managers()
+        for component_mgr in sub_component_mgrs:
+            component_mgr.abort_commands()
+
+        return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
 
     def slew(
         self,
@@ -754,6 +773,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Slew the dish."""
+        if len(values) != 2:
+            return (
+                TaskStatus.REJECTED,
+                f"Expected 2 arguments (az, el) but got {len(values)} arg(s).",
+            )
+
         status, response = self.submit_task(
             self._command_map.slew, args=[values], task_callback=task_callback
         )
@@ -811,6 +836,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Load the static pointing model offsets."""
+        if len(values) != 2:
+            return (
+                TaskStatus.REJECTED,
+                f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s).",
+            )
+
         status, response = self.submit_task(
             self._command_map.track_load_static_off, args=[values], task_callback=task_callback
         )

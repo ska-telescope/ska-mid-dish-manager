@@ -28,7 +28,6 @@ def test_track_load_static_off_handler(
         [
             1.0,
             2.0,
-            1.0,
         ],
         callbacks["task_cb"],
     )
