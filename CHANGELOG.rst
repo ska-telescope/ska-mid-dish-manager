@@ -14,15 +14,16 @@ Version 3.0.1
 - Upgraded ska-mid-dish-simulators chart to v3.1.0
 - Upgraded ska-mid-dish-ds-manager chart to v1.5.0
 
-   - WARNING: writes to `band[X]PointingModelParams` fails due to data type mismatch in current OPCUA nodeset file
+  - WARNING: writes to `band[X]PointingModelParams` fails due to data type mismatch in current OPCUA nodeset file
 
 Version 3.0.0
 *************
-- Updated PyTango to v9.5.0
-- Updated ska-tango-base to v1.0.0
+- Updated component manager to check "command_allowed" on dequeue
+- Overrode creation of lrc attributes to increase max_dim_x of `longRunningCommandInProgress`
+- Updated package dependencies
 
-   - Updated component manager to check "command_allowed" on dequeue
-   - Overrode creation of lrc attributes to increase max_dim_x of `longRunningCommandInProgress`
+  - Updated PyTango to v9.5.0
+  - Updated ska-tango-base to v1.0.0
 
 Version 2.7.0
 *************
@@ -113,8 +114,8 @@ Version 2.3.0
 - Not deploying ska-tango-base(Database DS) by default anymore
 - Extended device server interface
 
-   - Implemented `Slew`, `TrackLoadStaticOff`, `SetKValue` commands
-   - Implemented `band2PointingModelParams`, `kValue`, `programTracktable` attributes
+  - Implemented `Slew`, `TrackLoadStaticOff`, `SetKValue` commands
+  - Implemented `band2PointingModelParams`, `kValue`, `programTracktable` attributes
 
 Version 2.2.9
 *************
@@ -144,8 +145,8 @@ Version 2.2.5
 - Manual job to run lmc test prior to dish manager release
 - Bug fixes
 
-   - Refactored capability state updates in _component_state_changed
-   - Updated tango_device_cm to use .lower() on monitored attribute names when updating component states
+  - Refactored capability state updates in _component_state_changed
+  - Updated tango_device_cm to use .lower() on monitored attribute names when updating component states
 
 Version 2.2.4
 *************
@@ -242,7 +243,7 @@ Version 0.0.1
 *************
 - The first release of the DishManager rewrites DishLMC DishMaster in python:
 
-   - Device interface conforms to spec
-   - Commands implemented as LRC with no functionality
-   - Subservient devices managed by component manager
-   - DishMode model to handle commands requests on DishManager
+  - Device interface conforms to spec
+  - Commands implemented as LRC with no functionality
+  - Subservient devices managed by component manager
+  - DishMode model to handle commands requests on DishManager
