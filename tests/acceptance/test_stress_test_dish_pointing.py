@@ -1,3 +1,4 @@
+"""Test to stress test dish pointing by appending pointing coordinates at rate of 200ms"""
 import time
 
 import tango
@@ -14,7 +15,9 @@ NUMBER_OF_TABLE_SAMPLES = 1500
 CADENCE_SEC = 0.2
 
 
+# pylint:disable=too-many-locals
 def test_stress_test_dish_pointing(dish_manager_proxy, event_store_class):
+    """Dish pointing stress test implementation"""
     result_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
     band_event_store = event_store_class()
@@ -102,13 +105,13 @@ def test_stress_test_dish_pointing(dish_manager_proxy, event_store_class):
     pointing_coord_list = pointing_coord_list[10:]
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
 
-    x = 0
-    while x < len(pointing_coord_list):
+    count = 0
+    while count < len(pointing_coord_list):
         point_timestamp = get_current_tai_timestamp() + 10
-        point_az = pointing_coord_list[x]
-        point_el = pointing_coord_list[x + 1]
+        point_az = pointing_coord_list[count]
+        point_el = pointing_coord_list[count + 1]
         time.sleep(CADENCE_SEC)
         dish_manager_proxy.programTrackTable = [point_timestamp, point_az, point_el]
-        x += 2
+        count += 2
 
     assert True
