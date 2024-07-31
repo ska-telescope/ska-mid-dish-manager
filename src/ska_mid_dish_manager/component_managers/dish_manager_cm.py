@@ -530,17 +530,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
-    def _track_load_table(
-        self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
-    ) -> None:
-        """Load the track table."""
-        self.logger.debug("Calling track load table on DSManager.")
-        device_proxy = tango.DeviceProxy(self.sub_component_managers["DS"]._tango_device_fqdn)
-        float_list = [load_mode, sequence_length]
-        float_list.extend(table)
-
-        device_proxy.trackLoadTable(float_list)
-
     def sync_component_states(self):
         """
         Sync monitored attributes on component managers with their respective sub devices
@@ -612,6 +601,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for device_name, component_manager in self.sub_component_managers.items():
                 if not self.is_device_ignored(device_name):
                     component_manager.start_communicating()
+
+    def _track_load_table(
+        self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
+    ) -> None:
+        """Load the track table."""
+        float_list = [load_mode, sequence_length]
+        float_list.extend(table)
+        ds_cm = self.sub_component_managers["DS"]
+        self.logger.debug("Calling TrackLoadTable on DSManager.")
+        try:
+            result = ds_cm.execute_command("TrackLoadTable", float_list)
+            self.logger.debug(
+                "Result of the call to [%s] on SPFRx is [%s]",
+                "TrackLoadTable",
+                result,
+            )
+        except (LostConnection, tango.DevFailed) as err:
+            self.logger.exception("TrackLoadTable on DSManager failed")
+            return (ResultCode.FAILED, err)
+        return (ResultCode.OK, "Successfully requested TrackLoadTable on DSManager")
 
     def set_standby_lp_mode(
         self,
@@ -750,7 +759,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_cm = self.sub_component_managers["DS"]
         try:
             ds_cm.execute_command("Stow", None)
-
         except (LostConnection, tango.DevFailed) as err:
             task_callback(status=TaskStatus.FAILED, exception=err)
             self.logger.exception("DishManager has failed to execute Stow DSManager")
@@ -856,6 +864,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         SPFRx has been restarted.
         """
         spfrx_cm = self.sub_component_managers["SPFRX"]
+        self.logger.debug("Calling SetKValue on SPFRX.")
         try:
             result = spfrx_cm.execute_command("SetKValue", k_value)
             self.logger.debug(
