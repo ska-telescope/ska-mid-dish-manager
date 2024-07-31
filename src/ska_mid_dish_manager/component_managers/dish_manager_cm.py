@@ -325,7 +325,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         active_sub_component_managers = self._get_active_sub_component_managers()
 
-        # return None for look ups to component state of ignored devices
+        if not all(
+            sub_component_manager.component_state
+            for sub_component_manager in active_sub_component_managers.values()
+        ):
+            return
+
+        # return None for look ups on component state of ignored devices
         default_dict = defaultdict(lambda: None)
         component_state = {"DS": default_dict, "SPF": default_dict, "SPFRX": default_dict}
         for sub_device, component_mgr in active_sub_component_managers.items():
@@ -335,7 +341,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spf_component_state = component_state["SPF"]
         spfrx_component_state = component_state["SPFRX"]
 
-        # TODO update the __repr__ attribute of the defaultdict(dd) to return {} in the logs
+        # TODO update the __repr__ attribute of the default_dict to return {} in the logs
         self.logger.debug(
             (
                 "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
