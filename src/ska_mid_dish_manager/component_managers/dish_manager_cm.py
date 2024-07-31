@@ -613,7 +613,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         try:
             result = ds_cm.execute_command("TrackLoadTable", float_list)
             self.logger.debug(
-                "Result of the call to [%s] on SPFRx is [%s]",
+                "Result of the call to [%s] on DSManager is [%s]",
                 "TrackLoadTable",
                 result,
             )
