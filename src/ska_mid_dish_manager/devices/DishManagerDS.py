@@ -167,17 +167,18 @@ class DishManager(SKAController):
                 ),
             )
 
-            self.register_command_object(
+        self.register_command_object(
+            "SetStowMode",
+            ImmediateSlowCommand(
                 "SetStowMode",
-                ImmediateSlowCommand(
-                    "SetStowMode",
-                    self._command_tracker,
-                    self.component_manager,
-                    "set_stow_mode",
-                    callback=None,
-                    logger=self.logger,
-                ),
-            )
+                self._command_tracker,
+                self.component_manager,
+                "set_stow_mode",
+                callback=None,
+                logger=self.logger,
+            ),
+        )
+
         self.register_command_object(
             "AbortCommands",
             self.AbortCommandsCommand(self.component_manager, self.logger),
