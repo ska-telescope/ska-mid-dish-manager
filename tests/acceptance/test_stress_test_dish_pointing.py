@@ -13,6 +13,11 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 NUMBER_OF_TABLE_SAMPLES = 1500
+INIT_TABLE_SIZE = 5
+
+TRACK_START_DELAY = 8
+TRACK_APPEND_DELAY = 10
+
 CADENCE_SEC = 0.2
 
 
@@ -82,13 +87,13 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
         loaded_sample_count += 1
 
     # Generate 5 entry track table to start the track using first 5 coords
-    start_time_tai_s = get_current_tai_timestamp() + 8
+    start_time_tai_s = get_current_tai_timestamp() + TRACK_START_DELAY
     initial_table_timestamps = []
     for count in range(5):
         initial_table_timestamps.append((start_time_tai_s + (count * CADENCE_SEC)))
 
     initial_track_table = []
-    for i in range(5):
+    for i in range(INIT_TABLE_SIZE):
         initial_track_table.extend(
             [
                 initial_table_timestamps[i],
@@ -109,7 +114,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
 
     count = 0
     while count < len(pointing_coord_list):
-        point_timestamp = get_current_tai_timestamp() + 10
+        point_timestamp = get_current_tai_timestamp() + TRACK_APPEND_DELAY
         point_az = pointing_coord_list[count]
         point_el = pointing_coord_list[count + 1]
         time.sleep(CADENCE_SEC)
