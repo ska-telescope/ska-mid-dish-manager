@@ -1,6 +1,7 @@
 """Test to stress test dish pointing by appending pointing coordinates at rate of 200ms"""
 import time
 
+import pytest
 import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
@@ -16,6 +17,7 @@ CADENCE_SEC = 0.2
 
 
 # pylint:disable=too-many-locals
+@pytest.mark.scheduled
 def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_store_class):
     """Dish pointing stress test implementation"""
     result_event_store = event_store_class()
