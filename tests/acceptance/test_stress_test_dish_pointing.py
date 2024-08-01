@@ -71,8 +71,8 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     current_az = current_pointing[1]
     current_el = current_pointing[2]
 
-    az_dir = 1 if current_az < 350 else -1
-    el_dir = 1 if current_el < 80 else -1
+    az_dir = 1 if current_az < 0 else -1
+    el_dir = 1 if current_el < 45 else -1
 
     pointing_coord_list = []
     loaded_sample_count = 0
