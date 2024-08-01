@@ -16,7 +16,7 @@ CADENCE_SEC = 0.2
 
 
 # pylint:disable=too-many-locals
-def test_stress_test_dish_pointing(dish_manager_proxy, event_store_class):
+def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_store_class):
     """Dish pointing stress test implementation"""
     result_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
@@ -114,4 +114,12 @@ def test_stress_test_dish_pointing(dish_manager_proxy, event_store_class):
         dish_manager_proxy.programTrackTable = [point_timestamp, point_az, point_el]
         count += 2
 
-    assert True
+    # Ensure achievedPointing reaches the final coordinate provided following coord streaming
+    destination_coord = dish_manager_proxy.programTrackTable
+    achieved_pointing_store = event_store_class()
+    ds_device_proxy.subscribe_event(
+        "achievedPointing",
+        tango.EventType.CHANGE_EVENT,
+        achieved_pointing_store,
+    )
+    assert achieved_pointing_store.wait_for_value(destination_coord, timeout=60)
