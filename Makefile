@@ -40,6 +40,7 @@ k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_D
 
 ifeq ($(CI_PIPELINE_SOURCE), schedule)
 k8s-test-runner: MARK = scheduled
+PYTHON_VARS_AFTER_PYTEST = "${PYTHON_VARS_AFTER_PYTEST} --count=5"
 else
 k8s-test-runner: MARK = acceptance
 endif

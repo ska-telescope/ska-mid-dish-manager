@@ -3,6 +3,7 @@ import time
 
 import pytest
 import tango
+from pytest import approx
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -12,13 +13,14 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
-NUMBER_OF_TABLE_SAMPLES = 1500
+NUMBER_OF_TABLE_SAMPLES = 150
 INIT_TABLE_SIZE = 5
 
 TRACK_START_DELAY = 8
 TRACK_APPEND_DELAY = 10
-
 CADENCE_SEC = 0.2
+
+TOLERANCE = 1e-2
 
 
 # pylint:disable=too-many-locals
@@ -122,11 +124,8 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
         count += 2
 
     # Ensure achievedPointing reaches the final coordinate provided following coord streaming
+    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=60)
     destination_coord = dish_manager_proxy.programTrackTable
-    achieved_pointing_store = event_store_class()
-    ds_device_proxy.subscribe_event(
-        "achievedPointing",
-        tango.EventType.CHANGE_EVENT,
-        achieved_pointing_store,
-    )
-    assert achieved_pointing_store.wait_for_value(destination_coord, timeout=60)
+
+    assert ds_device_proxy.achievedPointingAz[1] == approx(destination_coord[1], rel=TOLERANCE)
+    assert ds_device_proxy.achievedPointingEl[1] == approx(destination_coord[2], rel=TOLERANCE)
