@@ -36,13 +36,12 @@ PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events"
 
 python-test: MARK = unit
-# k8s-test-runner: MARK = acceptance
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
-ifneq ($(CI_PIPELINE_SOURCE), schedule)
-k8s-test-runner: MARK = acceptance
-else
+ifeq ($(CI_PIPELINE_SOURCE), schedule)
 k8s-test-runner: MARK = scheduled
+else
+k8s-test-runner: MARK = acceptance
 endif
 
 -include .make/python.mk
