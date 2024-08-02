@@ -36,12 +36,14 @@ PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events"
 
 python-test: MARK = unit
+k8s-test-runner: MARK = acceptance
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
-ifeq ($(CI_PIPELINE_SOURCE), schedule)
+# this variable is used for running stress tests in the nightly scheduled jobs
+# the values nothing or the marker to select all the test which should run in the scheduled job
+STRESS_TEST_MARKER ?=
+ifeq ($(STRESS_TEST_MARKER), scheduled)
 k8s-test-runner: MARK = scheduled
-else
-k8s-test-runner: MARK = acceptance
 endif
 
 -include .make/python.mk
