@@ -63,7 +63,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     dish_manager_proxy.ConfigureBand2(True)
     dish_mode_event_store.wait_for_value(DishMode.CONFIG)
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
-    band_event_store.wait_for_value(Band.B2, timeout=8)
+    band_event_store.wait_for_value(Band.B2)
 
     [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -108,7 +108,6 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     dish_manager_proxy.programTrackTable = initial_track_table
 
     dish_manager_proxy.Track()
-    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=6)
 
     # Slice the first 5 coords out and rapid fire the remaining entries in append mode
     pointing_coord_list = pointing_coord_list[10:]
@@ -123,8 +122,16 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
         dish_manager_proxy.programTrackTable = [point_timestamp, point_az, point_el]
         count += 2
 
-    # Ensure achievedPointing reaches the final coordinate provided following coord streaming
-    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=60)
+    # Wait sufficient period of time for the track to complete
+    pointing_state_values = pointing_state_event_store.get_queue_values(timeout=60)
+    pointing_state_values = [event_value[1] for event_value in pointing_state_values]
+
+    # Assert that at least 2 READY and 1 TRACK events were received
+    # SLEW may or may not have been received
+    assert len(pointing_state_values) >= 3
+    assert pointing_state_values.count(PointingState["READY"]) == 2
+    assert pointing_state_values.count(PointingState["TRACK"]) == 1
+
     destination_coord = dish_manager_proxy.programTrackTable
 
     assert ds_device_proxy.achievedPointingAz[1] == approx(destination_coord[1], rel=TOLERANCE)
