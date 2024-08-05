@@ -39,6 +39,13 @@ python-test: MARK = unit
 k8s-test-runner: MARK = acceptance
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
+# this variable is used for running stress tests in the nightly stress jobs
+# the values nothing or the marker to select all the test which should run in the stress job
+STRESS_TEST_MARKER ?=
+ifeq ($(STRESS_TEST_MARKER), stress)
+k8s-test-runner: MARK = stress
+endif
+
 -include .make/python.mk
 
 
