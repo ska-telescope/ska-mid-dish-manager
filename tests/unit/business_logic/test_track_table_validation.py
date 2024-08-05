@@ -25,7 +25,7 @@ class TestTrackLoadTableFormatting:
 
     def test_track_table_input_happy(self):
         """Test happy path when length and future time is appropriate"""
-        offset_s = 1.0
+        offset_s = 2.0
         time_future_unix = time() + self.future_time_s + offset_s
         time_future_tai = get_tai_timestamp_from_unix_s(time_future_unix)
         table = [time_future_tai, 2.0, 3.0]
