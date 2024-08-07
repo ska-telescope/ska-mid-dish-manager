@@ -15,6 +15,7 @@ from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_map import CommandMap
+from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LENGTH
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
@@ -97,6 +98,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             trackinterpolationmode=None,
             ignorespf=None,
             ignorespfrx=None,
+            actstaticoffsetvaluexel=None,
+            actstaticoffsetvalueel=None,
             **kwargs,
         )
         self.logger = logger
@@ -150,6 +153,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band3pointingmodelparams=[],
                 band4pointingmodelparams=[],
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
+                actstaticoffsetvaluexel=None,
+                actstaticoffsetvalueel=None,
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, "dsConnectionState"
                 ),
@@ -201,6 +206,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "band4pointingmodelparams": [],
             "ignorespf": False,
             "ignorespfrx": False,
+            "actstaticoffsetvaluexel": 0.0,
+            "actstaticoffsetvalueel": 0.0,
         }
         self._update_component_state(**initial_component_states)
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -219,6 +226,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "desiredPointingAz",
                 "desiredPointingEl",
                 "trackInterpolationMode",
+                "actStaticOffsetValueXel",
+                "actStaticOffsetValueEl",
             ],
         }
 
@@ -598,13 +607,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return self.component_state["ignorespfrx"]
         return False
 
-    def _validate_band_x_pointing_model_params(self, values):
-        """Validate the args passed on all bandXPointingModelParams."""
-        # The argument value is a list of two floats: [off_xel, off_el]
-        if len(values) != 2:
-            raise ValueError(
-                f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s)."
-            )
+    def update_pointing_model_params(self, attr: str, values: list[float]) -> None:
+        """Update band pointing model parameters for the given attribute."""
+        try:
+            if len(values) != BAND_POINTING_MODEL_PARAMS_LENGTH:
+                raise ValueError(
+                    f"Expected {BAND_POINTING_MODEL_PARAMS_LENGTH} arguments but got"
+                    f" {len(values)}."
+                )
+            ds_com_man = self.sub_component_managers["DS"]
+            ds_com_man.write_attribute_value(attr, values)
+        except tango.DevFailed:
+            self.logger.exception("Failed to write to %s on DSManager", attr)
+            raise
+        except ValueError:
+            self.logger.exception("Failed to update %s", attr)
+            raise
 
     def start_communicating(self):
         """Connect from monitored devices"""

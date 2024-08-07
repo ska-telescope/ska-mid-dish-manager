@@ -38,8 +38,8 @@ class DSComponentManager(TangoDeviceComponentManager):
             "desiredPointingAz",
             "desiredPointingEl",
             "achievedPointing",
-            "achievedPointingaz",
-            "achievedPointingel",
+            "achievedPointingAz",
+            "achievedPointingEl",
             "band1PointingModelParams",
             "band2PointingModelParams",
             "band3PointingModelParams",
@@ -47,6 +47,8 @@ class DSComponentManager(TangoDeviceComponentManager):
             "trackInterpolationMode",
             "achievedTargetLock",
             "configureTargetLock",
+            "actStaticOffsetValueXel",
+            "actStaticOffsetValueEl",
         )
         super().__init__(
             tango_device_fqdn,
