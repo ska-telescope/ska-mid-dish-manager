@@ -17,7 +17,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, DevFloat, DevString, DispLevel, InfoIt, DevDouble
+from tango import AttrWriteType, DevDouble, DevFloat, DevString, DispLevel, InfoIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -560,7 +560,7 @@ class DishManager(SKAController):
     def azimuthOverWrap(self):
         """Returns the azimuthOverWrap"""
         return self._azimuth_over_wrap
-    
+
     @attribute(
         dtype=DevDouble,
         doc="Actual cross-elevation static offset (arcsec)",
