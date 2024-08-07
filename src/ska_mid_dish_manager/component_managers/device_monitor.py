@@ -216,11 +216,12 @@ class TangoDeviceMonitor:
             subscriptions = {name: None for name in self._monitored_attributes}
 
             def _event_reaction(events_queue: Queue, tango_event: tango.EventData) -> None:
-                if tango_event.err:
-                    self._logger.info("Got an error event on %s %s", self._tango_fqdn, tango_event)
-                    events_queue.put(PrioritizedEventData(priority=2, item=tango_event))
-                else:
-                    events_queue.put(PrioritizedEventData(priority=1, item=tango_event))
+                # if tango_event.err:
+                #     self._logger.info("Got an error event on %s %s", self._tango_fqdn, tango_event)
+                #     events_queue.put(PrioritizedEventData(priority=2, item=tango_event))
+                # else:
+                #     events_queue.put(PrioritizedEventData(priority=1, item=tango_event))
+                events_queue.put(tango_event)
 
             # set up all subscriptions
             device_proxy = None

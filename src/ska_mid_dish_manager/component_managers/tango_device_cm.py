@@ -3,7 +3,7 @@
 import datetime
 import logging
 import typing
-from queue import Empty, PriorityQueue
+from queue import Empty, Queue
 from threading import Event, Thread
 from typing import Any, Callable, Optional, Tuple
 
@@ -56,7 +56,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
         self._quality_state_callback = quality_state_callback
-        self._events_queue: PriorityQueue = PriorityQueue()
+        self._events_queue: Queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
         self._quality_monitored_attributes = quality_monitored_attributes
@@ -156,7 +156,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error occurred on attribute quality state update")
 
-        if quality is not tango.AttrQuality.ATTR_INVALID:
+        if quality is tango.AttrQuality.ATTR_VALID:
             try:
                 value = event_data.attr_value.value
                 if isinstance(value, np.ndarray):
@@ -200,38 +200,39 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @classmethod
     def _event_consumer(
         cls,
-        event_queue: PriorityQueue,
+        event_queue: Queue,
         update_state_cb: Callable,
         task_abort_event: Optional[Event] = None,
         task_callback: Optional[Callable] = None,  # type: ignore
     ) -> None:
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
-        latest_valid_event_timestamp = datetime.datetime.now() - datetime.timedelta(hours=1)
+        # if task_callback:
+        #     task_callback(status=TaskStatus.IN_PROGRESS)
+        # latest_valid_event_timestamp = datetime.datetime.now() - datetime.timedelta(hours=1)
         while task_abort_event and not task_abort_event.is_set():
             try:
-                p_event_data: PrioritizedEventData = event_queue.get(timeout=1)
-                event_data = p_event_data.item
+                event_data = event_queue.get(timeout=1)
                 if event_data.err:
+                    attr_name = event_data.attr_name
+                    print(f"Got an error event for {attr_name}")
                     # If we get an error event that is older than the latest valid event
                     # then discard it. If it's a new error event then start the reconnection
                     # process via task_callback and drain until we find a valid event
-                    if event_data.reception_date.todatetime() > latest_valid_event_timestamp:
-                        # Restart the connection
-                        if task_callback:
-                            task_callback(progress="Error Event Found")
-                        # Drain the remaining errors
-                        while event_data.err:
-                            p_event_data = event_queue.get(timeout=1)
-                            event_data = p_event_data.item
+                    # if event_data.reception_date.todatetime() > latest_valid_event_timestamp:
+                    #     # Restart the connection
+                    #     if task_callback:
+                    #         task_callback(progress="Error Event Found")
+                    #     # Drain the remaining errors
+                    #     while event_data.err:
+                    #         p_event_data = event_queue.get(timeout=1)
+                    #         event_data = p_event_data.item
 
                 if event_data.attr_value:
-                    latest_valid_event_timestamp = event_data.reception_date.todatetime()
+                    # latest_valid_event_timestamp = event_data.reception_date.todatetime()
                     update_state_cb(event_data)
             except Empty:
                 pass
-        if task_callback:
-            task_callback(status=TaskStatus.ABORTED)
+        # if task_callback:
+        #     task_callback(status=TaskStatus.ABORTED)
 
     def _event_consumer_cb(
         self,
