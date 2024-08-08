@@ -39,7 +39,7 @@ from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 # pylint: disable=abstract-method
 # pylint: disable=too-many-instance-attributes
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-public-methods
 class DishManagerComponentManager(TaskExecutorComponentManager):
     """A component manager for DishManager
 
@@ -861,7 +861,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         status, response = self.submit_task(
-            self._command_map.track_load_static_off, args=[values], task_callback=task_callback
+            self._command_map.track_load_static_off,
+            args=[values[0], values[1]],
+            task_callback=task_callback,
         )
         return status, response
 

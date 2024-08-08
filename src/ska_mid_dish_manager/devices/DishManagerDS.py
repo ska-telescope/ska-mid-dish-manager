@@ -1664,18 +1664,18 @@ class DishManager(SKAController):
         dtype_in=(float,),
         dtype_out="DevVarLongStringArray",
         doc_in="""
-            Load the static offsets for the currently selected band for correction.
+            Load (global) static tracking offsets.
 
-            Pointing model parameters are:
-            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
-            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
-            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
+            The offset is loaded immediately and is not cancelled
+            between tracks. The static offset introduces a positional adjustment to facilitate
+            reference pointing and the five-point calibration. The static offsets are added the
+            output of the interpolator before the correction of the static pointing model.
 
-            Note: To change the currently selected band for correction to B<N>, write to the
-            band<N>PointingModelParams attribute.
+            Note: If the static pointing correction is switched off, the static offsets remain as
+            an offset to the Azimuth and Elevation positions and need to be set to zero manually.
 
-            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
-            values will be updated.
+            Static offset parameters are:
+            [0] Off_Xel, [1] Off_El
         """,
     )
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)

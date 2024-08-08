@@ -123,7 +123,7 @@ def test_track_and_track_stop_cmds(
 
     expected_progress_updates = [
         "Track called on DS, ID",
-        "Awaiting DS pointingstate change to [<PointingState.TRACK: 2>",
+        "Awaiting DS pointingstate change to TRACK",
         "Track completed",
     ]
 
@@ -158,7 +158,7 @@ def test_track_and_track_stop_cmds(
 
     expected_progress_updates = [
         "TrackStop called on DS, ID",
-        "Awaiting DS pointingstate change to [<PointingState.READY",
+        "Awaiting DS pointingstate change to READY",
         "TrackStop completed",
     ]
 

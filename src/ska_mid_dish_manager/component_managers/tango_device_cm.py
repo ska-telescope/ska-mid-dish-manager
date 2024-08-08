@@ -212,7 +212,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             try:
                 p_event_data: PrioritizedEventData = event_queue.get(timeout=1)
                 event_data = p_event_data.item
-                print("Picked up event,", event_data.attr_value.value)
                 if event_data.err:
                     # If we get an error event that is older than the latest valid event
                     # then discard it. If it's a new error event then start the reconnection
