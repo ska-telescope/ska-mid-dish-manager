@@ -17,7 +17,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, DevDouble, DevFloat, DevString, DispLevel, InfoIt
+from tango import AttrWriteType, DispLevel, InfoIt
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -509,7 +509,7 @@ class DishManager(SKAController):
         return self._achieved_target_lock
 
     @attribute(
-        dtype=DevFloat,
+        dtype=float,
         access=AttrWriteType.READ_WRITE,
         doc="Indicates the SPFRx attenuation in the horizontal "
         "signal chain for the configuredband.",
@@ -527,7 +527,7 @@ class DishManager(SKAController):
         spfrx_cm.write_attribute_value("attenuationPolH", value)
 
     @attribute(
-        dtype=DevFloat,
+        dtype=float,
         access=AttrWriteType.READ_WRITE,
         doc="Indicates the SPFRx attenuation in the vertical "
         "signal chain for the configuredband.",
@@ -562,7 +562,7 @@ class DishManager(SKAController):
         return self._azimuth_over_wrap
 
     @attribute(
-        dtype=DevDouble,
+        dtype=float,
         doc="Actual cross-elevation static offset (arcsec)",
         access=AttrWriteType.READ,
     )
@@ -571,7 +571,7 @@ class DishManager(SKAController):
         return self._act_static_offset_value_xel
 
     @attribute(
-        dtype=DevDouble,
+        dtype=float,
         doc="Actual elevation static offset (arcsec)",
         access=AttrWriteType.READ,
     )
@@ -580,7 +580,7 @@ class DishManager(SKAController):
         return self._act_static_offset_value_el
 
     @attribute(
-        dtype=(DevFloat,),
+        dtype=(float,),
         max_dim_x=BAND_POINTING_MODEL_PARAMS_LENGTH,
         doc="""
             Parameters for (local) Band 1 pointing models used by Dish to do pointing corrections.
@@ -610,7 +610,7 @@ class DishManager(SKAController):
             raise RuntimeError("Failed to write to band1PointingModelParams on DishManager")
 
     @attribute(
-        dtype=(DevFloat,),
+        dtype=(float,),
         max_dim_x=BAND_POINTING_MODEL_PARAMS_LENGTH,
         doc="""
             Parameters for (local) Band 2 pointing models used by Dish to do pointing corrections.
@@ -640,7 +640,7 @@ class DishManager(SKAController):
             raise RuntimeError("Failed to write to band2PointingModelParams on DishManager")
 
     @attribute(
-        dtype=(DevFloat,),
+        dtype=(float,),
         max_dim_x=BAND_POINTING_MODEL_PARAMS_LENGTH,
         doc="""
             Parameters for (local) Band 3 pointing models used by Dish to do pointing corrections.
@@ -670,7 +670,7 @@ class DishManager(SKAController):
             raise RuntimeError("Failed to write to band3PointingModelParams on DishManager")
 
     @attribute(
-        dtype=(DevFloat,),
+        dtype=(float,),
         max_dim_x=BAND_POINTING_MODEL_PARAMS_LENGTH,
         doc="""
             Parameters for (local) Band 4 pointing models used by Dish to do pointing corrections.
@@ -700,7 +700,7 @@ class DishManager(SKAController):
             raise RuntimeError("Failed to write to band4PointingModelParams on DishManager")
 
     @attribute(
-        dtype=(DevFloat,),
+        dtype=(float,),
         max_dim_x=5,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 5a pointing models used by Dish to "
@@ -719,7 +719,7 @@ class DishManager(SKAController):
         self.push_archive_event("band5aPointingModelParams", value)
 
     @attribute(
-        dtype=(DevFloat,),
+        dtype=(float,),
         max_dim_x=5,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 5b pointing models used by Dish to "
@@ -951,7 +951,7 @@ class DishManager(SKAController):
         """Returns the frequencyResponse"""
         return self._frequency_response
 
-    @attribute(dtype=(DevFloat,), access=AttrWriteType.WRITE)
+    @attribute(dtype=(float,), access=AttrWriteType.WRITE)
     def noiseDiodeConfig(self):
         """Returns the noiseDiodeConfig"""
         return self._noise_diode_config
@@ -1159,7 +1159,7 @@ class DishManager(SKAController):
         return self._b5b_capability_state
 
     @attribute(
-        dtype=DevString,
+        dtype=str,
         access=AttrWriteType.READ_WRITE,
         doc="Report the scanID for Scan",
     )
@@ -1436,9 +1436,7 @@ class DishManager(SKAController):
         """Flushes the queue of time stamped commands."""
         raise NotImplementedError
 
-    @command(
-        dtype_in=DevString, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR
-    )
+    @command(dtype_in=str, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
@@ -1663,7 +1661,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @command(  # type: ignore[misc]
-        dtype_in="DevVarFloatArray",
+        dtype_in=(float,),
         dtype_out="DevVarLongStringArray",
         doc_in="""
             Load the static offsets for the currently selected band for correction.
