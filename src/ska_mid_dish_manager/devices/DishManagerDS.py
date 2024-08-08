@@ -236,13 +236,13 @@ class DishManager(SKAController):
                 try:
                     if device == Device.DS:
                         build_state = cm.read_attribute_value("buildState")
-                    elif device == Device.SPF or device == Device.SPFRX:
+                    elif device in [Device.SPF, Device.SPFRX]:
                         build_state = cm.read_attribute_value("swVersions")
 
                     self._build_state = self._release_info.update_build_state(device, build_state)
                 except (tango.DevFailed, AttributeError):
-                    self.logger.warn(
-                        f"Failed to update build state information for [{device}] device."
+                    self.logger.warning(
+                        "Failed to update build state information for [%s] device.", device
                     )
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
