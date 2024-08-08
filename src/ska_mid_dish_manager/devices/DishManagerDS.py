@@ -127,6 +127,14 @@ class DishManager(SKAController):
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
         """
+
+        self._release_info = ReleaseInfo(
+            ds_manager_address=self.DSDeviceFqdn,
+            spfc_address=self.SPFDeviceFqdn,
+            spfrx_address=self.SPFRxDeviceFqdn,
+        )
+        self._build_state = self._release_info.get_build_state()
+
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
@@ -224,10 +232,18 @@ class DishManager(SKAController):
                 device.value
             ].communication_state
             if comms_state == CommunicationStatus.ESTABLISHED:
-                build_state = self.component_manager.sub_component_managers[
-                    device.value
-                ].read_attribute_value("buildState")
-                self._release_info.update_build_state(device, build_state)
+                cm = self.component_manager.sub_component_managers[device.value]
+                try:
+                    if device == Device.DS:
+                        build_state = cm.read_attribute_value("buildState")
+                    elif device == Device.SPF or device == Device.SPFRX:
+                        build_state = cm.read_attribute_value("swVersions")
+
+                    self._build_state = self._release_info.update_build_state(device, build_state)
+                except tango.DevFailed:
+                    self.logger.warn(
+                        f"Failed to update build state information for " "[{device}] device."
+                    )
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
         # Do not modify or push quality changes before initialization complete
@@ -343,12 +359,6 @@ class DishManager(SKAController):
                 Device.SPF: "spfConnectionState",
                 Device.SPFRX: "spfrxConnectionState",
             }
-            device._release_info = ReleaseInfo(
-                ds_manager_address=self.DSDeviceFqdn,
-                spfc_address=self.SPFDeviceFqdn,
-                spfrx_address=self.SPFRxDeviceFqdn,
-            )
-            device._build_state = device._release_info.get_build_state()
 
             device.op_state_model.perform_action("component_standby")
 

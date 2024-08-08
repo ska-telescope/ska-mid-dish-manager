@@ -10,15 +10,6 @@ PYTHON_PACKAGE = "ska_mid_dish_simulators"
 BUILD_STATE_SPACING = 4
 
 
-def get_release_version():
-    """Get release version of package."""
-    try:
-        release_version = version(PYTHON_PACKAGE)
-    except PackageNotFoundError:
-        release_version = f"ERR: parsing {PYTHON_PACKAGE} version."
-    return release_version
-
-
 class ReleaseInfo:
     """Class containing version release information."""
 
@@ -26,6 +17,7 @@ class ReleaseInfo:
         self, ds_manager_address: str = "", spfc_address: str = "", spfrx_address: str = ""
     ) -> None:
         self._build_state = DmBuildStateDataClass(
+            DishManagerVersion=self.get_dish_manager_release_version(),
             DsManagerAddress=ds_manager_address,
             SPFCAddress=spfc_address,
             SPFRxAddress=spfrx_address,
@@ -59,3 +51,11 @@ class ReleaseInfo:
     def _update_spfrx_version(self, spfrx_version: str) -> None:
         """Update SPFRx version information."""
         self._build_state.SPFRxVersion = spfrx_version
+
+    def get_dish_manager_release_version(self) -> str:
+        """Get release version of package."""
+        try:
+            release_version = version(PYTHON_PACKAGE)
+        except PackageNotFoundError:
+            release_version = f"ERR: parsing {PYTHON_PACKAGE} version."
+        return release_version
