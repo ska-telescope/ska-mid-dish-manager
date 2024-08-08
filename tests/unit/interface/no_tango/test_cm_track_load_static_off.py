@@ -39,8 +39,15 @@ def test_track_load_static_off_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"TrackLoadStaticOff called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS  change to []"},
+        {
+            "progress": "Awaiting DS actstaticoffsetvaluexel, actstaticoffsetvalueel change to "
+            "1.0, 2.0"
+        },
         {"progress": "Commands: mocked sub-device-command-ids"},
+        {
+            "progress": "Awaiting actstaticoffsetvaluexel, actstaticoffsetvalueel change to "
+            "1.0, 2.0"
+        },
         {
             "progress": "TrackLoadStaticOff completed",
             "status": TaskStatus.COMPLETED,
@@ -50,6 +57,7 @@ def test_track_load_static_off_handler(
 
     # check that the initial lrc updates come through
     actual_call_kwargs = callbacks["task_cb"].call_args_list
+    print(actual_call_kwargs)
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]

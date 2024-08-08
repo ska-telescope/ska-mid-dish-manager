@@ -37,9 +37,9 @@ def test_configureband_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"SetIndexPosition called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS indexerposition change to [<IndexerPosition.B2: 2>]"},
+        {"progress": "Awaiting DS indexerposition change to B2"},
         {"progress": f"ConfigureBand2 called on SPFRX, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting SPFRX configuredband change to [<Band.B2: 2>]"},
+        {"progress": "Awaiting SPFRX configuredband change to B2"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {"progress": "Awaiting configuredband change to B2"},
     )

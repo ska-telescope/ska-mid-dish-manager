@@ -122,7 +122,7 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
 
     expected_progress_updates = [
         "TrackStop called on DS, ID",
-        "Awaiting DS pointingstate change to [<PointingState.READY: 0>]",
+        "Awaiting DS pointingstate change to READY",
         "TrackStop completed",
     ]
 

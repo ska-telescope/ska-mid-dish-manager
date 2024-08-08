@@ -613,7 +613,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if len(values) != BAND_POINTING_MODEL_PARAMS_LENGTH:
                 raise ValueError(
                     f"Expected {BAND_POINTING_MODEL_PARAMS_LENGTH} arguments but got"
-                    f" {len(values)}."
+                    f" {len(values)} arg(s)."
                 )
             ds_com_man = self.sub_component_managers["DS"]
             ds_com_man.write_attribute_value(attr, values)
