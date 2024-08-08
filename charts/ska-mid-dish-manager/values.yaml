@@ -71,7 +71,8 @@ dishmanager:
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"
 
-dsmanager:
+ska-mid-dish-ds-manager:
+  dishstructuremanager:
     image:
       registry: registry.gitlab.com/ska-telescope/ska-mid-dish-ds-manager
       image: ska-mid-dish-ds-manager
