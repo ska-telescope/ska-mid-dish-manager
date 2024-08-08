@@ -19,6 +19,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
     CapabilityStates,
+    Device,
     DishMode,
     DSOperatingMode,
     DSPowerState,
@@ -125,7 +126,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, "spfConnectionState"
+                    self._sub_communication_state_changed, Device.SPF
                 ),
                 component_state_callback=self._component_state_changed,
                 quality_state_callback=self._quality_state_callback,
@@ -151,7 +152,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band4pointingmodelparams=[],
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, "dsConnectionState"
+                    self._sub_communication_state_changed, Device.DS
                 ),
                 component_state_callback=self._component_state_changed,
                 quality_state_callback=self._quality_state_callback,
@@ -174,7 +175,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, "spfrxConnectionState"
+                    self._sub_communication_state_changed, Device.SPFRX
                 ),
                 component_state_callback=self._component_state_changed,
                 quality_state_callback=self._quality_state_callback,
