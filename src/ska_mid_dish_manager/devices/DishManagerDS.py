@@ -376,7 +376,7 @@ class DishManager(SKAController):
             device._spfrx_connection_state = CommunicationStatus.NOT_ESTABLISHED
             device._ds_connection_state = CommunicationStatus.NOT_ESTABLISHED
 
-            self._device_to_comm_attr_map = {
+            device._device_to_comm_attr_map = {
                 Device.DS: "dsConnectionState",
                 Device.SPF: "spfConnectionState",
                 Device.SPFRX: "spfrxConnectionState",
