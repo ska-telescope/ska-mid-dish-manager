@@ -6,7 +6,7 @@ from importlib.metadata import PackageNotFoundError, version
 from ska_mid_dish_manager.models.data_classes import DmBuildStateDataClass
 from ska_mid_dish_manager.models.dish_enums import Device
 
-PYTHON_PACKAGE = "ska_mid_dish_simulators"
+PYTHON_PACKAGE = "ska_mid_dish_manager"
 BUILD_STATE_SPACING = 4
 
 
