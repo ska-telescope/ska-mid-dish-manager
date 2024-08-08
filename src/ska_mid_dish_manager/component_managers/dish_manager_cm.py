@@ -114,7 +114,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             Device.SPF: "spfConnectionState",
             Device.SPFRX: "spfrxConnectionState",
         }
-        
+
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
@@ -132,7 +132,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, self._device_to_comm_attr_map[Device.SPF]
+                    self._sub_communication_state_changed,
+                    self._device_to_comm_attr_map[Device.SPF],
                 ),
                 component_state_callback=self._component_state_changed,
                 quality_state_callback=self._quality_state_callback,
@@ -181,7 +182,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, self._device_to_comm_attr_map[Device.SPFRX]
+                    self._sub_communication_state_changed,
+                    self._device_to_comm_attr_map[Device.SPFRX],
                 ),
                 component_state_callback=self._component_state_changed,
                 quality_state_callback=self._quality_state_callback,

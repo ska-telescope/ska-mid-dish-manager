@@ -228,7 +228,7 @@ class DishManager(SKAController):
     #             self._device_to_comm_attr_map[device],
     #             comms_state,
     #         )
-            
+
     def _update_connection_state_attrs(self, attribute_name: str):
         """
         Push change events on connection state attributes for
@@ -265,7 +265,6 @@ class DishManager(SKAController):
                 "dsConnectionState",
                 self.component_manager.sub_component_managers["DS"].communication_state,
             )
-
 
     def _update_version_of_subdevice_on_success(self, device: Device):
         """Update the version information of subdevice if connection is successful."""
