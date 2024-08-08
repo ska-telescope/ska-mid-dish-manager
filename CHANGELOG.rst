@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Upgraded ska-mid-dish-simulators chart to v4.0.0
+- Added actStaticOffsetValueXel and actStaticOffsetValueEl attributes
+- Updated band<N>PointingModelParams usage
 
 Version 3.0.1
 *************

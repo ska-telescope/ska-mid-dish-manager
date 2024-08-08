@@ -71,6 +71,12 @@ dishmanager:
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"
 
+dsmanager:
+    image:
+      registry: registry.gitlab.com/ska-telescope/ska-mid-dish-ds-manager
+      image: ska-mid-dish-ds-manager
+      tag: 1.5.0-dev.cec5f0704
+      pullPolicy: IfNotPresent
 
 dev_pod:
   enabled: false
