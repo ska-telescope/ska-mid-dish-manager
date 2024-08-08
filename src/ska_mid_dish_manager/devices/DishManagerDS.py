@@ -34,8 +34,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackProgramMode,
     TrackTableLoadMode,
 )
-
-# from ska_mid_dish_manager.release import ReleaseInfo
+from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
@@ -198,7 +197,7 @@ class DishManager(SKAController):
             return
 
         self._update_connection_state_attrs(device)
-        # self._update_version_of_subdevice_on_success(device)
+        self._update_version_of_subdevice_on_success(device)
 
     def _update_connection_state_attrs(self, device: Device):
         """
@@ -217,43 +216,6 @@ class DishManager(SKAController):
                 self._device_to_comm_attr_map[device],
                 comms_state,
             )
-
-    # def _update_connection_state_attrs(self, attribute_name: str):
-    #     """
-    #     Push change events on connection state attributes for
-    #     subservient devices communication state changes.
-    #     """
-
-    #     if not hasattr(self, "component_manager"):
-    #         self.logger.warning("Init not completed, but communication state is being updated")
-    #         return
-    #     if attribute_name == "spfConnectionState":
-    #         self.push_change_event(
-    #             "spfConnectionState",
-    #             self.component_manager.sub_component_managers["SPF"].communication_state,
-    #         )
-    #         self.push_archive_event(
-    #             "spfConnectionState",
-    #             self.component_manager.sub_component_managers["SPF"].communication_state,
-    #         )
-    #     if attribute_name == "spfrxConnectionState":
-    #         self.push_change_event(
-    #             "spfrxConnectionState",
-    #             self.component_manager.sub_component_managers["SPFRX"].communication_state,
-    #         )
-    #         self.push_archive_event(
-    #             "spfrxConnectionState",
-    #             self.component_manager.sub_component_managers["SPFRX"].communication_state,
-    #         )
-    #     if attribute_name == "dsConnectionState":
-    #         self.push_change_event(
-    #             "dsConnectionState",
-    #             self.component_manager.sub_component_managers["DS"].communication_state,
-    #         )
-    #         self.push_archive_event(
-    #             "dsConnectionState",
-    #             self.component_manager.sub_component_managers["DS"].communication_state,
-    #         )
 
     def _update_version_of_subdevice_on_success(self, device: Device):
         """Update the version information of subdevice if connection is successful."""
@@ -381,12 +343,12 @@ class DishManager(SKAController):
                 Device.SPF: "spfConnectionState",
                 Device.SPFRX: "spfrxConnectionState",
             }
-            # self._release_info = ReleaseInfo(
-            #     ds_manager_address=self.DSDeviceFqdn,
-            #     spfc_address=self.SPFDeviceFqdn,
-            #     spfrx_address=self.SPFRxDeviceFqdn,
-            # )
-            # self._build_state = self._release_info.get_build_state()
+            device._release_info = ReleaseInfo(
+                ds_manager_address=self.DSDeviceFqdn,
+                spfc_address=self.SPFDeviceFqdn,
+                spfrx_address=self.SPFRxDeviceFqdn,
+            )
+            device._build_state = device._release_info.get_build_state()
 
             device.op_state_model.perform_action("component_standby")
 
