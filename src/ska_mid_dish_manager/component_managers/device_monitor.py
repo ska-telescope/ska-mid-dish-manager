@@ -220,7 +220,6 @@ class TangoDeviceMonitor:
                     self._logger.info("Got an error event on %s %s", self._tango_fqdn, tango_event)
                     events_queue.put(PrioritizedEventData(priority=2, item=tango_event))
                 else:
-                    print("Got event: ", tango_event.attr_value.value)
                     events_queue.put(PrioritizedEventData(priority=1, item=tango_event))
 
             # set up all subscriptions
