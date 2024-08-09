@@ -4,13 +4,11 @@ state of the device to decide if the requested state is a nearby node to allow o
 """
 
 import typing
-from dataclasses import dataclass, field
 
 # pylint: disable=too-few-public-methods
 from typing import Any, Callable
 
 import networkx as nx
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
