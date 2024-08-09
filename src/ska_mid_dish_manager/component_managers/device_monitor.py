@@ -94,9 +94,10 @@ class SubscriptionTracker:
 
 # pylint:disable=too-few-public-methods, too-many-instance-attributes
 class TangoDeviceMonitor:
-    """Connects to and monitor a Tango device.
-    One thread per attribute.
-    Each thread creates a DeviceProxy and subscribes to an attribute
+    """
+    Connects to and monitors a Tango device.
+
+    Creates a device proxy in a thread to subscribe to change events on specified attributes
     """
 
     # pylint:disable=too-many-arguments
@@ -124,39 +125,31 @@ class TangoDeviceMonitor:
         self._event_queue = event_queue
         self._logger = logger
 
-        self._executor: Optional[ThreadPoolExecutor] = None
         self._run_count = 0
-        self._thread_futures: List[Future] = []
-        self._exit_thread_event: Event = Event()
-        # pylint: disable=bad-thread-instantiation
-        self._start_monitoring_thread: Thread = Thread()
+        self._exit_thread_event: Event = None
+        self._attribute_subscription_thread: Thread = None
 
         self._subscription_tracker = SubscriptionTracker(
             self._monitored_attributes, update_communication_state, self._logger
         )
 
     def stop_monitoring(self) -> None:
-        """Close all the monitroing threads"""
-        self._subscription_tracker.clear_subscriptions()
-
-        # Stop any existing start monitoring thread
-        if self._start_monitoring_thread.is_alive():
-            self._exit_thread_event.set()
-            self._start_monitoring_thread.join()
-
-        # Clear out existing subscriptions
-        if self._executor:
-            self._exit_thread_event.set()
-            self._logger.info("Stopping current monitoring threads on %s", self._tango_fqdn)
-            self._executor.shutdown(wait=True, cancel_futures=True)
-            self._logger.info("Stopped monitoring threads on %s", self._tango_fqdn)
+        """Close all live attribute subscriptions"""
+        if self._attribute_subscription_thread:
+            # Stop any existing thread with live event subscriptions
+            if self._attribute_subscription_thread.is_alive():
+                self._exit_thread_event.set()
+                self._attribute_subscription_thread.join()
+                self._logger.info("Stopped monitoring threads on %s", self._trl)
+                # undo subscriptions and inform client we have no comms to the device server
+                self._subscription_tracker.clear_subscriptions()
 
     def _verify_connection_up(
         self, on_verified_callback: Callable, exit_thread_event: Event
     ) -> None:
         """
-        Verify connection to the device by pinging it
-        Starts attribute monitoring threads once the connection is verified
+        Verify connection to the device by pinging it.
+        Starts attribute monitoring thread once the connection is verified
 
         :param on_verified_callback: Callback for when connection is verified
         :type on_verified_callback: Callable
@@ -188,22 +181,22 @@ class TangoDeviceMonitor:
         """
         self._run_count += 1
 
-        if self._start_monitoring_thread.is_alive() or self._executor:
-            self.stop_monitoring()
+        self.stop_monitoring()
 
         self._exit_thread_event = Event()
 
-        self._start_monitoring_thread = Thread(
+        self._attribute_subscription_thread = Thread(
             target=self._verify_connection_up,
             args=[
-                self._monitor_attributes_single_thread,
+                self._monitor_attributes_in_a_thread,
                 self._exit_thread_event,
-            ],  # start one thread to monitor all attributes
+            ],
         )
-        self._start_monitoring_thread.start()
+        # monitor all attributes in a thread
+        self._attribute_subscription_thread.start()
 
     # pylint:disable=too-many-arguments
-    def _monitor_attributes_single_thread(self, exit_thread_event: Event) -> None:
+    def _monitor_attributes_in_a_thread(self, exit_thread_event: Event) -> None:
         """Monitor all attributes
 
         :param exit_thread_event: Signals when to exit the thread

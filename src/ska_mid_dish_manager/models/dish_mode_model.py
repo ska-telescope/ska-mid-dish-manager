@@ -164,11 +164,3 @@ class DishModeModel:
             task_callback(progress=msg)  # status and result are handled in executor
 
         return False
-
-
-@dataclass(order=True)
-class PrioritizedEventData:
-    """Tango event data with a priority attribute"""
-
-    priority: int
-    item: tango.EventData = field(compare=False)
