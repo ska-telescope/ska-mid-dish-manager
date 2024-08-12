@@ -6,12 +6,10 @@ import logging
 from functools import partial
 from queue import Queue
 from threading import Event, Lock, Thread
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus
-
-from ska_mid_dish_manager.models.dish_mode_model import PrioritizedEventData
 
 TEST_CONNECTION_PERIOD = 2
 SLEEP_BETWEEN_EVENTS = 0.5
@@ -134,6 +132,7 @@ class TangoDeviceMonitor:
     def stop_monitoring(self) -> None:
         """Close all the monitroing threads"""
         self._subscription_tracker.clear_subscriptions()
+        self._logger.info("Stopped monitoring thread on %s", self._tango_fqdn)
 
         # Stop any existing start monitoring thread
         if self._start_monitoring_thread.is_alive():
@@ -205,11 +204,7 @@ class TangoDeviceMonitor:
             subscriptions = {name: None for name in self._monitored_attributes}
 
             def _event_reaction(events_queue: Queue, tango_event: tango.EventData) -> None:
-                if tango_event.err:
-                    self._logger.info("Got an error event on %s %s", self._tango_fqdn, tango_event)
-                    events_queue.put(PrioritizedEventData(priority=2, item=tango_event))
-                else:
-                    events_queue.put(PrioritizedEventData(priority=1, item=tango_event))
+                events_queue.put(tango_event)
 
             # set up all subscriptions
             device_proxy = None
