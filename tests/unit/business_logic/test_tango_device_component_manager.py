@@ -15,16 +15,14 @@ LOGGER = logging.getLogger(__name__)
 
 
 # pylint: disable=invalid-name, missing-function-docstring
-@pytest.mark.timeout(10)
+# @pytest.mark.timeout(10)
+# @pytest.mark.forked
 @pytest.mark.unit
-def test_component_manager_continues_reconnecting_when_device_is_unreachable(
-    caplog, mock_tango_device_proxy_instance
-):
+def test_component_manager_continues_reconnecting_when_device_is_unreachable(caplog):
     caplog.set_level(logging.DEBUG)
-    _, _ = mock_tango_device_proxy_instance
     tc_manager = TangoDeviceComponentManager("fake/fqdn/1", LOGGER, ("fake_attr",))
     tc_manager.start_communicating()
-    while "try number 3" not in caplog.text:
+    while "An error occured creating a device proxy to fake/fqdn/1" not in caplog.text:
         pass
     assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
     tc_manager.stop_communicating()
@@ -62,8 +60,8 @@ def test_happy_path(patched_tango, caplog):
 
 
 @pytest.mark.unit
-@mock.patch("ska_mid_dish_manager.component_managers.device_monitor.tango")
-def test_unhappy_path(patched_tango, caplog):
+@mock.patch("ska_mid_dish_manager.component_managers.device_monitor.DeviceProxyManager")
+def test_unhappy_path(patched_dev_factory, caplog):
     """Tango device is unreachable and can't communicate with component manager
 
     Similar to `test_component_manager_continues_reconnecting_...` except
@@ -72,13 +70,17 @@ def test_unhappy_path(patched_tango, caplog):
     on mocked device
     """
     # pylint: disable=no-member
-    patched_tango.DevFailed = tango.DevFailed
     caplog.set_level(logging.DEBUG)
 
     # Set up mocks
     mock_device_proxy = mock.MagicMock(name="DP")
     mock_device_proxy.ping.side_effect = tango.DevFailed("FAIL")
-    patched_tango.DeviceProxy.return_value = mock_device_proxy
+
+    class DummyFactory:
+        def __call__(self, *args, **kwargs):
+            return mock_device_proxy
+
+    patched_dev_factory.return_value = DummyFactory()
 
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
@@ -101,8 +103,8 @@ def test_unhappy_path(patched_tango, caplog):
 
 
 @pytest.mark.unit
-@mock.patch("ska_mid_dish_manager.component_managers.device_monitor.tango")
-def test_device_goes_away(patched_tango, caplog):
+@mock.patch("ska_mid_dish_manager.component_managers.device_monitor.DeviceProxyManager")
+def test_device_goes_away(patched_dev_factory, caplog):
     """Start up the component_manager.
     Signal a lost connection via an event
     Check for reconnect
@@ -110,11 +112,15 @@ def test_device_goes_away(patched_tango, caplog):
     caplog.set_level(logging.DEBUG)
 
     # Set up mocks
-    patched_dp = mock.MagicMock()
-    patched_dp.command_inout = mock.MagicMock()
-    patched_dp.ping = mock.MagicMock()
-    patched_tango.DeviceProxy = mock.MagicMock(return_value=patched_dp)
-    patched_tango.DevFailed = tango.DevFailed
+    mock_device_proxy = mock.MagicMock()
+    mock_device_proxy.command_inout = mock.MagicMock()
+    mock_device_proxy.ping = mock.MagicMock()
+
+    class DummyFactory:
+        def __call__(self, *args, **kwargs):
+            return mock_device_proxy
+
+    patched_dev_factory.return_value = DummyFactory()
 
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",

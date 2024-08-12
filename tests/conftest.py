@@ -41,8 +41,8 @@ def mock_tango_device_proxy_instance(mocker, open_port):
     _DeviceProxy = tango.DeviceProxy
     mocker.patch(
         "tango.DeviceProxy",
-        wraps=lambda fqdn, *args, **kwargs: _DeviceProxy(
-            f"tango://{HOST}:{PORT}/{fqdn}#dbase=no",
+        wraps=lambda trl, *args, **kwargs: _DeviceProxy(
+            f"tango://{HOST}:{PORT}/{trl}#dbase=no",
             *args,
             **kwargs,
         ),

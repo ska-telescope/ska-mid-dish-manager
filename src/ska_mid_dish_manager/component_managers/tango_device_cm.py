@@ -118,8 +118,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         This is a convenience method that can be called to sync up the
         monitored attributes on the device and the component state.
         """
-        device_proxy = self._tango_device_proxy(self._trl)
         with tango.EnsureOmniThread():
+            device_proxy = self._tango_device_proxy(self._trl)
             monitored_attribute_values = {}
             for monitored_attribute in self._monitored_attributes:
                 monitored_attribute = monitored_attribute.lower()
@@ -303,8 +303,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._trl,
             command_arg,
         )
-        device_proxy = self._tango_device_proxy(self._trl)
         with tango.EnsureOmniThread():
+            device_proxy = self._tango_device_proxy(self._trl)
             result = None
             try:
                 result = device_proxy.command_inout(command_name, command_arg)
@@ -332,8 +332,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attribute_name,
             self._trl,
         )
-        device_proxy = self._tango_device_proxy(self._trl)
         with tango.EnsureOmniThread():
+            device_proxy = self._tango_device_proxy(self._trl)
             try:
                 result = device_proxy.read_attribute(attribute_name)
             except tango.DevFailed:
@@ -360,8 +360,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._trl,
         )
 
-        device_proxy = self._tango_device_proxy(self._trl)
         with tango.EnsureOmniThread():
+            device_proxy = self._tango_device_proxy(self._trl)
             result = None
             try:
                 result = device_proxy.write_attribute(attribute_name, attribute_value)

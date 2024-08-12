@@ -72,7 +72,11 @@ class SubscriptionTracker:
     def setup_event_subscription(
         self, attribute_name: str, device_proxy: tango.DeviceProxy
     ) -> None:
-        """Subscribe to change events on the device server"""
+        """
+        Subscribe to change events on the device server
+
+        Note: Wrap calls in tango.EnsureOmniThread
+        """
 
         def _event_reaction(events_queue: Queue, tango_event: tango.EventData) -> None:
             events_queue.put(tango_event)
@@ -90,7 +94,11 @@ class SubscriptionTracker:
         self.subscription_started(attribute_name, subscription_id)
 
     def clear_subscriptions(self, device_proxy: tango.DeviceProxy) -> None:
-        """Set all attrs as not subscribed"""
+        """
+        Set all attrs as not subscribed
+
+        Note: Wrap calls in tango.EnsureOmniThread
+        """
         for attribute_name, subscription_id in self._subscribed_attrs.items():
             if self._subscribed_attrs.get(attribute_name) is not None:
                 try:
@@ -201,8 +209,9 @@ class TangoDeviceMonitor:
         self._logger.info("Check %s is up", self._trl)
 
         while not exit_thread_event.is_set():
-            if self._tango_device_proxy(self._trl):
-                on_verified_callback(exit_thread_event)
+            with tango.EnsureOmniThread():
+                self._tango_device_proxy(self._trl)
+            on_verified_callback(exit_thread_event)
             return
 
     def monitor(self) -> None:
@@ -239,8 +248,8 @@ class TangoDeviceMonitor:
         retry_counts = {name: 0 for name in self._monitored_attributes}
         # set up all subscriptions
         while not exit_thread_event.is_set():
-            device_proxy = self._tango_device_proxy(self._trl)
             with tango.EnsureOmniThread():
+                device_proxy = self._tango_device_proxy(self._trl, exit_thread_event)
                 try:
                     # Subscribe to all monitored attributes
                     for attribute_name in self._monitored_attributes:

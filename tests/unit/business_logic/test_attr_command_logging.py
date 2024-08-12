@@ -13,17 +13,20 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.unit
-@mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_log_command_inout(patched_tango, caplog):
+@mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager")
+def test_log_command_inout(patched_dev_factory, caplog: pytest.LogCaptureFixture):
     """Check that exceptions for command_inout is logged"""
-
-    patched_tango.DevFailed = tango.DevFailed
     caplog.set_level(logging.DEBUG)
 
     # Set up mocks
     mock_device_proxy = mock.MagicMock(name="DP")
     mock_device_proxy.command_inout.side_effect = tango.DevFailed("Failure Message")
-    patched_tango.DeviceProxy.return_value = mock_device_proxy
+
+    class DummyFactory:
+        def __call__(self, *args, **kwargs):
+            return mock_device_proxy
+
+    patched_dev_factory.return_value = DummyFactory()
 
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
@@ -46,16 +49,20 @@ def test_log_command_inout(patched_tango, caplog):
 
 
 @pytest.mark.unit
-@mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.tango")
-def test_log_write_attribute(patched_tango, caplog):
+@mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager")
+def test_log_write_attribute(patched_dev_factory, caplog: pytest.LogCaptureFixture):
     """Check that exceptions for write_attribute_value is logged"""
-    patched_tango.DevFailed = tango.DevFailed
     caplog.set_level(logging.DEBUG)
 
     # Set up mocks
     mock_device_proxy = mock.MagicMock(name="DP")
     mock_device_proxy.write_attribute.side_effect = tango.DevFailed("Failure Message")
-    patched_tango.DeviceProxy.return_value = mock_device_proxy
+
+    class DummyFactory:
+        def __call__(self, *args, **kwargs):
+            return mock_device_proxy
+
+    patched_dev_factory.return_value = DummyFactory()
 
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
