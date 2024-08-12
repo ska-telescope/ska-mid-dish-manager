@@ -67,7 +67,9 @@ class TrackLoadTableFormatting:
             if delta < lead_time:
                 raise TrackTableTimestampError(
                     "Check track table parameters."
-                    f"Timestamps less than {lead_time}s into the future."
+                    f" Timestamps less than {lead_time}s into the future."
+                    f" Violation detected for timestamp ({timestamp_tai_s}) which is less than "
+                    f" {lead_time}s ahead of current time ({current_time_tai_s})."
                 )
             # check for monotonically increasing
             if i != 0:
