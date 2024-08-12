@@ -111,6 +111,7 @@ source = ["src"]
 data_file = ".coverage/.coverage"
 branch = true
 source = ["ska_mid_dish_manager"]
+parallel = true
 
 [tool.coverage.report]
 show_missing = false
