@@ -52,7 +52,8 @@ class ReleaseInfo:
         """Update SPFRx version information."""
         self._build_state.SPFRxVersion = spfrx_version
 
-    def get_dish_manager_release_version(self) -> str:
+    @staticmethod
+    def get_dish_manager_release_version() -> str:
         """Get release version of package."""
         try:
             release_version = version(DISH_MANAGER_PACKAGE_NAME)
