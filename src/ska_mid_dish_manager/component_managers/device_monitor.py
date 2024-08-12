@@ -3,7 +3,6 @@ If an error event is received the DeviceProxy and subscription will be recreated
 """
 
 import logging
-from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial
 from queue import Queue
 from threading import Event, Lock, Thread
@@ -123,10 +122,7 @@ class TangoDeviceMonitor:
         self._monitored_attributes = monitored_attributes
         self._event_queue = event_queue
         self._logger = logger
-
-        self._executor: Optional[ThreadPoolExecutor] = None
         self._run_count = 0
-        self._thread_futures: List[Future] = []
         self._exit_thread_event: Event = Event()
         # pylint: disable=bad-thread-instantiation
         self._start_monitoring_thread: Thread = Thread()
@@ -143,13 +139,6 @@ class TangoDeviceMonitor:
         if self._start_monitoring_thread.is_alive():
             self._exit_thread_event.set()
             self._start_monitoring_thread.join()
-
-        # Clear out existing subscriptions
-        if self._executor:
-            self._exit_thread_event.set()
-            self._logger.info("Stopping current monitoring threads on %s", self._tango_fqdn)
-            self._executor.shutdown(wait=True, cancel_futures=True)
-            self._logger.info("Stopped monitoring threads on %s", self._tango_fqdn)
 
     def _verify_connection_up(
         self, on_verified_callback: Callable, exit_thread_event: Event
@@ -188,7 +177,7 @@ class TangoDeviceMonitor:
         """
         self._run_count += 1
 
-        if self._start_monitoring_thread.is_alive() or self._executor:
+        if self._start_monitoring_thread.is_alive():
             self.stop_monitoring()
 
         self._exit_thread_event = Event()
