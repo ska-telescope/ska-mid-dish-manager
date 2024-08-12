@@ -44,20 +44,20 @@ class TestDishManagerVersioning:
         """Read build state on startup before subdevices connect to dish manager."""
         buildState = self._dish_manager_proxy.buildState
         build_state_json = json.loads(buildState)
-        build_state_json["DishManagerVersion"] = ReleaseInfo.get_dish_manager_release_version()
-        build_state_json["DsManagerVersion"] = ""
-        build_state_json["SPFRxVersion"] = ""
-        build_state_json["SPFCVersion"] = ""
-        build_state_json["DsManagerAddress"] = DEFAULT_DISH_MANAGER_TRL
-        build_state_json["SPFRxAddress"] = DEFAULT_SPFRX_TRL
-        build_state_json["SPFCAddress"] = DEFAULT_SPFC_TRL
+        build_state_json["dish_manager_version"] = ReleaseInfo.get_dish_manager_release_version()
+        build_state_json["ds_manager_version"] = ""
+        build_state_json["spfrx_version"] = ""
+        build_state_json["spfc_version"] = ""
+        build_state_json["ds_manager_address"] = DEFAULT_DISH_MANAGER_TRL
+        build_state_json["spfrx_address"] = DEFAULT_SPFRX_TRL
+        build_state_json["spfc_address"] = DEFAULT_SPFC_TRL
 
     @pytest.mark.parametrize(
         "device, build_state_key",
         [
-            ("DS", "DsManagerVersion"),
-            ("SPF", "SPFCVersion"),
-            ("SPFRX", "SPFRxVersion"),
+            ("DS", "ds_manager_version"),
+            ("SPF", "spfc_version"),
+            ("SPFRX", "spfrx_version"),
         ],
     )
     def test_build_state_update_on_subdevice_connection(self, device: str, build_state_key: str):

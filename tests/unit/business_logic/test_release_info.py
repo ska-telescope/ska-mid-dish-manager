@@ -31,15 +31,15 @@ class TestReleaseInfo:
         build_state = self._release_info.get_build_state()
         build_state_json = json.loads(build_state)
         assert (
-            build_state_json["DishManagerVersion"]
+            build_state_json["dish_manager_version"]
             == self._release_info.get_dish_manager_release_version()
         )
-        assert build_state_json["DsManagerVersion"] == ""
-        assert build_state_json["SPFRxVersion"] == ""
-        assert build_state_json["SPFCVersion"] == ""
-        assert build_state_json["DsManagerAddress"] == self._ds_manager_add
-        assert build_state_json["SPFCAddress"] == self._spfc_add
-        assert build_state_json["SPFRxAddress"] == self._spfrx_add
+        assert build_state_json["ds_manager_version"] == ""
+        assert build_state_json["spfrx_version"] == ""
+        assert build_state_json["spfc_version"] == ""
+        assert build_state_json["ds_manager_address"] == self._ds_manager_add
+        assert build_state_json["spfc_address"] == self._spfc_add
+        assert build_state_json["spfrx_address"] == self._spfrx_add
 
     def test_package_not_found(self):
         """Test response when package is not found."""
@@ -57,9 +57,9 @@ class TestReleaseInfo:
     @pytest.mark.parametrize(
         "device, build_state_key",
         [
-            (Device.DS, "DsManagerVersion"),
-            (Device.SPF, "SPFCVersion"),
-            (Device.SPFRX, "SPFRxVersion"),
+            (Device.DS, "ds_manager_version"),
+            (Device.SPF, "spfc_version"),
+            (Device.SPFRX, "spfrx_version"),
         ],
     )
     def test_device_version_update(self, device: Device, build_state_key: str):

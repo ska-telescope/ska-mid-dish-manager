@@ -17,10 +17,10 @@ class ReleaseInfo:
         self, ds_manager_address: str = "", spfc_address: str = "", spfrx_address: str = ""
     ) -> None:
         self._build_state = DmBuildStateDataClass(
-            DishManagerVersion=self.get_dish_manager_release_version(),
-            DsManagerAddress=ds_manager_address,
-            SPFCAddress=spfc_address,
-            SPFRxAddress=spfrx_address,
+            dish_manager_version=self.get_dish_manager_release_version(),
+            ds_manager_address=ds_manager_address,
+            spfc_address=spfc_address,
+            spfrx_address=spfrx_address,
         )
 
         self._device_to_update_method_map = {
@@ -42,15 +42,15 @@ class ReleaseInfo:
 
     def _update_ds_manager_version(self, ds_manager_version: str) -> None:
         """Update DS manager version information."""
-        self._build_state.DsManagerVersion = ds_manager_version
+        self._build_state.ds_manager_version = ds_manager_version
 
     def _update_spfc_version(self, spfc_version: str) -> None:
         """Update SPFC version information."""
-        self._build_state.SPFCVersion = spfc_version
+        self._build_state.spfc_version = spfc_version
 
     def _update_spfrx_version(self, spfrx_version: str) -> None:
         """Update SPFRx version information."""
-        self._build_state.SPFRxVersion = spfrx_version
+        self._build_state.spfrx_version = spfrx_version
 
     @staticmethod
     def get_dish_manager_release_version() -> str:
