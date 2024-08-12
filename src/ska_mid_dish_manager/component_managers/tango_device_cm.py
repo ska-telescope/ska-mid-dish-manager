@@ -248,6 +248,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             quality,
         )
 
+        if self.communication_state == CommunicationStatus.ESTABLISHED:
+            self.logger.info("Reconnecting to %s", self._tango_device_fqdn)
+            self._tango_device_monitor.monitor()
+
     def run_device_command(
         self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore
     ) -> Any:
