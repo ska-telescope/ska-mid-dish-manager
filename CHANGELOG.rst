@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated `buildState` attribute to include version information of dish manager and subservient devices
 
 Version 3.0.1
 *************
