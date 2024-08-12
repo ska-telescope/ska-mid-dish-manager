@@ -83,8 +83,7 @@ typing_extensions = "*"
 
 [tool.pytest.ini_options]
 testpaths = "tests"
-#addopts = "-vv --forked --json-report --json-report-file=build/reports/report.json --cov-report html:build/htmlcov --cov-report xml:build/reports/code-coverage.xml --cov-report term:skip-covered --cov=ska_mid_dish_manager --junitxml=build/reports/unit-tests.xml --verbose"
-addopts = "-vv" 
+addopts = "--forked --json-report --json-report-file=build/reports/report.json --cov-report html:build/htmlcov --cov-report xml:build/reports/code-coverage.xml --cov-report term:skip-covered --cov=ska_mid_dish_manager --junitxml=build/reports/unit-tests.xml --verbose"
 console_output_style = "progress"
 junit_family = "legacy"
 markers = [
@@ -92,10 +91,6 @@ markers = [
     "acceptance",
     "stress"
 ]
-log_cli = true
-log_cli_level = "DEBUG"
-log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
-log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.isort]
 multi_line_output = 3
