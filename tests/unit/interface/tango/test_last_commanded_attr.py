@@ -1,4 +1,4 @@
-"""Unit tests for setstandbylp command."""
+"""Unit tests for tracking lastCommandedMode attribute updates"""
 
 import pytest
 import tango
@@ -17,7 +17,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 # pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
+def test_last_commanded_mode_attr_records_mode_transition_requests(
     dish_manager_resources,
     event_store_class,
 ):

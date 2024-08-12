@@ -447,7 +447,7 @@ class DishManager(SKAController):
     )
     def lastCommandedMode(self) -> tuple[str, str]:
         """Return the last commanded mode"""
-        return self._last_commanded_mode[0], self._last_commanded_mode[1]
+        return self._last_commanded_mode
 
     # pylint: disable=invalid-name
     @attribute(
