@@ -30,7 +30,7 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     last_command_event_store = event_store_class()
 
     device_proxy.subscribe_event(
-        "lastCommmandedMode",
+        "lastCommandedMode",
         tango.EventType.CHANGE_EVENT,
         last_command_event_store,
     )
@@ -56,7 +56,7 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     _, command_name = evts[0].attr_value.value
     assert command_name == "SetStandbyFPMode"
 
-    changed_time, commanded_name = device_proxy.lastCommmandedMode
+    changed_time, commanded_name = device_proxy.lastCommandedMode
     assert changed_time != "0.0"
     assert float(changed_time)
     assert commanded_name == "SetStandbyFPMode"
@@ -77,6 +77,6 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     _, command_name = evts[0].attr_value.value
     assert command_name == "SetOperateMode"
 
-    changed_time, commanded_name = device_proxy.lastCommmandedMode
+    changed_time, commanded_name = device_proxy.lastCommandedMode
     assert float(changed_time)
     assert commanded_name == "SetOperateMode"

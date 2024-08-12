@@ -421,7 +421,7 @@ class DishManager(SKAController):
                 "powerState",
                 "trackProgramMode",
                 "trackTableLoadMode",
-                "lastCommmandedMode",
+                "lastCommandedMode",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
@@ -445,7 +445,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="Reports when and which was the last commanded mode change (not when completed).",
     )
-    def lastCommmandedMode(self) -> tuple[str, str]:
+    def lastCommandedMode(self) -> tuple[str, str]:
         """Return the last commanded mode"""
         return self._last_commanded_mode[0], self._last_commanded_mode[1]
 

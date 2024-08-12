@@ -13,8 +13,8 @@ def record_mode_change_request(func):
         last_commanded_mode = (str(time.time()), func.__name__)
         # pylint: disable=protected-access
         device_instance._last_commanded_mode = last_commanded_mode
-        device_instance.push_change_event("lastCommmandedMode", last_commanded_mode)
-        device_instance.push_archive_event("lastCommmandedMode", last_commanded_mode)
+        device_instance.push_change_event("lastCommandedMode", last_commanded_mode)
+        device_instance.push_archive_event("lastCommandedMode", last_commanded_mode)
         return func(*args, **kwargs)
 
     return wrapper_record_mode_change_request
