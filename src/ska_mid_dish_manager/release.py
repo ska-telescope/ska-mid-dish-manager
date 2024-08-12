@@ -6,7 +6,7 @@ from importlib.metadata import PackageNotFoundError, version
 from ska_mid_dish_manager.models.data_classes import DmBuildStateDataClass
 from ska_mid_dish_manager.models.dish_enums import Device
 
-PYTHON_PACKAGE = "ska_mid_dish_manager"
+DISH_MANAGER_PACKAGE_NAME = "ska_mid_dish_manager"
 BUILD_STATE_SPACING = 4
 
 
@@ -55,7 +55,7 @@ class ReleaseInfo:
     def get_dish_manager_release_version(self) -> str:
         """Get release version of package."""
         try:
-            release_version = version(PYTHON_PACKAGE)
+            release_version = version(DISH_MANAGER_PACKAGE_NAME)
         except PackageNotFoundError:
-            release_version = f"ERR: parsing {PYTHON_PACKAGE} version."
+            release_version = f"ERR: parsing {DISH_MANAGER_PACKAGE_NAME} version."
         return release_version
