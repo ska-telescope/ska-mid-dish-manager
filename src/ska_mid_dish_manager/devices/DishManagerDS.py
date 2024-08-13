@@ -443,7 +443,10 @@ class DishManager(SKAController):
         dtype=(str, str),
         max_dim_x=2,
         access=AttrWriteType.READ,
-        doc="Reports when and which was the last commanded mode change (not when completed).",
+        doc=(
+            "Reports when and which was the last commanded mode change (not when completed). "
+            "Time is a UNIX UTC timestamp."
+        ),
     )
     def lastCommandedMode(self) -> tuple[str, str]:
         """Return the last commanded mode"""

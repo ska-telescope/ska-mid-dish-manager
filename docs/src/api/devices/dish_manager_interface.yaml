@@ -1228,7 +1228,7 @@
       data_format: SPECTRUM
       data_type: DevString
       description: Reports when and which was the last commanded mode change (not
-        when completed).
+        when completed). Time is a UNIX UTC timestamp.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
