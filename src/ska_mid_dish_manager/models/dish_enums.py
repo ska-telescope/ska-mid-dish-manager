@@ -160,3 +160,10 @@ class SPFRxCapabilityStates(enum.IntEnum):
     STANDBY = 2
     CONFIGURE = 3
     OPERATE = 4
+
+class NoiseDiodeMode(enum.IntEnum):
+    """SPFRx noise diode mode enums."""
+
+    OFF = 0
+    PERIODIC = 1
+    PSEUDO_RANDOM = 2
