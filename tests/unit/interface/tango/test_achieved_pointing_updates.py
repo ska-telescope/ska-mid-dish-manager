@@ -19,8 +19,6 @@ def test_achieved_pointing_in_sync_with_dish_structure_pointing(
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
 
     main_event_store = event_store_class()
-    az_event_store = event_store_class()
-    el_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "achievedPointing",
