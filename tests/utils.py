@@ -347,37 +347,6 @@ class EventStore:
         """
         return [(event.attr_value.name, event.attr_value.value) for event in events]
 
-    def wait_for_array_indices_match(
-        self, array: List[Any], match_indexes: List[int], timeout: int = 3
-    ) -> bool:
-        """Wait for an array to match certain indices.
-
-        Wait `timeout` seconds for each fetch.
-
-        :param array: Array to match against
-        :type value: List[Any]
-        :param match_indexes: the indexes concerned with matching
-        :type timeout: int, optional
-        :raises RuntimeError: If None are found
-        :return: True if found
-        :rtype: bool
-        """
-        try:
-            events = []
-            while True:
-                event = self._queue.get(timeout=timeout)
-                events.append(event)
-                if len(event.attr_value.value) < len(match_indexes):
-                    raise RuntimeError("Attribute list cannot be smaller than indexes of concern.")
-                if all(event.attr_value.value[i] == array[i] for i in match_indexes):
-                    return True
-        except queue.Empty as err:
-            ev_vals = self.extract_event_values(events)
-            raise RuntimeError(
-                f"Never got an event with subarray [{[array[i] for i in match_indexes]}] "
-                f"got [{ev_vals}]."
-            ) from err
-
 
 def set_dish_manager_to_standby_lp(event_store, dish_manager_proxy):
     """Ensure dishManager is in a known state"""

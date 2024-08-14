@@ -132,16 +132,6 @@ def test_track_and_track_stop_cmds(
         # Check achievedPointing
         achieved_pointing_event_store.wait_for_value(table_entry, timeout=4)
 
-        entry_az = [table_entry[0], table_entry[1]]
-        entry_el = [table_entry[0], table_entry[2]]
-
-        achieved_pointing_event_store.wait_for_array_indices_match(
-            match_indexes=[1, 2], array=entry_az
-        )
-        achieved_pointing_event_store.wait_for_array_indices_match(
-            match_indexes=[1, 2], array=entry_el
-        )
-
     # Call TrackStop on DishManager
     [[_], [unique_id]] = dish_manager_proxy.TrackStop()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
