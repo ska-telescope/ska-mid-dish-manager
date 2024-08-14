@@ -41,9 +41,9 @@ def test_set_operate_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"SetOperateMode called on SPF, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting SPF operatingmode change to [<SPFOperatingMode.OPERATE: 3>]"},
+        {"progress": "Awaiting SPF operatingmode change to OPERATE"},
         {"progress": f"SetPointMode called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS operatingmode change to [<DSOperatingMode.POINT: 7>]"},
+        {"progress": "Awaiting DS operatingmode change to POINT"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {"progress": "Awaiting dishmode change to OPERATE"},
     )

@@ -245,18 +245,18 @@
       dtype_out: DevVarLongStringArray
     - name: TrackLoadStaticOff
       disp_level: OPERATOR
-      doc_in: "\n            Load the static offsets for the currently selected band\
-        \ for correction.\n\n            Pointing model parameters are:\n        \
-        \    [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC,\
-        \ [8] ACES,\n            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC,\
-        \ [14] ECES, [15] HECE4,\n            [16] HESE4, [17] HECE8, [18] HESE8,\
-        \ [19] Eobs\n\n            Note: To change the currently selected band for\
-        \ correction to B<N>, write to the\n            band<N>PointingModelParams\
-        \ attribute.\n\n            When writing we expect a list of 2 values. Namely,\
-        \ CAobs and Eobs. Only those two\n            values will be updated.\n  \
-        \      "
+      doc_in: "\n            Load (global) static tracking offsets.\n\n          \
+        \  The offset is loaded immediately and is not cancelled\n            between\
+        \ tracks. The static offset introduces a positional adjustment to facilitate\n\
+        \            reference pointing and the five-point calibration. The static\
+        \ offsets are added the\n            output of the interpolator before the\
+        \ correction of the static pointing model.\n\n            Note: If the static\
+        \ pointing correction is switched off, the static offsets remain as\n    \
+        \        an offset to the Azimuth and Elevation positions and need to be set\
+        \ to zero manually.\n\n            Static offset parameters are:\n       \
+        \     [0] Off_Xel, [1] Off_El\n        "
       doc_out: Uninitialised
-      dtype_in: DevVarFloatArray
+      dtype_in: DevVarDoubleArray
       dtype_out: DevVarLongStringArray
     - name: TrackStop
       disp_level: OPERATOR
@@ -317,42 +317,6 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
-    - name: achievedPointingAz
-      data_format: SPECTRUM
-      data_type: DevDouble
-      description: '[0] Timestamp
-
-        [1] Azimuth'
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: achievedPointingAz
-      max_alarm: Not specified
-      max_dim_x: 2
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
-    - name: achievedPointingEl
-      data_format: SPECTRUM
-      data_type: DevDouble
-      description: '[0] Timestamp
-
-        [1] Elevation'
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: achievedPointingEl
-      max_alarm: Not specified
-      max_dim_x: 2
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
     - name: achievedTargetLock
       data_format: SCALAR
       data_type: DevBoolean
@@ -362,6 +326,38 @@
       display_unit: No display unit
       format: Not specified
       label: achievedTargetLock
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: actStaticOffsetValueEl
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Actual elevation static offset (arcsec)
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: actStaticOffsetValueEl
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: actStaticOffsetValueXel
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Actual cross-elevation static offset (arcsec)
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: actStaticOffsetValueXel
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
@@ -397,7 +393,7 @@
       writable_attr_name: adminMode
     - name: attenuationPolH
       data_format: SCALAR
-      data_type: DevFloat
+      data_type: DevDouble
       description: Indicates the SPFRx attenuation in the horizontal signal chain
         for the configuredband.
       disp_level: OPERATOR
@@ -414,7 +410,7 @@
       writable_attr_name: attenuationPolH
     - name: attenuationPolV
       data_format: SCALAR
-      data_type: DevFloat
+      data_type: DevDouble
       description: Indicates the SPFRx attenuation in the vertical signal chain for
         the configuredband.
       disp_level: OPERATOR
@@ -602,22 +598,20 @@
       writable_attr_name: None
     - name: band1PointingModelParams
       data_format: SPECTRUM
-      data_type: DevFloat
+      data_type: DevDouble
       description: "\n            Parameters for (local) Band 1 pointing models used\
         \ by Dish to do pointing corrections.\n\n            When writing to this\
         \ attribute, the selected band for correction will be set to B1.\n\n     \
-        \       Band 1 pointing model parameters are:\n            [0] IA, [1] CA,\
-        \ [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n      \
-        \      [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15]\
-        \ HECE4,\n            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs\n\n  \
-        \          When writing we expect a list of 2 values. Namely, CAobs and Eobs.\
-        \ Only those two\n            values will be updated.\n        "
+        \       Band pointing model parameters are:\n            [0] IA, [1] CA, [2]\
+        \ NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n          \
+        \  [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,\n     \
+        \       [15] HESE4, [16] HECE8, [17] HESE8\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
       label: band1PointingModelParams
       max_alarm: Not specified
-      max_dim_x: 20
+      max_dim_x: 18
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -642,22 +636,20 @@
       writable_attr_name: None
     - name: band2PointingModelParams
       data_format: SPECTRUM
-      data_type: DevFloat
+      data_type: DevDouble
       description: "\n            Parameters for (local) Band 2 pointing models used\
         \ by Dish to do pointing corrections.\n\n            When writing to this\
-        \ attribute, the selected band for correction will be set to B2.\n\n     \
-        \       Band 2 pointing model parameters are:\n            [0] IA, [1] CA,\
-        \ [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n      \
-        \      [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15]\
-        \ HECE4,\n            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs\n\n  \
-        \          When writing we expect a list of 2 values. Namely, CAobs and Eobs.\
-        \ Only those two\n            values will be updated.\n        "
+        \ attribute, the selected band for correction will be set to B1.\n\n     \
+        \       Band pointing model parameters are:\n            [0] IA, [1] CA, [2]\
+        \ NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n          \
+        \  [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,\n     \
+        \       [15] HESE4, [16] HECE8, [17] HESE8\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
       label: band2PointingModelParams
       max_alarm: Not specified
-      max_dim_x: 20
+      max_dim_x: 18
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -682,22 +674,20 @@
       writable_attr_name: None
     - name: band3PointingModelParams
       data_format: SPECTRUM
-      data_type: DevFloat
+      data_type: DevDouble
       description: "\n            Parameters for (local) Band 3 pointing models used\
         \ by Dish to do pointing corrections.\n\n            When writing to this\
-        \ attribute, the selected band for correction will be set to B3.\n\n     \
-        \       Band 3 pointing model parameters are:\n            [0] IA, [1] CA,\
-        \ [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n      \
-        \      [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15]\
-        \ HECE4,\n            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs\n\n  \
-        \          When writing we expect a list of 2 values. Namely, CAobs and Eobs.\
-        \ Only those two\n            values will be updated.\n        "
+        \ attribute, the selected band for correction will be set to B1.\n\n     \
+        \       Band pointing model parameters are:\n            [0] IA, [1] CA, [2]\
+        \ NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n          \
+        \  [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,\n     \
+        \       [15] HESE4, [16] HECE8, [17] HESE8\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
       label: band3PointingModelParams
       max_alarm: Not specified
-      max_dim_x: 20
+      max_dim_x: 18
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -722,22 +712,20 @@
       writable_attr_name: None
     - name: band4PointingModelParams
       data_format: SPECTRUM
-      data_type: DevFloat
+      data_type: DevDouble
       description: "\n            Parameters for (local) Band 4 pointing models used\
         \ by Dish to do pointing corrections.\n\n            When writing to this\
-        \ attribute, the selected band for correction will be set to B4.\n\n     \
-        \       Band 4 pointing model parameters are:\n            [0] IA, [1] CA,\
-        \ [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n      \
-        \      [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15]\
-        \ HECE4,\n            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs\n\n  \
-        \          When writing we expect a list of 2 values. Namely, CAobs and Eobs.\
-        \ Only those two\n            values will be updated.\n        "
+        \ attribute, the selected band for correction will be set to B1.\n\n     \
+        \       Band pointing model parameters are:\n            [0] IA, [1] CA, [2]\
+        \ NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n          \
+        \  [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,\n     \
+        \       [15] HESE4, [16] HECE8, [17] HESE8\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
       label: band4PointingModelParams
       max_alarm: Not specified
-      max_dim_x: 20
+      max_dim_x: 18
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -762,7 +750,7 @@
       writable_attr_name: None
     - name: band5aPointingModelParams
       data_format: SPECTRUM
-      data_type: DevFloat
+      data_type: DevDouble
       description: Parameters for (local) Band 5a pointing models used by Dish to
         do pointing corrections.
       disp_level: OPERATOR
@@ -795,7 +783,7 @@
       writable_attr_name: None
     - name: band5bPointingModelParams
       data_format: SPECTRUM
-      data_type: DevFloat
+      data_type: DevDouble
       description: Parameters for (local) Band 5b pointing models used by Dish to
         do pointing corrections.
       disp_level: OPERATOR
@@ -1224,6 +1212,23 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: lastCommandedMode
+      data_format: SPECTRUM
+      data_type: DevString
+      description: Reports when and which was the last commanded mode change (not
+        when completed). Time is a UNIX UTC timestamp.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lastCommandedMode
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: loggingLevel
       data_format: SCALAR
       data_type: DevEnum
@@ -1406,7 +1411,7 @@
       writable_attr_name: None
     - name: noiseDiodeConfig
       data_format: SPECTRUM
-      data_type: DevFloat
+      data_type: DevDouble
       description: Returns the noiseDiodeConfig
       disp_level: OPERATOR
       display_unit: No display unit
@@ -1729,4 +1734,5 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
+    - name: __SubDevices
     - name: polled_cmd

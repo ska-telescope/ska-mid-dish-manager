@@ -4,13 +4,11 @@ state of the device to decide if the requested state is a nearby node to allow o
 """
 
 import typing
-from dataclasses import dataclass, field
 
 # pylint: disable=too-few-public-methods
 from typing import Any, Callable
 
 import networkx as nx
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
@@ -164,11 +162,3 @@ class DishModeModel:
             task_callback(progress=msg)  # status and result are handled in executor
 
         return False
-
-
-@dataclass(order=True)
-class PrioritizedEventData:
-    """Tango event data with a priority attribute"""
-
-    priority: int
-    item: tango.EventData = field(compare=False)
