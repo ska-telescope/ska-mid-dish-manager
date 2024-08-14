@@ -3,7 +3,6 @@ import time
 
 import pytest
 import tango
-from pytest import approx
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -12,6 +11,9 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackTableLoadMode,
 )
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
+
+# from pytest import approx
+
 
 NUMBER_OF_TABLE_SAMPLES = 150
 INIT_TABLE_SIZE = 5
