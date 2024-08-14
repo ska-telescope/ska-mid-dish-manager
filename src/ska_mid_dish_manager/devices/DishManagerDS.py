@@ -26,7 +26,7 @@ from ska_mid_dish_manager.models.command_class import ImmediateSlowCommand
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_DISH_ID,
-    DEFAULT_DISH_MANAGER_TRL,
+    DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
 )
@@ -77,7 +77,7 @@ class DishManager(SKAController):
     # -----------------
     # these values will be overwritten by values in
     # /charts/ska-mid-dish-manager/data in k8s deployment
-    DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DISH_MANAGER_TRL)
+    DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)

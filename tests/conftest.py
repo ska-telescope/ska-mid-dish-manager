@@ -11,6 +11,12 @@ import pytest
 import tango
 from tango.test_context import get_host_ip
 
+from ska_mid_dish_manager.models.constants import (
+    DEFAULT_DISH_MANAGER_TRL,
+    DEFAULT_DS_MANAGER_TRL,
+    DEFAULT_SPFC_TRL,
+    DEFAULT_SPFRX_TRL,
+)
 from tests.utils import ComponentStateStore, EventStore
 
 
@@ -70,22 +76,22 @@ def component_state_store():
 
 @pytest.fixture
 def dish_manager_device_fqdn():
-    return "mid-dish/dish-manager/SKA001"
+    return DEFAULT_DISH_MANAGER_TRL
 
 
 @pytest.fixture
 def ds_device_fqdn():
-    return "mid-dish/ds-manager/SKA001"
+    return DEFAULT_DS_MANAGER_TRL
 
 
 @pytest.fixture
 def spf_device_fqdn():
-    return "mid-dish/simulator-spfc/SKA001"
+    return DEFAULT_SPFC_TRL
 
 
 @pytest.fixture
 def spfrx_device_fqdn():
-    return "mid-dish/simulator-spfrx/SKA001"
+    return DEFAULT_SPFRX_TRL
 
 
 @pytest.fixture
