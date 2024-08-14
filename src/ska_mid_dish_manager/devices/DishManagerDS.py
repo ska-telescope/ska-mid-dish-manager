@@ -34,6 +34,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackProgramMode,
     TrackTableLoadMode,
 )
+from ska_mid_dish_manager.utils.decorators import record_mode_change_request
 from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
@@ -326,6 +327,7 @@ class DishManager(SKAController):
             device._ignore_spfrx = False
             device._act_static_offset_value_xel = 0.0
             device._act_static_offset_value_el = 0.0
+            device._last_commanded_mode = ("0.0", "")
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
             device._b2_capability_state = CapabilityStates.UNKNOWN
@@ -424,6 +426,7 @@ class DishManager(SKAController):
                 "powerState",
                 "trackProgramMode",
                 "trackTableLoadMode",
+                "lastCommandedMode",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
@@ -439,6 +442,20 @@ class DishManager(SKAController):
     # ----------
     # Attributes
     # ----------
+
+    # pylint: disable=invalid-name
+    @attribute(
+        dtype=(str, str),
+        max_dim_x=2,
+        access=AttrWriteType.READ,
+        doc=(
+            "Reports when and which was the last commanded mode change (not when completed). "
+            "Time is a UNIX UTC timestamp."
+        ),
+    )
+    def lastCommandedMode(self) -> tuple[str, str]:
+        """Return the last commanded mode"""
+        return self._last_commanded_mode
 
     # pylint: disable=invalid-name
     @attribute(
@@ -1463,6 +1480,7 @@ class DishManager(SKAController):
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @record_mode_change_request
     def SetMaintenanceMode(self):
         """
         This command triggers the Dish to transition to the MAINTENANCE
@@ -1481,6 +1499,7 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
     )
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @record_mode_change_request
     def SetOperateMode(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1505,6 +1524,7 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
     )
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @record_mode_change_request
     def SetStandbyLPMode(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1536,6 +1556,7 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
     )
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @record_mode_change_request
     def SetStandbyFPMode(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1559,6 +1580,7 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
     )
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @record_mode_change_request
     def SetStowMode(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
