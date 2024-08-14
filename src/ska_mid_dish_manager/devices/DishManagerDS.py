@@ -1434,7 +1434,7 @@ class DishManager(SKAController):
         raise NotImplementedError
 
     @command(dtype_in=str, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
         The Dish records the scanID for an ongoing scan
