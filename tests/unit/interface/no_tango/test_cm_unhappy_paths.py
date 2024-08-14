@@ -88,7 +88,7 @@ def test_pseudo_random_noise_diode_pars_with_invalid_input(
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
-    with pytest.raises(ValueError, match=re.escape("Expected value of length 3 but got 2.")):
+    with pytest.raises(ValueError, match="Expected value of length 3 but got 2."):
         component_manager.set_pseudo_random_noise_diode_pars([1.0, 2.0])
 
 
