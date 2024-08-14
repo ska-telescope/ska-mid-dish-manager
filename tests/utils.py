@@ -1,6 +1,8 @@
 # pylint: disable=invalid-name,possibly-unused-variable,no-value-for-parameter
 """General utils for test devices"""
 import queue
+import random
+import string
 from typing import Any, List, Tuple
 
 import numpy as np
@@ -475,3 +477,9 @@ def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
         else:
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+
+
+def generate_random_text(length=10):
+    """Generate a random string."""
+    letters = string.ascii_letters
+    return "".join(random.choice(letters) for _ in range(length))

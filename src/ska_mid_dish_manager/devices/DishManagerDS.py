@@ -23,10 +23,17 @@ from tango.server import attribute, command, device_property, run
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_class import ImmediateSlowCommand
-from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LENGTH
+from ska_mid_dish_manager.models.constants import (
+    BAND_POINTING_MODEL_PARAMS_LENGTH,
+    DEFAULT_DISH_ID,
+    DEFAULT_DISH_MANAGER_TRL,
+    DEFAULT_SPFC_TRL,
+    DEFAULT_SPFRX_TRL,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
+    Device,
     DishMode,
     PointingState,
     PowerState,
@@ -34,6 +41,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackProgramMode,
     TrackTableLoadMode,
 )
+from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
 from ska_mid_dish_manager.utils.decorators import record_mode_change_request
 from ska_mid_dish_manager.utils.track_table_input_validation import (
@@ -68,10 +76,10 @@ class DishManager(SKAController):
     # -----------------
     # these values will be overwritten by values in
     # /charts/ska-mid-dish-manager/data in k8s deployment
-    DSDeviceFqdn = device_property(dtype=str, default_value="mid-dish/ds-manager/SKA001")
-    SPFDeviceFqdn = device_property(dtype=str, default_value="mid-dish/simulator-spfc/SKA001")
-    SPFRxDeviceFqdn = device_property(dtype=str, default_value="mid-dish/simulator-spfrx/SKA001")
-    DishId = device_property(dtype=str, default_value="SKA001")
+    DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DISH_MANAGER_TRL)
+    SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
+    SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
+    DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
 
     def _create_lrc_attributes(self) -> None:
         """
@@ -128,10 +136,18 @@ class DishManager(SKAController):
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
         """
+
+        self._release_info = ReleaseInfo(
+            ds_manager_address=self.DSDeviceFqdn,
+            spfc_address=self.SPFDeviceFqdn,
+            spfrx_address=self.SPFRxDeviceFqdn,
+        )
+        self._build_state = self._release_info.get_build_state()
+
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
-            self._update_connection_state_attrs,
+            self._connection_state_update,
             self._attr_quality_state_changed,
             self.get_name(),
             self.DSDeviceFqdn,
@@ -192,42 +208,51 @@ class DishManager(SKAController):
             self.SetKValueCommand(self.component_manager, self.logger),
         )
 
-    def _update_connection_state_attrs(self, attribute_name: str):
+    def _connection_state_update(self, device: Device):
+        if not hasattr(self, "component_manager"):
+            self.logger.warning("Init not completed, but communication state is being updated")
+            return
+
+        self._update_connection_state_attrs(device)
+        self._update_version_of_subdevice_on_success(device)
+
+    def _update_connection_state_attrs(self, device: Device):
         """
         Push change events on connection state attributes for
         subservient devices communication state changes.
         """
+        if device in self._device_to_comm_attr_map:
+            comms_state = self.component_manager.sub_component_managers[
+                device.value
+            ].communication_state
+            self.push_change_event(
+                self._device_to_comm_attr_map[device],
+                comms_state,
+            )
+            self.push_archive_event(
+                self._device_to_comm_attr_map[device],
+                comms_state,
+            )
 
-        if not hasattr(self, "component_manager"):
-            self.logger.warning("Init not completed, but communication state is being updated")
-            return
-        if attribute_name == "spfConnectionState":
-            self.push_change_event(
-                "spfConnectionState",
-                self.component_manager.sub_component_managers["SPF"].communication_state,
-            )
-            self.push_archive_event(
-                "spfConnectionState",
-                self.component_manager.sub_component_managers["SPF"].communication_state,
-            )
-        if attribute_name == "spfrxConnectionState":
-            self.push_change_event(
-                "spfrxConnectionState",
-                self.component_manager.sub_component_managers["SPFRX"].communication_state,
-            )
-            self.push_archive_event(
-                "spfrxConnectionState",
-                self.component_manager.sub_component_managers["SPFRX"].communication_state,
-            )
-        if attribute_name == "dsConnectionState":
-            self.push_change_event(
-                "dsConnectionState",
-                self.component_manager.sub_component_managers["DS"].communication_state,
-            )
-            self.push_archive_event(
-                "dsConnectionState",
-                self.component_manager.sub_component_managers["DS"].communication_state,
-            )
+    def _update_version_of_subdevice_on_success(self, device: Device):
+        """Update the version information of subdevice if connection is successful."""
+        if device in self._device_to_comm_attr_map:
+            comms_state = self.component_manager.sub_component_managers[
+                device.value
+            ].communication_state
+            if comms_state == CommunicationStatus.ESTABLISHED:
+                cm = self.component_manager.sub_component_managers[device.value]
+                try:
+                    if device == Device.DS:
+                        build_state = cm.read_attribute_value("buildState")
+                    elif device in [Device.SPF, Device.SPFRX]:
+                        build_state = cm.read_attribute_value("swVersions")
+
+                    self._build_state = self._release_info.update_build_state(device, build_state)
+                except (tango.DevFailed, AttributeError):
+                    self.logger.warning(
+                        "Failed to update build state information for [%s] device.", device
+                    )
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
         # Do not modify or push quality changes before initialization complete
@@ -340,6 +365,12 @@ class DishManager(SKAController):
             device._spf_connection_state = CommunicationStatus.NOT_ESTABLISHED
             device._spfrx_connection_state = CommunicationStatus.NOT_ESTABLISHED
             device._ds_connection_state = CommunicationStatus.NOT_ESTABLISHED
+
+            device._device_to_comm_attr_map = {
+                Device.DS: "dsConnectionState",
+                Device.SPF: "spfConnectionState",
+                Device.SPFRX: "spfrxConnectionState",
+            }
 
             device.op_state_model.perform_action("component_standby")
 
