@@ -132,8 +132,8 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     assert pointing_state_values.count(PointingState["READY"]) == 2
     assert pointing_state_values.count(PointingState["TRACK"]) == 1
 
-    destination_coord = dish_manager_proxy.programTrackTable
-
     assert 0, "Fix AZ/EL reference"
+    # destination_coord = dish_manager_proxy.programTrackTable
+
     # assert ds_device_proxy.achievedPointingAz[1] == approx(destination_coord[1], rel=TOLERANCE)
     # assert ds_device_proxy.achievedPointingEl[1] == approx(destination_coord[2], rel=TOLERANCE)
