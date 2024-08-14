@@ -27,6 +27,8 @@ def test_achieved_pointing_in_sync_with_dish_structure_pointing(
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
+
+    assert 0, "Fix Az El references"
     device_proxy.subscribe_event(
         "achievedPointingaz",
         tango.EventType.CHANGE_EVENT,

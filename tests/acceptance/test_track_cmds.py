@@ -22,8 +22,6 @@ def test_track_and_track_stop_cmds(
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
-    achieved_pointing_az_event_store = event_store_class()
-    achieved_pointing_el_event_store = event_store_class()
 
     dish_manager_proxy.subscribe_event(
         "longRunningCommandProgress",
@@ -59,16 +57,6 @@ def test_track_and_track_stop_cmds(
         "achievedPointing",
         tango.EventType.CHANGE_EVENT,
         achieved_pointing_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "achievedPointingAz",
-        tango.EventType.CHANGE_EVENT,
-        achieved_pointing_az_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "achievedPointingEl",
-        tango.EventType.CHANGE_EVENT,
-        achieved_pointing_el_event_store,
     )
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
@@ -144,12 +132,15 @@ def test_track_and_track_stop_cmds(
         # Check achievedPointing
         achieved_pointing_event_store.wait_for_value(table_entry, timeout=4)
 
-        # Check achievedPointingAz and achievedPointingEl
         entry_az = [table_entry[0], table_entry[1]]
         entry_el = [table_entry[0], table_entry[2]]
 
-        achieved_pointing_az_event_store.wait_for_value(entry_az, timeout=4)
-        achieved_pointing_el_event_store.wait_for_value(entry_el, timeout=4)
+        achieved_pointing_event_store.wait_for_array_indices_match(
+            match_indexes=[1, 2], array=entry_az
+        )
+        achieved_pointing_event_store.wait_for_array_indices_match(
+            match_indexes=[1, 2], array=entry_el
+        )
 
     # Call TrackStop on DishManager
     [[_], [unique_id]] = dish_manager_proxy.TrackStop()
