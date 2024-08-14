@@ -13,7 +13,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
-
 NUMBER_OF_TABLE_SAMPLES = 150
 INIT_TABLE_SIZE = 5
 
