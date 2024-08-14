@@ -15,10 +15,12 @@ from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_map import CommandMap
+from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LENGTH
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
     CapabilityStates,
+    Device,
     DishMode,
     DSOperatingMode,
     DSPowerState,
@@ -39,7 +41,7 @@ from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 # pylint: disable=abstract-method
 # pylint: disable=too-many-instance-attributes
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-public-methods
 class DishManagerComponentManager(TaskExecutorComponentManager):
     """A component manager for DishManager
 
@@ -99,6 +101,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             noisediodemode=None,
             periodicnoisediodepars=[0.0, 0.0, 0.0],
             pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
+            actstaticoffsetvaluexel=None,
+            actstaticoffsetvalueel=None,
             **kwargs,
         )
         self.logger = logger
@@ -109,6 +113,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
+
+        self._device_to_comm_attr_map = {
+            Device.DS: "dsConnectionState",
+            Device.SPF: "spfConnectionState",
+            Device.SPFRX: "spfrxConnectionState",
+        }
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -127,7 +137,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, "spfConnectionState"
+                    self._sub_communication_state_changed, Device.SPF
                 ),
                 component_state_callback=self._component_state_changed,
                 quality_state_callback=self._quality_state_callback,
@@ -150,8 +160,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band3pointingmodelparams=[],
                 band4pointingmodelparams=[],
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
+                actstaticoffsetvaluexel=None,
+                actstaticoffsetvalueel=None,
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, "dsConnectionState"
+                    self._sub_communication_state_changed, Device.DS
                 ),
                 component_state_callback=self._component_state_changed,
                 quality_state_callback=self._quality_state_callback,
@@ -177,7 +189,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 periodicnoisediodepars=[0.0, 0.0, 0.0],
                 pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, "spfrxConnectionState"
+                    self._sub_communication_state_changed, Device.SPFRX
                 ),
                 component_state_callback=self._component_state_changed,
                 quality_state_callback=self._quality_state_callback,
@@ -207,6 +219,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "noisediodemode": NoiseDiodeMode.OFF,
             "periodicnoisediodepars": [],
             "pseudorandomnoisediodepars": [],
+            "actstaticoffsetvaluexel": 0.0,
+            "actstaticoffsetvalueel": 0.0,
         }
         self._update_component_state(**initial_component_states)
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -223,6 +237,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "desiredPointingAz",
                 "desiredPointingEl",
                 "trackInterpolationMode",
+                "actStaticOffsetValueXel",
+                "actStaticOffsetValueEl",
             ],
             "SPFRX": [
                 "noiseDiodeMode",
@@ -596,13 +612,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return self.component_state["ignorespfrx"]
         return False
 
-    def _validate_band_x_pointing_model_params(self, values):
-        """Validate the args passed on all bandXPointingModelParams."""
-        # The argument value is a list of two floats: [off_xel, off_el]
-        if len(values) != 2:
-            raise ValueError(
-                f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s)."
-            )
+    def update_pointing_model_params(self, attr: str, values: list[float]) -> None:
+        """Update band pointing model parameters for the given attribute."""
+        try:
+            if len(values) != BAND_POINTING_MODEL_PARAMS_LENGTH:
+                raise ValueError(
+                    f"Expected {BAND_POINTING_MODEL_PARAMS_LENGTH} arguments but got"
+                    f" {len(values)} arg(s)."
+                )
+            ds_com_man = self.sub_component_managers["DS"]
+            ds_com_man.write_attribute_value(attr, values)
+        except tango.DevFailed:
+            self.logger.exception("Failed to write to %s on DSManager", attr)
+            raise
+        except ValueError:
+            self.logger.exception("Failed to update %s", attr)
+            raise
 
     def start_communicating(self):
         """Connect from monitored devices"""
@@ -860,7 +885,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         status, response = self.submit_task(
-            self._command_map.track_load_static_off, args=[values], task_callback=task_callback
+            self._command_map.track_load_static_off,
+            args=[values[0], values[1]],
+            task_callback=task_callback,
         )
         return status, response
 

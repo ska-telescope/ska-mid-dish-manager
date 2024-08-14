@@ -1,7 +1,5 @@
 """Tests dish manager component manager unhappy paths for command handlers"""
 
-import re
-
 import pytest
 from ska_control_model import TaskStatus
 

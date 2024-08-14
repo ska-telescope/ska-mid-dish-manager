@@ -37,9 +37,9 @@ def test_set_standbyfp_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"SetOperateMode called on SPF, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting SPF operatingmode change to [<SPFOperatingMode.OPERATE: 3>]"},
+        {"progress": "Awaiting SPF operatingmode change to OPERATE"},
         {"progress": f"SetStandbyFPMode called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS operatingmode change to [<DSOperatingMode.STANDBY_FP: 3>]"},
+        {"progress": "Awaiting DS operatingmode change to STANDBY_FP"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {"progress": "Awaiting dishmode change to STANDBY_FP"},
     )

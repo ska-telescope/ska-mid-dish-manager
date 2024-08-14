@@ -5,6 +5,12 @@
 import enum
 
 
+class Device(str, enum.Enum):
+    DS = "DS"
+    SPF = "SPF"
+    SPFRX = "SPFRX"
+
+
 class DishMode(enum.IntEnum):
     STARTUP = 0
     SHUTDOWN = 1

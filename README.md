@@ -69,7 +69,7 @@ kubectl create namespace dish-manager
 $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
 --set global.minikube=true \
 --set global.operator=true \
---set global.dishes={001,002} \ # number of instances to deploy; if not specified defaults to 001
+--set global.dishes="{001,002}" \ # number of instances to deploy; if not specified defaults to 001
 --set ska-mid-dish-simulators.enabled=true \
 --set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
 --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
