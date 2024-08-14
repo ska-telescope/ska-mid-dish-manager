@@ -91,7 +91,7 @@ def test_periodic_noise_diode_pars_with_invalid_states(
         AssertionError,
         match="Cannot write to periodicNoiseDiodePars."
         " Device is not in STANDBY or MAINTENANCE state."
-        f" Current state: UNKNOWN",
+        " Current state: UNKNOWN",
     ):
         component_manager.set_periodic_noise_diode_pars([1.0, 2.0, 3.0])
 
@@ -126,6 +126,6 @@ def test_pseudo_random_noise_diode_pars_with_invalid_states(
         AssertionError,
         match="Cannot write to pseudoRandomNoiseDiodePars."
         " Device is not in STANDBY or MAINTENANCE state."
-        f" Current state: UNKNOWN",
+        " Current state: UNKNOWN",
     ):
         component_manager.set_pseudo_random_noise_diode_pars([1.0, 2.0, 3.0])
