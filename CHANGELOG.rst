@@ -7,6 +7,12 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Upgraded ska-mid-dish-simulators chart to v4.0.1
+- Upgraded ska-mid-ds-manager version to v2.0.0
+- Added actStaticOffsetValueXel and actStaticOffsetValueEl attributes
+- Updated band<N>PointingModelParams usage
+- Added `lastCommandedMode` attribute to record the last mode change request
+- Remove achievedPointingAz and achievedPointingEl
 
 Version 3.0.1
 *************

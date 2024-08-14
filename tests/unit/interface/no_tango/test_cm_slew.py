@@ -34,7 +34,7 @@ def test_slew_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"Slew called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS pointingstate change to [<PointingState.SLEW: 1>]"},
+        {"progress": "Awaiting DS pointingstate change to SLEW"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {"progress": "Awaiting pointingstate change to SLEW"},
     )
