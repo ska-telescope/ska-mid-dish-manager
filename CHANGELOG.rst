@@ -8,6 +8,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Added `lastCommandedMode` attribute to record the last mode change request
+- Expose noide diode attributes from SPFRx:
+  - noiseDiodeMode, periodicNoiseDiodePars, pseudoRandomNoiseDiodePars
 
 Version 3.0.1
 *************
