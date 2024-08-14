@@ -24,12 +24,12 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_class import ImmediateSlowCommand
 from ska_mid_dish_manager.models.constants import (
+    BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_DISH_ID,
     DEFAULT_DISH_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
 )
-from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LENGTH
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
