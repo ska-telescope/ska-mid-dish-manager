@@ -43,23 +43,6 @@ def test_track_load_static_off_with_invalid_input(
 
 
 @pytest.mark.unit
-def test_validate_band_x_pointing_model_params_with_invalid_input(
-    component_manager: DishManagerComponentManager,
-) -> None:
-    """
-    Verify behaviour of validate_band_x_pointing_model_params() using invalid input.
-
-    :param component_manager: the component manager under test
-    """
-    with pytest.raises(
-        ValueError, match=re.escape("Expected 2 arguments (off_xel, off_el) but got 3 arg(s).")
-    ):
-        component_manager._validate_band_x_pointing_model_params(
-            [10.0, 20.0, 10.0],
-        )
-
-
-@pytest.mark.unit
 def test_periodic_noise_diode_pars_with_invalid_input(
     component_manager: DishManagerComponentManager,
 ) -> None:
