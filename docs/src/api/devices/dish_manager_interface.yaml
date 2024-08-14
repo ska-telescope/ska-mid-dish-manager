@@ -317,42 +317,6 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
-    - name: achievedPointingAz
-      data_format: SPECTRUM
-      data_type: DevDouble
-      description: '[0] Timestamp
-
-        [1] Azimuth'
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: achievedPointingAz
-      max_alarm: Not specified
-      max_dim_x: 2
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
-    - name: achievedPointingEl
-      data_format: SPECTRUM
-      data_type: DevDouble
-      description: '[0] Timestamp
-
-        [1] Elevation'
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: achievedPointingEl
-      max_alarm: Not specified
-      max_dim_x: 2
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
     - name: achievedTargetLock
       data_format: SCALAR
       data_type: DevBoolean

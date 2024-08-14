@@ -38,8 +38,6 @@ class DSComponentManager(TangoDeviceComponentManager):
             "desiredPointingAz",
             "desiredPointingEl",
             "achievedPointing",
-            "achievedPointingAz",
-            "achievedPointingEl",
             "band1PointingModelParams",
             "band2PointingModelParams",
             "band3PointingModelParams",

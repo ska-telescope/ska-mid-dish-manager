@@ -360,8 +360,6 @@ class DishManager(SKAController):
                 "desiredpointingaz": "desiredPointingAz",
                 "desiredpointingel": "desiredPointingEl",
                 "achievedpointing": "achievedPointing",
-                "achievedpointingaz": "achievedPointingAz",
-                "achievedpointingel": "achievedPointingEl",
                 "band1pointingmodelparams": "band1PointingModelParams",
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "band3pointingmodelparams": "band3PointingModelParams",
@@ -494,26 +492,6 @@ class DishManager(SKAController):
     def achievedPointing(self):
         """Returns the current achieved pointing for both axis."""
         return self._achieved_pointing
-
-    @attribute(
-        max_dim_x=2,
-        dtype=(float,),
-        doc="[0] Timestamp\n[1] Azimuth",
-        access=AttrWriteType.READ,
-    )
-    def achievedPointingAz(self):
-        """Returns the current achieved pointing for the azimuth axis."""
-        return self._achieved_pointing_az
-
-    @attribute(
-        max_dim_x=2,
-        dtype=(float,),
-        doc="[0] Timestamp\n[1] Elevation",
-        access=AttrWriteType.READ,
-    )
-    def achievedPointingEl(self):
-        """Returns the current achieved pointing for the elevation axis."""
-        return self._achieved_pointing_el
 
     @attribute(
         dtype=bool,

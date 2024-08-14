@@ -81,8 +81,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
             achievedpointing=[0.0, 0.0, 0.0],
-            achievedpointingaz=[0.0, 0.0, 0.0],
-            achievedpointingel=[0.0, 0.0, 0.0],
             configuredband=Band.NONE,
             attenuationpolh=0.0,
             attenuationpolv=0.0,
@@ -146,8 +144,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 desiredpointingaz=[0.0, 0.0],
                 desiredpointingel=[0.0, 0.0],
                 achievedpointing=[0.0, 0.0, 0.0],
-                achievedpointingaz=[0.0, 0.0, 0.0],
-                achievedpointingel=[0.0, 0.0, 0.0],
                 band1pointingmodelparams=[],
                 band2pointingmodelparams=[],
                 band3pointingmodelparams=[],
@@ -221,8 +217,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.direct_mapped_attrs = {
             "DS": [
                 "achievedPointing",
-                "achievedPointingAz",
-                "achievedPointingEl",
                 "desiredPointingAz",
                 "desiredPointingEl",
                 "trackInterpolationMode",
