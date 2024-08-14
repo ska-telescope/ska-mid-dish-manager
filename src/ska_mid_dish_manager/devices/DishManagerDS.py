@@ -337,9 +337,9 @@ class DishManager(SKAController):
             device._ds_connection_state = CommunicationStatus.NOT_ESTABLISHED
 
             # SPFRx noise diode attributes
-            device._spfrx_noise_diode_mode = CommunicationStatus.NOT_ESTABLISHED
-            device._spfrx_periodic_noise_diode_pars = CommunicationStatus.NOT_ESTABLISHED
-            device._spfrx_pseudo_random_noise_diode_pars = CommunicationStatus.NOT_ESTABLISHED
+            device._noise_diode_mode = CommunicationStatus.NOT_ESTABLISHED
+            device._periodic_noise_diode_pars = CommunicationStatus.NOT_ESTABLISHED
+            device._pseudo_random_noise_diode_pars = CommunicationStatus.NOT_ESTABLISHED
 
             device.op_state_model.perform_action("component_standby")
 
@@ -377,6 +377,9 @@ class DishManager(SKAController):
                 "spfconnectionstate": "spfConnectionState",
                 "spfrxconnectionstate": "spfrxConnectionState",
                 "dsconnectionstate": "dsConnectionState",
+                "noisediodemode": "noiseDiodeMode",
+                "periodicnoisediodepars": "periodicNoiseDiodePars",
+                "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)

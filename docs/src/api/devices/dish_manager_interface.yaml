@@ -1420,6 +1420,48 @@
       standard_unit: No standard unit
       writable: WRITE
       writable_attr_name: None
+    - name: noiseDiodeMode
+      data_format: SCALAR
+      data_type: DevEnum
+      description: "\n            Noise diode mode.\n\n            0: OFF, 1: PERIODIC,\
+        \ 2: PSEUDO-RANDOM\n\n            Note: This attribute does not persist after\
+        \ a power cycle. A default value is included\n            as a device property\
+        \ on the SPFRx.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - 'OFF'
+      - PERIODIC
+      - PSEUDO_RANDOM
+      format: '%s'
+      label: noiseDiodeMode
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: noiseDiodeMode
+    - name: periodicNoiseDiodePars
+      data_format: SPECTRUM
+      data_type: DevDouble
+      description: "\n            Periodic noise diode pars (units are in time quanta).\n\
+        \n            [0]: period, [1]: duty cycle, [2]: phase shift\n\n         \
+        \   Note: This attribute does not persist after a power cycle. A default value\
+        \ is included\n            as a device property on the SPFRx.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: periodicNoiseDiodePars
+      max_alarm: Not specified
+      max_dim_x: 3
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: periodicNoiseDiodePars
     - name: pointingBufferSize
       data_format: SCALAR
       data_type: DevLong64
@@ -1534,6 +1576,26 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: programTrackTable
+    - name: pseudoRandomNoiseDiodePars
+      data_format: SPECTRUM
+      data_type: DevDouble
+      description: "\n            Pseudo random noise diode pars (units are in time\
+        \ quanta).\n\n            [0]: binary polynomial, [1]: seed, [2]: dwell\n\n\
+        \            Note: This attribute does not persist after a power cycle. A\
+        \ default value is included\n            as a device property on the SPFRx.\n\
+        \        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: pseudoRandomNoiseDiodePars
+      max_alarm: Not specified
+      max_dim_x: 3
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: pseudoRandomNoiseDiodePars
     - name: scanID
       data_format: SCALAR
       data_type: DevString
@@ -1729,4 +1791,5 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
+    - name: __SubDevices
     - name: polled_cmd

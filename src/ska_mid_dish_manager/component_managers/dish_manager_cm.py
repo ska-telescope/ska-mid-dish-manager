@@ -1,4 +1,4 @@
-# pylint: disable=protected-access
+# pylint: disable=protected-access,too-many-lines,too-many-public-methods
 """Component manager for a DishManager tango device"""
 import logging
 import os
@@ -98,8 +98,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             trackinterpolationmode=None,
             ignorespf=None,
             ignorespfrx=None,
-            actstaticoffsetvaluexel=None,
-            actstaticoffsetvalueel=None,
+            noisediodemode=None,
             periodicnoisediodepars=[0.0, 0.0, 0.0],
             pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
             **kwargs,
@@ -209,6 +208,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "band4pointingmodelparams": [],
             "ignorespf": False,
             "ignorespfrx": False,
+            "noisediodemode": NoiseDiodeMode.OFF,
+            "periodicnoisediodepars": [],
+            "pseudorandomnoisediodepars": [],
         }
         self._update_component_state(**initial_component_states)
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -928,7 +930,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"Expected value of length 3 but got {len(values)}.",
             )
 
-        spfrx_operating_mode = self.sub_component_managers["SPFRX"]["operatingmode"]
+        spfrx_operating_mode = self.sub_component_managers["SPFRX"].component_state[
+            "operatingmode"
+        ]
 
         if spfrx_operating_mode in [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.MAINTENANCE]:
             ds_cm = self.sub_component_managers["SPFRX"]
@@ -942,7 +946,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             raise AssertionError(
                 "Cannot write to periodicNoiseDiodePars."
                 " Device is not in STANDBY or MAINTENANCE state."
-                f" Current state: {spfrx_operating_mode}"
+                f" Current state: {spfrx_operating_mode.name}"
             )
 
         return (ResultCode.OK, "Successfully updated periodicNoiseDiodePars on SPFRx")
@@ -957,7 +961,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"Expected value of length 3 but got {len(values)}.",
             )
 
-        spfrx_operating_mode = self.sub_component_managers["SPFRX"]["operatingmode"]
+        spfrx_operating_mode = self.sub_component_managers["SPFRX"].component_state[
+            "operatingmode"
+        ]
 
         if spfrx_operating_mode in [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.MAINTENANCE]:
             ds_cm = self.sub_component_managers["SPFRX"]
@@ -971,7 +977,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             raise AssertionError(
                 "Cannot write to pseudoRandomNoiseDiodePars."
                 " Device is not in STANDBY or MAINTENANCE state."
-                f" Current state: {spfrx_operating_mode}"
+                f" Current state: {spfrx_operating_mode.name}"
             )
 
         return (ResultCode.OK, "Successfully updated pseudoRandomNoiseDiodePars on SPFRx")
