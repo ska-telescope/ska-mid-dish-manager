@@ -1,9 +1,8 @@
 """Generic component manager for a subservient tango device"""
 
-import datetime
 import logging
 import typing
-from queue import Empty, PriorityQueue
+from queue import Empty, Queue
 from threading import Event, Thread
 from typing import Any, Callable, Optional, Tuple
 
@@ -13,7 +12,6 @@ from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
-from ska_mid_dish_manager.models.dish_mode_model import PrioritizedEventData
 
 
 def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
@@ -56,7 +54,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
         self._quality_state_callback = quality_state_callback
-        self._events_queue: PriorityQueue = PriorityQueue()
+        self._events_queue: Queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
         self._quality_monitored_attributes = quality_monitored_attributes
@@ -200,72 +198,59 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @classmethod
     def _event_consumer(
         cls,
-        event_queue: PriorityQueue,
-        update_state_cb: Callable,
+        event_queue: Queue,
+        valid_event_cb: Callable,
         task_abort_event: Optional[Event] = None,
-        task_callback: Optional[Callable] = None,  # type: ignore
+        error_event_cb: Optional[Callable] = None,  # type: ignore
     ) -> None:
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
-        latest_valid_event_timestamp = datetime.datetime.now() - datetime.timedelta(hours=1)
         while task_abort_event and not task_abort_event.is_set():
             try:
-                p_event_data: PrioritizedEventData = event_queue.get(timeout=1)
-                event_data = p_event_data.item
+                event_data = event_queue.get(timeout=1)
                 if event_data.err:
-                    # If we get an error event that is older than the latest valid event
-                    # then discard it. If it's a new error event then start the reconnection
-                    # process via task_callback and drain until we find a valid event
-                    if event_data.reception_date.todatetime() > latest_valid_event_timestamp:
-                        # Restart the connection
-                        if task_callback:
-                            task_callback(progress="Error Event Found")
-                        # Drain the remaining errors
-                        while event_data.err:
-                            p_event_data = event_queue.get(timeout=1)
-                            event_data = p_event_data.item
-
-                if event_data.attr_value:
-                    latest_valid_event_timestamp = event_data.reception_date.todatetime()
-                    update_state_cb(event_data)
+                    if error_event_cb:
+                        error_event_cb(event_data)
+                    continue
+                valid_event_cb(event_data)
             except Empty:
                 pass
-        if task_callback:
-            task_callback(status=TaskStatus.ABORTED)
 
-    def _event_consumer_cb(
-        self,
-        status: Optional[TaskStatus] = None,
-        progress: Optional[int] = None,
-        result: Optional[Tuple[ResultCode, str]] = None,
-        exception: Optional[Exception] = None,
-    ) -> None:
-        """Just log the status of the event handler thread
+    def _event_consumer_cb(self, event_data: tango.EventData) -> None:
+        """Just log the error event
 
-        :param status: _description_, defaults to None
-        :type status: Optional[TaskStatus], optional
-        :param progress: _description_, defaults to None
-        :type progress: Optional[int], optional
-        :param result: _description_, defaults to None
-        :type result: Optional[tuple[ResultCode, str]], optional
-        :param exception: _description_, defaults to None
-        :type exception: Optional[Exception], optional
+        :param event_data: data representing tango event
+        :type event_data: tango.EventData
         """
+        attr_name = event_data.attr_name
+        received_timestamp = event_data.reception_date.totime()
+        event_type = event_data.event
+        value = event_data.attr_value
+        errors = event_data.errors
+        # Events with errors do not send the attribute value
+        # so regard its reading as invalid.
+        quality = tango.AttrQuality.ATTR_INVALID
+
         self.logger.debug(
             (
-                "Device [%s] event handler callback status [%s], "
-                "progress [%s] result [%s], exception [%s]"
+                "Error event was emitted by device [%s] with the following details: "
+                "attr_name: %s"
+                "received_timestamp: %s"
+                "event_type: %s"
+                "value: %s"
+                "quality: %s"
+                "errors: %s"
             ),
             self._tango_device_fqdn,
-            status,
-            progress,
-            result,
-            exception,
+            attr_name,
+            received_timestamp,
+            event_type,
+            value,
+            errors,
+            quality,
         )
-        if progress and progress == "Error Event Found":
+
+        if self.communication_state == CommunicationStatus.ESTABLISHED:
             self.logger.info("Reconnecting to %s", self._tango_device_fqdn)
-            if self.communication_state == CommunicationStatus.ESTABLISHED:
-                self._tango_device_monitor.monitor()
+            self._tango_device_monitor.monitor()
 
     def run_device_command(
         self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore

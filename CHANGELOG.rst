@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added `lastCommandedMode` attribute to record the last mode change request
 
 Version 3.0.1
 *************

@@ -32,10 +32,10 @@ dependencies:
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-tango-base.enabled
 - name: ska-mid-dish-simulators
-  version: 3.1.2
+  version: 4.0.1
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-simulators.enabled
 - name: ska-mid-dish-ds-manager
-  version: 1.5.0
+  version: 2.0.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-ds-manager.enabled
