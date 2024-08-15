@@ -1,4 +1,4 @@
-# pylint: disable=protected-access
+# pylint: disable=protected-access,too-many-lines,too-many-public-methods
 """Component manager for a DishManager tango device"""
 import logging
 import os
@@ -25,6 +25,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
+    NoiseDiodeMode,
     PointingState,
     SPFCapabilityStates,
     SPFOperatingMode,
@@ -97,6 +98,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             trackinterpolationmode=None,
             ignorespf=None,
             ignorespfrx=None,
+            noisediodemode=None,
+            periodicnoisediodepars=[0.0, 0.0, 0.0],
+            pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
             actstaticoffsetvaluexel=None,
             actstaticoffsetvalueel=None,
             **kwargs,
@@ -181,6 +185,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b4capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                noisediodemode=NoiseDiodeMode.OFF,
+                periodicnoisediodepars=[0.0, 0.0, 0.0],
+                pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, Device.SPFRX
                 ),
@@ -209,6 +216,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "band4pointingmodelparams": [],
             "ignorespf": False,
             "ignorespfrx": False,
+            "noisediodemode": NoiseDiodeMode.OFF,
+            "periodicnoisediodepars": [],
+            "pseudorandomnoisediodepars": [],
             "actstaticoffsetvaluexel": 0.0,
             "actstaticoffsetvalueel": 0.0,
         }
@@ -229,6 +239,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "trackInterpolationMode",
                 "actStaticOffsetValueXel",
                 "actStaticOffsetValueEl",
+            ],
+            "SPFRX": [
+                "noiseDiodeMode",
+                "periodicNoiseDiodePars",
+                "pseudoRandomNoiseDiodePars",
             ],
         }
 
@@ -911,6 +926,82 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
         return (ResultCode.OK, "Successfully updated trackInterpolationMode on DSManager")
+
+    def set_noise_diode_mode(
+        self,
+        noise_diode_mode,
+    ) -> None:
+        """Set the noiseDiodeMode on the SPFRx."""
+        spfrx_cm = self.sub_component_managers["SPFRX"]
+        try:
+            spfrx_cm.write_attribute_value("noiseDiodeMode", noise_diode_mode)
+            self.logger.debug("Successfully updated noiseDiodeMode on SPFRx.")
+        except (LostConnection, tango.DevFailed):
+            self.logger.error("Failed to update noiseDiodeMode on SPFRx.")
+            raise
+        return (ResultCode.OK, "Successfully updated noiseDiodeMode on SPFRx")
+
+    def set_periodic_noise_diode_pars(
+        self,
+        values,
+    ) -> None:
+        """Set the periodicNoiseDiodePars on the SPFRx."""
+        if len(values) != 3:
+            raise ValueError(
+                f"Expected value of length 3 but got {len(values)}.",
+            )
+
+        spfrx_operating_mode = self.sub_component_managers["SPFRX"].component_state[
+            "operatingmode"
+        ]
+
+        if spfrx_operating_mode in [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.MAINTENANCE]:
+            spfrx_cm = self.sub_component_managers["SPFRX"]
+            try:
+                spfrx_cm.write_attribute_value("periodicNoiseDiodePars", values)
+                self.logger.debug("Successfully updated periodicNoiseDiodePars on SPFRx.")
+            except (LostConnection, tango.DevFailed):
+                self.logger.error("Failed to update periodicNoiseDiodePars on SPFRx.")
+                raise
+        else:
+            raise AssertionError(
+                "Cannot write to periodicNoiseDiodePars."
+                " Device is not in STANDBY or MAINTENANCE state."
+                f" Current state: {spfrx_operating_mode.name}"
+            )
+
+        return (ResultCode.OK, "Successfully updated periodicNoiseDiodePars on SPFRx")
+
+    def set_pseudo_random_noise_diode_pars(
+        self,
+        values,
+    ) -> None:
+        """Set the pseudoRandomNoiseDiodePars on the SPFRx."""
+        if len(values) != 3:
+            raise ValueError(
+                f"Expected value of length 3 but got {len(values)}.",
+            )
+
+        spfrx_operating_mode = self.sub_component_managers["SPFRX"].component_state[
+            "operatingmode"
+        ]
+
+        if spfrx_operating_mode in [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.MAINTENANCE]:
+            spfrx_cm = self.sub_component_managers["SPFRX"]
+            try:
+                spfrx_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
+                self.logger.debug("Successfully updated pseudoRandomNoiseDiodePars on SPFRx.")
+            except (LostConnection, tango.DevFailed):
+                self.logger.error("Failed to update pseudoRandomNoiseDiodePars on SPFRx.")
+                raise
+        else:
+            raise AssertionError(
+                "Cannot write to pseudoRandomNoiseDiodePars."
+                " Device is not in STANDBY or MAINTENANCE state."
+                f" Current state: {spfrx_operating_mode.name}"
+            )
+
+        return (ResultCode.OK, "Successfully updated pseudoRandomNoiseDiodePars on SPFRx")
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
         """

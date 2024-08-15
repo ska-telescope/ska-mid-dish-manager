@@ -13,7 +13,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added actStaticOffsetValueXel and actStaticOffsetValueEl attributes
 - Updated band<N>PointingModelParams usage
 - Added `lastCommandedMode` attribute to record the last mode change request
-- Remove achievedPointingAz and achievedPointingEl
+- Removed achievedPointingAz and achievedPointingEl
+- Exposed noide diode attributes from SPFRx:
+
+  - noiseDiodeMode, periodicNoiseDiodePars, pseudoRandomNoiseDiodePars
 
 Version 3.0.1
 *************

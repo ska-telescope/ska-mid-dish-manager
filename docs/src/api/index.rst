@@ -12,6 +12,7 @@ API
   :caption: Models and Component Managers
   :maxdepth: 2
 
+  Release Info<release>
   Utils<utils/index>
   Models<models/index>
   Component Managers<component_managers/index>

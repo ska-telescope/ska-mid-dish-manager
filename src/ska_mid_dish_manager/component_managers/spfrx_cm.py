@@ -38,6 +38,9 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "attenuationPolH",
             "attenuationPolV",
             "kValue",
+            "noisediodemode",
+            "periodicnoisediodepars",
+            "pseudorandomnoisediodepars",
         )
         super().__init__(
             tango_device_fqdn,

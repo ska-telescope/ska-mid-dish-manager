@@ -6,5 +6,7 @@ Package Utils
 
 .. toctree::
    
+   Command Logger<command_logger>
+   Decorators<decorators>
    Track Table Input Validation<track_table_input_validation>
    SKA Epoch to TAI Conversion<ska_epoch_to_tai>

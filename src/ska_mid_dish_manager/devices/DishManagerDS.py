@@ -26,7 +26,7 @@ from ska_mid_dish_manager.models.command_class import ImmediateSlowCommand
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_DISH_ID,
-    DEFAULT_DISH_MANAGER_TRL,
+    DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
 )
@@ -35,6 +35,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     Device,
     DishMode,
+    NoiseDiodeMode,
     PointingState,
     PowerState,
     TrackInterpolationMode,
@@ -76,7 +77,7 @@ class DishManager(SKAController):
     # -----------------
     # these values will be overwritten by values in
     # /charts/ska-mid-dish-manager/data in k8s deployment
-    DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DISH_MANAGER_TRL)
+    DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
@@ -366,6 +367,10 @@ class DishManager(SKAController):
             device._spfrx_connection_state = CommunicationStatus.NOT_ESTABLISHED
             device._ds_connection_state = CommunicationStatus.NOT_ESTABLISHED
 
+            # SPFRx noise diode attributes
+            device._noise_diode_mode = NoiseDiodeMode.OFF
+            device._periodic_noise_diode_pars = []
+            device._pseudo_random_noise_diode_pars = []
             device._device_to_comm_attr_map = {
                 Device.DS: "dsConnectionState",
                 Device.SPF: "spfConnectionState",
@@ -406,6 +411,9 @@ class DishManager(SKAController):
                 "spfconnectionstate": "spfConnectionState",
                 "spfrxconnectionstate": "spfrxConnectionState",
                 "dsconnectionstate": "dsConnectionState",
+                "noisediodemode": "noiseDiodeMode",
+                "periodicnoisediodepars": "periodicNoiseDiodePars",
+                "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
                 "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
                 "actstaticoffsetvalueel": "actStaticOffsetValueEl",
             }
@@ -1088,8 +1096,6 @@ class DishManager(SKAController):
     def trackInterpolationMode(self, value):
         """Set the trackInterpolationMode"""
         self.component_manager.set_track_interpolation_mode(value)
-        self.push_change_event("trackInterpolationMode", value)
-        self.push_archive_event("trackInterpolationMode", value)
 
     @attribute(
         dtype=TrackProgramMode,
@@ -1235,6 +1241,74 @@ class DishManager(SKAController):
         """Sets ignoreSpfrx"""
         self.logger.debug("Write to ignoreSpfrx, %s", value)
         self.component_manager.set_spfrx_device_ignored(value)
+
+    @attribute(
+        dtype=NoiseDiodeMode,
+        access=AttrWriteType.READ_WRITE,
+        doc="""
+            Noise diode mode.
+
+            0: OFF, 1: PERIODIC, 2: PSEUDO-RANDOM
+
+            Note: This attribute does not persist after a power cycle. A default value is included
+            as a device property on the SPFRx.
+        """,
+    )
+    def noiseDiodeMode(self):
+        """Returns the noise diode mode."""
+        self.logger.debug("Read noiseDiodeMode")
+        return self._noise_diode_mode
+
+    @noiseDiodeMode.write
+    def noiseDiodeMode(self, mode: NoiseDiodeMode):
+        """Set the device noise diode mode."""
+        self.component_manager.set_noise_diode_mode(mode)
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=3,
+        doc="""
+            Periodic noise diode pars (units are in time quanta).
+
+            [0]: period, [1]: duty cycle, [2]: phase shift
+
+            Note: This attribute does not persist after a power cycle. A default value is included
+            as a device property on the SPFRx.
+        """,
+        access=AttrWriteType.READ_WRITE,
+    )
+    def periodicNoiseDiodePars(self):
+        """Returns the device periodic noise diode pars."""
+        self.logger.debug("Read periodicNoiseDiodePars")
+        return self._periodic_noise_diode_pars
+
+    @periodicNoiseDiodePars.write
+    def periodicNoiseDiodePars(self, values):
+        """Set the device periodic noise diode pars."""
+        self.component_manager.set_periodic_noise_diode_pars(values)
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=3,
+        doc="""
+            Pseudo random noise diode pars (units are in time quanta).
+
+            [0]: binary polynomial, [1]: seed, [2]: dwell
+
+            Note: This attribute does not persist after a power cycle. A default value is included
+            as a device property on the SPFRx.
+        """,
+        access=AttrWriteType.READ_WRITE,
+    )
+    def pseudoRandomNoiseDiodePars(self):
+        """Returns the device pseudo random noise diode pars."""
+        self.logger.debug("Read noiseDiodeMode")
+        return self._pseudo_random_noise_diode_pars
+
+    @pseudoRandomNoiseDiodePars.write
+    def pseudoRandomNoiseDiodePars(self, values):
+        """Set the device pseudo random noise diode pars."""
+        self.component_manager.set_pseudo_random_noise_diode_pars(values)
 
     # --------
     # Commands

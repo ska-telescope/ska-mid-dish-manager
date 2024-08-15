@@ -8,6 +8,7 @@ DishManager Models
    
    Command Map<command_map>
    Constants<constants>
+   Data Classes<data_classes>
    DishMode Model<dish_mode_model>
    Dish Enums<dish_enums>
    Dish State Transition Computation<dish_state_transition>
