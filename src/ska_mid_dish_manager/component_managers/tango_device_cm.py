@@ -244,8 +244,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             received_timestamp,
             event_type,
             value,
-            errors,
             quality,
+            errors,
         )
 
         if self.communication_state == CommunicationStatus.ESTABLISHED:
