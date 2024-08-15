@@ -40,7 +40,7 @@ def test_track_stop_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"TrackStop called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS pointingstate change to [<PointingState.READY: 0>]"},
+        {"progress": "Awaiting DS pointingstate change to READY"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {"progress": "Awaiting pointingstate change to READY"},
     )

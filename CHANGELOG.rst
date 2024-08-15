@@ -7,8 +7,15 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated `buildState` attribute to include version information of dish manager and subservient devices
+- Upgraded ska-mid-dish-simulators chart to v4.0.1
+- Upgraded ska-mid-ds-manager version to v2.0.0
+- Added actStaticOffsetValueXel and actStaticOffsetValueEl attributes
+- Updated band<N>PointingModelParams usage
 - Added `lastCommandedMode` attribute to record the last mode change request
-- Expose noide diode attributes from SPFRx:
+- Removed achievedPointingAz and achievedPointingEl
+- Exposed noide diode attributes from SPFRx:
+
   - noiseDiodeMode, periodicNoiseDiodePars, pseudoRandomNoiseDiodePars
 
 Version 3.0.1

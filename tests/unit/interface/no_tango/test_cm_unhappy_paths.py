@@ -1,7 +1,5 @@
 """Tests dish manager component manager unhappy paths for command handlers"""
 
-import re
-
 import pytest
 from ska_control_model import TaskStatus
 
@@ -42,23 +40,6 @@ def test_track_load_static_off_with_invalid_input(
     )
     assert result_code == TaskStatus.REJECTED
     assert message == "Expected 2 arguments (off_xel, off_el) but got 3 arg(s)."
-
-
-@pytest.mark.unit
-def test_validate_band_x_pointing_model_params_with_invalid_input(
-    component_manager: DishManagerComponentManager,
-) -> None:
-    """
-    Verify behaviour of validate_band_x_pointing_model_params() using invalid input.
-
-    :param component_manager: the component manager under test
-    """
-    with pytest.raises(
-        ValueError, match=re.escape("Expected 2 arguments (off_xel, off_el) but got 3 arg(s).")
-    ):
-        component_manager._validate_band_x_pointing_model_params(
-            [10.0, 20.0, 10.0],
-        )
 
 
 @pytest.mark.unit
@@ -107,7 +88,7 @@ def test_pseudo_random_noise_diode_pars_with_invalid_input(
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
-    with pytest.raises(ValueError, match=re.escape("Expected value of length 3 but got 2.")):
+    with pytest.raises(ValueError, match="Expected value of length 3 but got 2."):
         component_manager.set_pseudo_random_noise_diode_pars([1.0, 2.0])
 
 

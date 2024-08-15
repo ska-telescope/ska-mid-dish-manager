@@ -17,15 +17,23 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, DevFloat, DevString, DispLevel, InfoIt
+from tango import AttrWriteType, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_class import ImmediateSlowCommand
+from ska_mid_dish_manager.models.constants import (
+    BAND_POINTING_MODEL_PARAMS_LENGTH,
+    DEFAULT_DISH_ID,
+    DEFAULT_DS_MANAGER_TRL,
+    DEFAULT_SPFC_TRL,
+    DEFAULT_SPFRX_TRL,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
+    Device,
     DishMode,
     NoiseDiodeMode,
     PointingState,
@@ -34,6 +42,8 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackProgramMode,
     TrackTableLoadMode,
 )
+from ska_mid_dish_manager.release import ReleaseInfo
+from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
 from ska_mid_dish_manager.utils.decorators import record_mode_change_request
 from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,
@@ -67,10 +77,10 @@ class DishManager(SKAController):
     # -----------------
     # these values will be overwritten by values in
     # /charts/ska-mid-dish-manager/data in k8s deployment
-    DSDeviceFqdn = device_property(dtype=str, default_value="mid-dish/ds-manager/SKA001")
-    SPFDeviceFqdn = device_property(dtype=str, default_value="mid-dish/simulator-spfc/SKA001")
-    SPFRxDeviceFqdn = device_property(dtype=str, default_value="mid-dish/simulator-spfrx/SKA001")
-    DishId = device_property(dtype=str, default_value="SKA001")
+    DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
+    SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
+    SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
+    DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
 
     def _create_lrc_attributes(self) -> None:
         """
@@ -127,10 +137,18 @@ class DishManager(SKAController):
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
         """
+
+        self._release_info = ReleaseInfo(
+            ds_manager_address=self.DSDeviceFqdn,
+            spfc_address=self.SPFDeviceFqdn,
+            spfrx_address=self.SPFRxDeviceFqdn,
+        )
+        self._build_state = self._release_info.get_build_state()
+
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
-            self._update_connection_state_attrs,
+            self._connection_state_update,
             self._attr_quality_state_changed,
             self.get_name(),
             self.DSDeviceFqdn,
@@ -191,42 +209,51 @@ class DishManager(SKAController):
             self.SetKValueCommand(self.component_manager, self.logger),
         )
 
-    def _update_connection_state_attrs(self, attribute_name: str):
+    def _connection_state_update(self, device: Device):
+        if not hasattr(self, "component_manager"):
+            self.logger.warning("Init not completed, but communication state is being updated")
+            return
+
+        self._update_connection_state_attrs(device)
+        self._update_version_of_subdevice_on_success(device)
+
+    def _update_connection_state_attrs(self, device: Device):
         """
         Push change events on connection state attributes for
         subservient devices communication state changes.
         """
+        if device in self._device_to_comm_attr_map:
+            comms_state = self.component_manager.sub_component_managers[
+                device.value
+            ].communication_state
+            self.push_change_event(
+                self._device_to_comm_attr_map[device],
+                comms_state,
+            )
+            self.push_archive_event(
+                self._device_to_comm_attr_map[device],
+                comms_state,
+            )
 
-        if not hasattr(self, "component_manager"):
-            self.logger.warning("Init not completed, but communication state is being updated")
-            return
-        if attribute_name == "spfConnectionState":
-            self.push_change_event(
-                "spfConnectionState",
-                self.component_manager.sub_component_managers["SPF"].communication_state,
-            )
-            self.push_archive_event(
-                "spfConnectionState",
-                self.component_manager.sub_component_managers["SPF"].communication_state,
-            )
-        if attribute_name == "spfrxConnectionState":
-            self.push_change_event(
-                "spfrxConnectionState",
-                self.component_manager.sub_component_managers["SPFRX"].communication_state,
-            )
-            self.push_archive_event(
-                "spfrxConnectionState",
-                self.component_manager.sub_component_managers["SPFRX"].communication_state,
-            )
-        if attribute_name == "dsConnectionState":
-            self.push_change_event(
-                "dsConnectionState",
-                self.component_manager.sub_component_managers["DS"].communication_state,
-            )
-            self.push_archive_event(
-                "dsConnectionState",
-                self.component_manager.sub_component_managers["DS"].communication_state,
-            )
+    def _update_version_of_subdevice_on_success(self, device: Device):
+        """Update the version information of subdevice if connection is successful."""
+        if device in self._device_to_comm_attr_map:
+            comms_state = self.component_manager.sub_component_managers[
+                device.value
+            ].communication_state
+            if comms_state == CommunicationStatus.ESTABLISHED:
+                cm = self.component_manager.sub_component_managers[device.value]
+                try:
+                    if device == Device.DS:
+                        build_state = cm.read_attribute_value("buildState")
+                    elif device in [Device.SPF, Device.SPFRX]:
+                        build_state = cm.read_attribute_value("swVersions")
+
+                    self._build_state = self._release_info.update_build_state(device, build_state)
+                except (tango.DevFailed, AttributeError):
+                    self.logger.warning(
+                        "Failed to update build state information for [%s] device.", device
+                    )
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
         # Do not modify or push quality changes before initialization complete
@@ -325,6 +352,8 @@ class DishManager(SKAController):
             device._scan_i_d = ""
             device._ignore_spf = False
             device._ignore_spfrx = False
+            device._act_static_offset_value_xel = 0.0
+            device._act_static_offset_value_el = 0.0
             device._last_commanded_mode = ("0.0", "")
 
             device._b1_capability_state = CapabilityStates.UNKNOWN
@@ -342,6 +371,11 @@ class DishManager(SKAController):
             device._noise_diode_mode = NoiseDiodeMode.OFF
             device._periodic_noise_diode_pars = []
             device._pseudo_random_noise_diode_pars = []
+            device._device_to_comm_attr_map = {
+                Device.DS: "dsConnectionState",
+                Device.SPF: "spfConnectionState",
+                Device.SPFRX: "spfrxConnectionState",
+            }
 
             device.op_state_model.perform_action("component_standby")
 
@@ -380,6 +414,8 @@ class DishManager(SKAController):
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
+                "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
+                "actstaticoffsetvalueel": "actStaticOffsetValueEl",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -509,7 +545,7 @@ class DishManager(SKAController):
         return self._achieved_target_lock
 
     @attribute(
-        dtype=DevFloat,
+        dtype=float,
         access=AttrWriteType.READ_WRITE,
         doc="Indicates the SPFRx attenuation in the horizontal "
         "signal chain for the configuredband.",
@@ -527,7 +563,7 @@ class DishManager(SKAController):
         spfrx_cm.write_attribute_value("attenuationPolH", value)
 
     @attribute(
-        dtype=DevFloat,
+        dtype=float,
         access=AttrWriteType.READ_WRITE,
         doc="Indicates the SPFRx attenuation in the vertical "
         "signal chain for the configuredband.",
@@ -562,22 +598,37 @@ class DishManager(SKAController):
         return self._azimuth_over_wrap
 
     @attribute(
-        dtype=(DevFloat,),
-        max_dim_x=20,
-        access=AttrWriteType.READ_WRITE,
+        dtype=float,
+        doc="Actual cross-elevation static offset (arcsec)",
+        access=AttrWriteType.READ,
+    )
+    def actStaticOffsetValueXel(self) -> float:
+        """Indicate actual cross-elevation static offset in arcsec."""
+        return self._act_static_offset_value_xel
+
+    @attribute(
+        dtype=float,
+        doc="Actual elevation static offset (arcsec)",
+        access=AttrWriteType.READ,
+    )
+    def actStaticOffsetValueEl(self) -> float:
+        """Indicate actual elevation static offset in arcsec."""
+        return self._act_static_offset_value_el
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=BAND_POINTING_MODEL_PARAMS_LENGTH,
         doc="""
             Parameters for (local) Band 1 pointing models used by Dish to do pointing corrections.
 
             When writing to this attribute, the selected band for correction will be set to B1.
 
-            Band 1 pointing model parameters are:
+            Band pointing model parameters are:
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
-            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
-            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
-
-            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
-            values will be updated.
+            [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
+            [15] HESE4, [16] HECE8, [17] HESE8
         """,
+        access=AttrWriteType.READ_WRITE,
     )
     def band1PointingModelParams(self):
         """Returns the band1PointingModelParams"""
@@ -589,37 +640,25 @@ class DishManager(SKAController):
         self.logger.debug("band1PointingModelParams write method called with params %s", value)
 
         if hasattr(self, "component_manager"):
-            if "DS" in self.component_manager.sub_component_managers:
-                try:
-                    self.component_manager._validate_band_x_pointing_model_params(value)
-                    ds_com_man = self.component_manager.sub_component_managers["DS"]
-                    ds_com_man.write_attribute_value("band1PointingModelParams", value)
-                except tango.DevFailed:
-                    self.logger.exception("Could not reach DS to write band1PointingModelParams")
-                    raise
-                except ValueError:
-                    self.logger.exception("Incorrect params for band1PointingModelParams")
-                    raise
+            self.component_manager.update_pointing_model_params("band1PointingModelParams", value)
         else:
             self.logger.warning("No component manager to write band1PointingModelParams yet")
+            raise RuntimeError("Failed to write to band1PointingModelParams on DishManager")
 
     @attribute(
-        dtype=(DevFloat,),
-        max_dim_x=20,
-        access=AttrWriteType.READ_WRITE,
+        dtype=(float,),
+        max_dim_x=BAND_POINTING_MODEL_PARAMS_LENGTH,
         doc="""
             Parameters for (local) Band 2 pointing models used by Dish to do pointing corrections.
 
-            When writing to this attribute, the selected band for correction will be set to B2.
+            When writing to this attribute, the selected band for correction will be set to B1.
 
-            Band 2 pointing model parameters are:
+            Band pointing model parameters are:
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
-            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
-            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
-
-            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
-            values will be updated.
+            [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
+            [15] HESE4, [16] HECE8, [17] HESE8
         """,
+        access=AttrWriteType.READ_WRITE,
     )
     def band2PointingModelParams(self):
         """Returns the band2PointingModelParams"""
@@ -631,37 +670,25 @@ class DishManager(SKAController):
         self.logger.debug("band2PointingModelParams write method called with params %s", value)
 
         if hasattr(self, "component_manager"):
-            if "DS" in self.component_manager.sub_component_managers:
-                try:
-                    self.component_manager._validate_band_x_pointing_model_params(value)
-                    ds_com_man = self.component_manager.sub_component_managers["DS"]
-                    ds_com_man.write_attribute_value("band2PointingModelParams", value)
-                except tango.DevFailed:
-                    self.logger.exception("Could not reach DS to write band2PointingModelParams")
-                    raise
-                except ValueError:
-                    self.logger.exception("Incorrect params for band2PointingModelParams")
-                    raise
+            self.component_manager.update_pointing_model_params("band2PointingModelParams", value)
         else:
             self.logger.warning("No component manager to write band2PointingModelParams yet")
+            raise RuntimeError("Failed to write to band2PointingModelParams on DishManager")
 
     @attribute(
-        dtype=(DevFloat,),
-        max_dim_x=20,
-        access=AttrWriteType.READ_WRITE,
+        dtype=(float,),
+        max_dim_x=BAND_POINTING_MODEL_PARAMS_LENGTH,
         doc="""
             Parameters for (local) Band 3 pointing models used by Dish to do pointing corrections.
 
-            When writing to this attribute, the selected band for correction will be set to B3.
+            When writing to this attribute, the selected band for correction will be set to B1.
 
-            Band 3 pointing model parameters are:
+            Band pointing model parameters are:
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
-            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
-            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
-
-            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
-            values will be updated.
+            [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
+            [15] HESE4, [16] HECE8, [17] HESE8
         """,
+        access=AttrWriteType.READ_WRITE,
     )
     def band3PointingModelParams(self):
         """Returns the band3PointingModelParams"""
@@ -673,38 +700,25 @@ class DishManager(SKAController):
         self.logger.debug("band3PointingModelParams write method called with params %s", value)
 
         if hasattr(self, "component_manager"):
-            if "DS" in self.component_manager.sub_component_managers:
-                try:
-                    self.component_manager._validate_band_x_pointing_model_params(value)
-                    ds_com_man = self.component_manager.sub_component_managers["DS"]
-                    ds_com_man.write_attribute_value("band3PointingModelParams", value)
-                except tango.DevFailed:
-                    self.logger.exception("Could not reach DS to write band3PointingModelParams")
-                    raise
-                except ValueError:
-                    self.logger.exception("Incorrect params for band3PointingModelParams")
-                    raise
-
+            self.component_manager.update_pointing_model_params("band3PointingModelParams", value)
         else:
             self.logger.warning("No component manager to write band3PointingModelParams yet")
+            raise RuntimeError("Failed to write to band3PointingModelParams on DishManager")
 
     @attribute(
-        dtype=(DevFloat,),
-        max_dim_x=20,
-        access=AttrWriteType.READ_WRITE,
+        dtype=(float,),
+        max_dim_x=BAND_POINTING_MODEL_PARAMS_LENGTH,
         doc="""
             Parameters for (local) Band 4 pointing models used by Dish to do pointing corrections.
 
-            When writing to this attribute, the selected band for correction will be set to B4.
+            When writing to this attribute, the selected band for correction will be set to B1.
 
-            Band 4 pointing model parameters are:
+            Band pointing model parameters are:
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
-            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
-            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
-
-            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
-            values will be updated.
+            [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
+            [15] HESE4, [16] HECE8, [17] HESE8
         """,
+        access=AttrWriteType.READ_WRITE,
     )
     def band4PointingModelParams(self):
         """Returns the band4PointingModelParams"""
@@ -716,22 +730,13 @@ class DishManager(SKAController):
         self.logger.debug("band4PointingModelParams write method called with params %s", value)
 
         if hasattr(self, "component_manager"):
-            if "DS" in self.component_manager.sub_component_managers:
-                try:
-                    self.component_manager._validate_band_x_pointing_model_params(value)
-                    ds_com_man = self.component_manager.sub_component_managers["DS"]
-                    ds_com_man.write_attribute_value("band4PointingModelParams", value)
-                except tango.DevFailed:
-                    self.logger.exception("Could not reach DS to write band4PointingModelParams")
-                    raise
-                except ValueError:
-                    self.logger.exception("Incorrect params for band4PointingModelParams")
-                    raise
+            self.component_manager.update_pointing_model_params("band4PointingModelParams", value)
         else:
             self.logger.warning("No component manager to write band4PointingModelParams yet")
+            raise RuntimeError("Failed to write to band4PointingModelParams on DishManager")
 
     @attribute(
-        dtype=(DevFloat,),
+        dtype=(float,),
         max_dim_x=5,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 5a pointing models used by Dish to "
@@ -750,7 +755,7 @@ class DishManager(SKAController):
         self.push_archive_event("band5aPointingModelParams", value)
 
     @attribute(
-        dtype=(DevFloat,),
+        dtype=(float,),
         max_dim_x=5,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 5b pointing models used by Dish to "
@@ -982,7 +987,7 @@ class DishManager(SKAController):
         """Returns the frequencyResponse"""
         return self._frequency_response
 
-    @attribute(dtype=(DevFloat,), access=AttrWriteType.WRITE)
+    @attribute(dtype=(float,), access=AttrWriteType.WRITE)
     def noiseDiodeConfig(self):
         """Returns the noiseDiodeConfig"""
         return self._noise_diode_config
@@ -1188,7 +1193,7 @@ class DishManager(SKAController):
         return self._b5b_capability_state
 
     @attribute(
-        dtype=DevString,
+        dtype=str,
         access=AttrWriteType.READ_WRITE,
         doc="Report the scanID for Scan",
     )
@@ -1383,7 +1388,7 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
         dtype_out="DevVarLongStringArray",
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def AbortCommands(self) -> DevVarLongStringArrayType:
         """
         Empty out long running commands in queue.
@@ -1404,7 +1409,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand1(self, synchronise) -> DevVarLongStringArrayType:
         """
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1429,7 +1434,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand2(self, synchronise) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1456,7 +1461,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand3(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1475,7 +1480,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand4(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1496,7 +1501,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand5a(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1517,7 +1522,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand5b(self, synchronise):  # pylint: disable=unused-argument
         """
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1533,10 +1538,8 @@ class DishManager(SKAController):
         """Flushes the queue of time stamped commands."""
         raise NotImplementedError
 
-    @command(
-        dtype_in=DevString, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR
-    )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @command(dtype_in=str, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Scan(self, scanid) -> DevVarLongStringArrayType:
         """
         The Dish records the scanID for an ongoing scan
@@ -1549,7 +1552,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def EndScan(self) -> DevVarLongStringArrayType:
         """
         This command clears out the scan_id
@@ -1560,7 +1563,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
     def SetMaintenanceMode(self):
         """
@@ -1579,7 +1582,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
     def SetOperateMode(self) -> DevVarLongStringArrayType:
         """
@@ -1604,7 +1607,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
     def SetStandbyLPMode(self) -> DevVarLongStringArrayType:
         """
@@ -1636,7 +1639,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
     def SetStandbyFPMode(self) -> DevVarLongStringArrayType:
         """
@@ -1660,7 +1663,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
     def SetStowMode(self) -> DevVarLongStringArrayType:
         """
@@ -1686,7 +1689,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Slew(self, values):  # pylint: disable=unused-argument
         """
         Trigger the Dish to start moving to the commanded (Az,El) position.
@@ -1714,7 +1717,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Track(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1748,7 +1751,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def TrackStop(self) -> DevVarLongStringArrayType:
         """
         Implemented as a Long Running Command
@@ -1765,24 +1768,24 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @command(  # type: ignore[misc]
-        dtype_in="DevVarFloatArray",
+        dtype_in=(float,),
         dtype_out="DevVarLongStringArray",
         doc_in="""
-            Load the static offsets for the currently selected band for correction.
+            Load (global) static tracking offsets.
 
-            Pointing model parameters are:
-            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
-            [9] ABA, [10] ABphi, [11] CAobs, [12] IE, [13] ECEC, [14] ECES, [15] HECE4,
-            [16] HESE4, [17] HECE8, [18] HESE8, [19] Eobs
+            The offset is loaded immediately and is not cancelled
+            between tracks. The static offset introduces a positional adjustment to facilitate
+            reference pointing and the five-point calibration. The static offsets are added the
+            output of the interpolator before the correction of the static pointing model.
 
-            Note: To change the currently selected band for correction to B<N>, write to the
-            band<N>PointingModelParams attribute.
+            Note: If the static pointing correction is switched off, the static offsets remain as
+            an offset to the Azimuth and Elevation positions and need to be set to zero manually.
 
-            When writing we expect a list of 2 values. Namely, CAobs and Eobs. Only those two
-            values will be updated.
+            Static offset parameters are:
+            [0] Off_Xel, [1] Off_El
         """,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def TrackLoadStaticOff(self, values) -> DevVarLongStringArrayType:
         """
         Loads the given static pointing model offsets.
@@ -1832,7 +1835,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetKValue(self, value) -> DevVarLongStringArrayType:
         """
         This command sets the kValue on SPFRx.
@@ -1844,13 +1847,13 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def StopCommunication(self):
         """Stop communicating with monitored devices"""
         self.component_manager.stop_communicating()
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def StartCommunication(self):
         """Start communicating with monitored devices"""
         self.component_manager.start_communicating()
@@ -1861,7 +1864,7 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
         doc_out=("Retrieve the states of SPF, SPFRx" " and DS as DishManager sees it."),
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def GetComponentStates(self):
         """
         Get the current component states of subservient devices.
@@ -1882,7 +1885,7 @@ class DishManager(SKAController):
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
     )
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SyncComponentStates(self) -> None:
         """
         Sync each subservient device component state with its tango device

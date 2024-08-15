@@ -39,8 +39,15 @@ def test_track_load_static_off_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"TrackLoadStaticOff called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS  change to []"},
+        {
+            "progress": "Awaiting DS actstaticoffsetvaluexel, actstaticoffsetvalueel change to "
+            "1.0, 2.0"
+        },
         {"progress": "Commands: mocked sub-device-command-ids"},
+        {
+            "progress": "Awaiting actstaticoffsetvaluexel, actstaticoffsetvalueel change to "
+            "1.0, 2.0"
+        },
         {
             "progress": "TrackLoadStaticOff completed",
             "status": TaskStatus.COMPLETED,
