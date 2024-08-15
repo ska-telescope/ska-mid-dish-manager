@@ -905,9 +905,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         noise_diode_mode,
     ) -> None:
         """Set the noiseDiodeMode on the SPFRx."""
-        ds_cm = self.sub_component_managers["SPFRX"]
+        spfrx_cm = self.sub_component_managers["SPFRX"]
         try:
-            ds_cm.write_attribute_value("noiseDiodeMode", noise_diode_mode)
+            spfrx_cm.write_attribute_value("noiseDiodeMode", noise_diode_mode)
             self.logger.debug("Successfully updated noiseDiodeMode on SPFRx.")
         except (LostConnection, tango.DevFailed):
             self.logger.error("Failed to update noiseDiodeMode on SPFRx.")
@@ -929,9 +929,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ]
 
         if spfrx_operating_mode in [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.MAINTENANCE]:
-            ds_cm = self.sub_component_managers["SPFRX"]
+            spfrx_cm = self.sub_component_managers["SPFRX"]
             try:
-                ds_cm.write_attribute_value("periodicNoiseDiodePars", values)
+                spfrx_cm.write_attribute_value("periodicNoiseDiodePars", values)
                 self.logger.debug("Successfully updated periodicNoiseDiodePars on SPFRx.")
             except (LostConnection, tango.DevFailed):
                 self.logger.error("Failed to update periodicNoiseDiodePars on SPFRx.")
@@ -960,9 +960,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ]
 
         if spfrx_operating_mode in [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.MAINTENANCE]:
-            ds_cm = self.sub_component_managers["SPFRX"]
+            spfrx_cm = self.sub_component_managers["SPFRX"]
             try:
-                ds_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
+                spfrx_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
                 self.logger.debug("Successfully updated pseudoRandomNoiseDiodePars on SPFRx.")
             except (LostConnection, tango.DevFailed):
                 self.logger.error("Failed to update pseudoRandomNoiseDiodePars on SPFRx.")

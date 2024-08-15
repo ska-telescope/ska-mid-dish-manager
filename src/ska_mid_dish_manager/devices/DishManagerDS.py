@@ -339,9 +339,9 @@ class DishManager(SKAController):
             device._ds_connection_state = CommunicationStatus.NOT_ESTABLISHED
 
             # SPFRx noise diode attributes
-            device._noise_diode_mode = CommunicationStatus.NOT_ESTABLISHED
-            device._periodic_noise_diode_pars = CommunicationStatus.NOT_ESTABLISHED
-            device._pseudo_random_noise_diode_pars = CommunicationStatus.NOT_ESTABLISHED
+            device._noise_diode_mode = NoiseDiodeMode.OFF
+            device._periodic_noise_diode_pars = []
+            device._pseudo_random_noise_diode_pars = []
 
             device.op_state_model.perform_action("component_standby")
 
