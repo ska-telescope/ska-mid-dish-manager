@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 3.1.0
+*************
 - Updated `buildState` attribute to include version information of dish manager and subservient devices
 - Upgraded ska-mid-dish-simulators chart to v4.0.1
 - Upgraded ska-mid-ds-manager version to v2.0.0
