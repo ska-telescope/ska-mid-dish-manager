@@ -17,6 +17,7 @@ Version 4.0.0
 - Updated band<N>PointingModelParams usage
 - Added `lastCommandedMode` attribute to record the last mode change request
 - Removed achievedPointingAz and achievedPointingEl
+- Fixed missing events from sub-devices on the event consumer thread
 - Exposed noide diode attributes from SPFRx:
 
   - noiseDiodeMode, periodicNoiseDiodePars, pseudoRandomNoiseDiodePars
