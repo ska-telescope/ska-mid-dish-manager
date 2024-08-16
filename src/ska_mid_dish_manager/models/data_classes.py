@@ -5,7 +5,7 @@ from typing import Optional
 
 @dataclass
 class DeviceInfoDataClass:
-    """Format of spfc device information."""
+    """Format of subdevice information."""
 
     address: Optional[str] = ""
     version: Optional[str] = ""
