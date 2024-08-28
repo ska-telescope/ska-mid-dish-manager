@@ -215,10 +215,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Empty:
                 pass
 
-    def _event_consumer_cb(
-        self,
-        event_data: Optional[tango.EventData] = None,
-    ) -> None:
+    def _event_consumer_cb(self, event_data: tango.EventData) -> None:
         """Just log the error event
 
         :param event_data: data representing tango event
@@ -248,8 +245,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             received_timestamp,
             event_type,
             value,
-            errors,
             quality,
+            errors,
         )
 
     def run_device_command(

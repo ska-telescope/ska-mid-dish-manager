@@ -2,7 +2,7 @@
 
 import enum
 import json
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
@@ -45,17 +45,17 @@ class CommandMap:
         commands_for_sub_devices = {
             "SPF": {
                 "command": "SetStandbyLPMode",
-                "awaitedAttribute": "operatingmode",
+                "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [SPFOperatingMode.STANDBY_LP],
             },
             "SPFRX": {
                 "command": "SetStandbyMode",
-                "awaitedAttribute": "operatingmode",
+                "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
             },
             "DS": {
                 "command": "SetStandbyLPMode",
-                "awaitedAttribute": "operatingmode",
+                "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [DSOperatingMode.STANDBY_LP],
             },
         }
@@ -65,8 +65,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "SetStandbyLPMode",
-            "dishmode",
-            DishMode.STANDBY_LP,
+            ["dishmode"],
+            [DishMode.STANDBY_LP],
         )
 
     def set_standby_fp_mode(
@@ -79,7 +79,7 @@ class CommandMap:
             commands_for_sub_devices = {
                 "DS": {
                     "command": "SetStandbyFPMode",
-                    "awaitedAttribute": "operatingmode",
+                    "awaitedAttributes": ["operatingmode"],
                     "awaitedValuesList": [DSOperatingMode.STANDBY_FP],
                 }
             }
@@ -87,12 +87,12 @@ class CommandMap:
             commands_for_sub_devices = {
                 "SPF": {
                     "command": "SetOperateMode",
-                    "awaitedAttribute": "operatingmode",
+                    "awaitedAttributes": ["operatingmode"],
                     "awaitedValuesList": [SPFOperatingMode.OPERATE],
                 },
                 "DS": {
                     "command": "SetStandbyFPMode",
-                    "awaitedAttribute": "operatingmode",
+                    "awaitedAttributes": ["operatingmode"],
                     "awaitedValuesList": [DSOperatingMode.STANDBY_FP],
                 },
             }
@@ -102,8 +102,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "SetStandbyFPMode",
-            "dishmode",
-            DishMode.STANDBY_FP,
+            ["dishmode"],
+            [DishMode.STANDBY_FP],
         )
 
     def set_operate_mode(
@@ -123,12 +123,12 @@ class CommandMap:
         commands_for_sub_devices = {
             "SPF": {
                 "command": "SetOperateMode",
-                "awaitedAttribute": "operatingmode",
+                "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [SPFOperatingMode.OPERATE],
             },
             "DS": {
                 "command": "SetPointMode",
-                "awaitedAttribute": "operatingmode",
+                "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [DSOperatingMode.POINT],
             },
         }
@@ -138,8 +138,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "SetOperateMode",
-            "dishmode",
-            DishMode.OPERATE,
+            ["dishmode"],
+            [DishMode.OPERATE],
         )
 
     def track_cmd(
@@ -151,7 +151,7 @@ class CommandMap:
         commands_for_sub_devices = {
             "DS": {
                 "command": "Track",
-                "awaitedAttribute": "pointingstate",
+                "awaitedAttributes": ["pointingstate"],
                 "awaitedValuesList": [PointingState.TRACK],
             },
         }
@@ -161,8 +161,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "Track",
-            "pointingstate",
-            PointingState.TRACK,
+            ["pointingstate"],
+            [PointingState.TRACK],
         )
 
     def track_stop_cmd(
@@ -174,7 +174,7 @@ class CommandMap:
         commands_for_sub_devices = {
             "DS": {
                 "command": "TrackStop",
-                "awaitedAttribute": "pointingstate",
+                "awaitedAttributes": ["pointingstate"],
                 "awaitedValuesList": [PointingState.READY],
             },
         }
@@ -184,8 +184,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "TrackStop",
-            "pointingstate",
-            PointingState.READY,
+            ["pointingstate"],
+            [PointingState.READY],
         )
 
     def configure_band_cmd(
@@ -214,13 +214,13 @@ class CommandMap:
             "DS": {
                 "command": "SetIndexPosition",
                 "commandArgument": int(band_number),
-                "awaitedAttribute": "indexerposition",
+                "awaitedAttributes": ["indexerposition"],
                 "awaitedValuesList": [indexer_enum],
             },
             "SPFRX": {
                 "command": requested_cmd,
                 "commandArgument": synchronise,
-                "awaitedAttribute": "configuredband",
+                "awaitedAttributes": ["configuredband"],
                 "awaitedValuesList": [band_enum],
             },
         }
@@ -230,8 +230,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             requested_cmd,
-            "configuredband",
-            band_enum,
+            ["configuredband"],
+            [band_enum],
         )
 
     def slew(
@@ -242,7 +242,7 @@ class CommandMap:
             "DS": {
                 "command": "Slew",
                 "commandArgument": argin,
-                "awaitedAttribute": "pointingstate",
+                "awaitedAttributes": ["pointingstate"],
                 "awaitedValuesList": [PointingState.SLEW],
             },
         }
@@ -252,8 +252,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "Slew",
-            "pointingstate",
-            PointingState.SLEW,
+            ["pointingstate"],
+            [PointingState.SLEW],
         )
 
     # pylint: disable=unused-argument
@@ -271,15 +271,15 @@ class CommandMap:
             )
 
     def track_load_static_off(
-        self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None
+        self, off_xel, off_el, task_abort_event=None, task_callback: Optional[Callable] = None
     ):
         """Transition the dish to Track Load Static Off mode"""
         commands_for_sub_devices = {
             "DS": {
                 "command": "TrackLoadStaticOff",
-                "commandArgument": argin,
-                "awaitedAttribute": "",
-                "awaitedValuesList": [],
+                "commandArgument": [off_xel, off_el],
+                "awaitedAttributes": ["actstaticoffsetvaluexel", "actstaticoffsetvalueel"],
+                "awaitedValuesList": [off_xel, off_el],
             },
         }
 
@@ -288,8 +288,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "TrackLoadStaticOff",
-            "",
-            None,
+            ["actstaticoffsetvaluexel", "actstaticoffsetvalueel"],
+            [off_xel, off_el],
         )
 
     def _fan_out_cmd(self, task_callback, device, fan_out_args):
@@ -314,14 +314,20 @@ class CommandMap:
         if response == TaskStatus.FAILED:
             raise RuntimeError(command_id)
 
-        awaited_attribute = fan_out_args["awaitedAttribute"]
+        awaited_attributes = fan_out_args["awaitedAttributes"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
 
         # Report which attribute and value the sub device is waiting for
-        # e.g. Awaiting DS operatingmode change to [<DSOperatingMode.STANDBY_LP: 2>]
+        # e.g. Awaiting DEVICE attra, attrb change to VALUE_1, VALUE_2
         if awaited_values_list is not None:
+            values_print_string = self.convert_enums_to_names(awaited_values_list)
+            attributes_print_string = ", ".join(map(str, awaited_attributes))
+            values_print_string = ", ".join(map(str, values_print_string))
+
             task_callback(
-                progress=(f"Awaiting {device} {awaited_attribute} change to {awaited_values_list}")
+                progress=(
+                    f"Awaiting {device} {attributes_print_string} change to {values_print_string}"
+                )
             )
         return command_id
 
@@ -334,29 +340,41 @@ class CommandMap:
 
     def _report_fan_out_cmd_progress(self, task_callback, device, fan_out_args):
         """Report and update the progress of the fanned out command"""
-        awaited_attribute = fan_out_args["awaitedAttribute"]
+        awaited_attributes = fan_out_args["awaitedAttributes"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
-
-        component_attr_value = self._dish_manager_cm.sub_component_managers[
+        device_cm_component_state = self._dish_manager_cm.sub_component_managers[
             device
-        ].component_state[awaited_attribute]
+        ].component_state
 
-        if component_attr_value in awaited_values_list:
-            task_callback(
-                progress=f"{device} {awaited_attribute} changed to {awaited_values_list}"
-            )
-            return True
-        return False
+        got_all_awaited_values = True
+        for awaited_attribute, expected_val in zip(awaited_attributes, awaited_values_list):
+            component_state_attr_value = device_cm_component_state[awaited_attribute]
+
+            if component_state_attr_value == expected_val:
+                task_callback(progress=f"{device} {awaited_attribute} changed to {expected_val}")
+            else:
+                got_all_awaited_values = False
+        return got_all_awaited_values
+
+    def convert_enums_to_names(self, values) -> list[str]:
+        """Convert any enums in the given list to their names."""
+        enum_labels = []
+        for val in values:
+            if isinstance(val, enum.IntEnum):
+                enum_labels.append(val.name)
+            else:
+                enum_labels.append(val)
+        return enum_labels
 
     # pylint: disable=too-many-locals, too-many-branches
     def _run_long_running_command(
         self,
-        task_callback,
-        task_abort_event,
-        commands_for_sub_devices,
-        running_command,
-        awaited_event_attribute,
-        awaited_event_value,
+        task_callback: Callable,
+        task_abort_event: Any,
+        commands_for_sub_devices: dict,
+        running_command: str,
+        awaited_event_attributes: list[str],
+        awaited_event_values: list[Any],
     ):
         """Run the long running command and track progress"""
         assert task_callback, "task_callback has to be defined"
@@ -392,12 +410,8 @@ class CommandMap:
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 
-        awaited_event_value_print = awaited_event_value
-        if isinstance(awaited_event_value, enum.IntEnum):
-            awaited_event_value_print = awaited_event_value.name
-
         # If we're not waiting for anything, finish up
-        if awaited_event_value is None:
+        if awaited_event_values is None:
             task_callback(
                 progress=f"{running_command} completed",
                 status=TaskStatus.COMPLETED,
@@ -407,8 +421,12 @@ class CommandMap:
 
         # Report which attribute and value the dish manager is waiting for
         # e.g. Awaiting dishmode change to STANDBY_LP
+        awaited_event_values_print = self.convert_enums_to_names(awaited_event_values)
+
+        attributes_print_string = ", ".join(map(str, awaited_event_attributes))
+        values_print_string = ", ".join(map(str, awaited_event_values_print))
         task_callback(
-            progress=(f"Awaiting {awaited_event_attribute} change to {awaited_event_value_print}")
+            progress=(f"Awaiting {attributes_print_string} change to {values_print_string}")
         )
 
         for fan_out_args in commands_for_sub_devices.values():
@@ -456,9 +474,19 @@ class CommandMap:
             #     return
 
             # Check on dishmanager to see whether the LRC has completed
-            current_awaited_value = self._dish_manager_cm.component_state[awaited_event_attribute]
+            dm_cm_component_state = self._dish_manager_cm.component_state
 
-            if current_awaited_value != awaited_event_value:
+            got_all_awaited_values = True
+            for awaited_attribute, expected_val in zip(
+                awaited_event_attributes, awaited_event_values
+            ):
+                component_state_attr_value = dm_cm_component_state[awaited_attribute]
+
+                if component_state_attr_value != expected_val:
+                    got_all_awaited_values = False
+                    break
+
+            if not got_all_awaited_values:
                 task_abort_event.wait(timeout=1)
                 for device in commands_for_sub_devices.keys():
                     if not self.is_device_ignored(device):

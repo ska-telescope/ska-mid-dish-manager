@@ -172,10 +172,10 @@ class TangoDeviceMonitor:
         self._monitored_attributes = monitored_attributes
         self._event_queue = event_queue
         self._logger = logger
-
         self._run_count = 0
-        self._exit_thread_event: Event = None
-        self._attribute_subscription_thread: Thread = None
+        self._exit_thread_event: Event = Event()
+        # pylint: disable=bad-thread-instantiation
+        self._start_monitoring_thread: Thread = Thread()
 
         self._subscription_tracker = SubscriptionTracker(
             self._event_queue, update_communication_state, self._logger

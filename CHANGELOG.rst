@@ -8,6 +8,20 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 4.0.0
+*************
+- Updated `buildState` attribute to include version information of dish manager and subservient devices
+- Upgraded ska-mid-dish-simulators chart to v4.0.1
+- Upgraded ska-mid-ds-manager version to v2.0.0
+- Added actStaticOffsetValueXel and actStaticOffsetValueEl attributes
+- Updated band<N>PointingModelParams usage
+- Added `lastCommandedMode` attribute to record the last mode change request
+- Removed achievedPointingAz and achievedPointingEl
+- Fixed missing events from sub-devices on the event consumer thread
+- Exposed noide diode attributes from SPFRx:
+
+  - noiseDiodeMode, periodicNoiseDiodePars, pseudoRandomNoiseDiodePars
+
 Version 3.0.1
 *************
 - Updated the Stow Command to execute immediately when triggered and to abort all queued LRC tasks afterwards

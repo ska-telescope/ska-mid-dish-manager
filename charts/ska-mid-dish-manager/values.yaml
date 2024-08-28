@@ -48,7 +48,7 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 3.0.1
+    tag: 4.0.0
     pullPolicy: IfNotPresent
 
   # Setting fqdn assumes you are only deploying one Dish Manager
@@ -70,7 +70,6 @@ dishmanager:
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"
-
 
 dev_pod:
   enabled: false

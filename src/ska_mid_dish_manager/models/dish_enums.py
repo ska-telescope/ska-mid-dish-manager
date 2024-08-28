@@ -5,6 +5,12 @@
 import enum
 
 
+class Device(str, enum.Enum):
+    DS = "DS"
+    SPF = "SPF"
+    SPFRX = "SPFRX"
+
+
 class DishMode(enum.IntEnum):
     STARTUP = 0
     SHUTDOWN = 1
@@ -160,3 +166,11 @@ class SPFRxCapabilityStates(enum.IntEnum):
     STANDBY = 2
     CONFIGURE = 3
     OPERATE = 4
+
+
+class NoiseDiodeMode(enum.IntEnum):
+    """SPFRx noise diode mode enums."""
+
+    OFF = 0
+    PERIODIC = 1
+    PSEUDO_RANDOM = 2
