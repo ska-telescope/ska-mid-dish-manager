@@ -6,7 +6,7 @@ import logging
 from functools import partial
 from queue import Queue
 from threading import Event, Lock, Thread
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Dict, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus
@@ -42,7 +42,7 @@ class SubscriptionTracker:
         self._event_queue = event_queue
         self._update_communication_state = update_communication_state
         self._logger = logger
-        self._subscribed_attrs = {}
+        self._subscribed_attrs: Dict[str, int] = {}
         self._update_lock = Lock()
 
     def subscription_started(self, attribute_name: str, subscription_id: int) -> None:
@@ -56,7 +56,7 @@ class SubscriptionTracker:
         with self._update_lock:
             self._logger.info("Marking %s attribute as subscribed", attribute_name)
             self._subscribed_attrs[attribute_name] = subscription_id
-            self.update_subscription_status()
+            self.update_sub_device_communication_status()
 
     def subscription_stopped(self, attribute_name: str) -> None:
         """Mark attr as unsubscribed
@@ -67,7 +67,7 @@ class SubscriptionTracker:
         with self._update_lock:
             self._logger.info("Marking %s attribute as not subscribed", attribute_name)
             self._subscribed_attrs[attribute_name] = False
-            self.update_subscription_status()
+            self.update_sub_device_communication_status()
 
     def setup_event_subscription(
         self, attribute_name: str, device_proxy: tango.DeviceProxy
@@ -127,7 +127,7 @@ class SubscriptionTracker:
         """
         return all(self._subscribed_attrs.values())
 
-    def update_subscription_status(self) -> None:
+    def update_sub_device_communication_status(self) -> None:
         """Update Communication Status"""
         if self.all_subscribed():
             self._logger.info("Updating CommunicationStatus as ESTABLISHED")
@@ -175,7 +175,8 @@ class TangoDeviceMonitor:
         self._run_count = 0
         self._exit_thread_event: Event = Event()
         # pylint: disable=bad-thread-instantiation
-        self._start_monitoring_thread: Thread = Thread()
+        self._attribute_subscription_thread: Thread = Thread()
+        # self._attribute_subscription_thread: Thread = None
 
         self._subscription_tracker = SubscriptionTracker(
             self._event_queue, update_communication_state, self._logger
@@ -301,7 +302,7 @@ if __name__ == "__main__":
         """An empty function"""
         pass  # pylint:disable=unnecessary-pass
 
-    basic_logger = (logging.getLogger(__name__),)
+    basic_logger = logging.getLogger(__name__)
     tdm = TangoDeviceMonitor(
         "tango://localhost:45678/mid-dish/simulator-spf/ska001#dbase=no",
         DeviceProxyManager(basic_logger),
