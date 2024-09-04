@@ -65,6 +65,7 @@ class DSComponentManager(TangoDeviceComponentManager):
 
         # For achievedPointing, return immediately
         if "achievedpointing" in kwargs:
+            self.logger.error("More kwargs than expected %s", kwargs)
             super()._update_component_state(achievedpointing=kwargs["achievedpointing"])
             return
 
