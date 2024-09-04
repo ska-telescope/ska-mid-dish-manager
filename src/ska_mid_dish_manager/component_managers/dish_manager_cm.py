@@ -369,6 +369,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ):
             return
 
+        # Process coordinate updates as fast as possible
+        if "achievedpointing" in kwargs:
+            self._update_component_state(achievedpointing=kwargs["achievedpointing"])
+            return
+
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state

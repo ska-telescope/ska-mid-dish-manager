@@ -63,6 +63,11 @@ class DSComponentManager(TangoDeviceComponentManager):
     def _update_component_state(self, **kwargs) -> None:  # type: ignore
         """Update the int we get from the event to the Enum"""
 
+        # For achievedPointing, return immediately
+        if "achievedpointing" in kwargs:
+            super()._update_component_state(achievedpointing=kwargs["achievedpointing"])
+            return
+
         enum_conversion = {
             "operatingmode": DSOperatingMode,
             "powerstate": DSPowerState,
