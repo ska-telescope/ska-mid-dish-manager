@@ -371,7 +371,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Process coordinate updates as fast as possible
         if "achievedpointing" in kwargs:
-            self.logger.error("More kwargs than expected %s", kwargs)
             self._update_component_state(achievedpointing=kwargs["achievedpointing"])
             return
 
