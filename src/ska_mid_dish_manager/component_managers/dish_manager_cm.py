@@ -370,7 +370,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return
 
         # Process coordinate updates as fast as possible
-        if "achievedpointing" in kwargs:
+        if "achievedpointing" in kwargs and len(kwargs) == 1:
             self._update_component_state(achievedpointing=kwargs["achievedpointing"])
             return
 
