@@ -233,7 +233,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         self.direct_mapped_attrs = {
             "DS": [
-                "achievedPointing",
                 "desiredPointingAz",
                 "desiredPointingEl",
                 "trackInterpolationMode",
