@@ -6,7 +6,7 @@ import logging
 from functools import partial
 from queue import Queue
 from threading import Event, Lock, Thread
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus
@@ -56,7 +56,7 @@ class SubscriptionTracker:
         with self._update_lock:
             self._logger.info("Marking %s attribute as subscribed", attribute_name)
             self._subscribed_attrs[attribute_name] = subscription_id
-            self.update_sub_device_communication_status()
+            self.sync_communication_to_subscription()
 
     def subscription_stopped(self, attribute_name: str) -> None:
         """Mark attr as unsubscribed
@@ -67,7 +67,7 @@ class SubscriptionTracker:
         with self._update_lock:
             self._logger.info("Marking %s attribute as not subscribed", attribute_name)
             self._subscribed_attrs[attribute_name] = False
-            self.update_sub_device_communication_status()
+            self.sync_communication_to_subscription()
 
     def setup_event_subscription(
         self, attribute_name: str, device_proxy: tango.DeviceProxy
@@ -115,10 +115,9 @@ class SubscriptionTracker:
                         attribute_name,
                         device_proxy.dev_name(),
                     )
-                self.subscription_stopped(attribute_name)
+                else:
+                    self.subscription_stopped(attribute_name)
 
-    # Do we want to tell the world we arent talking to the
-    # sub system because we cant subscribe to an attr?
     def all_subscribed(self) -> bool:
         """Check if all attributes have been subscribed
 
@@ -127,7 +126,7 @@ class SubscriptionTracker:
         """
         return all(self._subscribed_attrs.values())
 
-    def update_sub_device_communication_status(self) -> None:
+    def sync_communication_to_subscription(self) -> None:
         """Update Communication Status"""
         if self.all_subscribed():
             self._logger.info("Updating CommunicationStatus as ESTABLISHED")
@@ -173,10 +172,8 @@ class TangoDeviceMonitor:
         self._event_queue = event_queue
         self._logger = logger
         self._run_count = 0
-        self._exit_thread_event: Event = Event()
-        # pylint: disable=bad-thread-instantiation
-        self._attribute_subscription_thread: Thread = Thread()
-        # self._attribute_subscription_thread: Thread = None
+        self._exit_thread_event: Optional[Event] = None
+        self._attribute_subscription_thread: Optional[Thread] = None
 
         self._subscription_tracker = SubscriptionTracker(
             self._event_queue, update_communication_state, self._logger
@@ -184,16 +181,19 @@ class TangoDeviceMonitor:
 
     def stop_monitoring(self) -> None:
         """Close all live attribute subscriptions"""
-        if self._attribute_subscription_thread:
-            # Stop any existing thread with live event subscriptions
-            if self._attribute_subscription_thread.is_alive():
-                self._exit_thread_event.set()
-                self._attribute_subscription_thread.join()
-                self._logger.info("Stopped monitoring threads on %s", self._trl)
-                # undo subscriptions and inform client we have no comms to the device server
-                device_proxy = self._tango_device_proxy(self._trl)
-                with tango.EnsureOmniThread():
-                    self._subscription_tracker.clear_subscriptions(device_proxy)
+        if (
+            self._attribute_subscription_thread is not None
+            and self._exit_thread_event is not None
+            and self._attribute_subscription_thread.is_alive()
+        ):
+            # Stop any existing thread performing attribute event subscriptions
+            self._exit_thread_event.set()
+            self._attribute_subscription_thread.join()
+            self._logger.info("Stopped monitoring thread on %s", self._trl)
+            # undo subscriptions and inform client we have no comms to the device server
+            with tango.EnsureOmniThread():
+                device_proxy = self._tango_device_proxy(self._trl, self._exit_thread_event)
+                self._subscription_tracker.clear_subscriptions(device_proxy)
 
     def _verify_connection_up(
         self, on_verified_callback: Callable, exit_thread_event: Event
@@ -211,7 +211,7 @@ class TangoDeviceMonitor:
 
         while not exit_thread_event.is_set():
             with tango.EnsureOmniThread():
-                self._tango_device_proxy(self._trl)
+                self._tango_device_proxy(self._trl, exit_thread_event)
             on_verified_callback(exit_thread_event)
             return
 
@@ -222,9 +222,7 @@ class TangoDeviceMonitor:
         monitoring threads are removed and recreated.
         """
         self._run_count += 1
-
         self.stop_monitoring()
-
         self._exit_thread_event = Event()
 
         self._attribute_subscription_thread = Thread(
@@ -272,7 +270,6 @@ class TangoDeviceMonitor:
                     )
 
                     # Keep thread alive while the events are being processed
-                    # is this necessary?
                     while not exit_thread_event.wait(timeout=SLEEP_BETWEEN_EVENTS):
                         pass
                 except tango.DevFailed:

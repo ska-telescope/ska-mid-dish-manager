@@ -119,7 +119,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         monitored attributes on the device and the component state.
         """
         with tango.EnsureOmniThread():
-            device_proxy = self._tango_device_proxy(self._trl)
+            device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
             monitored_attribute_values = {}
             for monitored_attribute in self._monitored_attributes:
                 monitored_attribute = monitored_attribute.lower()
@@ -301,7 +301,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             command_arg,
         )
         with tango.EnsureOmniThread():
-            device_proxy = self._tango_device_proxy(self._trl)
+            device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
             result = None
             try:
                 result = device_proxy.command_inout(command_name, command_arg)
@@ -330,7 +330,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._trl,
         )
         with tango.EnsureOmniThread():
-            device_proxy = self._tango_device_proxy(self._trl)
+            device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
             try:
                 result = device_proxy.read_attribute(attribute_name)
             except tango.DevFailed:
@@ -358,7 +358,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
 
         with tango.EnsureOmniThread():
-            device_proxy = self._tango_device_proxy(self._trl)
+            device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
             result = None
             try:
                 result = device_proxy.write_attribute(attribute_name, attribute_value)

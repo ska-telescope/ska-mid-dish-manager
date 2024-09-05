@@ -1,7 +1,6 @@
 """A factory for creating and managing tango device proxies"""
 
 import logging
-import time
 from threading import Event
 from typing import Any, Dict, Optional
 
@@ -19,16 +18,15 @@ class DeviceProxyManager:
     """
 
     def __init__(self, logger: logging.Logger):
-        self.logger = logger
+        self._logger = logger
         self.device_proxies: Dict[str, tango.DeviceProxy] = {}
 
     def __call__(self, trl: str, thread_event: Optional[Event] = None) -> Any:
         device_proxy = self.device_proxies.get(trl)
 
-        # import pdb; pdb.set_trace()
-        if device_proxy:
+        if device_proxy is not None:
             if not self._is_tango_device_running(device_proxy):
-                self._wait_for_device(device_proxy)
+                self._wait_for_device(device_proxy, thread_event=thread_event)
             return device_proxy
 
         device_proxy = self.create_tango_device_proxy(trl, thread_event=thread_event)
@@ -45,7 +43,7 @@ class DeviceProxyManager:
         try:
             tango_device_proxy.ping()
         except tango.DevFailed:
-            self.logger.exception(f"Failed to ping device proxy: {tango_device_proxy.dev_name()}")
+            self._logger.exception(f"Failed to ping device proxy: {tango_device_proxy.dev_name()}")
             is_device_running = False
         else:
             is_device_running = True
@@ -55,7 +53,7 @@ class DeviceProxyManager:
     def _wait_for_device(
         self,
         tango_device_proxy: tango.DeviceProxy,
-        retry_time: float = 2,
+        retry_time: float = 0.5,
         thread_event: Optional[Event] = None,
     ) -> None:
         """
@@ -66,28 +64,28 @@ class DeviceProxyManager:
         :type tango_device_proxy: tango.DeviceProxy
         :param retry_time: waits between reconnection attempts
         :type retry_time: int
+        :param thread_event: communicate with thread from a signal
+        :type thread_event: threading.Event
 
-        :returns: is_device_connected (boolean)
+        :returns: None
         """
         is_device_connected = False
-        while not is_device_connected:
+        while not is_device_connected and (thread_event and not thread_event.is_set()):
             try:
                 tango_device_proxy.reconnect(True)
             except tango.DevFailed:
-                self.logger.exception(
+                self._logger.exception(
                     f"Failed to reconnect to device proxy: {tango_device_proxy.dev_name()}"
                 )
-                self.logger.debug(f"Attempting reconnection to the device proxy in {retry_time}s")
+                self._logger.debug(f"Attempting reconnection to the device proxy in {retry_time}s")
                 if thread_event:
                     thread_event.wait(timeout=retry_time)
-                    continue
-                time.sleep(retry_time)
             else:
                 is_device_connected = True
 
     def create_tango_device_proxy(
-        self, trl: str, retry_time: float = 2, thread_event: Optional[Event] = None
-    ) -> tango.DeviceProxy:
+        self, trl: str, retry_time: float = 0.5, thread_event: Optional[Event] = None
+    ) -> Any:
         """
         Wait until it the sub component manager has established a connection
         with the device server and/or for the device server to be up and running.
@@ -96,29 +94,33 @@ class DeviceProxyManager:
         :type tango_device_proxy: tango.DeviceProxy
         :param retry_time: waits between reconnection attempts
         :type retry_time: int
+        :param thread_event: communicate with thread from a signal
+        :type thread_event: threading.Event
 
-        :returns: is_device_connected (boolean)
+        :returns: device_proxy (tango.DeviceProxy | None)
         """
-        # import pdb; pdb.set_trace()
+        device_proxy = None
         proxy_created = False
-        try_count = 0
-        while not proxy_created:
+        try_count = 1
+        while not proxy_created and (thread_event and not thread_event.is_set()):
             try:
                 device_proxy = tango.DeviceProxy(trl)
                 proxy_created = True
             except tango.DevFailed:
-                self.logger.exception(f"An error occured creating a device proxy to {trl}")
-                self.logger.debug(
+                self._logger.exception(f"An error occured creating a device proxy to {trl}")
+                self._logger.debug(
                     f"Try number {try_count}: failed to connect to tango device server"
                     f" {trl}, retrying in {retry_time}s"
                 )
                 try_count += 1
                 if thread_event:
                     thread_event.wait(timeout=retry_time)
-                    continue
-                time.sleep(retry_time)
+
+        if device_proxy is None:
+            self._logger.debug(f"DeviceProxy to {trl} was not created. NoneType returned")
+            return device_proxy
 
         if not self._is_tango_device_running(device_proxy):
-            self._wait_for_device(device_proxy)
+            self._wait_for_device(device_proxy, thread_event=thread_event)
         self.device_proxies[trl] = device_proxy
         return device_proxy

@@ -2,6 +2,7 @@
 """Unit tests checking generic component manager behaviour."""
 
 import logging
+import time
 from queue import Empty
 from unittest import mock
 
@@ -15,15 +16,17 @@ LOGGER = logging.getLogger(__name__)
 
 
 # pylint: disable=invalid-name, missing-function-docstring
-# @pytest.mark.timeout(10)
-# @pytest.mark.forked
+@pytest.mark.timeout(5)
+@pytest.mark.forked
 @pytest.mark.unit
 def test_component_manager_continues_reconnecting_when_device_is_unreachable(caplog):
     caplog.set_level(logging.DEBUG)
     tc_manager = TangoDeviceComponentManager("fake/fqdn/1", LOGGER, ("fake_attr",))
     tc_manager.start_communicating()
-    while "An error occured creating a device proxy to fake/fqdn/1" not in caplog.text:
-        pass
+    retry_log = "failed to connect to tango device server fake/fqdn/1, retrying in"
+    while retry_log not in caplog.text:
+        time.sleep(0.5)
+
     assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
     tc_manager.stop_communicating()
 
@@ -93,13 +96,16 @@ def test_unhappy_path(patched_dev_factory, caplog):
     tc_manager.start_communicating()
     # Wait a bit
     try:
-        tc_manager._events_queue.get(timeout=6)
+        tc_manager._events_queue.get(timeout=2)
     except Empty:
         pass
     logs = [record.message for record in caplog.records]
-    for count in ("0", "1", "2"):
-        # assert f"Tango error on a/b/c for attr {the_attr}, try number {count}" in logs
-        assert f"Cannot connect to a/b/c try number {count}" in logs
+    for count in ("1", "2", "3"):
+        # retry time to be an arg when backloop is implemented
+        assert (
+            f"Try number {count}: failed to connect to tango device server a/b/c, retrying in 0.5s"
+            in logs
+        )
 
 
 @pytest.mark.unit
