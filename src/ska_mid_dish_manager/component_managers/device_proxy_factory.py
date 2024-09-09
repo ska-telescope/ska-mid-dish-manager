@@ -33,7 +33,8 @@ class DeviceProxyManager:
         return device_proxy
 
     def _is_tango_device_running(self, tango_device_proxy: tango.DeviceProxy) -> bool:
-        """Checks if the TANGO device server is running.
+        """
+        Checks if the TANGO device server is running.
 
         :param tango_device_proxy: a client to the device server
         :type tango_device_proxy: tango.DeviceProxy

@@ -16,7 +16,8 @@ from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceP
 
 
 def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
-    """Connection check decorator.
+    """
+    Connection check decorator.
 
     This is a workaround for decorators in classes.
 
@@ -109,7 +110,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._component_state[monitored_attribute] = 0
 
     def update_state_from_monitored_attributes(self) -> None:
-        """Update the component state by reading the monitored attributes
+        """
+        Update the component state by reading the monitored attributes
 
         When an attribute on the device does not match the component_state
         it won't update unless it changes value (changes are updated via
@@ -118,8 +120,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         This is a convenience method that can be called to sync up the
         monitored attributes on the device and the component state.
         """
+        device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
         with tango.EnsureOmniThread():
-            device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
             monitored_attribute_values = {}
             for monitored_attribute in self._monitored_attributes:
                 monitored_attribute = monitored_attribute.lower()
@@ -135,7 +137,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._update_component_state(**monitored_attribute_values)
 
     def _update_state_from_event(self, event_data: tango.EventData) -> None:
-        """Update component state as the change events come in.
+        """
+        Update component state as the change events come in.
 
         :param event_data: Tango event
         :type event_data: tango.EventData
@@ -176,7 +179,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._event_consumer_thread.join()
 
     def _start_event_consumer_thread(self) -> None:
-        """Start the event consumer thread.
+        """
+        Start the event consumer thread.
 
         This method is idempotent. When called the existing (if any)
         event consumer thread is removed and recreated.
@@ -216,7 +220,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 pass
 
     def _event_consumer_cb(self, event_data: tango.EventData) -> None:
-        """Just log the error event
+        """
+        Just log the error event
 
         :param event_data: data representing tango event
         :type event_data: tango.EventData
@@ -300,9 +305,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._trl,
             command_arg,
         )
+        device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
+        result = None
         with tango.EnsureOmniThread():
-            device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
-            result = None
             try:
                 result = device_proxy.command_inout(command_name, command_arg)
             except tango.DevFailed:
@@ -329,8 +334,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attribute_name,
             self._trl,
         )
+        device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
         with tango.EnsureOmniThread():
-            device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
             try:
                 result = device_proxy.read_attribute(attribute_name)
             except tango.DevFailed:
@@ -357,8 +362,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._trl,
         )
 
+        device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
         with tango.EnsureOmniThread():
-            device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
             result = None
             try:
                 result = device_proxy.write_attribute(attribute_name, attribute_value)

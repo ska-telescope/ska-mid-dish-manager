@@ -26,7 +26,8 @@ class SubscriptionTracker:
         update_communication_state: Callable,
         logger: logging.Logger,
     ):
-        """Keep track of which attributes has been subscribed to.
+        """
+        Keep track of which attributes has been subscribed to.
 
         Set communication_state to ESTABLISHED only when all are subscribed.
         Set NOT_ESTABLISHED otherwise.
@@ -46,7 +47,8 @@ class SubscriptionTracker:
         self._update_lock = Lock()
 
     def subscription_started(self, attribute_name: str, subscription_id: int) -> None:
-        """Mark attr as subscribed
+        """
+        Mark attr as subscribed
 
         :param attribute_name: The attribute name
         :type attribute_name: str
@@ -59,7 +61,8 @@ class SubscriptionTracker:
             self.sync_communication_to_subscription()
 
     def subscription_stopped(self, attribute_name: str) -> None:
-        """Mark attr as unsubscribed
+        """
+        Mark attr as unsubscribed
 
         :param attribute_name: The attribute name
         :type attribute_name: str
@@ -74,52 +77,51 @@ class SubscriptionTracker:
     ) -> None:
         """
         Subscribe to change events on the device server
-
-        Note: Wrap calls in tango.EnsureOmniThread
         """
 
         def _event_reaction(events_queue: Queue, tango_event: tango.EventData) -> None:
             events_queue.put(tango_event)
 
         event_reaction_cb = partial(_event_reaction, self._event_queue)
-        try:
-            subscription_id = device_proxy.subscribe_event(
-                attribute_name,
-                tango.EventType.CHANGE_EVENT,
-                event_reaction_cb,
-            )
-        except tango.DevFailed as err:
-            raise err
+        with tango.EnsureOmniThread():
+            try:
+                subscription_id = device_proxy.subscribe_event(
+                    attribute_name,
+                    tango.EventType.CHANGE_EVENT,
+                    event_reaction_cb,
+                )
+            except tango.DevFailed as err:
+                raise err
 
         self.subscription_started(attribute_name, subscription_id)
 
     def clear_subscriptions(self, device_proxy: tango.DeviceProxy) -> None:
         """
         Set all attrs as not subscribed
-
-        Note: Wrap calls in tango.EnsureOmniThread
         """
-        for attribute_name, subscription_id in self._subscribed_attrs.items():
-            if self._subscribed_attrs.get(attribute_name) is not None:
-                try:
-                    device_proxy.unsubscribe_event(subscription_id)
-                    self._logger.info(
-                        "Unsubscribed from %s attr on %s",
-                        attribute_name,
-                        device_proxy.dev_name(),
-                    )
-                except tango.DevFailed as err:
-                    self._logger.exception(err)
-                    self._logger.info(
-                        "Could not unsubscribe from %s attr on %s",
-                        attribute_name,
-                        device_proxy.dev_name(),
-                    )
-                else:
-                    self.subscription_stopped(attribute_name)
+        with tango.EnsureOmniThread():
+            for attribute_name, subscription_id in self._subscribed_attrs.items():
+                if self._subscribed_attrs.get(attribute_name) is not None:
+                    try:
+                        device_proxy.unsubscribe_event(subscription_id)
+                        self._logger.info(
+                            "Unsubscribed from %s attr on %s",
+                            attribute_name,
+                            device_proxy.dev_name(),
+                        )
+                    except tango.DevFailed as err:
+                        self._logger.exception(err)
+                        self._logger.info(
+                            "Could not unsubscribe from %s attr on %s",
+                            attribute_name,
+                            device_proxy.dev_name(),
+                        )
+                    else:
+                        self.subscription_stopped(attribute_name)
 
     def all_subscribed(self) -> bool:
-        """Check if all attributes have been subscribed
+        """
+        Check if all attributes have been subscribed
 
         :return: all attributes subscribed
         :rtype: bool
@@ -191,9 +193,8 @@ class TangoDeviceMonitor:
             self._attribute_subscription_thread.join()
             self._logger.info("Stopped monitoring thread on %s", self._trl)
             # undo subscriptions and inform client we have no comms to the device server
-            with tango.EnsureOmniThread():
-                device_proxy = self._tango_device_proxy(self._trl, self._exit_thread_event)
-                self._subscription_tracker.clear_subscriptions(device_proxy)
+            device_proxy = self._tango_device_proxy(self._trl, self._exit_thread_event)
+            self._subscription_tracker.clear_subscriptions(device_proxy)
 
     def _verify_connection_up(
         self, on_verified_callback: Callable, exit_thread_event: Event
@@ -210,13 +211,13 @@ class TangoDeviceMonitor:
         self._logger.info("Check %s is up", self._trl)
 
         while not exit_thread_event.is_set():
-            with tango.EnsureOmniThread():
-                self._tango_device_proxy(self._trl, exit_thread_event)
+            self._tango_device_proxy(self._trl, exit_thread_event)
             on_verified_callback(exit_thread_event)
             return
 
     def monitor(self) -> None:
-        """Kick off device monitoring
+        """
+        Kick off device monitoring
 
         This method is idempotent. When called the existing (if any)
         monitoring threads are removed and recreated.
@@ -237,7 +238,8 @@ class TangoDeviceMonitor:
 
     # pylint:disable=too-many-arguments
     def _monitor_attributes_in_a_thread(self, exit_thread_event: Event) -> None:
-        """Monitor all attributes
+        """
+        Monitor all attributes
 
         :param exit_thread_event: Signals when to exit the thread
         :type exit_thread_event: Event
@@ -247,49 +249,46 @@ class TangoDeviceMonitor:
         retry_counts = {name: 0 for name in self._monitored_attributes}
         # set up all subscriptions
         while not exit_thread_event.is_set():
-            with tango.EnsureOmniThread():
-                device_proxy = self._tango_device_proxy(self._trl, exit_thread_event)
-                try:
-                    # Subscribe to all monitored attributes
-                    for attribute_name in self._monitored_attributes:
-                        if exit_thread_event.is_set():
-                            return
+            device_proxy = self._tango_device_proxy(self._trl, exit_thread_event)
+            try:
+                # Subscribe to all monitored attributes
+                for attribute_name in self._monitored_attributes:
+                    if exit_thread_event.is_set():
+                        return
 
-                        self._subscription_tracker.setup_event_subscription(
-                            attribute_name, device_proxy
-                        )
-
-                        self._logger.debug(
-                            "Subscribed on %s to attr %s", self._trl, attribute_name
-                        )
-
-                    self._logger.info(
-                        "Change event subscriptions on %s successfully set up for %s",
-                        self._trl,
-                        self._monitored_attributes,
+                    self._subscription_tracker.setup_event_subscription(
+                        attribute_name, device_proxy
                     )
 
-                    # Keep thread alive while the events are being processed
-                    while not exit_thread_event.wait(timeout=SLEEP_BETWEEN_EVENTS):
-                        pass
-                except tango.DevFailed:
-                    self._logger.exception(
-                        (
-                            f"Encountered tango error on {self._trl} for {attribute_name} "
-                            f"attribute subscription, try number {retry_counts[attribute_name]}"
-                        )
+                    self._logger.debug("Subscribed on %s to attr %s", self._trl, attribute_name)
+
+                self._logger.info(
+                    "Change event subscriptions on %s successfully set up for %s",
+                    self._trl,
+                    self._monitored_attributes,
+                )
+
+                # Keep thread alive while the events are being processed
+                while not exit_thread_event.wait(timeout=SLEEP_BETWEEN_EVENTS):
+                    pass
+            except tango.DevFailed:
+                self._logger.exception(
+                    (
+                        f"Encountered tango error on {self._trl} for {attribute_name} "
+                        f"attribute subscription, try number {retry_counts[attribute_name]}"
                     )
-                    retry_counts[attribute_name] += 1
-                    exit_thread_event.wait(timeout=RETRY_TIME)
-                except Exception:  # pylint: disable=W0703
-                    self._logger.exception(
-                        (
-                            f"Encountered python error on {self._trl} for {attribute_name} "
-                            f"attribute subscription, try number {retry_counts[attribute_name]}"
-                        )
+                )
+                retry_counts[attribute_name] += 1
+                exit_thread_event.wait(timeout=RETRY_TIME)
+            except Exception:  # pylint: disable=W0703
+                self._logger.exception(
+                    (
+                        f"Encountered python error on {self._trl} for {attribute_name} "
+                        f"attribute subscription, try number {retry_counts[attribute_name]}"
                     )
-                    retry_counts[attribute_name] += 1
-                    exit_thread_event.wait(timeout=RETRY_TIME)
+                )
+                retry_counts[attribute_name] += 1
+                exit_thread_event.wait(timeout=RETRY_TIME)
 
 
 if __name__ == "__main__":
