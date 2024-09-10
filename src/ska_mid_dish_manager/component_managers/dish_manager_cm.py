@@ -723,7 +723,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Track the commanded pointing position"""
 
         def _is_track_cmd_allowed():
-            if self.component_state["dishmode"] != DishMode.OPERATE:
+            if (
+                self.component_state["dishmode"] != DishMode.OPERATE
+                or self.component_state["pointingstate"] != PointingState.READY
+            ):
                 return False
             return True
 
