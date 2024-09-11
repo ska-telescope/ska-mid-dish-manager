@@ -886,7 +886,7 @@ class DishManager(SKAController):
     )
     def desiredPointingAz(self) -> list[float]:
         """Returns the azimuth desiredPointing."""
-        return self.component_manager.component_state.get("desiredpointingaz", [])
+        return self.component_manager.component_state.get("desiredpointingaz", [0.0, 0.0])
 
     @attribute(
         max_dim_x=2,
@@ -897,7 +897,7 @@ class DishManager(SKAController):
     )
     def desiredPointingEl(self) -> list[float]:
         """Returns the elevation desiredPointing."""
-        return self.component_manager.component_state.get("desiredpointingel", [])
+        return self.component_manager.component_state.get("desiredpointingel", [0.0, 0.0])
 
     @attribute(
         dtype=DishMode,
