@@ -724,11 +724,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         def _is_track_cmd_allowed():
             if (
-                self.component_state["dishmode"] != DishMode.OPERATE
-                or self.component_state["pointingstate"] != PointingState.READY
+                self.component_state["dishmode"] == DishMode.OPERATE
+                and self.component_state["pointingstate"] == PointingState.READY
             ):
-                return False
-            return True
+                return True
+            return False
 
         status, response = self.submit_task(
             self._command_map.track_cmd,
