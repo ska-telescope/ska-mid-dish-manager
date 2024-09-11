@@ -123,6 +123,7 @@ def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
     [[_], [unique_id]] = device_proxy.Track()
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
+
 # pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
