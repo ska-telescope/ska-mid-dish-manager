@@ -331,6 +331,7 @@ class DishManager(SKAController):
             device._poly_track = []
             device._power_state = PowerState.LOW
             device._program_track_table = []
+            device._track_interpolation_mode = TrackInterpolationMode.SPLINE
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
             device._last_commanded_mode = ("0.0", "")
@@ -1044,9 +1045,7 @@ class DishManager(SKAController):
     )
     def trackInterpolationMode(self):
         """Returns the trackInterpolationMode"""
-        return self.component_manager.component_state.get(
-            "trackinterpolationmode", TrackInterpolationMode.SPLINE
-        )
+        return self._track_interpolation_mode
 
     @trackInterpolationMode.write
     def trackInterpolationMode(self, value):
