@@ -142,6 +142,7 @@ class CommandMap:
             [DishMode.OPERATE],
         )
 
+    # pylint: disable = no-value-for-parameter
     def track_cmd(
         self,
         task_abort_event=None,
@@ -151,8 +152,6 @@ class CommandMap:
         commands_for_sub_devices = {
             "DS": {
                 "command": "Track",
-                "awaitedAttributes": ["pointingstate"],
-                "awaitedValuesList": [PointingState.TRACK],
             },
         }
 
@@ -161,8 +160,6 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "Track",
-            ["pointingstate"],
-            [PointingState.TRACK],
         )
 
     def track_stop_cmd(
@@ -234,6 +231,7 @@ class CommandMap:
             [band_enum],
         )
 
+    # pylint: disable = no-value-for-parameter
     def slew(
         self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None
     ):
@@ -242,8 +240,6 @@ class CommandMap:
             "DS": {
                 "command": "Slew",
                 "commandArgument": argin,
-                "awaitedAttributes": ["pointingstate"],
-                "awaitedValuesList": [PointingState.SLEW],
             },
         }
 
@@ -252,8 +248,6 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "Slew",
-            ["pointingstate"],
-            [PointingState.SLEW],
         )
 
     # pylint: disable=unused-argument
@@ -413,11 +407,15 @@ class CommandMap:
         # If we're not waiting for anything, finish up
         if awaited_event_values is None:
             task_callback(
-                progress=f"{running_command} completed",
-                status=TaskStatus.COMPLETED,
-                result=(ResultCode.OK, f"{running_command} completed"),
+                progress=f"{running_command} started",
+                status=TaskStatus.IN_PROGRESS,
+                result=(ResultCode.OK, f"{running_command} started"),
             )
             return
+
+        self.logger.info(
+            "Command called successfully, manually check the completion status of the task"
+        )
 
         # Report which attribute and value the dish manager is waiting for
         # e.g. Awaiting dishmode change to STANDBY_LP
