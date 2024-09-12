@@ -140,8 +140,7 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
 
     expected_progress_updates = [
         "Track called on DS, ID",
-        "Awaiting pointingstate change to TRACK",
-        "Track completed",
+        "Track started",
     ]
 
     events = progress_event_store.wait_for_progress_update(

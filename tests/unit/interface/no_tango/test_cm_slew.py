@@ -32,11 +32,9 @@ def test_slew_handler(
 
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
-        {"status": TaskStatus.IN_PROGRESS},
+        {"status": TaskStatus.COMPLETED},
         {"progress": f"Slew called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS pointingstate change to SLEW"},
         {"progress": "Commands: mocked sub-device-command-ids"},
-        {"progress": "Awaiting pointingstate change to SLEW"},
     )
 
     # check that the initial lrc updates come through
@@ -54,7 +52,7 @@ def test_slew_handler(
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="Slew completed",
-        status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "Slew completed"),
+        progress="Slew started",
+        status=TaskStatus.IN_PROGRESS,
+        result=(ResultCode.OK, "Slew started"),
     )

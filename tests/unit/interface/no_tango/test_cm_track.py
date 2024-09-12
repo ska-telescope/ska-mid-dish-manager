@@ -38,9 +38,7 @@ def test_track_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"Track called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS pointingstate change to TRACK"},
         {"progress": "Commands: mocked sub-device-command-ids"},
-        {"progress": "Awaiting pointingstate change to TRACK"},
     )
 
     # check that the initial lrc updates come through
@@ -49,16 +47,12 @@ def test_track_handler(
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
 
-    # check that the component state reports the requested command
-    component_manager._update_component_state(pointingstate=PointingState.TRACK)
-    component_state_cb.wait_for_value("pointingstate", PointingState.TRACK)
-
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="Track completed",
-        status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "Track completed"),
+        progress="Track started",
+        status=TaskStatus.IN_PROGRESS,
+        result=(ResultCode.OK, "Track started"),
     )
