@@ -35,6 +35,7 @@ def test_slew_handler(
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"Slew called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Commands: mocked sub-device-command-ids"},
+        {"progress": "Slew started", "status": TaskStatus.IN_PROGRESS, "result": (ResultCode.OK, "Slew started")},
     )
 
     # check that the initial lrc updates come through
