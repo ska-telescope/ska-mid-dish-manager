@@ -152,6 +152,8 @@ class CommandMap:
         commands_for_sub_devices = {
             "DS": {
                 "command": "Track",
+                "awaitedAttributes": None,
+                "awaitedValuesList": None,
             },
         }
 
@@ -160,6 +162,12 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "Track",
+            None,
+            None,
+        )
+
+        self.logger.info(
+            "Command called successfully, manually check the completion status of the task"
         )
 
     def track_stop_cmd(
@@ -240,6 +248,8 @@ class CommandMap:
             "DS": {
                 "command": "Slew",
                 "commandArgument": argin,
+                "awaitedAttributes": None,
+                "awaitedValuesList": None,
             },
         }
 
@@ -248,6 +258,12 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "Slew",
+            None,
+            None,
+        )
+
+        self.logger.info(
+            "Command called successfully, manually check the completion status of the task"
         )
 
     # pylint: disable=unused-argument
@@ -412,10 +428,6 @@ class CommandMap:
                 result=(ResultCode.OK, f"{running_command} started"),
             )
             return
-
-        self.logger.info(
-            "Command called successfully, manually check the completion status of the task"
-        )
 
         # Report which attribute and value the dish manager is waiting for
         # e.g. Awaiting dishmode change to STANDBY_LP
