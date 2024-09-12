@@ -32,7 +32,7 @@ def test_slew_handler(
 
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
-        {"status": TaskStatus.COMPLETED},
+        {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"Slew called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Commands: mocked sub-device-command-ids"},
     )
@@ -53,6 +53,6 @@ def test_slew_handler(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         progress="Slew started",
-        status=TaskStatus.COMPLETED,
+        status=TaskStatus.IN_PROGRESS,
         result=(ResultCode.OK, "Slew started"),
     )

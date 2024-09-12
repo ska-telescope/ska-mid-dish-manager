@@ -53,6 +53,6 @@ def test_track_handler(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         progress="Track started",
-        status=TaskStatus.COMPLETED,
+        status=TaskStatus.IN_PROGRESS,
         result=(ResultCode.OK, "Track started"),
     )
