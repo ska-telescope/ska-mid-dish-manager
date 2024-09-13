@@ -39,7 +39,11 @@ def test_track_handler(
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"Track called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Commands: mocked sub-device-command-ids"},
-        {"progress": "Track started", "status": TaskStatus.IN_PROGRESS, "result": (ResultCode.OK, "Track started")},
+        {
+            "progress": "Track started",
+            "status": TaskStatus.IN_PROGRESS,
+            "result": (ResultCode.OK, "Track started"),
+        },
     )
 
     # check that the initial lrc updates come through
