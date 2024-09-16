@@ -373,17 +373,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
-        self.logger.debug(
-            (
-                "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
-                ", SPFRx [%s], DM [%s]"
-            ),
-            kwargs,
-            ds_component_state,
-            spf_component_state,
-            spfrx_component_state,
-            self.component_state,
-        )
+        # Only log non pointing changes
+        if not any(
+            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            for attr in kwargs
+        ):
+            self.logger.debug(
+                (
+                    "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
+                    ", SPFRx [%s], DM [%s]"
+                ),
+                kwargs,
+                ds_component_state,
+                spf_component_state,
+                spfrx_component_state,
+                self.component_state,
+            )
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs or "indexerposition" in kwargs:
@@ -528,6 +533,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Update attributes that are mapped directly from subservient devices
         for device, attrs in self.direct_mapped_attrs.items():
+            enum_attr_mapping = {
+                "trackInterpolationMode": TrackInterpolationMode,
+                "noiseDiodeMode": NoiseDiodeMode,
+            }
             for attr in attrs:
                 attr_lower = attr.lower()
 
@@ -539,20 +548,30 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         new_value = spf_component_state[attr_lower]
                     elif device == "SPFRX":
                         new_value = spfrx_component_state[attr_lower]
-
-                    self.logger.debug(
-                        ("Updating %s with %s %s [%s]"),
-                        attr,
-                        device,
-                        attr,
-                        new_value,
-                    )
+                    if attr_lower not in [
+                        "desiredpointingaz",
+                        "desiredpointingel",
+                        "achievedpointing",
+                    ]:
+                        self.logger.debug(
+                            ("Updating %s with %s %s [%s]"),
+                            attr,
+                            device,
+                            attr,
+                            enum_attr_mapping[attr](new_value)
+                            if attr in enum_attr_mapping
+                            else new_value,
+                        )
 
                     self._update_component_state(**{attr_lower: new_value})
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
-        self.logger.debug("Updating dish manager component state with [%s]", kwargs)
+        if not any(
+            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            for attr in kwargs
+        ):
+            self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
     def sync_component_states(self):
