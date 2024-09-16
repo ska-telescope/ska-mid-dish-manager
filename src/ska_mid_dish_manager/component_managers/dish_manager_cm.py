@@ -374,7 +374,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
         # Only log non pointing changes
-        if kwargs not in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]:
+        if any(
+            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            for attr in kwargs
+        ):
             self.logger.debug(
                 (
                     "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
@@ -564,7 +567,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
-        if kwargs not in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]:
+        if any(
+            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            for attr in kwargs
+        ):
             self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
