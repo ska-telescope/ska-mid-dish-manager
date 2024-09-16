@@ -109,7 +109,7 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
     # wait a bit before forcing the updates on the subcomponents
     main_event_store.get_queue_values()
 
-    # # transition DS pointingState to READY
+    # transition DS pointingState to READY
     ds_cm._update_component_state(pointingstate=PointingState.READY)
     main_event_store.wait_for_value(PointingState.READY)
 
