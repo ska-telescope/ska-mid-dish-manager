@@ -530,6 +530,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Update attributes that are mapped directly from subservient devices
         for device, attrs in self.direct_mapped_attrs.items():
+            enum_attr_mapping = {
+                "trackInterpolationMode": TrackInterpolationMode,
+                "noiseDiodeMode": NoiseDiodeMode,
+            }
             for attr in attrs:
                 attr_lower = attr.lower()
 
@@ -551,7 +555,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                             attr,
                             device,
                             attr,
-                            new_value,
+                            type(enum_attr_mapping[attr])(new_value)
+                            if isinstance(attr, ("trackInterpolationMode", "noiseDiodeMode"))
+                            else new_value,
                         )
 
                     self._update_component_state(**{attr_lower: new_value})
