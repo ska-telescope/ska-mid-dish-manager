@@ -374,7 +374,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
         # Only log non pointing changes
-        if any(
+        if not any(
             attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
             for attr in kwargs
         ):
@@ -537,6 +537,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "trackInterpolationMode": TrackInterpolationMode,
                 "noiseDiodeMode": NoiseDiodeMode,
             }
+            enum_attr_mapping = {
+                "trackInterpolationMode": TrackInterpolationMode,
+                "noiseDiodeMode": NoiseDiodeMode,
+            }
             for attr in attrs:
                 attr_lower = attr.lower()
 
@@ -567,7 +571,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
-        if any(
+        if not any(
             attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
             for attr in kwargs
         ):
