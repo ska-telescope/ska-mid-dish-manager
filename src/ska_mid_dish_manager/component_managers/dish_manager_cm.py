@@ -537,10 +537,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "trackInterpolationMode": TrackInterpolationMode,
                 "noiseDiodeMode": NoiseDiodeMode,
             }
-            enum_attr_mapping = {
-                "trackInterpolationMode": TrackInterpolationMode,
-                "noiseDiodeMode": NoiseDiodeMode,
-            }
             for attr in attrs:
                 attr_lower = attr.lower()
 
