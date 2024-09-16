@@ -555,8 +555,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                             attr,
                             device,
                             attr,
-                            type(enum_attr_mapping[attr])(new_value)
-                            if isinstance(attr, ("trackInterpolationMode", "noiseDiodeMode"))
+                            enum_attr_mapping[attr](new_value)
+                            if attr in enum_attr_mapping
                             else new_value,
                         )
 
