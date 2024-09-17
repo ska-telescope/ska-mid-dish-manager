@@ -6,6 +6,7 @@ import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.models.dish_enums import PointingState
 
 
 @pytest.mark.unit
@@ -55,6 +56,11 @@ def test_slew_handler(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    # check that the component state reports the requested command
+    component_manager._update_component_state(pointingstate=PointingState.SLEW)
+    component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)
+
 
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
