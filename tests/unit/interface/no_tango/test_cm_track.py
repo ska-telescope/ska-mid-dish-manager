@@ -40,9 +40,12 @@ def test_track_handler(
         {"progress": f"Track called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {
-            "progress": "Track command has been executed on DS",
+            "progress": "Track command has been executed on DS. Monitor the pointing attributes for the completion status of the task",
             "status": TaskStatus.COMPLETED,
-            "result": (ResultCode.OK, "Track command has been executed on DS"),
+            "result": (
+                ResultCode.OK,
+                "Track command has been executed on DS. Monitor the pointing attributes for the completion status of the task",
+            ),
         },
     )
 
@@ -57,7 +60,10 @@ def test_track_handler(
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="Track command has been executed on DS",
+        progress="Track command has been executed on DS. Monitor the pointing attributes for the completion status of the task",
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "Track command has been executed on DS"),
+        result=(
+            ResultCode.OK,
+            "Track command has been executed on DS. Monitor the pointing attributes for the completion status of the task",
+        ),
     )

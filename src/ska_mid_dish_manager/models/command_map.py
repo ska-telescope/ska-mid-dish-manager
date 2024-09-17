@@ -164,11 +164,7 @@ class CommandMap:
             "Track",
             None,
             None,
-            "Track command has been executed on DS",
-        )
-
-        self.logger.info(
-            "Command called successfully, manually check the completion status of the task"
+            "Track command has been executed on DS. Monitor the pointing attributes for the completion status of the task",
         )
 
     def track_stop_cmd(
@@ -261,11 +257,7 @@ class CommandMap:
             "Slew",
             None,
             None,
-            f"The DS has been commanded to Slew to {argin}",
-        )
-
-        self.logger.info(
-            "Command called successfully, manually check the completion status of the task"
+            f"The DS has been commanded to Slew to {argin}. Monitor the pointing attributes for the completion status of the task.",
         )
 
     # pylint: disable=unused-argument
@@ -434,6 +426,7 @@ class CommandMap:
                 status=TaskStatus.COMPLETED,
                 result=(ResultCode.OK, final_message),
             )
+            self.logger.info(final_message)
             return
 
         # Report which attribute and value the dish manager is waiting for
