@@ -116,7 +116,6 @@ def test_track_and_track_stop_cmds(
     events = progress_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=6
     )
-    print("*************************", events)
 
     # Check that all the expected progress messages appeared
     # in the event store
