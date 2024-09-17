@@ -156,7 +156,10 @@ class CommandMap:
                 "awaitedValuesList": None,
             },
         }
-
+        status_message = (
+            "Track command has been executed on DS. "
+            "Monitor the pointing attributes for the completion status of the task."
+        )
         self._run_long_running_command(
             task_callback,
             task_abort_event,
@@ -164,7 +167,7 @@ class CommandMap:
             "Track",
             None,
             None,
-            "Track command has been executed on DS. Monitor the pointing attributes for the completion status of the task",
+            status_message,
         )
 
     def track_stop_cmd(
@@ -249,7 +252,10 @@ class CommandMap:
                 "awaitedValuesList": None,
             },
         }
-
+        status_message = (
+            f"The DS has been commanded to Slew to {argin}. "
+            "Monitor the pointing attributes for the completion status of the task."
+        )
         self._run_long_running_command(
             task_callback,
             task_abort_event,
@@ -257,7 +263,7 @@ class CommandMap:
             "Slew",
             None,
             None,
-            f"The DS has been commanded to Slew to {argin}. Monitor the pointing attributes for the completion status of the task.",
+            status_message,
         )
 
     # pylint: disable=unused-argument

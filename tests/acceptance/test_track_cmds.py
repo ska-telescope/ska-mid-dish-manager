@@ -109,7 +109,10 @@ def test_track_and_track_stop_cmds(
 
     expected_progress_updates = [
         "Track called on DS, ID",
-        "Track command has been executed on DS. Monitor the pointing attributes for the completion status of the task",
+        (
+            "Track command has been executed on DS. "
+            "Monitor the pointing attributes for the completion status of the task"
+        ),
     ]
 
     # Wait for the track command to complete

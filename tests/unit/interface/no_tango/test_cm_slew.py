@@ -35,11 +35,17 @@ def test_slew_handler(
         {"progress": f"Slew called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {
-            "progress": "The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing attributes for the completion status of the task.",
+            "progress": (
+                "The DS has been commanded to Slew to [20.0, 30.0]. "
+                "Monitor the pointing attributes for the completion status of the task."
+            ),
             "status": TaskStatus.COMPLETED,
             "result": (
                 ResultCode.OK,
-                "The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing attributes for the completion status of the task.",
+                (
+                    "The DS has been commanded to Slew to [20.0, 30.0]. "
+                    "Monitor the pointing attributes for the completion status of the task."
+                ),
             ),
         },
     )
@@ -55,10 +61,16 @@ def test_slew_handler(
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing attributes for the completion status of the task.",
+        progress=(
+            "The DS has been commanded to Slew to [20.0, 30.0]. "
+            "Monitor the pointing attributes for the completion status of the task."
+        ),
         status=TaskStatus.COMPLETED,
         result=(
             ResultCode.OK,
-            "The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing attributes for the completion status of the task.",
+            (
+                "The DS has been commanded to Slew to [20.0, 30.0]. "
+                "Monitor the pointing attributes for the completion status of the task."
+            ),
         ),
     )
