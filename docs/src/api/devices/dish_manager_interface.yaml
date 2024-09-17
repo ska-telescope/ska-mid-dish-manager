@@ -1409,6 +1409,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: noiseDiodeConfig
+      data_format: SPECTRUM
+      data_type: DevDouble
+      description: Returns the noiseDiodeConfig
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: noiseDiodeConfig
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: WRITE
+      writable_attr_name: None
     - name: noiseDiodeMode
       data_format: SCALAR
       data_type: DevEnum

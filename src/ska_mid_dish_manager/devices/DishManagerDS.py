@@ -955,6 +955,19 @@ class DishManager(SKAController):
         """Returns the frequencyResponse"""
         return self._frequency_response
 
+    @attribute(dtype=(float,), access=AttrWriteType.WRITE)
+    def noiseDiodeConfig(self):
+        """Returns the noiseDiodeConfig"""
+        return self._noise_diode_config
+
+    @noiseDiodeConfig.write
+    def noiseDiodeConfig(self, value):
+        """Set the noiseDiodeConfig"""
+        # pylint: disable=attribute-defined-outside-init
+        self._noise_diode_config = value
+        self.push_change_event("noiseDiodeConfig", value)
+        self.push_archive_event("noiseDiodeConfig", value)
+
     @attribute(dtype=PointingState)
     def pointingState(self):
         """Returns the pointingState"""
