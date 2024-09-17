@@ -422,6 +422,7 @@ class DishManager(SKAController):
                 "dshMaxShortTermPower",
                 "dshPowerCurtailment",
                 "frequencyResponse",
+                "noiseDiodeConfig",
                 "programTrackTable",
                 "pointingBufferSize",
                 "polyTrack",
