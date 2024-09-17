@@ -6,7 +6,6 @@ import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.models.dish_enums import PointingState
 
 
 @pytest.mark.unit
@@ -36,9 +35,9 @@ def test_slew_handler(
         {"progress": f"Slew called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {
-            "progress": "Slew started",
-            "status": TaskStatus.IN_PROGRESS,
-            "result": (ResultCode.OK, "Slew started"),
+            "progress": "The DS has been commanded to Slew to [20.0, 30.0]",
+            "status": TaskStatus.COMPLETED,
+            "result": (ResultCode.OK, "The DS has been commanded to Slew to [20.0, 30.0]"),
         },
     )
 
@@ -48,16 +47,12 @@ def test_slew_handler(
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
 
-    # check that the component state reports the requested command
-    component_manager._update_component_state(pointingstate=PointingState.SLEW)
-    component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)
-
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="Slew started",
-        status=TaskStatus.IN_PROGRESS,
-        result=(ResultCode.OK, "Slew started"),
+        progress="The DS has been commanded to Slew to [20.0, 30.0]",
+        status=TaskStatus.COMPLETED,
+        result=(ResultCode.OK, "The DS has been commanded to Slew to [20.0, 30.0]"),
     )

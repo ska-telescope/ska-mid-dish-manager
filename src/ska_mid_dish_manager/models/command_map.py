@@ -2,7 +2,7 @@
 
 import enum
 import json
-from typing import Any, Callable, Optional
+from typing import Any, Callable, List, Optional
 
 from ska_control_model import ResultCode, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
@@ -164,6 +164,7 @@ class CommandMap:
             "Track",
             None,
             None,
+            "Track command has been executed on DS",
         )
 
         self.logger.info(
@@ -260,6 +261,7 @@ class CommandMap:
             "Slew",
             None,
             None,
+            f"The DS has been commanded to Slew to {argin}",
         )
 
         self.logger.info(
@@ -383,8 +385,9 @@ class CommandMap:
         task_abort_event: Any,
         commands_for_sub_devices: dict,
         running_command: str,
-        awaited_event_attributes: list[str],
-        awaited_event_values: list[Any],
+        awaited_event_attributes: Optional[List[str]] = None,
+        awaited_event_values: Optional[List[Any]] = None,
+        completed_response_msg: Optional[str] = None,
     ):
         """Run the long running command and track progress"""
         assert task_callback, "task_callback has to be defined"
@@ -420,12 +423,16 @@ class CommandMap:
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 
+        final_message = (
+            completed_response_msg if completed_response_msg else f"{running_command} completed"
+        )
+
         # If we're not waiting for anything, finish up
         if awaited_event_values is None:
             task_callback(
-                progress=f"{running_command} started",
-                status=TaskStatus.IN_PROGRESS,
-                result=(ResultCode.OK, f"{running_command} started"),
+                progress=final_message,
+                status=TaskStatus.COMPLETED,
+                result=(ResultCode.OK, final_message),
             )
             return
 
