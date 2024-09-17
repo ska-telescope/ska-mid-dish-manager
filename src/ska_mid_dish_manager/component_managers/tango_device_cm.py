@@ -345,7 +345,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     @_check_connection
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
-        """Check the connection and read an attribute"""
+        """Check the connection and write an attribute"""
         self.logger.debug(
             "About to write attribute [%s] on device [%s]",
             attribute_name,
