@@ -61,6 +61,7 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
 ):
     device_proxy, dish_manager_cm = dish_manager_resources
     dish_mode_event_store = event_store_class()
+    pointing_state_event_store = event_store_class()
     lrc_status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
@@ -70,10 +71,20 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
     )
 
     device_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        pointing_state_event_store,
+    )
+
+    device_proxy.subscribe_event(
         "longRunningCommandStatus",
         tango.EventType.CHANGE_EVENT,
         lrc_status_event_store,
     )
+
+    # Ensure that the pointingState precondition is met before testing Track() against dishMode
+    dish_manager_cm._update_component_state(pointingstate=PointingState.READY)
+    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=5)
 
     dish_manager_cm._update_component_state(dishmode=current_dish_mode)
     dish_mode_event_store.wait_for_value(current_dish_mode, timeout=5)

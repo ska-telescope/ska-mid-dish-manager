@@ -106,6 +106,8 @@ def test_track_and_track_stop_cmds(
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=6)
+    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=6)
 
     expected_progress_updates = [
         "Track called on DS, ID",
