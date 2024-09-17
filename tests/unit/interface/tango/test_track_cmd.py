@@ -138,7 +138,6 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
     ds_cm._update_component_state(pointingstate=PointingState.TRACK)
     main_event_store.wait_for_value(PointingState.TRACK)
 
-
     expected_progress_updates = [
         "Track called on DS, ID",
         "Track command has been executed on DS. "

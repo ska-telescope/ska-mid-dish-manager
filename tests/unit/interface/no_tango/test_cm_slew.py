@@ -61,7 +61,6 @@ def test_slew_handler(
     component_manager._update_component_state(pointingstate=PointingState.SLEW)
     component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)
 
-
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
     # check that the final lrc updates come through

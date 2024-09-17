@@ -32,7 +32,6 @@ def test_track_handler(
     component_manager._update_component_state(pointingstate=PointingState.READY)
     component_state_cb.wait_for_value("pointingstate", PointingState.READY)
 
-
     component_manager.track_cmd(callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
@@ -67,7 +66,6 @@ def test_track_handler(
     # check that the component state reports the requested command
     component_manager._update_component_state(pointingstate=PointingState.TRACK)
     component_state_cb.wait_for_value("pointingstate", PointingState.TRACK)
-
 
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
