@@ -42,8 +42,6 @@ class DSComponentManager(TangoDeviceComponentManager):
             "band2PointingModelParams",
             "band3PointingModelParams",
             "band4PointingModelParams",
-            "band5aPointingModelParams",
-            "band5bPointingModelParams",
             "trackInterpolationMode",
             "achievedTargetLock",
             "configureTargetLock",

@@ -371,8 +371,6 @@ class DishManager(SKAController):
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "band3pointingmodelparams": "band3PointingModelParams",
                 "band4pointingmodelparams": "band4PointingModelParams",
-                "band5apointingmodelparams": "band5aPointingModelParams",
-                "band5bpointingmodelparams": "band5bPointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
