@@ -1009,18 +1009,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"The coefficients found in the JSON object were {list(coefficients.keys())}",
             )
 
-        else:
-            # If there is an issue with the Dish ID/ Antenna name
-            self.logger.debug(
-                ("Command rejected. The Dish id %s and the Antenna value %s are not equal."),
-                DEFAULT_DISH_ID,
-                data.get("antenna"),
-            )
-            return (
-                ResultCode.FAILED,
-                f"Command rejected. The Dish id {DEFAULT_DISH_ID} and the Antenna"
-                f"value {data.get('antenna')} are not equal.",
-            )
+        # If there is an issue with the Dish ID/ Antenna name
+        self.logger.debug(
+            ("Command rejected. The Dish id %s and the Antenna value %s are not equal."),
+            DEFAULT_DISH_ID,
+            data.get("antenna"),
+        )
+        return (
+            ResultCode.FAILED,
+            f"Command rejected. The Dish id {DEFAULT_DISH_ID} and the Antenna"
+            f"value {data.get('antenna')} are not equal.",
+        )
 
     def set_track_interpolation_mode(
         self,
