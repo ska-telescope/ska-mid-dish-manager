@@ -387,7 +387,25 @@ class CommandMap:
         awaited_event_values: Optional[List[Any]] = None,
         completed_response_msg: Optional[str] = None,
     ):
-        """Run the long running command and track progress"""
+        """Run the long running command and track progress
+            and track progress across subservient devices.
+
+        :param task_callback: Reports progress, status, and result.
+        :type task_callback: Callable
+        :param task_abort_event: Aborts the ongoing task when set
+        :type task_abort_event: Any
+        :param commands_for_sub_devices: Fanout commands to subservient devices
+        :type commands_for_sub_devices: dict
+        :param running_command: Name of the command being executed
+        :type running_command: str
+        :param awaited_event_attributes: Attributes to wait for before command completion,
+        defaults to None
+        :type awaited_event_attributes: Optional[List[str]], optional
+        :param awaited_event_values:  Expected values for the awaited attributes, defaults to None
+        :type awaited_event_values: Optional[List[Any]], optional
+        :param completed_response_msg: Custom message for task_callback, defaults to None
+        :type completed_response_msg: Optional[str], optional
+        """
         assert task_callback, "task_callback has to be defined"
 
         if task_abort_event.is_set():
