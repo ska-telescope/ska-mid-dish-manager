@@ -93,6 +93,58 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
 
+# pylint: disable=protected-access
+@pytest.mark.unit
+@pytest.mark.forked
+@pytest.mark.parametrize(
+    "current_pointing_state",
+    [
+        PointingState.SLEW,
+        PointingState.TRACK,
+        PointingState.SCAN,
+        PointingState.UNKNOWN,
+    ],
+)
+def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
+    dish_manager_resources,
+    event_store_class,
+    current_pointing_state,
+):
+    """Test to verify that call to Track cmd is rejected if pointingState is not READY"""
+    device_proxy, dish_manager_cm = dish_manager_resources
+    dish_mode_event_store = event_store_class()
+    pointing_state_event_store = event_store_class()
+    lrc_status_event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        dish_mode_event_store,
+    )
+
+    device_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        pointing_state_event_store,
+    )
+
+    device_proxy.subscribe_event(
+        "longRunningCommandStatus",
+        tango.EventType.CHANGE_EVENT,
+        lrc_status_event_store,
+    )
+
+    # Ensure that the dishMode precondition is met before testing Track() against pointingState
+    dish_manager_cm._update_component_state(dishmode=DishMode.OPERATE)
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
+
+    dish_manager_cm._update_component_state(pointingstate=current_pointing_state)
+    pointing_state_event_store.wait_for_value(current_pointing_state, timeout=5)
+
+    [[_], [unique_id]] = device_proxy.Track()
+    lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
+
+
 # pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked

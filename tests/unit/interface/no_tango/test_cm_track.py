@@ -26,7 +26,7 @@ def test_track_handler(
     """
     component_state_cb = callbacks["comp_state_cb"]
     # track commmand does not use the dish mode model
-    # ensure that its precondition is satisfied before command trigger
+    # ensure that the preconditions are satisfied before the command is triggered
     component_manager._update_component_state(dishmode=DishMode.OPERATE)
     component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
     component_manager._update_component_state(pointingstate=PointingState.READY)
