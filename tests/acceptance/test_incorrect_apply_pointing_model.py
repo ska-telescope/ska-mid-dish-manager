@@ -258,7 +258,10 @@ def test_incorrect_apply_pointing_model(
         "ECES",
         "HECE4",
     ]
-    coeff_error_resp = f"Coefficients are missing or not in the correct order. The coefficients found in the JSON object were {expected_coefficients}"
+    coeff_error_resp = (
+        f"Coefficients are missing or not in the correct order. "
+        f"The coefficients found in the JSON object were {expected_coefficients}"
+    )
     assert not np.array_equal(values, ds_band_pointing_model_params)
     assert coeff_error_resp == coefficients_resp[0]
     assert result_code == ResultCode.REJECTED
