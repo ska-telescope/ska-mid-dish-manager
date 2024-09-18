@@ -152,13 +152,13 @@ class CommandMap:
         commands_for_sub_devices = {
             "DS": {
                 "command": "Track",
-                "awaitedAttributes": None,
-                "awaitedValuesList": None,
+                "awaitedAttributes": [],
+                "awaitedValuesList": [],
             },
         }
         status_message = (
             "Track command has been executed on DS. "
-            "Monitor the pointing attributes for the completion status of the task."
+            "Monitor the achievedTargetLock attribute to determine when the dish is on source."
         )
         self._run_long_running_command(
             task_callback,
@@ -248,8 +248,8 @@ class CommandMap:
             "DS": {
                 "command": "Slew",
                 "commandArgument": argin,
-                "awaitedAttributes": None,
-                "awaitedValuesList": None,
+                "awaitedAttributes": [],
+                "awaitedValuesList": [],
             },
         }
         status_message = (
@@ -329,7 +329,7 @@ class CommandMap:
 
         # Report which attribute and value the sub device is waiting for
         # e.g. Awaiting DEVICE attra, attrb change to VALUE_1, VALUE_2
-        if awaited_values_list is not None:
+        if awaited_values_list is not None and awaited_values_list != []:
             values_print_string = self.convert_enums_to_names(awaited_values_list)
             attributes_print_string = ", ".join(map(str, awaited_attributes))
             values_print_string = ", ".join(map(str, values_print_string))
@@ -426,7 +426,7 @@ class CommandMap:
         )
 
         # If we're not waiting for anything, finish up
-        if awaited_event_values is None:
+        if awaited_event_values is None or awaited_event_values == []:
             task_callback(
                 progress=final_message,
                 status=TaskStatus.COMPLETED,

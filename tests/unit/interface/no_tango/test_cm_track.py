@@ -43,15 +43,16 @@ def test_track_handler(
         {"progress": "Commands: mocked sub-device-command-ids"},
         {
             "progress": (
-                "Track command has been executed on DS. "
-                "Monitor the pointing attributes for the completion status of the task."
+                "Track command has been executed on DS."
+                "Monitor the achievedTargetLock attribute to determine when the dish is on source."
             ),
             "status": TaskStatus.COMPLETED,
             "result": (
                 ResultCode.OK,
                 (
-                    "Track command has been executed on DS. "
-                    "Monitor the pointing attributes for the completion status of the task."
+                    "Track command has been executed on DS."
+                    "Monitor the achievedTargetLock attribute to determine"
+                    "when the dish is on source."
                 ),
             ),
         },
@@ -74,14 +75,14 @@ def test_track_handler(
     task_cb.assert_called_with(
         progress=(
             "Track command has been executed on DS. "
-            "Monitor the pointing attributes for the completion status of the task."
+            "Monitor the achievedTargetLock attribute to determine when the dish is on source."
         ),
         status=TaskStatus.COMPLETED,
         result=(
             ResultCode.OK,
             (
                 "Track command has been executed on DS. "
-                "Monitor the pointing attributes for the completion status of the task."
+                "Monitor the achievedTargetLock attribute to determine when the dish is on source."
             ),
         ),
     )

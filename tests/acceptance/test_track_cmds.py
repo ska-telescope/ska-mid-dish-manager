@@ -113,7 +113,7 @@ def test_track_and_track_stop_cmds(
         "Track called on DS, ID",
         (
             "Track command has been executed on DS. "
-            "Monitor the pointing attributes for the completion status of the task"
+            "Monitor the achievedTargetLock attribute to determine when the dish is on source."
         ),
     ]
 
