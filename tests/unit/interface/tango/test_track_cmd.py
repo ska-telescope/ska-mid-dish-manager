@@ -194,7 +194,7 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
     # wait a bit before forcing the updates on the subcomponents
     main_event_store.get_queue_values()
 
-    # transition DS pointingState to TRACK
+    # Transition DS pointingState to TRACK
     ds_cm._update_component_state(pointingstate=PointingState.SLEW)
     main_event_store.wait_for_value(PointingState.SLEW)
 
@@ -203,8 +203,8 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
 
     expected_progress_updates = [
         "Track called on DS, ID",
-        "Awaiting pointingstate change to TRACK",
-        "Track completed",
+        "Track command has been executed on DS. "
+        "Monitor the achievedTargetLock attribute to determine when the dish is on source.",
     ]
 
     events = progress_event_store.wait_for_progress_update(

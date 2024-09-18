@@ -40,9 +40,22 @@ def test_track_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"Track called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS pointingstate change to TRACK"},
         {"progress": "Commands: mocked sub-device-command-ids"},
-        {"progress": "Awaiting pointingstate change to TRACK"},
+        {
+            "progress": (
+                "Track command has been executed on DS. "
+                "Monitor the achievedTargetLock attribute to determine when the dish is on source."
+            ),
+            "status": TaskStatus.COMPLETED,
+            "result": (
+                ResultCode.OK,
+                (
+                    "Track command has been executed on DS. "
+                    "Monitor the achievedTargetLock attribute to determine "
+                    "when the dish is on source."
+                ),
+            ),
+        },
     )
 
     # check that the initial lrc updates come through
@@ -60,7 +73,16 @@ def test_track_handler(
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="Track completed",
+        progress=(
+            "Track command has been executed on DS. "
+            "Monitor the achievedTargetLock attribute to determine when the dish is on source."
+        ),
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "Track completed"),
+        result=(
+            ResultCode.OK,
+            (
+                "Track command has been executed on DS. "
+                "Monitor the achievedTargetLock attribute to determine when the dish is on source."
+            ),
+        ),
     )

@@ -111,8 +111,10 @@ def test_track_and_track_stop_cmds(
 
     expected_progress_updates = [
         "Track called on DS, ID",
-        "Awaiting DS pointingstate change to TRACK",
-        "Track completed",
+        (
+            "Track command has been executed on DS. "
+            "Monitor the achievedTargetLock attribute to determine when the dish is on source."
+        ),
     ]
 
     # Wait for the track command to complete

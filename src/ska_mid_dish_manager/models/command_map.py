@@ -2,7 +2,7 @@
 
 import enum
 import json
-from typing import Any, Callable, Optional
+from typing import Any, Callable, List, Optional
 
 from ska_control_model import ResultCode, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
@@ -142,6 +142,7 @@ class CommandMap:
             [DishMode.OPERATE],
         )
 
+    # pylint: disable = no-value-for-parameter
     def track_cmd(
         self,
         task_abort_event=None,
@@ -151,18 +152,22 @@ class CommandMap:
         commands_for_sub_devices = {
             "DS": {
                 "command": "Track",
-                "awaitedAttributes": ["pointingstate"],
-                "awaitedValuesList": [PointingState.TRACK],
+                "awaitedAttributes": [],
+                "awaitedValuesList": [],
             },
         }
-
+        status_message = (
+            "Track command has been executed on DS. "
+            "Monitor the achievedTargetLock attribute to determine when the dish is on source."
+        )
         self._run_long_running_command(
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
             "Track",
-            ["pointingstate"],
-            [PointingState.TRACK],
+            None,
+            None,
+            status_message,
         )
 
     def track_stop_cmd(
@@ -234,6 +239,7 @@ class CommandMap:
             [band_enum],
         )
 
+    # pylint: disable = no-value-for-parameter
     def slew(
         self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None
     ):
@@ -242,18 +248,22 @@ class CommandMap:
             "DS": {
                 "command": "Slew",
                 "commandArgument": argin,
-                "awaitedAttributes": ["pointingstate"],
-                "awaitedValuesList": [PointingState.SLEW],
+                "awaitedAttributes": [],
+                "awaitedValuesList": [],
             },
         }
-
+        status_message = (
+            f"The DS has been commanded to Slew to {argin}. "
+            "Monitor the pointing attributes for the completion status of the task."
+        )
         self._run_long_running_command(
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
             "Slew",
-            ["pointingstate"],
-            [PointingState.SLEW],
+            None,
+            None,
+            status_message,
         )
 
     # pylint: disable=unused-argument
@@ -319,7 +329,7 @@ class CommandMap:
 
         # Report which attribute and value the sub device is waiting for
         # e.g. Awaiting DEVICE attra, attrb change to VALUE_1, VALUE_2
-        if awaited_values_list is not None:
+        if awaited_values_list is not None and awaited_values_list != []:
             values_print_string = self.convert_enums_to_names(awaited_values_list)
             attributes_print_string = ", ".join(map(str, awaited_attributes))
             values_print_string = ", ".join(map(str, values_print_string))
@@ -373,10 +383,29 @@ class CommandMap:
         task_abort_event: Any,
         commands_for_sub_devices: dict,
         running_command: str,
-        awaited_event_attributes: list[str],
-        awaited_event_values: list[Any],
+        awaited_event_attributes: Optional[List[str]] = None,
+        awaited_event_values: Optional[List[Any]] = None,
+        completed_response_msg: Optional[str] = None,
     ):
-        """Run the long running command and track progress"""
+        """Run the long running command and track progress
+            and track progress across subservient devices.
+
+        :param task_callback: Reports progress, status, and result.
+        :type task_callback: Callable
+        :param task_abort_event: Aborts the ongoing task and clears the queue when set
+        :type task_abort_event: Any
+        :param commands_for_sub_devices: Fanout commands to subservient devices
+        :type commands_for_sub_devices: dict
+        :param running_command: Name of the command being executed
+        :type running_command: str
+        :param awaited_event_attributes: Attributes to wait for before command completion,
+        defaults to None
+        :type awaited_event_attributes: Optional[List[str]], optional
+        :param awaited_event_values:  Expected values for the awaited attributes, defaults to None
+        :type awaited_event_values: Optional[List[Any]], optional
+        :param completed_response_msg: Custom message for task_callback, defaults to None
+        :type completed_response_msg: Optional[str], optional
+        """
         assert task_callback, "task_callback has to be defined"
 
         if task_abort_event.is_set():
@@ -410,13 +439,18 @@ class CommandMap:
 
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 
+        final_message = (
+            completed_response_msg if completed_response_msg else f"{running_command} completed"
+        )
+
         # If we're not waiting for anything, finish up
-        if awaited_event_values is None:
+        if awaited_event_values is None or awaited_event_values == []:
             task_callback(
-                progress=f"{running_command} completed",
+                progress=final_message,
                 status=TaskStatus.COMPLETED,
-                result=(ResultCode.OK, f"{running_command} completed"),
+                result=(ResultCode.OK, final_message),
             )
+            self.logger.info(final_message)
             return
 
         # Report which attribute and value the dish manager is waiting for
