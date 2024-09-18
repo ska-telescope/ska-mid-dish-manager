@@ -18,8 +18,6 @@ from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LEN
         ("band2PointingModelParams"),
         ("band3PointingModelParams"),
         ("band4PointingModelParams"),
-        ("band5aPointingModelParams"),
-        ("band5bPointingModelParams"),
     ],
 )
 def test_read_band_static_pointing_model_parameters(
@@ -41,8 +39,6 @@ def test_read_band_static_pointing_model_parameters(
         ("band2PointingModelParams"),
         ("band3PointingModelParams"),
         ("band4PointingModelParams"),
-        ("band5aPointingModelParams"),
-        ("band5bPointingModelParams"),
     ],
 )
 def test_write_bands_static_pointing_model_parameters(
