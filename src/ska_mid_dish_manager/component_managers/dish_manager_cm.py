@@ -994,8 +994,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     f"Successfully wrote the following values {coefficients}"
                     "to band {band_value} on DS",
                 )
-            
-        
+
             # If there is an issue with the coefficients
             self.logger.debug(
                 (
