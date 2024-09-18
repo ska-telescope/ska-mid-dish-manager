@@ -1,6 +1,6 @@
-"""Test Apply Pointing Model Command."""
+# pylint: disable=too-many-locals
 
-from typing import Any
+"""Test Apply Pointing Model Command."""
 
 import numpy as np
 import pytest
@@ -13,7 +13,6 @@ from ska_control_model import ResultCode
 def test_incorrect_apply_pointing_model(
     dish_manager_proxy: tango.DeviceProxy,
     ds_device_proxy: tango.DeviceProxy,
-    event_store_class: Any,
 ) -> None:
     """Test ApplyPointingModel command with incorrect JSON inputs."""
     incorrect_antenna = """{
