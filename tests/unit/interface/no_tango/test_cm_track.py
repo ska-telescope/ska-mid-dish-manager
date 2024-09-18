@@ -50,8 +50,8 @@ def test_track_handler(
             "result": (
                 ResultCode.OK,
                 (
-                    "Track command has been executed on DS."
-                    "Monitor the achievedTargetLock attribute to determine"
+                    "Track command has been executed on DS. "
+                    "Monitor the achievedTargetLock attribute to determine "
                     "when the dish is on source."
                 ),
             ),
