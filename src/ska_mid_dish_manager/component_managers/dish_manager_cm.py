@@ -994,21 +994,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     f"Successfully wrote the following values {coefficients}"
                     "to band {band_value} on DS",
                 )
-
-            else:
-                # If there is an issue with the coefficients
-                self.logger.debug(
-                    (
-                        "Coefficients are missing or not in the correct order."
-                        "The coefficients found in the JSON object were %s."
-                    ),
-                    coefficients.keys(),
-                )
-                return (
-                    ResultCode.FAILED,
-                    f"Coefficients are missing or not in the correct order."
-                    f"The coefficients found in the JSON object were {list(coefficients.keys())}",
-                )
+            
+        
+            # If there is an issue with the coefficients
+            self.logger.debug(
+                (
+                    "Coefficients are missing or not in the correct order."
+                    "The coefficients found in the JSON object were %s."
+                ),
+                coefficients.keys(),
+            )
+            return (
+                ResultCode.FAILED,
+                f"Coefficients are missing or not in the correct order."
+                f"The coefficients found in the JSON object were {list(coefficients.keys())}",
+            )
 
         else:
             # If there is an issue with the Dish ID/ Antenna name
