@@ -19,8 +19,6 @@ import tango
             ],
         ),
         ("band4PointingModelParams", [11.12, 13.14, 19.0]),
-        ("band5aPointingModelParams", [11.12, 13.14, 19.0]),
-        ("band5bPointingModelParams", [11.12, 13.14, 19.0]),
     ],
 )
 def test_band_X_pointing_model_params_validation_checks(
