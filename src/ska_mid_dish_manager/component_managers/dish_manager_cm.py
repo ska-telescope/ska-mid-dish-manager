@@ -1,5 +1,6 @@
 # pylint: disable=protected-access,too-many-lines,too-many-public-methods
 """Component manager for a DishManager tango device"""
+import json
 import logging
 import os
 from functools import partial
@@ -15,7 +16,10 @@ from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_map import CommandMap
-from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LENGTH
+from ska_mid_dish_manager.models.constants import (
+    BAND_POINTING_MODEL_PARAMS_LENGTH,
+    DEFAULT_DISH_ID,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
@@ -913,6 +917,107 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.exception("SetKvalue on SPFRx failed")
             return (ResultCode.FAILED, err)
         return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
+
+    def apply_pointing_model(
+        self,
+        json_object,
+    ) -> Tuple[ResultCode, str]:
+        """This command sets a particular badns parameters given a JSON input.
+        Note, all 18 coefficients in the JSON object should be in the excpected
+        order and the Dish ID should be correct. Each time the command is called
+        all parameters will get updated not just the ones that have been modified.
+        """
+        # A list of expected coefficients in their specified order
+        expected_coefficients = [
+            "IA",
+            "CA",
+            "NPAE",
+            "AN",
+            "AN0",
+            "AW",
+            "AW0",
+            "ACEC",
+            "ACES",
+            "ABA",
+            "ABphi",
+            "IE",
+            "ECEC",
+            "ECES",
+            "HECE4",
+            "HESE4",
+            "HECE8",
+            "HESE8",
+        ]
+        ds_cm = self.sub_component_managers["DS"]
+        # Process the JSON data
+        data = json.loads(json_object)
+        # Validate the Dish ID  == antenna
+        if DEFAULT_DISH_ID == data.get("antenna"):
+            # Validate the coeffients
+            # Get the coefficients out of the data object
+            coefficients = data.get("coefficients", {})
+            # Convert the coefficients returned into a list to verify that the number and order are as expected
+            if list(coefficients.keys()) == expected_coefficients:
+                # Possibly log the feedback for debugging purposes
+                self.logger.debug("All 18 coefficients are present and in the correct order.")
+
+                # Get all coefficient values
+                band_coeffs_values = [coef.get("value") for coef in coefficients.values()]
+
+                # Extract the part after the underscore
+                band_value = data.get("band").split("_")[-1]
+                try:
+                    # Define possible values and corresponding function
+                    if band_value == "1":
+                        ds_cm.write_attribute_value("band1pointingmodelparams", band_coeffs_values)
+                    elif band_value == "2":
+                        ds_cm.write_attribute_value("band2pointingmodelparams", band_coeffs_values)
+                    elif band_value == "3":
+                        ds_cm.write_attribute_value("band3pointingmodelparams", band_coeffs_values)
+                    elif band_value == "4":
+                        ds_cm.write_attribute_value("band4pointingmodelparams", band_coeffs_values)
+                    elif band_value == "5a":
+                        ds_cm.write_attribute_value(
+                            "band5apointingmodelparams", band_coeffs_values
+                        )
+                    elif band_value == "5b":
+                        ds_cm.write_attribute_value(
+                            "band5bpointingmodelparams", band_coeffs_values
+                        )
+                    else:
+                        print(f"Unsupported: {band_value}")
+
+                except (LostConnection, tango.DevFailed) as err:
+                    return (ResultCode.FAILED, err)
+                return (
+                    ResultCode.OK,
+                    f"Successfully wrote the following values {coefficients} to band {band_value} on DS",
+                )
+
+            else:
+                # If there is an issue with the coefficients
+                self.logger.debug(
+                    (
+                        "Coefficients are missing or not in the correct order. The coefficients found in the JSON object were %s."
+                    ),
+                    coefficients.keys(),
+                )
+                return (
+                    ResultCode.FAILED,
+                    f"Coefficients are missing or not in the correct order. The coefficients found in the JSON object were {list(coefficients.keys())}",
+                )
+
+        else:
+            # If there is an issue with the Dish ID/ Antenna name
+            self.logger.debug(
+                ("Command rejected. The Dish id %s and the Antenna value %s are not equal."),
+                DEFAULT_DISH_ID,
+                data.get("antenna"),
+            )
+            return (
+                ResultCode.FAILED,
+                f"Command rejected. The Dish id {DEFAULT_DISH_ID} and the Antenna value {data.get('antenna')} are not equal.",
+            )
 
     def set_track_interpolation_mode(
         self,

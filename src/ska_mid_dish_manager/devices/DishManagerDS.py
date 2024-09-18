@@ -209,6 +209,11 @@ class DishManager(SKAController):
             self.SetKValueCommand(self.component_manager, self.logger),
         )
 
+        self.register_command_object(
+            "ApplyPointingModel",
+            self.ApplyPointingModelCommand(self.component_manager, self.logger),
+        )
+
     def _connection_state_update(self, device: Device):
         if not hasattr(self, "component_manager"):
             self.logger.warning("Init not completed, but communication state is being updated")
@@ -1824,6 +1829,73 @@ class DishManager(SKAController):
         SPFRx has been restarted.
         """
         handler = self.get_command_object("SetKValue")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
+    class ApplyPointingModelCommand(FastCommand):
+        """Class for handling band pointing parameters given a JSON input."""
+
+        def __init__(
+            self,
+            component_manager: DishManagerComponentManager,
+            logger: Optional[logging.Logger] = None,
+        ) -> None:
+            """
+            Initialise a new ApplyPointingModelCommand instance.
+
+            :param component_manager: the device to which this command belongs.
+            :param logger: a logger for this command to use.
+            """
+            self._component_manager = component_manager
+            super().__init__(logger)
+
+        def do(
+            self,
+            *args: Any,
+            **kwargs: Any,
+        ) -> tuple[ResultCode, str]:
+            """
+            Implement ApplyPointingModel command functionality.
+
+            :param json_object: JSON object with a schema similar to this,
+                {
+                    "interface": "...",
+                    "antenna": "....",
+                    "band": "Band_...",
+                    "attrs": {...},
+                    "coefficients": {
+                        "IA": {...},
+                        ...
+                        ...
+                        "HESE8":{...}
+                    },
+                    "rms_fits":
+                    {
+                        "xel_rms": {...},
+                        "el_rms": {...},
+                        "sky_rms": {...}
+                    }
+                }
+
+            :return: A tuple containing a return code and a string
+                message indicating status.
+            """
+            return self._component_manager.apply_pointing_model(*args)
+
+    @command(
+        dtype_in="DevString",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def ApplyPointingModel(self, value) -> DevVarLongStringArrayType:
+        """
+        This command sets a particular badns parameters given a JSON input.
+        Note, all 18 coefficients in the JSON object should be in the excpected
+        orde and the Dish ID should be correct. Each time the command is called
+        all parameters will get updated not just the ones that have been modified.
+        """
+        handler = self.get_command_object("ApplyPointingModel")
         return_code, message = handler(value)
         return ([return_code], [message])
 
