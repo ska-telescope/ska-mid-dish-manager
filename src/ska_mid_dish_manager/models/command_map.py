@@ -392,7 +392,7 @@ class CommandMap:
 
         :param task_callback: Reports progress, status, and result.
         :type task_callback: Callable
-        :param task_abort_event: Aborts the ongoing task when set
+        :param task_abort_event: Aborts the ongoing task and clears the queue when set
         :type task_abort_event: Any
         :param commands_for_sub_devices: Fanout commands to subservient devices
         :type commands_for_sub_devices: dict
