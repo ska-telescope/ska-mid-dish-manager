@@ -956,7 +956,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # Validate the coeffients
             # Get the coefficients out of the data object
             coefficients = data.get("coefficients", {})
-            # Convert the coefficients returned into a list to verify that the number and order are as expected
+            # Verify that the number and order are as expected
             if list(coefficients.keys()) == expected_coefficients:
                 # Possibly log the feedback for debugging purposes
                 self.logger.debug("All 18 coefficients are present and in the correct order.")
@@ -991,20 +991,23 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     return (ResultCode.FAILED, err)
                 return (
                     ResultCode.OK,
-                    f"Successfully wrote the following values {coefficients} to band {band_value} on DS",
+                    f"Successfully wrote the following values {coefficients}"
+                    "to band {band_value} on DS",
                 )
 
             else:
                 # If there is an issue with the coefficients
                 self.logger.debug(
                     (
-                        "Coefficients are missing or not in the correct order. The coefficients found in the JSON object were %s."
+                        "Coefficients are missing or not in the correct order."
+                        "The coefficients found in the JSON object were %s."
                     ),
                     coefficients.keys(),
                 )
                 return (
                     ResultCode.FAILED,
-                    f"Coefficients are missing or not in the correct order. The coefficients found in the JSON object were {list(coefficients.keys())}",
+                    f"Coefficients are missing or not in the correct order."
+                    f"The coefficients found in the JSON object were {list(coefficients.keys())}",
                 )
 
         else:
@@ -1016,7 +1019,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             return (
                 ResultCode.FAILED,
-                f"Command rejected. The Dish id {DEFAULT_DISH_ID} and the Antenna value {data.get('antenna')} are not equal.",
+                f"Command rejected. The Dish id {DEFAULT_DISH_ID} and the Antenna"
+                f"value {data.get('antenna')} are not equal.",
             )
 
     def set_track_interpolation_mode(
