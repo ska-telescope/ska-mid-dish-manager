@@ -90,7 +90,11 @@ def test_apply_pointing_model_command(
         json_file_path = path
 
     pointing_model_definition = ""
-    with open(json_file_path, "r") as file:
+    with open(
+        json_file_path,
+        "r",
+        encoding="UTF-8",
+    ) as file:
         pointing_model_definition = json.load(file)
         pointing_model_definition["band"] = band_selection[1]
         pointing_model_definition["antenna"] = "SKA001"
