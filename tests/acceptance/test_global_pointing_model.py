@@ -100,7 +100,7 @@ def test_apply_pointing_model_command(
         pointing_model_definition["antenna"] = "SKA001"
     file.close()
 
-    # dish_manager_proxy.ApplyPointingModel(pointing_model_definition)
+    dish_manager_proxy.ApplyPointingModel(pointing_model_definition)
 
     # Construct list of expected values from the JSON definition
     coeffient_dictionary = pointing_model_definition["coefficients"]
