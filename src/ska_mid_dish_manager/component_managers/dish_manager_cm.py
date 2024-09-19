@@ -990,6 +990,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         )
                     else:
                         print(f"Unsupported: {band_value}")
+                        return (ResultCode.REJECTED, f"Unsupported Band: b{band_value}")
 
                 except (LostConnection, tango.DevFailed) as err:
                     return (ResultCode.FAILED, err)
@@ -1008,20 +1009,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 coefficients.keys(),
             )
             return (
-                ResultCode.FAILED,
-                f"Coefficients are missing or not in the correct order."
+                ResultCode.REJECTED,
+                f"Coefficients are missing or not in the correct order. "
                 f"The coefficients found in the JSON object were {list(coefficients.keys())}",
             )
 
         # If there is an issue with the Dish ID/ Antenna name
         self.logger.debug(
-            ("Command rejected. The Dish id %s and the Antenna value %s are not equal."),
+            ("Command rejected. The Dish id %s and the Antenna's value %s are not equal."),
             DEFAULT_DISH_ID,
             data.get("antenna"),
         )
         return (
-            ResultCode.FAILED,
-            f"Command rejected. The Dish id {DEFAULT_DISH_ID} and the Antenna"
+            ResultCode.REJECTED,
+            f"Command rejected. The Dish id {DEFAULT_DISH_ID} and the Antenna's "
             f"value {data.get('antenna')} are not equal.",
         )
 
