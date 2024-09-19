@@ -86,3 +86,11 @@ deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
     enabled: true
+
+ska-mid-dish-simulators:
+  dishsimulators:
+    image:
+      registry: registry.gitlab.com/ska-telescope/ska-mid-dish-simulators
+      image: ska-mid-dish-simulators
+      tag: 4.0.3-dev.c265846ae
+      pullPolicy: IfNotPresent
