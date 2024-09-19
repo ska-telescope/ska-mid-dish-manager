@@ -951,49 +951,38 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_cm = self.sub_component_managers["DS"]
         # Process the JSON data
         data = json.loads(json_object)
-        # Validate the Dish ID  == antenna
+        # Validate the Dish ID
         if DEFAULT_DISH_ID == data.get("antenna"):
             # Validate the coeffients
-            # Get the coefficients out of the data object
             coefficients = data.get("coefficients", {})
             # Verify that the number and order are as expected
             if list(coefficients.keys()) == expected_coefficients:
-                # Possibly log the feedback for debugging purposes
                 self.logger.debug("All 18 coefficients are present and in the correct order.")
-
                 # Get all coefficient values
                 band_coeffs_values = [coef.get("value") for coef in coefficients.values()]
-
-                # Extract the part after the underscore
+                # Extract the band's value after the underscore
                 band_value = data.get("band").split("_")[-1]
+                # Write to band
                 try:
-                    # Define possible values and corresponding function
-                    if band_value == "1":
-                        ds_cm.write_attribute_value("band1pointingmodelparams", band_coeffs_values)
-                    elif band_value == "2":
-                        ds_cm.write_attribute_value("band2pointingmodelparams", band_coeffs_values)
-                    elif band_value == "3":
-                        ds_cm.write_attribute_value("band3pointingmodelparams", band_coeffs_values)
-                    elif band_value == "4":
-                        ds_cm.write_attribute_value("band4pointingmodelparams", band_coeffs_values)
-                    elif band_value == "5a":
-                        ds_cm.write_attribute_value(
-                            "band5apointingmodelparams", band_coeffs_values
-                        )
-                    elif band_value == "5b":
-                        ds_cm.write_attribute_value(
-                            "band5bpointingmodelparams", band_coeffs_values
-                        )
+                    band_map = {
+                        "1": "band1pointingmodelparams",
+                        "2": "band2pointingmodelparams",
+                        "3": "band3pointingmodelparams",
+                        "4": "band4pointingmodelparams",
+                        "5a": "band5apointingmodelparams",
+                        "5b": "band5bpointingmodelparams",
+                    }
+                    attribute_name = band_map.get(band_value)
+                    if attribute_name:
+                        ds_cm.write_attribute_value(attribute_name, band_coeffs_values)
                     else:
-                        print(f"Unsupported: {band_value}")
                         return (ResultCode.REJECTED, f"Unsupported Band: b{band_value}")
-
                 except (LostConnection, tango.DevFailed) as err:
                     return (ResultCode.FAILED, err)
                 return (
                     ResultCode.OK,
-                    f"Successfully wrote the following values {coefficients}"
-                    "to band {band_value} on DS",
+                    f"Successfully wrote the following values {coefficients} "
+                    f"to band {band_value} on DS",
                 )
 
             # If there is an issue with the coefficients
