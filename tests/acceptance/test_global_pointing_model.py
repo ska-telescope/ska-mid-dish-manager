@@ -1,5 +1,7 @@
 """Test Static Pointing Model."""
 
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -53,3 +55,56 @@ def test_track_load_static_off(
 
     model_event_store.wait_for_value(write_values[0], timeout=7)
     model_event_store.wait_for_value(write_values[1], timeout=7)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+@pytest.mark.parametrize(
+    "band_selection",
+    [
+        ("band1PointingModelParams", "Band_1"),
+        ("band2PointingModelParams", "Band_2"),
+        ("band3PointingModelParams", "Band_3"),
+        ("band4PointingModelParams", "Band_4"),
+        ("band5aPointingModelParams", "Band_5a"),
+        ("band5bPointingModelParams", "Band_5b"),
+    ],
+)
+def test_apply_pointing_model_command(
+    band_selection: tuple[str, str], dish_manager_proxy: tango.DeviceProxy, event_store_class: Any
+) -> None:
+    """Test that global pointing parameters are applied correctly from incoming JSON defintion"""
+    pointing_model_param_events = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        band_selection[0],
+        tango.EventType.CHANGE_EVENT,
+        pointing_model_param_events,
+    )
+
+    # NOTE TO SELF: Handle cases where you cant find the file!!!!!!!!
+    # Ingest the file as JSON string and configure band selection
+    home_dir = Path.home()
+    json_file_path = ""
+    for path in home_dir.rglob("global_pointing_model.json"):
+        json_file_path = path
+
+    pointing_model_definition = ""
+    with open(json_file_path, "r") as file:
+        pointing_model_definition = json.load(file)
+        pointing_model_definition["band"] = band_selection[1]
+        pointing_model_definition["antenna"] = "SKA001"
+    file.close()
+
+    # dish_manager_proxy.ApplyPointingModel(pointing_model_definition)
+
+    # Construct list of expected values from the JSON definition
+    coeffient_dictionary = pointing_model_definition["coefficients"]
+    pointing_model_params_keys = coeffient_dictionary.keys()
+
+    expected_pointing_model_param_values = []
+    for coeffient_key in pointing_model_params_keys:
+        pointing_model_value = coeffient_dictionary[coeffient_key]["value"]
+        expected_pointing_model_param_values.append(pointing_model_value)
+
+    pointing_model_param_events.wait_for_value(expected_pointing_model_param_values, timeout=7)
