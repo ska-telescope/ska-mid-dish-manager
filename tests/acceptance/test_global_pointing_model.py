@@ -90,15 +90,14 @@ def test_apply_pointing_model_command(
 
     if not json_file_path.exists():
         print("File not found. Stopping test.")
-        pointing_model_definition =[]
-
+        pointing_model_definition = []
 
     with open(json_file_path, "r", encoding="UTF-8") as file:
         pointing_model_definition = json.load(file)
         pointing_model_definition["band"] = band_selection[1]
         pointing_model_definition["antenna"] = "SKA001"
 
-    pointing_model_json_str = json.dumps(pointing_model_definition)     
+    pointing_model_json_str = json.dumps(pointing_model_definition)
     dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
 
     # Construct list of expected values from the JSON definition
