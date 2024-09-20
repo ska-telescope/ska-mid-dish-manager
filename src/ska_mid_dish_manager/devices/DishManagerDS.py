@@ -725,10 +725,13 @@ class DishManager(SKAController):
     @band5aPointingModelParams.write
     def band5aPointingModelParams(self, value):
         """Set the band5aPointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band5a_pointing_model_params = value
-        self.push_change_event("band5aPointingModelParams", value)
-        self.push_archive_event("band5aPointingModelParams", value)
+        self.logger.debug("band5aPointingModelParams write method called with params %s", value)
+
+        if hasattr(self, "component_manager"):
+            self.component_manager.update_pointing_model_params("band5aPointingModelParams", value)
+        else:
+            self.logger.warning("No component manager to write band5aPointingModelParams yet")
+            raise RuntimeError("Failed to write to band5aPointingModelParams on DishManager")
 
     @attribute(
         dtype=(float,),
@@ -744,10 +747,13 @@ class DishManager(SKAController):
     @band5bPointingModelParams.write
     def band5bPointingModelParams(self, value):
         """Set the band5bPointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band5b_pointing_model_params = value
-        self.push_change_event("band5bPointingModelParams", value)
-        self.push_archive_event("band5bPointingModelParams", value)
+        self.logger.debug("band5bPointingModelParams write method called with params %s", value)
+
+        if hasattr(self, "component_manager"):
+            self.component_manager.update_pointing_model_params("band5bPointingModelParams", value)
+        else:
+            self.logger.warning("No component manager to write band5bPointingModelParams yet")
+            raise RuntimeError("Failed to write to band5bPointingModelParams on DishManager")
 
     @attribute(
         dtype=float,
