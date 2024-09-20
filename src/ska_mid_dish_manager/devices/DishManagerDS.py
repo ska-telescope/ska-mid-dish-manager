@@ -752,6 +752,7 @@ class DishManager(SKAController):
         else:
             self.logger.warning("No component manager to write band5bPointingModelParams yet")
             raise RuntimeError("Failed to write to band5bPointingModelParams on DishManager")
+
     def band1SamplerFrequency(self):
         """Returns the band1SamplerFrequency"""
         return self._band1_sampler_frequency
