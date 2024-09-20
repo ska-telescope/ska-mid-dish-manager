@@ -371,6 +371,8 @@ class DishManager(SKAController):
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "band3pointingmodelparams": "band3PointingModelParams",
                 "band4pointingmodelparams": "band4PointingModelParams",
+                "band5apointingmodelparams": "band5aPointingModelParams",
+                "band5bpointingmodelparams": "band5bPointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
@@ -753,6 +755,11 @@ class DishManager(SKAController):
             self.logger.warning("No component manager to write band5bPointingModelParams yet")
             raise RuntimeError("Failed to write to band5bPointingModelParams on DishManager")
 
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.WRITE,
+        doc="BAND1 absolute sampler clock frequency (base plus offset).",
+    )
     def band1SamplerFrequency(self):
         """Returns the band1SamplerFrequency"""
         return self._band1_sampler_frequency
