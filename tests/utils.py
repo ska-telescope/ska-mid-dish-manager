@@ -3,7 +3,7 @@
 import queue
 import random
 import string
-from typing import Any, List, Tuple
+from typing import Any, Callable, List, Tuple
 
 import numpy as np
 import tango
@@ -131,6 +131,30 @@ class EventStore:
         except queue.Empty as err:
             ev_vals = self.extract_event_values(events)
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
+
+    def wait_for_condition(self, condition: Callable, timeout: int = 3) -> bool:
+        """Wait for a generic condition.
+
+        Wait `timeout` seconds for each fetch.
+
+        :param condition: Function that represents condition to check
+        :type value: Callable
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If None are found
+        :return: True if found
+        :rtype: bool
+        """
+        try:
+            events = []
+            while True:
+                event = self._queue.get(timeout=timeout)
+                events.append(event)
+                if condition(event.attr_value.value):
+                    return True
+        except queue.Empty as err:
+            ev_vals = self.extract_event_values(events)
+            raise RuntimeError(f"Never got an event that meets condition got [{ev_vals}]") from err
 
     def wait_for_quality(  # pylint:disable=inconsistent-return-statements
         self, value: tango.AttrQuality, timeout: int = 3

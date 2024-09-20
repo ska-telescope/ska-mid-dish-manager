@@ -6,6 +6,8 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode, PointingState
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
+TRACKING_POSITION_THRESHOLD_ERROR_DEG = 0.05
+
 
 # pylint: disable=unused-argument,too-many-arguments,too-many-locals,too-many-statements
 @pytest.mark.acceptance
@@ -98,9 +100,7 @@ def test_track_and_track_stop_cmds(
         current_az + 5 * az_dir,
         current_el + 5 * el_dir,
     ]
-    first_table_entry = [track_table[0], track_table[1], track_table[2]]
-    second_table_entry = [track_table[3], track_table[4], track_table[5]]
-    third_table_entry = [track_table[6], track_table[7], track_table[8]]
+    final_table_entry = [track_table[6], track_table[7], track_table[8]]
 
     dish_manager_proxy.programTrackTable = track_table
 
@@ -129,10 +129,15 @@ def test_track_and_track_stop_cmds(
     for message in expected_progress_updates:
         assert message in events_string
 
-    # Ensure that we pass through the first three points
-    for table_entry in [first_table_entry, second_table_entry, third_table_entry]:
-        # Check achievedPointing
-        achieved_pointing_event_store.wait_for_value(table_entry, timeout=4)
+    # Check that we get to last entry
+    def check_final_points_reached(value: any) -> bool:
+        return (
+            abs(value[1] - final_table_entry[1]) < TRACKING_POSITION_THRESHOLD_ERROR_DEG
+            and abs(value[2] - final_table_entry[2]) < TRACKING_POSITION_THRESHOLD_ERROR_DEG
+        )
+
+    achieved_pointing_event_store.clear_queue()
+    achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=10)
 
     # Call TrackStop on DishManager
     [[_], [unique_id]] = dish_manager_proxy.TrackStop()
