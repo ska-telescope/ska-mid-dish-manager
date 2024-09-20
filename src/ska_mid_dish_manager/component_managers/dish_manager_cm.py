@@ -63,6 +63,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
+        dish_id: str,
         *args,
         **kwargs,
     ):
@@ -91,6 +92,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             band2pointingmodelparams=[],
             band3pointingmodelparams=[],
             band4pointingmodelparams=[],
+            band5apointingmodelparams=[],
+            band5bpointingmodelparams=[],
             ignorespf=False,
             ignorespfrx=False,
             noisediodemode=NoiseDiodeMode.OFF,
@@ -117,6 +120,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
+        self.dish_id = dish_id
 
         self._device_to_comm_attr_map = {
             Device.DS: "dsConnectionState",
@@ -163,6 +167,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band2pointingmodelparams=[],
                 band3pointingmodelparams=[],
                 band4pointingmodelparams=[],
+                band5apointingmodelparams=[],
+                band5bpointingmodelparams=[],
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 actstaticoffsetvaluexel=None,
                 actstaticoffsetvalueel=None,
@@ -922,7 +928,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         json_object,
     ) -> Tuple[ResultCode, str]:
-        """This command sets a particular badns parameters given a JSON input.
+        """Updates a band's coefficient parameters with a given JSON input.
         Note, all 18 coefficients in the JSON object should be in the excpected
         order and the Dish ID should be correct. Each time the command is called
         all parameters will get updated not just the ones that have been modified.
@@ -949,14 +955,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "HESE8",
         ]
         ds_cm = self.sub_component_managers["DS"]
+        coeff_keys = []
         # Process the JSON data
-        data = json.loads(json_object)
+        try:
+            data = json.loads(json_object)
+        except (LostConnection, tango.DevFailed) as err:
+            return (ResultCode.REJECTED, f" Invalid JSON input.")
         # Validate the Dish ID
-        if DEFAULT_DISH_ID == data.get("antenna"):
+        if self.dish_id == data.get("antenna"):
             # Validate the coeffients
             coefficients = data.get("coefficients", {})
+            coeff_keys = coefficients.keys()
             # Verify that the number and order are as expected
-            if list(coefficients.keys()) == expected_coefficients:
+            if list(coeff_keys) == expected_coefficients:
                 self.logger.debug("All 18 coefficients are present and in the correct order.")
                 # Get all coefficient values
                 band_coeffs_values = [coef.get("value") for coef in coefficients.values()]
@@ -978,6 +989,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     else:
                         return (ResultCode.REJECTED, f"Unsupported Band: b{band_value}")
                 except (LostConnection, tango.DevFailed) as err:
+                    self.logger.exception(
+                        "%s. The error response is: %s", (ResultCode.FAILED, err)
+                    )
                     return (ResultCode.FAILED, err)
                 return (
                     ResultCode.OK,
@@ -991,12 +1005,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Coefficients are missing or not in the correct order."
                     "The coefficients found in the JSON object were %s."
                 ),
-                coefficients.keys(),
+                coeff_keys,
             )
             return (
                 ResultCode.REJECTED,
                 f"Coefficients are missing or not in the correct order. "
-                f"The coefficients found in the JSON object were {list(coefficients.keys())}",
+                f"The coefficients found in the JSON object were {list(coeff_keys)}",
             )
 
         # If there is an issue with the Dish ID/ Antenna name

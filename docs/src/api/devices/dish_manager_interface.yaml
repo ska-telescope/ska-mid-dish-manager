@@ -1802,4 +1802,5 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
+    - name: __SubDevices
     - name: polled_cmd

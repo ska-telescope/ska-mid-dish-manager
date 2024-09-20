@@ -8,7 +8,6 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Upgraded ska-mid-dish-simulators chart to v4.0.2
-- Upgraded ska-tango-util to version v0.4.12
 - Added in a command called `ApplyPointingModel` that updates bands using a json input
 
 Version 4.0.0
