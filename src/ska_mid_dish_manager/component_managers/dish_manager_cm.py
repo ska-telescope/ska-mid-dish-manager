@@ -965,12 +965,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 # Write to band
                 try:
                     band_map = {
-                        "1": "band1pointingmodelparams",
-                        "2": "band2pointingmodelparams",
-                        "3": "band3pointingmodelparams",
-                        "4": "band4pointingmodelparams",
-                        "5a": "band5apointingmodelparams",
-                        "5b": "band5bpointingmodelparams",
+                        "1": "band1PointingModelParams",
+                        "2": "band2PointingModelParams",
+                        "3": "band3PointingModelParams",
+                        "4": "band4PointingModelParams",
+                        "5a": "band5aPointingModelParams",
+                        "5b": "band5bPointingModelParams",
                     }
                     attribute_name = band_map.get(band_value)
                     if attribute_name:
