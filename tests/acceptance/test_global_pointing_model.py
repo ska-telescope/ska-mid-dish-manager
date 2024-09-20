@@ -82,25 +82,24 @@ def test_apply_pointing_model_command(
         pointing_model_param_events,
     )
 
-    # NOTE TO SELF: Handle cases where you cant find the file!!!!!!!!
     # Ingest the file as JSON string and configure band selection
-    home_dir = Path.home()
-    json_file_path = ""
-    for path in home_dir.rglob("global_pointing_model.json"):
-        json_file_path = path
+    # Get the directory where the test file is located
+    test_dir = Path(__file__).parent
+    # Construct the path to the 'supplementary' directory
+    json_file_path = test_dir / "supplementary" / "global_pointing_model.json"
 
-    pointing_model_definition = ""
-    with open(
-        json_file_path,
-        "r",
-        encoding="UTF-8",
-    ) as file:
+    if not json_file_path.exists():
+        print("File not found. Stopping test.")
+        pointing_model_definition =[]
+
+
+    with open(json_file_path, "r", encoding="UTF-8") as file:
         pointing_model_definition = json.load(file)
         pointing_model_definition["band"] = band_selection[1]
         pointing_model_definition["antenna"] = "SKA001"
-    file.close()
 
-    dish_manager_proxy.ApplyPointingModel(pointing_model_definition)
+    pointing_model_json_str = json.dumps(pointing_model_definition)     
+    dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
 
     # Construct list of expected values from the JSON definition
     coeffient_dictionary = pointing_model_definition["coefficients"]

@@ -9,6 +9,12 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
+    - name: ApplyPointingModel
+      disp_level: OPERATOR
+      doc_in: Uninitialised
+      doc_out: Uninitialised
+      dtype_in: DevString
+      dtype_out: DevVarLongStringArray
     - name: CheckLongRunningCommandStatus
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -758,7 +764,7 @@
       format: '%6.2f'
       label: band5aPointingModelParams
       max_alarm: Not specified
-      max_dim_x: 5
+      max_dim_x: 18
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -791,7 +797,7 @@
       format: '%6.2f'
       label: band5bPointingModelParams
       max_alarm: Not specified
-      max_dim_x: 5
+      max_dim_x: 18
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1796,5 +1802,4 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: __SubDevices
     - name: polled_cmd

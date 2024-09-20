@@ -973,20 +973,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 try:
                     # Define possible values and corresponding function
                     if band_value == "1":
-                        ds_cm.write_attribute_value("band1pointingmodelparams", band_coeffs_values)
+                        ds_cm.write_attribute_value("band1PointingModelParams", band_coeffs_values)
                     elif band_value == "2":
-                        ds_cm.write_attribute_value("band2pointingmodelparams", band_coeffs_values)
+                        ds_cm.write_attribute_value("band2PointingModelParams", band_coeffs_values)
                     elif band_value == "3":
-                        ds_cm.write_attribute_value("band3pointingmodelparams", band_coeffs_values)
+                        ds_cm.write_attribute_value("band3PointingModelParams", band_coeffs_values)
                     elif band_value == "4":
-                        ds_cm.write_attribute_value("band4pointingmodelparams", band_coeffs_values)
+                        ds_cm.write_attribute_value("band4PointingModelParams", band_coeffs_values)
                     elif band_value == "5a":
                         ds_cm.write_attribute_value(
-                            "band5apointingmodelparams", band_coeffs_values
+                            "band5aPointingModelParams", band_coeffs_values
                         )
                     elif band_value == "5b":
                         ds_cm.write_attribute_value(
-                            "band5bpointingmodelparams", band_coeffs_values
+                            "band5bPointingModelParams", band_coeffs_values
                         )
                     else:
                         print(f"Unsupported: {band_value}")

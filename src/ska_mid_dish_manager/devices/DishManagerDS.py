@@ -713,7 +713,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(float,),
-        max_dim_x=5,
+        max_dim_x=18,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 5a pointing models used by Dish to "
         "do pointing corrections.",
@@ -732,7 +732,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(float,),
-        max_dim_x=5,
+        max_dim_x=18,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 5b pointing models used by Dish to "
         "do pointing corrections.",
