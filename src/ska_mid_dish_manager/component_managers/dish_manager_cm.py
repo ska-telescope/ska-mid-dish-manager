@@ -63,6 +63,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
+        dish_id: str,
         *args,
         **kwargs,
     ):
@@ -119,6 +120,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
+        self.dish_id = dish_id
 
         self._device_to_comm_attr_map = {
             Device.DS: "dsConnectionState",
@@ -926,7 +928,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         json_object,
     ) -> Tuple[ResultCode, str]:
-        """This command sets a particular badns parameters given a JSON input.
+        """Updates a band's coefficient parameters with a given JSON input.
         Note, all 18 coefficients in the JSON object should be in the excpected
         order and the Dish ID should be correct. Each time the command is called
         all parameters will get updated not just the ones that have been modified.
@@ -953,51 +955,48 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "HESE8",
         ]
         ds_cm = self.sub_component_managers["DS"]
+        coeff_keys = []
         # Process the JSON data
-        data = json.loads(json_object)
-        # Validate the Dish ID  == antenna
-        if DEFAULT_DISH_ID == data.get("antenna"):
+        try:
+            data = json.loads(json_object)
+        except (LostConnection, json.JSONDecodeError) as err:
+            return (ResultCode.REJECTED, str(err))
+        # Validate the Dish ID
+        if self.dish_id == data.get("antenna"):
             # Validate the coeffients
-            # Get the coefficients out of the data object
             coefficients = data.get("coefficients", {})
+            coeff_keys = coefficients.keys()
             # Verify that the number and order are as expected
-            if list(coefficients.keys()) == expected_coefficients:
-                # Possibly log the feedback for debugging purposes
+            if list(coeff_keys) == expected_coefficients:
                 self.logger.debug("All 18 coefficients are present and in the correct order.")
-
                 # Get all coefficient values
                 band_coeffs_values = [coef.get("value") for coef in coefficients.values()]
-
-                # Extract the part after the underscore
+                # Extract the band's value after the underscore
                 band_value = data.get("band").split("_")[-1]
+                # Write to band
                 try:
-                    # Define possible values and corresponding function
-                    if band_value == "1":
-                        ds_cm.write_attribute_value("band1PointingModelParams", band_coeffs_values)
-                    elif band_value == "2":
-                        ds_cm.write_attribute_value("band2PointingModelParams", band_coeffs_values)
-                    elif band_value == "3":
-                        ds_cm.write_attribute_value("band3PointingModelParams", band_coeffs_values)
-                    elif band_value == "4":
-                        ds_cm.write_attribute_value("band4PointingModelParams", band_coeffs_values)
-                    elif band_value == "5a":
-                        ds_cm.write_attribute_value(
-                            "band5aPointingModelParams", band_coeffs_values
-                        )
-                    elif band_value == "5b":
-                        ds_cm.write_attribute_value(
-                            "band5bPointingModelParams", band_coeffs_values
-                        )
+                    band_map = {
+                        "1": "band1PointingModelParams",
+                        "2": "band2PointingModelParams",
+                        "3": "band3PointingModelParams",
+                        "4": "band4PointingModelParams",
+                        "5a": "band5aPointingModelParams",
+                        "5b": "band5bPointingModelParams",
+                    }
+                    attribute_name = band_map.get(band_value)
+                    if attribute_name:
+                        ds_cm.write_attribute_value(attribute_name, band_coeffs_values)
                     else:
-                        print(f"Unsupported: {band_value}")
                         return (ResultCode.REJECTED, f"Unsupported Band: b{band_value}")
-
                 except (LostConnection, tango.DevFailed) as err:
+                    self.logger.exception(
+                        "%s. The error response is: %s", (ResultCode.FAILED, err)
+                    )
                     return (ResultCode.FAILED, err)
                 return (
                     ResultCode.OK,
-                    f"Successfully wrote the following values {coefficients}"
-                    "to band {band_value} on DS",
+                    f"Successfully wrote the following values {coefficients} "
+                    f"to band {band_value} on DS",
                 )
 
             # If there is an issue with the coefficients
@@ -1006,12 +1005,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Coefficients are missing or not in the correct order."
                     "The coefficients found in the JSON object were %s."
                 ),
-                coefficients.keys(),
+                coeff_keys,
             )
             return (
                 ResultCode.REJECTED,
                 f"Coefficients are missing or not in the correct order. "
-                f"The coefficients found in the JSON object were {list(coefficients.keys())}",
+                f"The coefficients found in the JSON object were {list(coeff_keys)}",
             )
 
         # If there is an issue with the Dish ID/ Antenna name
