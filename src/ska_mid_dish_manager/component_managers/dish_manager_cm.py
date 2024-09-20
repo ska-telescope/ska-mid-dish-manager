@@ -959,8 +959,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Process the JSON data
         try:
             data = json.loads(json_object)
-        except (LostConnection, tango.DevFailed) as err:
-            return (ResultCode.REJECTED, f" Invalid JSON input.")
+        except (LostConnection, json.JSONDecodeError) as err:
+            return (ResultCode.REJECTED, str(err))
         # Validate the Dish ID
         if self.dish_id == data.get("antenna"):
             # Validate the coeffients

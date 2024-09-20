@@ -1899,7 +1899,7 @@ class DishManager(SKAController):
 
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
             [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
-            [15] HESE4, [16] HECE8, [17] HESE8
+            [15] HESE4, [16] HECE8, [17] HESE8.
              
             The command only looks for the antenna, band, number of coefficients and order of
             coefficients - everything else is ignored. A typical structure would be:
