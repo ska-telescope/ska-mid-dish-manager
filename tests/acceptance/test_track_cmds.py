@@ -110,6 +110,7 @@ def test_track_and_track_stop_cmds(
     ]
     final_table_entry = [track_table[6], track_table[7], track_table[8]]
 
+    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
     dish_manager_proxy.programTrackTable = track_table
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
@@ -237,7 +238,7 @@ def test_append(
     init_az = -250
     init_el = 70
     dish_manager_proxy.Slew([init_az, init_el])
-    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=6)
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=10)
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=60)
 
     # Load a track table
@@ -280,6 +281,10 @@ def test_append(
         track_table = generate_next_1_second_table(start_tai, samples_per_append)
         dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
         dish_manager_proxy.programTrackTable = track_table
+        time.sleep(1)
+
+    last_timestamp_in_table = track_table[-3]
+    while get_current_tai_timestamp() < last_timestamp_in_table + 5:
         time.sleep(1)
 
     # Check that we get to last entry
