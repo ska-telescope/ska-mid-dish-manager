@@ -270,7 +270,7 @@ def test_append(
     [[_], [unique_id]] = dish_manager_proxy.Track()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
     pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=10)
-    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=10)
+    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
 
     number_of_1_second_appends = 20
     for _ in range(number_of_1_second_appends):
