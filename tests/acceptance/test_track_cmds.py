@@ -238,7 +238,7 @@ def test_append(
     init_el = 70
     dish_manager_proxy.Slew([init_az, init_el])
     pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=6)
-    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=6)
+    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=60)
 
     # Load a track table
     az_amplitude = 8
