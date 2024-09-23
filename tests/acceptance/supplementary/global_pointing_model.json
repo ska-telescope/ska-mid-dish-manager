@@ -1,6 +1,6 @@
 {
     "interface": "https://schema.skao.int/ska-mid-dish-gpm/1.2",
-    "antenna": "SKA063",
+    "antenna": "SKA001",
     "band": "Band_2",
     "attrs": {
       "obs_date_times": [
@@ -139,12 +139,3 @@
       }
     }
   }
-  
-  
-  
-  
-  
-  
-  
-  
-  

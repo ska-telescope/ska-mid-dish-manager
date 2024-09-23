@@ -966,11 +966,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # Validate the coeffients
             coefficients = data.get("coefficients", {})
             coeff_keys = coefficients.keys()
-            # Verify that the number and order are as expected
-            if list(coeff_keys) == expected_coefficients:
-                self.logger.debug("All 18 coefficients are present and in the correct order.")
+            # Verify that the number expected coeffs are are available
+            # Check if they have the same elements (ignoring order)
+            if set(coeff_keys) == set(expected_coefficients):
+                # Reorder `coeff_keys` to match `expected_coefficients`
+                coeff_keys = [item for item in expected_coefficients if item in coeff_keys]
+                print(f"The coeffs keys: {coeff_keys}")
+                self.logger.debug("All 18 coefficients are present.")
                 # Get all coefficient values
-                band_coeffs_values = [coef.get("value") for coef in coefficients.values()]
+                band_coeffs_values = [coefficients[key].get("value") for key in coeff_keys]
+                # band_coeffs_values = [coef.get("value") for coef in coefficients.values()]
                 # Extract the band's value after the underscore
                 band_value = data.get("band").split("_")[-1]
                 # Write to band
@@ -1001,15 +1006,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
             # If there is an issue with the coefficients
             self.logger.debug(
-                (
-                    "Coefficients are missing or not in the correct order."
-                    "The coefficients found in the JSON object were %s."
-                ),
+                ("Coefficients are missing." "The coefficients found in the JSON object were %s."),
                 coeff_keys,
             )
             return (
                 ResultCode.REJECTED,
-                f"Coefficients are missing or not in the correct order. "
+                f"Coefficients are missing. "
                 f"The coefficients found in the JSON object were {list(coeff_keys)}",
             )
 
@@ -1021,7 +1023,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return (
             ResultCode.REJECTED,
-            f"Command rejected. The Dish id {DEFAULT_DISH_ID} and the Antenna's "
+            f"Command rejected. The Dish id {self.dish_id} and the Antenna's "
             f"value {data.get('antenna')} are not equal.",
         )
 
