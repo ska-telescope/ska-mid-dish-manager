@@ -83,7 +83,7 @@ def test_apply_pointing_model_command(
             "incorrect_antenna.json",
             "Command rejected. The Dish id SKA001 and the Antenna's value SKA053 are not equal.",
         ),
-        ("incorrect_band.json", "band5bPointingModelParams", "Unsupported Band: b6"),
+        ("incorrect_band.json", "Unsupported Band: b6"),
         (
             "incorrect_total_coeff.json",
             "Coefficients are missing. The coefficients found in the JSON object were {coeff}",
