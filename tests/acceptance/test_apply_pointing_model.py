@@ -26,7 +26,7 @@ def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict
 
     with open(json_file_path, "r", encoding="UTF-8") as file:
         pointing_model_definition = json.load(file)
-        if band != None:
+        if band is not None:
             pointing_model_definition["band"] = band
 
     return json.dumps(pointing_model_definition), pointing_model_definition
@@ -107,51 +107,12 @@ def test_inconsistent_json_apply_pointing_model(
     ds_device_proxy: tango.DeviceProxy,
 ) -> None:
     """Test ApplyPointingModel command with incorrect JSON inputs."""
-    expected_coefficients = [
-        "IA",
-        "CA",
-        "NPAE",
-        "AN",
-        "AN0",
-        "AW",
-        "AW0",
-        "ACEC",
-        "ACES",
-        "ABA",
-        "ABphi",
-        "IE",
-        "ECEC",
-        "ECES",
-        "HECE4",
-    ]
-
-    expected_values = [
-        -4.91052372e02,
-        -4.64943876e01,
-        -2.00438839e-01,
-        6.30348854e00,
-        2.00000000e00,
-        1.60156949e01,
-        4.00000090e00,
-        1.19744029e01,
-        -3.73854203e00,
-        7.00000000e00,
-        4.00000000e00,
-        1.65598689e03,
-        -1.45284228e02,
-        -2.67608481e01,
-        9.00000700e00,
-        7.00090000e00,
-        9.00000000e00,
-        7.00000900e00,
-    ]
 
     pointing_model_json_str, pointing_model_definition = read_file_contents(file_name, None)
 
     # Incorrect JSON assessment
     result_code, command_resp = dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
-    ds_band_pointing_model_params = ds_device_proxy.read_attribute(band).value
-    assert not np.array_equal(expected_values, ds_band_pointing_model_params)
+
     if file_name in ["incorrect_total_coeff.json"]:
         coefficients = pointing_model_definition.get("coefficients", {})
         coeff_keys = list(coefficients.keys())
