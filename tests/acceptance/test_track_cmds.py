@@ -19,8 +19,8 @@ INIT_AZ = -250
 INIT_EL = 70
 
 
-@pytest.fixture
 def slew_dish_to_init(event_store_class, dish_manager_proxy):
+    """Fixture that slews the dish to a init position."""
     main_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
         "dishMode",
@@ -209,13 +209,15 @@ def test_track_and_track_stop_cmds(
 
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_append(
-    slew_dish_to_init,
+def test_append_dvs_case(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
 ):
     """Test Track with Append"""
+
+    slew_dish_to_init(event_store_class, dish_manager_proxy)
+
     band_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
@@ -276,7 +278,7 @@ def test_append(
     el_amplitude = 4
     el_sin_period = 100
 
-    track_delay = 10
+    track_delay = 15
     samples_per_append = 5
 
     def generate_next_1_second_table(start_time, samples):

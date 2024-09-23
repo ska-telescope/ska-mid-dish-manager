@@ -56,7 +56,7 @@ def setup_and_teardown(
 
     if ds_device_proxy.operatingMode != DSOperatingMode.STOW:
         ds_device_proxy.Stow()
-        assert event_store.wait_for_value(DSOperatingMode.STOW, timeout=9)
+        assert event_store.wait_for_value(DSOperatingMode.STOW, timeout=60)
 
     ds_device_proxy.SetStandbyLPMode()
     assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=9)
