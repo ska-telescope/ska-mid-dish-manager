@@ -1,5 +1,6 @@
 # pylint: disable=protected-access,too-many-lines,too-many-public-methods
 """Component manager for a DishManager tango device"""
+import json
 import logging
 import os
 from functools import partial
@@ -59,6 +60,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
+        dish_id: str,
         *args,
         **kwargs,
     ):
@@ -87,6 +89,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             band2pointingmodelparams=[],
             band3pointingmodelparams=[],
             band4pointingmodelparams=[],
+            band5apointingmodelparams=[],
+            band5bpointingmodelparams=[],
             ignorespf=False,
             ignorespfrx=False,
             noisediodemode=NoiseDiodeMode.OFF,
@@ -113,6 +117,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
+        self.dish_id = dish_id
 
         self._device_to_comm_attr_map = {
             Device.DS: "dsConnectionState",
@@ -159,6 +164,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band2pointingmodelparams=[],
                 band3pointingmodelparams=[],
                 band4pointingmodelparams=[],
+                band5apointingmodelparams=[],
+                band5bpointingmodelparams=[],
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 actstaticoffsetvaluexel=None,
                 actstaticoffsetvalueel=None,
@@ -913,6 +920,108 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.exception("SetKvalue on SPFRx failed")
             return (ResultCode.FAILED, err)
         return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
+
+    def apply_pointing_model(
+        self,
+        json_object,
+    ) -> Tuple[ResultCode, str]:
+        """Updates a band's coefficient parameters with a given JSON input.
+        Note, all 18 coefficients need to be present in the JSON object and
+        the Dish ID should be correct. Each time the command is called all
+        parameters will get updated not just the ones that have been modified.
+        """
+        # A list of expected coefficients (The order in which they are written)
+        expected_coefficients = [
+            "IA",
+            "CA",
+            "NPAE",
+            "AN",
+            "AN0",
+            "AW",
+            "AW0",
+            "ACEC",
+            "ACES",
+            "ABA",
+            "ABphi",
+            "IE",
+            "ECEC",
+            "ECES",
+            "HECE4",
+            "HESE4",
+            "HECE8",
+            "HESE8",
+        ]
+        ds_cm = self.sub_component_managers["DS"]
+        coeff_keys = []
+        # Process the JSON data
+        try:
+            data = json.loads(json_object)
+        except (LostConnection, json.JSONDecodeError) as err:
+            return (ResultCode.REJECTED, str(err))
+        # Validate the Dish ID
+        if self.dish_id == data.get("antenna"):
+            # Validate the coeffients
+            coefficients = data.get("coefficients", {})
+            coeff_keys = coefficients.keys()
+            # Verify that the number expected coeffs are are available
+            # Check if they have the same elements (ignoring order)
+            if set(coeff_keys) == set(expected_coefficients):
+                # Reorder `coeff_keys` to match `expected_coefficients`
+                coeff_keys = [item for item in expected_coefficients if item in coeff_keys]
+                print(f"The coeffs keys: {coeff_keys}")
+                self.logger.debug("All 18 coefficients are present.")
+                # Get all coefficient values
+                band_coeffs_values = [coefficients[key].get("value") for key in coeff_keys]
+                # band_coeffs_values = [coef.get("value") for coef in coefficients.values()]
+                # Extract the band's value after the underscore
+                band_value = data.get("band").split("_")[-1]
+                # Write to band
+                band_map = {
+                    "1": "band1PointingModelParams",
+                    "2": "band2PointingModelParams",
+                    "3": "band3PointingModelParams",
+                    "4": "band4PointingModelParams",
+                    "5a": "band5aPointingModelParams",
+                    "5b": "band5bPointingModelParams",
+                }
+                attribute_name = band_map.get(band_value)
+                if attribute_name is None:
+                    return (ResultCode.REJECTED, f"Unsupported Band: b{band_value}")
+                try:
+                    ds_cm.write_attribute_value(attribute_name, band_coeffs_values)
+                except (LostConnection, tango.DevFailed) as err:
+                    self.logger.exception(
+                        "%s. The error response is: %s", (ResultCode.FAILED, err)
+                    )
+                    return (ResultCode.FAILED, err)
+                return (
+                    ResultCode.OK,
+                    f"Successfully wrote the following values {coefficients} "
+                    f"to band {band_value} on DS",
+                )
+
+            # If there is an issue with the coefficients
+            self.logger.debug(
+                ("Coefficients are missing. The coefficients found in the JSON object were %s."),
+                coeff_keys,
+            )
+            return (
+                ResultCode.REJECTED,
+                f"Coefficients are missing. "
+                f"The coefficients found in the JSON object were {list(coeff_keys)}",
+            )
+
+        # If there is an issue with the Dish ID/ Antenna name
+        self.logger.debug(
+            ("Command rejected. The Dish id %s and the Antenna's value %s are not equal."),
+            self.dish_id,
+            data.get("antenna"),
+        )
+        return (
+            ResultCode.REJECTED,
+            f"Command rejected. The Dish id {self.dish_id} and the Antenna's "
+            f"value {data.get('antenna')} are not equal.",
+        )
 
     def set_track_interpolation_mode(
         self,
