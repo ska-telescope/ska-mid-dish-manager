@@ -9,6 +9,25 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
+    - name: ApplyPointingModel
+      disp_level: OPERATOR
+      doc_in: "The command accepts a JSON input (value) containing data to update\
+        \ a particular\n        band's (b1-b5b). The following 18 coefficients need\
+        \ to be within the JSON object:\n            [0] IA, [1] CA, [2] NPAE, [3]\
+        \ AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n            [9] ABA,\
+        \ [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,\n            [15]\
+        \ HESE4, [16] HECE8, [17] HESE8.\n\n        The command only looks for the\
+        \ antenna, band and coefficients\n        - everything else is ignored. A\
+        \ typical structure would be:\n            \"interface\": \"...\",\n     \
+        \       \"antenna\": \"....\",\n            \"band\": \"Band_...\",\n    \
+        \        \"attrs\": {...},\n            \"coefficients\": {\n            \
+        \    \"IA\": {...},\n                ...\n                \"HESE8\":{...}\n\
+        \            },\n            \"rms_fits\": {\n                \"xel_rms\"\
+        : {...},\n                \"el_rms\": {...},\n                \"sky_rms\"\
+        : {...}\n            }\n        }"
+      doc_out: Uninitialised
+      dtype_in: DevString
+      dtype_out: DevVarLongStringArray
     - name: CheckLongRunningCommandStatus
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -758,7 +777,7 @@
       format: '%6.2f'
       label: band5aPointingModelParams
       max_alarm: Not specified
-      max_dim_x: 5
+      max_dim_x: 18
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -791,7 +810,7 @@
       format: '%6.2f'
       label: band5bPointingModelParams
       max_alarm: Not specified
-      max_dim_x: 5
+      max_dim_x: 18
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1796,5 +1815,4 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: __SubDevices
     - name: polled_cmd
