@@ -18,7 +18,6 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnecti
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
-    DEFAULT_DISH_ID,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
