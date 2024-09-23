@@ -16,9 +16,7 @@ from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_map import CommandMap
-from ska_mid_dish_manager.models.constants import (
-    BAND_POINTING_MODEL_PARAMS_LENGTH,
-)
+from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LENGTH
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
