@@ -1017,7 +1017,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # If there is an issue with the Dish ID/ Antenna name
         self.logger.debug(
             ("Command rejected. The Dish id %s and the Antenna's value %s are not equal."),
-            DEFAULT_DISH_ID,
+            self.dish_id,
             data.get("antenna"),
         )
         return (
