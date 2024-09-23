@@ -1006,7 +1006,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
             # If there is an issue with the coefficients
             self.logger.debug(
-                ("Coefficients are missing." "The coefficients found in the JSON object were %s."),
+                ("Coefficients are missing. The coefficients found in the JSON object were %s."),
                 coeff_keys,
             )
             return (

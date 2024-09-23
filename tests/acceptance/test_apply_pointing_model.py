@@ -9,10 +9,9 @@ import pytest
 import tango
 from ska_control_model import ResultCode
 
-# Read file
-
 
 def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict]:
+    """Appy Pointing Model Test - Best Cases"""
     # Ingest the file as JSON string and configure band selection
     # Get the directory where the test file is located
     test_dir = Path(__file__).parent
@@ -78,32 +77,27 @@ def test_apply_pointing_model_command(
 @pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize(
-    ("file_name, band, response"),
+    ("file_name, response"),
     [
         (
             "incorrect_antenna.json",
-            "band3PointingModelParams",
             "Command rejected. The Dish id SKA001 and the Antenna's value SKA053 are not equal.",
         ),
         ("incorrect_band.json", "band5bPointingModelParams", "Unsupported Band: b6"),
         (
             "incorrect_total_coeff.json",
-            "band1PointingModelParams",
             "Coefficients are missing. The coefficients found in the JSON object were {coeff}",
         ),
         (
             "coeff_order.json",
-            "band2PointingModelParams",
             "Successfully wrote the following values {coeff} to band 2 on DS",
         ),
     ],
 )
 def test_inconsistent_json_apply_pointing_model(
     file_name: str,
-    band: str,
     response: str,
     dish_manager_proxy: tango.DeviceProxy,
-    ds_device_proxy: tango.DeviceProxy,
 ) -> None:
     """Test ApplyPointingModel command with incorrect JSON inputs."""
 
