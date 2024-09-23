@@ -929,11 +929,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         json_object,
     ) -> Tuple[ResultCode, str]:
         """Updates a band's coefficient parameters with a given JSON input.
-        Note, all 18 coefficients in the JSON object should be in the excpected
-        order and the Dish ID should be correct. Each time the command is called
-        all parameters will get updated not just the ones that have been modified.
+        Note, all 18 coefficients need to be present in the JSON object and
+        the Dish ID should be correct. Each time the command is called all
+        parameters will get updated not just the ones that have been modified.
         """
-        # A list of expected coefficients in their specified order
+        # A list of expected coefficients (The order in which they are written)
         expected_coefficients = [
             "IA",
             "CA",

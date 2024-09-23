@@ -1894,14 +1894,13 @@ class DishManager(SKAController):
     @command(
         dtype_in="DevString",
         doc_in="""The command accepts a JSON input (value) containing data to update a particular
-        band's (b1-b5b). The coefficients within the JSON object need to be organised in a specific
-        order and must be a total of 18 coefficients:
+        band's (b1-b5b). The following 18 coefficients need to be within the JSON object:
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
             [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
             [15] HESE4, [16] HECE8, [17] HESE8.
 
-        The command only looks for the antenna, band, number of coefficients and order of
-        coefficients - everything else is ignored. A typical structure would be:
+        The command only looks for the antenna, band and coefficients
+        - everything else is ignored. A typical structure would be:
             "interface": "...",
             "antenna": "....",
             "band": "Band_...",
@@ -1924,8 +1923,8 @@ class DishManager(SKAController):
     def ApplyPointingModel(self, value) -> DevVarLongStringArrayType:
         """
         This command sets a particular band's parameters given a JSON input.
-        Note, all 18 coefficients in the JSON object should be in the excpected
-        orde and the Dish ID should be correct. Each time the command is called
+        Note, all 18 coefficients in the JSON object should be present and
+        the Dish ID should be correct. Each time the command is called
         all parameters will get updated not just the ones that have been modified.
         """
         handler = self.get_command_object("ApplyPointingModel")
