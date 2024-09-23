@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 from typing import Any, Optional
 
-import numpy as np
 import pytest
 import tango
 from ska_control_model import ResultCode
