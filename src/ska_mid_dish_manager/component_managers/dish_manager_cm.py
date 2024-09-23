@@ -979,20 +979,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 # Extract the band's value after the underscore
                 band_value = data.get("band").split("_")[-1]
                 # Write to band
+                band_map = {
+                    "1": "band1PointingModelParams",
+                    "2": "band2PointingModelParams",
+                    "3": "band3PointingModelParams",
+                    "4": "band4PointingModelParams",
+                    "5a": "band5aPointingModelParams",
+                    "5b": "band5bPointingModelParams",
+                }
+                attribute_name = band_map.get(band_value)
+                if attribute_name is None:
+                    return (ResultCode.REJECTED, f"Unsupported Band: b{band_value}")
                 try:
-                    band_map = {
-                        "1": "band1PointingModelParams",
-                        "2": "band2PointingModelParams",
-                        "3": "band3PointingModelParams",
-                        "4": "band4PointingModelParams",
-                        "5a": "band5aPointingModelParams",
-                        "5b": "band5bPointingModelParams",
-                    }
-                    attribute_name = band_map.get(band_value)
-                    if attribute_name:
-                        ds_cm.write_attribute_value(attribute_name, band_coeffs_values)
-                    else:
-                        return (ResultCode.REJECTED, f"Unsupported Band: b{band_value}")
+                    ds_cm.write_attribute_value(attribute_name, band_coeffs_values)
                 except (LostConnection, tango.DevFailed) as err:
                     self.logger.exception(
                         "%s. The error response is: %s", (ResultCode.FAILED, err)
