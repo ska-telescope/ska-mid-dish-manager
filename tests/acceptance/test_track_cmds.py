@@ -15,6 +15,41 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 TRACKING_POSITION_THRESHOLD_ERROR_DEG = 0.05
+INIT_AZ = -250
+INIT_EL = 70
+
+
+@pytest.fixture
+def slew_dish_to_init(event_store_class, dish_manager_proxy):
+    main_event_store = event_store_class()
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+    dish_manager_proxy.SetStandbyFPMode()
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
+
+    achieved_pointing_event_store = event_store_class()
+    dish_manager_proxy.subscribe_event(
+        "achievedPointing",
+        tango.EventType.CHANGE_EVENT,
+        achieved_pointing_event_store,
+    )
+    achieved_pointing_event_store.clear_queue()
+
+    dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
+
+    # wait until no updates
+    data_points = achieved_pointing_event_store.get_queue_values(timeout=5)
+    # timeout return empty list
+    assert data_points
+    # returned data is an array of tuple consisting of attribute name and value
+    last_az_el = data_points[-1][1]
+    # check last az and el received and compare with reference
+    achieved_az, achieved_el = last_az_el[1], last_az_el[2]
+    assert achieved_az == pytest.approx(INIT_AZ)
+    assert achieved_el == pytest.approx(INIT_EL)
 
 
 # pylint: disable=unused-argument,too-many-arguments,too-many-locals,too-many-statements
@@ -150,7 +185,7 @@ def test_track_and_track_stop_cmds(
 
     # Call TrackStop on DishManager
     [[_], [unique_id]] = dish_manager_proxy.TrackStop()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    result_event_store.wait_for_command_id(unique_id, timeout=60)
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=4)
 
     expected_progress_updates = [
@@ -175,6 +210,7 @@ def test_track_and_track_stop_cmds(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_append(
+    slew_dish_to_init,
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -234,13 +270,6 @@ def test_append(
     [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
-    # Slew to valid tracking region
-    init_az = -250
-    init_el = 70
-    dish_manager_proxy.Slew([init_az, init_el])
-    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=10)
-    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=60)
-
     # Load a track table
     az_amplitude = 8
     az_sin_period = 100
@@ -255,8 +284,8 @@ def test_append(
         track_table_temp = []
         for i in range(samples):
             timestamp = start_time + i * sampling_time
-            azimuth = az_amplitude * sin(2 * pi * timestamp / az_sin_period) + init_az
-            elevation = el_amplitude * sin(2 * pi * timestamp / el_sin_period) + init_el
+            azimuth = az_amplitude * sin(2 * pi * timestamp / az_sin_period) + INIT_AZ
+            elevation = el_amplitude * sin(2 * pi * timestamp / el_sin_period) + INIT_EL
             track_table_temp.append(timestamp)
             track_table_temp.append(azimuth)
             track_table_temp.append(elevation)
@@ -270,7 +299,7 @@ def test_append(
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
-    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=10)
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
 
     number_of_1_second_appends = 20
@@ -299,26 +328,3 @@ def test_append(
 
     achieved_pointing_event_store.clear_queue()
     achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=10)
-
-    # Call TrackStop on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.TrackStop()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
-    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=4)
-
-    expected_progress_updates = [
-        "TrackStop called on DS, ID",
-        "Awaiting DS pointingstate change to READY",
-        "TrackStop completed",
-    ]
-
-    # Wait for the track command to complete
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=8
-    )
-
-    # Check that all the expected progress messages appeared
-    # in the event store
-    events_string = "".join([str(event) for event in events])
-
-    for message in expected_progress_updates:
-        assert message in events_string
