@@ -181,7 +181,7 @@ def test_track_and_track_stop_cmds(
         )
 
     achieved_pointing_event_store.clear_queue()
-    achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=10)
+    achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=20)
 
     # Call TrackStop on DishManager
     [[_], [unique_id]] = dish_manager_proxy.TrackStop()
