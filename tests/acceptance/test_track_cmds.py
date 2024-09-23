@@ -129,6 +129,7 @@ def test_track_and_track_stop_cmds(
     az_dir = 1 if current_az < 350 else -1
     el_dir = 1 if current_el < 80 else -1
 
+    # create a long track table with last three reference positions the same
     track_table = [
         current_time_tai_s + 3,
         current_az + 1 * az_dir,
@@ -139,14 +140,14 @@ def test_track_and_track_stop_cmds(
         current_time_tai_s + 7,
         current_az + 3 * az_dir,
         current_el + 3 * el_dir,
-        current_time_tai_s + 9,
-        current_az + 4 * az_dir,
-        current_el + 4 * el_dir,
-        current_time_tai_s + 11,
-        current_az + 5 * az_dir,
-        current_el + 5 * el_dir,
+        current_time_tai_s + 20,
+        current_az + 3 * az_dir,
+        current_el + 3 * el_dir,
+        current_time_tai_s + 30,
+        current_az + 3 * az_dir,
+        current_el + 3 * el_dir,
     ]
-    final_table_entry = track_table[-3:]
+    final_position = track_table[-2:]
 
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
     dish_manager_proxy.programTrackTable = track_table
@@ -179,8 +180,8 @@ def test_track_and_track_stop_cmds(
     # Check that we get to last entry
     def check_final_points_reached(value: any) -> bool:
         return (
-            abs(value[1] - final_table_entry[1]) < TRACKING_POSITION_THRESHOLD_ERROR_DEG
-            and abs(value[2] - final_table_entry[2]) < TRACKING_POSITION_THRESHOLD_ERROR_DEG
+            abs(value[1] - final_position[0]) < TRACKING_POSITION_THRESHOLD_ERROR_DEG
+            and abs(value[2] - final_position[1]) < TRACKING_POSITION_THRESHOLD_ERROR_DEG
         )
 
     achieved_pointing_event_store.clear_queue()
