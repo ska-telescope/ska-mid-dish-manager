@@ -146,7 +146,7 @@ def test_track_and_track_stop_cmds(
         current_az + 5 * az_dir,
         current_el + 5 * el_dir,
     ]
-    final_table_entry = [track_table[6], track_table[7], track_table[8]]
+    final_table_entry = track_table[-3:]
 
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
     dish_manager_proxy.programTrackTable = track_table
