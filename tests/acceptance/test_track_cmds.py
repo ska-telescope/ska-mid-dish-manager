@@ -61,6 +61,9 @@ def test_track_and_track_stop_cmds(
     dish_manager_proxy,
 ):
     """Test Track command"""
+
+    slew_dish_to_init(event_store_class, dish_manager_proxy)
+
     band_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
