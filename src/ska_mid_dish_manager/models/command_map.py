@@ -305,24 +305,25 @@ class CommandMap:
         """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
+        if device in ["SPF","SPFRX"]:
+            command = SubmittedSlowCommand(
+                f"{device}_{command_name}",
+                self._command_tracker,
+                self._dish_manager_cm.sub_component_managers[device],
+                "run_device_command",
+                callback=None,
+                logger=self.logger,
+            )
 
-        # command = SubmittedSlowCommand(
-        #     f"{device}_{command_name}",
-        #     self._command_tracker,
-        #     self._dish_manager_cm.sub_component_managers[device],
-        #     "run_device_command",
-        #     callback=None,
-        #     logger=self.logger,
-        # )
-
-        # response, command_id = command(command_name, command_argument)
+            response, command_id = command(command_name, command_argument)
         # Report that the command has been called on the subservient device
-        device_fqdns = {"DS":"mid-dish/ds-manager/SKA001", "SPF":"mid-dish/simulator-spfc/SKA001","SPF":"mid-dish/simulator-spfrx/SKA001"}
-        if device in device_fqdns:
+        else:
             try:
-                dp = DeviceProxy(device_fqdns[device])
+                dp = DeviceProxy("mid-dish/ds-manager/SKA001")
                 lrc_subscriptions = invoke_lrc(self._lrc_callback, dp,command_name,command_args=command_argument)
             except Exception as err:
+                response = TaskStatus.FAILED
+                command_id = lrc_subscriptions.command_id
                 self.logger.info(f"SOMETHING WENT WRONG WITH INVOKE_LRC : {err}")
 
         task_callback(progress=f"{fan_out_args['command']} called on {device} and with the command response {response} , ID {command_id}")
