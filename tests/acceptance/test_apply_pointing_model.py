@@ -11,6 +11,7 @@ import tango
 from ska_control_model import ResultCode
 
 logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict]:
@@ -22,7 +23,7 @@ def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict
     json_file_path = test_dir.parent / "data" / path
 
     if not json_file_path.exists():
-        logging.debug(("File not found in %s. Stopping test."), json_file_path)
+        logger.debug("File not found in %s. Stopping test.", json_file_path)
         pointing_model_definition = []
 
     with open(json_file_path, "r", encoding="UTF-8") as file:
@@ -49,7 +50,7 @@ def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict
 def test_best_case_json(
     band_selection: tuple[str, str], dish_manager_proxy: tango.DeviceProxy, event_store_class: Any
 ) -> None:
-    """Test that global pointing parameters are applied correctly from incoming JSON defintion"""
+    """Test that global pointing parameters are applied correctly from incoming JSON definition"""
     pointing_model_param_events = event_store_class()
     attribute, band_number, file_name = band_selection
     dish_manager_proxy.subscribe_event(

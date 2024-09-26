@@ -951,7 +951,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ]
         ds_cm = self.sub_component_managers["DS"]
         coeff_keys = []
-        antenna_id = None
         # Process the JSON data
         try:
             data = json.loads(json_object)
@@ -969,9 +968,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # Verify that the number expected coeffs are are available
             # Check if they have the same elements (ignoring order)
             if set(coeff_keys) == set(expected_coefficients):
-                coeff_keys = expected_coefficients[:]
                 # Reorder `coeff_keys` to match `expected_coefficients`
-                coeff_keys = [item for item in expected_coefficients if item in coeff_keys]
+                coeff_keys = expected_coefficients[:]
                 self.logger.debug(f"All 18 coefficients {coeff_keys} are present.")
                 # Get all coefficient values
                 band_coeffs_values = [coefficients[key].get("value") for key in coeff_keys]
