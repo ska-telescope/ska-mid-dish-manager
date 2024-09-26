@@ -3,9 +3,11 @@
 import enum
 import json
 from typing import Any, Callable, Optional
+from tango import DeviceProxy
 
 from ska_control_model import ResultCode, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
+from ska_tango_base.long_running_commands_api import *
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -34,6 +36,7 @@ class CommandMap:
         self._dish_manager_cm = dish_manager_cm
         self._command_tracker = command_tracker
         self.logger = logger
+        self.lrc_commands_results = {}
 
     # pylint: disable=protected-access
     def is_device_ignored(self, device: str):
@@ -292,23 +295,37 @@ class CommandMap:
             [off_xel, off_el],
         )
 
+    def _lrc_callback(self, result: list[Any] | None = None,**kwargs):
+        if result is not None:
+            for r in result:
+                self.logger.info(f"Result from subdevice is {r}")
+                
+
     def _fan_out_cmd(self, task_callback, device, fan_out_args):
         """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
 
-        command = SubmittedSlowCommand(
-            f"{device}_{command_name}",
-            self._command_tracker,
-            self._dish_manager_cm.sub_component_managers[device],
-            "run_device_command",
-            callback=None,
-            logger=self.logger,
-        )
+        # command = SubmittedSlowCommand(
+        #     f"{device}_{command_name}",
+        #     self._command_tracker,
+        #     self._dish_manager_cm.sub_component_managers[device],
+        #     "run_device_command",
+        #     callback=None,
+        #     logger=self.logger,
+        # )
 
-        response, command_id = command(command_name, command_argument)
+        # response, command_id = command(command_name, command_argument)
         # Report that the command has been called on the subservient device
-        task_callback(progress=f"{fan_out_args['command']} called on {device}, ID {command_id}")
+        device_fqdns = {"DS":"mid-dish/ds-manager/SKA001", "SPF":"mid-dish/simulator-spfc/SKA001","SPF":"mid-dish/simulator-spfrx/SKA001"}
+        if device in device_fqdns:
+            try:
+                dp = DeviceProxy(device_fqdns[device])
+                lrc_subscriptions = invoke_lrc(self._lrc_callback, dp,command_name,command_args=command_argument)
+            except Exception as err:
+                self.logger.info(f"SOMETHING WENT WRONG WITH INVOKE_LRC : {err}")
+
+        task_callback(progress=f"{fan_out_args['command']} called on {device} and with the command response {response} , ID {command_id}")
 
         # fail the command immediately, if the subservient device fails
         if response == TaskStatus.FAILED:
