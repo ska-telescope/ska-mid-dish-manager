@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict]:
-    """Read out the JSON object, from a file. Object used when calling ApplyPointingModel command"""
+    """Read out the JSON file. Object used when calling ApplyPointingModel command"""
     # Ingest the file as JSON string and configure band selection
     # Get the directory where the test file is located
     test_dir = Path(__file__).parent
