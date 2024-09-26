@@ -22,7 +22,7 @@ def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict
     json_file_path = test_dir.parent / "data" / path
 
     if not json_file_path.exists():
-        logging.debug(f"File not found in {json_file_path}. Stopping test.")
+        logging.debug(("File not found in %. Stopping test."), json_file_path)
         pointing_model_definition = []
 
     with open(json_file_path, "r", encoding="UTF-8") as file:
