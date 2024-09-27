@@ -1,7 +1,8 @@
 # pylint: disable=too-many-locals
 
-"""Test Apply Pointing Model Command."""
+"""Test Apply Pointing Model Command"""
 import json
+import logging
 from pathlib import Path
 from typing import Any, Optional
 
@@ -9,17 +10,20 @@ import pytest
 import tango
 from ska_control_model import ResultCode
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 
 def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict]:
-    """Appy Pointing Model Test - Best Cases"""
+    """Read out the JSON file. Object used when calling ApplyPointingModel command"""
     # Ingest the file as JSON string and configure band selection
     # Get the directory where the test file is located
     test_dir = Path(__file__).parent
-    # Construct the path to the 'supplementary' directory
-    json_file_path = test_dir / "supplementary" / path
+    # Construct the path to the 'data' directory
+    json_file_path = test_dir.parent / "data" / path
 
     if not json_file_path.exists():
-        print("File not found. Stopping test.")
+        logger.debug("File not found in %s. Stopping test.", json_file_path)
         pointing_model_definition = []
 
     with open(json_file_path, "r", encoding="UTF-8") as file:
@@ -43,23 +47,20 @@ def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict
         ("band5bPointingModelParams", "Band_5b", "global_pointing_model.json"),
     ],
 )
-def test_apply_pointing_model_command(
+def test_best_case_json(
     band_selection: tuple[str, str], dish_manager_proxy: tango.DeviceProxy, event_store_class: Any
 ) -> None:
-    """Test that global pointing parameters are applied correctly from incoming JSON defintion"""
+    """Test that global pointing parameters are applied correctly from incoming JSON definition"""
     pointing_model_param_events = event_store_class()
-
+    attribute, band_number, file_name = band_selection
     dish_manager_proxy.subscribe_event(
-        band_selection[0],
+        attribute,
         tango.EventType.CHANGE_EVENT,
         pointing_model_param_events,
     )
 
-    pointing_model_json_str, pointing_model_definition = read_file_contents(
-        band_selection[2], band_selection[1]
-    )
+    pointing_model_json_str, pointing_model_definition = read_file_contents(file_name, band_number)
 
-    # pointing_model_json_str = json.dumps(pointing_model_definition)
     dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
 
     # Construct list of expected values from the JSON definition
@@ -84,39 +85,63 @@ def test_apply_pointing_model_command(
             "Command rejected. The Dish id SKA001 and the Antenna's value SKA053 are not equal.",
         ),
         ("incorrect_band.json", "Unsupported Band: b6"),
-        (
-            "incorrect_total_coeff.json",
-            "Coefficients are missing. The coefficients found in the JSON object were {coeff}",
-        ),
-        (
-            "coeff_order.json",
-            "Successfully wrote the following values {coeff} to band 2 on DS",
-        ),
     ],
 )
-def test_inconsistent_json_apply_pointing_model(
+def test_inconsistent_json(
     file_name: str,
     response: str,
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
-    """Test ApplyPointingModel command with incorrect JSON inputs."""
+    """Test ApplyPointingModel command with incorrect (Wrong antenna and band) JSON inputs."""
+
+    pointing_model_json_str, _ = read_file_contents(file_name, None)
+
+    [[result_code], [command_resp]] = dish_manager_proxy.ApplyPointingModel(
+        pointing_model_json_str
+    )
+    assert response == command_resp
+    assert result_code == ResultCode.REJECTED
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_missing_coeffs_json(
+    dish_manager_proxy: tango.DeviceProxy,
+) -> None:
+    """Test ApplyPointingModel command with missing pointing coefficients."""
+
+    file_name = "incorrect_total_coeff.json"
+    response = "Coefficients are missing. The coefficients found in the JSON object were {coeff}"
 
     pointing_model_json_str, pointing_model_definition = read_file_contents(file_name, None)
 
-    # Incorrect JSON assessment
-    result_code, command_resp = dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
+    [[result_code], [command_resp]] = dish_manager_proxy.ApplyPointingModel(
+        pointing_model_json_str
+    )
+    coefficients = pointing_model_definition.get("coefficients", {})
+    coeff_keys = list(coefficients.keys())
+    formatted_response = response.format(coeff=coeff_keys)
+    assert formatted_response == command_resp
+    assert result_code == ResultCode.REJECTED
 
-    if file_name in ["incorrect_total_coeff.json"]:
-        coefficients = pointing_model_definition.get("coefficients", {})
-        coeff_keys = list(coefficients.keys())
-        formatted_response = response.format(coeff=coeff_keys)
-        assert formatted_response == command_resp[0]
-        assert result_code == ResultCode.REJECTED
-    elif file_name in ["coeff_order.json"]:
-        coefficients = pointing_model_definition.get("coefficients", {})
-        formatted_response = response.format(coeff=coefficients)
-        assert formatted_response == command_resp[0]
-        assert result_code == ResultCode.OK
-    else:
-        assert response == command_resp[0]
-        assert result_code == ResultCode.REJECTED
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_out_of_order_pointing_coeff_json(
+    dish_manager_proxy: tango.DeviceProxy,
+) -> None:
+    """Test ApplyPointingModel command with coefficients in a non-standard order."""
+
+    file_name = "coeff_order.json"
+    response = "Successfully wrote the following values {coeff} to band 2 on DS"
+
+    pointing_model_json_str, pointing_model_definition = read_file_contents(file_name, None)
+
+    [[result_code], [command_resp]] = dish_manager_proxy.ApplyPointingModel(
+        pointing_model_json_str
+    )
+
+    coefficients = pointing_model_definition.get("coefficients", {})
+    formatted_response = response.format(coeff=coefficients)
+    assert formatted_response == command_resp
+    assert result_code == ResultCode.OK
