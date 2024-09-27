@@ -61,7 +61,6 @@ def component_manager(mock_command_tracker: Mock, callbacks: dict) -> Generator:
             "sub-device-1",
             "sub-device-2",
             "sub-device-3",
-            "dish-id",
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
         )
