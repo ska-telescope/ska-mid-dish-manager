@@ -5,9 +5,12 @@ import json
 from typing import Any, Callable, Optional
 from tango import DeviceProxy
 
+import traceback
+
 from ska_control_model import ResultCode, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
-from ska_tango_base.long_running_commands_api import *
+from ska_tango_base.long_running_commands_api import invoke_lrc, LrcSubscriptions
+from ska_tango_base.faults import CommandError, ResultCodeError
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -297,15 +300,29 @@ class CommandMap:
 
     def _lrc_callback(self, result: list[Any] | None = None,**kwargs):
         if result is not None:
-            for r in result:
-                self.logger.info(f"Result from subdevice is {r}")
+            self.logger.info(f"PASSED CALLBACK Subdevice LRC result: {result}")
                 
 
-    def _fan_out_cmd(self, task_callback, device, fan_out_args):
+    def _fan_out_cmd(self, task_callback, device, fan_out_args, cb):
         """Fan out the respective command to the subservient devices"""
+        command_id = None
+
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
-        if device in ["SPF","SPFRX"]:
+
+        subscriptions_object = None # A reference needs to be kept to keep the subscriptions alive (Pass it back the caller????)
+        try:
+            subscriptions_object = self._dish_manager_cm.sub_component_managers[device].execute_command(cb, command_name, command_argument)
+            command_id = subscriptions_object.command_id
+
+            # This call doesn't return the result code and as a result an exception is thrown when trying to ascertain whether the command failed or not
+            # NOTE: Hardcoding the resultcode here is not representative of what happened in the underlying call
+            # result_code = TaskStatus.STAGING
+        except Exception as e:
+            traceback_str = traceback.format_exc()
+            self.logger.warning(f"ERROR executing invoke_lrc. See full exception trace: {traceback_str}")
+
+            self.logger.warning("Falling back to run_device_command")
             command = SubmittedSlowCommand(
                 f"{device}_{command_name}",
                 self._command_tracker,
@@ -314,22 +331,10 @@ class CommandMap:
                 callback=None,
                 logger=self.logger,
             )
+            result_code, command_id = command(command_name, command_argument)
 
-            response, command_id = command(command_name, command_argument)
-        # Report that the command has been called on the subservient device
-        else:
-            try:
-                dp = DeviceProxy("mid-dish/ds-manager/SKA001")
-                lrc_subscriptions = invoke_lrc(self._lrc_callback, dp,command_name,command_args=command_argument)
-            except Exception as err:
-                response = TaskStatus.FAILED
-                command_id = lrc_subscriptions.command_id
-                self.logger.info(f"SOMETHING WENT WRONG WITH INVOKE_LRC : {err}")
-
-        task_callback(progress=f"{fan_out_args['command']} called on {device} and with the command response {response} , ID {command_id}")
-
-        # fail the command immediately, if the subservient device fails
-        if response == TaskStatus.FAILED:
+        # fail the command immediately, if the subservient device fails or the command is rejected
+        if result_code in [TaskStatus.FAILED, TaskStatus.REJECTED]:
             raise RuntimeError(command_id)
 
         awaited_attributes = fan_out_args["awaitedAttributes"]
@@ -352,6 +357,7 @@ class CommandMap:
     def _fanout_command_has_failed(self, command_id):
         """Check the status of the fanned out command on the subservient device"""
         current_status = self._command_tracker.get_command_status(command_id)
+        # self.logger.info(f"Verification of current command status: {current_status} of command ID: {command_id}") # NOTE: Remove
         if current_status == TaskStatus.FAILED:
             return True
         return False
@@ -408,14 +414,38 @@ class CommandMap:
 
         device_command_ids = {}
 
+        # Outcome value lists to be updated by lrc_callback
+        result_values = []
+        status_values = []
+        progress_values = []
+
+        def lrc_callback( status: list[Any] | None = None,
+                result: list[Any] | None = None, 
+                progress: list[Any] | None = None,
+                **kwargs):
+            # Seem to only be getting back "Command called" and "TaskStatus == 0 (Staging)" should invoke_lrc be run in a separate thread?
+            if result is not None:
+                result_values.append(result)
+                self.logger.info(f"Fanout callback results: {result_values}")
+
+            if progress is not None:
+                progress_values.append(progress)
+                self.logger.info(f"Fanout callback progress: {progress_values}")
+            
+            if status is not None:
+                status_values.append(status)
+                self.logger.info(f"Fanout callback status: {status_values}")
+
+
         for device, fan_out_args in commands_for_sub_devices.items():
             cmd_name = fan_out_args["command"]
             if self.is_device_ignored(device):
                 task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
             else:
                 try:
+                    # Fan out return should include the an instance of the LRCSubscriptions object to ensure its kept alive
                     device_command_ids[device] = self._fan_out_cmd(
-                        task_callback, device, fan_out_args
+                        task_callback, device, fan_out_args, lrc_callback
                     )
                 except RuntimeError as ex:
                     device_command_ids[device] = ex.args[0]
@@ -450,6 +480,10 @@ class CommandMap:
         for fan_out_args in commands_for_sub_devices.values():
             fan_out_args["progress_updated"] = False
             fan_out_args["command_has_failed"] = False
+
+
+      
+
 
         while True:
             if task_abort_event.is_set():
