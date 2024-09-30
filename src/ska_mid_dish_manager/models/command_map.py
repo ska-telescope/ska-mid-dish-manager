@@ -303,39 +303,16 @@ class CommandMap:
             self.logger.info(f"PASSED CALLBACK Subdevice LRC result: {result}")
                 
 
-    def _fan_out_cmd(self, task_callback, device, fan_out_args, cb):
+    def _fan_out_cmd(self, task_callback, device, fan_out_args, callback):
         """Fan out the respective command to the subservient devices"""
-        command_id = None
-
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
+        
+        command_response = self._dish_manager_cm.sub_component_managers[device].execute_command(command_name, command_argument, callback)
 
-        subscriptions_object = None # A reference needs to be kept to keep the subscriptions alive (Pass it back the caller????)
-        try:
-            subscriptions_object = self._dish_manager_cm.sub_component_managers[device].execute_command(cb, command_name, command_argument)
-            command_id = subscriptions_object.command_id
-
-            # This call doesn't return the result code and as a result an exception is thrown when trying to ascertain whether the command failed or not
-            # NOTE: Hardcoding the resultcode here is not representative of what happened in the underlying call
-            # result_code = TaskStatus.STAGING
-        except Exception as e:
-            traceback_str = traceback.format_exc()
-            self.logger.warning(f"ERROR executing invoke_lrc. See full exception trace: {traceback_str}")
-
-            self.logger.warning("Falling back to run_device_command")
-            command = SubmittedSlowCommand(
-                f"{device}_{command_name}",
-                self._command_tracker,
-                self._dish_manager_cm.sub_component_managers[device],
-                "run_device_command",
-                callback=None,
-                logger=self.logger,
-            )
-            result_code, command_id = command(command_name, command_argument)
-
-        # fail the command immediately, if the subservient device fails or the command is rejected
-        if result_code in [TaskStatus.FAILED, TaskStatus.REJECTED]:
-            raise RuntimeError(command_id)
+        # fail the command immediately, if the subservient device fails
+        if command_response == TaskStatus.FAILED:
+            raise RuntimeError("Message to be defined")
 
         awaited_attributes = fan_out_args["awaitedAttributes"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
@@ -352,13 +329,12 @@ class CommandMap:
                     f"Awaiting {device} {attributes_print_string} change to {values_print_string}"
                 )
             )
-        return command_id
+        return command_response
 
-    def _fanout_command_has_failed(self, command_id):
+    def _fanout_command_has_failed(self, lrc_callback_values):
         """Check the status of the fanned out command on the subservient device"""
-        current_status = self._command_tracker.get_command_status(command_id)
-        # self.logger.info(f"Verification of current command status: {current_status} of command ID: {command_id}") # NOTE: Remove
-        if current_status == TaskStatus.FAILED:
+        status = lrc_callback_values.get('status')
+        if status == TaskStatus.FAILED:
             return True
         return False
 
@@ -414,28 +390,14 @@ class CommandMap:
 
         device_command_ids = {}
 
-        # Outcome value lists to be updated by lrc_callback
-        result_values = []
-        status_values = []
-        progress_values = []
+        # Dict to be populated with latest LRC command as returned by sub devices
+        lrc_callback_values = {}
 
         def lrc_callback( status: list[Any] | None = None,
-                result: list[Any] | None = None, 
-                progress: list[Any] | None = None,
                 **kwargs):
-            # Seem to only be getting back "Command called" and "TaskStatus == 0 (Staging)" should invoke_lrc be run in a separate thread?
-            if result is not None:
-                result_values.append(result)
-                self.logger.info(f"Fanout callback results: {result_values}")
-
-            if progress is not None:
-                progress_values.append(progress)
-                self.logger.info(f"Fanout callback progress: {progress_values}")
-            
+            # NOTE: Place dict update behind a lock to prevent a read while writing
             if status is not None:
-                status_values.append(status)
-                self.logger.info(f"Fanout callback status: {status_values}")
-
+                lrc_callback_values.update({'status' : status})
 
         for device, fan_out_args in commands_for_sub_devices.items():
             cmd_name = fan_out_args["command"]
@@ -443,11 +405,11 @@ class CommandMap:
                 task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
             else:
                 try:
-                    # Fan out return should include the an instance of the LRCSubscriptions object to ensure its kept alive
                     device_command_ids[device] = self._fan_out_cmd(
                         task_callback, device, fan_out_args, lrc_callback
                     )
                 except RuntimeError as ex:
+                    lrc_callback_values.update({'status' : TaskStatus.FAILED})
                     device_command_ids[device] = ex.args[0]
                     task_callback(
                         progress=(
@@ -479,11 +441,6 @@ class CommandMap:
 
         for fan_out_args in commands_for_sub_devices.values():
             fan_out_args["progress_updated"] = False
-            fan_out_args["command_has_failed"] = False
-
-
-      
-
 
         while True:
             if task_abort_event.is_set():
@@ -502,28 +459,14 @@ class CommandMap:
                             task_callback, device, fan_out_args
                         )
 
-                    command_in_progress = fan_out_args["command"]
-                    if not fan_out_args["command_has_failed"]:
-                        if self._fanout_command_has_failed(device_command_ids[device]):
-                            task_callback(
-                                progress=(
-                                    f"{device} device failed executing {command_in_progress} "
-                                    f"command with ID {device_command_ids[device]}"
-                                )
-                            )
-                            fan_out_args["command_has_failed"] = True
-
-            # TODO: If all three commands have failed, then bail
-            # if all(
-            #     sub_device_command["command_has_failed"]
-            #     for sub_device_command in commands_for_sub_devices.values()
-            # ):
-            #     task_callback(
-            #         progress=f"{running_command} completed",
-            #         status=TaskStatus.FAILED,
-            #         result=(ResultCode.OK, f"{running_command} completed"),
-            #     )
-            #     return
+            # Check whether a device has returned a TaskStatus.FAILED update and return if so
+            if self._fanout_command_has_failed(lrc_callback_values):
+                task_callback(
+                    progress=f"{running_command} failed",
+                    status=TaskStatus.FAILED,
+                    result=(ResultCode.FAILED, f"{running_command} failed"),
+                )
+                return
 
             # Check on dishmanager to see whether the LRC has completed
             dm_cm_component_state = self._dish_manager_cm.component_state
