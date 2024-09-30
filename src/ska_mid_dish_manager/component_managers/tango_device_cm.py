@@ -286,7 +286,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         result = None
         try:
-            result = self.x_execute_command(command_name, command_arg)
+            result = self.execute_device_command(command_name, command_arg)
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception(err)
             if task_callback:
@@ -300,9 +300,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if task_callback:
             task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(result)))
 
-    @_check_connection
-    def x_execute_command(self, command_name: str, command_arg: Any) -> Any:
-        """Check the connection and execute the command on the Tango device"""
+    
+    def execute_device_command(self, command_name: str, command_arg: Any) -> Any:
+        """Execute the command on the Tango device"""
         self.logger.debug(
             "About to execute command [%s] on device [%s] with param [%s]",
             command_name,
@@ -330,25 +330,44 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             )
         return result
     
-    def execute_command(self, callback, cmd_name, cmd_arg):
-        """ An example function invoking the On LRC on device.
-
-        :return: ResultCode.OK if the command succeed, ResultCode.FAILED
-        otherwise.
-        """
-        lrc_subscriptions = None
-        result_code = ResultCode.FAILED # Setting this here is not representative of actual result
-
-        dp = tango.DeviceProxy(self._tango_device_fqdn)
+    def wrap_invoke_lrc(self, callback, device_proxy, cmd_name, cmd_arg):
         try:
-            self.logger.info(f"With invoke_lrc calling command {cmd_name} on device {self._tango_device_fqdn} with args {cmd_arg}")
-            lrc_subscriptions = invoke_lrc(callback, dp, cmd_name, command_args=cmd_arg)
+            lrc_subscriptions = invoke_lrc(callback, device_proxy, cmd_name, command_args=(cmd_arg))
         except CommandError:
-            self.logger.warning(f"Device {self._tango_device_fqdn} rejected command {cmd_name}")
-            result_code = ResultCode.REJECTED
+            self.logger.exception(f"Device {self._tango_device_fqdn} rejected command {cmd_name}")
+            raise
+        except ResultCodeError:
+            self.logger.exception(f"Device {self._tango_device_fqdn} returned unexpected result code")
+            raise
+        except tango.DevFailed:
+            self.logger.exception(f"Command call {cmd_name} failed on device {self._tango_device_fqdn}")
+            raise
 
-        # Should we return a result code here?
-        return lrc_subscriptions
+        return lrc_subscriptions.command_id
+
+    @_check_connection
+    def execute_command(self, cmd_name, cmd_arg = None, callback = None):
+        """ Function to invoke command or LRC on subservient device."""
+        # Callback to be used in the event that a caller doesn't provide one
+        def _dummy_callback(**kwargs):
+            pass
+
+        device_proxy = tango.DeviceProxy(self._tango_device_fqdn) 
+        
+        if 'ds' in self._tango_device_fqdn:
+            if callback is None:
+                callback = _dummy_callback
+            try:
+                response = self.wrap_invoke_lrc(callback, device_proxy, cmd_name, cmd_arg)
+            except (CommandError, ResultCodeError, tango.DevFailed):
+                return ResultCode.FAILED
+        else:
+            try:
+                response = self.execute_device_command(cmd_name, cmd_arg)
+            except tango.DevFailed:
+                return ResultCode.FAILED
+        return response
+ 
 
     @_check_connection
     def read_attribute_value(self, attribute_name: str) -> Any:
