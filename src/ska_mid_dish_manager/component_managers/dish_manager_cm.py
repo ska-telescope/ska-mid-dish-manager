@@ -645,7 +645,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_cm = self.sub_component_managers["DS"]
         self.logger.debug("Calling TrackLoadTable on DSManager.")
         try:
-            result = ds_cm.execute_command("TrackLoadTable", float_list)
+            result = ds_cm.execute_device_command("TrackLoadTable", float_list)
             self.logger.debug(
                 "Result of the call to [%s] on DSManager is [%s]",
                 "TrackLoadTable",
