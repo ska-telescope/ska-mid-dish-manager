@@ -3,14 +3,8 @@
 import enum
 import json
 from typing import Any, Callable, Optional
-from tango import DeviceProxy
-
-import traceback
 
 from ska_control_model import ResultCode, TaskStatus
-from ska_tango_base.commands import SubmittedSlowCommand
-from ska_tango_base.long_running_commands_api import invoke_lrc, LrcSubscriptions
-from ska_tango_base.faults import CommandError, ResultCodeError
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -298,17 +292,18 @@ class CommandMap:
             [off_xel, off_el],
         )
 
-    def _lrc_callback(self, result: list[Any] | None = None,**kwargs):
+    def _lrc_callback(self, result: list[Any] | None = None, **kwargs):
         if result is not None:
             self.logger.info(f"PASSED CALLBACK Subdevice LRC result: {result}")
-                
 
     def _fan_out_cmd(self, task_callback, device, fan_out_args, callback):
         """Fan out the respective command to the subservient devices"""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
-        
-        command_response = self._dish_manager_cm.sub_component_managers[device].execute_command(command_name, command_argument, callback)
+
+        command_response = self._dish_manager_cm.sub_component_managers[device].execute_command(
+            command_name, command_argument, callback
+        )
 
         # fail the command immediately, if the subservient device fails
         if command_response == TaskStatus.FAILED:
@@ -333,7 +328,7 @@ class CommandMap:
 
     def _fanout_command_has_failed(self, lrc_callback_values):
         """Check the status of the fanned out command on the subservient device"""
-        status = lrc_callback_values.get('status')
+        status = lrc_callback_values.get("status")
         if status == TaskStatus.FAILED:
             return True
         return False
@@ -393,11 +388,10 @@ class CommandMap:
         # Dict to be populated with latest LRC command as returned by sub devices
         lrc_callback_values = {}
 
-        def lrc_callback( status: list[Any] | None = None,
-                **kwargs):
+        def lrc_callback(status: list[Any] | None = None, **kwargs):
             # NOTE: Place dict update behind a lock to prevent a read while writing
             if status is not None:
-                lrc_callback_values.update({'status' : status})
+                lrc_callback_values.update({"status": status})
 
         for device, fan_out_args in commands_for_sub_devices.items():
             cmd_name = fan_out_args["command"]
@@ -409,7 +403,7 @@ class CommandMap:
                         task_callback, device, fan_out_args, lrc_callback
                     )
                 except RuntimeError as ex:
-                    lrc_callback_values.update({'status' : TaskStatus.FAILED})
+                    lrc_callback_values.update({"status": TaskStatus.FAILED})
                     device_command_ids[device] = ex.args[0]
                     task_callback(
                         progress=(
