@@ -513,7 +513,7 @@ class CommandMap:
                 task_callback(
                     progress=f"{running_command} failed",
                     status=TaskStatus.FAILED,
-                    result=(ResultCode.FAILED, f"{running_command} failed"),
+                    result=(ResultCode.FAILED, f"{device} device failed executing {running_command} command with ID {self.device_command_ids[device]}"),
                 )
 
             # Check on dishmanager to see whether the LRC has completed
