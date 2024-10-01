@@ -61,7 +61,6 @@ def test_apply_pointing_model_command(
 
     # pointing_model_json_str = json.dumps(pointing_model_definition)
     dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
-
     # Construct list of expected values from the JSON definition
     coeffient_dictionary = pointing_model_definition["coefficients"]
     pointing_model_params_keys = coeffient_dictionary.keys()
@@ -72,6 +71,36 @@ def test_apply_pointing_model_command(
         expected_pointing_model_param_values.append(pointing_model_value)
 
     pointing_model_param_events.wait_for_value(expected_pointing_model_param_values, timeout=7)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -> None:
+    pointing_model_json_str, pointing_model_definition = read_file_contents(
+        "global_pointing_model.json", "Band_2"
+    )
+    # Read the last_commanded_params attribute and check if it defaults to an empty string
+    last_requested_parameters = dish_manager_proxy.read_attribute(
+        "lastCommandedPointingParams"
+    ).value
+    # Command execution
+    dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
+    # print(f"Last commanded parameters: {last_requested_parameters}")
+    try:
+        last_requested_parameters = json.loads(last_requested_parameters)
+    except json.JSONDecodeError:
+        raise ValueError("lastCommandedPointingParams is not valid JSON or it is default value")
+    # extract list of coefficient from last_requested_params
+    applied_coefficient_dict = last_requested_parameters["coefficients"]
+    applied_coefficient_list = [
+        (key, value_dict["value"]) for key, value_dict in applied_coefficient_dict.items()
+    ]
+    # Construct list of expected values from the JSON definition
+    requested_coefficient_dict = pointing_model_definition.get("coefficients", {})
+    requested_coefficient_list = [
+        (key, value_dict["value"]) for key, value_dict in requested_coefficient_dict.items()
+    ]
+    assert applied_coefficient_list == requested_coefficient_list
 
 
 @pytest.mark.acceptance
