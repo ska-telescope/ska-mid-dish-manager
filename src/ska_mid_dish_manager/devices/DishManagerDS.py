@@ -209,6 +209,11 @@ class DishManager(SKAController):
             self.SetKValueCommand(self.component_manager, self.logger),
         )
 
+        self.register_command_object(
+            "ApplyPointingModel",
+            self.ApplyPointingModelCommand(self.component_manager, self.logger),
+        )
+
     def _connection_state_update(self, device: Device):
         if not hasattr(self, "component_manager"):
             self.logger.warning("Init not completed, but communication state is being updated")
@@ -366,6 +371,8 @@ class DishManager(SKAController):
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "band3pointingmodelparams": "band3PointingModelParams",
                 "band4pointingmodelparams": "band4PointingModelParams",
+                "band5apointingmodelparams": "band5aPointingModelParams",
+                "band5bpointingmodelparams": "band5bPointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
@@ -706,7 +713,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(float,),
-        max_dim_x=5,
+        max_dim_x=18,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 5a pointing models used by Dish to "
         "do pointing corrections.",
@@ -718,14 +725,17 @@ class DishManager(SKAController):
     @band5aPointingModelParams.write
     def band5aPointingModelParams(self, value):
         """Set the band5aPointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band5a_pointing_model_params = value
-        self.push_change_event("band5aPointingModelParams", value)
-        self.push_archive_event("band5aPointingModelParams", value)
+        self.logger.debug("band5aPointingModelParams write method called with params %s", value)
+
+        if hasattr(self, "component_manager"):
+            self.component_manager.update_pointing_model_params("band5aPointingModelParams", value)
+        else:
+            self.logger.warning("No component manager to write band5aPointingModelParams yet")
+            raise RuntimeError("Failed to write to band5aPointingModelParams on DishManager")
 
     @attribute(
         dtype=(float,),
-        max_dim_x=5,
+        max_dim_x=18,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 5b pointing models used by Dish to "
         "do pointing corrections.",
@@ -737,10 +747,13 @@ class DishManager(SKAController):
     @band5bPointingModelParams.write
     def band5bPointingModelParams(self, value):
         """Set the band5bPointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band5b_pointing_model_params = value
-        self.push_change_event("band5bPointingModelParams", value)
-        self.push_archive_event("band5bPointingModelParams", value)
+        self.logger.debug("band5bPointingModelParams write method called with params %s", value)
+
+        if hasattr(self, "component_manager"):
+            self.component_manager.update_pointing_model_params("band5bPointingModelParams", value)
+        else:
+            self.logger.warning("No component manager to write band5bPointingModelParams yet")
+            raise RuntimeError("Failed to write to band5bPointingModelParams on DishManager")
 
     @attribute(
         dtype=float,
@@ -1824,6 +1837,96 @@ class DishManager(SKAController):
         SPFRx has been restarted.
         """
         handler = self.get_command_object("SetKValue")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
+    class ApplyPointingModelCommand(FastCommand):
+        """Class for handling band pointing parameters given a JSON input."""
+
+        def __init__(
+            self,
+            component_manager: DishManagerComponentManager,
+            logger: Optional[logging.Logger] = None,
+        ) -> None:
+            """
+            Initialise a new ApplyPointingModelCommand instance.
+
+            :param component_manager: the device to which this command belongs.
+            :param logger: a logger for this command to use.
+            """
+            self._component_manager = component_manager
+            super().__init__(logger)
+
+        def do(
+            self,
+            *args: Any,
+            **kwargs: Any,
+        ) -> tuple[ResultCode, str]:
+            """
+            Implement ApplyPointingModel command functionality.
+
+            :param json_object: JSON object with a schema similar to this,
+                {
+                    "interface": "...",
+                    "antenna": "....",
+                    "band": "Band_...",
+                    "attrs": {...},
+                    "coefficients": {
+                        "IA": {...},
+                        ...
+                        ...
+                        "HESE8":{...}
+                    },
+                    "rms_fits":
+                    {
+                        "xel_rms": {...},
+                        "el_rms": {...},
+                        "sky_rms": {...}
+                    }
+                }
+
+            :return: A tuple containing a return code and a string
+                message indicating status.
+            """
+            return self._component_manager.apply_pointing_model(*args)
+
+    @command(
+        dtype_in="DevString",
+        doc_in="""The command accepts a JSON input (value) containing data to update a particular
+        band's (b1-b5b). The following 18 coefficients need to be within the JSON object:
+            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
+            [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
+            [15] HESE4, [16] HECE8, [17] HESE8.
+
+        The command only looks for the antenna, band and coefficients
+        - everything else is ignored. A typical structure would be:
+            "interface": "...",
+            "antenna": "....",
+            "band": "Band_...",
+            "attrs": {...},
+            "coefficients": {
+                "IA": {...},
+                ...
+                "HESE8":{...}
+            },
+            "rms_fits": {
+                "xel_rms": {...},
+                "el_rms": {...},
+                "sky_rms": {...}
+            }
+        }""",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def ApplyPointingModel(self, value) -> DevVarLongStringArrayType:
+        """
+        This command sets a particular band's parameters given a JSON input.
+        Note, all 18 coefficients in the JSON object should be present and
+        the Dish ID should be correct. Each time the command is called
+        all parameters will get updated not just the ones that have been modified.
+        """
+        handler = self.get_command_object("ApplyPointingModel")
         return_code, message = handler(value)
         return ([return_code], [message])
 
