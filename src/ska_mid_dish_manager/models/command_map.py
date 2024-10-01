@@ -305,6 +305,11 @@ class CommandMap:
             command_name, command_argument, callback
         )
 
+        # Report that the command has been called on the subservient device
+        task_callback(
+            progress=f"{fan_out_args['command']} called on {device}, with response {command_response}"
+        )
+
         # fail the command immediately, if the subservient device fails
         if command_response == TaskStatus.FAILED:
             raise RuntimeError("Message to be defined")
