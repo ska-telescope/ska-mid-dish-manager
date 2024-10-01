@@ -7,9 +7,18 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Upgraded ska-mid-dish-simulators chart to v4.0.3
-- Upgraded ska-mid-dish-ds-manger chart to v2.0.1
+- Upgraded ska-mid-dish-simulators to v4.1.0
+
+  - Servo loops simulator implemented to represent dish movement
+
+- Upgraded ska-mid-dish-ds-manger chart to v2.1.0
+
+  - DSC states and modes updated to align with ITF PLC
+
 - Added in a command called `ApplyPointingModel` that updates bands using a json input
+- Added Slew command execution preconditions on DishMode and PointingState
+- Updated ska-tango-base and ska-tango-util to version 0.4.12
+
 
 Version 4.0.0
 *************
