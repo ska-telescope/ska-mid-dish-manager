@@ -266,6 +266,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         return task_status, response
 
+    # pylint: disable=unnecessary-pass
     def lrc_callback(self, status=None, **kwargs):
         """Callback to be passed to invoke_lrc, updating LRC status value."""
         pass
