@@ -328,9 +328,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     def wrap_invoke_lrc(self, callback, device_proxy, cmd_name, cmd_arg):
         """Wrapper to call for invoke_lrc on subdevice."""
         try:
-            lrc_subscriptions = invoke_lrc(
-                callback, device_proxy, cmd_name, command_args=(cmd_arg)
-            )
+            if isinstance(cmd_arg, list):
+                cmd_arg = tuple(cmd_arg)
+            else:
+                cmd_arg = (cmd_arg,)
+
+            lrc_subscriptions = invoke_lrc(callback, device_proxy, cmd_name, cmd_arg)
         except CommandError:
             self.logger.exception(
                 "Device [%s] rejected command [%s]",
