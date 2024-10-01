@@ -76,20 +76,18 @@ def test_apply_pointing_model_command(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -> None:
+    "Test the Test the `lastCommandedPointingParams` attribute of the dish manager."
     pointing_model_json_str, pointing_model_definition = read_file_contents(
         "global_pointing_model.json", "Band_2"
     )
-    # Read the last_commanded_params attribute and check if it defaults to an empty string
-    last_requested_parameters = dish_manager_proxy.read_attribute(
-        "lastCommandedPointingParams"
-    ).value
     # Command execution
     dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
+    last_requested_parameters = dish_manager_proxy.lastCommandedPointingParams()
     # print(f"Last commanded parameters: {last_requested_parameters}")
     try:
         last_requested_parameters = json.loads(last_requested_parameters)
-    except json.JSONDecodeError:
-        raise ValueError("lastCommandedPointingParams is not valid JSON or it is default value")
+    except json.JSONDecodeError as e:
+        raise ValueError("lastCommandedPointingParams is not valid JSON or it is default value") from e
     # extract list of coefficient from last_requested_params
     applied_coefficient_dict = last_requested_parameters["coefficients"]
     applied_coefficient_list = [
