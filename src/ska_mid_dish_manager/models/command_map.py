@@ -366,6 +366,7 @@ class CommandMap:
                     f"Awaiting {device} {attributes_print_string} change to {values_print_string}"
                 )
             )
+        return command_id
 
     def _fanout_command_has_failed(self):
         """Check the status of the fanned out commands on the subservient device"""
