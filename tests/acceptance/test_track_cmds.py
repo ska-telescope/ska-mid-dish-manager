@@ -218,7 +218,7 @@ def test_append_dvs_case(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test Track with Append"""
+    """Test Track with Append for DVS case"""
 
     slew_dish_to_init(event_store_class, dish_manager_proxy)
 
@@ -334,3 +334,88 @@ def test_append_dvs_case(
 
     achieved_pointing_event_store.clear_queue()
     achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=10)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_track_fails_when_track_called_late(
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+):
+    """Test Track command fails when the track table is no more valid"""
+
+    slew_dish_to_init(event_store_class, dish_manager_proxy)
+
+    band_event_store = event_store_class()
+    dish_mode_event_store = event_store_class()
+    pointing_state_event_store = event_store_class()
+    result_event_store = event_store_class()
+    progress_event_store = event_store_class()
+    achieved_pointing_event_store = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandProgress",
+        tango.EventType.CHANGE_EVENT,
+        progress_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        result_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        dish_mode_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        pointing_state_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        band_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "achievedPointing",
+        tango.EventType.CHANGE_EVENT,
+        achieved_pointing_event_store,
+    )
+
+    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
+
+    dish_manager_proxy.ConfigureBand1(True)
+    dish_mode_event_store.wait_for_value(DishMode.CONFIG)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
+    band_event_store.wait_for_value(Band.B1, timeout=8)
+
+    [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
+
+    # Construct track table
+    track_table_delay_s = 2
+    start_time = get_current_tai_timestamp() + track_table_delay_s
+    track_table_duration_s = 4
+    track_table = []
+    for i in range(track_table_duration_s):
+        track_table.extend([start_time + i, INIT_AZ, INIT_EL])
+
+    # Load the track table
+    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
+    dish_manager_proxy.programTrackTable = track_table
+
+    # wait until the table is not valid
+    while get_current_tai_timestamp() <= track_table[-3] + 1:
+        time.sleep(1)
+
+    [[_], [unique_id]] = dish_manager_proxy.Track()
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
