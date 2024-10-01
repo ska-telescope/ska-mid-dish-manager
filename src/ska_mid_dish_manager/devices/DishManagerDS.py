@@ -1308,7 +1308,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=str,
         access=AttrWriteType.READ,
-        doc="Default empty string when not set, and is a JSON string of the last requested global pointing model when set.",
+        doc=(
+            "Default empty string when not set, and is a JSON string"
+            "of the last requested global pointing model when set."
+        ),
     )
     def lastCommandedPointingParams(self) -> str:
         """
@@ -1944,7 +1947,7 @@ class DishManager(SKAController):
         return_code, message = handler(value)
         last_commanded_pointing_params = value
         self._last_commanded_pointing_params = last_commanded_pointing_params
-        # Push change and archive events with the recorded value 
+        # Push change and archive events with the recorded value
         self.push_change_event("lastCommandedPointingParams", last_commanded_pointing_params)
         self.push_archive_event("lastCommandedPointingParams", last_commanded_pointing_params)
         return ([return_code], [message])
