@@ -44,10 +44,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
-from ska_mid_dish_manager.utils.decorators import (
-    record_applied_pointing_value,
-    record_mode_change_request,
-)
+from ska_mid_dish_manager.utils.decorators import record_mode_change_request
 from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
@@ -1309,7 +1306,9 @@ class DishManager(SKAController):
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
 
     @attribute(
-        dtype=str, access=AttrWriteType.READ, doc="recording last commanded pointing params"
+        dtype=str,
+        access=AttrWriteType.READ,
+        doc="Default empty string when not set, and is a JSON string of the last requested global pointing model when set.",
     )
     def lastCommandedPointingParams(self) -> str:
         """
@@ -1933,7 +1932,6 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @record_applied_pointing_value
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ApplyPointingModel(self, value) -> DevVarLongStringArrayType:
         """
@@ -1944,6 +1942,11 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ApplyPointingModel")
         return_code, message = handler(value)
+        last_commanded_pointing_params = value
+        self._last_commanded_pointing_params = last_commanded_pointing_params
+        # Push change and archive events with the recorded value 
+        self.push_change_event("lastCommandedPointingParams", last_commanded_pointing_params)
+        self.push_archive_event("lastCommandedPointingParams", last_commanded_pointing_params)
         return ([return_code], [message])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
