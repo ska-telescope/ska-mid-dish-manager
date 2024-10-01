@@ -325,7 +325,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             )
         return result
 
-    def wrap_invoke_lrc(self, callback, device_proxy, cmd_name, cmd_arg):
+    def wrap_invoke_lrc(self, callback, device_proxy, cmd_name, cmd_arg) -> Any:
         """Wrapper to call for invoke_lrc on subdevice."""
         try:
             if isinstance(cmd_arg, list):
@@ -359,7 +359,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     # pylint: disable=unused-argument
     @_check_connection
-    def execute_command(self, cmd_name, cmd_arg=None, callback=None):
+    def execute_command(self, cmd_name, cmd_arg=None, callback=None) -> Any:
         """Function to invoke command or LRC on subservient device."""
 
         # Callback to be used in the event that a caller doesn't provide one
