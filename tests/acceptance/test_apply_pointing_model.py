@@ -87,7 +87,9 @@ def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -
     try:
         last_requested_parameters = json.loads(last_requested_parameters)
     except json.JSONDecodeError as e:
-        raise ValueError("lastCommandedPointingParams is not valid JSON or it is default value") from e
+        raise ValueError(
+            "lastCommandedPointingParams is not valid JSON or it is default value"
+        ) from e
     # extract list of coefficient from last_requested_params
     applied_coefficient_dict = last_requested_parameters["coefficients"]
     applied_coefficient_list = [
