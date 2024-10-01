@@ -58,12 +58,12 @@ def setup_and_teardown(
         ds_device_proxy.Stow()
         assert event_store.wait_for_value(DSOperatingMode.STOW, timeout=60)
 
-    ds_device_proxy.SetStandbyLPMode()
-    assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=9)
-
     if ds_device_proxy.indexerPosition != IndexerPosition.B1:
         ds_device_proxy.SetIndexPosition(IndexerPosition.B1)
         assert event_store.wait_for_value(IndexerPosition.B1, timeout=9)
+
+    ds_device_proxy.SetStandbyLPMode()
+    assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=9)
 
     spf_device_proxy.subscribe_event(
         "operatingMode",

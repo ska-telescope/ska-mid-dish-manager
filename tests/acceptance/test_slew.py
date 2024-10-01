@@ -3,7 +3,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
 
 ELEV_MECHANICAL_LIMIT_MAX = 85.0
 AZIM_MECHANICAL_LIMIT_MAX = 360.0
@@ -12,7 +12,7 @@ AZIM_MECHANICAL_LIMIT_MAX = 360.0
 # pylint: disable=too-many-locals,unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_slew_transition(event_store_class, dish_manager_proxy):
+def test_slew_transition(event_store_class, dish_manager_proxy, ds_device_proxy):
     """Test transition to SLEW"""
     main_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
@@ -53,3 +53,5 @@ def test_slew_transition(event_store_class, dish_manager_proxy):
     achieved_az, achieved_el = last_az_el[1], last_az_el[2]
     assert achieved_az == pytest.approx(slew_azimuth)
     assert achieved_el == pytest.approx(slew_elevation)
+
+    assert ds_device_proxy.operatingMode == DSOperatingMode.POINT

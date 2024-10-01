@@ -19,9 +19,18 @@ INIT_AZ = -250
 INIT_EL = 70
 
 
+@pytest.fixture(autouse=True, scope="function")
 def slew_dish_to_init(event_store_class, dish_manager_proxy):
     """Fixture that slews the dish to a init position."""
     main_event_store = event_store_class()
+    band_event_store = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        band_event_store,
+    )
+
     dish_manager_proxy.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
@@ -29,6 +38,17 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     )
     dish_manager_proxy.SetStandbyFPMode()
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
+
+    dish_manager_proxy.ConfigureBand1(True)
+    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10)
+    band_event_store.wait_for_value(Band.B1, timeout=10)
+
+    dish_manager_proxy.SetOperateMode()
+    try:
+        main_event_store.wait_for_value(DishMode.OPERATE, timeout=10)
+    except RuntimeError as err:
+        component_states = dish_manager_proxy.GetComponentStates()
+        raise RuntimeError(f"DishManager not in OPERATE:\n {component_states}\n") from err
 
     achieved_pointing_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
@@ -60,12 +80,8 @@ def test_track_and_track_stop_cmds(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test Track command"""
+    """Test call of Track command and stop"""
 
-    slew_dish_to_init(event_store_class, dish_manager_proxy)
-
-    band_event_store = event_store_class()
-    dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -84,21 +100,9 @@ def test_track_and_track_stop_cmds(
     )
 
     dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
         "pointingState",
         tango.EventType.CHANGE_EVENT,
         pointing_state_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
     )
 
     dish_manager_proxy.subscribe_event(
@@ -107,16 +111,7 @@ def test_track_and_track_stop_cmds(
         achieved_pointing_event_store,
     )
 
-    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
-
-    dish_manager_proxy.ConfigureBand1(True)
-    dish_mode_event_store.wait_for_value(DishMode.CONFIG)
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
-    band_event_store.wait_for_value(Band.B1, timeout=8)
-
-    [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     # Load a track table
     current_pointing = dish_manager_proxy.achievedPointing
@@ -220,31 +215,14 @@ def test_append_dvs_case(
 ):
     """Test Track with Append for DVS case"""
 
-    slew_dish_to_init(event_store_class, dish_manager_proxy)
-
-    band_event_store = event_store_class()
-    dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
 
     dish_manager_proxy.subscribe_event(
         "longRunningCommandResult",
         tango.EventType.CHANGE_EVENT,
         result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
     )
 
     dish_manager_proxy.subscribe_event(
@@ -254,27 +232,12 @@ def test_append_dvs_case(
     )
 
     dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
         "achievedPointing",
         tango.EventType.CHANGE_EVENT,
         achieved_pointing_event_store,
     )
 
-    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
-
-    dish_manager_proxy.ConfigureBand1(True)
-    dish_mode_event_store.wait_for_value(DishMode.CONFIG)
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
-    band_event_store.wait_for_value(Band.B1, timeout=8)
-
-    [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     # Load a track table
     az_amplitude = 8
@@ -345,32 +308,7 @@ def test_track_fails_when_track_called_late(
 ):
     """Test Track command fails when the track table is no more valid"""
 
-    slew_dish_to_init(event_store_class, dish_manager_proxy)
-
-    band_event_store = event_store_class()
-    dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
-    result_event_store = event_store_class()
-    progress_event_store = event_store_class()
-    achieved_pointing_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
 
     dish_manager_proxy.subscribe_event(
         "pointingState",
@@ -378,28 +316,7 @@ def test_track_fails_when_track_called_late(
         pointing_state_event_store,
     )
 
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "achievedPointing",
-        tango.EventType.CHANGE_EVENT,
-        achieved_pointing_event_store,
-    )
-
-    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
-
-    dish_manager_proxy.ConfigureBand1(True)
-    dish_mode_event_store.wait_for_value(DishMode.CONFIG)
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
-    band_event_store.wait_for_value(Band.B1, timeout=8)
-
-    [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     # Construct track table
     track_table_delay_s = 2
@@ -417,5 +334,7 @@ def test_track_fails_when_track_called_late(
     while get_current_tai_timestamp() <= track_table[-3] + 1:
         time.sleep(1)
 
-    [[_], [unique_id]] = dish_manager_proxy.Track()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    # we don't have any way yet to confirm that the track command failed
+    dish_manager_proxy.Track()
+    with pytest.raises(RuntimeError):
+        pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=10)
