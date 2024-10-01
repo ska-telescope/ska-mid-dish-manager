@@ -515,7 +515,8 @@ class CommandMap:
                     status=TaskStatus.FAILED,
                     result=(
                         ResultCode.FAILED,
-                        f"{device} device failed executing {running_command} command with ID {self.device_command_ids[device]}",
+                        f"{device} device failed executing {running_command} "
+                        f"command with ID {self.device_command_ids[device]}",
                     ),
                 )
 

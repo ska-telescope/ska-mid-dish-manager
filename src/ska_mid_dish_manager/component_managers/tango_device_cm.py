@@ -267,7 +267,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         return task_status, response
 
     # pylint: disable=unnecessary-pass
-    def lrc_callback(self, status=None, **kwargs):
+    def lrc_callback(self, status=None, **kwargs) -> None:
         """Callback to be passed to invoke_lrc, updating LRC status value."""
         pass
 
@@ -327,7 +327,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
 
     @_check_connection
-    def wrap_invoke_lrc(self, cmd_name, cmd_arg):
+    def wrap_invoke_lrc(self, cmd_name, cmd_arg) -> Any:
         """Invokes LRC execution on subdevices."""
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
