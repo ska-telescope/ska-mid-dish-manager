@@ -29,6 +29,7 @@ def record_applied_pointing_value(func):
         value = args[1]  # The JSON object is the second positional argument
         last_commanded_pointing_params = value
         # Store the value passed into the command
+        # pylint: disable=protected-access
         device_instance._last_commanded_pointing_params = last_commanded_pointing_params
         # Push change and archive events with the recorded value and timestamp
         device_instance.push_change_event(
