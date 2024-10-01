@@ -307,7 +307,8 @@ class CommandMap:
 
         # Report that the command has been called on the subservient device
         task_callback(
-            progress=f"{fan_out_args['command']} called on {device}, with response {command_response}"
+            progress=f"{fan_out_args['command']} called on {device},\
+                with response {command_response}"
         )
 
         # fail the command immediately, if the subservient device fails
