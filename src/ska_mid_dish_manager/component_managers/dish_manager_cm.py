@@ -827,8 +827,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"Expected 2 arguments (az, el) but got {len(values)} arg(s).",
             )
 
+        def _is_slew_cmd_allowed():
+            if self.component_state["dishmode"] != DishMode.OPERATE:
+                task_callback(
+                    progress="Slew command rejected for current dishMode. "
+                    "Slew command is allowed for dishMode OPERATE"
+                )
+                return False
+            if self.component_state["pointingstate"] != PointingState.READY:
+                task_callback(
+                    progress="Slew command rejected for current pointingState. "
+                    "Slew command is allowed for pointingState READY"
+                )
+                return False
+            return True
+
         status, response = self.submit_task(
-            self._command_map.slew, args=[values], task_callback=task_callback
+            self._command_map.slew,
+            args=[values],
+            is_cmd_allowed=_is_slew_cmd_allowed,
+            task_callback=task_callback,
         )
         return status, response
 

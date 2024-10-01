@@ -37,18 +37,14 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
         main_event_store,
     )
     dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5, proxy=dish_manager_proxy)
 
     dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10)
+    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
     band_event_store.wait_for_value(Band.B1, timeout=10)
 
     dish_manager_proxy.SetOperateMode()
-    try:
-        main_event_store.wait_for_value(DishMode.OPERATE, timeout=10)
-    except RuntimeError as err:
-        component_states = dish_manager_proxy.GetComponentStates()
-        raise RuntimeError(f"DishManager not in OPERATE:\n {component_states}\n") from err
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
     achieved_pointing_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(

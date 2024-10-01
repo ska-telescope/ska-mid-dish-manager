@@ -96,7 +96,10 @@ class EventStore:
         self._queue.put(event)
 
     def wait_for_value(  # pylint:disable=inconsistent-return-statements
-        self, value: Any, timeout: int = 3
+        self,
+        value: Any,
+        timeout: int = 3,
+        proxy: Any = None,
     ):
         """Wait for a value to arrive
 
@@ -130,6 +133,12 @@ class EventStore:
                     return True
         except queue.Empty as err:
             ev_vals = self.extract_event_values(events)
+            if proxy:
+                component_states = proxy.GetComponentStates()
+                raise RuntimeError(
+                    f"Never got an event with value [{value}] got [{ev_vals}]"
+                    f"with component states: [{component_states}]"
+                ) from err
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 
     def wait_for_condition(self, condition: Callable, timeout: int = 3) -> bool:
