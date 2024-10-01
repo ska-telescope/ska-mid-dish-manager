@@ -2,6 +2,7 @@
 
 import logging
 import typing
+import uuid
 from queue import Empty, Queue
 from threading import Event, Thread
 from typing import Any, Callable, Optional, Tuple
@@ -259,56 +260,100 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     ) -> Any:
         """Execute the command in a thread"""
         task_status, response = self.submit_task(
-            self._run_device_command,
+            self.execute_command,
             args=[command_name, command_arg],
             task_callback=task_callback,
         )
         return task_status, response
 
+    def lrc_callback(self, status=None, **kwargs):
+        pass
+
     @typing.no_type_check
-    def _run_device_command(
+    def execute_command(
         self,
         command_name: str,
         command_arg: Any,
         task_callback: Callable = None,
         task_abort_event: Event = None,
     ) -> None:
-        if task_abort_event.is_set():
+
+        if task_abort_event and task_abort_event.is_set():
             task_callback(status=TaskStatus.ABORTED)
             return
 
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
+        cmd_response = None
 
-        result = None
-        try:
-            result = self.execute_device_command(command_name, command_arg)
-        except (LostConnection, tango.DevFailed) as err:
-            self.logger.exception(err)
-            if task_callback:
-                task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
-            return
-
-        # perform another abort event check in case it was missed earlier
-        if task_abort_event.is_set():
-            task_callback(progress=f"{command_name} was aborted")
-
-        if task_callback:
-            task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(result)))
-
-    def execute_device_command(self, command_name: str, command_arg: Any) -> Any:
-        """Execute the command on the Tango device"""
         self.logger.debug(
             "About to execute command [%s] on device [%s] with param [%s]",
             command_name,
             self._tango_device_fqdn,
             command_arg,
         )
+        
+        if "ds" in self._tango_device_fqdn:
+            try:
+                if isinstance(command_arg, list):
+                    command_arg = tuple(command_arg)
+                else:
+                    command_arg = (command_arg,)
+
+                cmd_response = self.wrap_invoke_lrc(command_name, command_arg)
+            except (CommandError, ResultCodeError, tango.DevFailed) as err:
+                if task_callback:
+                    task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
+                return
+        else:
+            try:
+                cmd_response = self.invoke_device_command(command_name, command_arg)
+            except (LostConnection, tango.DevFailed) as err:
+                if task_callback:
+                    task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
+                return
+
+            # this is not entirely true. we just dont know what attribute
+            # to watch on the device to determine the command finished, so
+            # reporting completed for now and marking a TODO to re-use invoke_lrc
+            if task_callback:
+                task_callback(status=TaskStatus.COMPLETED)
+        
+        self.logger.debug(
+            "Result of [%s] on [%s] is [%s]",
+            command_name,
+            self._tango_device_fqdn,
+            cmd_response,
+        )
+
+    @_check_connection
+    def wrap_invoke_lrc(self, cmd_name, cmd_arg):
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = None
+        try:
+            
+            lrc_subscriptions = invoke_lrc(
+                self.lrc_callback, device_proxy, cmd_name, cmd_arg)
+        except CommandError:
+            self.logger.exception(f"Device {self._tango_device_fqdn} rejected command {cmd_name}")
+            raise
+        except ResultCodeError:
+            self.logger.exception(
+                f"Device {self._tango_device_fqdn} returned unexpected result code"
+            )
+            raise
+        except tango.DevFailed:
+            self.logger.exception(
+                f"Command call {cmd_name} failed on device {self._tango_device_fqdn}"
+            )
+            raise
+        return lrc_subscriptions.command_id
+
+    @_check_connection
+    def invoke_device_command(self, command_name: str, command_arg: Any) -> Any:
+        """Check the connection and execute the command on the Tango device"""
+        with tango.EnsureOmniThread():
+            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
             try:
-                result = device_proxy.command_inout(command_name, command_arg)
+                response = device_proxy.command_inout(command_name, command_arg)
             except tango.DevFailed:
                 self.logger.exception(
                     "Could not execute command [%s] with arg [%s] on [%s]",
@@ -317,70 +362,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                     self._tango_device_fqdn,
                 )
                 raise
-            self.logger.debug(
-                "Result of [%s] on [%s] is [%s]",
-                command_name,
-                self._tango_device_fqdn,
-                result,
-            )
-        return result
-
-    def wrap_invoke_lrc(self, callback, device_proxy, cmd_name, cmd_arg):
-        """Wrapper to call for invoke_lrc on subdevice."""
-        try:
-            if isinstance(cmd_arg, list):
-                cmd_arg = tuple(cmd_arg)
-            else:
-                cmd_arg = (cmd_arg,)
-
-            lrc_subscriptions = invoke_lrc(callback, device_proxy, cmd_name, cmd_arg)
-        except CommandError:
-            self.logger.exception(
-                "Device [%s] rejected command [%s]",
-                self._tango_device_fqdn,
-                cmd_name,
-            )
-            raise
-        except ResultCodeError:
-            self.logger.exception(
-                "Device [%s] returned unexpected result code",
-                self._tango_device_fqdn,
-            )
-            raise
-        except tango.DevFailed:
-            self.logger.exception(
-                "Command call [%s] failed on device [%s]",
-                cmd_name,
-                self._tango_device_fqdn,
-            )
-            raise
-
-        return lrc_subscriptions.command_id
-
-    # pylint: disable=unused-argument
-    @_check_connection
-    def execute_command(self, cmd_name, cmd_arg=None, callback=None):
-        """Function to invoke command or LRC on subservient device."""
-
-        # Callback to be used in the event that a caller doesn't provide one
-        def _dummy_callback(**kwargs):
-            pass
-
-        device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-
-        if "ds" in self._tango_device_fqdn:
-            if callback is None:
-                callback = _dummy_callback
-            try:
-                response = self.wrap_invoke_lrc(callback, device_proxy, cmd_name, cmd_arg)
-            except (CommandError, ResultCodeError, tango.DevFailed):
-                return ResultCode.FAILED
-        else:
-            try:
-                response = self.execute_device_command(cmd_name, cmd_arg)
-            except tango.DevFailed:
-                return ResultCode.FAILED
+        # generate a pseudo unique_id for commands
+        # that go through and return nothing. this
+        # is for the dish lmc tango devie simulators
+        if response is None:
+            response = f"{self._tango_device_fqdn}_{uuid.uuid1()}"
         return response
+
 
     @_check_connection
     def read_attribute_value(self, attribute_name: str) -> Any:
@@ -403,7 +391,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     @_check_connection
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
-        """Check the connection and read an attribute"""
+        """Check the connection and write an attribute"""
         self.logger.debug(
             "About to write attribute [%s] on device [%s]",
             attribute_name,
