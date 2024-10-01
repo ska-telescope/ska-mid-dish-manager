@@ -277,7 +277,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         task_callback: Callable = None,
         task_abort_event: Event = None,
     ) -> None:
-
         if task_abort_event and task_abort_event.is_set():
             task_callback(status=TaskStatus.ABORTED)
             return
@@ -290,7 +289,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._tango_device_fqdn,
             command_arg,
         )
-        
+
         if "ds" in self._tango_device_fqdn:
             try:
                 if isinstance(command_arg, list):
@@ -316,7 +315,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             # reporting completed for now and marking a TODO to re-use invoke_lrc
             if task_callback:
                 task_callback(status=TaskStatus.COMPLETED)
-        
+
         self.logger.debug(
             "Result of [%s] on [%s] is [%s]",
             command_name,
@@ -329,9 +328,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
         try:
-            
-            lrc_subscriptions = invoke_lrc(
-                self.lrc_callback, device_proxy, cmd_name, cmd_arg)
+            lrc_subscriptions = invoke_lrc(self.lrc_callback, device_proxy, cmd_name, cmd_arg)
         except CommandError:
             self.logger.exception(f"Device {self._tango_device_fqdn} rejected command {cmd_name}")
             raise
@@ -368,7 +365,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if response is None:
             response = f"{self._tango_device_fqdn}_{uuid.uuid1()}"
         return response
-
 
     @_check_connection
     def read_attribute_value(self, attribute_name: str) -> Any:
