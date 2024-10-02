@@ -340,7 +340,7 @@ class DishManager(SKAController):
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
             device._last_commanded_mode = ("0.0", "")
-
+            device._last_commanded_pointing_params = ""
             device._device_to_comm_attr_map = {
                 Device.DS: "dsConnectionState",
                 Device.SPF: "spfConnectionState",
@@ -437,6 +437,7 @@ class DishManager(SKAController):
                 "trackProgramMode",
                 "trackTableLoadMode",
                 "lastCommandedMode",
+                "lastCommandedPointingParams",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
@@ -726,7 +727,6 @@ class DishManager(SKAController):
     def band5aPointingModelParams(self, value):
         """Set the band5aPointingModelParams"""
         self.logger.debug("band5aPointingModelParams write method called with params %s", value)
-
         if hasattr(self, "component_manager"):
             self.component_manager.update_pointing_model_params("band5aPointingModelParams", value)
         else:
@@ -1303,6 +1303,22 @@ class DishManager(SKAController):
     def pseudoRandomNoiseDiodePars(self, values):
         """Set the device pseudo random noise diode pars."""
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
+
+    @attribute(
+        dtype=str,
+        access=AttrWriteType.READ,
+        doc=(
+            "Default empty string when not set, and is a JSON string"
+            "of the last requested global pointing model when set."
+        ),
+    )
+    def lastCommandedPointingParams(self) -> str:
+        """
+        Tango string attribute that returns the
+        last JSON input passed to the ApplyPointingModel command.
+        Defaults to an empty string.
+        """
+        return self._last_commanded_pointing_params
 
     # --------
     # Commands
@@ -1926,6 +1942,11 @@ class DishManager(SKAController):
         the Dish ID should be correct. Each time the command is called
         all parameters will get updated not just the ones that have been modified.
         """
+        last_commanded_pointing_params = value
+        self._last_commanded_pointing_params = last_commanded_pointing_params
+        # Push change and archive events with the recorded value
+        self.push_change_event("lastCommandedPointingParams", last_commanded_pointing_params)
+        self.push_archive_event("lastCommandedPointingParams", last_commanded_pointing_params)
         handler = self.get_command_object("ApplyPointingModel")
         return_code, message = handler(value)
         return ([return_code], [message])

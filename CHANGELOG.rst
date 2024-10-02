@@ -21,6 +21,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
   - `DishMode` required to be in `OPERATE` and `PointingState` required to be `READY`
 
 - Updated ska-tango-base and ska-tango-util to version 0.4.12
+- Added an atrtribute called `last_commanded_pointing_params` that reports the last updated pointing parameters. 
 
 
 Version 4.0.0
