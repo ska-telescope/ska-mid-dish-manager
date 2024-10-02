@@ -260,7 +260,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     ) -> Any:
         """Execute the command in a thread"""
         task_status, response = self.submit_task(
-            self.execute_command,
+            self.invoke_device_command,
             args=[command_name, command_arg],
             task_callback=task_callback,
         )
@@ -272,7 +272,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         pass
 
     @typing.no_type_check
-    def execute_command(
+    def invoke_device_command(
         self,
         command_name: str,
         command_arg: Any,
@@ -286,20 +286,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         cmd_response = None
 
-        self.logger.debug(
-            "About to execute command [%s] on device [%s] with param [%s]",
-            command_name,
-            self._tango_device_fqdn,
-            command_arg,
-        )
-
         if "ds" in self._tango_device_fqdn:
             try:
-                if isinstance(command_arg, list):
-                    command_arg = tuple(command_arg)
-                else:
-                    command_arg = (command_arg,)
-
                 cmd_response = self.wrap_invoke_lrc(command_name, command_arg)
             except (CommandError, ResultCodeError, tango.DevFailed) as err:
                 if task_callback:
@@ -307,7 +295,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 return
         else:
             try:
-                cmd_response = self.invoke_device_command(command_name, command_arg)
+                cmd_response = self.execute_command(command_name, command_arg)
             except (LostConnection, tango.DevFailed) as err:
                 if task_callback:
                     task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
@@ -332,34 +320,32 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
         try:
-            lrc_subscriptions = invoke_lrc(self.lrc_callback, device_proxy, cmd_name, cmd_arg)
+            lrc_subscriptions = invoke_lrc(self.lrc_callback, device_proxy, cmd_name, (cmd_arg,))
         except CommandError:
-            self.logger.exception(
-                "Device [%s] rejected command [%s]",
-                self._tango_device_fqdn,
-                cmd_name,
-            )
+            self.logger.exception(f"Device {self._tango_device_fqdn} rejected command {cmd_name}")
             raise
         except ResultCodeError:
             self.logger.exception(
-                "Device [%s] returned unexpected result code",
-                self._tango_device_fqdn,
+                f"Device {self._tango_device_fqdn} returned unexpected result code"
             )
-
             raise
         except tango.DevFailed:
             self.logger.exception(
-                "Command call [%s] failed on device [%s]",
-                cmd_name,
-                self._tango_device_fqdn,
+                f"Command call {cmd_name} failed on device {self._tango_device_fqdn}"
             )
-
             raise
         return lrc_subscriptions.command_id
 
     @_check_connection
-    def invoke_device_command(self, command_name: str, command_arg: Any) -> Any:
+    def execute_command(self, command_name: str, command_arg: Any) -> Any:
         """Check the connection and execute the command on the Tango device"""
+        self.logger.debug(
+            "About to execute command [%s] on device [%s] with param [%s]",
+            command_name,
+            self._tango_device_fqdn,
+            command_arg,
+        )
+        response = None
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
             try:

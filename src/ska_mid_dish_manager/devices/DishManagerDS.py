@@ -1837,8 +1837,8 @@ class DishManager(SKAController):
         SPFRx has been restarted.
         """
         handler = self.get_command_object("SetKValue")
-        return_code, message = handler(value)
-        return ([return_code], [message])
+        result_code, message = handler(value)
+        return ([result_code], [message])
 
     class ApplyPointingModelCommand(FastCommand):
         """Class for handling band pointing parameters given a JSON input."""
@@ -1927,8 +1927,8 @@ class DishManager(SKAController):
         all parameters will get updated not just the ones that have been modified.
         """
         handler = self.get_command_object("ApplyPointingModel")
-        return_code, message = handler(value)
-        return ([return_code], [message])
+        result_code, message = handler(value)
+        return ([result_code], [message])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)

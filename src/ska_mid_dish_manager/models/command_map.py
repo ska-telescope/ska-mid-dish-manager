@@ -314,7 +314,7 @@ class CommandMap:
                 self.lrc_callback_statuses.update({"status": status})
 
             # TODO taskcallback will need a command id. since this func
-            # is written for only DSM, the command id can be easily fetched
+            # is written for only DSM, the command id can be easily fetched.
             # need to think of the command id/ response from the other devices
             # and how to track them
             command_id = self.device_command_ids.get("DS")
@@ -342,14 +342,15 @@ class CommandMap:
             logger=self.logger,
         )
 
-        response, command_id = command(command_name, command_argument)
-        self.device_command_ids[device] = command_id
-        # Report that the command has been called on the subservient device
-        task_callback(progress=f"{fan_out_args['command']} called on {device}, ID {command_id}")
-
+        result_code, command_response = command(command_name, command_argument)
         # fail the command immediately, if the subservient device fails
-        if response == TaskStatus.FAILED:
-            raise RuntimeError(command_id)
+        if result_code == ResultCode.FAILED:
+            raise RuntimeError(command_response)
+
+        # Report that the command has been called on the subservient device
+        task_callback(
+            progress=f"{fan_out_args['command']} called on {device}, ID {command_response}"
+        )
 
         awaited_attributes = fan_out_args["awaitedAttributes"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
@@ -366,7 +367,7 @@ class CommandMap:
                     f"Awaiting {device} {attributes_print_string} change to {values_print_string}"
                 )
             )
-        return command_id
+        return command_response
 
     def _fanout_command_has_failed(self):
         """Check the status of the fanned out commands on the subservient device"""
@@ -456,18 +457,11 @@ class CommandMap:
                     )
                 except RuntimeError:
                     task_callback(
-                        progress=(
-                            f"{device} device failed to execute {cmd_name} command with"
-                            f" ID {self.device_command_ids[device]}"
-                        )
+                        progress=(f"{device} device failed to execute {cmd_name} command")
                     )
                     self.cmd_status_callback(status=TaskStatus.FAILED)
 
         task_callback(progress=f"Commands: {json.dumps(self.device_command_ids)}")
-
-        final_message = (
-            completed_response_msg if completed_response_msg else f"{running_command} completed"
-        )
 
         final_message = (
             completed_response_msg if completed_response_msg else f"{running_command} completed"
@@ -517,12 +511,9 @@ class CommandMap:
                 task_callback(
                     progress=f"{running_command} failed",
                     status=TaskStatus.FAILED,
-                    result=(
-                        ResultCode.FAILED,
-                        f"{device} device failed executing {running_command} "
-                        f"command with ID {self.device_command_ids[device]}",
-                    ),
+                    result=(ResultCode.FAILED, f"{running_command} failed"),
                 )
+                return
 
             # Check on dishmanager to see whether the LRC has completed
             dm_cm_component_state = self._dish_manager_cm.component_state

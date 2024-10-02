@@ -641,16 +641,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_cm = self.sub_component_managers["DS"]
         self.logger.debug("Calling TrackLoadTable on DSManager.")
         try:
-            result = ds_cm.execute_command("TrackLoadTable", float_list)
+            [[result_code], [response]] = ds_cm.execute_command("TrackLoadTable", float_list)
+        except (LostConnection, tango.DevFailed):
+            self.logger.exception("TrackLoadTable on DSManager failed")
+        else:
+            if result_code in [ResultCode.FAILED, ResultCode.REJECTED]:
+                raise RuntimeError(f"{result_code}: {response}")
             self.logger.debug(
                 "Result of the call to [%s] on DSManager is [%s]",
                 "TrackLoadTable",
-                result,
+                response,
             )
-        except (LostConnection, tango.DevFailed) as err:
-            self.logger.exception("TrackLoadTable on DSManager failed")
-            return (ResultCode.FAILED, err)
-        return (ResultCode.OK, "Successfully requested TrackLoadTable on DSManager")
 
     def set_standby_lp_mode(
         self,
@@ -798,11 +799,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         ds_cm = self.sub_component_managers["DS"]
         try:
-            ds_cm.execute_command("Stow", None)
+            [[result_code], [response]] = ds_cm.execute_command("Stow", None)
         except (LostConnection, tango.DevFailed) as err:
             task_callback(status=TaskStatus.FAILED, exception=err)
             self.logger.exception("DishManager has failed to execute Stow DSManager")
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
+        else:
+            if result_code == ResultCode.FAILED:
+                task_callback(status=TaskStatus.FAILED, result=(ResultCode.FAILED, response))
+                return TaskStatus.FAILED, response
+
         task_callback(
             progress="Stow called, monitor dishmode for LRC completed", status=TaskStatus.COMPLETED
         )
@@ -972,7 +978,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Process the JSON data
         try:
             data = json.loads(json_object)
-        except (LostConnection, json.JSONDecodeError) as err:
+        except json.JSONDecodeError as err:
             self.logger.exception("Invalid json supplied")
             return (ResultCode.REJECTED, str(err))
         # Validate the Dish ID
