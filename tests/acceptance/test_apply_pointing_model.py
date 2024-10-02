@@ -89,19 +89,11 @@ def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -
         last_requested_parameters = json.loads(last_requested_parameters)
     except json.JSONDecodeError as json_error:
         raise ValueError(
-            "lastCommandedPointingParams is not valid JSON or it is default value"
+            "lastCommandedPointingParams is not valid JSON or it is default empty string"
         ) from json_error
-    # extract list of coefficient from last_requested_params
-    applied_coefficient_dict = last_requested_parameters["coefficients"]
-    applied_coefficient_list = [
-        (key, value_dict["value"]) for key, value_dict in applied_coefficient_dict.items()
-    ]
-    # Construct list of expected values from the JSON definition
-    requested_coefficient_dict = pointing_model_definition.get("coefficients", {})
-    requested_coefficient_list = [
-        (key, value_dict["value"]) for key, value_dict in requested_coefficient_dict.items()
-    ]
-    assert applied_coefficient_list == requested_coefficient_list
+    assert last_requested_parameters == json.loads(
+        pointing_model_json_str
+    ), "The JSON strings did not match as expected"
 
 
 @pytest.mark.acceptance

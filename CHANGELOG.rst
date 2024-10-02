@@ -9,6 +9,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - Upgraded ska-mid-dish-simulators chart to v4.0.2
 - Added in a command called `ApplyPointingModel` that updates bands using a json input
+- Added an atrtribute called `last_commanded_pointing_params` that reports the last updated pointing parameters. 
 
 Version 4.0.0
 *************

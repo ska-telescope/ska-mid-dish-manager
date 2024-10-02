@@ -1944,12 +1944,12 @@ class DishManager(SKAController):
         all parameters will get updated not just the ones that have been modified.
         """
         last_commanded_pointing_params = value
-        handler = self.get_command_object("ApplyPointingModel")
-        return_code, message = handler(value)
         self._last_commanded_pointing_params = last_commanded_pointing_params
         # Push change and archive events with the recorded value
         self.push_change_event("lastCommandedPointingParams", last_commanded_pointing_params)
         self.push_archive_event("lastCommandedPointingParams", last_commanded_pointing_params)
+        handler = self.get_command_object("ApplyPointingModel")
+        return_code, message = handler(value)
         return ([return_code], [message])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
