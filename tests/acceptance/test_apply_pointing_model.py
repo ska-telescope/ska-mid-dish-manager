@@ -78,9 +78,7 @@ def test_best_case_json(
 @pytest.mark.forked
 def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -> None:
     "Test the `lastCommandedPointingParams` attribute of the dish manager."
-    pointing_model_json_str, pointing_model_definition = read_file_contents(
-        "global_pointing_model.json", "Band_2"
-    )
+    pointing_model_json_str, _ = read_file_contents("global_pointing_model.json", "Band_2")
     # Command execution
     dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
     last_requested_parameters = dish_manager_proxy.read_attribute(
