@@ -60,7 +60,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
-        dish_id: str,
         *args,
         **kwargs,
     ):
@@ -117,7 +116,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
-        self.dish_id = dish_id
 
         self._device_to_comm_attr_map = {
             Device.DS: "dsConnectionState",
@@ -829,8 +827,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"Expected 2 arguments (az, el) but got {len(values)} arg(s).",
             )
 
+        def _is_slew_cmd_allowed():
+            if self.component_state["dishmode"] != DishMode.OPERATE:
+                task_callback(
+                    progress="Slew command rejected for current dishMode. "
+                    "Slew command is allowed for dishMode OPERATE"
+                )
+                return False
+            if self.component_state["pointingstate"] != PointingState.READY:
+                task_callback(
+                    progress="Slew command rejected for current pointingState. "
+                    "Slew command is allowed for pointingState READY"
+                )
+                return False
+            return True
+
         status, response = self.submit_task(
-            self._command_map.slew, args=[values], task_callback=task_callback
+            self._command_map.slew,
+            args=[values],
+            is_cmd_allowed=_is_slew_cmd_allowed,
+            task_callback=task_callback,
         )
         return status, response
 
@@ -957,9 +973,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         try:
             data = json.loads(json_object)
         except (LostConnection, json.JSONDecodeError) as err:
+            self.logger.exception("Invalid json supplied")
             return (ResultCode.REJECTED, str(err))
         # Validate the Dish ID
-        if self.dish_id == data.get("antenna"):
+        antenna_id = data.get("antenna")
+        # Getting the dish ID from device name
+        dish_id = self.tango_device_name.split("/")[-1]
+        if dish_id == antenna_id:
             # Validate the coeffients
             coefficients = data.get("coefficients", {})
             coeff_keys = coefficients.keys()
@@ -967,12 +987,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # Check if they have the same elements (ignoring order)
             if set(coeff_keys) == set(expected_coefficients):
                 # Reorder `coeff_keys` to match `expected_coefficients`
-                coeff_keys = [item for item in expected_coefficients if item in coeff_keys]
-                print(f"The coeffs keys: {coeff_keys}")
-                self.logger.debug("All 18 coefficients are present.")
+                coeff_keys = expected_coefficients[:]
+                self.logger.debug(f"All 18 coefficients {coeff_keys} are present.")
                 # Get all coefficient values
                 band_coeffs_values = [coefficients[key].get("value") for key in coeff_keys]
-                # band_coeffs_values = [coef.get("value") for coef in coefficients.values()]
                 # Extract the band's value after the underscore
                 band_value = data.get("band").split("_")[-1]
                 # Write to band
@@ -986,6 +1004,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 }
                 attribute_name = band_map.get(band_value)
                 if attribute_name is None:
+                    self.logger.debug(("Unsupported Band: b%s"), band_value)
                     return (ResultCode.REJECTED, f"Unsupported Band: b{band_value}")
                 try:
                     ds_cm.write_attribute_value(attribute_name, band_coeffs_values)
@@ -1014,13 +1033,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # If there is an issue with the Dish ID/ Antenna name
         self.logger.debug(
             ("Command rejected. The Dish id %s and the Antenna's value %s are not equal."),
-            self.dish_id,
-            data.get("antenna"),
+            dish_id,
+            antenna_id,
         )
         return (
             ResultCode.REJECTED,
-            f"Command rejected. The Dish id {self.dish_id} and the Antenna's "
-            f"value {data.get('antenna')} are not equal.",
+            f"Command rejected. The Dish id {dish_id} and the Antenna's "
+            f"value {antenna_id} are not equal.",
         )
 
     def set_track_interpolation_mode(

@@ -154,7 +154,6 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
-            self.DishId,
             communication_state_callback=None,
             component_state_callback=self._component_state_changed,
         )
