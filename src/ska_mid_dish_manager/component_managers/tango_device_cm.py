@@ -16,6 +16,8 @@ from ska_tango_base.long_running_commands_api import invoke_lrc
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 
+SLEEP_BETWEEN_EVENTS = 0.5
+
 
 def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
     """Connection check decorator.
@@ -75,6 +77,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         self._event_consumer_thread: Optional[Thread] = None
         self._event_consumer_abort_event: Optional[Event] = None
+        self.lrc_callback_event: Optional[Event] = None
 
         super().__init__(
             logger,
@@ -268,7 +271,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     # pylint: disable=unnecessary-pass
     def lrc_callback(self, *args: Any, **kwargs: Any) -> None:
-        """Callback to be passed to invoke_lrc, updating LRC status value."""
+        """Abstract method for invoke_lrc callback to be overridden by caller, else do nothing."""
         pass
 
     @typing.no_type_check
@@ -284,18 +287,20 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.ABORTED)
             return
 
-        cmd_response = None
-
         if "ds" in self._tango_device_fqdn:
             try:
-                cmd_response = self.wrap_invoke_lrc(command_name, command_arg)
+                self.wrap_invoke_lrc(command_name, command_arg)
             except (CommandError, ResultCodeError, tango.DevFailed) as err:
                 if task_callback:
                     task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
                 return
+            else:
+                # Keep function alive to maintain reference to LRCSubscription object
+                while not self.lrc_callback_event.wait(SLEEP_BETWEEN_EVENTS):
+                    pass
         else:
             try:
-                cmd_response = self.execute_command(command_name, command_arg)
+                self.execute_command(command_name, command_arg)
             except (LostConnection, tango.DevFailed) as err:
                 if task_callback:
                     task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
@@ -306,13 +311,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             # reporting completed for now and marking a TODO to re-use invoke_lrc
             if task_callback:
                 task_callback(status=TaskStatus.COMPLETED)
-
-        self.logger.debug(
-            "Result of [%s] on [%s] is [%s]",
-            command_name,
-            self._tango_device_fqdn,
-            cmd_response,
-        )
 
     @_check_connection
     def wrap_invoke_lrc(self, cmd_name: str, cmd_arg: Any) -> Any:
@@ -341,7 +339,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._tango_device_fqdn,
             )
             raise
-        return lrc_subscriptions.command_id
+        self.lrc_callback_event = Event()
+        self.logger.debug(
+            "Result of [%s] on [%s] is [%s]",
+            cmd_name,
+            self._tango_device_fqdn,
+            lrc_subscriptions.command_id,
+        )
+        return lrc_subscriptions
 
     @_check_connection
     def execute_command(self, command_name: str, command_arg: Any) -> Any:
@@ -370,6 +375,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # is for the dish lmc tango devie simulators
         if response is None:
             response = f"{self._tango_device_fqdn}_{uuid.uuid1()}"
+
+        self.logger.debug(
+            "Result of [%s] on [%s] is [%s]",
+            command_name,
+            self._tango_device_fqdn,
+            response,
+        )
         return response
 
     @_check_connection

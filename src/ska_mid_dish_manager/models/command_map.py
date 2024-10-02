@@ -37,6 +37,7 @@ class CommandMap:
         self.logger = logger
         self.device_command_ids = {}
         self.lrc_callback_statuses = {}
+        self.event_objects = {}
         self.lrc_callback_lock = Lock()
 
     # pylint: disable=protected-access
@@ -347,6 +348,8 @@ class CommandMap:
         if result_code == ResultCode.FAILED:
             raise RuntimeError(command_response)
 
+        self.event_objects[device] = sub_cm.lrc_callback_event
+
         # Report that the command has been called on the subservient device
         task_callback(
             progress=f"{fan_out_args['command']} called on {device}, ID {command_response}"
@@ -508,6 +511,10 @@ class CommandMap:
                         )
 
             if self._fanout_command_has_failed():
+                # Inform tango device cm to cancel live subscriptions to lrc attributes
+                for evt_object in self.event_objects.values():
+                    evt_object.set()
+
                 task_callback(
                     progress=f"{running_command} failed",
                     status=TaskStatus.FAILED,
