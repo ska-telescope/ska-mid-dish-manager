@@ -646,7 +646,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.exception("TrackLoadTable on DSManager failed")
         else:
             if result_code in [ResultCode.FAILED, ResultCode.REJECTED]:
-                raise RuntimeError(f"{result_code}: {response}")
+                raise RuntimeError(f"{result_code.name}: {response}")
             self.logger.debug(
                 "Result of the call to [%s] on DSManager is [%s]",
                 "TrackLoadTable",

@@ -73,7 +73,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
 
     dish_manager_proxy.SetStandbyLPMode()
 
-    progress_msg = "SPFRX device failed executing SetStandbyMode command with ID"
+    progress_msg = "SetStandbyLPMode failed"
     progress_event_store.wait_for_progress_update(progress_msg, timeout=5)
 
     result_event_store = result_event_store.get_queue_values(timeout=5)

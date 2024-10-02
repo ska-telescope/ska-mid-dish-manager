@@ -46,6 +46,9 @@ def dish_manager_resources():
             task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(None)))
             return TaskStatus.QUEUED, "message"
 
+        def _simulate_execute_command(*args):
+            return [[ResultCode.OK], [f"{args[0]} completed"]]
+
         for com_man in [ds_cm, spf_cm, spfrx_cm]:
             com_man.run_device_command = Mock(side_effect=_simulate_lrc_callbacks)
 
@@ -58,9 +61,14 @@ def dish_manager_resources():
             "execute_command",
         ]
         for method_name in candidate_stub_methods:
-            setattr(ds_cm, method_name, Mock())
-            setattr(spf_cm, method_name, Mock())
-            setattr(spfrx_cm, method_name, Mock())
+            mock_method = (
+                Mock(side_effect=_simulate_execute_command)
+                if method_name == "execute_command"
+                else Mock()
+            )
+            setattr(ds_cm, method_name, mock_method)
+            setattr(spf_cm, method_name, mock_method)
+            setattr(spfrx_cm, method_name, mock_method)
 
         # trigger transition to StandbyLP mode
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)

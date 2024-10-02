@@ -45,12 +45,15 @@ def component_manager(mock_command_tracker: Mock, callbacks: dict) -> Generator:
         task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(None)))
         return TaskStatus.QUEUED, "message"
 
+    def _simulate_execute_command(*args):
+        return [[ResultCode.OK], [f"{args[0]} completed"]]
+
     with patch.multiple(
         "ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceComponentManager",
         run_device_command=Mock(side_effect=_simulate_lrc_callbacks),
         update_state_from_monitored_attributes=Mock(),
         write_attribute_value=Mock(),
-        execute_command=Mock(),
+        execute_command=Mock(side_effect=_simulate_execute_command),
     ):
         yield DishManagerComponentManager(
             LOGGER,
