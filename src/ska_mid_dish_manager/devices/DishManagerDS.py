@@ -1943,9 +1943,9 @@ class DishManager(SKAController):
         the Dish ID should be correct. Each time the command is called
         all parameters will get updated not just the ones that have been modified.
         """
+        last_commanded_pointing_params = value
         handler = self.get_command_object("ApplyPointingModel")
         return_code, message = handler(value)
-        last_commanded_pointing_params = value
         self._last_commanded_pointing_params = last_commanded_pointing_params
         # Push change and archive events with the recorded value
         self.push_change_event("lastCommandedPointingParams", last_commanded_pointing_params)
