@@ -12,6 +12,49 @@ AZIM_MECHANICAL_LIMIT_MAX = 360.0
 # pylint: disable=too-many-locals,unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
+def test_slew_rejected(event_store_class, dish_manager_proxy):
+    """Test slew command rejected when not in OPERATE"""
+    main_event_store = event_store_class()
+    progress_event_store = event_store_class()
+    result_event_store = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandProgress",
+        tango.EventType.CHANGE_EVENT,
+        progress_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        result_event_store,
+    )
+
+    dish_manager_proxy.SetStandbyFPMode()
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
+
+    # Position must be in range but absolute not important
+    [[_], [unique_id]] = dish_manager_proxy.Slew([0.0, 50.0])
+    events = result_event_store.wait_for_command_id(unique_id, timeout=10)
+
+    assert "Command is not allowed" in events[-1].attr_value.value[1]
+
+    expected_progress_updates = (
+        "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE"
+    )
+
+    # Wait for the slew command progress update
+    progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
 def test_slew_transition(event_store_class, dish_manager_proxy):
     """Test transition to SLEW"""
     main_event_store = event_store_class()
@@ -22,6 +65,11 @@ def test_slew_transition(event_store_class, dish_manager_proxy):
     )
     dish_manager_proxy.SetStandbyFPMode()
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
+
+    # Set mode to Operate to accept Slew command
+    dish_manager_proxy.ConfigureBand1(True)
+    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10)
+    dish_manager_proxy.SetOperateMode()
 
     achieved_pointing = dish_manager_proxy.achievedPointing
     # Increase by 5 degrees in Azimuth and Elevation unless limits will be hit

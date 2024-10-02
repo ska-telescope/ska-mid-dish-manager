@@ -1,5 +1,6 @@
 # pylint: disable=protected-access,too-many-lines,too-many-public-methods
 """Component manager for a DishManager tango device"""
+import json
 import logging
 import os
 from functools import partial
@@ -69,25 +70,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         super().__init__(
             logger,
             *args,
-            dishmode=None,
-            capturing=False,
-            healthstate=None,
-            pointingstate=None,
-            b1capabilitystate=None,
-            b2capabilitystate=None,
-            b3capabilitystate=None,
-            b4capabilitystate=None,
-            b5acapabilitystate=None,
-            b5bcapabilitystate=None,
-            achievedtargetlock=None,
-            desiredpointingaz=[0.0, 0.0],
-            desiredpointingel=[0.0, 0.0],
-            achievedpointing=[0.0, 0.0, 0.0],
+            dishmode=DishMode.UNKNOWN,
+            healthstate=HealthState.UNKNOWN,
             configuredband=Band.NONE,
-            attenuationpolh=0.0,
-            attenuationpolv=0.0,
-            kvalue=0,
-            scanid="",
+            capturing=False,
+            pointingstate=PointingState.UNKNOWN,
+            b1capabilitystate=CapabilityStates.UNKNOWN,
+            b2capabilitystate=CapabilityStates.UNKNOWN,
+            b3capabilitystate=CapabilityStates.UNKNOWN,
+            b4capabilitystate=CapabilityStates.UNKNOWN,
+            b5acapabilitystate=CapabilityStates.UNKNOWN,
+            b5bcapabilitystate=CapabilityStates.UNKNOWN,
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
@@ -95,14 +88,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             band2pointingmodelparams=[],
             band3pointingmodelparams=[],
             band4pointingmodelparams=[],
-            trackinterpolationmode=None,
-            ignorespf=None,
-            ignorespfrx=None,
-            noisediodemode=None,
-            periodicnoisediodepars=[0.0, 0.0, 0.0],
+            band5apointingmodelparams=[],
+            band5bpointingmodelparams=[],
+            ignorespf=False,
+            ignorespfrx=False,
+            noisediodemode=NoiseDiodeMode.OFF,
+            periodicnoisediodepars=[],
             pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
-            actstaticoffsetvaluexel=None,
-            actstaticoffsetvalueel=None,
+            actstaticoffsetvaluexel=0.0,
+            actstaticoffsetvalueel=0.0,
+            achievedtargetlock=False,
+            desiredpointingaz=[0.0, 0.0],
+            desiredpointingel=[0.0, 0.0],
+            achievedpointing=[0.0, 0.0, 0.0],
+            attenuationpolh=0.0,
+            attenuationpolv=0.0,
+            kvalue=0,
+            scanid="",
+            trackinterpolationmode=TrackInterpolationMode.SPLINE,
             **kwargs,
         )
         self.logger = logger
@@ -148,7 +151,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._state_update_lock,
                 healthstate=HealthState.UNKNOWN,
                 operatingmode=DSOperatingMode.UNKNOWN,
-                pointingstate=None,
+                pointingstate=PointingState.UNKNOWN,
                 achievedtargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
@@ -159,6 +162,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band2pointingmodelparams=[],
                 band3pointingmodelparams=[],
                 band4pointingmodelparams=[],
+                band5apointingmodelparams=[],
+                band5bpointingmodelparams=[],
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 actstaticoffsetvaluexel=None,
                 actstaticoffsetvalueel=None,
@@ -195,34 +200,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
             ),
         }
-        initial_component_states = {
-            "dishmode": DishMode.UNKNOWN,
-            "healthstate": HealthState.UNKNOWN,
-            "configuredband": Band.NONE,
-            "capturing": False,
-            "pointingstate": PointingState.UNKNOWN,
-            "b1capabilitystate": CapabilityStates.UNKNOWN,
-            "b2capabilitystate": CapabilityStates.UNKNOWN,
-            "b3capabilitystate": CapabilityStates.UNKNOWN,
-            "b4capabilitystate": CapabilityStates.UNKNOWN,
-            "b5acapabilitystate": CapabilityStates.UNKNOWN,
-            "b5bcapabilitystate": CapabilityStates.UNKNOWN,
-            "spfconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
-            "spfrxconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
-            "dsconnectionstate": CommunicationStatus.NOT_ESTABLISHED,
-            "band1pointingmodelparams": [],
-            "band2pointingmodelparams": [],
-            "band3pointingmodelparams": [],
-            "band4pointingmodelparams": [],
-            "ignorespf": False,
-            "ignorespfrx": False,
-            "noisediodemode": NoiseDiodeMode.OFF,
-            "periodicnoisediodepars": [],
-            "pseudorandomnoisediodepars": [],
-            "actstaticoffsetvaluexel": 0.0,
-            "actstaticoffsetvalueel": 0.0,
-        }
-        self._update_component_state(**initial_component_states)
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
         self._command_map = CommandMap(
@@ -373,17 +350,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
-        self.logger.debug(
-            (
-                "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
-                ", SPFRx [%s], DM [%s]"
-            ),
-            kwargs,
-            ds_component_state,
-            spf_component_state,
-            spfrx_component_state,
-            self.component_state,
-        )
+        # Only log non pointing changes
+        if not any(
+            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            for attr in kwargs
+        ):
+            self.logger.debug(
+                (
+                    "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
+                    ", SPFRx [%s], DM [%s]"
+                ),
+                kwargs,
+                ds_component_state,
+                spf_component_state,
+                spfrx_component_state,
+                self.component_state,
+            )
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs or "indexerposition" in kwargs:
@@ -528,6 +510,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Update attributes that are mapped directly from subservient devices
         for device, attrs in self.direct_mapped_attrs.items():
+            enum_attr_mapping = {
+                "trackInterpolationMode": TrackInterpolationMode,
+                "noiseDiodeMode": NoiseDiodeMode,
+            }
             for attr in attrs:
                 attr_lower = attr.lower()
 
@@ -539,20 +525,30 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         new_value = spf_component_state[attr_lower]
                     elif device == "SPFRX":
                         new_value = spfrx_component_state[attr_lower]
-
-                    self.logger.debug(
-                        ("Updating %s with %s %s [%s]"),
-                        attr,
-                        device,
-                        attr,
-                        new_value,
-                    )
+                    if attr_lower not in [
+                        "desiredpointingaz",
+                        "desiredpointingel",
+                        "achievedpointing",
+                    ]:
+                        self.logger.debug(
+                            ("Updating %s with %s %s [%s]"),
+                            attr,
+                            device,
+                            attr,
+                            enum_attr_mapping[attr](new_value)
+                            if attr in enum_attr_mapping
+                            else new_value,
+                        )
 
                     self._update_component_state(**{attr_lower: new_value})
 
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
-        self.logger.debug("Updating dish manager component state with [%s]", kwargs)
+        if not any(
+            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            for attr in kwargs
+        ):
+            self.logger.debug("Updating dish manager component state with [%s]", kwargs)
         super()._update_component_state(*args, **kwargs)
 
     def sync_component_states(self):
@@ -831,8 +827,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"Expected 2 arguments (az, el) but got {len(values)} arg(s).",
             )
 
+        def _is_slew_cmd_allowed():
+            if self.component_state["dishmode"] != DishMode.OPERATE:
+                task_callback(
+                    progress="Slew command rejected for current dishMode. "
+                    "Slew command is allowed for dishMode OPERATE"
+                )
+                return False
+            if self.component_state["pointingstate"] != PointingState.READY:
+                task_callback(
+                    progress="Slew command rejected for current pointingState. "
+                    "Slew command is allowed for pointingState READY"
+                )
+                return False
+            return True
+
         status, response = self.submit_task(
-            self._command_map.slew, args=[values], task_callback=task_callback
+            self._command_map.slew,
+            args=[values],
+            is_cmd_allowed=_is_slew_cmd_allowed,
+            task_callback=task_callback,
         )
         return status, response
 
@@ -922,6 +936,111 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.exception("SetKvalue on SPFRx failed")
             return (ResultCode.FAILED, err)
         return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
+
+    def apply_pointing_model(
+        self,
+        json_object,
+    ) -> Tuple[ResultCode, str]:
+        """Updates a band's coefficient parameters with a given JSON input.
+        Note, all 18 coefficients need to be present in the JSON object and
+        the Dish ID should be correct. Each time the command is called all
+        parameters will get updated not just the ones that have been modified.
+        """
+        # A list of expected coefficients (The order in which they are written)
+        expected_coefficients = [
+            "IA",
+            "CA",
+            "NPAE",
+            "AN",
+            "AN0",
+            "AW",
+            "AW0",
+            "ACEC",
+            "ACES",
+            "ABA",
+            "ABphi",
+            "IE",
+            "ECEC",
+            "ECES",
+            "HECE4",
+            "HESE4",
+            "HECE8",
+            "HESE8",
+        ]
+        ds_cm = self.sub_component_managers["DS"]
+        coeff_keys = []
+        # Process the JSON data
+        try:
+            data = json.loads(json_object)
+        except (LostConnection, json.JSONDecodeError) as err:
+            self.logger.exception("Invalid json supplied")
+            return (ResultCode.REJECTED, str(err))
+        # Validate the Dish ID
+        antenna_id = data.get("antenna")
+        # Getting the dish ID from device name
+        dish_id = self.tango_device_name.split("/")[-1]
+        if dish_id == antenna_id:
+            # Validate the coeffients
+            coefficients = data.get("coefficients", {})
+            coeff_keys = coefficients.keys()
+            # Verify that the number expected coeffs are are available
+            # Check if they have the same elements (ignoring order)
+            if set(coeff_keys) == set(expected_coefficients):
+                # Reorder `coeff_keys` to match `expected_coefficients`
+                coeff_keys = expected_coefficients[:]
+                self.logger.debug(f"All 18 coefficients {coeff_keys} are present.")
+                # Get all coefficient values
+                band_coeffs_values = [coefficients[key].get("value") for key in coeff_keys]
+                # Extract the band's value after the underscore
+                band_value = data.get("band").split("_")[-1]
+                # Write to band
+                band_map = {
+                    "1": "band1PointingModelParams",
+                    "2": "band2PointingModelParams",
+                    "3": "band3PointingModelParams",
+                    "4": "band4PointingModelParams",
+                    "5a": "band5aPointingModelParams",
+                    "5b": "band5bPointingModelParams",
+                }
+                attribute_name = band_map.get(band_value)
+                if attribute_name is None:
+                    self.logger.debug(("Unsupported Band: b%s"), band_value)
+                    return (ResultCode.REJECTED, f"Unsupported Band: b{band_value}")
+                try:
+                    ds_cm.write_attribute_value(attribute_name, band_coeffs_values)
+                except (LostConnection, tango.DevFailed) as err:
+                    self.logger.exception(
+                        "%s. The error response is: %s", (ResultCode.FAILED, err)
+                    )
+                    return (ResultCode.FAILED, err)
+                return (
+                    ResultCode.OK,
+                    f"Successfully wrote the following values {coefficients} "
+                    f"to band {band_value} on DS",
+                )
+
+            # If there is an issue with the coefficients
+            self.logger.debug(
+                ("Coefficients are missing. The coefficients found in the JSON object were %s."),
+                coeff_keys,
+            )
+            return (
+                ResultCode.REJECTED,
+                f"Coefficients are missing. "
+                f"The coefficients found in the JSON object were {list(coeff_keys)}",
+            )
+
+        # If there is an issue with the Dish ID/ Antenna name
+        self.logger.debug(
+            ("Command rejected. The Dish id %s and the Antenna's value %s are not equal."),
+            dish_id,
+            antenna_id,
+        )
+        return (
+            ResultCode.REJECTED,
+            f"Command rejected. The Dish id {dish_id} and the Antenna's "
+            f"value {antenna_id} are not equal.",
+        )
 
     def set_track_interpolation_mode(
         self,

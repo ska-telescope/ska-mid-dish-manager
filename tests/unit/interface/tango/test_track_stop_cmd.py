@@ -99,17 +99,16 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
 
     # Request Track on Dish
     [[_], [unique_id]] = device_proxy.Track()
+    main_event_store.wait_for_command_id(unique_id, timeout=6)
     # wait a bit before forcing the updates on the subcomponents
     main_event_store.get_queue_values()
 
-    # transition DS pointingState to TRACK
+    # Transition of DS pointingState to TRACK
     ds_cm._update_component_state(pointingstate=PointingState.SLEW)
     main_event_store.wait_for_value(PointingState.SLEW)
 
     ds_cm._update_component_state(pointingstate=PointingState.TRACK)
     main_event_store.wait_for_value(PointingState.TRACK)
-
-    main_event_store.wait_for_command_id(unique_id, timeout=6)
 
     # Request TrackStop on Dish
     device_proxy.TrackStop()

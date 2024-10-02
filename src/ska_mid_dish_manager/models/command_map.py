@@ -469,6 +469,10 @@ class CommandMap:
             completed_response_msg if completed_response_msg else f"{running_command} completed"
         )
 
+        final_message = (
+            completed_response_msg if completed_response_msg else f"{running_command} completed"
+        )
+
         # If we're not waiting for anything, finish up
         if awaited_event_values is None or awaited_event_values == []:
             task_callback(
