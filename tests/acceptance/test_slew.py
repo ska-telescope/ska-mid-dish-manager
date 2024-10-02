@@ -16,6 +16,7 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     """Test slew command rejected when not in OPERATE"""
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
+    result_event_store = event_store_class()
 
     dish_manager_proxy.subscribe_event(
         "dishMode",
@@ -29,11 +30,20 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
         progress_event_store,
     )
 
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        result_event_store,
+    )
+
     dish_manager_proxy.SetStandbyFPMode()
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
 
     # Position must be in range but absolute not important
-    dish_manager_proxy.Slew([0.0, 50.0])
+    [[_], [unique_id]] = dish_manager_proxy.Slew([0.0, 50.0])
+    events = result_event_store.wait_for_command_id(unique_id, timeout=10)
+
+    assert "Command is not allowed" in events[-1].attr_value.value[1]
 
     expected_progress_updates = (
         "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE"

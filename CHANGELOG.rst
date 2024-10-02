@@ -17,6 +17,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 - Added in a command called `ApplyPointingModel` that updates bands using a json input
 - Added Slew command execution preconditions on DishMode and PointingState
+
+  - `DishMode` required to be in `OPERATE` and `PointingState` required to be `READY`
+
 - Updated ska-tango-base and ska-tango-util to version 0.4.12
 
 
