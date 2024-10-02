@@ -322,16 +322,23 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         try:
             lrc_subscriptions = invoke_lrc(self.lrc_callback, device_proxy, cmd_name, (cmd_arg,))
         except CommandError:
-            self.logger.exception(f"Device {self._tango_device_fqdn} rejected command {cmd_name}")
+            self.logger.exception(
+                "Device [%s] rejected command [%s]",
+                self._tango_device_fqdn,
+                cmd_name,
+            )
             raise
         except ResultCodeError:
             self.logger.exception(
-                f"Device {self._tango_device_fqdn} returned unexpected result code"
+                "Device [%s] returned unexpected result code",
+                self._tango_device_fqdn,
             )
             raise
         except tango.DevFailed:
             self.logger.exception(
-                f"Command call {cmd_name} failed on device {self._tango_device_fqdn}"
+                "Command call [%s] failed on device [%s]",
+                cmd_name,
+                self._tango_device_fqdn,
             )
             raise
         return lrc_subscriptions.command_id

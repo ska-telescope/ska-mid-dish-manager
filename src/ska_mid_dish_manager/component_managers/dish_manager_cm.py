@@ -804,10 +804,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.FAILED, exception=err)
             self.logger.exception("DishManager has failed to execute Stow DSManager")
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
-        else:
-            if result_code == ResultCode.FAILED:
-                task_callback(status=TaskStatus.FAILED, result=(ResultCode.FAILED, response))
-                return TaskStatus.FAILED, response
+
+        if result_code == ResultCode.FAILED:
+            task_callback(status=TaskStatus.FAILED, result=(ResultCode.FAILED, response))
+            return TaskStatus.FAILED, response
 
         task_callback(
             progress="Stow called, monitor dishmode for LRC completed", status=TaskStatus.COMPLETED
