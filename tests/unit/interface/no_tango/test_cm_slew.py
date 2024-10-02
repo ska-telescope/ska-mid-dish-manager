@@ -6,7 +6,7 @@ import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.models.dish_enums import PointingState
+from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 
 
 @pytest.mark.unit
@@ -24,7 +24,13 @@ def test_slew_handler(
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
-    # slew has no pre-condition
+    # slew has a pre-condition: dishMode to be in operate and pointing state is ready
+    component_state_cb = callbacks["comp_state_cb"]
+    component_manager._update_component_state(dishmode=DishMode.OPERATE)
+    component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
+    component_manager._update_component_state(pointingstate=PointingState.READY)
+    component_state_cb.wait_for_value("pointingstate", PointingState.READY)
+
     component_manager.slew([20.0, 30.0], callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
     component_state_cb = callbacks["comp_state_cb"]

@@ -86,3 +86,4 @@ deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
     enabled: true
+
