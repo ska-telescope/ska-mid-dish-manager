@@ -274,6 +274,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Abstract method for invoke_lrc callback to be overridden by caller, else do nothing."""
         pass
 
+    # pylint: disable=no-else-return
     @typing.no_type_check
     def invoke_device_command(
         self,
@@ -294,10 +295,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 if task_callback:
                     task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
                 return
-            else:
-                # Keep function alive to maintain reference to LRCSubscription object
-                while not self.lrc_callback_event.wait(SLEEP_BETWEEN_EVENTS):
-                    pass
+            # Keep function alive to maintain reference to LRCSubscription object
+            while not self.lrc_callback_event.wait(SLEEP_BETWEEN_EVENTS):
+                pass
         else:
             try:
                 self.execute_command(command_name, command_arg)
