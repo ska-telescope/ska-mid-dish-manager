@@ -4,7 +4,6 @@ import time
 import pytest
 import tango
 from pytest import approx
-from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -106,8 +105,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
         )
 
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
-    result_code, result_message = dish_manager_proxy.programTrackTable = initial_track_table
-    assert result_code == ResultCode.OK, f"Writing Track failed {result_code} {result_message}"
+    dish_manager_proxy.programTrackTable = initial_track_table
 
     dish_manager_proxy.Track()
 
@@ -121,12 +119,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
         point_az = pointing_coord_list[count]
         point_el = pointing_coord_list[count + 1]
         time.sleep(CADENCE_SEC)
-        result_code, result_message = dish_manager_proxy.programTrackTable = [
-            point_timestamp,
-            point_az,
-            point_el,
-        ]
-        assert result_code == ResultCode.OK, f"Writing Track fail {result_code} {result_message}"
+        dish_manager_proxy.programTrackTable = [point_timestamp, point_az, point_el]
         count += 2
 
     # Wait sufficient period of time for the track to complete

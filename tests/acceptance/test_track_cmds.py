@@ -5,7 +5,6 @@ from math import pi, sin
 
 import pytest
 import tango
-from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -142,8 +141,7 @@ def test_track_and_track_stop_cmds(
     final_position = track_table[-2:]
 
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
-    result_code, result_message = dish_manager_proxy.programTrackTable = track_table
-    assert result_code == ResultCode.OK, f"Writing Track failed {result_code} {result_message}"
+    dish_manager_proxy.programTrackTable = track_table
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -262,8 +260,7 @@ def test_append_dvs_case(
     start_tai = get_current_tai_timestamp() + track_delay
     track_table = generate_next_1_second_table(start_tai, samples_per_append)
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
-    result_code, result_message = dish_manager_proxy.programTrackTable = track_table
-    assert result_code == ResultCode.OK, f"Writing Track failed {result_code} {result_message}"
+    dish_manager_proxy.programTrackTable = track_table
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -277,8 +274,7 @@ def test_append_dvs_case(
         start_tai = prev_start_tai + 1 / samples_per_append
         track_table = generate_next_1_second_table(start_tai, samples_per_append)
         dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
-        result_code, result_message = dish_manager_proxy.programTrackTable = track_table
-        assert result_code == ResultCode.OK, f"Writing Track failed {result_code} {result_message}"
+        dish_manager_proxy.programTrackTable = track_table
         time.sleep(1)
 
     last_timestamp_in_table = track_table[-3]
@@ -328,8 +324,7 @@ def test_track_fails_when_track_called_late(
 
     # Load the track table
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
-    result_code, result_message = dish_manager_proxy.programTrackTable = track_table
-    assert result_code == ResultCode.OK, f"Writing Track failed {result_code} {result_message}"
+    dish_manager_proxy.programTrackTable = track_table
 
     # wait until the table is not valid
     while get_current_tai_timestamp() <= track_table[-3] + 1:

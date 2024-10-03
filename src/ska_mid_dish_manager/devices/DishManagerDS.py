@@ -1022,9 +1022,13 @@ class DishManager(SKAController):
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
-        self.component_manager._track_load_table(
+        result_code, result_message = self.component_manager._track_load_table(
             sequence_length, table, self._track_table_load_mode
         )
+
+        if result_code != ResultCode.OK:
+            err_message = f"Write to programTrackTable failed, [{result_code}] [{result_message}]"
+            raise RuntimeError(err_message)
         self._program_track_table = table
         self.push_change_event("programTrackTable", table)
         self.push_archive_event("programTrackTable", table)

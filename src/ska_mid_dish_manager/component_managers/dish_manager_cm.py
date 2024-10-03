@@ -634,7 +634,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
-    ) -> None:
+    ) -> Tuple[ResultCode, str]:
         """Load the track table."""
         float_list = [load_mode, sequence_length]
         float_list.extend(table)
