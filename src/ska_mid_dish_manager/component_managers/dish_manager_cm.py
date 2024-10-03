@@ -648,7 +648,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Result of the call to [%s] on DSManager is [%s] [%s]",
                 "TrackLoadTable",
                 result_code,
-                result_message
+                result_message,
             )
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception("TrackLoadTable on DSManager failed")
