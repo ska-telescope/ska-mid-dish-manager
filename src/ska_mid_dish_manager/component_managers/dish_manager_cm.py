@@ -927,6 +927,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spfrx_cm = self.sub_component_managers["SPFRX"]
         self.logger.debug("Calling SetKValue on SPFRX.")
         try:
+            # pylint: disable=unused-variable
             result = spfrx_cm.execute_command("SetKValue", k_value)  # noqa: F841
             # TODO check the result for a failure response on the rx from CIPA/MAPLE
         except (LostConnection, tango.DevFailed) as err:

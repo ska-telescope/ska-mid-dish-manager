@@ -423,7 +423,8 @@ class CommandMap:
                 enum_labels.append(val)
         return enum_labels
 
-    # pylint: disable=too-many-locals, too-many-branches
+    # TODO this function needs a refactor to remove pylint disables
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     def _run_long_running_command(
         self,
         task_callback: Callable,

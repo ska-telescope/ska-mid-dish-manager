@@ -290,16 +290,16 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             try:
                 # assign the function call to keep reference alive
                 # and the lrc attribute lrc subscriptions going
+                # pylint: disable=unused-variable
                 lrc_subscription = self.wrap_invoke_lrc(command_name, command_arg)  # noqa: F841
             except (CommandError, ResultCodeError, tango.DevFailed) as err:
                 if task_callback:
                     task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
                 return
-            else:
-                # Keep function alive to maintain reference to LRCSubscription object
-                while not self.lrc_callback_event.wait(SLEEP_BETWEEN_EVENTS):
-                    pass
-                return
+            # Keep function alive to maintain reference to LRCSubscription object
+            while not self.lrc_callback_event.wait(SLEEP_BETWEEN_EVENTS):
+                pass
+
         else:
             try:
                 self.execute_command(command_name, command_arg)
