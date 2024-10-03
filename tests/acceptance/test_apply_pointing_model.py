@@ -62,7 +62,6 @@ def test_best_case_json(
     pointing_model_json_str, pointing_model_definition = read_file_contents(file_name, band_number)
 
     dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
-
     # Construct list of expected values from the JSON definition
     coeffient_dictionary = pointing_model_definition["coefficients"]
     pointing_model_params_keys = coeffient_dictionary.keys()
@@ -73,6 +72,27 @@ def test_best_case_json(
         expected_pointing_model_param_values.append(pointing_model_value)
 
     pointing_model_param_events.wait_for_value(expected_pointing_model_param_values, timeout=7)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -> None:
+    "Test the `lastCommandedPointingParams` attribute of the dish manager."
+    pointing_model_json_str, _ = read_file_contents("global_pointing_model.json", "Band_2")
+    # Command execution
+    dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
+    last_requested_parameters = dish_manager_proxy.read_attribute(
+        "lastCommandedPointingParams"
+    ).value
+    try:
+        last_requested_parameters = json.loads(last_requested_parameters)
+    except json.JSONDecodeError as json_error:
+        raise ValueError(
+            "lastCommandedPointingParams is not valid JSON or it is default empty string"
+        ) from json_error
+    assert last_requested_parameters == json.loads(
+        pointing_model_json_str
+    ), "The JSON strings did not match as expected"
 
 
 @pytest.mark.acceptance
