@@ -359,7 +359,8 @@ class CommandMap:
 
         result_code, command_response = command(command_name, command_argument)
         self.logger.info(
-            f"Command call {command_name} on device {device} returned result code {result_code} with command response {command_response}"
+            f"Command call {command_name} on device {device} returned"
+            " result code {result_code} with command response {command_response}"
         )
         # fail the command immediately, if the subservient device fails
         if result_code == ResultCode.FAILED:
