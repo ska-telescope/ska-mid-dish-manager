@@ -15,8 +15,8 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 TRACKING_POSITION_THRESHOLD_ERROR_DEG = 0.05
-INIT_AZ = -250
-INIT_EL = 70
+INIT_AZ = 181
+INIT_EL = 31
 
 
 @pytest.fixture(autouse=True, scope="function")
@@ -131,10 +131,10 @@ def test_track_and_track_stop_cmds(
         current_time_tai_s + 7,
         current_az + 3 * az_dir,
         current_el + 3 * el_dir,
-        current_time_tai_s + 20,
+        current_time_tai_s + 9,
         current_az + 3 * az_dir,
         current_el + 3 * el_dir,
-        current_time_tai_s + 30,
+        current_time_tai_s + 11,
         current_az + 3 * az_dir,
         current_el + 3 * el_dir,
     ]

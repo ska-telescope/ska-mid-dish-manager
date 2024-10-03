@@ -330,7 +330,11 @@ class CommandMap:
                 # called after the awaited attributes values arrive (running command completed).
                 # ensure we dont call it twice on the same command_id
                 command_status = self._command_tracker.get_command_status(command_id)
-                if command_status not in [TaskStatus.NOT_FOUND, TaskStatus.COMPLETED]:
+                if command_status not in [
+                    TaskStatus.NOT_FOUND,
+                    TaskStatus.COMPLETED,
+                    TaskStatus.ABORTED,
+                ]:
                     task_callback(command_id, status=status)
 
     def _fan_out_cmd(self, task_callback, device, fan_out_args):
@@ -354,6 +358,9 @@ class CommandMap:
         )
 
         result_code, command_response = command(command_name, command_argument)
+        self.logger.info(
+            f"Command call {command_name} on device {device} returned result code {result_code} with command response {command_response}"
+        )
         # fail the command immediately, if the subservient device fails
         if result_code == ResultCode.FAILED:
             raise RuntimeError(command_response)
@@ -466,20 +473,24 @@ class CommandMap:
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         # remove status updates from previously executed command
+
         self.lrc_callback_statuses.clear()
+        self.logger.info(f"XXXX About to fanout commands for DM command: {running_command}")
         for device, fan_out_args in commands_for_sub_devices.items():
             cmd_name = fan_out_args["command"]
             if self.is_device_ignored(device):
                 task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
             else:
                 try:
+                    self.logger.info(f"Fanning out command {cmd_name} to device {device}")
                     self.device_command_ids[device] = self._fan_out_cmd(
                         task_callback, device, fan_out_args
                     )
                 except RuntimeError:
-                    task_callback(
-                        progress=(f"{device} device failed to execute {cmd_name} command")
-                    )
+                    # task_callback(
+                    #     progress=(f"{device} device failed to execute {cmd_name} command")
+                    # )
+                    task_callback(progress=f"{cmd_name} failed")
                     self.cmd_status_callback(status=TaskStatus.FAILED, run_time_error=True)
 
         task_callback(progress=f"Commands: {json.dumps(self.device_command_ids)}")
@@ -490,6 +501,10 @@ class CommandMap:
 
         # If we're not waiting for anything, finish up
         if awaited_event_values is None or awaited_event_values == []:
+            self._cancel_live_lrc_subscriptions()
+            # guarantee we dont leave any idling commands in the queue
+            # in case we dont hit the cmd_status_callback before subscriptions are cancelled
+            self.cmd_status_callback(status=TaskStatus.COMPLETED)
             task_callback(
                 progress=final_message,
                 status=TaskStatus.COMPLETED,
@@ -514,6 +529,9 @@ class CommandMap:
         while True:
             if task_abort_event.is_set():
                 self._cancel_live_lrc_subscriptions()
+                # guarantee we dont leave any idling commands in the queue
+                # in case we dont hit the cmd_status_callback before subscriptions are cancelled
+                self.cmd_status_callback(status=TaskStatus.ABORTED)
                 task_callback(
                     progress=f"{running_command} Aborted",
                     status=TaskStatus.ABORTED,

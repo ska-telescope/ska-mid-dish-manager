@@ -287,6 +287,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             return
 
         if "ds" in self._tango_device_fqdn:
+            self.logger.info(f"Wrap invoke lrc to be called with command: {command_name}")
             try:
                 # assign the function call to keep reference alive
                 # and the lrc attribute lrc subscriptions going
@@ -317,6 +318,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @_check_connection
     def wrap_invoke_lrc(self, cmd_name: str, cmd_arg: Any) -> Any:
         """Invokes LRC execution on subdevices."""
+        self.logger.info(f"Calling invoke lrc with command {cmd_name}")
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
 
