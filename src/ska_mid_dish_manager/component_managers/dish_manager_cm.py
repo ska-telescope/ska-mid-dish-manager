@@ -647,11 +647,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         else:
             if result_code in [ResultCode.FAILED, ResultCode.REJECTED]:
                 raise RuntimeError(f"{result_code.name}: {response}")
-            self.logger.debug(
-                "Result of the call to [%s] on DSManager is [%s]",
-                "TrackLoadTable",
-                response,
-            )
 
     def set_standby_lp_mode(
         self,
@@ -932,12 +927,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spfrx_cm = self.sub_component_managers["SPFRX"]
         self.logger.debug("Calling SetKValue on SPFRX.")
         try:
-            result = spfrx_cm.execute_command("SetKValue", k_value)
-            self.logger.debug(
-                "Result of the call to [%s] on SPFRx is [%s]",
-                "SetKValue",
-                result,
-            )
+            result = spfrx_cm.execute_command("SetKValue", k_value)  # noqa: F841
+            # TODO check the result for a failure response on the rx from CIPA/MAPLE
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception("SetKvalue on SPFRx failed")
             return (ResultCode.FAILED, err)

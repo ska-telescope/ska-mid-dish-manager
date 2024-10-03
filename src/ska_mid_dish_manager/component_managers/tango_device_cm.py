@@ -2,7 +2,6 @@
 
 import logging
 import typing
-import uuid
 from queue import Empty, Queue
 from threading import Event, Thread
 from typing import Any, Callable, Optional, Tuple
@@ -77,7 +76,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         self._event_consumer_thread: Optional[Thread] = None
         self._event_consumer_abort_event: Optional[Event] = None
-        self.lrc_callback_event: Optional[Event] = None
+        self.lrc_callback_event: Event = Event()
 
         super().__init__(
             logger,
@@ -274,7 +273,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Abstract method for invoke_lrc callback to be overridden by caller, else do nothing."""
         pass
 
-    # pylint: disable=no-else-return
     @typing.no_type_check
     def invoke_device_command(
         self,
@@ -290,14 +288,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         if "ds" in self._tango_device_fqdn:
             try:
-                self.wrap_invoke_lrc(command_name, command_arg)
+                # assign the function call to keep reference alive
+                # and the lrc attribute lrc subscriptions going
+                lrc_subscription = self.wrap_invoke_lrc(command_name, command_arg)  # noqa: F841
             except (CommandError, ResultCodeError, tango.DevFailed) as err:
                 if task_callback:
                     task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
                 return
-            # Keep function alive to maintain reference to LRCSubscription object
-            while not self.lrc_callback_event.wait(SLEEP_BETWEEN_EVENTS):
-                pass
+            else:
+                # Keep function alive to maintain reference to LRCSubscription object
+                while not self.lrc_callback_event.wait(SLEEP_BETWEEN_EVENTS):
+                    pass
+                return
         else:
             try:
                 self.execute_command(command_name, command_arg)
@@ -317,6 +319,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Invokes LRC execution on subdevices."""
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
+
         try:
             lrc_subscriptions = invoke_lrc(self.lrc_callback, device_proxy, cmd_name, (cmd_arg,))
         except CommandError:
@@ -339,7 +342,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._tango_device_fqdn,
             )
             raise
-        self.lrc_callback_event = Event()
+
+        self.lrc_callback_event.clear()
         self.logger.debug(
             "Result of [%s] on [%s] is [%s]",
             cmd_name,
@@ -370,11 +374,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                     self._tango_device_fqdn,
                 )
                 raise
-        # generate a pseudo unique_id for commands
-        # that go through and return nothing. this
-        # is for the dish lmc tango devie simulators
-        if response is None:
-            response = f"{self._tango_device_fqdn}_{uuid.uuid1()}"
 
         self.logger.debug(
             "Result of [%s] on [%s] is [%s]",

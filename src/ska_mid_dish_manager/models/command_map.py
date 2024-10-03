@@ -5,6 +5,7 @@ import json
 from threading import Lock
 from typing import Any, Callable, List, Optional
 
+import tango
 from ska_control_model import ResultCode, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
 
@@ -307,12 +308,16 @@ class CommandMap:
             [off_xel, off_el],
         )
 
-    def cmd_status_callback(self, status=None, **kwargs):
+    def cmd_status_callback(self, status=None, run_time_error=False, **kwargs):
         """Updates a dictionary of statuses from the subservient devices"""
         # this function will report status events on only the DSM
         if status is not None:
             with self.lrc_callback_lock:
                 self.lrc_callback_statuses.update({"status": status})
+            if run_time_error:
+                # dont update task_callback if the status update was triggered
+                # after a command fanout from a subservient device failed immediately
+                return
 
             # TODO taskcallback will need a command id. since this func
             # is written for only DSM, the command id can be easily fetched.
@@ -321,7 +326,12 @@ class CommandMap:
             command_id = self.device_command_ids.get("DS")
             if command_id:
                 task_callback = self._command_tracker.update_command_info
-                task_callback(command_id, status=status)
+                # the task_callback may raise an exception downstream if cmd_status_callback is
+                # called after the awaited attributes values arrive (running command completed).
+                # ensure we dont call it twice on the same command_id
+                command_status = self._command_tracker.get_command_status(command_id)
+                if command_status not in [TaskStatus.NOT_FOUND, TaskStatus.COMPLETED]:
+                    task_callback(command_id, status=status)
 
     def _fan_out_cmd(self, task_callback, device, fan_out_args):
         """Fan out the respective command to the subservient devices"""
@@ -398,6 +408,11 @@ class CommandMap:
                 got_all_awaited_values = False
         return got_all_awaited_values
 
+    def _cancel_live_lrc_subscriptions(self):
+        # Inform tango device cm to stop waiting for live subscriptions to lrc attributes
+        for evt_object in self.event_objects.values():
+            evt_object.set()
+
     def convert_enums_to_names(self, values) -> list[str]:
         """Convert any enums in the given list to their names."""
         enum_labels = []
@@ -449,6 +464,8 @@ class CommandMap:
             return
         task_callback(status=TaskStatus.IN_PROGRESS)
 
+        # remove status updates from previously executed command
+        self.lrc_callback_statuses.clear()
         for device, fan_out_args in commands_for_sub_devices.items():
             cmd_name = fan_out_args["command"]
             if self.is_device_ignored(device):
@@ -462,7 +479,7 @@ class CommandMap:
                     task_callback(
                         progress=(f"{device} device failed to execute {cmd_name} command")
                     )
-                    self.cmd_status_callback(status=TaskStatus.FAILED)
+                    self.cmd_status_callback(status=TaskStatus.FAILED, run_time_error=True)
 
         task_callback(progress=f"Commands: {json.dumps(self.device_command_ids)}")
 
@@ -495,10 +512,20 @@ class CommandMap:
 
         while True:
             if task_abort_event.is_set():
+                self._cancel_live_lrc_subscriptions()
                 task_callback(
                     progress=f"{running_command} Aborted",
                     status=TaskStatus.ABORTED,
                     result=(ResultCode.ABORTED, f"{running_command} Aborted"),
+                )
+                return
+
+            if self._fanout_command_has_failed():
+                self._cancel_live_lrc_subscriptions()
+                task_callback(
+                    progress=f"{running_command} failed",
+                    status=TaskStatus.FAILED,
+                    result=(ResultCode.FAILED, f"{running_command} failed"),
                 )
                 return
 
@@ -509,18 +536,6 @@ class CommandMap:
                         fan_out_args["progress_updated"] = self._report_fan_out_cmd_progress(
                             task_callback, device, fan_out_args
                         )
-
-            if self._fanout_command_has_failed():
-                # Inform tango device cm to cancel live subscriptions to lrc attributes
-                for evt_object in self.event_objects.values():
-                    evt_object.set()
-
-                task_callback(
-                    progress=f"{running_command} failed",
-                    status=TaskStatus.FAILED,
-                    result=(ResultCode.FAILED, f"{running_command} failed"),
-                )
-                return
 
             # Check on dishmanager to see whether the LRC has completed
             dm_cm_component_state = self._dish_manager_cm.component_state
@@ -540,8 +555,19 @@ class CommandMap:
                 for device in commands_for_sub_devices.keys():
                     if not self.is_device_ignored(device):
                         component_manager = self._dish_manager_cm.sub_component_managers[device]
-                        component_manager.update_state_from_monitored_attributes()
+                        try:
+                            component_manager.update_state_from_monitored_attributes()
+                        except tango.DevFailed:
+                            self.logger.warning(
+                                f"Failed to fetch fresh values from {device} "
+                                f"to evaluate {running_command}"
+                            )
+
             else:
+                self._cancel_live_lrc_subscriptions()
+                # guarantee we dont leave any idling commands in the queue
+                # in case we dont hit the cmd_status_callback before subscriptions are cancelled
+                self.cmd_status_callback(status=TaskStatus.COMPLETED)
                 task_callback(
                     progress=f"{running_command} completed",
                     status=TaskStatus.COMPLETED,
