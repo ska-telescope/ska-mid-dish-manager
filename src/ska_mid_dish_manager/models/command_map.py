@@ -389,7 +389,6 @@ class CommandMap:
 
     def _fanout_command_has_failed(self, command_id):
         """Check the status of the fanned out commands on the subservient device"""
-        self.logger.info(f"BBBBB Checking failure status of command id: {command_id}")
         with self.lrc_callback_lock:
             current_status = self.lrc_callback_statuses.get("status")
         if current_status == TaskStatus.FAILED:
