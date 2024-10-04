@@ -274,7 +274,12 @@ def test_append_dvs_case(
         start_tai = prev_start_tai + 1 / samples_per_append
         track_table = generate_next_1_second_table(start_tai, samples_per_append)
         dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
-        dish_manager_proxy.programTrackTable = track_table
+        try:
+            dish_manager_proxy.programTrackTable = track_table
+        except tango.DevFailed:
+            # Give it one more try
+            dish_manager_proxy.programTrackTable = track_table
+
         time.sleep(1)
 
     last_timestamp_in_table = track_table[-3]
