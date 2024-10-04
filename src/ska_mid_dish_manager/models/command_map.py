@@ -493,7 +493,7 @@ class CommandMap:
                     task_callback(
                         progress=(
                             f"{device} device failed to execute {cmd_name} command with"
-                            f" ID {self.device_command_ids[device]}"
+                            f" ID {self.device_command_ids[device]} and exception {ex}"
                         )
                     )
 
