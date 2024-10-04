@@ -358,10 +358,7 @@ class CommandMap:
         )
 
         result_code, command_response = command(command_name, command_argument)
-        self.logger.info(
-            f"Command call {command_name} on device {device} returned"
-            " result code {result_code} with command response {command_response}"
-        )
+
         # fail the command immediately, if the subservient device fails
         if result_code == ResultCode.FAILED:
             raise RuntimeError(command_response)
@@ -390,12 +387,19 @@ class CommandMap:
             )
         return command_response
 
-    def _fanout_command_has_failed(self):
+    def _fanout_command_has_failed(self, command_id):
         """Check the status of the fanned out commands on the subservient device"""
+        self.logger.info(f"BBBBB Checking failure status of command id: {command_id}")
         with self.lrc_callback_lock:
             current_status = self.lrc_callback_statuses.get("status")
         if current_status == TaskStatus.FAILED:
             return True
+
+        # Query the command tracker for commands which dont update the LRC status dict
+        current_status = self._command_tracker.get_command_status(command_id)
+        if current_status == TaskStatus.FAILED:
+            return True
+
         return False
 
     def _report_fan_out_cmd_progress(self, task_callback, device, fan_out_args):
@@ -474,25 +478,24 @@ class CommandMap:
         task_callback(status=TaskStatus.IN_PROGRESS)
 
         # remove status updates from previously executed command
-
         self.lrc_callback_statuses.clear()
-        self.logger.info(f"XXXX About to fanout commands for DM command: {running_command}")
+
         for device, fan_out_args in commands_for_sub_devices.items():
             cmd_name = fan_out_args["command"]
             if self.is_device_ignored(device):
                 task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
             else:
                 try:
-                    self.logger.info(f"Fanning out command {cmd_name} to device {device}")
                     self.device_command_ids[device] = self._fan_out_cmd(
                         task_callback, device, fan_out_args
                     )
-                except RuntimeError:
-                    # task_callback(
-                    #     progress=(f"{device} device failed to execute {cmd_name} command")
-                    # )
-                    task_callback(progress=f"{cmd_name} failed")
-                    self.cmd_status_callback(status=TaskStatus.FAILED, run_time_error=True)
+                except RuntimeError as ex:
+                    task_callback(
+                        progress=(
+                            f"{device} device failed to execute {cmd_name} command with"
+                            f" ID {self.device_command_ids[device]}"
+                        )
+                    )
 
         task_callback(progress=f"Commands: {json.dumps(self.device_command_ids)}")
 
@@ -540,14 +543,7 @@ class CommandMap:
                 )
                 return
 
-            if self._fanout_command_has_failed():
-                self._cancel_live_lrc_subscriptions()
-                task_callback(
-                    progress=f"{running_command} failed",
-                    status=TaskStatus.FAILED,
-                    result=(ResultCode.FAILED, f"{running_command} failed"),
-                )
-                return
+            command_in_progress = fan_out_args["command"]
 
             for device, fan_out_args in commands_for_sub_devices.items():
                 if not self.is_device_ignored(device):
@@ -556,6 +552,16 @@ class CommandMap:
                         fan_out_args["progress_updated"] = self._report_fan_out_cmd_progress(
                             task_callback, device, fan_out_args
                         )
+
+                    if self._fanout_command_has_failed(self.device_command_ids[device]):
+                        self._cancel_live_lrc_subscriptions()
+                        task_callback(
+                            progress=(
+                                f"{device} device failed executing {command_in_progress} "
+                                f"command with ID {self.device_command_ids[device]}"
+                            )
+                        )
+                        return
 
             # Check on dishmanager to see whether the LRC has completed
             dm_cm_component_state = self._dish_manager_cm.component_state
