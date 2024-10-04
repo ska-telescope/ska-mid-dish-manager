@@ -1027,9 +1027,7 @@ class DishManager(SKAController):
         )
 
         if result_code != ResultCode.OK:
-            err_message = (
-                f"Write to programTrackTable failed, [{result_code.name}] [{result_message}]"
-            )
+            err_message = f"Write to programTrackTable failed, [{result_code.name}] [{result_message}]"
             raise RuntimeError(err_message)
         self._program_track_table = table
         self.push_change_event("programTrackTable", table)
