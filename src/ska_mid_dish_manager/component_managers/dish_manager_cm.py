@@ -149,6 +149,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ds_device_fqdn,
                 logger,
                 self._state_update_lock,
+                self._command_tracker,
                 healthstate=HealthState.UNKNOWN,
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=PointingState.UNKNOWN,
