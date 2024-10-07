@@ -3,6 +3,7 @@
 # pylint: disable=protected-access
 
 import json
+import time
 from datetime import datetime
 
 import pytest
@@ -88,3 +89,19 @@ def test_connection_ping(dish_manager_resources):
     device_proxy, _ = dish_manager_resources
     MONITOR_PING_POLL_PERIOD = 30000
     assert device_proxy.get_command_poll_period("MonitoringPing") == MONITOR_PING_POLL_PERIOD
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_monitoring_ping_on_spfrx_called(dish_manager_resources):
+    "Test that monitoring ping command is called on spfrx"
+    device_proxy, dish_manager_cm = dish_manager_resources
+    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
+
+    # wait for the command to be executed (done periodically)
+    cmd_period_s = device_proxy.get_command_poll_period("MonitoringPing") / 1000
+    period_cmd_tolerance_s = 2
+    time.sleep(cmd_period_s + period_cmd_tolerance_s)
+
+    assert spfrx_cm.execute_command.call_count == 1
+    assert "MonitorPing" in spfrx_cm.execute_command.call_args_list[0].args
