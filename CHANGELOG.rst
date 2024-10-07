@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 5.0.1
+*************
+- Fixed MonitoringPing bug on DishManager
+
 
 Version 5.0.0
 *************
