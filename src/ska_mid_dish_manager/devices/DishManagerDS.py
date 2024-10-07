@@ -1343,7 +1343,10 @@ class DishManager(SKAController):
         Connection status is not monitored from here.
         TODO: Move this into DeviceMonitor
         """
-        if not self._ignore_spfrx and self.dev_state() != tango.DevState.INIT:
+        if (
+            not self.component_manager.component_state.get("ignorespfrx", False)
+            and self.dev_state() != tango.DevState.INIT
+        ):
             if hasattr(self, "component_manager"):
                 if "SPFRX" in self.component_manager.sub_component_managers:
                     try:
