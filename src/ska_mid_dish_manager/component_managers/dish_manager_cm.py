@@ -799,7 +799,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         ds_cm = self.sub_component_managers["DS"]
         try:
-            ds_cm.execute_command("Stow", None)
+            result = ds_cm.execute_command("Stow", None)
+            self.logger.debug(
+                "SetStowMode command call returned result [%s]",
+                "SetStowMode",
+                result,
+            )
         except (LostConnection, tango.DevFailed) as err:
             task_callback(status=TaskStatus.FAILED, exception=err)
             self.logger.exception("DishManager has failed to execute Stow DSManager")
