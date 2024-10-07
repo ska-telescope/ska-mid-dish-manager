@@ -634,23 +634,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
-    ) -> None:
+    ) -> Tuple[ResultCode, str]:
         """Load the track table."""
         float_list = [load_mode, sequence_length]
         float_list.extend(table)
         ds_cm = self.sub_component_managers["DS"]
-        self.logger.debug("Calling TrackLoadTable on DSManager.")
+        result_code = ResultCode.UNKNOWN
+        result_message = ""
         try:
-            result = ds_cm.execute_command("TrackLoadTable", float_list)
-            self.logger.debug(
-                "Result of the call to [%s] on DSManager is [%s]",
-                "TrackLoadTable",
-                result,
-            )
+            [[result_code], [result_message]] = ds_cm.execute_command("TrackLoadTable", float_list)
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception("TrackLoadTable on DSManager failed")
-            return (ResultCode.FAILED, err)
-        return (ResultCode.OK, "Successfully requested TrackLoadTable on DSManager")
+            result_code = ResultCode.FAILED
+            result_message = str(err)
+        return (result_code, result_message)
 
     def set_standby_lp_mode(
         self,
