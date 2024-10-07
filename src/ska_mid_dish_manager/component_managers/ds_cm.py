@@ -79,8 +79,10 @@ class DSComponentManager(TangoDeviceComponentManager):
         if "longrunningcommandprogress" in kwargs:
             command_id, progress = kwargs["longrunningcommandprogress"]
             progress = "From Dish Structure Manager: " + progress
+            self.logger.info(f"DS Component manager updating with progress: {progress}")
             if command_id:
                 if command_id not in self._command_tracker._commands:
+                    self.logger.info(f"DS Subdevice command not in command tracker on receipt of progress update {progress}. Adding")
                     self._command_tracker._commands[command_id] = {
                         "name": f"Dish Structure Manager command {command_id}",
                         "status": TaskStatus.IN_PROGRESS,
@@ -93,8 +95,10 @@ class DSComponentManager(TangoDeviceComponentManager):
         if "longrunningcommandresult" in kwargs:
             command_id, result = kwargs["longrunningcommandresult"]
             result = "From Dish Structure Manager: " + result
+            self.logger.info(f"DS Component manager updating with result: {result}")
             if command_id:
                 if command_id not in self._command_tracker._commands:
+                    self.logger.info(f"DS Subdevice command not in command tracker on receipt of result update {result}. Adding")
                     self._command_tracker._commands[command_id] = {
                         "name": f"Dish Structure Manager command {command_id}",
                         "status": TaskStatus.IN_PROGRESS,
@@ -104,9 +108,13 @@ class DSComponentManager(TangoDeviceComponentManager):
                 self._command_tracker.update_command_info(
                     command_id,
                     result=result,
+                )
+                self._command_tracker.update_command_info(
+                    command_id,
                     status=TaskStatus.COMPLETED,
                 )
             del kwargs["longrunningcommandresult"]
+        self.logger.info(f"DS command tracker commands: {self._command_tracker._commands}")
 
         if not kwargs:
             return
