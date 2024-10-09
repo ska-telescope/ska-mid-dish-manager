@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added unit and range verification checks to `ApplyPointingModel`command
 
 Version 5.0.1
 *************
