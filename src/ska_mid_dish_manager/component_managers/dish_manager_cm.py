@@ -1,4 +1,4 @@
-# pylint: disable=protected-access,too-many-lines,too-many-public-methods
+# pylint: disable=protected-access,too-many-lines,too-many-public-methods,too-many-return-statements
 """Component manager for a DishManager tango device"""
 import json
 import logging
