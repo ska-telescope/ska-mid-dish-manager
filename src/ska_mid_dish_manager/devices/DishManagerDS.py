@@ -1946,11 +1946,11 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ApplyPointingModel(self, value) -> DevVarLongStringArrayType:
-        """
-        This command sets a particular band's parameters given a JSON input.
-        Note, all 18 coefficients in the JSON object should be present and
-        the Dish ID should be correct. Each time the command is called
-        all parameters will get updated not just the ones that have been modified.
+        """Updates a band's coefficient parameters with a given JSON input.
+        Note, all 18 coefficients need to be present in the JSON object,the Dish ID
+        should be correct, the appropriate unit should be present and coefficient values
+        should be in range. Each time the command is called all parameters will get
+        updated not just the ones that have been modified.
         """
         last_commanded_pointing_params = value
         self._last_commanded_pointing_params = last_commanded_pointing_params

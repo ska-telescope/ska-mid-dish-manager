@@ -937,9 +937,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def apply_pointing_model(self, json_object) -> Tuple[ResultCode, str]:
         # pylint: disable=R0911
         """Updates a band's coefficient parameters with a given JSON input.
-        Note, all 18 coefficients need to be present in the JSON object and
-        the Dish ID should be correct. Each time the command is called all
-        parameters will get updated not just the ones that have been modified.
+        Note, all 18 coefficients need to be present in the JSON object,the Dish ID
+        should be correct, the appropriate unit should be present and coefficient values
+        should be in range. Each time the command is called all parameters will get
+        updated not just the ones that have been modified.
         """
         # A list of expected coefficients (The order in which they are written)
         min_value = -2000
@@ -1024,6 +1025,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             value = coefficients[key].get("value")
             unit = coefficients[key].get("units")
 
+            min_value, max_value = (0, 360) if key == "ABphi" else (-2000, 2000)
             if not min_value <= value <= max_value:
                 self.logger.debug(
                     "Value %s for key '%s' is out of range [%s, %s]",

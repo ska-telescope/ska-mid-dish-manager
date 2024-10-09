@@ -10,7 +10,7 @@ Note:
 
 * Units need to be correct and present for each coefficients (deg or arcsec).
 
-* The values of the coefficients need to adhere to this range [-2000, 2000].
+* The values of the coefficients need to adhere to this range [-2000, 2000] and [0, 360] for ABphi.
 
 * The Dish ID should be correct. (Necessary so that the write dish is written too).
 
@@ -36,7 +36,7 @@ of the command. An example of the JSON command is shown below:
 
   {
   "interface": "https://schema.skao.int/ska-mid-dish-gpm/1.2",
-  "antenna": "SKA063",
+  "antenna": "SKA001",
   "band": "Band_2",
   "attrs": {
     "obs_date_times": [
