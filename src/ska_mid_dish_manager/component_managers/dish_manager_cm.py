@@ -935,6 +935,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
 
     def apply_pointing_model(self, json_object) -> Tuple[ResultCode, str]:
+        # pylint: disable=R0911
         """Updates a band's coefficient parameters with a given JSON input.
         Note, all 18 coefficients need to be present in the JSON object and
         the Dish ID should be correct. Each time the command is called all
@@ -988,8 +989,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 dish_id,
                 antenna_id,
             )
-            message = f"Command rejected. The Dish id {dish_id} and the Antenna's "
-            f"value {antenna_id} are not equal."
+            message = (
+                f"Command rejected. The Dish id {dish_id} and the Antenna's "
+                f"value {antenna_id} are not equal."
+            )
             return result_code, message
 
         # Validate the coefficients
@@ -1021,7 +1024,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             value = coefficients[key].get("value")
             unit = coefficients[key].get("units")
 
-            if not (min_value <= value <= max_value):
+            if not min_value <= value <= max_value:
                 self.logger.debug(
                     "Value %s for key '%s' is out of range [%s, %s]",
                     value,
@@ -1070,8 +1073,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         try:
             ds_cm.write_attribute_value(attribute_name, band_coeffs_values)
             result_code = ResultCode.OK
-            message = f"Successfully wrote the following values {coefficients} "
-            f"to band {band_value} on DS"
+            message = (
+                f"Successfully wrote the following values {coefficients} "
+                f"to band {band_value} on DS"
+            )
         except (LostConnection, tango.DevFailed) as err:
             self.logger.exception("%s. The error response is: %s", (ResultCode.FAILED, err))
             result_code = ResultCode.FAILED
