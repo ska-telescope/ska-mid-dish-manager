@@ -1,4 +1,4 @@
-# pylint: disable=protected-access,too-many-lines,too-many-public-methods,too-many-return-statements
+# pylint: disable=protected-access,too-many-lines,too-many-public-methods
 """Component manager for a DishManager tango device"""
 import json
 import logging
@@ -934,151 +934,137 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return (ResultCode.FAILED, err)
         return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
 
-    def apply_pointing_model(
-        self,
-        json_object,
-    ) -> Tuple[ResultCode, str]:
-        """Updates a band's coefficient parameters with a given JSON input.
-        Note, all 18 coefficients need to be present in the JSON object and
-        the Dish ID should be correct. Each time the command is called all
-        parameters will get updated not just the ones that have been modified.
-        """
-        # A list of expected coefficients (The order in which they are written)
-        min_value = -2000
-        max_value = 2000
-        expected_coefficients = {
-            "IA": {"unit": "arcsec"},
-            "CA": {"unit": "arcsec"},
-            "NPAE": {"unit": "arcsec"},
-            "AN": {"unit": "arcsec"},
-            "AN0": {"unit": "arcsec"},
-            "AW": {"unit": "arcsec"},
-            "AW0": {"unit": "arcsec"},
-            "ACEC": {"unit": "arcsec"},
-            "ACES": {"unit": "arcsec"},
-            "ABA": {"unit": "arcsec"},
-            "ABphi": {"unit": "deg"},
-            "IE": {"unit": "arcsec"},
-            "ECEC": {"unit": "arcsec"},
-            "ECES": {"unit": "arcsec"},
-            "HECE4": {"unit": "arcsec"},
-            "HESE4": {"unit": "arcsec"},
-            "HECE8": {"unit": "arcsec"},
-            "HESE8": {"unit": "arcsec"},
-        }
 
-        ds_cm = self.sub_component_managers["DS"]
-        coeff_keys = []
-        band_coeffs_values = []
-        # Process the JSON data
-        try:
-            data = json.loads(json_object)
-        except (LostConnection, json.JSONDecodeError) as err:
-            self.logger.exception("Invalid json supplied")
-            return (ResultCode.REJECTED, str(err))
-        # Validate the Dish ID
-        antenna_id = data.get("antenna")
-        # Getting the dish ID from device name
-        dish_id = self.tango_device_name.split("/")[-1]
-        if dish_id == antenna_id:
-            # Validate the coeffients
-            coefficients = data.get("coefficients", {})
-            coeff_keys = coefficients.keys()
-            # Verify that the number expected coeffs are are available
-            # Check if they have the same elements (ignoring order)
-            if set(coeff_keys) == set(expected_coefficients.keys()):
-                # Reorder `coeff_keys` to match the order in `expected_coefficients`
-                expected_coeff_keys = list(expected_coefficients.keys())
-                expected_coeff_units = [
-                    expected_coefficients[coeff]["unit"] for coeff in expected_coeff_keys
-                ]
-                self.logger.debug(f"All 18 coefficients {coeff_keys} are present.")
-                # Get all coefficient values
-                for key, expected_unit in zip(coeff_keys, expected_coeff_units):
-                    value = coefficients[key].get("value")
-                    unit = coefficients[key].get("units")
-                    # Check if the value is within the range [-2000,2000]
-                    if min_value <= value <= max_value:
-                        self.logger.debug(
-                            f"Received unit: '{unit}' for key '{key}', expected: '{expected_unit}'"
-                        )
-                        if unit.strip().lower() == expected_unit.strip().lower():
-                            band_coeffs_values.append(value)
-                        else:
-                            self.logger.debug(
-                                ("Unit %s for key '%s' is not correct. It should be %s"),
-                                unit,
-                                key,
-                                expected_unit,
-                            )
-                            return (
-                                ResultCode.REJECTED,
-                                f"Unit {unit} for key '{key}' is not correct. It should "
-                                f"be {expected_unit}",
-                            )
-                    else:
-                        self.logger.debug(
-                            ("Value %s for key '%s' is out of range [%s, %s]"),
-                            value,
-                            key,
-                            min_value,
-                            max_value,
-                        )
-                        return (
-                            ResultCode.REJECTED,
-                            f"Value {value} for key '{key}' is out of range "
-                            f"[{min_value}, {max_value}]",
-                        )
-                # Extract the band's value after the underscore
-                band_value = data.get("band").split("_")[-1]
-                # Write to band
-                band_map = {
-                    "1": "band1PointingModelParams",
-                    "2": "band2PointingModelParams",
-                    "3": "band3PointingModelParams",
-                    "4": "band4PointingModelParams",
-                    "5a": "band5aPointingModelParams",
-                    "5b": "band5bPointingModelParams",
-                }
-                attribute_name = band_map.get(band_value)
-                if attribute_name is None:
-                    self.logger.debug(("Unsupported Band: b%s"), band_value)
-                    return (ResultCode.REJECTED, f"Unsupported Band: b{band_value}")
-                try:
-                    ds_cm.write_attribute_value(attribute_name, band_coeffs_values)
-                except (LostConnection, tango.DevFailed) as err:
-                    self.logger.exception(
-                        "%s. The error response is: %s", (ResultCode.FAILED, err)
-                    )
-                    return (ResultCode.FAILED, err)
-                return (
-                    ResultCode.OK,
-                    f"Successfully wrote the following values {coefficients} "
-                    f"to band {band_value} on DS",
-                )
+def apply_pointing_model(self, json_object) -> Tuple[ResultCode, str]:
+    """Updates a band's coefficient parameters with a given JSON input.
+    Note, all 18 coefficients need to be present in the JSON object and
+    the Dish ID should be correct. Each time the command is called all
+    parameters will get updated not just the ones that have been modified.
+    """
+    # A list of expected coefficients (The order in which they are written)
+    min_value = -2000
+    max_value = 2000
+    expected_coefficients = {
+        "IA": {"unit": "arcsec"},
+        "CA": {"unit": "arcsec"},
+        "NPAE": {"unit": "arcsec"},
+        "AN": {"unit": "arcsec"},
+        "AN0": {"unit": "arcsec"},
+        "AW": {"unit": "arcsec"},
+        "AW0": {"unit": "arcsec"},
+        "ACEC": {"unit": "arcsec"},
+        "ACES": {"unit": "arcsec"},
+        "ABA": {"unit": "arcsec"},
+        "ABphi": {"unit": "deg"},
+        "IE": {"unit": "arcsec"},
+        "ECEC": {"unit": "arcsec"},
+        "ECES": {"unit": "arcsec"},
+        "HECE4": {"unit": "arcsec"},
+        "HESE4": {"unit": "arcsec"},
+        "HECE8": {"unit": "arcsec"},
+        "HESE8": {"unit": "arcsec"},
+    }
 
-            # If there is an issue with the coefficients
-            self.logger.debug(
-                ("Coefficients are missing. The coefficients found in the JSON object were %s."),
-                coeff_keys,
-            )
-            return (
-                ResultCode.REJECTED,
-                f"Coefficients are missing. "
-                f"The coefficients found in the JSON object were {list(coeff_keys)}",
-            )
+    ds_cm = self.sub_component_managers["DS"]
+    coeff_keys = []
+    band_coeffs_values = []
+    result_code = ResultCode.REJECTED
+    message = "Unknown error."
 
-        # If there is an issue with the Dish ID/ Antenna name
+    # Process the JSON data
+    try:
+        data = json.loads(json_object)
+    except (LostConnection, json.JSONDecodeError) as err:
+        self.logger.exception("Invalid json supplied")
+        message = str(err)
+        return result_code, message
+
+    # Validate the Dish ID
+    antenna_id = data.get("antenna")
+    dish_id = self.tango_device_name.split("/")[-1]
+
+    if dish_id != antenna_id:
         self.logger.debug(
-            ("Command rejected. The Dish id %s and the Antenna's value %s are not equal."),
+            "Command rejected. The Dish id %s and the Antenna's value %s are not equal.",
             dish_id,
             antenna_id,
         )
-        return (
-            ResultCode.REJECTED,
-            f"Command rejected. The Dish id {dish_id} and the Antenna's "
-            f"value {antenna_id} are not equal.",
+        message = f"Command rejected. The Dish id {dish_id} and the Antenna's "
+        f"value {antenna_id} are not equal."
+        return result_code, message
+
+    # Validate the coefficients
+    coefficients = data.get("coefficients", {})
+    coeff_keys = coefficients.keys()
+
+    # Verify that all expected coefficients are available
+    if set(coeff_keys) != set(expected_coefficients.keys()):
+        self.logger.debug(
+            "Coefficients are missing. The coefficients found in the JSON object were %s.",
+            coeff_keys,
         )
+        message = f"Coefficients are missing. The coefficients found in the JSON object "
+        f"were {list(coeff_keys)}"
+        return result_code, message
+
+    # Reorder `coeff_keys` to match the order in `expected_coefficients`
+    expected_coeff_keys = list(expected_coefficients.keys())
+    expected_coeff_units = [expected_coefficients[coeff]["unit"] for coeff in expected_coeff_keys]
+
+    self.logger.debug(f"All 18 coefficients {coeff_keys} are present.")
+
+    # Get all coefficient values
+    for key, expected_unit in zip(expected_coeff_keys, expected_coeff_units):
+        value = coefficients[key].get("value")
+        unit = coefficients[key].get("units")
+
+        if not (min_value <= value <= max_value):
+            self.logger.debug(
+                "Value %s for key '%s' is out of range [%s, %s]", value, key, min_value, max_value
+            )
+            message = f"Value {value} for key '{key}' is out of range [{min_value}, {max_value}]"
+            return result_code, message
+
+        if unit.strip().lower() != expected_unit.strip().lower():
+            self.logger.debug(
+                "Unit %s for key '%s' is not correct. It should be %s", unit, key, expected_unit
+            )
+            message = f"Unit {unit} for key '{key}' is not correct. It should be {expected_unit}"
+            return result_code, message
+
+        band_coeffs_values.append(value)
+
+    # Extract the band's value after the underscore
+    band_value = data.get("band").split("_")[-1]
+
+    # Write to the appropriate band
+    band_map = {
+        "1": "band1PointingModelParams",
+        "2": "band2PointingModelParams",
+        "3": "band3PointingModelParams",
+        "4": "band4PointingModelParams",
+        "5a": "band5aPointingModelParams",
+        "5b": "band5bPointingModelParams",
+    }
+
+    attribute_name = band_map.get(band_value)
+    if attribute_name is None:
+        self.logger.debug("Unsupported Band: b%s", band_value)
+        message = f"Unsupported Band: b{band_value}"
+        return result_code, message
+
+    try:
+        ds_cm.write_attribute_value(attribute_name, band_coeffs_values)
+        result_code = ResultCode.OK
+        message = (
+            f"Successfully wrote the following values {coefficients} to band {band_value} on DS"
+        )
+    except (LostConnection, tango.DevFailed) as err:
+        self.logger.exception("%s. The error response is: %s", (ResultCode.FAILED, err))
+        result_code = ResultCode.FAILED
+        message = str(err)
+
+    return result_code, message
 
     def set_track_interpolation_mode(
         self,
