@@ -4,49 +4,64 @@
     "band": "Band_2",
     "coefficients": {
         "IA": {
-            "value": -491.05237180985154
+            "value": -491.05237180985154,
+            "units": "arcsec"
         },
         "CA": {
-            "value": -46.49438759990891
+            "value": -46.49438759990891,
+            "units": "arcsec"
         },
         "NPAE": {
-            "value": -0.20043883924247693
+            "value": -0.20043883924247693,
+            "units": "arcsec"
         },
         "AN": {
-            "value": 6.303488540553789
+            "value": 6.303488540553789,
+            "units": "arcsec"
         },
         "AN0": {
-            "value": 0
+            "value": 0,
+            "units": "arcsec"
         },
         "AW": {
-            "value": 16.015694895168707
+            "value": 16.015694895168707,
+            "units": "arcsec"
         },
         "AW0": {
-            "value": 0
+            "value": 0,
+            "units": "arcsec"
         },
         "ACEC": {
-            "value": 11.97440290133107
+            "value": 11.97440290133107,
+            "units": "arcsec"
         },
         "ACES": {
-            "value": -3.7385420287177227
+            "value": -3.7385420287177227,
+            "units": "arcsec"
         },
         "ABA": {
-            "value": 0
+            "value": 0,
+            "units": "arcsec"
         },
         "ABphi": {
-            "value": 0
+            "value": 0,
+            "units": "deg"
         },
         "IE": {
-            "value": 1655.986889730121
+            "value": 1655.986889730121,
+            "units": "arcsec"
         },
         "ECEC": {
-            "value": -145.2842284526637
+            "value": -145.2842284526637,
+            "units": "arcsec"
         },
         "ECES": {
-            "value": -26.760848137365375
+            "value": -26.760848137365375,
+            "units": "arcsec"
         },
         "HECE4": {
-            "value": 0
+            "value": 0,
+            "units": "arcsec"
         }
     }
     }

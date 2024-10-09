@@ -944,28 +944,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         parameters will get updated not just the ones that have been modified.
         """
         # A list of expected coefficients (The order in which they are written)
-        expected_coefficients = [
-            "IA",
-            "CA",
-            "NPAE",
-            "AN",
-            "AN0",
-            "AW",
-            "AW0",
-            "ACEC",
-            "ACES",
-            "ABA",
-            "ABphi",
-            "IE",
-            "ECEC",
-            "ECES",
-            "HECE4",
-            "HESE4",
-            "HECE8",
-            "HESE8",
-        ]
+        min_value = -2000
+        max_value = 2000
+        expected_coefficients = {
+            "IA": {"unit": "arcsec"},
+            "CA": {"unit": "arcsec"},
+            "NPAE": {"unit": "arcsec"},
+            "AN": {"unit": "arcsec"},
+            "AN0": {"unit": "arcsec"},
+            "AW": {"unit": "arcsec"},
+            "AW0": {"unit": "arcsec"},
+            "ACEC": {"unit": "arcsec"},
+            "ACES": {"unit": "arcsec"},
+            "ABA": {"unit": "arcsec"},
+            "ABphi": {"unit": "deg"},
+            "IE": {"unit": "arcsec"},
+            "ECEC": {"unit": "arcsec"},
+            "ECES": {"unit": "arcsec"},
+            "HECE4": {"unit": "arcsec"},
+            "HESE4": {"unit": "arcsec"},
+            "HECE8": {"unit": "arcsec"},
+            "HESE8": {"unit": "arcsec"},
+        }
+
         ds_cm = self.sub_component_managers["DS"]
         coeff_keys = []
+        band_coeffs_values = []
         # Process the JSON data
         try:
             data = json.loads(json_object)
@@ -982,12 +986,49 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             coeff_keys = coefficients.keys()
             # Verify that the number expected coeffs are are available
             # Check if they have the same elements (ignoring order)
-            if set(coeff_keys) == set(expected_coefficients):
-                # Reorder `coeff_keys` to match `expected_coefficients`
-                coeff_keys = expected_coefficients[:]
+            if set(coeff_keys) == set(expected_coefficients.keys()):
+                # Reorder `coeff_keys` to match the order in `expected_coefficients`
+                expected_coeff_keys = list(expected_coefficients.keys())
+                expected_coeff_units = [
+                    expected_coefficients[coeff]["unit"] for coeff in expected_coeff_keys
+                ]
                 self.logger.debug(f"All 18 coefficients {coeff_keys} are present.")
                 # Get all coefficient values
-                band_coeffs_values = [coefficients[key].get("value") for key in coeff_keys]
+                for key, expected_unit in zip(coeff_keys, expected_coeff_units):
+                    value = coefficients[key].get("value")
+                    unit = coefficients[key].get("units")
+                    # Check if the value is within the range [-2000,2000]
+                    if min_value <= value <= max_value:
+                        self.logger.debug(
+                            f"Received unit: '{unit}' for key '{key}', expected: '{expected_unit}'"
+                        )
+                        if unit.strip().lower() == expected_unit.strip().lower():
+                            band_coeffs_values.append(value)
+                        else:
+                            self.logger.debug(
+                                ("Unit %s for key '%s' is not correct. It should be %s"),
+                                unit,
+                                key,
+                                expected_unit,
+                            )
+                            return (
+                                ResultCode.REJECTED,
+                                f"Unit {unit} for key '{key}' is not correct. It should "
+                                f"be {expected_unit}",
+                            )
+                    else:
+                        self.logger.debug(
+                            ("Value %s for key '%s' is out of range [%s, %s]"),
+                            value,
+                            key,
+                            min_value,
+                            max_value,
+                        )
+                        return (
+                            ResultCode.REJECTED,
+                            f"Value {value} for key '{key}' is out of range "
+                            f"[{min_value}, {max_value}]",
+                        )
                 # Extract the band's value after the underscore
                 band_value = data.get("band").split("_")[-1]
                 # Write to band
