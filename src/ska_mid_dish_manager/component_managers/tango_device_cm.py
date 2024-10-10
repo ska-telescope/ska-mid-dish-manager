@@ -52,7 +52,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         quality_monitored_attributes: Tuple[str, ...] = (),
         **kwargs: Any,
     ):
-        self._component_state: dict = {}  # type: ignore
+        self._component_state: dict = {}  # type: ignore this is not necessary
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
         self._quality_state_callback = quality_state_callback
@@ -69,7 +69,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._monitored_attributes,
             self._events_queue,
             logger,
-            self._update_communication_state,
+            self.something_something,
         )
 
         self._event_consumer_thread: Optional[Thread] = None
@@ -83,12 +83,27 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
-        self._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
+        # this is not necessary callback is called for you automatically
         # Default to NOT_ESTABLISHED
         if self._communication_state_callback:
             self._communication_state_callback()  # type: ignore
 
+    def something_something(self, subscribed_attrs):
+        # think about adding comms disabled to args
+
+        # add some logging somewhere to show that this is a better approach
+        all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
+        if all_subscribed:
+            if self._communication_state != CommunicationStatus.ESTABLISHED:
+                self._logger.info("Updating CommunicationStatus as ESTABLISHED")
+                self._update_communication_state(CommunicationStatus.ESTABLISHED)
+        else:
+            if self._communication_state != CommunicationStatus.NOT_ESTABLISHED:
+                self._logger.info("Updating CommunicationStatus as NOT ESTABLISHED")
+                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        
     def clear_monitored_attributes(self) -> None:
         """
         Sets all the monitored attribute values to 0.
