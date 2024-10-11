@@ -14,7 +14,13 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict]:
+def read_file_contents(
+    path: str,
+    band: Optional[str] = None,
+    unit: Optional[bool] = False,
+    value_range: Optional[bool] = False,
+    coeff: Optional[str] = None,
+) -> tuple[str, dict]:
     """Read out the JSON file. Object used when calling ApplyPointingModel command"""
     # Ingest the file as JSON string and configure band selection
     # Get the directory where the test file is located
@@ -30,6 +36,18 @@ def read_file_contents(path: str, band: Optional[str] = None) -> tuple[str, dict
         pointing_model_definition = json.load(file)
         if band is not None:
             pointing_model_definition["band"] = band
+        if unit:
+            pointing_model_definition["coefficients"]["IA"][
+                "units"
+            ] = "deg"  # Change units from arcsec to deg
+        if value_range and coeff == "IA":
+            pointing_model_definition["coefficients"]["IA"][
+                "value"
+            ] = 3000  # force out of range value
+        if value_range and coeff == "ABphi":
+            pointing_model_definition["coefficients"]["ABphi"][
+                "value"
+            ] = -2500  # force out of range value
 
     return json.dumps(pointing_model_definition), pointing_model_definition
 
@@ -114,7 +132,7 @@ def test_inconsistent_json(
 ) -> None:
     """Test ApplyPointingModel command with incorrect (Wrong antenna and band) JSON inputs."""
 
-    pointing_model_json_str, _ = read_file_contents(file_name, None)
+    pointing_model_json_str, _ = read_file_contents(file_name)
 
     [[result_code], [command_resp]] = dish_manager_proxy.ApplyPointingModel(
         pointing_model_json_str
@@ -165,3 +183,30 @@ def test_out_of_order_pointing_coeff_json(
     formatted_response = response.format(coeff=coefficients)
     assert formatted_response == command_resp
     assert result_code == ResultCode.OK
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+@pytest.mark.parametrize(
+    ("resp", "unit", "value_range", "coeff"),
+    [
+        ("Unit deg for key 'IA' is not correct. It should be arcsec", True, False, None),
+        ("Value 3000 for key 'IA' is out of range [-2000, 2000]", False, True, "IA"),
+        ("Value -2500 for key 'ABphi' is out of range [0, 360]", False, True, "ABphi"),
+    ],
+)
+def test_unit_and_range(
+    resp, unit, value_range, coeff, dish_manager_proxy: tango.DeviceProxy
+) -> None:
+    """Test that units and ranges"""
+    file_name = "global_pointing_model.json"
+    pointing_model_json_str, _ = read_file_contents(
+        file_name, unit=unit, value_range=value_range, coeff=coeff
+    )
+
+    [[result_code], [command_resp]] = dish_manager_proxy.ApplyPointingModel(
+        pointing_model_json_str
+    )
+
+    assert command_resp == resp
+    assert result_code == ResultCode.REJECTED
