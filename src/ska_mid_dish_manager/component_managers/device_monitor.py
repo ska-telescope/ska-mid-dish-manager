@@ -9,7 +9,6 @@ from threading import Event, Lock, Thread
 from typing import Any, Callable, Dict, Optional, Tuple
 
 import tango
-from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 
@@ -23,8 +22,8 @@ class SubscriptionTracker:
     def __init__(
         self,
         event_queue: Queue,
-        update_communication_state: Callable,
         logger: logging.Logger,
+        something_something: Optional[Callable] = None,
     ):
         """
         Keep track of which attributes has been subscribed to.
@@ -34,14 +33,14 @@ class SubscriptionTracker:
 
         :param event_queue: the store for change events emitted by the device server
         :type event_queue: Queue
-        :param update_communication_state: Update communication status
-        :type update_communication_state: Callable
+        :param something_something: Update communication status
+        :type something_something: Callable
         :param logger: Logger
         :type logger: logging.Logger
         ...
         """
         self._event_queue = event_queue
-        self._update_communication_state = update_communication_state
+        self.something_something = something_something
         self._logger = logger
         self._subscribed_attrs: Dict[str, int] = {}
         self._update_lock = Lock()
@@ -56,9 +55,10 @@ class SubscriptionTracker:
         :type subcription_id: int
         """
         with self._update_lock:
-            self._logger.info("Marking %s attribute as subscribed", attribute_name)
+            self._logger.debug("Marking %s attribute as subscribed", attribute_name)
             self._subscribed_attrs[attribute_name] = subscription_id
-            self.sync_communication_to_subscription()
+            if self.something_something:
+                self.something_something(self._subscribed_attrs.keys())
 
     def subscription_stopped(self, attribute_name: str) -> None:
         """
@@ -68,9 +68,10 @@ class SubscriptionTracker:
         :type attribute_name: str
         """
         with self._update_lock:
-            self._logger.info("Marking %s attribute as not subscribed", attribute_name)
-            self._subscribed_attrs[attribute_name] = False
-            self.sync_communication_to_subscription()
+            self._logger.debug("Marking %s attribute as not subscribed", attribute_name)
+            self._subscribed_attrs.pop(attribute_name)
+            if self.something_something:
+                self.something_something(self._subscribed_attrs.keys())
 
     def setup_event_subscription(
         self, attribute_name: str, device_proxy: tango.DeviceProxy
@@ -78,6 +79,9 @@ class SubscriptionTracker:
         """
         Subscribe to change events on the device server
         """
+        # dont attempt to subscribe to attributes with live subscriptions already
+        if attribute_name in self._subscribed_attrs:
+            return
 
         def _event_reaction(events_queue: Queue, tango_event: tango.EventData) -> None:
             events_queue.put(tango_event)
@@ -90,8 +94,11 @@ class SubscriptionTracker:
                     tango.EventType.CHANGE_EVENT,
                     event_reaction_cb,
                 )
-            except tango.DevFailed as err:
+            except tango.EventSystemFailed as err:
                 raise err
+            self._logger.debug(
+                "Subscribed to attr %s on %s", attribute_name, device_proxy.dev_name()
+            )
 
         self.subscription_started(attribute_name, subscription_id)
 
@@ -99,43 +106,27 @@ class SubscriptionTracker:
         """
         Set all attrs as not subscribed
         """
+        # subscription stopped will update the dictionary being iterated over
+        # and raise a RuntimeError. grab a copy to use in the iteration
+        subscribed_attrs_copy = self._subscribed_attrs.copy()
         with tango.EnsureOmniThread():
-            for attribute_name, subscription_id in self._subscribed_attrs.items():
-                if self._subscribed_attrs.get(attribute_name) is not None:
-                    try:
-                        device_proxy.unsubscribe_event(subscription_id)
-                        self._logger.info(
-                            "Unsubscribed from %s attr on %s",
-                            attribute_name,
-                            device_proxy.dev_name(),
-                        )
-                    except tango.DevFailed as err:
-                        self._logger.exception(err)
-                        self._logger.info(
-                            "Could not unsubscribe from %s attr on %s",
-                            attribute_name,
-                            device_proxy.dev_name(),
-                        )
-                    else:
-                        self.subscription_stopped(attribute_name)
-
-    def all_subscribed(self) -> bool:
-        """
-        Check if all attributes have been subscribed
-
-        :return: all attributes subscribed
-        :rtype: bool
-        """
-        return all(self._subscribed_attrs.values())
-
-    def sync_communication_to_subscription(self) -> None:
-        """Update Communication Status"""
-        if self.all_subscribed():
-            self._logger.info("Updating CommunicationStatus as ESTABLISHED")
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
-        else:
-            self._logger.info("Updating CommunicationStatus as NOT_ESTABLISHED")
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+            for attribute_name, subscription_id in subscribed_attrs_copy.items():
+                try:
+                    device_proxy.unsubscribe_event(subscription_id)
+                    self._logger.info(
+                        "Unsubscribed from %s attr on %s",
+                        attribute_name,
+                        device_proxy.dev_name(),
+                    )
+                except tango.EventSystemFailed as err:
+                    self._logger.exception(err)
+                    self._logger.info(
+                        "Could not unsubscribe from %s attr on %s",
+                        attribute_name,
+                        device_proxy.dev_name(),
+                    )
+                else:
+                    self.subscription_stopped(attribute_name)
 
 
 # pylint:disable=too-few-public-methods, too-many-instance-attributes
@@ -154,7 +145,7 @@ class TangoDeviceMonitor:
         monitored_attributes: Tuple[str, ...],
         event_queue: Queue,
         logger: logging.Logger,
-        update_communication_state: Callable,
+        something_something: Callable,
     ) -> None:
         """
         Create the TangoDeviceMonitor.
@@ -178,7 +169,7 @@ class TangoDeviceMonitor:
         self._attribute_subscription_thread: Optional[Thread] = None
 
         self._subscription_tracker = SubscriptionTracker(
-            self._event_queue, update_communication_state, self._logger
+            self._event_queue, self._logger, something_something
         )
 
     def stop_monitoring(self) -> None:
@@ -193,6 +184,7 @@ class TangoDeviceMonitor:
             self._attribute_subscription_thread.join()
             self._logger.info("Stopped monitoring thread on %s", self._trl)
             # undo subscriptions and inform client we have no comms to the device server
+            # maybe grab the already existing proxy rather than going over the whole thing again
             device_proxy = self._tango_device_proxy(self._trl, self._exit_thread_event)
             self._subscription_tracker.clear_subscriptions(device_proxy)
 
@@ -222,6 +214,7 @@ class TangoDeviceMonitor:
         This method is idempotent. When called the existing (if any)
         monitoring threads are removed and recreated.
         """
+        # log this variable to show that this happens to much
         self._run_count += 1
         self.stop_monitoring()
         self._exit_thread_event = Event()
@@ -259,8 +252,6 @@ class TangoDeviceMonitor:
                     self._subscription_tracker.setup_event_subscription(
                         attribute_name, device_proxy
                     )
-
-                    self._logger.debug("Subscribed on %s to attr %s", self._trl, attribute_name)
 
                 self._logger.info(
                     "Change event subscriptions on %s successfully set up for %s",

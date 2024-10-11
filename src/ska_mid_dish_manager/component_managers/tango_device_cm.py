@@ -52,13 +52,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         quality_monitored_attributes: Tuple[str, ...] = (),
         **kwargs: Any,
     ):
-        self._component_state: dict = {}  # type: ignore
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
         self._quality_state_callback = quality_state_callback
         self._events_queue: Queue = Queue()
         self._trl = trl
         self._monitored_attributes = monitored_attributes
+        self._attr_event_tracker: set[str] = set()
         self._quality_monitored_attributes = quality_monitored_attributes
         self.logger = logger
 
@@ -69,7 +69,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._monitored_attributes,
             self._events_queue,
             logger,
-            self._update_communication_state,
+            self.something_something,
         )
 
         self._event_consumer_thread: Optional[Thread] = None
@@ -83,11 +83,31 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
-        self._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
+        # this is not necessary callback is called for you automatically
         # Default to NOT_ESTABLISHED
-        if self._communication_state_callback:
-            self._communication_state_callback()  # type: ignore
+        # if self._communication_state_callback:
+        #     self._communication_state_callback()  # type: ignore
+
+    def something_something(self, subscribed_attrs: list[str]) -> None:
+        """_summary_
+
+        Arguments:
+            subscribed_attrs -- _description_
+        """
+        # think about adding comms disabled to args
+
+        # add some logging somewhere to show that this is a better approach
+        all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
+        if all_subscribed:
+            if self._communication_state != CommunicationStatus.ESTABLISHED:
+                self.logger.debug("Updating CommunicationStatus as ESTABLISHED")
+                self._update_communication_state(CommunicationStatus.ESTABLISHED)
+        else:
+            if self._communication_state != CommunicationStatus.NOT_ESTABLISHED:
+                self.logger.debug("Updating CommunicationStatus as NOT ESTABLISHED")
+                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     def clear_monitored_attributes(self) -> None:
         """
@@ -130,6 +150,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 if monitored_attribute not in self._component_state:
                     self._component_state[monitored_attribute] = None
 
+                # this can potentially raise an error, handle it
                 value = device_proxy.read_attribute(monitored_attribute).value
                 if isinstance(value, np.ndarray):
                     value = list(value)
@@ -166,7 +187,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(**{attr_name: value})
             # Catch any errors and log it otherwise it remains hidden
             except Exception:  # pylint:disable=broad-except
-                self.logger.exception("Error updating component state")
+                self.logger.exception("Error occured updating component state")
+            self._attr_event_tracker.add(attr_name)
+            # dont give it a list, just making mypy happy for now
+            self.something_something(list(self._attr_event_tracker))
 
     def _stop_event_consumer_thread(self) -> None:
         """Stop the event consumer thread if it is alive."""
@@ -194,7 +218,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._events_queue,
                 self._update_state_from_event,
                 self._event_consumer_abort_event,
-                self._event_consumer_cb,
+                self._handle_error_events,
             ],
         )
         self._event_consumer_thread.start()
@@ -219,9 +243,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Empty:
                 pass
 
-    def _event_consumer_cb(self, event_data: tango.EventData) -> None:
+    def _handle_error_events(self, event_data: tango.EventData) -> None:
         """
-        Just log the error event
+        Handle error events from attr subscription
 
         :param event_data: data representing tango event
         :type event_data: tango.EventData
@@ -253,6 +277,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             quality,
             errors,
         )
+        try:
+            self._attr_event_tracker.remove(attr_name)
+        except KeyError:
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+            return
+        # dont give it a list, just making mypy happy for now
+        self.something_something(list(self._attr_event_tracker))
 
     def run_device_command(
         self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore

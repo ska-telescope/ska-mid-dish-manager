@@ -79,8 +79,7 @@ class DeviceProxyManager:
                     f"Failed to reconnect to device proxy: {tango_device_proxy.dev_name()}"
                 )
                 self._logger.debug(f"Attempting reconnection to the device proxy in {retry_time}s")
-                if thread_event:
-                    thread_event.wait(timeout=retry_time)
+                thread_event.wait(timeout=retry_time)
             else:
                 is_device_connected = True
 
@@ -100,6 +99,7 @@ class DeviceProxyManager:
 
         :returns: device_proxy (tango.DeviceProxy | None)
         """
+        # exceptiontango.DeviceUnlocked use this in the polling in command map
         device_proxy = None
         proxy_created = False
         try_count = 1
@@ -114,9 +114,9 @@ class DeviceProxyManager:
                     f" {trl}, retrying in {retry_time}s"
                 )
                 try_count += 1
-                if thread_event:
-                    thread_event.wait(timeout=retry_time)
+                thread_event.wait(timeout=retry_time)
 
+        # this will happen if stop monitoring is triggered while the proxy creation is ongoing
         if device_proxy is None:
             self._logger.debug(f"DeviceProxy to {trl} was not created. NoneType returned")
             return device_proxy

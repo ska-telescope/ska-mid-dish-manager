@@ -28,25 +28,22 @@ def test_component_manager_continues_reconnecting_when_device_is_unreachable(cap
         time.sleep(0.5)
 
     assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
+    # clean up afterwards
     tc_manager.stop_communicating()
 
 
 @pytest.mark.unit
-@mock.patch("ska_mid_dish_manager.component_managers.device_monitor.tango")
-def test_happy_path(patched_tango, caplog):
+@mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango")
+def test_happy_path(caplog):
     """Tango device is reachable and communicates with component manager
 
     Tango layer is mocked and checks are made on the mock for expected
     calls made when communication is established and component is
     updated accordingly
     """
-    # pylint: disable=no-member
     caplog.set_level(logging.DEBUG)
 
-    patched_dp = mock.MagicMock()
-    patched_dp.command_inout = mock.MagicMock()
-    patched_tango.DeviceProxy = mock.MagicMock(return_value=patched_dp)
-
+    # set up mocks
     comm_state_cb = mock.MagicMock()
     comp_state_cb = mock.MagicMock()
 
@@ -60,37 +57,29 @@ def test_happy_path(patched_tango, caplog):
 
     tc_manager.start_communicating()
     assert comm_state_cb.called
+    # clean up afterwards
+    tc_manager.stop_communicating()
 
 
 @pytest.mark.unit
-@mock.patch("ska_mid_dish_manager.component_managers.device_monitor.DeviceProxyManager")
-def test_unhappy_path(patched_dev_factory, caplog):
-    """Tango device is unreachable and can't communicate with component manager
+@mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
+def test_unhappy_path(patched_dp, caplog):
+    """Tango device is unreachable and can't be reach by the component manager
 
     Similar to `test_component_manager_continues_reconnecting_...` except
     Tango layer is mocked here. Checks are made on the mock for expected
     calls and logs when communication is attempted by component manager
     on mocked device
     """
-    # pylint: disable=no-member
     caplog.set_level(logging.DEBUG)
 
-    # Set up mocks
-    mock_device_proxy = mock.MagicMock(name="DP")
-    mock_device_proxy.ping.side_effect = tango.DevFailed("FAIL")
-
-    class DummyFactory:
-        def __call__(self, *args, **kwargs):
-            return mock_device_proxy
-
-    patched_dev_factory.return_value = DummyFactory()
+    # configure mock
+    patched_dp.side_effect = tango.DevFailed("FAIL")
 
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
         LOGGER,
         ("some_attr", "some_other_attr"),
-        communication_state_callback=None,
-        component_state_callback=None,
     )
 
     tc_manager.start_communicating()
@@ -106,41 +95,51 @@ def test_unhappy_path(patched_dev_factory, caplog):
             f"Try number {count}: failed to connect to tango device server a/b/c, retrying in 0.5s"
             in logs
         )
+    # clean up afterwards
+    tc_manager.stop_communicating()
 
 
 @pytest.mark.unit
-@mock.patch("ska_mid_dish_manager.component_managers.device_monitor.DeviceProxyManager")
-def test_device_goes_away(patched_dev_factory, caplog):
-    """Start up the component_manager.
+@mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
+def test_device_goes_away(caplog):
+    """
+    Start up the component_manager.
     Signal a lost connection via an event
-    Check for reconnect
+    Check for updated communication state
     """
     caplog.set_level(logging.DEBUG)
-
-    # Set up mocks
-    mock_device_proxy = mock.MagicMock()
-    mock_device_proxy.command_inout = mock.MagicMock()
-    mock_device_proxy.ping = mock.MagicMock()
-
-    class DummyFactory:
-        def __call__(self, *args, **kwargs):
-            return mock_device_proxy
-
-    patched_dev_factory.return_value = DummyFactory()
 
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
         LOGGER,
-        ("some_,attr",),
+        ("some_attr", "some_other_attr"),
     )
 
     tc_manager.start_communicating()
+    # wait a bit for the state to change
+    time.sleep(0.5)
+    assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # Set up mock error event
     mock_error = mock.MagicMock()
     mock_error.err = True
-
-    # Trigger the failure
+    mock_error.name = "some_attr"
+    # Trigger a failure event
     tc_manager._events_queue.put(mock_error)
 
-    tc_manager.abort_commands()
+    # wait a bit for the state to change
+    time.sleep(0.5)
+    assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
+
+    # Set up mock valid event
+    mock_data = mock.MagicMock()
+    mock_data.name = "some_attr"
+    # Trigger the event processing again
+    tc_manager._events_queue.put(mock_data)
+
+    # wait a bit for the state to change
+    time.sleep(0.5)
+    assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
+
+    # clean up afterwards
+    tc_manager.stop_communicating()
