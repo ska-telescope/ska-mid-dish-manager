@@ -131,7 +131,7 @@ class DishManager(SKAController):
             self.longRunningCommandProgress,
         )
 
-    def create_component_manager(self):
+    def create_component_manager(self) -> DishManagerComponentManager:
         """Create the component manager for DishManager
 
         :return: Instance of DishManagerComponentManager
@@ -207,6 +207,11 @@ class DishManager(SKAController):
         self.register_command_object(
             "SetKValue",
             self.SetKValueCommand(self.component_manager, self.logger),
+        )
+
+        self.register_command_object(
+            "ApplyPointingModel",
+            self.ApplyPointingModelCommand(self.component_manager, self.logger),
         )
 
     def _connection_state_update(self, device: Device):
@@ -312,17 +317,9 @@ class DishManager(SKAController):
             """
             device: DishManager = self._device
             # pylint: disable=protected-access
-            device._achieved_pointing = [0.0, 0.0, 0.0]
             device._achieved_pointing_az = [0.0, 0.0]
             device._achieved_pointing_el = [0.0, 0.0]
-            device._achieved_target_lock = False
-            device._attenuation_pol_h = 0.0
-            device._attenuation_pol_v = 0.0
             device._azimuth_over_wrap = False
-            device._band1_pointing_model_params = []
-            device._band2_pointing_model_params = []
-            device._band3_pointing_model_params = []
-            device._band4_pointing_model_params = []
             device._band5a_pointing_model_params = []
             device._band5b_pointing_model_params = []
             device._band1_sampler_frequency = 0.0
@@ -331,46 +328,19 @@ class DishManager(SKAController):
             device._band4_sampler_frequency = 0.0
             device._band5a_sampler_frequency = 0.0
             device._band5b_sampler_frequency = 0.0
-            device._capturing = False
-            device._configured_band = Band.NONE
             device._configure_target_lock = []
-            device._desired_pointing_az = [0.0, 0.0]
-            device._desired_pointing_el = [0.0, 0.0]
-            device._dish_mode = DishMode.UNKNOWN
             device._dsh_max_short_term_power = 13.5
             device._dsh_power_curtailment = True
             device._frequency_response = [[], []]
-            device._noise_diode_config = []
             device._pointing_buffer_size = 0
-            device._pointing_state = PointingState.UNKNOWN
             device._poly_track = []
             device._power_state = PowerState.LOW
             device._program_track_table = []
             device._track_interpolation_mode = TrackInterpolationMode.SPLINE
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
-            device._scan_i_d = ""
-            device._ignore_spf = False
-            device._ignore_spfrx = False
-            device._act_static_offset_value_xel = 0.0
-            device._act_static_offset_value_el = 0.0
             device._last_commanded_mode = ("0.0", "")
-
-            device._b1_capability_state = CapabilityStates.UNKNOWN
-            device._b2_capability_state = CapabilityStates.UNKNOWN
-            device._b3_capability_state = CapabilityStates.UNKNOWN
-            device._b4_capability_state = CapabilityStates.UNKNOWN
-            device._b5a_capability_state = CapabilityStates.UNKNOWN
-            device._b5b_capability_state = CapabilityStates.UNKNOWN
-
-            device._spf_connection_state = CommunicationStatus.NOT_ESTABLISHED
-            device._spfrx_connection_state = CommunicationStatus.NOT_ESTABLISHED
-            device._ds_connection_state = CommunicationStatus.NOT_ESTABLISHED
-
-            # SPFRx noise diode attributes
-            device._noise_diode_mode = NoiseDiodeMode.OFF
-            device._periodic_noise_diode_pars = []
-            device._pseudo_random_noise_diode_pars = []
+            device._last_commanded_pointing_params = ""
             device._device_to_comm_attr_map = {
                 Device.DS: "dsConnectionState",
                 Device.SPF: "spfConnectionState",
@@ -401,6 +371,8 @@ class DishManager(SKAController):
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "band3pointingmodelparams": "band3PointingModelParams",
                 "band4pointingmodelparams": "band4PointingModelParams",
+                "band5apointingmodelparams": "band5aPointingModelParams",
+                "band5bpointingmodelparams": "band5bPointingModelParams",
                 "attenuationpolh": "attenuationPolH",
                 "attenuationpolv": "attenuationPolV",
                 "kvalue": "kValue",
@@ -465,6 +437,7 @@ class DishManager(SKAController):
                 "trackProgramMode",
                 "trackTableLoadMode",
                 "lastCommandedMode",
+                "lastCommandedPointingParams",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
@@ -503,7 +476,9 @@ class DishManager(SKAController):
     )
     def spfConnectionState(self):
         """Returns the spf connection state"""
-        return self._spf_connection_state
+        return self.component_manager.component_state.get(
+            "spfconnectionstate", CommunicationStatus.NOT_ESTABLISHED
+        )
 
     @attribute(
         dtype=CommunicationStatus,
@@ -512,7 +487,9 @@ class DishManager(SKAController):
     )
     def spfrxConnectionState(self):
         """Returns the spfrx connection state"""
-        return self._spfrx_connection_state
+        return self.component_manager.component_state.get(
+            "spfrxconnectionstate", CommunicationStatus.NOT_ESTABLISHED
+        )
 
     @attribute(
         dtype=CommunicationStatus,
@@ -521,7 +498,9 @@ class DishManager(SKAController):
     )
     def dsConnectionState(self):
         """Returns the ds connection state"""
-        return self._ds_connection_state
+        return self.component_manager.component_state.get(
+            "dsconnectionstate", CommunicationStatus.NOT_ESTABLISHED
+        )
 
     @attribute(
         max_dim_x=3,
@@ -531,7 +510,7 @@ class DishManager(SKAController):
     )
     def achievedPointing(self):
         """Returns the current achieved pointing for both axis."""
-        return self._achieved_pointing
+        return self.component_manager.component_state.get("achievedpointing", [0.0, 0.0, 0.0])
 
     @attribute(
         dtype=bool,
@@ -542,7 +521,7 @@ class DishManager(SKAController):
     )
     def achievedTargetLock(self):
         """Returns the achievedTargetLock"""
-        return self._achieved_target_lock
+        return self.component_manager.component_state.get("achievedtargetlock", False)
 
     @attribute(
         dtype=float,
@@ -552,13 +531,12 @@ class DishManager(SKAController):
     )
     def attenuationPolH(self):
         """Returns the attenuationPolH"""
-        return self._attenuation_pol_h
+        return self.component_manager.component_state.get("attenuationpolh", 0.0)
 
     @attenuationPolH.write
     def attenuationPolH(self, value):
         """Set the attenuationPolH"""
         # pylint: disable=attribute-defined-outside-init
-        self._attenuation_pol_h = value
         spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
         spfrx_cm.write_attribute_value("attenuationPolH", value)
 
@@ -570,13 +548,12 @@ class DishManager(SKAController):
     )
     def attenuationPolV(self):
         """Returns the attenuationPolV"""
-        return self._attenuation_pol_v
+        return self.component_manager.component_state.get("attenuationpolv", 0.0)
 
     @attenuationPolV.write
     def attenuationPolV(self, value):
         """Set the attenuationPolV("""
         # pylint: disable=attribute-defined-outside-init
-        self._attenuation_pol_v = value
         spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
         spfrx_cm.write_attribute_value("attenuationPolV", value)
 
@@ -604,7 +581,7 @@ class DishManager(SKAController):
     )
     def actStaticOffsetValueXel(self) -> float:
         """Indicate actual cross-elevation static offset in arcsec."""
-        return self._act_static_offset_value_xel
+        return self.component_manager.component_state.get("actstaticoffsetvaluexel", 0.0)
 
     @attribute(
         dtype=float,
@@ -613,7 +590,7 @@ class DishManager(SKAController):
     )
     def actStaticOffsetValueEl(self) -> float:
         """Indicate actual elevation static offset in arcsec."""
-        return self._act_static_offset_value_el
+        return self.component_manager.component_state.get("actstaticoffsetvalueel", 0.0)
 
     @attribute(
         dtype=(float,),
@@ -632,7 +609,7 @@ class DishManager(SKAController):
     )
     def band1PointingModelParams(self):
         """Returns the band1PointingModelParams"""
-        return self._band1_pointing_model_params
+        return self.component_manager.component_state.get("band1pointingmodelparams", [])
 
     @band1PointingModelParams.write
     def band1PointingModelParams(self, value):
@@ -662,7 +639,7 @@ class DishManager(SKAController):
     )
     def band2PointingModelParams(self):
         """Returns the band2PointingModelParams"""
-        return self._band2_pointing_model_params
+        return self.component_manager.component_state.get("band2pointingmodelparams", [])
 
     @band2PointingModelParams.write
     def band2PointingModelParams(self, value):
@@ -692,7 +669,7 @@ class DishManager(SKAController):
     )
     def band3PointingModelParams(self):
         """Returns the band3PointingModelParams"""
-        return self._band3_pointing_model_params
+        return self.component_manager.component_state.get("band3pointingmodelparams", [])
 
     @band3PointingModelParams.write
     def band3PointingModelParams(self, value):
@@ -722,7 +699,7 @@ class DishManager(SKAController):
     )
     def band4PointingModelParams(self):
         """Returns the band4PointingModelParams"""
-        return self._band4_pointing_model_params
+        return self.component_manager.component_state.get("band4pointingmodelparams", [])
 
     @band4PointingModelParams.write
     def band4PointingModelParams(self, value):
@@ -737,7 +714,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(float,),
-        max_dim_x=5,
+        max_dim_x=18,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 5a pointing models used by Dish to "
         "do pointing corrections.",
@@ -749,14 +726,16 @@ class DishManager(SKAController):
     @band5aPointingModelParams.write
     def band5aPointingModelParams(self, value):
         """Set the band5aPointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band5a_pointing_model_params = value
-        self.push_change_event("band5aPointingModelParams", value)
-        self.push_archive_event("band5aPointingModelParams", value)
+        self.logger.debug("band5aPointingModelParams write method called with params %s", value)
+        if hasattr(self, "component_manager"):
+            self.component_manager.update_pointing_model_params("band5aPointingModelParams", value)
+        else:
+            self.logger.warning("No component manager to write band5aPointingModelParams yet")
+            raise RuntimeError("Failed to write to band5aPointingModelParams on DishManager")
 
     @attribute(
         dtype=(float,),
-        max_dim_x=5,
+        max_dim_x=18,
         access=AttrWriteType.READ_WRITE,
         doc="Parameters for (local) Band 5b pointing models used by Dish to "
         "do pointing corrections.",
@@ -768,10 +747,13 @@ class DishManager(SKAController):
     @band5bPointingModelParams.write
     def band5bPointingModelParams(self, value):
         """Set the band5bPointingModelParams"""
-        # pylint: disable=attribute-defined-outside-init
-        self._band5b_pointing_model_params = value
-        self.push_change_event("band5bPointingModelParams", value)
-        self.push_archive_event("band5bPointingModelParams", value)
+        self.logger.debug("band5bPointingModelParams write method called with params %s", value)
+
+        if hasattr(self, "component_manager"):
+            self.component_manager.update_pointing_model_params("band5bPointingModelParams", value)
+        else:
+            self.logger.warning("No component manager to write band5bPointingModelParams yet")
+            raise RuntimeError("Failed to write to band5bPointingModelParams on DishManager")
 
     @attribute(
         dtype=float,
@@ -881,7 +863,7 @@ class DishManager(SKAController):
     )
     def capturing(self):
         """Returns the capturing"""
-        return self._capturing
+        return self.component_manager.component_state.get("capturing", False)
 
     @attribute(
         dtype=Band,
@@ -889,7 +871,7 @@ class DishManager(SKAController):
     )
     def configuredBand(self):
         """Returns the configuredBand"""
-        return self._configured_band
+        return self.component_manager.component_state.get("configuredband", Band.UNKNOWN)
 
     @attribute(
         dtype=(float,),
@@ -918,7 +900,7 @@ class DishManager(SKAController):
     )
     def desiredPointingAz(self) -> list[float]:
         """Returns the azimuth desiredPointing."""
-        return self._desired_pointing_az
+        return self.component_manager.component_state.get("desiredpointingaz", [0.0, 0.0])
 
     @attribute(
         max_dim_x=2,
@@ -929,7 +911,7 @@ class DishManager(SKAController):
     )
     def desiredPointingEl(self) -> list[float]:
         """Returns the elevation desiredPointing."""
-        return self._desired_pointing_el
+        return self.component_manager.component_state.get("desiredpointingel", [0.0, 0.0])
 
     @attribute(
         dtype=DishMode,
@@ -937,7 +919,7 @@ class DishManager(SKAController):
     )
     def dishMode(self):
         """Returns the dishMode"""
-        return self._dish_mode
+        return self.component_manager.component_state.get("dishmode", DishMode.UNKNOWN)
 
     @attribute(
         dtype=float,
@@ -1003,7 +985,7 @@ class DishManager(SKAController):
     @attribute(dtype=PointingState)
     def pointingState(self):
         """Returns the pointingState"""
-        return self._pointing_state
+        return self.component_manager.component_state.get("pointingstate", PointingState.UNKNOWN)
 
     @attribute(
         dtype=(float,),
@@ -1040,9 +1022,16 @@ class DishManager(SKAController):
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
-        self.component_manager._track_load_table(
+        result_code, result_message = self.component_manager._track_load_table(
             sequence_length, table, self._track_table_load_mode
         )
+
+        result_code = ResultCode(result_code)
+        if result_code != ResultCode.OK:
+            err_message = (
+                f"Write to programTrackTable failed, [{result_code.name}] [{result_message}]"
+            )
+            raise RuntimeError(err_message)
         self._program_track_table = table
         self.push_change_event("programTrackTable", table)
         self.push_archive_event("programTrackTable", table)
@@ -1145,7 +1134,9 @@ class DishManager(SKAController):
     )
     def b1CapabilityState(self):
         """Returns the b1CapabilityState"""
-        return self._b1_capability_state
+        return self.component_manager.component_state.get(
+            "b1capabilitystate", CapabilityStates.UNKNOWN
+        )
 
     @attribute(
         dtype=CapabilityStates,
@@ -1154,7 +1145,9 @@ class DishManager(SKAController):
     )
     def b2CapabilityState(self):
         """Returns the b2CapabilityState"""
-        return self._b2_capability_state
+        return self.component_manager.component_state.get(
+            "b2capabilitystate", CapabilityStates.UNKNOWN
+        )
 
     @attribute(
         dtype=CapabilityStates,
@@ -1163,7 +1156,9 @@ class DishManager(SKAController):
     )
     def b3CapabilityState(self):
         """Returns the b3CapabilityState"""
-        return self._b3_capability_state
+        return self.component_manager.component_state.get(
+            "b3capabilitystate", CapabilityStates.UNKNOWN
+        )
 
     @attribute(
         dtype=CapabilityStates,
@@ -1172,7 +1167,9 @@ class DishManager(SKAController):
     )
     def b4CapabilityState(self):
         """Returns the b4CapabilityState"""
-        return self._b4_capability_state
+        return self.component_manager.component_state.get(
+            "b4capabilitystate", CapabilityStates.UNKNOWN
+        )
 
     @attribute(
         dtype=CapabilityStates,
@@ -1181,7 +1178,9 @@ class DishManager(SKAController):
     )
     def b5aCapabilityState(self):
         """Returns the b5aCapabilityState"""
-        return self._b5a_capability_state
+        return self.component_manager.component_state.get(
+            "b5acapabilitystate", CapabilityStates.UNKNOWN
+        )
 
     @attribute(
         dtype=CapabilityStates,
@@ -1190,7 +1189,9 @@ class DishManager(SKAController):
     )
     def b5bCapabilityState(self):
         """Returns the b5aCapabilityState"""
-        return self._b5b_capability_state
+        return self.component_manager.component_state.get(
+            "b5bcapabilitystate", CapabilityStates.UNKNOWN
+        )
 
     @attribute(
         dtype=str,
@@ -1199,7 +1200,7 @@ class DishManager(SKAController):
     )
     def scanID(self):
         """Returns the scanID"""
-        return self._scan_i_d
+        return self.component_manager.component_state.get("scanid", "")
 
     @scanID.write
     def scanID(self, scanid):
@@ -1216,7 +1217,7 @@ class DishManager(SKAController):
     )
     def ignoreSpf(self):
         """Returns ignoreSpf"""
-        return self._ignore_spf
+        return self.component_manager.component_state.get("ignorespf", False)
 
     @ignoreSpf.write
     def ignoreSpf(self, value):
@@ -1234,7 +1235,7 @@ class DishManager(SKAController):
     )
     def ignoreSpfrx(self):
         """Returns ignoreSpfrx"""
-        return self._ignore_spfrx
+        return self.component_manager.component_state.get("ignorespfrx", False)
 
     @ignoreSpfrx.write
     def ignoreSpfrx(self, value):
@@ -1257,7 +1258,7 @@ class DishManager(SKAController):
     def noiseDiodeMode(self):
         """Returns the noise diode mode."""
         self.logger.debug("Read noiseDiodeMode")
-        return self._noise_diode_mode
+        return self.component_manager.component_state.get("noisediodemode", NoiseDiodeMode.OFF)
 
     @noiseDiodeMode.write
     def noiseDiodeMode(self, mode: NoiseDiodeMode):
@@ -1280,7 +1281,7 @@ class DishManager(SKAController):
     def periodicNoiseDiodePars(self):
         """Returns the device periodic noise diode pars."""
         self.logger.debug("Read periodicNoiseDiodePars")
-        return self._periodic_noise_diode_pars
+        return self.component_manager.component_state.get("periodicnoisediodepars", [])
 
     @periodicNoiseDiodePars.write
     def periodicNoiseDiodePars(self, values):
@@ -1303,12 +1304,28 @@ class DishManager(SKAController):
     def pseudoRandomNoiseDiodePars(self):
         """Returns the device pseudo random noise diode pars."""
         self.logger.debug("Read noiseDiodeMode")
-        return self._pseudo_random_noise_diode_pars
+        return self.component_manager.component_state.get("pseudorandomnoisediodepars", [])
 
     @pseudoRandomNoiseDiodePars.write
     def pseudoRandomNoiseDiodePars(self, values):
         """Set the device pseudo random noise diode pars."""
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
+
+    @attribute(
+        dtype=str,
+        access=AttrWriteType.READ,
+        doc=(
+            "Default empty string when not set, and is a JSON string"
+            "of the last requested global pointing model when set."
+        ),
+    )
+    def lastCommandedPointingParams(self) -> str:
+        """
+        Tango string attribute that returns the
+        last JSON input passed to the ApplyPointingModel command.
+        Defaults to an empty string.
+        """
+        return self._last_commanded_pointing_params
 
     # --------
     # Commands
@@ -1326,7 +1343,10 @@ class DishManager(SKAController):
         Connection status is not monitored from here.
         TODO: Move this into DeviceMonitor
         """
-        if not self._ignore_spfrx and self.dev_state() != tango.DevState.INIT:
+        if (
+            not self.component_manager.component_state.get("ignorespfrx", False)
+            and self.dev_state() != tango.DevState.INIT
+        ):
             if hasattr(self, "component_manager"):
                 if "SPFRX" in self.component_manager.sub_component_managers:
                     try:
@@ -1843,6 +1863,101 @@ class DishManager(SKAController):
         SPFRx has been restarted.
         """
         handler = self.get_command_object("SetKValue")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
+    class ApplyPointingModelCommand(FastCommand):
+        """Class for handling band pointing parameters given a JSON input."""
+
+        def __init__(
+            self,
+            component_manager: DishManagerComponentManager,
+            logger: Optional[logging.Logger] = None,
+        ) -> None:
+            """
+            Initialise a new ApplyPointingModelCommand instance.
+
+            :param component_manager: the device to which this command belongs.
+            :param logger: a logger for this command to use.
+            """
+            self._component_manager = component_manager
+            super().__init__(logger)
+
+        def do(
+            self,
+            *args: Any,
+            **kwargs: Any,
+        ) -> tuple[ResultCode, str]:
+            """
+            Implement ApplyPointingModel command functionality.
+
+            :param json_object: JSON object with a schema similar to this,
+                {
+                    "interface": "...",
+                    "antenna": "....",
+                    "band": "Band_...",
+                    "attrs": {...},
+                    "coefficients": {
+                        "IA": {...},
+                        ...
+                        ...
+                        "HESE8":{...}
+                    },
+                    "rms_fits":
+                    {
+                        "xel_rms": {...},
+                        "el_rms": {...},
+                        "sky_rms": {...}
+                    }
+                }
+
+            :return: A tuple containing a return code and a string
+                message indicating status.
+            """
+            return self._component_manager.apply_pointing_model(*args)
+
+    @command(
+        dtype_in="DevString",
+        doc_in="""The command accepts a JSON input (value) containing data to update a particular
+        band's (b1-b5b). The following 18 coefficients need to be within the JSON object:
+            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
+            [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
+            [15] HESE4, [16] HECE8, [17] HESE8.
+
+        The command only looks for the antenna, band and coefficients
+        - everything else is ignored. A typical structure would be:
+            "interface": "...",
+            "antenna": "....",
+            "band": "Band_...",
+            "attrs": {...},
+            "coefficients": {
+                "IA": {...},
+                ...
+                "HESE8":{...}
+            },
+            "rms_fits": {
+                "xel_rms": {...},
+                "el_rms": {...},
+                "sky_rms": {...}
+            }
+        }""",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def ApplyPointingModel(self, value) -> DevVarLongStringArrayType:
+        """Updates a band's coefficient parameters with a given JSON input.
+        Note, all 18 coefficients need to be present in the JSON object,the Dish ID
+        should be correct, the appropriate unit should be present and coefficient values
+        should be in range. Each time the command is called all parameters will get
+        updated not just the ones that have been modified.
+        """
+        last_commanded_pointing_params = value
+        self._last_commanded_pointing_params = last_commanded_pointing_params
+        # Push change and archive events with the recorded value
+        self.push_change_event("lastCommandedPointingParams", last_commanded_pointing_params)
+        self.push_archive_event("lastCommandedPointingParams", last_commanded_pointing_params)
+        handler = self.get_command_object("ApplyPointingModel")
         return_code, message = handler(value)
         return ([return_code], [message])
 
