@@ -21,7 +21,7 @@ def mock_command_tracker() -> Mock:
 def callbacks() -> dict:
     """Return a dictionary of callbacks."""
     return {
-        "conn_state_cb": Mock(),
+        "build_state_cb": Mock(),
         "quality_state_cb": Mock(),
         "comm_state_cb": Mock(),
         "comp_state_cb": ComponentStateStore(),
@@ -55,7 +55,7 @@ def component_manager(mock_command_tracker: Mock, callbacks: dict) -> Generator:
         yield DishManagerComponentManager(
             LOGGER,
             mock_command_tracker,
-            callbacks["conn_state_cb"],
+            callbacks["build_state_cb"],
             callbacks["quality_state_cb"],
             "device-1",
             "sub-device-1",

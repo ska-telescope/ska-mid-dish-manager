@@ -55,10 +55,9 @@ class SubscriptionTracker:
         :type subcription_id: int
         """
         with self._update_lock:
-            self._logger.debug("Marking %s attribute as subscribed", attribute_name)
             self._subscribed_attrs[attribute_name] = subscription_id
-            if self.something_something:
-                self.something_something(self._subscribed_attrs.keys())
+        if self.something_something:
+            self.something_something(self._subscribed_attrs.keys())
 
     def subscription_stopped(self, attribute_name: str) -> None:
         """
@@ -68,10 +67,9 @@ class SubscriptionTracker:
         :type attribute_name: str
         """
         with self._update_lock:
-            self._logger.debug("Marking %s attribute as not subscribed", attribute_name)
             self._subscribed_attrs.pop(attribute_name)
-            if self.something_something:
-                self.something_something(self._subscribed_attrs.keys())
+        if self.something_something:
+            self.something_something(self._subscribed_attrs.keys())
 
     def setup_event_subscription(
         self, attribute_name: str, device_proxy: tango.DeviceProxy
@@ -113,14 +111,13 @@ class SubscriptionTracker:
             for attribute_name, subscription_id in subscribed_attrs_copy.items():
                 try:
                     device_proxy.unsubscribe_event(subscription_id)
-                    self._logger.info(
+                    self._logger.debug(
                         "Unsubscribed from %s attr on %s",
                         attribute_name,
                         device_proxy.dev_name(),
                     )
-                except tango.EventSystemFailed as err:
-                    self._logger.exception(err)
-                    self._logger.info(
+                except tango.EventSystemFailed:
+                    self._logger.exception(
                         "Could not unsubscribe from %s attr on %s",
                         attribute_name,
                         device_proxy.dev_name(),
@@ -239,7 +236,7 @@ class TangoDeviceMonitor:
         """
         self._logger.info("Setting up monitoring on %s", self._trl)
 
-        retry_counts = {name: 0 for name in self._monitored_attributes}
+        retry_counts = {name: 1 for name in self._monitored_attributes}
         # set up all subscriptions
         while not exit_thread_event.is_set():
             device_proxy = self._tango_device_proxy(self._trl, exit_thread_event)

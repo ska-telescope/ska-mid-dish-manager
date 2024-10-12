@@ -31,9 +31,7 @@ def test_log_command_inout(patched_dev_factory, caplog: pytest.LogCaptureFixture
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
         LOGGER,
-        [],
-        communication_state_callback=None,
-        component_state_callback=None,
+        (),
     )
 
     tc_manager._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
@@ -67,9 +65,7 @@ def test_log_write_attribute(patched_dev_factory, caplog: pytest.LogCaptureFixtu
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
         LOGGER,
-        [],
-        communication_state_callback=None,
-        component_state_callback=None,
+        (),
     )
 
     tc_manager._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)

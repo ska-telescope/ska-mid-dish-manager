@@ -64,7 +64,7 @@ def test_happy_path(caplog):
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
 def test_unhappy_path(patched_dp, caplog):
-    """Tango device is unreachable and can't be reach by the component manager
+    """Tango device is unreachable and can't communicate with component manager
 
     Similar to `test_component_manager_continues_reconnecting_...` except
     Tango layer is mocked here. Checks are made on the mock for expected
@@ -120,26 +120,29 @@ def test_device_goes_away(caplog):
     time.sleep(0.5)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
-    # Set up mock error event
-    mock_error = mock.MagicMock()
+    # Set up an error mock event
+    mock_error = mock.MagicMock(name="mock_error")
     mock_error.err = True
     mock_error.name = "some_attr"
     # Trigger a failure event
     tc_manager._events_queue.put(mock_error)
-
     # wait a bit for the state to change
     time.sleep(0.5)
     assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
 
-    # Set up mock valid event
-    mock_data = mock.MagicMock()
-    mock_data.name = "some_attr"
-    # Trigger the event processing again
+    # Set up a valid mock event
+    mock_attr_value = mock.MagicMock(name="mock_attr_value")
+    mock_attr_value.name = "some_attr"
+    mock_attr_value.quality = tango.AttrQuality.ATTR_VALID
+    mock_data = mock.MagicMock(name="mock_data")
+    mock_data.attr_value = mock_attr_value
+    mock_data.err = False
+    # trigger a valid event
     tc_manager._events_queue.put(mock_data)
 
     # wait a bit for the state to change
     time.sleep(0.5)
-    assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
+    assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
-    # clean up afterwards
+    # clean up afterwards (THIS SHOULD BE A FINALIZER ELSE THINGS HANG)
     tc_manager.stop_communicating()
