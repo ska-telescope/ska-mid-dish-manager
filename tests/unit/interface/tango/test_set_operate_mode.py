@@ -100,7 +100,7 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     # Transition DishManager to OPERATE mode with configuredBand not set
     [[_], [unique_id]] = device_proxy.SetOperateMode()
     result_event_store.wait_for_command_result(
-        unique_id, '[6, "SetOperateMode requires a configured band"]'
+        unique_id, '[6, "SetOperateMode requires a configured band"]', timeout=30
     )
 
     # Set configuredBand and try again

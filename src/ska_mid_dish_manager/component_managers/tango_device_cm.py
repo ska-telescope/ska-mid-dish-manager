@@ -186,36 +186,30 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # print(f"cb err at time: {datetime.datetime.
         # utcfromtimestamp(time.time()).strftime('%Y-%m-%dT%H:%M:%SZ')}, data: {event_data}")
         attr_name = event_data.attr_name
-        received_timestamp = event_data.reception_date.totime()
-        event_type = event_data.event
-        value = event_data.attr_value
         errors = event_data.errors
-        # Events with errors do not send the attribute value
-        # so regard its reading as invalid.
-        quality = tango.AttrQuality.ATTR_INVALID
 
         self.logger.debug(
             (
-                "Error event was emitted by device [%s] with the following details: "
-                "attr_name: %s ,"
-                "received_timestamp: %s ,"
-                "event_type: %s ,"
-                "value: %s ,"
-                "quality: %s ,"
+                "Error event was emitted by device %s with the following details: "
+                "attr_name: %s, "
                 "errors: %s"
             ),
             self._trl,
             attr_name,
-            received_timestamp,
-            event_type,
-            value,
-            quality,
             errors,
         )
         try:
             self._live_attr_event_subscriptions.remove(attr_name)
         except KeyError:
             pass
+
+        # this is a hack at the moment to get comms to stay as established
+        # needs a broader discussion on what to do about this especially
+        # since this affects e.g. write_attribute_value function
+        error_reason = errors[-1].reason
+        if error_reason in ["API_EventTimeout", "API_MissedEvents"]:
+            return
+        # proposal will be to rather update the quality factor on all the attributes as INVALID
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         # return
         # dont give it a list, just making mypy happy for now

@@ -143,7 +143,7 @@ class DishManager(SKAController):
             spfc_address=self.SPFDeviceFqdn,
             spfrx_address=self.SPFRxDeviceFqdn,
         )
-        self._build_state = self._release_info.get_build_state()
+        # self._build_state = self._release_info.get_build_state()
 
         return DishManagerComponentManager(
             self.logger,
@@ -154,8 +154,9 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,  # to be changed to TRL?
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
-            communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
+            # communication_state_callback=self._communication_state_changed,
+            communication_state_callback=None,
         )
 
     def init_command_objects(self) -> None:
@@ -259,6 +260,7 @@ class DishManager(SKAController):
             return
         if communication_state == CommunicationStatus.ESTABLISHED:
             cm = self.component_manager.sub_component_managers[device.value]
+            build_state = None
             try:
                 if device == Device.DS:
                     build_state = cm.read_attribute_value("buildState")
@@ -396,7 +398,7 @@ class DishManager(SKAController):
                 "ignorespfrx": "ignoreSpfrx",
                 "spfconnectionstate": "spfConnectionState",
                 "spfrxconnectionstate": "spfrxConnectionState",
-                "dsconnectionstate": "dsConnectionState",
+                "dsconnectionstate": "dsConnectionState",  # maybe dont push events for these
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",

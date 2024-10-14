@@ -24,6 +24,7 @@ def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_mana
         tango.EventType.CHANGE_EVENT,
         cap_state_event_store,
     )
+    cap_state_event_store.clear_queue()
     dish_manager_proxy.SetStandbyFPMode()
 
     cap_state_event_store.wait_for_value(CapabilityStates.STANDBY, timeout=10)

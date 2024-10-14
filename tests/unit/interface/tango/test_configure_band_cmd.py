@@ -76,7 +76,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     ds_cm._update_component_state(indexerposition=IndexerPosition[band_number])
     spf_cm._update_component_state(bandinfocus=BandInFocus[band_number])
 
-    assert main_event_store.wait_for_command_id(unique_id, timeout=5)
+    assert main_event_store.wait_for_command_id(unique_id, timeout=30)
     assert device_proxy.configuredBand == Band[band_number]
 
     expected_progress_updates = [

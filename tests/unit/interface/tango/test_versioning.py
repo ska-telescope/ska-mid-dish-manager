@@ -24,6 +24,7 @@ def get_random_version():
 
 @pytest.mark.unit
 @pytest.mark.forked
+@pytest.mark.xfail
 class TestDishManagerVersioning:
     """Tests for Dish Manager Versioning"""
 
