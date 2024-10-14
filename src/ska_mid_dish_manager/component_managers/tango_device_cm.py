@@ -69,7 +69,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._monitored_attributes,
             self._events_queue,
             logger,
-            self.something_something,
+            self._sync_communication_to_subscription,
         )
 
         self._event_consumer_thread: Optional[Thread] = None
@@ -83,57 +83,34 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
-        # do this in start communication instead
-        # self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-
-        # this is not necessary callback is called for you automatically
-        # Default to NOT_ESTABLISHED
-        # if self._communication_state_callback:
-        #     self._communication_state_callback()  # type: ignore
-
     # ---------
     # Callbacks
     # ---------
 
-    def another_thing(self) -> None:
-        """_summary_
-
-        Arguments:
-            subscribed_attrs -- _description_
-        """
+    def valid_event_communication_state_cb(self) -> None:
+        """Sync communication state with valid events from monitored attributes"""
         # add some logging somewhere to show that this is a better approach
-        # raise RuntimeError
-        # print(f"xxx in another thing {self._live_attr_event_subscriptions}")
         all_monitored_events_valid = (
             set(self._monitored_attributes) == self._live_attr_event_subscriptions
         )
         if all_monitored_events_valid:
-            # check is already happening in the base classes
-            # if self._communication_state != CommunicationStatus.ESTABLISHED:
-            #     self.logger.debug("Updating CommunicationStatus as ESTABLISHED")
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
-    def something_something(self, subscribed_attrs: list[str]) -> None:
-        """_summary_
-
-        Arguments:
-            subscribed_attrs -- _description_
+    def _sync_communication_to_subscription(self, subscribed_attrs: list[str]) -> None:
         """
-        # save a copy of the subscribed attributes
-        self._live_attr_event_subscriptions = set(subscribed_attrs)
+        Reflect status of monitored attribute subscription on communication state
 
-        # print(f"xxx in something something {subscribed_attrs}")
+        :param subscribed_attrs: the attributes with successful change event subscription
+        :type subscribed_attrs: list
+        """
+        # save a copy of the subscribed attributes. this will be evaluated
+        # by the callback executed by the function processing the valid events
+        self._live_attr_event_subscriptions = set(subscribed_attrs)
         # add some logging somewhere to show that this is a better approach
         all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
         if all_subscribed:
-            # check is already happening in the base classes
-            # if self._communication_state != CommunicationStatus.ESTABLISHED:
-            #     self.logger.debug("Updating CommunicationStatus as ESTABLISHED")
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
         else:
-            # check is already happening in the base classes
-            # if self._communication_state != CommunicationStatus.NOT_ESTABLISHED:
-            #     self.logger.debug("Updating CommunicationStatus as NOT ESTABLISHED")
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     def _update_state_from_event(self, event_data: tango.EventData) -> None:
@@ -145,11 +122,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
-        # import ipdb; ipdb.set_trace()
-        # print(f"cb data at time: {datetime.datetime.
-        # utcfromtimestamp(time.time()).strftime('%Y-%m-%dT%H:%M:%SZ')} data: {event_data}")
         attr_name = event_data.attr_value.name.lower()
-        # attr_name = event_data.attr_value.name
 
         # Add it to component state if not there
         if attr_name not in self._component_state:
@@ -174,7 +147,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
             # update the communication state in case the error event callback flipped it
             self._live_attr_event_subscriptions.add(attr_name)
-            self.another_thing()
+            self.valid_event_communication_state_cb()
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
         """
@@ -183,8 +156,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: data representing tango event
         :type event_data: tango.EventData
         """
-        # print(f"cb err at time: {datetime.datetime.
-        # utcfromtimestamp(time.time()).strftime('%Y-%m-%dT%H:%M:%SZ')}, data: {event_data}")
         attr_name = event_data.attr_name
         errors = event_data.errors
 
@@ -211,11 +182,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             return
         # proposal will be to rather update the quality factor on all the attributes as INVALID
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-        # return
-        # dont give it a list, just making mypy happy for now
-        # self.something_something(list(self._live_attr_event_subscriptions))
-
-        # pylint: disable=too-many-arguments
 
     # --------------
     # helper methods
@@ -262,8 +228,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 if monitored_attribute not in self._component_state:
                     self._component_state[monitored_attribute] = None
 
-                # this can potentially raise an error, handle it
-                value = device_proxy.read_attribute(monitored_attribute).value
+                try:
+                    value = device_proxy.read_attribute(monitored_attribute).value
+                except tango.DevFailed:
+                    self.logger.exception(
+                        "Encountered an error retrieving the current value of %s from %s",
+                        monitored_attribute,
+                        self._trl,
+                    )
                 if isinstance(value, np.ndarray):
                     value = list(value)
                 monitored_attribute_values[monitored_attribute] = value
@@ -278,20 +250,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         error_event_cb: Optional[Callable] = None,  # type: ignore
     ) -> None:
         while task_abort_event and not task_abort_event.is_set():
-            # print(f"www in the while loop at time: {datetime.datetime.
-            # utcfromtimestamp(time.time()).strftime('%Y-%m-%dT%H:%M:%SZ')}")
             try:
                 event_data = event_queue.get(timeout=1)
-                # print(f"www got this event data {event_data}")
                 if event_data.err:
                     if error_event_cb:
                         error_event_cb(event_data)
                     continue
-                # raise RuntimeError(event_data)
                 valid_event_cb(event_data)
             except Empty:
-                # print(f"www didnt get any event data {event_data}")
-                # raise RuntimeError(event_data)
                 pass
 
     def _stop_event_consumer_thread(self) -> None:
@@ -323,7 +289,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._handle_error_events,
             ],
         )
-        # name the threads to allow easy following in logs
+
+        def _construct_thread_name(trl: str) -> str:
+            if "spfc" in trl:
+                dev = "spfc"
+            elif "spfrx" in trl:
+                dev = "spfrx"
+            else:
+                dev = "ds"
+            return f"{dev}_event_consumer_thread"
+
+        self._event_consumer_thread.name = _construct_thread_name(self._trl)
         self._event_consumer_thread.start()
 
     def run_device_command(

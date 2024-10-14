@@ -23,7 +23,7 @@ class SubscriptionTracker:
         self,
         event_queue: Queue,
         logger: logging.Logger,
-        something_something: Optional[Callable] = None,
+        communication_status_callback: Optional[Callable] = None,
     ):
         """
         Keep track of which attributes has been subscribed to.
@@ -33,14 +33,14 @@ class SubscriptionTracker:
 
         :param event_queue: the store for change events emitted by the device server
         :type event_queue: Queue
-        :param something_something: Update communication status
-        :type something_something: Callable
+        :param communication_status_callback: Update communication status
+        :type communication_status_callback: Callable
         :param logger: Logger
         :type logger: logging.Logger
         ...
         """
         self._event_queue = event_queue
-        self.something_something = something_something
+        self.communication_status_callback = communication_status_callback
         self._logger = logger
         self._subscribed_attrs: Dict[str, int] = {}
         self._update_lock = Lock()
@@ -56,8 +56,8 @@ class SubscriptionTracker:
         """
         with self._update_lock:
             self._subscribed_attrs[attribute_name] = subscription_id
-        if self.something_something:
-            self.something_something(self._subscribed_attrs.keys())
+        if self.communication_status_callback:
+            self.communication_status_callback(self._subscribed_attrs.keys())
 
     def subscription_stopped(self, attribute_name: str) -> None:
         """
@@ -68,8 +68,8 @@ class SubscriptionTracker:
         """
         with self._update_lock:
             self._subscribed_attrs.pop(attribute_name)
-        if self.something_something:
-            self.something_something(self._subscribed_attrs.keys())
+        if self.communication_status_callback:
+            self.communication_status_callback(self._subscribed_attrs.keys())
 
     def setup_event_subscription(
         self, attribute_name: str, device_proxy: tango.DeviceProxy
@@ -77,7 +77,7 @@ class SubscriptionTracker:
         """
         Subscribe to change events on the device server
         """
-        # dont attempt to subscribe to attributes with live subscriptions already
+        # dont subscribe to attributes with live subscriptions already
         if attribute_name in self._subscribed_attrs:
             return
 
@@ -142,7 +142,7 @@ class TangoDeviceMonitor:
         monitored_attributes: Tuple[str, ...],
         event_queue: Queue,
         logger: logging.Logger,
-        something_something: Callable,
+        communication_status_callback: Callable,
     ) -> None:
         """
         Create the TangoDeviceMonitor.
@@ -166,7 +166,7 @@ class TangoDeviceMonitor:
         self._attribute_subscription_thread: Optional[Thread] = None
 
         self._subscription_tracker = SubscriptionTracker(
-            self._event_queue, self._logger, something_something
+            self._event_queue, self._logger, communication_status_callback
         )
 
     def stop_monitoring(self) -> None:
@@ -223,6 +223,18 @@ class TangoDeviceMonitor:
                 self._exit_thread_event,
             ],
         )
+
+        # will be good to move this and import
+        def _construct_thread_name(trl: str) -> str:
+            if "spfc" in trl:
+                dev = "spfc"
+            elif "spfrx" in trl:
+                dev = "spfrx"
+            else:
+                dev = "ds"
+            return f"{dev}_attribute_subscription_thread"
+
+        self._attribute_subscription_thread.name = _construct_thread_name(self._trl)
         # monitor all attributes in a thread
         self._attribute_subscription_thread.start()
 

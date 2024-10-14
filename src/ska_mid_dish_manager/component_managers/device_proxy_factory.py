@@ -13,8 +13,6 @@ class DeviceProxyManager:
 
     Too many device proxy objects to the same server is unnecessary and probably
     risky; i.e. any device proxy thread dying can crash the device server process
-
-    Note: The caller should wrap the call in tango.EnsureOmniThread
     """
 
     def __init__(self, logger: logging.Logger):
@@ -41,13 +39,16 @@ class DeviceProxyManager:
 
         :returns: is_device_running (boolean)
         """
-        try:
-            tango_device_proxy.ping()
-        except tango.DevFailed:
-            self._logger.exception(f"Failed to ping device proxy: {tango_device_proxy.dev_name()}")
-            is_device_running = False
-        else:
-            is_device_running = True
+        with tango.EnsureOmniThread():
+            try:
+                tango_device_proxy.ping()
+            except tango.DevFailed:
+                self._logger.exception(
+                    f"Failed to ping device proxy: {tango_device_proxy.dev_name()}"
+                )
+                is_device_running = False
+            else:
+                is_device_running = True
 
         return is_device_running
 
@@ -72,16 +73,19 @@ class DeviceProxyManager:
         """
         is_device_connected = False
         while not is_device_connected and (thread_event and not thread_event.is_set()):
-            try:
-                tango_device_proxy.reconnect(True)
-            except tango.DevFailed:
-                self._logger.exception(
-                    f"Failed to reconnect to device proxy: {tango_device_proxy.dev_name()}"
-                )
-                self._logger.debug(f"Attempting reconnection to the device proxy in {retry_time}s")
-                thread_event.wait(timeout=retry_time)
-            else:
-                is_device_connected = True
+            with tango.EnsureOmniThread():
+                try:
+                    tango_device_proxy.reconnect(True)
+                except tango.DevFailed:
+                    self._logger.exception(
+                        f"Failed to reconnect to device proxy: {tango_device_proxy.dev_name()}"
+                    )
+                    self._logger.debug(
+                        f"Attempting reconnection to the device proxy in {retry_time}s"
+                    )
+                    thread_event.wait(timeout=retry_time)
+                else:
+                    is_device_connected = True
 
     def create_tango_device_proxy(
         self, trl: str, retry_time: float = 0.5, thread_event: Optional[Event] = None
@@ -99,24 +103,25 @@ class DeviceProxyManager:
 
         :returns: device_proxy (tango.DeviceProxy | None)
         """
-        # exceptiontango.DeviceUnlocked use this in the polling in command map
         device_proxy = None
         proxy_created = False
         try_count = 1
         while not proxy_created and (thread_event and not thread_event.is_set()):
-            try:
-                device_proxy = tango.DeviceProxy(trl)
-                proxy_created = True
-            except tango.DevFailed:
-                self._logger.exception(f"An error occured creating a device proxy to {trl}")
-                self._logger.debug(
-                    f"Try number {try_count}: failed to connect to tango device server"
-                    f" {trl}, retrying in {retry_time}s"
-                )
-                try_count += 1
-                thread_event.wait(timeout=retry_time)
+            with tango.EnsureOmniThread():
+                try:
+                    device_proxy = tango.DeviceProxy(trl)
+                    proxy_created = True
+                except tango.DevFailed:
+                    self._logger.exception(f"An error occured creating a device proxy to {trl}")
+                    self._logger.debug(
+                        f"Try number {try_count}: failed to connect to tango device server"
+                        f" {trl}, retrying in {retry_time}s"
+                    )
+                    try_count += 1
+                    thread_event.wait(timeout=retry_time)
 
-        # this will happen if stop monitoring is triggered while the proxy creation is ongoing
+        # if stop monitoring is triggered while the proxy creation is ongoing
+        # device_proxy will still be a NoneType, handle that edge case also
         if device_proxy is None:
             self._logger.debug(f"DeviceProxy to {trl} was not created. NoneType returned")
             return device_proxy

@@ -215,41 +215,9 @@ class DishManager(SKAController):
             self.ApplyPointingModelCommand(self.component_manager, self.logger),
         )
 
-    # def _connection_and_build_state_updates(self, device: Device,
-    # communication_state: CommunicationStatus):
-    # if not hasattr(self, "component_manager"):
-    #     self.logger.warning("Init not completed, but communication state is being updated")
-    #     return
-
-    # self._update_connection_state_attrs(device)
-    # self._update_version_of_subdevice_on_success(device, communication_state)
-
-    # def _update_connection_state_attrs(self, device: Device):
-    #     """
-    #     Push change events on connection state attributes for
-    #     subservient devices communication state changes.
-    #     """
-    #     if device in self._device_to_comm_attr_map:
-    #         comms_state = self.component_manager.sub_component_managers[
-    #             device.value
-    #         ].communication_state
-    #         self.push_change_event(
-    #             self._device_to_comm_attr_map[device],
-    #             comms_state,
-    #         )
-    #         self.push_archive_event(
-    #             self._device_to_comm_attr_map[device],
-    #             comms_state,
-    #         )
-
     # ---------
     # Callbacks
     # ---------
-
-    def _update_dev_state(self, communication_state: CommunicationStatus):
-        # self._update_state()
-        # use this or keep the default communication_state callback
-        pass
 
     def _update_version_of_subdevice_on_success(
         self, device: Device, communication_state: CommunicationStatus
@@ -276,11 +244,6 @@ class DishManager(SKAController):
             self.logger.debug("Build state for %s device is available", device.value)
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
-        # Do not modify or push quality changes before initialization complete
-        if not hasattr(self, "_component_state_attr_map"):
-            self.logger.warning("Init not completed, rejecting attribute quality update")
-            return
-
         device_attribute_name = self._component_state_attr_map.get(attribute_name, None)
         if device_attribute_name:
             attribute_object = getattr(self, device_attribute_name, None)
@@ -290,10 +253,6 @@ class DishManager(SKAController):
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
-        # if not hasattr(self, "_component_state_attr_map"):
-        #     self.logger.warning("Init not completed, but state is being updated [%s]", kwargs)
-        #     return
-
         def change_case(attr_name):
             """Convert camel case string to snake case
 
