@@ -23,7 +23,7 @@ class SubscriptionTracker:
         self,
         event_queue: Queue,
         logger: logging.Logger,
-        communication_status_callback: Optional[Callable] = None,
+        subscription_status_callback: Optional[Callable] = None,
     ):
         """
         Keep track of which attributes has been subscribed to.
@@ -33,17 +33,25 @@ class SubscriptionTracker:
 
         :param event_queue: the store for change events emitted by the device server
         :type event_queue: Queue
-        :param communication_status_callback: Update communication status
-        :type communication_status_callback: Callable
         :param logger: Logger
         :type logger: logging.Logger
-        ...
+        :param subscription_status_callback: Update communication status based on the subscription
+        :type subscription_status_callback: Callable
         """
         self._event_queue = event_queue
-        self.communication_status_callback = communication_status_callback
+        self.subscription_status_callback = subscription_status_callback
         self._logger = logger
         self._subscribed_attrs: Dict[str, int] = {}
         self._update_lock = Lock()
+
+    @property
+    def subscribed_attrs(self) -> list:
+        """
+        Get the list of attributes with change events
+
+        :return: list of attribute names
+        """
+        return list(self._subscribed_attrs.keys())
 
     def subscription_started(self, attribute_name: str, subscription_id: int) -> None:
         """
@@ -56,8 +64,8 @@ class SubscriptionTracker:
         """
         with self._update_lock:
             self._subscribed_attrs[attribute_name] = subscription_id
-        if self.communication_status_callback:
-            self.communication_status_callback(self._subscribed_attrs.keys())
+        if self.subscription_status_callback:
+            self.subscription_status_callback(self._subscribed_attrs.keys())
 
     def subscription_stopped(self, attribute_name: str) -> None:
         """
@@ -68,8 +76,8 @@ class SubscriptionTracker:
         """
         with self._update_lock:
             self._subscribed_attrs.pop(attribute_name)
-        if self.communication_status_callback:
-            self.communication_status_callback(self._subscribed_attrs.keys())
+        if self.subscription_status_callback:
+            self.subscription_status_callback(self._subscribed_attrs.keys())
 
     def setup_event_subscription(
         self, attribute_name: str, device_proxy: tango.DeviceProxy
@@ -142,7 +150,7 @@ class TangoDeviceMonitor:
         monitored_attributes: Tuple[str, ...],
         event_queue: Queue,
         logger: logging.Logger,
-        communication_status_callback: Callable,
+        subscription_status_callback: Optional[Callable] = None,
     ) -> None:
         """
         Create the TangoDeviceMonitor.
@@ -155,6 +163,8 @@ class TangoDeviceMonitor:
         :type event_queue: Queue
         :param logger: logger
         :type logger: logging.Logger
+        :param subscription_status_callback: Sync communication to subscription
+        :type subscription_status_callback: Callable
         """
         self._trl = trl
         self._tango_device_proxy = device_proxy_factory
@@ -166,7 +176,7 @@ class TangoDeviceMonitor:
         self._attribute_subscription_thread: Optional[Thread] = None
 
         self._subscription_tracker = SubscriptionTracker(
-            self._event_queue, self._logger, communication_status_callback
+            self._event_queue, self._logger, subscription_status_callback
         )
 
     def stop_monitoring(self) -> None:
@@ -181,9 +191,9 @@ class TangoDeviceMonitor:
             self._attribute_subscription_thread.join()
             self._logger.info("Stopped monitoring thread on %s", self._trl)
             # undo subscriptions and inform client we have no comms to the device server
-            # maybe grab the already existing proxy rather than going over the whole thing again
-            device_proxy = self._tango_device_proxy(self._trl, self._exit_thread_event)
-            self._subscription_tracker.clear_subscriptions(device_proxy)
+            if self._subscription_tracker.subscribed_attrs:
+                device_proxy = self._tango_device_proxy(self._trl, self._exit_thread_event)
+                self._subscription_tracker.clear_subscriptions(device_proxy)
 
     def _verify_connection_up(
         self, on_verified_callback: Callable, exit_thread_event: Event
@@ -250,8 +260,8 @@ class TangoDeviceMonitor:
 
         retry_counts = {name: 1 for name in self._monitored_attributes}
         # set up all subscriptions
+        device_proxy = self._tango_device_proxy(self._trl, exit_thread_event)
         while not exit_thread_event.is_set():
-            device_proxy = self._tango_device_proxy(self._trl, exit_thread_event)
             try:
                 # Subscribe to all monitored attributes
                 for attribute_name in self._monitored_attributes:

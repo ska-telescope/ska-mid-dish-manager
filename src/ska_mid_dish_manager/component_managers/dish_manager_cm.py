@@ -40,7 +40,6 @@ from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 
-# NUMBER_OF_SUB_DEVICES = 3
 # pylint: disable=abstract-method
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments,too-many-public-methods
@@ -118,12 +117,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._state_update_lock = Lock()  # does not seem to be used
         self._sub_communication_state_change_lock = Lock()
 
-        # self._device_to_comm_attr_map = {
-        #     Device.DS: "dsConnectionState",
-        #     Device.SPF: "spfConnectionState",
-        #     Device.SPFRX: "spfrxConnectionState",
-        # }
-
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
@@ -199,8 +192,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
             ),
         }
-        # do this in start communication instead
-        # self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
         self._command_map = CommandMap(
             self,
@@ -223,17 +214,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "pseudoRandomNoiseDiodePars",
             ],
         }
-
-    # logging happens in the if block
-    # def _update_component_state(self, *args, **kwargs):
-    #     """Override component state to add logging"""
-    #     pointing_related_attrs = set(
-    #         ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
-    #     )
-    #     no_pointing_updates = set()
-    #     if pointing_related_attrs.intersection(kwargs) == no_pointing_updates:
-    #         self.logger.debug("Updating dish manager component state with [%s]", kwargs)
-    #     super()._update_component_state(*args, **kwargs)
 
     def is_device_ignored(self, device: str):
         """Check whether the given device is ignored."""
@@ -346,17 +326,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # this is too much, reconsider doing this only once
             # self._build_state_callback(device, communication_state)
 
-            # THIS IS USELESS BECAUSE WE WILL ALREADY HAVE A COMPONENT MANAGER BEFORE
-            # THIS CALLBACK IS TRIGGERED
-
-            # While creating the first sub-component manager, this callback
-            # can be triggered when self.sub_component_managers is still None
-            # if self.sub_component_managers is None:
-            #     return
-            # # Have all the component managers been created?
-            # if len(self.sub_component_managers.values()) != NUMBER_OF_SUB_DEVICES:
-            #     return
-
             active_sub_component_managers = self._get_active_sub_component_managers()
             sub_devices_communication_states = [
                 sub_component_manager.communication_state
@@ -368,24 +337,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ):
                 self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
-                # ds_component_state = self.sub_component_managers["DS"].component_state
-                # spf_component_state = self.sub_component_managers["SPF"].component_state
-                # spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
-
-                # new_health_state = self._state_transition.compute_dish_health_state(
-                #     ds_component_state,
-                #     spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                #     spf_component_state if not self.is_device_ignored("SPF") else None,
-                # )
-                # new_dish_mode = self._state_transition.compute_dish_mode(
-                #     ds_component_state,
-                #     spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                #     spf_component_state if not self.is_device_ignored("SPF") else None,
-                # )
-
-                # self._update_component_state(
-                #     healthstate=new_health_state, dishmode=new_dish_mode
-                # )
             elif any(
                 communication_state == CommunicationStatus.NOT_ESTABLISHED
                 for communication_state in sub_devices_communication_states
@@ -393,14 +344,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
             else:
                 self._update_communication_state(CommunicationStatus.DISABLED)
-                # self._update_component_state(
-                #     healthstate=HealthState.UNKNOWN, dishmode=DishMode.UNKNOWN
-                # )
-
-            # self._component_state_changed() this does nothing as no kwargs are passed
-
-            # push change events for the connection state attributes
-            # self._connection_state_callback(attribute_name)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _component_state_changed(self, device: Device, *args, **kwargs):
@@ -416,15 +359,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         Note: This callback is triggered by the component managers of
         the subservient devices only. DishManager also has its own callback.
         """
-        # Do all the component managers have a component state
-        # THIS IS USELESS BECAUSE WE WILL ALREADY HAVE A COMPONENT STATE BEFORE
-        # THIS CALLBACK IS TRIGGERED
-        # if not all(
-        #     sub_component_manager.component_state
-        #     for sub_component_manager in self.sub_component_managers.values()
-        # ):
-        #     return
-
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
@@ -495,10 +429,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
             # update the bandInFocus of SPF before configuredBand
             spf_component_manager = self.sub_component_managers["SPF"]
-            # wrap this in try catch for LostConnection
-            # and DevFailed for first time device comes up
-            spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
-            spf_component_state["bandinfocus"] = band_in_focus
+            try:
+                spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
+            except (LostConnection, tango.DevFailed):
+                # this will impact configuredBand calculation on dish manager
+                self.logger.warning(
+                    "Encountered an error writing bandInFocus %s on SPF", band_in_focus
+                )
+            else:
+                spf_component_state["bandinfocus"] = band_in_focus
 
         # spfrx attenuation
         if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:

@@ -87,15 +87,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     # Callbacks
     # ---------
 
-    def valid_event_communication_state_cb(self) -> None:
-        """Sync communication state with valid events from monitored attributes"""
-        # add some logging somewhere to show that this is a better approach
-        all_monitored_events_valid = (
-            set(self._monitored_attributes) == self._live_attr_event_subscriptions
-        )
-        if all_monitored_events_valid:
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
-
     def _sync_communication_to_subscription(self, subscribed_attrs: list[str]) -> None:
         """
         Reflect status of monitored attribute subscription on communication state
@@ -103,8 +94,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param subscribed_attrs: the attributes with successful change event subscription
         :type subscribed_attrs: list
         """
-        # save a copy of the subscribed attributes. this will be evaluated
-        # by the callback executed by the function processing the valid events
+        # save a copy of the subscribed attributes. this will be
+        # evaluated by the function processing the valid events
         self._live_attr_event_subscriptions = set(subscribed_attrs)
         # add some logging somewhere to show that this is a better approach
         all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
@@ -147,7 +138,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
             # update the communication state in case the error event callback flipped it
             self._live_attr_event_subscriptions.add(attr_name)
-            self.valid_event_communication_state_cb()
+            self.sync_communication_to_valid_event()
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
         """
@@ -186,6 +177,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     # --------------
     # helper methods
     # --------------
+
+    def sync_communication_to_valid_event(self) -> None:
+        """Sync communication state with valid events from monitored attributes"""
+        # add some logging somewhere to show that this is a better approach
+        all_monitored_events_valid = (
+            set(self._monitored_attributes) == self._live_attr_event_subscriptions
+        )
+        if all_monitored_events_valid:
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
     def clear_monitored_attributes(self) -> None:
         """

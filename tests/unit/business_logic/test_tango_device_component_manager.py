@@ -90,7 +90,6 @@ def test_unhappy_path(patched_dp, caplog):
         pass
     logs = [record.message for record in caplog.records]
     for count in ("1", "2", "3"):
-        # retry time to be an arg when backloop is implemented
         assert (
             f"Try number {count}: failed to connect to tango device server a/b/c, retrying in 0.5s"
             in logs

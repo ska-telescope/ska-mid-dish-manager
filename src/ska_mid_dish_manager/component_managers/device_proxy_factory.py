@@ -55,7 +55,7 @@ class DeviceProxyManager:
     def _wait_for_device(
         self,
         tango_device_proxy: tango.DeviceProxy,
-        retry_time: float = 0.5,
+        retry_time: float = 1.2,  # connection request should be <= 1000ms
         thread_event: Optional[Event] = None,
     ) -> None:
         """
@@ -71,6 +71,8 @@ class DeviceProxyManager:
 
         :returns: None
         """
+        # TODO implement retry time with a backloop which will have
+        # max retries and increase retry time for successive retries
         is_device_connected = False
         while not is_device_connected and (thread_event and not thread_event.is_set()):
             with tango.EnsureOmniThread():
@@ -103,6 +105,8 @@ class DeviceProxyManager:
 
         :returns: device_proxy (tango.DeviceProxy | None)
         """
+        # TODO implement retry time with a backloop which will have
+        # max retries and increase retry time for successive retries
         device_proxy = None
         proxy_created = False
         try_count = 1
