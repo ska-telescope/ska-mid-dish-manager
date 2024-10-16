@@ -148,7 +148,9 @@ def test_dsc_current_limit_used(
     )
     ds_device_proxy.Slew([80.0, 90.0])
     progress_event_store.wait_for_progress_update(
-        ("Slew called with Azimuth speed: 3.0 deg/s, Elevation speed: 1.0 deg/s "
-         "and DSC Power Limit: 14.0kW"),
+        (
+            "Slew called with Azimuth speed: 3.0 deg/s, Elevation speed: 1.0 deg/s "
+            "and DSC Power Limit: 14.0kW"
+        ),
         timeout=6,
     )
