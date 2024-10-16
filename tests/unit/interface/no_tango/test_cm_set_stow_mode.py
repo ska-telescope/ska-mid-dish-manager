@@ -3,7 +3,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from ska_control_model import TaskStatus
+from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.dish_enums import DishMode
@@ -37,6 +37,13 @@ def test_set_stow_mode_handler(
         {
             "status": TaskStatus.COMPLETED,
             "progress": "Stow called, monitor dishmode for LRC completed",
+        },
+        # IN_PROGRESS is called 2x in base classes: report a fix
+        {"status": TaskStatus.IN_PROGRESS},
+        {"status": TaskStatus.IN_PROGRESS},
+        {
+            "status": TaskStatus.COMPLETED,
+            "result": (ResultCode.OK, "Abort completed OK"),
         },
     )
 

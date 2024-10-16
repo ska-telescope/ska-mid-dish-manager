@@ -814,7 +814,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.exception("DishManager has failed to execute Stow DSManager")
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
         task_callback(
-            progress="Stow called, monitor dishmode for LRC completed", status=TaskStatus.COMPLETED
+            status=TaskStatus.COMPLETED, progress="Stow called, monitor dishmode for LRC completed"
         )
         # abort queued tasks on the task executor
         self.abort_commands(task_callback=task_callback)
