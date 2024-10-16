@@ -204,6 +204,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "achievedPointing",
                 "desiredPointingAz",
                 "desiredPointingEl",
+                "achievedTargetLock",
                 "trackInterpolationMode",
                 "actStaticOffsetValueXel",
                 "actStaticOffsetValueEl",
