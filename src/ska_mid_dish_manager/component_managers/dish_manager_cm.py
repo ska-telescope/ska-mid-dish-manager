@@ -976,7 +976,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Process the JSON data
         try:
             data = json.loads(json_object)
-        except (LostConnection, json.JSONDecodeError) as err:
+        except json.JSONDecodeError as err:
             self.logger.exception("Invalid json supplied")
             message = str(err)
             return result_code, message

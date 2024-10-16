@@ -1,51 +1,39 @@
-============================
-AbortCommands on DishManager
-============================
+====================
+Abort on DishManager
+====================
 
-*AbortCommands* resulted from the implementation of long running commands.
-There is extensive `documentation`_ on the implementation details and usage
-of long running commands. From the docs, *AbortCommands*:
+DishManager implemented *AbortCommands* as part of its adaptation of the base classes long running command interface (LRC).
+There is extensive `documentation`_ on the implementation details and usage LRC. For clients of DishLMC, cancelling a task
+(Stop for MeerKAT dish proxy and Abort for TMC) means more than just instructing the executor to cancel a LRC.
 
-* Cancels currently running long running task.
+In TMC for example, it could mean:
+* stop moving the dish
 
-* Clears out any commands in the queue.
+* and clear the scan id
 
-* Once completed the client is notified via a change event on the lrc attributes.
+In the MeerKAT dish proxy, it could mean:
 
-The steps above also apply to the execution of long running commands on DishManager.
-Since DishManager provides aggregate attribute monitoring and control to subservient
-devices, it's also useful to detail the events which occur at the sub-level.
+* stop moving the dish
 
-**Scenario: DishManager issues AbortCommands after issuing SetStandbyFPMode**
+* and request the dish to go to STANDBY-FP mode.
 
-* *abort_commands* is triggered on the component managers for
-  DishManager and the subservient devices.
+In light of the above, Abort for DishManager consolidates cancelling tasks on DishLMC from the clients' (TMC, MeerKAT Dish Proxy) perspective.
+The goal is to arrive at the same state regardless of which client is requesting the action.
 
-* *abort_commands* sets abort_event (threading.Event object).
+**What does Abort do?**
 
-* AbortEvent check:
-  
-  * if event check happens after event is set in the command handler:
+Abort transitions the device to a state from which further commands can be requested, i.e STANDBY-FP mode.
 
-    * lrc progress attributes will report aborted.
-    * *SetStandbyFPMode()* will be canceled.
-    * There will be no command fanout to the
-      subservient devices i.e. **DS**, **SPF** and **SPFRx**.
+.. note:: Abort in the other sub-systems usually comes with a Reset command: no Reset functionality is accounted for.
 
-  * if event check happens before abort event is set:
-  
-    * lrc progress attributes will report **"in progress"**.
-    * sub commands will be fanned out to **DS**, **SPF** and **SPFRx**.
-    * lrc progress attributes will report every second waiting
-      for DishMode update while checking for abort_event.
-    * DishManager will abort (cancel the waiting) and report aborted on its
-      lrc progress attributes.
-    * Subservient devices will be busy executing the sub-commands in a thread
-    * The component state of the subservient device might change.
-      Abort might leave the device in an inconsistent state and may need recovering.
+Guarantees and Caveats
+^^^^^^^^^^^^^^^^^^^^^^
 
-      .. note:: While the above is ongoing, all commands to DishManager will be rejected until
-         `shutdown_and_relaunch`_ is completed on the DishManager component manager.
+* Only slew/track tasks will be interrupted when Abort is triggered; tasks like receiver indexing, and stow, will not be affected.
+
+* Dish will always be restored to STANDBY-FP mode regardless of the previous state before Abort was triggered
+
+See `abort_documentation`_ for discussion and flow diagram
 
 .. _documentation: https://developer.skao.int/projects/ska-tango-base/en/latest/concepts/long-running-commands.html
-.. _shutdown_and_relaunch: https://gitlab.com/ska-telescope/ska-tango-base/-/blob/186236607dc724432fc5ab713766ff8315aafbf2/src/ska_tango_base/executor/executor.py#L128
+.. _abort_documentation: https://confluence.skatelescope.org/x/cMiJEQ

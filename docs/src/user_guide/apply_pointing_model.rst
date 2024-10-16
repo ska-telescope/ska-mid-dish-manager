@@ -1,10 +1,11 @@
-==================================
+=================================
 ApplyPointingModel on DishManager
-==================================
+=================================
 
-*ApplyPointingModel* (a Fast Command) is a command that accepts a JSON input to update PointingModelParams (band 1 - band 5b). It
+*ApplyPointingModel* (a Fast Command) accepts a JSON input to update PointingModelParams (band 1 - band 5b). It
 does this by updating the 18 coefficients for the band in question found in the JSON input.
-Note:
+
+**Note**:
 
 * All 18 coefficients need to be present in the JSON object.
 
@@ -16,10 +17,10 @@ Note:
 
 * Each time the command is called all parameters will get updated not just the ones that have been modified.
 
-**Command Parameters: Structure of JSON Object**
+Command Parameters: Structure of JSON Object
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It is important to note that the only properties assessed by the command
-are:
+It is important to note that the only properties assessed by the command are:
 
 * antenna 
 * band
@@ -176,7 +177,8 @@ of the command. An example of the JSON command is shown below:
     }
   }
 
-**Command Feedback: A collection to command responses and their meanings**
+Command Feedback: A collection to command responses and their meanings
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table:: Command Feeback
    :header-rows: 1
@@ -205,6 +207,3 @@ of the command. An example of the JSON command is shown below:
    * - Lostconnection, Invalid JSON
      - <related error message>
      - ResultCode.REJECTED
-
-
-
