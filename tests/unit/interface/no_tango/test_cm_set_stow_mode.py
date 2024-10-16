@@ -38,13 +38,6 @@ def test_set_stow_mode_handler(
             "status": TaskStatus.COMPLETED,
             "progress": "Stow called, monitor dishmode for LRC completed",
         },
-        # IN_PROGRESS is called 2x in base classes: report a fix
-        {"status": TaskStatus.IN_PROGRESS},
-        {"status": TaskStatus.IN_PROGRESS},
-        {
-            "status": TaskStatus.COMPLETED,
-            "result": (ResultCode.OK, "Abort completed OK"),
-        },
     )
 
     # check that the initial lrc updates come through

@@ -817,7 +817,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             status=TaskStatus.COMPLETED, progress="Stow called, monitor dishmode for LRC completed"
         )
         # abort queued tasks on the task executor
-        self.abort_commands(task_callback=task_callback)
+        self.abort_commands()
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
 
