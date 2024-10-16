@@ -7,6 +7,7 @@ DishManager Models
 .. toctree::
    
    Command Map<command_map>
+   Command Class<command_class>
    Constants<constants>
    Data Classes<data_classes>
    DishMode Model<dish_mode_model>
