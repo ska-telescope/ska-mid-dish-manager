@@ -51,7 +51,6 @@ def test_correct_power_limit_change(
 def test_incorrect_power_limit_change(
     ds_device_proxy: tango.DeviceProxy,
     dish_manager_proxy: tango.DeviceProxy,
-    event_store_class: Any,
 ) -> None:
     """Tests the setting of the dscPowerLimitkW attribute (incorrect)"""
     limit = 0.8
@@ -115,7 +114,6 @@ def test_power_limit_change_set_power_mode(
 )
 def test_fp_lp_power_limit_used(
     ds_device_proxy: tango.DeviceProxy,
-    dish_manager_proxy: tango.DeviceProxy,
     full_power: bool,
     expected_progress: str,
     event_store_class: Any,
