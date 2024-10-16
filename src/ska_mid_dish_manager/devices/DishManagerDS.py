@@ -1383,52 +1383,30 @@ class DishManager(SKAController):
                     except tango.DevFailed:
                         pass
 
-    # pylint: disable=too-few-public-methods
-    class AbortCommandsCommand(SlowCommand):
-        """The command class for the AbortCommand command."""
+    @command(
+        doc_in="Abort currently executing long running command on "
+        "DishManager including stopping dish movement and transitioning "
+        "dishMode to StandbyFP. For details consult DishManager documentation",
+        display_level=DispLevel.OPERATOR,
+        dtype_out="DevVarLongStringArray",
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def Abort(self) -> DevVarLongStringArrayType:
+        """
+        Empty out long running commands in queue.
 
-        def __init__(
-            self,
-            component_manager: DishManagerComponentManager,
-            logger: Optional[logging.Logger] = None,
-        ) -> None:
-            """
-            Initialise a new AbortCommandsCommand instance.
-
-            :param component_manager: contains the queue manager which
-                manages the worker thread and the LRC attributes
-            :param logger: the logger to be used by this Command. If not
-                provided, then a default module logger will be used.
-            """
-            self._component_manager = component_manager
-            super().__init__(None, logger=logger)
-
-        # pylint: disable=arguments-differ
-        def do(self) -> Tuple[ResultCode, str]:  # type: ignore[override]
-            """
-            Abort long running commands.
-
-            Abort the currently executing LRC and remove all enqueued
-            LRCs.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            # abort the task on dish manager
-            self._component_manager.abort_commands()
-            # abort the task on the subservient devices
-            sub_component_managers = self._component_manager._get_active_sub_component_managers()
-            for component_mgr in sub_component_managers:
-                component_mgr.abort_commands()
-
-            return (ResultCode.STARTED, "Aborting commands")
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        handler = self.get_command_object("Abort")
+        (return_code, message) = handler()
+        return ([return_code], [message])
 
     @command(
         doc_in="Abort currently executing long running command on "
-        "DishManager and subservient devices. Empties out the queue "
-        "on DishManager and rejects any scheduled commands. For "
-        "details consult DishManager documentation",
+        "DishManager including stopping dish movement and transitioning "
+        "dishMode to StandbyFP. For details consult DishManager documentation",
         display_level=DispLevel.OPERATOR,
         dtype_out="DevVarLongStringArray",
     )
