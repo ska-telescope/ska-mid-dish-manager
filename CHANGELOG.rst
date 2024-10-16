@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Added unit and range verification checks to `ApplyPointingModel`command
+- Added in Read/Write dscPowerLimitKw attribute to be used when FP, LP and Slew are invoked.
 
 Version 5.0.1
 *************
