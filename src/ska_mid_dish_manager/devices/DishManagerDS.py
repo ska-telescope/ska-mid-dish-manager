@@ -1335,9 +1335,9 @@ class DishManager(SKAController):
         dtype=float,
         access=AttrWriteType.READ_WRITE,
         doc="""
-            DSC Power Limit (kW). Note that this attribute can also
-            be set by calling SetPowerMode.This value does not reflect
-            the power limit in reality.
+            DSC Power Limit (kW). Note that this attribute can also be set by calling
+            SetPowerMode. This value does not reflect the power limit in reality because
+            the current PowerLimit(kW) is not reported as it cannot be read from the DSC.
             """,
     )
     def dscPowerLimitKw(self):
