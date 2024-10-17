@@ -16,7 +16,10 @@ from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_map import CommandMap
-from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LENGTH
+from ska_mid_dish_manager.models.constants import (
+    BAND_POINTING_MODEL_PARAMS_LENGTH,
+    DSC_MIN_POWER_LIMIT_KW,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
@@ -103,7 +106,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achievedpointing=[0.0, 0.0, 0.0],
             attenuationpolh=0.0,
             attenuationpolv=0.0,
-            dscpowerlimitkw=10.0,
+            dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
@@ -165,7 +168,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band4pointingmodelparams=[],
                 band5apointingmodelparams=[],
                 band5bpointingmodelparams=[],
-                dscpowerlimitkw=10.0,
+                dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 actstaticoffsetvaluexel=None,
                 actstaticoffsetvalueel=None,
@@ -1188,14 +1191,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_dsc_power_limit_kw(
         self,
-        power_limit,
+        power_limit: float,
     ) -> None:
         """Set the DSC Power Limit kW on the DS."""
-        self._update_component_state(dscpowerlimitkw=power_limit)
         ds_cm = self.sub_component_managers["DS"]
         try:
             ds_cm.write_attribute_value("dscPowerLimitKw", power_limit)
             self.logger.debug("Successfully updated dscPowerLimitKw on DS.")
+            self._update_component_state(dscpowerlimitkw=power_limit)
         except (LostConnection, tango.DevFailed):
             self.logger.error("Failed to update dscPowerLimitKw on DS.")
             raise
