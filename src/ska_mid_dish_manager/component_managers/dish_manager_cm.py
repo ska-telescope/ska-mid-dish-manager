@@ -1231,8 +1231,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
     ) -> Tuple[TaskStatus, str]:
+        # the name has to be different, task_callback != task_cb
+        # one is a partial with a command id and the other isnt
+        task_cb = self._command_tracker.update_command_info
         command_statuses = self._command_tracker.command_statuses
 
+        # ------------
+        # Helper funcs
+        # ------------
         def _is_abort_currently_executing(command_statuses):
             command_idx = 0
             status_idx = 1
@@ -1254,42 +1260,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 return True
             return False
 
-        if _is_abort_currently_executing(command_statuses):
-            self.logger.info("Abort rejected: there's an ongoing abort sequence.")
-            if task_callback:
-                task_callback(
-                    status=TaskStatus.REJECTED,
-                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
-                )
-            return
-
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
-
-        # -----------
-        # Command IDs
-        # -----------
-        track_stop_command_id = self._command_tracker.new_command(
-            "abort-sequence:trackstop", completed_callback=None
-        )
-        end_scan_command_id = self._command_tracker.new_command(
-            "abort-sequence:endscan", completed_callback=None
-        )
-        standby_fp_command_id = self._command_tracker.new_command(
-            "abort-sequence:standbyfp", completed_callback=None
-        )
-
-        # --------------
-        # Task Callbacks
-        # --------------
-        task_callback = self._command_tracker.update_command_info
-        track_stop_task_cb = partial(task_callback, track_stop_command_id)
-        end_scan_task_cb = partial(task_callback, end_scan_command_id)
-        standby_fp_task_cb = partial(task_callback, standby_fp_command_id)
-
-        # ------------
-        # Helper funcs
-        # ------------
         def _is_commmand_submitted(command_tracker_statuses, statuses_to_check):
             status_idx = 1
             if command_tracker_statuses:
@@ -1297,6 +1267,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     status_item[status_idx] for status_item in command_tracker_statuses
                 ]
                 # do we have any commands in staging, queued or in progress
+                statuses_to_check = set(statuses_to_check)
                 if statuses_to_check.intersection(command_statuses) == set():
                     return False
                 return True
@@ -1314,29 +1285,59 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     return True
             return False
 
+        if _is_abort_currently_executing(command_statuses):
+            self.logger.info("Abort rejected: there's an ongoing abort sequence.")
+            if task_callback:
+                task_callback(
+                    status=TaskStatus.REJECTED,
+                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
+                )
+            return
+
+        if task_callback:
+            task_callback(status=TaskStatus.IN_PROGRESS)
+
         task_statuses = [TaskStatus.STAGING, TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]
         command_statuses = self._command_tracker.command_statuses  # get a fresh copy
         if _is_commmand_submitted(command_statuses, task_statuses):
-            self.logger.debug("Issuing AbortCommands from Abort sequence")
+            self.logger.debug("Cancelling LRCs from Abort sequence")
             abort_command_id = self._command_tracker.new_command(
-                "abort-sequence:abortcommands", completed_callback=None
+                "abort-sequence:abort-lrcs", completed_callback=None
             )
-            abort_task_cb = partial(task_callback, abort_command_id)
+            abort_task_cb = partial(task_cb, abort_command_id)
             self.abort_commands(task_callback=abort_task_cb)
             while (
                 not self._command_tracker.get_command_status(abort_command_id)
                 != TaskStatus.COMPLETED
             ):
-                Event().wait(0.1)  # sleep a bit to not overwork the CPU
+                task_abort_event.wait(0.1)  # sleep a bit to not overwork the CPU
 
         if _is_dish_moving(self.component_state):
+            # stop the dish
+            track_stop_command_id = self._command_tracker.new_command(
+                "abort-sequence:trackstop", completed_callback=None
+            )
+            track_stop_task_cb = partial(task_cb, track_stop_command_id)
             self.logger.debug("Issuing TrackStop from Abort sequence")
             self._command_map.track_stop_cmd(task_abort_event, track_stop_task_cb)
+
+            # clear the scan id
+            end_scan_command_id = self._command_tracker.new_command(
+                "abort-sequence:endscan", completed_callback=None
+            )
+            end_scan_task_cb = partial(task_cb, end_scan_command_id)
             self.logger.debug("Issuing EndScan from Abort sequence")
             self._end_scan(task_abort_event, end_scan_task_cb)
 
+        # send the last reported achieved pointing in load mode new
         self.logger.debug("Resetting the programTrackTable from Abort sequence")
         self._reset_track_table()
+
+        # go to the known state: STANDBY-FP
+        standby_fp_command_id = self._command_tracker.new_command(
+            "abort-sequence:standbyfp", completed_callback=None
+        )
+        standby_fp_task_cb = partial(task_cb, standby_fp_command_id)
         self.logger.debug("Issuing SetStandbyFPMode from Abort sequence")
         self._ensure_transition_to_fp_mode(task_abort_event, standby_fp_task_cb)
 
