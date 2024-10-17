@@ -278,7 +278,7 @@ def test_append_dvs_case(
             dish_manager_proxy.programTrackTable = track_table
         except tango.DevFailed:
             # Give it one more try
-            time.sleep(1)
+            time.sleep(1.5)
             dish_manager_proxy.programTrackTable = track_table
 
         time.sleep(1)
