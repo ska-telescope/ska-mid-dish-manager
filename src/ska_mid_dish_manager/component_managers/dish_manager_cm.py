@@ -636,7 +636,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if not self.is_device_ignored(device_name):
                     component_manager.start_communicating()
 
-    def abort_commands(self, task_callback: Optional[Callable] = None) -> None:
+    def abort_commands(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Abort commands on dish manager and its subservient devices
 
         :param task_callback: callback when the status changes
@@ -647,6 +647,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         for component_mgr in sub_component_mgrs.values():
             # dont use the same taskcallback else we get completed 4x on the same command id
             component_mgr.abort_commands()
+        return TaskStatus.IN_PROGRESS, "Abort commands is in progress"
 
     def _track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
