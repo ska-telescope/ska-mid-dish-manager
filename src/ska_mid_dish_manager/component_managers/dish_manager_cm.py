@@ -636,7 +636,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if not self.is_device_ignored(device_name):
                     component_manager.start_communicating()
 
-    def abort_commands(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+    def abort_commands(self, task_callback: Optional[Callable] = None) -> None:
         """Abort commands on dish manager and its subservient devices
 
         :param task_callback: callback when the status changes
@@ -647,7 +647,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         for component_mgr in sub_component_mgrs.values():
             # dont use the same taskcallback else we get completed 4x on the same command id
             component_mgr.abort_commands()
-        return TaskStatus.IN_PROGRESS, "Abort commands is in progress"
 
     def _track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
@@ -1191,7 +1190,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         current_pointing = self.component_state.get("achievedpointing")
         timestamp = get_current_tai_timestamp()
         current_pointing[0] = timestamp
-        sequence_length = len(current_pointing) // 3
+        sequence_length = 1
         load_mode = TrackTableLoadMode.NEW
 
         result_code, result_message = self._track_load_table(
@@ -1367,7 +1366,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         abort_thread.name = "abort_thread"
         abort_thread.start()
-        return TaskStatus.IN_PROGRESS, "Abort Started"
+        return TaskStatus.IN_PROGRESS, "Abort sequence is in progress"
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
         """
