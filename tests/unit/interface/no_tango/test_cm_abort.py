@@ -1,4 +1,4 @@
-"""Tests dish manager component manager setstandbylp command handler"""
+"""Tests dish manager component manager abort command handler"""
 
 from unittest.mock import MagicMock, patch
 
@@ -41,7 +41,6 @@ def test_abort_handler(
     mock_abort_event.is_set.return_value = False
 
     # issue an abort while the command is busy running
-    # import ipdb;ipdb.set_trace()
     component_manager.abort(callbacks["task_cb"], mock_abort_event)
     # wait a bit for the lrc updates to come through
     component_state_cb = callbacks["comp_state_cb"]
@@ -60,7 +59,6 @@ def test_abort_handler(
         },
     )
 
-    # import ipdb;ipdb.set_trace()
     # check that the abort lrc updates come through
     actual_call_kwargs = callbacks["task_cb"].call_args_list
     for count, mock_call in enumerate(actual_call_kwargs):

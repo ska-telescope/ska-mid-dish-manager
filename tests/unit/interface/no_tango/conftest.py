@@ -48,7 +48,6 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
     def _simulate_execute_command(*args):
         return [[ResultCode.OK], [f"{args[0]} completed"]]
 
-    # with patch.object("ska_mid_dish_manager.models.command_map.CommandMap", "_dish_manager_cm"):
     with patch.multiple(
         "ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceComponentManager",
         read_attribute_value=MagicMock(),

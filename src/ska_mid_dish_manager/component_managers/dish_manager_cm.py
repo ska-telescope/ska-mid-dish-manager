@@ -5,7 +5,7 @@ import logging
 import os
 from functools import partial
 from threading import Event, Lock, Thread
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -1230,37 +1230,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
         task_abort_event: Optional[Event] = None,
-    ) -> Tuple[TaskStatus, str]:
+    ) -> None:
         # the name has to be different, task_callback != task_cb
         # one is a partial with a command id and the other isnt
         task_cb = self._command_tracker.update_command_info
+        task_statuses = [TaskStatus.STAGING, TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]
         command_statuses = self._command_tracker.command_statuses
+
+        if task_callback:
+            task_callback(status=TaskStatus.IN_PROGRESS)
 
         # ------------
         # Helper funcs
         # ------------
-        def _is_abort_currently_executing(command_statuses):
-            command_idx = 0
-            status_idx = 1
-            command_statuses = self._command_tracker.command_statuses
-            cmd_in_progress = [
-                status_item[command_idx]
-                for status_item in command_statuses
-                if status_item[status_idx] == TaskStatus.IN_PROGRESS
-            ]
-            # Only one command can be in progress from the executor
-            # Two commands can be in progress from abort thread
-            # Either way grabbing just one value should do
-            try:
-                cmd_in_progress = cmd_in_progress[-1]
-            except IndexError:
-                return False
-            # is the command in progress an abort sequence command
-            if "Abort" in cmd_in_progress or "abort-sequence" in cmd_in_progress:
-                return True
-            return False
-
-        def _is_commmand_submitted(command_tracker_statuses, statuses_to_check):
+        def _is_lrc_currently_executing(
+            command_tracker_statuses: List[Tuple[str, TaskStatus]], statuses_to_check: List
+        ) -> bool:
             status_idx = 1
             if command_tracker_statuses:
                 command_statuses = [
@@ -1274,7 +1259,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # there are no commands in staging, queued or in progress
             return False
 
-        def _is_dish_moving(component_state):
+        def _is_dish_moving(component_state: Dict) -> bool:
             pointing_state = component_state.get("pointingstate")
             dish_mode = component_state.get("dishmode")
             if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
@@ -1285,22 +1270,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     return True
             return False
 
-        if _is_abort_currently_executing(command_statuses):
-            self.logger.info("Abort rejected: there's an ongoing abort sequence.")
-            if task_callback:
-                task_callback(
-                    status=TaskStatus.REJECTED,
-                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
-                )
-            return
-
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
-
-        task_statuses = [TaskStatus.STAGING, TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]
-        command_statuses = self._command_tracker.command_statuses  # get a fresh copy
-        if _is_commmand_submitted(command_statuses, task_statuses):
-            self.logger.debug("Cancelling LRCs from Abort sequence")
+        if _is_lrc_currently_executing(command_statuses, task_statuses):
+            self.logger.debug("Aborting LRCs from Abort sequence")
             abort_command_id = self._command_tracker.new_command(
                 "abort-sequence:abort-lrcs", completed_callback=None
             )
@@ -1348,7 +1319,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def abort(
         self, task_callback: Optional[Callable] = None, task_abort_event: Optional[Event] = Event()
-    ):
+    ) -> Tuple[TaskStatus, str]:
         """
         Issue abort sequence
 
@@ -1360,6 +1331,35 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # since it might prevent the command from being triggered
         # when the check is performed after abort_commands finishes
 
+        def _is_abort_currently_executing(command_statuses: List[Tuple[str, TaskStatus]]) -> bool:
+            command_idx = 0
+            status_idx = 1
+            cmd_in_progress = [
+                status_item[command_idx]
+                for status_item in command_statuses
+                if status_item[status_idx] == TaskStatus.IN_PROGRESS
+            ]
+            # Only one command can be in progress from the executor
+            # Two commands can be in progress from abort thread
+            # Either way grabbing just one value should do
+            try:
+                cmd_in_progress = cmd_in_progress[-1]
+            except IndexError:
+                return False
+            # is the command in progress an abort sequence command
+            if "Abort" in cmd_in_progress or "abort-sequence" in cmd_in_progress:
+                return True
+            return False
+
+        if _is_abort_currently_executing(self._command_tracker.command_statuses):
+            self.logger.info("Abort rejected: there's an ongoing abort sequence.")
+            if task_callback:
+                task_callback(
+                    status=TaskStatus.REJECTED,
+                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
+                )
+            return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
+
         abort_thread = Thread(
             target=self._abort,
             args=[],
@@ -1367,7 +1367,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         abort_thread.name = "abort_thread"
         abort_thread.start()
-        return TaskStatus.IN_PROGRESS, "Abort sequence is in progress"
+        return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
         """
