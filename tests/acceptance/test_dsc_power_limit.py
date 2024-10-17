@@ -1,4 +1,4 @@
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals,too-many-arguments
 
 """Test dscPowerLimtkW Attribute"""
 from typing import Any
@@ -14,6 +14,7 @@ def clean_up(
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
 ) -> None:
+    """Sets the power limit to it's default value."""
     ds_device_proxy.write_attribute("dscPowerLimitKw", DEFAULT_POWER_LIMIT)
     dm_attribute_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
