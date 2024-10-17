@@ -1224,7 +1224,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # fan out respective FP command to the sub devices
         self._command_map.set_standby_fp_mode(task_abort_event, task_callback)
-        # alternative will be to call the respective commands manually on the sub component manager
 
     def _abort(
         self,

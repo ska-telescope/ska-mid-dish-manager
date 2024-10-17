@@ -1,11 +1,19 @@
 - class: DishManager
   meta:
     commands:
+    - name: Abort
+      disp_level: OPERATOR
+      doc_in: Abort currently executing long running command on DishManager including
+        stopping dish movement and transitioning dishMode to StandbyFP. For details
+        consult DishManager documentation
+      doc_out: Uninitialised
+      dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: AbortCommands
       disp_level: OPERATOR
-      doc_in: Abort currently executing long running command on DishManager and subservient
-        devices. Empties out the queue on DishManager and rejects any scheduled commands.
-        For details consult DishManager documentation
+      doc_in: Abort currently executing long running command on DishManager including
+        stopping dish movement and transitioning dishMode to StandbyFP. For details
+        consult DishManager documentation
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
@@ -1242,6 +1250,23 @@
       label: lastCommandedMode
       max_alarm: Not specified
       max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lastCommandedPointingParams
+      data_format: SCALAR
+      data_type: DevString
+      description: Default empty string when not set, and is a JSON stringof the last
+        requested global pointing model when set.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lastCommandedPointingParams
+      max_alarm: Not specified
+      max_dim_x: 1
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
