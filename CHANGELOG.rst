@@ -7,7 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Added unit and range verification checks to `ApplyPointingModel`command
+- Added unit and range verification checks to `ApplyPointingModel` command
 - Added `Abort` tango command which cancels any task and restores the dish to FP mode
 
   - `AbortCommmands` implements the same handler as `Abort`

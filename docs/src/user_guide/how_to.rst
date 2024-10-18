@@ -158,12 +158,6 @@ The sandbox pod can be killed using ``Ctrl + k``.
         $ cd ska-tango-operator
         $ make k8s-uninstall-chart
 
-Dish Monitoring and Control
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-How to:
-* :doc:`Apply Pointing Model <apply_pointing_model>`
-* ...
-
 .. _set up your development environment: https://developer.skatelescope.org/en/latest/tools/tango-devenv-setup.html
 .. _k9s: https://github.com/derailed/k9s
 .. _example configuration file: https://gitlab.com/ska-telescope/ska-mid-dish-manager/-/blob/main/charts/sandbox.yaml?ref_type=heads

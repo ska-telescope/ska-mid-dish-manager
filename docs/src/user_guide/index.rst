@@ -7,3 +7,4 @@ User Guide
 
    Getting Started<getting_started>
    How To<how_to>
+   Apply Pointing Model<apply_pointing_model> 

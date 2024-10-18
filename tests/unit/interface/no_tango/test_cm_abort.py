@@ -41,7 +41,10 @@ def test_abort_handler(
     mock_abort_event.is_set.return_value = False
 
     # issue an abort while the command is busy running
-    component_manager.abort(callbacks["task_cb"], mock_abort_event)
+    task_status, message = component_manager.abort(callbacks["task_cb"], mock_abort_event)
+    assert task_status == TaskStatus.IN_PROGRESS
+    assert message == "Abort sequence has started"
+
     # wait a bit for the lrc updates to come through
     component_state_cb = callbacks["comp_state_cb"]
     component_state_cb.get_queue_values(timeout=60)

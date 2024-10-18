@@ -1,4 +1,4 @@
-""""Custom command classes for DishManager commands requiring different handling"""
+""""Custom command classes for commands requiring overrides to do()."""
 
 import functools
 import logging
@@ -10,7 +10,7 @@ from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
 
 
 class AbortCommand(SubmittedSlowCommand):
-    """A custom class for Dish Manager's Abort Command"""
+    """A custom class for Abort Command."""
 
     def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
         """
@@ -38,13 +38,13 @@ class AbortCommand(SubmittedSlowCommand):
             return ResultCode.STARTED, command_id
         return (
             ResultCode.REJECTED,
-            f"Expected COMPLETED task status, but {status.name} was returned "
+            f"Expected IN_PROGRESS task status, but {status.name} was returned "
             f"by command method with message: {message}",
         )
 
 
 class AbortCommandsDeprecatedCommand(SubmittedSlowCommand):
-    """A custom class for Dish Manager's AbortCommands Command"""
+    """A custom class for AbortCommands Command."""
 
     def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
         """
@@ -77,7 +77,7 @@ class AbortCommandsDeprecatedCommand(SubmittedSlowCommand):
             return ResultCode.STARTED, command_id
         return (
             ResultCode.REJECTED,
-            f"Expected COMPLETED task status, but {status.name} was returned "
+            f"Expected IN_PROGRESS task status, but {status.name} was returned "
             f"by command method with message: {message}",
         )
 
@@ -85,11 +85,7 @@ class AbortCommandsDeprecatedCommand(SubmittedSlowCommand):
 class ApplyPointingModelCommand(FastCommand):
     """Class for handling band pointing parameters given a JSON input."""
 
-    def __init__(
-        self,
-        component_manager,
-        logger: Optional[logging.Logger] = None,
-    ) -> None:
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialise a new ApplyPointingModelCommand instance.
 
@@ -99,19 +95,16 @@ class ApplyPointingModelCommand(FastCommand):
         self._component_manager = component_manager
         super().__init__(logger)
 
-    def do(
-        self,
-        *args: Any,
-        **kwargs: Any,
-    ) -> tuple[ResultCode, str]:
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
         """
         Implement ApplyPointingModel command functionality.
 
-        :param json_object: JSON object with a schema similar to this,
+        :param args: JSON object with a schema similar to this::
+
             {
                 "interface": "...",
                 "antenna": "....",
-                "band": "Band_...",
+                "band": "`Band_`...",
                 "attrs": {...},
                 "coefficients": {
                     "IA": {...},
@@ -136,11 +129,7 @@ class ApplyPointingModelCommand(FastCommand):
 class SetKValueCommand(FastCommand):
     """Class for handling the SetKValue command."""
 
-    def __init__(
-        self,
-        component_manager,
-        logger: Optional[logging.Logger] = None,
-    ) -> None:
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialise a new SetKValueCommand instance.
 
@@ -150,11 +139,7 @@ class SetKValueCommand(FastCommand):
         self._component_manager = component_manager
         super().__init__(logger)
 
-    def do(
-        self,
-        *args: Any,
-        **kwargs: Any,
-    ) -> tuple[ResultCode, str]:
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
         """
         Implement SetKValue command functionality.
 
@@ -167,7 +152,7 @@ class SetKValueCommand(FastCommand):
 
 
 class StowCommand(SubmittedSlowCommand):
-    """A custom class for Dish Manager's Stow Command"""
+    """A custom class for Stow Command."""
 
     def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
         """

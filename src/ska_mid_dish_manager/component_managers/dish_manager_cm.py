@@ -1351,7 +1351,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return False
 
         if _is_abort_currently_executing(self._command_tracker.command_statuses):
-            self.logger.info("Abort rejected: there's an ongoing abort sequence.")
+            self.logger.info("Abort rejected: there is an ongoing abort sequence.")
             if task_callback:
                 task_callback(
                     status=TaskStatus.REJECTED,

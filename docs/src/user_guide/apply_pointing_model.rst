@@ -207,3 +207,7 @@ Command Feedback: A collection to command responses and their meanings
    * - Lostconnection, Invalid JSON
      - <related error message>
      - ResultCode.REJECTED
+
+.. note:: This page will be moved to the `dish lmc user guide`_ docs
+
+.. _dish lmc user guide: https://developer.skao.int/projects/ska-dish-lmc/en/latest/user_guide/index.html
