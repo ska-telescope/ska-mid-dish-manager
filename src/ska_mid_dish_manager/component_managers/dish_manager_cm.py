@@ -1272,7 +1272,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if _is_lrc_currently_executing(command_statuses, task_statuses):
             self.logger.debug("Aborting LRCs from Abort sequence")
             abort_command_id = self._command_tracker.new_command(
-                "abort-sequence:abort-lrcs", completed_callback=None
+                "abort-sequence:abort-lrc", completed_callback=None
             )
             abort_task_cb = partial(task_cb, abort_command_id)
             self.abort_commands(task_callback=abort_task_cb)
