@@ -14,7 +14,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_abort_raises_deprecation_warning(dish_manager_resources):
+def test_abort_commands_raises_deprecation_warning(dish_manager_resources):
     # this test will be removed when AbortCommands is also removed
     device_proxy, _ = dish_manager_resources
     with pytest.warns(DeprecationWarning) as record:
