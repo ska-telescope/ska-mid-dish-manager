@@ -123,5 +123,5 @@ def test_connection_error(caplog):
     with pytest.raises(Empty):
         event_queue.get(timeout=8)
     all_logs = [record.message for record in caplog.records]
-    for i in range(2):
+    for i in range(0, 2):
         assert f"Cannot connect to fake_device try number {i}" in all_logs

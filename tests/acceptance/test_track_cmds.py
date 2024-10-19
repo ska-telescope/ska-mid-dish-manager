@@ -271,7 +271,7 @@ def test_append_dvs_case(
     for _ in range(number_of_1_second_appends):
         # get last absolute time
         prev_start_tai = track_table[-3]
-        start_tai = (prev_start_tai + 1) / samples_per_append
+        start_tai = prev_start_tai + 1 / samples_per_append
         track_table = generate_next_1_second_table(start_tai, samples_per_append)
         dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
         try:
