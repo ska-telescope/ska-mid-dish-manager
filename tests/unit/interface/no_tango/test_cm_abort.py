@@ -10,6 +10,30 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
 @pytest.mark.unit
+def test_abort_handler_runs_only_one_sequence_at_a_time(
+    component_manager: DishManagerComponentManager,
+    mock_command_tracker: MagicMock,
+) -> None:
+    """
+    Verify only one Abort sequence can be requested at a time.
+
+    :param component_manager: the component manager under test
+    :param mock_command_tracker: a representing the command tracker class
+    :param callbacks: a dictionary of mocks, passed as callbacks to
+        the command tracker under test
+    """
+    task_status, message = component_manager.abort()
+    assert task_status == TaskStatus.IN_PROGRESS
+    assert message == "Abort sequence has started"
+    mock_command_tracker.command_statuses = [("Abort", TaskStatus.IN_PROGRESS)]
+
+    # issue a 2nd abort while the previous is busy running
+    task_status, message = component_manager.abort()
+    assert task_status == TaskStatus.REJECTED
+    assert message == "Existing Abort sequence ongoing"
+
+
+@pytest.mark.unit
 @patch(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     MagicMock(return_value=True),

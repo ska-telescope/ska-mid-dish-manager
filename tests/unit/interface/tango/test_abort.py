@@ -2,6 +2,7 @@
 
 import pytest
 import tango
+from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -9,6 +10,41 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     SPFOperatingMode,
 )
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_abort_raises_deprecation_warning(dish_manager_resources):
+    # this test will be removed when AbortCommands is also removed
+    device_proxy, _ = dish_manager_resources
+    with pytest.warns(DeprecationWarning) as record:
+        device_proxy.AbortCommands()
+
+    # check that only one warning was raised
+    assert len(record) == 1
+    # check that the message matches
+    warning_msg = (
+        "AbortCommands is deprecated, use Abort instead. "
+        "Issuing Abort sequence for requested command."
+    )
+    assert record[0].message.args[0] == warning_msg
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_only_one_abort_runs_at_a_time(dish_manager_resources):
+    device_proxy, _ = dish_manager_resources
+    [[result_code], [_]] = device_proxy.Abort()
+    assert result_code == ResultCode.STARTED
+
+    reject_msg = (
+        "Expected IN_PROGRESS task status, but REJECTED was returned by "
+        "command method with message: Existing Abort sequence ongoing"
+    )
+    # check that second abort trigger is rejected
+    [[result_code], [message]] = device_proxy.Abort()
+    assert result_code == ResultCode.REJECTED
+    assert message == reject_msg
 
 
 # pylint:disable=protected-access
