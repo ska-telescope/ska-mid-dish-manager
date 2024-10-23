@@ -8,6 +8,7 @@ ska-mid-dish-ds-manager:
 
 system: SW-infrastructure
 subsystem: ska-dish-lmc
+telescope: SKA-mid
 
 labels:
   app: ska-mid-dish-manager
@@ -69,18 +70,6 @@ dishmanager:
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"
-
-    domain_name: "mid-dish"
-    family_name: "simulator-spfrx"
-
-ska-mid-dish-ds-manager:
-  dishstructuremanager:
-    image:
-      registry: registry.gitlab.com/ska-telescope/ska-mid-dish-ds-manager
-      image: ska-mid-dish-ds-manager
-      tag: 2.1.2-dev.c1e3aa324
-      pullPolicy: IfNotPresent
-
 
 dev_pod:
   enabled: false
