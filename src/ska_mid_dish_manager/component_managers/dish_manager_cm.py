@@ -1197,9 +1197,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             sequence_length, current_pointing, load_mode
         )
         if result_code == ResultCode.OK:
-            # need to find a way to bubble up this table
-            # to dish manager._program_track_table and _load_mode
-            pass
+            # the keys are camel case because they are not in the
+            # attribute component state mapping which converts
+            reset_params = {
+                "trackTableLoadMode": TrackTableLoadMode.NEW,
+                "programTrackTable": current_pointing,
+            }
+            self._update_component_state(**reset_params)
         else:
             self.logger.warning(
                 "Failed to reset programTrackTable in Abort sequence: %s", result_message
