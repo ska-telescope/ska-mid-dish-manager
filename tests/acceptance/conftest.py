@@ -56,7 +56,7 @@ def setup_and_teardown(
 
     if ds_device_proxy.operatingMode != DSOperatingMode.STOW:
         ds_device_proxy.Stow()
-        assert event_store.wait_for_value(DSOperatingMode.STOW, timeout=60)
+        assert event_store.wait_for_value(DSOperatingMode.STOW, timeout=120)
 
     if ds_device_proxy.indexerPosition != IndexerPosition.B1:
         ds_device_proxy.SetIndexPosition(IndexerPosition.B1)
