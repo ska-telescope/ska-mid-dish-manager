@@ -117,6 +117,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
+        self._abort_thread: Optional[Thread] = None
 
         self._device_to_comm_attr_map = {
             Device.DS: "dsConnectionState",
@@ -1186,7 +1187,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return (ResultCode.OK, "Successfully updated pseudoRandomNoiseDiodePars on SPFRx")
 
     def _reset_track_table(self) -> None:
-        """Write the last achievedPointing back to the trackTable in loadmode NEW"""
+        """
+        Write the last achievedPointing back to the trackTable in loadmode NEW
+
+        NOTE: this is a workaround until the RESET mode is implemented on the DSC.
+        Remove/re-work this when the RESET mode is available
+        """
         current_pointing = self.component_state.get("achievedpointing")
         timestamp = get_current_tai_timestamp()
         current_pointing[0] = timestamp
@@ -1334,27 +1340,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # since it might prevent the command from being triggered
         # when the check is performed after abort_commands finishes
 
-        def _is_abort_currently_executing(command_statuses: List[Tuple[str, TaskStatus]]) -> bool:
-            command_idx = 0
-            status_idx = 1
-            cmd_in_progress = [
-                status_item[command_idx]
-                for status_item in command_statuses
-                if status_item[status_idx] == TaskStatus.IN_PROGRESS
-            ]
-            # Only one command can be in progress from the executor
-            # Two commands can be in progress from abort thread
-            # Either way grabbing just one value should do
-            try:
-                cmd_in_progress = cmd_in_progress[-1]
-            except IndexError:
-                return False
-            # is the command in progress an abort sequence command
-            if "Abort" in cmd_in_progress or "abort-sequence" in cmd_in_progress:
-                return True
-            return False
-
-        if _is_abort_currently_executing(self._command_tracker.command_statuses):
+        if self._abort_thread is not None and self._abort_thread.is_alive():
             self.logger.info("Abort rejected: there is an ongoing abort sequence.")
             if task_callback:
                 task_callback(
@@ -1363,13 +1349,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
             return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
 
-        abort_thread = Thread(
+        self._abort_thread = Thread(
             target=self._abort,
             args=[],
             kwargs={"task_callback": task_callback, "task_abort_event": task_abort_event},
         )
-        abort_thread.name = "abort_thread"
-        abort_thread.start()
+        self._abort_thread.name = "abort_thread"
+        self._abort_thread.start()
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
