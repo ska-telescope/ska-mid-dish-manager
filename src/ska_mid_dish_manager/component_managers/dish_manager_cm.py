@@ -5,7 +5,7 @@ import logging
 import os
 from functools import partial
 from threading import Event, Lock, Thread
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -1211,6 +1211,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Failed to reset programTrackTable in Abort sequence: %s", result_message
             )
 
+    def is_dish_moving(self) -> bool:
+        """
+        Report whether or not the dish is moving
+
+        :returns: boolean dish movement activity
+        """
+        pointing_state = self.component_state.get("pointingstate")
+        if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
+            return True
+        return False
+
     def _ensure_transition_to_fp_mode(
         self,
         task_abort_event: Optional[Event] = None,
@@ -1231,6 +1242,25 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # fan out respective FP command to the sub devices
         self._command_map.set_standby_fp_mode(task_abort_event, task_callback)
 
+    def is_lrc_currently_executing(self) -> bool:
+        """
+        Report whether or not commands are running or waiting to be executed from the task executor
+
+        :returns: boolean indicating whether or not an lrc is executing
+        """
+        statuses_to_check = [TaskStatus.STAGING, TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]
+        command_statuses = self._command_tracker.command_statuses
+        status_idx = 1
+        if command_statuses:
+            command_statuses = [status_item[status_idx] for status_item in command_statuses]
+            # do we have any commands in staging, queued or in progress
+            statuses_to_check = set(statuses_to_check)
+            if statuses_to_check.intersection(command_statuses) == set():
+                return False
+            return True
+        # there are no commands in staging, queued or in progress
+        return False
+
     def _abort(
         self,
         task_callback: Optional[Callable] = None,
@@ -1239,43 +1269,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # the name has to be different, task_callback != task_cb
         # one is a partial with a command id and the other isnt
         task_cb = self._command_tracker.update_command_info
-        task_statuses = [TaskStatus.STAGING, TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]
-        command_statuses = self._command_tracker.command_statuses
 
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
-        # ------------
-        # Helper funcs
-        # ------------
-        def _is_lrc_currently_executing(
-            command_tracker_statuses: List[Tuple[str, TaskStatus]], statuses_to_check: List
-        ) -> bool:
-            status_idx = 1
-            if command_tracker_statuses:
-                command_statuses = [
-                    status_item[status_idx] for status_item in command_tracker_statuses
-                ]
-                # do we have any commands in staging, queued or in progress
-                statuses_to_check = set(statuses_to_check)
-                if statuses_to_check.intersection(command_statuses) == set():
-                    return False
-                return True
-            # there are no commands in staging, queued or in progress
-            return False
-
-        def _is_dish_moving(component_state: Dict) -> bool:
-            pointing_state = component_state.get("pointingstate")
-            dish_mode = component_state.get("dishmode")
-            if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
-                # TODO find out if STOW doesnt change the pointing state to SLEW
-                # For now perform extra check on the dish mode to be
-                # sure we dont abort an ongoing STOW movement
-                if dish_mode != DishMode.STOW:
-                    return True
-            return False
-
-        if _is_lrc_currently_executing(command_statuses, task_statuses):
+        if self.is_lrc_currently_executing():
             self.logger.debug("Aborting LRCs from Abort sequence")
             abort_command_id = self._command_tracker.new_command(
                 "abort-sequence:abort-lrc", completed_callback=None
@@ -1288,7 +1286,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ):
                 task_abort_event.wait(0.1)  # sleep a bit to not overwork the CPU
 
-        if _is_dish_moving(self.component_state):
+        if self.is_dish_moving():
             # stop the dish
             track_stop_command_id = self._command_tracker.new_command(
                 "abort-sequence:trackstop", completed_callback=None
@@ -1344,6 +1342,30 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
                 )
             return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
+
+        if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
+            self.logger.info("Abort rejected: command not allowed from MAINTENANCE mode")
+            if task_callback:
+                task_callback(
+                    status=TaskStatus.REJECTED,
+                    result=(
+                        ResultCode.REJECTED,
+                        "Abort not allowed from MAINTENANCE mode",
+                    ),
+                )
+            return TaskStatus.REJECTED, "Abort not allowed from MAINTENANCE mode"
+
+        if self.is_dish_moving() and self.component_state.get("dishmode") == DishMode.STOW:
+            self.logger.info("Abort rejected: STOW cannot be aborted")
+            if task_callback:
+                task_callback(
+                    status=TaskStatus.REJECTED,
+                    result=(
+                        ResultCode.REJECTED,
+                        "STOW cannot be aborted",
+                    ),
+                )
+            return TaskStatus.REJECTED, "STOW cannot be aborted"
 
         self._abort_thread = Thread(
             target=self._abort,
