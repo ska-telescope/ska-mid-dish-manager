@@ -38,6 +38,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
+from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
@@ -209,6 +210,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_tracker,
             self.logger,
         )
+        self._cmd_allowed_checks = CommandAllowedChecks(self)
 
         self.direct_mapped_attrs = {
             "DS": [
@@ -1343,29 +1345,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
             return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
 
-        if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
-            self.logger.info("Abort rejected: command not allowed from MAINTENANCE mode")
+        if not self._cmd_allowed_checks.is_abort_allowed():
+            self.logger.info(
+                "Abort rejected: command not allowed during a STOW and MAINTENANCE modes"
+            )
             if task_callback:
                 task_callback(
                     status=TaskStatus.REJECTED,
                     result=(
                         ResultCode.REJECTED,
-                        "Abort not allowed from MAINTENANCE mode",
+                        "Command not allowed during a STOW and MAINTENANCE modes",
                     ),
                 )
-            return TaskStatus.REJECTED, "Abort not allowed from MAINTENANCE mode"
-
-        if self.is_dish_moving() and self.component_state.get("dishmode") == DishMode.STOW:
-            self.logger.info("Abort rejected: STOW cannot be aborted")
-            if task_callback:
-                task_callback(
-                    status=TaskStatus.REJECTED,
-                    result=(
-                        ResultCode.REJECTED,
-                        "STOW cannot be aborted",
-                    ),
-                )
-            return TaskStatus.REJECTED, "STOW cannot be aborted"
+            return TaskStatus.REJECTED, "Command not allowed during a STOW and MAINTENANCE modes"
 
         self._abort_thread = Thread(
             target=self._abort,
