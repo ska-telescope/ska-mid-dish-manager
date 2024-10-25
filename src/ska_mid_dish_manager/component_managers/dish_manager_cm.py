@@ -229,7 +229,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
-    def _get_active_sub_component_managers(self) -> Dict:
+    def get_active_sub_component_managers(self) -> Dict:
         """Get a list of subservient device component managers which are not being ignored."""
         active_component_managers = {"DS": self.sub_component_managers["DS"]}
 
@@ -276,7 +276,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
             if self.sub_component_managers:
-                active_sub_component_managers = self._get_active_sub_component_managers()
+                active_sub_component_managers = self.get_active_sub_component_managers()
 
                 self.logger.debug(
                     ("Active component managers [%s]"), active_sub_component_managers
@@ -344,7 +344,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         if not self.sub_component_managers:
             return
-        active_sub_component_managers = self._get_active_sub_component_managers()
+        active_sub_component_managers = self.get_active_sub_component_managers()
         if not all(
             sub_component_manager.component_state
             for sub_component_manager in active_sub_component_managers.values()
@@ -646,12 +646,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         self.logger.debug("Aborting long running commands")
         super().abort_commands(task_callback)
-        sub_component_mgrs = self._get_active_sub_component_managers()
+        sub_component_mgrs = self.get_active_sub_component_managers()
         for component_mgr in sub_component_mgrs.values():
             # dont use the same taskcallback else we get completed 4x on the same command id
             component_mgr.abort_commands()
 
-    def _track_load_table(
+    def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
     ) -> Tuple[ResultCode, str]:
         """Load the track table."""
