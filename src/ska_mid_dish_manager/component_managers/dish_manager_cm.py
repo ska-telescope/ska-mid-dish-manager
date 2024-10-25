@@ -5,7 +5,7 @@ import logging
 import os
 from functools import partial
 from threading import Event, Lock, Thread
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -38,7 +38,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
-from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
@@ -210,7 +209,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_tracker,
             self.logger,
         )
-        self._cmd_allowed_checks = CommandAllowedChecks(self)
 
         self.direct_mapped_attrs = {
             "DS": [
@@ -1245,11 +1243,43 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # the name has to be different, task_callback != task_cb
         # one is a partial with a command id and the other isnt
         task_cb = self._command_tracker.update_command_info
+        task_statuses = [TaskStatus.STAGING, TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]
+        command_statuses = self._command_tracker.command_statuses
 
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
-        if self.is_lrc_currently_executing():
+        # ------------
+        # Helper funcs
+        # ------------
+        def _is_lrc_currently_executing(
+            command_tracker_statuses: List[Tuple[str, TaskStatus]], statuses_to_check: List
+        ) -> bool:
+            status_idx = 1
+            if command_tracker_statuses:
+                command_statuses = [
+                    status_item[status_idx] for status_item in command_tracker_statuses
+                ]
+                # do we have any commands in staging, queued or in progress
+                statuses_to_check = set(statuses_to_check)
+                if statuses_to_check.intersection(command_statuses) == set():
+                    return False
+                return True
+            # there are no commands in staging, queued or in progress
+            return False
+
+        def _is_dish_moving(component_state: Dict) -> bool:
+            pointing_state = component_state.get("pointingstate")
+            dish_mode = component_state.get("dishmode")
+            if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
+                # TODO find out if STOW doesnt change the pointing state to SLEW
+                # For now perform extra check on the dish mode to be
+                # sure we dont abort an ongoing STOW movement
+                if dish_mode != DishMode.STOW:
+                    return True
+            return False
+
+        if _is_lrc_currently_executing(command_statuses, task_statuses):
             self.logger.debug("Aborting LRCs from Abort sequence")
             abort_command_id = self._command_tracker.new_command(
                 "abort-sequence:abort-lrc", completed_callback=None
@@ -1262,9 +1292,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ):
                 task_abort_event.wait(0.1)  # sleep a bit to not overwork the CPU
 
-        # is the dish moving
-        pointing_state = self.component_state.get("pointingstate")
-        if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
+        if _is_dish_moving(self.component_state):
             # stop the dish
             track_stop_command_id = self._command_tracker.new_command(
                 "abort-sequence:trackstop", completed_callback=None
@@ -1298,25 +1326,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 status=TaskStatus.COMPLETED, result=(ResultCode.OK, "Abort sequence completed")
             )
 
-    def is_lrc_currently_executing(self) -> bool:
-        """
-        Report any commands running or waiting to be executed from the task executor
-
-        :returns: boolean indicating whether or not an lrc is executing
-        """
-        statuses_to_check = [TaskStatus.STAGING, TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]
-        command_statuses = self._command_tracker.command_statuses
-        status_idx = 1
-        if command_statuses:
-            command_statuses = [status_item[status_idx] for status_item in command_statuses]
-            # do we have any commands in staging, queued or in progress
-            statuses_to_check = set(statuses_to_check)
-            if statuses_to_check.intersection(command_statuses) == set():
-                return False
-            return True
-        # there are no commands in staging, queued or in progress
-        return False
-
     def abort(
         self, task_callback: Optional[Callable] = None, task_abort_event: Optional[Event] = Event()
     ) -> Tuple[TaskStatus, str]:
@@ -1339,20 +1348,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
                 )
             return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
-
-        if not self._cmd_allowed_checks.is_abort_allowed:
-            self.logger.info(
-                "Abort rejected: command not allowed during a STOW and MAINTENANCE modes"
-            )
-            if task_callback:
-                task_callback(
-                    status=TaskStatus.REJECTED,
-                    result=(
-                        ResultCode.REJECTED,
-                        "Command not allowed during a STOW and MAINTENANCE modes",
-                    ),
-                )
-            return TaskStatus.REJECTED, "Command not allowed during a STOW and MAINTENANCE modes"
 
         self._abort_thread = Thread(
             target=self._abort,
