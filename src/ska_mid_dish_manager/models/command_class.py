@@ -36,8 +36,10 @@ class AbortCommand(SubmittedSlowCommand):
 
         if status == TaskStatus.IN_PROGRESS:
             return ResultCode.STARTED, command_id
+        if status == TaskStatus.REJECTED:
+            return ResultCode.REJECTED, command_id
         return (
-            ResultCode.REJECTED,
+            ResultCode.FAILED,
             f"Expected IN_PROGRESS task status, but {status.name} was returned "
             f"by command method with message: {message}",
         )
@@ -75,8 +77,10 @@ class AbortCommandsDeprecatedCommand(SubmittedSlowCommand):
 
         if status == TaskStatus.IN_PROGRESS:
             return ResultCode.STARTED, command_id
+        if status == TaskStatus.REJECTED:
+            return ResultCode.REJECTED, command_id
         return (
-            ResultCode.REJECTED,
+            ResultCode.FAILED,
             f"Expected IN_PROGRESS task status, but {status.name} was returned "
             f"by command method with message: {message}",
         )

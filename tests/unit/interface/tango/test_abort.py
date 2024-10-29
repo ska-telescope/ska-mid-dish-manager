@@ -145,7 +145,14 @@ def test_abort(dish_manager_resources, event_store_class, abort_cmd, pointing_st
 # pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-def test_abort_is_rejected_in_stow_dishmode(dish_manager_resources, event_store_class):
+# @pytest.mark.parametrize(
+#     "abort_cmd, pointing_state",
+#     [
+#         ("Abort"),
+#         ("AbortCommands"),
+#     ],
+# )
+def test_abort_is_accepted_when_slewing(dish_manager_resources, event_store_class):
     """Verify Abort/AbortCommands is rejected when DishMode is STOW/MAINTENANCE"""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
@@ -159,21 +166,59 @@ def test_abort_is_rejected_in_stow_dishmode(dish_manager_resources, event_store_
     )
 
     ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-
-    [[result_code], [_]] = device_proxy.SetStowMode()
-    assert result_code == ResultCode.STARTED
-
-    import time
-
-    time.sleep(5)
-
     ds_cm._update_component_state(pointingstate=PointingState.SLEW)
 
     pointing_state_event_store.wait_for_value(PointingState.SLEW)
     assert device_proxy.pointingState == PointingState.SLEW
 
     [[result_code], [_]] = device_proxy.Abort()
+    assert result_code == ResultCode.STARTED
+
+
+# pylint:disable=protected-access
+@pytest.mark.unit
+@pytest.mark.forked
+def test_abort_is_rejected_in_stow_dishmode(dish_manager_resources, event_store_class):
+    """Verify Abort/AbortCommands is rejected when DishMode is STOW/MAINTENANCE"""
+    device_proxy, dish_manager_cm = dish_manager_resources
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+
+    pointing_state_event_store = event_store_class()
+    lrc_status_event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        pointing_state_event_store,
+    )
+    device_proxy.subscribe_event(
+        "longRunningCommandStatus",
+        tango.EventType.CHANGE_EVENT,
+        lrc_status_event_store,
+    )
+
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+
+    [[result_code], [stow_unique_id]] = device_proxy.SetStowMode()
+    assert result_code == ResultCode.STARTED
+
+    ds_cm._update_component_state(pointingstate=PointingState.SLEW)
+
+    pointing_state_event_store.wait_for_value(PointingState.SLEW)
+    assert device_proxy.pointingState == PointingState.SLEW
+
+    [[result_code], [abort_unique_id]] = device_proxy.Abort()
     assert result_code == ResultCode.REJECTED
+
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
+    lrc_status_event_store.wait_for_value(
+        (
+            stow_unique_id,
+            "COMPLETED",
+            abort_unique_id,
+            "REJECTED",
+        )
+    )
 
 
 # pylint:disable=protected-access

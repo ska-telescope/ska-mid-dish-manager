@@ -829,13 +829,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             args=[task_callback],
         )
         self._monitor_stow_thread.name = "monitor_stow_thread"
-        print("Starting stow thread")
         self._monitor_stow_thread.start()
 
     def _monitor_stow(self, task_callback: Optional[Callable] = None):
-        while self.sub_component_managers["DS"]["operatingmode"] != DSOperatingMode.STOW:
-            print("Waiting")
-            time.sleep(10.1)
+        while (
+            self.sub_component_managers["DS"].component_state["operatingmode"]
+            != DSOperatingMode.STOW
+        ):
+            time.sleep(0.1)
         task_callback(status=TaskStatus.COMPLETED, progress="Stow completed")
 
     def slew(
@@ -1370,10 +1371,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
             return TaskStatus.REJECTED, "Abort not allowed from MAINTENANCE mode"
 
-        print("Is dish moving:", self.is_dish_moving())
-        print("_monitor_stow_thread:", self._monitor_stow_thread)
-        if self._monitor_stow_thread is not None:
-            print("self._monitor_stow_thread.is_alive():", self._monitor_stow_thread.is_alive())
         if self.is_dish_moving() and (
             self._monitor_stow_thread is not None and self._monitor_stow_thread.is_alive()
         ):
