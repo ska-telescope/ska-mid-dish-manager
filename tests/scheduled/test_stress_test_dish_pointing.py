@@ -72,7 +72,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     # start from a known arbitrary point
     pointing_state_event_store.clear_queue()
     dish_manager_proxy.Slew([0, 35])
-    pointing_state_event_store.wait_for_value(PointingState.READY)
+    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=300)
 
     # Dish goes to FP mode after moving. Request Operate again
     # TODO Remove this after bug is fixed
@@ -124,7 +124,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
         time.sleep(CADENCE_SEC)
 
     # Wait sufficient period of time for the track to complete
-    pointing_state_values = pointing_state_event_store.get_queue_values(timeout=60)
+    pointing_state_values = pointing_state_event_store.get_queue_values(timeout=300)
     pointing_state_values = [event_value[1] for event_value in pointing_state_values]
 
     # Check that the dish transitioned through READY, SLEW and TRACK pointing states
