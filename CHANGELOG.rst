@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Added unit and range verification checks to `ApplyPointingModel`command
+- Updated SPFRx operatingMode from DATA_CAPTURE to OPERATE to match Rev 4 ICD
 
 Version 5.0.1
 *************
