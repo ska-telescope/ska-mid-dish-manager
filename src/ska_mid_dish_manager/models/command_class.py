@@ -176,7 +176,7 @@ class StowCommand(SubmittedSlowCommand):
             **kwargs,
         )
 
-        if status == TaskStatus.COMPLETED:
+        if status == TaskStatus.IN_PROGRESS:
             return ResultCode.STARTED, command_id
         return (
             ResultCode.FAILED,

@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import time
 from functools import partial
 from threading import Event, Lock, Thread
 from typing import Callable, Dict, Optional, Tuple
@@ -118,6 +119,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
         self._abort_thread: Optional[Thread] = None
+        self._monitor_stow_thread: Optional[Thread] = None
 
         self._device_to_comm_attr_map = {
             Device.DS: "dsConnectionState",
@@ -814,13 +816,27 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback(status=TaskStatus.FAILED, exception=err)
             self.logger.exception("DishManager has failed to execute Stow DSManager")
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
-        task_callback(
-            status=TaskStatus.COMPLETED, progress="Stow called, monitor dishmode for LRC completed"
-        )
+        task_callback(status=TaskStatus.IN_PROGRESS, progress="Stow called")
         # abort queued tasks on the task executor
         self.abort_commands()
+        self.start_monitor_stow_thread(task_callback)
 
-        return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
+        return TaskStatus.IN_PROGRESS, "Stow called"
+
+    def start_monitor_stow_thread(self, task_callback: Optional[Callable] = None):
+        self._monitor_stow_thread = Thread(
+            target=self._monitor_stow,
+            args=[task_callback],
+        )
+        self._monitor_stow_thread.name = "monitor_stow_thread"
+        print("Starting stow thread")
+        self._monitor_stow_thread.start()
+
+    def _monitor_stow(self, task_callback: Optional[Callable] = None):
+        while self.sub_component_managers["DS"]["operatingmode"] != DSOperatingMode.STOW:
+            print("Waiting")
+            time.sleep(10.1)
+        task_callback(status=TaskStatus.COMPLETED, progress="Stow completed")
 
     def slew(
         self,
@@ -1281,8 +1297,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             abort_task_cb = partial(task_cb, abort_command_id)
             self.abort_commands(task_callback=abort_task_cb)
             while (
-                not self._command_tracker.get_command_status(abort_command_id)
-                != TaskStatus.COMPLETED
+                self._command_tracker.get_command_status(abort_command_id) != TaskStatus.COMPLETED
             ):
                 task_abort_event.wait(0.1)  # sleep a bit to not overwork the CPU
 
@@ -1355,7 +1370,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
             return TaskStatus.REJECTED, "Abort not allowed from MAINTENANCE mode"
 
-        if self.is_dish_moving() and self.component_state.get("dishmode") == DishMode.STOW:
+        print("Is dish moving:", self.is_dish_moving())
+        print("_monitor_stow_thread:", self._monitor_stow_thread)
+        if self._monitor_stow_thread is not None:
+            print("self._monitor_stow_thread.is_alive():", self._monitor_stow_thread.is_alive())
+        if self.is_dish_moving() and (
+            self._monitor_stow_thread is not None and self._monitor_stow_thread.is_alive()
+        ):
             self.logger.info("Abort rejected: STOW cannot be aborted")
             if task_callback:
                 task_callback(
