@@ -16,7 +16,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 LOGGER = logging.getLogger(__name__)
-NUMBER_OF_TABLE_SAMPLES = 1000
+NUMBER_OF_TABLE_SAMPLES = 300  # amounts to 6 calls to track table
 TRACK_TABLE_LIMIT = 150
 
 LEAD_TIME = 10
