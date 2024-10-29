@@ -1,5 +1,6 @@
 """Test to stress test dish pointing by appending pointing coordinates at rate of 200ms"""
 
+import logging
 import time
 
 import pytest
@@ -14,17 +15,16 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
-NUMBER_OF_TABLE_SAMPLES = 600
-TRACK_TABLE_LIMIT = 150  # that sums up to 150 samples per write
+LOGGER = logging.getLogger(__name__)
+NUMBER_OF_TABLE_SAMPLES = 1000
+TRACK_TABLE_LIMIT = 150
 
-TRACK_START_DELAY = 8
-TRACK_APPEND_DELAY = 10
+LEAD_TIME = 10
 CADENCE_SEC = 0.2  # decided cadence is 1Hz but choosing quicker rate to stress test
 
 TOLERANCE = 1e-2
 
 
-# pylint:disable=too-many-locals
 @pytest.mark.stress
 def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_store_class):
     """Dish pointing stress test implementation"""
@@ -89,7 +89,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
 
     track_table = []
     loaded_sample_count = 0
-    start_time_tai_s = get_current_tai_timestamp() + TRACK_START_DELAY
+    start_time_tai_s = get_current_tai_timestamp() + LEAD_TIME
 
     while loaded_sample_count < NUMBER_OF_TABLE_SAMPLES:
         track_table.extend(
@@ -119,8 +119,11 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
         try:
             dish_manager_proxy.programTrackTable = track_table[:TRACK_TABLE_LIMIT]
         except tango.DevFailed:
-            # try again before giving up
-            dish_manager_proxy.programTrackTable = track_table[:TRACK_TABLE_LIMIT]
+            # log failed programTrackTable writes
+            LOGGER.warning(
+                "Writing track sample %s to programTrackTable failed",
+                track_table[:TRACK_TABLE_LIMIT],
+            )
         time.sleep(CADENCE_SEC)
 
     # Wait sufficient period of time for the track to complete
