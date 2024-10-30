@@ -16,7 +16,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 LOGGER = logging.getLogger(__name__)
-NUMBER_OF_TABLE_SAMPLES = 300  # amounts to 6 calls to track table
+NUMBER_OF_TABLE_SAMPLES = 500  # amounts to 10 calls to track table
 TRACK_TABLE_LIMIT = 150
 
 LEAD_TIME = 10
@@ -87,9 +87,15 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     az_dir = 1 if current_az < 0 else -1
     el_dir = 1 if current_el < 45 else -1
 
-    track_table = []
-    loaded_sample_count = 0
+    loaded_sample_count = 1
     start_time_tai_s = get_current_tai_timestamp() + LEAD_TIME
+
+    # have a huge jump in the first point to guarantee a slew
+    track_table = [
+        start_time_tai_s,
+        current_az + (10.0 * az_dir),
+        current_el + (5.0 * el_dir),
+    ]
 
     while loaded_sample_count < NUMBER_OF_TABLE_SAMPLES:
         track_table.extend(
@@ -131,15 +137,14 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     pointing_state_values = [event_value[1] for event_value in pointing_state_values]
 
     # Check that the dish transitioned through READY, SLEW and TRACK pointing states
-    assert len(pointing_state_values) >= 2
-    assert pointing_state_values.count(PointingState["TRACK"]) == 1
-    assert pointing_state_values.count(PointingState["READY"]) >= 1
-    # Dish may or may not SLEW depending on how close it is to the target
-    assert pointing_state_values.count(PointingState["SLEW"]) >= 0
+    assert len(pointing_state_values) >= 3
+    assert pointing_state_values.count(PointingState["READY"]) >= 1, pointing_state_values
+    assert pointing_state_values.count(PointingState["TRACK"]) == 1, pointing_state_values
+    assert pointing_state_values.count(PointingState["SLEW"]) == 1, pointing_state_values
 
     destination_coord = dish_manager_proxy.programTrackTable
     last_requested_az = destination_coord[-2]
-    last_requested_el = destination_coord[1]
+    last_requested_el = destination_coord[-1]
 
     assert ds_device_proxy.achievedPointing[1] == approx(last_requested_az, rel=TOLERANCE)
     assert ds_device_proxy.achievedPointing[2] == approx(last_requested_el, rel=TOLERANCE)
