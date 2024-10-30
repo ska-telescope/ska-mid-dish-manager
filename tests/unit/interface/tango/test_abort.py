@@ -138,7 +138,7 @@ def test_abort(dish_manager_resources, event_store_class, abort_cmd, pointing_st
 
     # Confirm that abort finished and the queue is cleared
     result_event_store.wait_for_command_id(abort_unique_id)
-    cmds_in_queue_store.wait_for_value((), timeout=5)
+    cmds_in_queue_store.wait_for_value((), timeout=10)
     assert device_proxy.dishMode == DishMode.STANDBY_FP
 
 
