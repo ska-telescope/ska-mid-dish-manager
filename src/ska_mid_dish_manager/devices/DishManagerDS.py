@@ -34,6 +34,8 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
+    DSC_MAX_POWER_LIMIT_KW,
+    DSC_MIN_POWER_LIMIT_KW,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -412,6 +414,7 @@ class DishManager(SKAController):
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
                 "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
                 "actstaticoffsetvalueel": "actStaticOffsetValueEl",
+                "dscpowerlimitkw": "dscPowerLimitKw",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -462,6 +465,7 @@ class DishManager(SKAController):
                 "trackTableLoadMode",
                 "lastCommandedMode",
                 "lastCommandedPointingParams",
+                "dscPowerLimitKw",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
@@ -1350,6 +1354,33 @@ class DishManager(SKAController):
         Defaults to an empty string.
         """
         return self._last_commanded_pointing_params
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ_WRITE,
+        doc="""
+            DSC Power Limit (kW). Note that this attribute can also be set by calling
+            SetPowerMode. This value does not reflect the power limit in reality because
+            the current PowerLimit(kW) is not reported as it cannot be read from the DSC.
+            """,
+    )
+    def dscPowerLimitKw(self):
+        """Returns the DSC Power Limit (Kw)"""
+        return self.component_manager.component_state.get(
+            "dscpowerlimitkw", DSC_MIN_POWER_LIMIT_KW
+        )
+
+    @dscPowerLimitKw.write
+    def dscPowerLimitKw(self, value):
+        """Sets the DSC Power Limit (Kw)"""
+        # pylint: disable=attribute-defined-outside-init
+        if DSC_MIN_POWER_LIMIT_KW <= value <= DSC_MAX_POWER_LIMIT_KW:
+            self.component_manager.set_dsc_power_limit_kw(value)
+        else:
+            raise ValueError(
+                f"Invalid value, {value}, for DSC Power Limit (kW),"
+                f" valid range is [{DSC_MIN_POWER_LIMIT_KW}, {DSC_MAX_POWER_LIMIT_KW}]."
+            )
 
     # --------
     # Commands
