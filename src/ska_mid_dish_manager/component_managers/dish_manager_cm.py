@@ -809,6 +809,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         Transition the dish to STOW mode
         """
+        if self._monitor_stow_thread is not None and self._monitor_stow_thread.is_alive():
+            return TaskStatus.REJECTED, "Dish is already stowing"
+
         ds_cm = self.sub_component_managers["DS"]
         try:
             ds_cm.execute_command("Stow", None)
