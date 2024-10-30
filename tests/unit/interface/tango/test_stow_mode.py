@@ -1,8 +1,8 @@
 """Unit tests verifying model against DS_SetStowMode transition."""
 
 import pytest
-from ska_control_model import ResultCode
 import tango
+from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
 
