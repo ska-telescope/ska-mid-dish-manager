@@ -837,7 +837,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             != DSOperatingMode.STOW
         ):
             time.sleep(0.1)
-        task_callback(status=TaskStatus.COMPLETED, progress="Stow completed")
+        task_callback(
+            status=TaskStatus.COMPLETED,
+            progress="Stow completed",
+            result=(ResultCode.OK, "Stow completed"),
+        )
 
     def slew(
         self,

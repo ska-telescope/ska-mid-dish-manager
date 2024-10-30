@@ -35,8 +35,8 @@ def test_set_stow_mode_handler(
 
     expected_call_kwargs = (
         {
-            "status": TaskStatus.COMPLETED,
-            "progress": "Stow called, monitor dishmode for LRC completed",
+            "status": TaskStatus.IN_PROGRESS,
+            "progress": "Stow called",
         },
     )
 
