@@ -49,6 +49,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "configureTargetLock",
             "actStaticOffsetValueXel",
             "actStaticOffsetValueEl",
+            "dscpowerlimitkw",
         )
         super().__init__(
             tango_device_fqdn,
