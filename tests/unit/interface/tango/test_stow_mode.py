@@ -58,6 +58,7 @@ def test_stow_mode(dish_manager_resources, event_store_class):
         )
     )
 
+
 # pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
