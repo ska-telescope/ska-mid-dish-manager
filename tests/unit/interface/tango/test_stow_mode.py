@@ -57,3 +57,18 @@ def test_stow_mode(dish_manager_resources, event_store_class):
             "COMPLETED",
         )
     )
+
+# pylint: disable=missing-function-docstring, protected-access
+@pytest.mark.unit
+@pytest.mark.forked
+def test_only_one_stow_runs_at_a_time(dish_manager_resources, event_store_class):
+    device_proxy, dish_manager_cm = dish_manager_resources
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+
+    [[result_code], [_]] = device_proxy.SetStowMode()
+    assert result_code == ResultCode.STARTED
+
+    [[result_code], [_]] = device_proxy.SetStowMode()
+    assert result_code == ResultCode.REJECTED
