@@ -1,4 +1,6 @@
 """Test to stress test dish pointing by appending pointing coordinates at rate of 200ms"""
+
+import logging
 import time
 
 import pytest
@@ -13,17 +15,16 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
-NUMBER_OF_TABLE_SAMPLES = 150
-INIT_TABLE_SIZE = 5
+LOGGER = logging.getLogger(__name__)
+NUMBER_OF_TABLE_SAMPLES = 500  # amounts to 10 calls to track table
+TRACK_TABLE_LIMIT = 150
 
-TRACK_START_DELAY = 8
-TRACK_APPEND_DELAY = 10
-CADENCE_SEC = 0.2
+LEAD_TIME = 10
+CADENCE_SEC = 0.2  # decided cadence is 1Hz but choosing quicker rate to stress test
 
 TOLERANCE = 1e-2
 
 
-# pylint:disable=too-many-locals
 @pytest.mark.stress
 def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_store_class):
     """Dish pointing stress test implementation"""
@@ -68,6 +69,16 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
+    # start from a known arbitrary point
+    pointing_state_event_store.clear_queue()
+    dish_manager_proxy.Slew([0, 35])
+    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=300)
+
+    # Dish goes to FP mode after moving. Request Operate again
+    # TODO Remove this after bug is fixed
+    [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
+
     # Generate NUMBER_OF_TABLE_SAMPLES sized list of pointing coords
     current_pointing = dish_manager_proxy.achievedPointing
     current_az = current_pointing[1]
@@ -76,63 +87,64 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     az_dir = 1 if current_az < 0 else -1
     el_dir = 1 if current_el < 45 else -1
 
-    pointing_coord_list = []
-    loaded_sample_count = 0
+    loaded_sample_count = 1
+    start_time_tai_s = get_current_tai_timestamp() + LEAD_TIME
+
+    # have a huge jump in the first point to guarantee a slew
+    track_table = [
+        start_time_tai_s,
+        current_az + (10.0 * az_dir),
+        current_el + (5.0 * el_dir),
+    ]
 
     while loaded_sample_count < NUMBER_OF_TABLE_SAMPLES:
-        pointing_coord_list.extend(
+        track_table.extend(
             [
+                start_time_tai_s + (loaded_sample_count * CADENCE_SEC),
                 current_az + (0.025 * loaded_sample_count * az_dir),
                 current_el + (0.025 * loaded_sample_count * el_dir),
             ]
         )
         loaded_sample_count += 1
 
-    # Generate 5 entry track table to start the track using first 5 coords
-    start_time_tai_s = get_current_tai_timestamp() + TRACK_START_DELAY
-    initial_table_timestamps = []
-    for count in range(5):
-        initial_table_timestamps.append((start_time_tai_s + (count * CADENCE_SEC)))
-
-    initial_track_table = []
-    for i in range(INIT_TABLE_SIZE):
-        initial_track_table.extend(
-            [
-                initial_table_timestamps[i],
-                pointing_coord_list[(i * 2)],
-                pointing_coord_list[(i * 2) + 1],
-            ]
-        )
-
+    # Send first table in NEW mode
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
-    dish_manager_proxy.programTrackTable = initial_track_table
-
+    dish_manager_proxy.programTrackTable = track_table[:TRACK_TABLE_LIMIT]
     dish_manager_proxy.Track()
 
-    # Slice the first 5 coords out and rapid fire the remaining entries in append mode
-    pointing_coord_list = pointing_coord_list[10:]
+    # Rapid fire the remaining entries in append mode
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
 
-    count = 0
-    while count < len(pointing_coord_list):
-        point_timestamp = get_current_tai_timestamp() + TRACK_APPEND_DELAY
-        point_az = pointing_coord_list[count]
-        point_el = pointing_coord_list[count + 1]
+    while True:
+        try:
+            track_table = track_table[TRACK_TABLE_LIMIT:]
+        except IndexError:
+            break
+        if len(track_table) < TRACK_TABLE_LIMIT:
+            break
+        try:
+            dish_manager_proxy.programTrackTable = track_table[:TRACK_TABLE_LIMIT]
+        except tango.DevFailed:
+            # log failed programTrackTable writes
+            LOGGER.warning(
+                "Writing track sample %s to programTrackTable failed",
+                track_table[:TRACK_TABLE_LIMIT],
+            )
         time.sleep(CADENCE_SEC)
-        dish_manager_proxy.programTrackTable = [point_timestamp, point_az, point_el]
-        count += 2
 
     # Wait sufficient period of time for the track to complete
-    pointing_state_values = pointing_state_event_store.get_queue_values(timeout=60)
+    pointing_state_values = pointing_state_event_store.get_queue_values(timeout=300)
     pointing_state_values = [event_value[1] for event_value in pointing_state_values]
 
-    # Assert that at least 2 READY and 1 TRACK events were received
-    # SLEW may or may not have been received
+    # Check that the dish transitioned through READY, SLEW and TRACK pointing states
     assert len(pointing_state_values) >= 3
-    assert pointing_state_values.count(PointingState["READY"]) == 2
-    assert pointing_state_values.count(PointingState["TRACK"]) == 1
+    assert pointing_state_values.count(PointingState["READY"]) >= 1, pointing_state_values
+    assert pointing_state_values.count(PointingState["TRACK"]) == 1, pointing_state_values
+    assert pointing_state_values.count(PointingState["SLEW"]) == 1, pointing_state_values
 
     destination_coord = dish_manager_proxy.programTrackTable
+    last_requested_az = destination_coord[-2]
+    last_requested_el = destination_coord[-1]
 
-    assert ds_device_proxy.achievedPointing[1] == approx(destination_coord[1], rel=TOLERANCE)
-    assert ds_device_proxy.achievedPointing[2] == approx(destination_coord[2], rel=TOLERANCE)
+    assert ds_device_proxy.achievedPointing[1] == approx(last_requested_az, rel=TOLERANCE)
+    assert ds_device_proxy.achievedPointing[2] == approx(last_requested_el, rel=TOLERANCE)
