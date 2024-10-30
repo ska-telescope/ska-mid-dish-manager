@@ -140,14 +140,14 @@ def test_abort(dish_manager_resources, event_store_class, abort_cmd, pointing_st
 # pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-# @pytest.mark.parametrize(
-#     "abort_cmd, pointing_state",
-#     [
-#         ("Abort"),
-#         ("AbortCommands"),
-#     ],
-# )
-def test_abort_is_accepted_when_slewing(dish_manager_resources, event_store_class):
+@pytest.mark.parametrize(
+    "abort_cmd",
+    [
+        ("Abort"),
+        ("AbortCommands"),
+    ],
+)
+def test_abort_is_accepted_when_slewing(abort_cmd, dish_manager_resources, event_store_class):
     """Verify Abort/AbortCommands is rejected when DishMode is STOW/MAINTENANCE"""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
@@ -166,14 +166,21 @@ def test_abort_is_accepted_when_slewing(dish_manager_resources, event_store_clas
     pointing_state_event_store.wait_for_value(PointingState.SLEW)
     assert device_proxy.pointingState == PointingState.SLEW
 
-    [[result_code], [_]] = device_proxy.Abort()
+    [[result_code], [_]] = device_proxy.command_inout(abort_cmd, None)
     assert result_code == ResultCode.STARTED
 
 
 # pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-def test_abort_is_rejected_in_stow_dishmode(dish_manager_resources, event_store_class):
+@pytest.mark.parametrize(
+    "abort_cmd",
+    [
+        ("Abort"),
+        ("AbortCommands"),
+    ],
+)
+def test_abort_is_rejected_in_stow_dishmode(abort_cmd, dish_manager_resources, event_store_class):
     """Verify Abort/AbortCommands is rejected when DishMode is STOW/MAINTENANCE"""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
@@ -202,7 +209,7 @@ def test_abort_is_rejected_in_stow_dishmode(dish_manager_resources, event_store_
     pointing_state_event_store.wait_for_value(PointingState.SLEW)
     assert device_proxy.pointingState == PointingState.SLEW
 
-    [[result_code], [abort_unique_id]] = device_proxy.Abort()
+    [[result_code], [abort_unique_id]] = device_proxy.command_inout(abort_cmd, None)
     assert result_code == ResultCode.REJECTED
 
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
@@ -219,7 +226,14 @@ def test_abort_is_rejected_in_stow_dishmode(dish_manager_resources, event_store_
 # pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
-def test_abort_is_rejected_in_maintenance_dishmode(dish_manager_resources, event_store_class):
+@pytest.mark.parametrize(
+    "abort_cmd",
+    [
+        ("Abort"),
+        ("AbortCommands"),
+    ],
+)
+def test_abort_is_rejected_in_maintenance_dishmode(abort_cmd, dish_manager_resources, event_store_class):
     """Verify Abort/AbortCommands is rejected when DishMode is STOW/MAINTENANCE"""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
@@ -243,5 +257,5 @@ def test_abort_is_rejected_in_maintenance_dishmode(dish_manager_resources, event
     dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
-    [[result_code], [_]] = device_proxy.Abort()
+    [[result_code], [_]] = device_proxy.command_inout(abort_cmd, None)
     assert result_code == ResultCode.REJECTED
