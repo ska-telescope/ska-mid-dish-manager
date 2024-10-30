@@ -824,6 +824,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return TaskStatus.IN_PROGRESS, "Stow called"
 
     def start_monitor_stow_thread(self, task_callback: Optional[Callable] = None):
+        """
+        Report the progress of the stow command
+
+        :param task_callback: Callback for task
+        """
         self._monitor_stow_thread = Thread(
             target=self._monitor_stow,
             args=[task_callback],
