@@ -233,7 +233,9 @@ def test_abort_is_rejected_in_stow_dishmode(abort_cmd, dish_manager_resources, e
         ("AbortCommands"),
     ],
 )
-def test_abort_is_rejected_in_maintenance_dishmode(abort_cmd, dish_manager_resources, event_store_class):
+def test_abort_is_rejected_in_maintenance_dishmode(
+    abort_cmd, dish_manager_resources, event_store_class
+):
     """Verify Abort/AbortCommands is rejected when DishMode is STOW/MAINTENANCE"""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
