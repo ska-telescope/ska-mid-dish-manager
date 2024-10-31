@@ -1269,6 +1269,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._abort_thread.start()
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
+    def set_dsc_power_limit_kw(
+        self,
+        power_limit: float,
+    ) -> None:
+        """Set the DSC Power Limit kW on the DS."""
+        ds_cm = self.sub_component_managers["DS"]
+        try:
+            ds_cm.write_attribute_value("dscPowerLimitKw", power_limit)
+            self.logger.debug("Successfully updated dscPowerLimitKw on DS.")
+            self._update_component_state(dscpowerlimitkw=power_limit)
+        except (LostConnection, tango.DevFailed):
+            self.logger.error("Failed to update dscPowerLimitKw on DS.")
+            raise
+        return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
+
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
         """
         Read memorized attributes values from TangoDB.
