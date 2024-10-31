@@ -95,4 +95,4 @@ def test_dish_handles_unhappy_path_in_command_execution(
     # check that the mode transition to LP mode did not happen on dish manager, spf and spfrx
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
     assert spf_device_proxy.operatingMode == SPFOperatingMode.OPERATE
-    assert spfrx_device_proxy.operatingMode == SPFRxOperatingMode.DATA_CAPTURE
+    assert spfrx_device_proxy.operatingMode == SPFRxOperatingMode.OPERATE

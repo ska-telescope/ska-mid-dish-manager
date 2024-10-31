@@ -89,7 +89,7 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
     # Force dishManager dishMode to go to OPERATE
     ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
     main_event_store.wait_for_value(DishMode.OPERATE)
     ds_cm._update_component_state(pointingstate=PointingState.READY)
     main_event_store.wait_for_value(PointingState.READY)

@@ -863,7 +863,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=bool,
-        doc="Indicates whether Dish is capturing data in the configured band " "or not.",
+        doc="Indicates whether Dish is capturing data in the configured band or not.",
     )
     def capturing(self):
         """Returns the capturing"""
@@ -871,7 +871,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=Band,
-        doc="The frequency band that the Dish is configured to capture data " "in.",
+        doc="The frequency band that the Dish is configured to capture data in.",
     )
     def configuredBand(self):
         """Returns the configuredBand"""
@@ -1759,7 +1759,7 @@ class DishManager(SKAController):
     def Synchronise(self):
         """
         Reset configured band sample counters. Command only valid in
-        SPFRx Data_Capture mode.
+        SPFRx OPERATE mode.
         """
         raise NotImplementedError
 
