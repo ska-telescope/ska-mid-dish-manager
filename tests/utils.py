@@ -436,7 +436,7 @@ def set_configuredBand_b1(
     spf_device_proxy.bandInFocus = BandInFocus.B1
     spfrx_device_proxy.configuredband = Band.B1
     # accompany spfrx configuredband change with operatingMode change
-    spfrx_device_proxy.operatingMode = SPFRxOperatingMode.DATA_CAPTURE
+    spfrx_device_proxy.operatingMode = SPFRxOperatingMode.OPERATE
 
     try:
         config_band_event_store.wait_for_value(Band.B1, timeout=7)
@@ -472,7 +472,7 @@ def set_configuredBand_b2(
     spf_device_proxy.bandInFocus = BandInFocus.B2
     spfrx_device_proxy.configuredband = Band.B2
     # accompany spfrx configuredband change with operatingMode change
-    spfrx_device_proxy.operatingMode = SPFRxOperatingMode.DATA_CAPTURE
+    spfrx_device_proxy.operatingMode = SPFRxOperatingMode.OPERATE
 
     config_band_event_store.wait_for_value(Band.B2, timeout=7)
 

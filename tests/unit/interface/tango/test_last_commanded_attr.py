@@ -67,8 +67,8 @@ def test_last_commanded_mode_attr_records_mode_transition_requests(
     ds_cm._update_component_state(indexerposition=IndexerPosition.B1)
     spf_cm._update_component_state(bandinfocus=BandInFocus.B1)
     spfrx_cm._update_component_state(configuredband=Band.B1)
-    # spfrx operating mode transitions to Data Capture after successful band configuration
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
+    # spfrx operating mode transitions to OPERATE after successful band configuration
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
     main_event_store.wait_for_value(Band.B1, timeout=10)
 
     device_proxy.SetOperateMode()

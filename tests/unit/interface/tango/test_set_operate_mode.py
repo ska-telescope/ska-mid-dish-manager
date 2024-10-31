@@ -44,7 +44,7 @@ def test_set_operate_mode_fails_when_already_in_operate_dish_mode(
     # Force dishManager dishMode to go to OPERATE
     ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
     dish_mode_event_store.wait_for_value(DishMode.OPERATE)
 
     [[_], [unique_id]] = device_proxy.SetOperateMode()
@@ -107,8 +107,8 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     ds_cm._update_component_state(indexerposition=IndexerPosition.B1)
     spf_cm._update_component_state(bandinfocus=BandInFocus.B1)
     spfrx_cm._update_component_state(configuredband=Band.B1)
-    # spfrx operating mode transitions to Data Capture after successful band configuration
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
+    # spfrx operating mode transitions to OPERATE after successful band configuration
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
     main_event_store.wait_for_value(Band.B1)
 
     device_proxy.SetOperateMode()

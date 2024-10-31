@@ -37,7 +37,7 @@ class SPFRxOperatingMode(enum.IntEnum):
     UNKNOWN = 0
     STARTUP = 1
     STANDBY = 2
-    DATA_CAPTURE = 3
+    OPERATE = 3
     CONFIGURE = 4
     MAINTENANCE = 5
 

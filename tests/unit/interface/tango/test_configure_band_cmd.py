@@ -63,7 +63,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
 
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.DATA_CAPTURE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
 
     assert main_event_store.wait_for_command_id(unique_id, timeout=6)
     assert device_proxy.dishMode == DishMode.STANDBY_FP
