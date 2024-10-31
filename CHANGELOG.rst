@@ -12,9 +12,6 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
   - `AbortCommmands` implements the same handler as `Abort`
 
-- Added unit and range verification checks to `ApplyPointingModel`command
-- Added in Read/Write dscPowerLimitKw attribute to be used when FP, LP and Slew are invoked.
-- Using DS Manager v2.2.0
 
 Version 5.0.1
 *************

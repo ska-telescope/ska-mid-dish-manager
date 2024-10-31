@@ -1043,25 +1043,6 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
-    - name: dscPowerLimitKw
-      data_format: SCALAR
-      data_type: DevDouble
-      description: "\n            DSC Power Limit (kW). Note that this attribute can\
-        \ also be set by calling\n            SetPowerMode. This value does not reflect\
-        \ the power limit in reality because\n            the current PowerLimit(kW)\
-        \ is not reported as it cannot be read from the DSC.\n            "
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: dscPowerLimitKw
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ_WRITE
-      writable_attr_name: dscPowerLimitKw
     - name: dshMaxShortTermPower
       data_format: SCALAR
       data_type: DevDouble
