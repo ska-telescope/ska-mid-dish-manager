@@ -43,7 +43,7 @@ def state_transition():
         (
             dict(indexerposition=IndexerPosition.MOVING),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
-            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.CONFIG,
         ),
         (
@@ -79,13 +79,13 @@ def state_transition():
                 operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
             ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
-            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.STANDBY_FP,
         ),
         (
             dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
             dict(operatingmode=SPFOperatingMode.OPERATE),
-            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.OPERATE,
         ),
         # Any other random combo goes to UNKNOWN
@@ -137,7 +137,7 @@ def test_compute_dish_mode(
         (
             dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
             None,
-            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.OPERATE,
         ),
         (
@@ -145,7 +145,7 @@ def test_compute_dish_mode(
                 operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
             ),
             None,
-            dict(operatingmode=SPFRxOperatingMode.DATA_CAPTURE),
+            dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.STANDBY_FP,
         ),
         (
