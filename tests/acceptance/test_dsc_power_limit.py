@@ -1,4 +1,3 @@
-# pylint: disable=too-many-positional-arguments,too-many-arguments
 """Test dscPowerLimtkW Attribute"""
 
 from typing import Any
@@ -125,6 +124,7 @@ def test_power_limit_change_set_power_mode(
         dm_attribute_event_store.wait_for_value(DEFAULT_POWER_LIMIT, timeout=6)
 
 
+# pylint: disable=too-many-arguments
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     ("full_power", "expected_progress", "limit_value"),
