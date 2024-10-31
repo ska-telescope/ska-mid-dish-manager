@@ -7,14 +7,12 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Added unit and range verification checks to `ApplyPointingModel` command
+- Added unit and range verification checks to `ApplyPointingModel`command
+- Added in Read/Write dscPowerLimitKw attribute to be used when SetStandbyFPMode, SetStandbyLPMode and Slew are invoked.
+- Upgraded ska-mid-dish-ds-manager chart to v2.2.0
 - Added `Abort` tango command which cancels any task and restores the dish to FP mode
 
   - `AbortCommmands` implements the same handler as `Abort`
-
-- Added unit and range verification checks to `ApplyPointingModel`command
-- Added in Read/Write dscPowerLimitKw attribute to be used when FP, LP and Slew are invoked.
-- Upgraded ska-mid-dish-ds-manager chart to v2.2.0
 
 Version 5.0.1
 *************
