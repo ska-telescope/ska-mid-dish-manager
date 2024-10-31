@@ -8,6 +8,8 @@ DishManager Models
    
    Command Map<command_map>
    Command Class<command_class>
+   Command Handlers<command_handlers>
+   Command Checks<is_allowed_rules>
    Constants<constants>
    Data Classes<data_classes>
    DishMode Model<dish_mode_model>

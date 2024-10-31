@@ -15,6 +15,7 @@ from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
+from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
@@ -41,7 +42,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
-from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
+from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 
 
 # pylint: disable=abstract-method
@@ -214,6 +215,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_tracker,
             self.logger,
         )
+        self._cmd_allowed_checks = CommandAllowedChecks(self)
+
+        # ----------------
+        # Command Handlers
+        # ----------------
+        self._abort_handler = Abort(self, self._command_map, self._command_tracker, logger=logger)
 
         self.direct_mapped_attrs = {
             "DS": [
@@ -232,7 +239,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
-    def _get_active_sub_component_managers(self) -> Dict:
+    def get_active_sub_component_managers(self) -> Dict:
         """Get a list of subservient device component managers which are not being ignored."""
         active_component_managers = {"DS": self.sub_component_managers["DS"]}
 
@@ -279,7 +286,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
             if self.sub_component_managers:
-                active_sub_component_managers = self._get_active_sub_component_managers()
+                active_sub_component_managers = self.get_active_sub_component_managers()
 
                 self.logger.debug(
                     ("Active component managers [%s]"), active_sub_component_managers
@@ -347,7 +354,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         if not self.sub_component_managers:
             return
-        active_sub_component_managers = self._get_active_sub_component_managers()
+        active_sub_component_managers = self.get_active_sub_component_managers()
         if not all(
             sub_component_manager.component_state
             for sub_component_manager in active_sub_component_managers.values()
@@ -656,12 +663,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         self.logger.debug("Aborting long running commands")
         super().abort_commands(task_callback)
-        sub_component_mgrs = self._get_active_sub_component_managers()
+        sub_component_mgrs = self.get_active_sub_component_managers()
         for component_mgr in sub_component_mgrs.values():
             # dont use the same taskcallback else we get completed 4x on the same command id
             component_mgr.abort_commands()
 
-    def _track_load_table(
+    def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
     ) -> Tuple[ResultCode, str]:
         """Load the track table."""
@@ -1198,31 +1205,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return (ResultCode.OK, "Successfully updated pseudoRandomNoiseDiodePars on SPFRx")
 
-    def _reset_track_table(self) -> None:
-        """
-        Write the last achievedPointing back to the trackTable in loadmode NEW
-
-        NOTE: this is a workaround until the RESET mode is implemented on the DSC.
-        Remove/re-work this when the RESET mode is available
-        """
-        current_pointing = self.component_state.get("achievedpointing")
-        timestamp = get_current_tai_timestamp()
-        current_pointing[0] = timestamp
-        sequence_length = 1
-        load_mode = TrackTableLoadMode.NEW
-
-        result_code, result_message = self._track_load_table(
-            sequence_length, current_pointing, load_mode
-        )
-        if result_code == ResultCode.OK:
-            # need to find a way to bubble up this table
-            # to dish manager._program_track_table and _load_mode
-            pass
-        else:
-            self.logger.warning(
-                "Failed to reset programTrackTable in Abort sequence: %s", result_message
-            )
-
     def is_dish_moving(self) -> bool:
         """
         Report whether or not the dish is moving
@@ -1233,26 +1215,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
             return True
         return False
-
-    def _ensure_transition_to_fp_mode(
-        self,
-        task_abort_event: Optional[Event] = None,
-        task_callback: Optional[Callable] = None,
-    ) -> None:
-        # get fresh component states from the sub devices
-        sub_component_mgrs = self._get_active_sub_component_managers()
-        for component_manager in sub_component_mgrs.values():
-            component_manager.update_state_from_monitored_attributes()
-
-        # only force the transition if the dish is not in FP already
-        current_dish_mode = self.component_state.get("dishmode")
-        if current_dish_mode == DishMode.STANDBY_FP:
-            if task_callback:
-                task_callback(status=TaskStatus.COMPLETED)
-            return
-
-        # fan out respective FP command to the sub devices
-        self._command_map.set_standby_fp_mode(task_abort_event, task_callback)
 
     def is_lrc_currently_executing(self) -> bool:
         """
@@ -1272,65 +1234,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return True
         # there are no commands in staging, queued or in progress
         return False
-
-    def _abort(
-        self,
-        task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[Event] = None,
-    ) -> None:
-        # the name has to be different, task_callback != task_cb
-        # one is a partial with a command id and the other isnt
-        task_cb = self._command_tracker.update_command_info
-
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
-
-        if self.is_lrc_currently_executing():
-            self.logger.debug("Aborting LRCs from Abort sequence")
-            abort_command_id = self._command_tracker.new_command(
-                "abort-sequence:abort-lrc", completed_callback=None
-            )
-            abort_task_cb = partial(task_cb, abort_command_id)
-            self.abort_commands(task_callback=abort_task_cb)
-            while (
-                not self._command_tracker.get_command_status(abort_command_id)
-                != TaskStatus.COMPLETED
-            ):
-                task_abort_event.wait(0.1)  # sleep a bit to not overwork the CPU
-
-        if self.is_dish_moving():
-            # stop the dish
-            track_stop_command_id = self._command_tracker.new_command(
-                "abort-sequence:trackstop", completed_callback=None
-            )
-            track_stop_task_cb = partial(task_cb, track_stop_command_id)
-            self.logger.debug("Issuing TrackStop from Abort sequence")
-            self._command_map.track_stop_cmd(task_abort_event, track_stop_task_cb)
-
-            # clear the scan id
-            end_scan_command_id = self._command_tracker.new_command(
-                "abort-sequence:endscan", completed_callback=None
-            )
-            end_scan_task_cb = partial(task_cb, end_scan_command_id)
-            self.logger.debug("Issuing EndScan from Abort sequence")
-            self._end_scan(task_abort_event, end_scan_task_cb)
-
-        # send the last reported achieved pointing in load mode new
-        self.logger.debug("Resetting the programTrackTable from Abort sequence")
-        self._reset_track_table()
-
-        # go to the known state: STANDBY-FP
-        standby_fp_command_id = self._command_tracker.new_command(
-            "abort-sequence:standbyfp", completed_callback=None
-        )
-        standby_fp_task_cb = partial(task_cb, standby_fp_command_id)
-        self.logger.debug("Issuing SetStandbyFPMode from Abort sequence")
-        self._ensure_transition_to_fp_mode(task_abort_event, standby_fp_task_cb)
-
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED, result=(ResultCode.OK, "Abort sequence completed")
-            )
 
     def abort(
         self, task_callback: Optional[Callable] = None, task_abort_event: Optional[Event] = Event()
@@ -1355,32 +1258,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
             return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
 
-        if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
-            self.logger.info("Abort rejected: command not allowed from MAINTENANCE mode")
+        if not self._cmd_allowed_checks.is_abort_allowed():
+            self.logger.info(
+                "Abort rejected: command not allowed during a STOW and MAINTENANCE modes"
+            )
             if task_callback:
                 task_callback(
                     status=TaskStatus.REJECTED,
                     result=(
                         ResultCode.REJECTED,
-                        "Abort not allowed from MAINTENANCE mode",
+                        "Command not allowed during a STOW and MAINTENANCE modes",
                     ),
                 )
-            return TaskStatus.REJECTED, "Abort not allowed from MAINTENANCE mode"
-
-        if self.is_dish_moving() and self.component_state.get("dishmode") == DishMode.STOW:
-            self.logger.info("Abort rejected: STOW cannot be aborted")
-            if task_callback:
-                task_callback(
-                    status=TaskStatus.REJECTED,
-                    result=(
-                        ResultCode.REJECTED,
-                        "STOW cannot be aborted",
-                    ),
-                )
-            return TaskStatus.REJECTED, "STOW cannot be aborted"
+            return TaskStatus.REJECTED, "Command not allowed during a STOW and MAINTENANCE modes"
 
         self._abort_thread = Thread(
-            target=self._abort,
+            target=self._abort_handler,
             args=[],
             kwargs={"task_callback": task_callback, "task_abort_event": task_abort_event},
         )
