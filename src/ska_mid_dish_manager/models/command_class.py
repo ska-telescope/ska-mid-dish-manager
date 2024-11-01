@@ -19,7 +19,7 @@ class AbortCommand(SubmittedSlowCommand):
         :param args: positional args to the component manager method
         :param kwargs: keyword args to the component manager method
 
-        :return: A tuple containing the task status (e.g. IN_PROGRESS)
+        :return: A tuple containing the result code (e.g. STARTED)
             and a string message containing a command_id (if
             the command has been accepted) or an informational message
             (if the command was rejected)
@@ -55,7 +55,7 @@ class AbortCommandsDeprecatedCommand(SubmittedSlowCommand):
         :param args: positional args to the component manager method
         :param kwargs: keyword args to the component manager method
 
-        :return: A tuple containing the task status (e.g. IN_PROGRESS)
+        :return: A tuple containing the result code (e.g. STARTED)
             and a string message containing a command_id (if
             the command has been accepted) or an informational message
             (if the command was rejected)
@@ -165,10 +165,8 @@ class StowCommand(SubmittedSlowCommand):
         :param args: positional args to the component manager method
         :param kwargs: keyword args to the component manager method
 
-        :return: A tuple containing the task status (e.g. COMPLETED)
-            and a string message containing a command_id (if
-            the command has been accepted) or an informational message
-            (if the command was rejected)
+        :return: A tuple containing the result code (e.g. STARTED)
+            and a string message if the command has been accepted or failed
         """
         command_id = self._command_tracker.new_command(
             self._command_name, completed_callback=self._completed
@@ -180,12 +178,12 @@ class StowCommand(SubmittedSlowCommand):
             **kwargs,
         )
 
+        # the stow command is not tracked from this point
+        # dont return the command id to the client
         if status == TaskStatus.IN_PROGRESS:
-            return ResultCode.STARTED, command_id
-        if status == TaskStatus.REJECTED:
-            return ResultCode.REJECTED, command_id
+            return ResultCode.STARTED, "Stow called on Dish Structure, monitor dishmode for STOW"
         return (
             ResultCode.FAILED,
-            f"Expected IN_PROGRESS/REJECTED task status, but {status.name} was returned "
+            f"Expected IN_PROGRESS task status, but {status.name} was returned "
             f"by command method with message: {message}",
         )
