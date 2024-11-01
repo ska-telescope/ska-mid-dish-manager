@@ -2040,6 +2040,38 @@ class DishManager(SKAController):
         if hasattr(self, "component_manager"):
             self.component_manager.sync_component_states()
 
+    @command(
+        dtype_out="DevVarLongStringArray"
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def On(self) -> DevVarLongStringArrayType:
+        """The On command inherited from base classes."""
+        raise NotImplementedError("DishManager does not implement the On command.")
+
+    @command(
+        dtype_out="DevVarLongStringArray"
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def Off(self) -> DevVarLongStringArrayType:
+        """The Off command inherited from base classes."""
+        raise NotImplementedError("DishManager does not implement the Off command.")
+
+    @command(
+        dtype_out="DevVarLongStringArray"
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def Standby(self) -> DevVarLongStringArrayType:
+        """The Standby command inherited from base classes."""
+        raise NotImplementedError("DishManager does not implement the Standby command.")
+
+    @command(
+        dtype_out="DevVarLongStringArray"
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def Reset(self) -> DevVarLongStringArrayType:
+        """The Reset command inherited from base classes."""
+        raise NotImplementedError("DishManager does not implement the Reset command.")
+
 
 def main(args=None, **kwargs):
     """Launch a DishManager device."""
