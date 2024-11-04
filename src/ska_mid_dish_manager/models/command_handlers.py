@@ -39,9 +39,6 @@ class Abort:
     def _reset_track_table(self) -> None:
         """
         Write the last achievedPointing back to the trackTable in loadmode NEW
-
-        NOTE: this is a workaround until the RESET mode is implemented on the DSC.
-        Remove/re-work this when the RESET mode is available
         """
         current_pointing = self._component_manager.component_state.get("achievedpointing")
         timestamp = get_current_tai_timestamp()
