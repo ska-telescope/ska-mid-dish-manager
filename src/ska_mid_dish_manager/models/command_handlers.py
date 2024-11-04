@@ -107,14 +107,6 @@ class Abort:
         # is the dish moving
         pointing_state = self._component_manager.component_state.get("pointingstate")
         if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
-            # stop the dish
-            track_stop_command_id = self._command_tracker.new_command(
-                "abort-sequence:trackstop", completed_callback=None
-            )
-            track_stop_task_cb = partial(task_cb, track_stop_command_id)
-            self.logger.debug("Issuing TrackStop from Abort sequence")
-            self._command_map.track_stop_cmd(task_abort_event, track_stop_task_cb)
-
             # clear the scan id
             end_scan_command_id = self._command_tracker.new_command(
                 "abort-sequence:endscan", completed_callback=None

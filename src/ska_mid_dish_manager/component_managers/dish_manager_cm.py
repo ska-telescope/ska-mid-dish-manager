@@ -1259,18 +1259,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
 
         if not self._cmd_allowed_checks.is_abort_allowed():
-            self.logger.info(
-                "Abort rejected: command not allowed during a STOW and MAINTENANCE modes"
-            )
+            self.logger.info("Abort rejected: command not allowed in MAINTENANCE mode")
             if task_callback:
                 task_callback(
                     status=TaskStatus.REJECTED,
                     result=(
                         ResultCode.REJECTED,
-                        "Command not allowed during a STOW and MAINTENANCE modes",
+                        "Command not allowed during in MAINTENANCE mode",
                     ),
                 )
-            return TaskStatus.REJECTED, "Command not allowed during a STOW and MAINTENANCE modes"
+            return TaskStatus.REJECTED, "Command not allowed during MAINTENANCE mode"
 
         self._abort_thread = Thread(
             target=self._abort_handler,

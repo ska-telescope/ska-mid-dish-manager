@@ -16,9 +16,6 @@ class CommandAllowedChecks:
         """Determine if abort command is allowed"""
         component_state = self._component_manager.component_state
         dish_mode = component_state.get("dishmode")
-        if self._component_manager.is_dish_moving() and dish_mode == DishMode.STOW:
-            # TODO find out if STOW changes pointing state to SLEW only... and what else?
-            return False
         if dish_mode == DishMode.MAINTENANCE:
             return False
         return True
