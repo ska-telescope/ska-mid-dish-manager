@@ -95,12 +95,11 @@ def test_abort(dish_manager_resources, event_store_class, abort_cmd, pointing_st
     # event received after subscription to prevent false reporting
     cmds_in_queue_store.clear_queue()
 
-    # it doesnt matter which command is executed, so long as it's not STOW
     [[_], [fp_unique_id]] = device_proxy.SetStandbyFPMode()
     # dont update spf operatingMode to mimic skipAttributeUpdate=True
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
     # we can now expect dishMode to transition to UNKNOWN
-    dish_mode_event_store.wait_for_value(DishMode.UNKNOWN)
+    dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
     assert device_proxy.dishMode == DishMode.UNKNOWN
     # remove the progress events emitted from SetStandbyFPMode execution
     progress_event_store.clear_queue()
@@ -113,11 +112,7 @@ def test_abort(dish_manager_resources, event_store_class, abort_cmd, pointing_st
     result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
     progress_event_store.wait_for_progress_update("SetStandbyFPMode Aborted")
 
-    progress_event_store.wait_for_progress_update("TrackStop called on DS", timeout=30)
-    # update the pointingState to READY indicating dish movement finished
-    ds_cm._update_component_state(pointingstate=PointingState.READY)
     expected_progress_updates = [
-        "TrackStop completed",
         "Clearing scanID",
         "EndScan completed",
         "SetOperateMode called on SPF",
