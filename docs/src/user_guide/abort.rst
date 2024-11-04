@@ -7,6 +7,7 @@ There is extensive `documentation`_ on the implementation details and usage LRC.
 (Stop for MeerKAT dish proxy and Abort for TMC) means more than just instructing the executor to cancel a LRC.
 
 In TMC for example, it could mean:
+
 * stop moving the dish
 
 * and clear the scan id
@@ -20,7 +21,8 @@ In the MeerKAT dish proxy, it could mean:
 In light of the above, Abort for DishManager consolidates cancelling tasks on DishLMC from the clients' (TMC, MeerKAT Dish Proxy) perspective.
 The goal is to arrive at the same state regardless of which client is requesting the action.
 
-**What does Abort do?**
+What does Abort do?
+^^^^^^^^^^^^^^^^^^^
 
 Abort transitions the device to a state from which further commands can be requested, i.e STANDBY-FP mode.
 
@@ -29,11 +31,18 @@ Abort transitions the device to a state from which further commands can be reque
 Guarantees and Caveats
 ^^^^^^^^^^^^^^^^^^^^^^
 
-* Only slew/track tasks will be interrupted when Abort is triggered; tasks like receiver indexing, and stow, will not be affected.
+* Only slew/track tasks will be interrupted when Abort is triggered; tasks like receiver indexing, will not be affected.
+
+* Abort will **stop an ongoing STOW**.
 
 * Dish will always be restored to STANDBY-FP mode regardless of the previous state before Abort was triggered
 
-See `abort_documentation`_ for discussion and flow diagram
+See `abort documentation`_ for discussion and flow diagram
+
+.. warning::
+    An ongoing STOW can be interrupted if Abort is triggered. SetStowMode can
+    be requ again to resume STOW movement. STOW is primarily a SAFETY request
+    is the user's responsibility to avoid unintended consequences by issuing Abort.
 
 .. _documentation: https://developer.skao.int/projects/ska-tango-base/en/latest/concepts/long-running-commands.html
-.. _abort_documentation: https://confluence.skatelescope.org/x/cMiJEQ
+.. _abort documentation: https://confluence.skatelescope.org/x/cMiJEQ
