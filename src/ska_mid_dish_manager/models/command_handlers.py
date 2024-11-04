@@ -29,9 +29,12 @@ class Abort:
         self._command_tracker = command_tracker
 
     def __call__(
-        self, task_callback: Optional[Callable] = None, task_abort_event: Optional[Event] = None
+        self,
+        abort_command_id,
+        task_abort_event,
+        task_callback: Optional[Callable] = None,
     ) -> None:
-        self.abort(task_callback=task_callback, task_abort_event=task_abort_event)
+        self.abort(abort_command_id, task_abort_event, task_callback=task_callback)
 
     def _reset_track_table(self) -> None:
         """
@@ -78,31 +81,15 @@ class Abort:
         # fan out respective FP command to the sub devices
         self._command_map.set_standby_fp_mode(task_abort_event, task_callback)
 
-    def abort(
-        self,
-        task_callback: Optional[Callable] = None,
-        task_abort_event: Optional[Event] = None,
-    ) -> None:
-        """Executes the abort sequence"""
+    def _complete_abort_sequence(
+        self, task_callback: Optional[Callable] = None, task_abort_event: Optional[Callable] = None
+    ):
         # the name has to be different, task_callback != task_cb
         # one is a partial with a command id and the other isnt
         task_cb = self._command_tracker.update_command_info
 
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
-
-        if self._component_manager.is_lrc_currently_executing():
-            self.logger.debug("Aborting LRCs from Abort sequence")
-            abort_command_id = self._command_tracker.new_command(
-                "abort-sequence:abort-lrc", completed_callback=None
-            )
-            abort_task_cb = partial(task_cb, abort_command_id)
-            self._component_manager.abort_commands(task_callback=abort_task_cb)
-            while (
-                not self._command_tracker.get_command_status(abort_command_id)
-                != TaskStatus.COMPLETED
-            ):
-                task_abort_event.wait(0.1)  # sleep a bit to not overwork the CPU
 
         # is the dish moving
         pointing_state = self._component_manager.component_state.get("pointingstate")
@@ -116,11 +103,11 @@ class Abort:
             # pylint: disable=protected-access
             self._component_manager._end_scan(task_abort_event, end_scan_task_cb)
 
-        # send the last reported achieved pointing in load mode new
-        self.logger.debug("Resetting the programTrackTable from Abort sequence")
-        self._reset_track_table()
+            # send the last reported achieved pointing in load mode new
+            self.logger.debug("Resetting the programTrackTable from Abort sequence")
+            self._reset_track_table()
 
-        # go to the known state: STANDBY-FP
+        # go to STANDBY-FP
         standby_fp_command_id = self._command_tracker.new_command(
             "abort-sequence:standbyfp", completed_callback=None
         )
@@ -132,6 +119,28 @@ class Abort:
             task_callback(
                 status=TaskStatus.COMPLETED, result=(ResultCode.OK, "Abort sequence completed")
             )
+
+    def abort(
+        self,
+        abort_command_id,
+        task_abort_event,
+        task_callback: Optional[Callable] = None,
+    ) -> None:
+        """Executes the abort sequence"""
+        if abort_command_id is not None:
+            while (
+                self._command_tracker.get_command_status(abort_command_id) != TaskStatus.COMPLETED
+            ):
+                task_abort_event.wait(0.1)  # sleep a bit to not overwork the CPU
+
+        self.logger.debug(
+            "Handing over work from abort-thread to executor to complete the abort sequence"
+        )
+        self._component_manager.submit_task(
+            self._complete_abort_sequence,
+            args=[],
+            task_callback=task_callback,
+        )
 
 
 # pylint: disable=too-few-public-methods

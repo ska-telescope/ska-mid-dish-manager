@@ -74,12 +74,12 @@ def test_abort_handler(
     component_state_cb.get_queue_values(timeout=60)
 
     expected_call_kwargs = (
-        {"status": TaskStatus.IN_PROGRESS},
         {
             "progress": "SetStandbyLPMode Aborted",
             "status": TaskStatus.ABORTED,
             "result": (ResultCode.ABORTED, "SetStandbyLPMode Aborted"),
         },
+        {"status": TaskStatus.IN_PROGRESS},
         {
             "status": TaskStatus.COMPLETED,
             "result": (ResultCode.OK, "Abort sequence completed"),

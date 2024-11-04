@@ -5,7 +5,7 @@ import logging
 import os
 from functools import partial
 from threading import Event, Lock, Thread
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -68,7 +68,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         *args,
         **kwargs,
     ):
-        """"""
         # pylint: disable=useless-super-delegation
         self.tango_device_name = tango_device_name
         self.sub_component_managers = None
@@ -1216,24 +1215,36 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return True
         return False
 
-    def is_lrc_currently_executing(self) -> bool:
+    def get_currently_executing_lrcs(
+        self,
+        statuses_to_check: Tuple[TaskStatus] = (
+            TaskStatus.STAGING,
+            TaskStatus.QUEUED,
+            TaskStatus.IN_PROGRESS,
+        ),
+    ) -> List[str]:
         """
-        Report whether or not commands are running or waiting to be executed from the task executor
+        Report command ids that are running or waiting to be executed from the task executor
 
-        :returns: boolean indicating whether or not an lrc is executing
+        :param statuses_to_check: TaskStatuses which count as lrc is executing
+        :returns: a list of all lrcs currently executing or queued
         """
-        statuses_to_check = [TaskStatus.STAGING, TaskStatus.QUEUED, TaskStatus.IN_PROGRESS]
-        command_statuses = self._command_tracker.command_statuses
+        command_idx = 0
         status_idx = 1
-        if command_statuses:
-            command_statuses = [status_item[status_idx] for status_item in command_statuses]
-            # do we have any commands in staging, queued or in progress
-            statuses_to_check = set(statuses_to_check)
-            if statuses_to_check.intersection(command_statuses) == set():
-                return False
-            return True
-        # there are no commands in staging, queued or in progress
-        return False
+        cmd_ids = []
+
+        command_statuses = self._command_tracker.command_statuses
+        filtered_command_statuses = [
+            cmd_status
+            for cmd_status in command_statuses
+            if cmd_status[status_idx] in statuses_to_check
+        ]
+
+        if filtered_command_statuses:
+            cmd_ids = [cmd_status[command_idx] for cmd_status in filtered_command_statuses]
+            return cmd_ids
+        # there are no commands in statuses_to_check
+        return cmd_ids
 
     def abort(
         self, task_callback: Optional[Callable] = None, task_abort_event: Optional[Event] = Event()
@@ -1246,9 +1257,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         # NOTE we dont want to pass the existing abort event object
         # i.e. self._task_executor._abort_event to this function
-        # since it might prevent the command from being triggered
-        # when the check is performed after abort_commands finishes
+        # since it might prevent the sequence from being continued
+        # when event.is_set() is performed after abort_commands finishes
 
+        # This will be a short lived thread. It hands over the work to the
+        # executor to do the heavy lifting. But perform the check nonetheless
         if self._abort_thread is not None and self._abort_thread.is_alive():
             self.logger.info("Abort rejected: there is an ongoing abort sequence.")
             if task_callback:
@@ -1270,10 +1283,36 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
             return TaskStatus.REJECTED, "Command not allowed during MAINTENANCE mode"
 
+        cmds_in_progress = self.get_currently_executing_lrcs(
+            statuses_to_check=(TaskStatus.QUEUED, TaskStatus.IN_PROGRESS)
+        )
+        abort_command_id = None
+        if cmds_in_progress:
+            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
+                self.logger.info("Abort rejected: there is an ongoing abort sequence.")
+                if task_callback:
+                    task_callback(
+                        status=TaskStatus.REJECTED,
+                        result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
+                    )
+                return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
+
+            self.logger.debug("Aborting LRCs from Abort sequence")
+            abort_command_id = self._command_tracker.new_command(
+                "abort-sequence:abort-lrc", completed_callback=None
+            )
+            abort_task_cb = partial(self._command_tracker.update_command_info, abort_command_id)
+            self.abort_commands(task_callback=abort_task_cb)
+
         self._abort_thread = Thread(
             target=self._abort_handler,
-            args=[],
-            kwargs={"task_callback": task_callback, "task_abort_event": task_abort_event},
+            args=[
+                abort_command_id,
+                task_abort_event,
+            ],
+            kwargs={
+                "task_callback": task_callback,
+            },
         )
         self._abort_thread.name = "abort_thread"
         self._abort_thread.start()
