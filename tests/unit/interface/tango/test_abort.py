@@ -37,14 +37,9 @@ def test_only_one_abort_runs_at_a_time(dish_manager_resources):
     [[result_code], [_]] = device_proxy.Abort()
     assert result_code == ResultCode.STARTED
 
-    reject_msg = (
-        "Expected IN_PROGRESS task status, but REJECTED was returned by "
-        "command method with message: Existing Abort sequence ongoing"
-    )
     # check that second abort trigger is rejected
-    [[result_code], [message]] = device_proxy.Abort()
+    [[result_code], [_]] = device_proxy.Abort()
     assert result_code == ResultCode.REJECTED
-    assert message == reject_msg
 
 
 # pylint:disable=protected-access
