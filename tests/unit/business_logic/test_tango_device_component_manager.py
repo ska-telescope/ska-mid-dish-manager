@@ -3,7 +3,6 @@
 
 import logging
 import time
-from queue import Empty
 from unittest import mock
 
 import pytest
@@ -23,7 +22,7 @@ def test_component_manager_continues_reconnecting_when_device_is_unreachable(cap
     caplog.set_level(logging.DEBUG)
     tc_manager = TangoDeviceComponentManager("fake/fqdn/1", LOGGER, ("fake_attr",))
     tc_manager.start_communicating()
-    retry_log = "failed to connect to tango device server fake/fqdn/1, retrying in"
+    retry_log = "failed to connect to tango device fake/fqdn/1, retrying in"
     while retry_log not in caplog.text:
         time.sleep(0.5)
 
@@ -83,16 +82,16 @@ def test_unhappy_path(patched_dp, caplog):
     )
 
     tc_manager.start_communicating()
-    # Wait a bit
-    try:
-        tc_manager._events_queue.get(timeout=2)
-    except Empty:
-        pass
+
+    default_retry_times = [1, 2, 3, 4, 6]
+    # wait a bit
+    time.sleep(sum(default_retry_times))
+
     logs = [record.message for record in caplog.records]
-    for count in ("1", "2", "3"):
+    for count, retry_time in enumerate(default_retry_times, start=1):
         assert (
-            f"Try number {count}: failed to connect to tango device server a/b/c, retrying in 0.5s"
-            in logs
+            f"Try number {count}: "
+            f"failed to connect to tango device a/b/c, retrying in {retry_time}s" in logs
         )
     # clean up afterwards
     tc_manager.stop_communicating()
