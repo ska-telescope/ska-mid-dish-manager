@@ -3,6 +3,7 @@
 import logging
 from functools import partial
 from queue import Empty, Queue
+from threading import Event
 
 import pytest
 import tango
@@ -24,7 +25,7 @@ def test_device_monitor(monitor_tango_servers, caplog, spf_device_fqdn):
     """Device monitoring sanity check"""
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    device_proxy_factory = DeviceProxyManager(LOGGER)
+    device_proxy_factory = DeviceProxyManager(LOGGER, Event())
     tdm = TangoDeviceMonitor(
         spf_device_fqdn, device_proxy_factory, ["powerState"], event_queue, LOGGER, empty_func
     )
@@ -62,7 +63,7 @@ def test_multi_monitor(caplog, spf_device_fqdn):
     )
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    device_proxy_factory = DeviceProxyManager(LOGGER)
+    device_proxy_factory = DeviceProxyManager(LOGGER, Event())
     tdm = TangoDeviceMonitor(
         spf_device_fqdn, device_proxy_factory, test_attributes, event_queue, LOGGER, empty_func
     )
@@ -87,7 +88,7 @@ def test_device_monitor_stress(spf_device_fqdn):
     mocked_logger.debug.side_effect = partial(add_log, logs_queue)
 
     event_queue = Queue()
-    device_proxy_factory = DeviceProxyManager(mocked_logger)
+    device_proxy_factory = DeviceProxyManager(mocked_logger, Event())
     tdm = TangoDeviceMonitor(
         spf_device_fqdn,
         device_proxy_factory,
@@ -131,7 +132,7 @@ def test_connection_error(caplog):
     """Test that connection is retried"""
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    device_proxy_factory = DeviceProxyManager(LOGGER)
+    device_proxy_factory = DeviceProxyManager(LOGGER, Event())
     tdm = TangoDeviceMonitor(
         "fake_device", device_proxy_factory, ["powerState"], event_queue, LOGGER, empty_func
     )

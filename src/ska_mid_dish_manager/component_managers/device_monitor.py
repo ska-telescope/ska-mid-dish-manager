@@ -192,7 +192,7 @@ class TangoDeviceMonitor:
             self._logger.info("Stopped monitoring thread on %s", self._trl)
             # undo subscriptions and inform client we have no comms to the device server
             if self._subscription_tracker.subscribed_attrs:
-                device_proxy = self._tango_device_proxy(self._trl, self._exit_thread_event)
+                device_proxy = self._tango_device_proxy(self._trl)
                 self._subscription_tracker.clear_subscriptions(device_proxy)
 
     def _verify_connection_up(
@@ -210,8 +210,13 @@ class TangoDeviceMonitor:
         self._logger.info("Check %s is up", self._trl)
 
         while not exit_thread_event.is_set():
-            self._tango_device_proxy(self._trl, exit_thread_event)
-            on_verified_callback(exit_thread_event)
+            dev_proxy = self._tango_device_proxy(self._trl)
+            if dev_proxy:
+                on_verified_callback(exit_thread_event)
+            else:
+                self._logger.error(
+                    f"Communication to device at {self._trl} failed. Retry StartCommunication."
+                )
             return
 
     def monitor(self) -> None:
@@ -260,7 +265,7 @@ class TangoDeviceMonitor:
 
         retry_counts = {name: 1 for name in self._monitored_attributes}
         # set up all subscriptions
-        device_proxy = self._tango_device_proxy(self._trl, exit_thread_event)
+        device_proxy = self._tango_device_proxy(self._trl)
         while not exit_thread_event.is_set():
             try:
                 # Subscribe to all monitored attributes
@@ -309,9 +314,10 @@ if __name__ == "__main__":
         pass  # pylint:disable=unnecessary-pass
 
     basic_logger = logging.getLogger(__name__)
+    signal = Event()
     tdm = TangoDeviceMonitor(
         "tango://localhost:45678/mid-dish/simulator-spf/ska001#dbase=no",
-        DeviceProxyManager(basic_logger),
+        DeviceProxyManager(basic_logger, signal),
         ("powerState",),
         Queue(),
         basic_logger,

@@ -75,11 +75,12 @@ class DeviceProxyManager:
     risky; i.e. any device proxy thread dying can crash the device server process
     """
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger, thread_event: Event):
         self._logger = logger
+        self._event_signal = thread_event
         self.device_proxies: Dict[str, tango.DeviceProxy] = {}
 
-    def __call__(self, trl: str, thread_event: Optional[Event] = None) -> Any:
+    def __call__(self, trl: str) -> Any:
         device_proxy = self.device_proxies.get(trl)
 
         if device_proxy is None:

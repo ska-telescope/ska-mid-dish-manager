@@ -61,8 +61,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._live_attr_event_subscriptions: set[str] = set()
         self._quality_monitored_attributes = quality_monitored_attributes
         self.logger = logger
+        self._dp_factory_signal: Optional[Event] = Event()
 
-        self._tango_device_proxy = DeviceProxyManager(self.logger)
+        self._tango_device_proxy = DeviceProxyManager(self.logger, self._dp_factory_signal)
         self._tango_device_monitor = TangoDeviceMonitor(
             self._trl,
             self._tango_device_proxy,
@@ -218,7 +219,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         This is a convenience method that can be called to sync up the
         monitored attributes on the device and the component state.
         """
-        device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
+        device_proxy = self._tango_device_proxy(self._trl)
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
             for monitored_attribute in self._monitored_attributes:
@@ -353,7 +354,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._trl,
             command_arg,
         )
-        device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
+        device_proxy = self._tango_device_proxy(self._trl)
         result = None
         with tango.EnsureOmniThread():
             try:
@@ -382,7 +383,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attribute_name,
             self._trl,
         )
-        device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
+        device_proxy = self._tango_device_proxy(self._trl)
         with tango.EnsureOmniThread():
             try:
                 result = device_proxy.read_attribute(attribute_name)
@@ -410,7 +411,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._trl,
         )
 
-        device_proxy = self._tango_device_proxy(self._trl, self._event_consumer_abort_event)
+        device_proxy = self._tango_device_proxy(self._trl)
         with tango.EnsureOmniThread():
             result = None
             try:
@@ -434,15 +435,16 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @typing.no_type_check
     def start_communicating(self) -> None:
         """Establish communication with the device"""
-        # pylint: disable=no-member
-        self.logger.info("start_communicating")
+        self.logger.info(f"Establish communication with {self._trl}")
+        self._dp_factory_signal.clear()
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._tango_device_monitor.monitor()
         self._start_event_consumer_thread()
 
     def stop_communicating(self) -> None:
         """Stop communication with the device"""
-        # pylint: disable=no-member
+        self.logger.info(f"Stop communication with {self._trl}")
+        self._dp_factory_signal.set()
         self._tango_device_monitor.stop_monitoring()
         self._stop_event_consumer_thread()
         self._update_communication_state(CommunicationStatus.DISABLED)
