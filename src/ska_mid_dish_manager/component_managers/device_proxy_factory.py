@@ -3,12 +3,12 @@
 import logging
 from functools import wraps
 from threading import Event
-from typing import Any, Dict
+from typing import Any, Callable, Dict
 
 import tango
 
 
-def retry_connection(func):
+def retry_connection(func: Callable) -> Any:
     """
     Return a function that retries connection to a tango device if it is not available.
 
@@ -27,7 +27,7 @@ def retry_connection(func):
 
     # pylint: disable=protected-access
     @wraps(func)
-    def _wrapper(device_proxy_manager, *args: Any, **kwargs: Any) -> Any:
+    def _wrapper(device_proxy_manager: Any, *args: Any, **kwargs: Any) -> Any:
         """
         Wrapper function that implements the functionality of the decorator.
 

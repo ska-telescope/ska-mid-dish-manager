@@ -41,7 +41,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._active_attr_event_subscriptions: set[str] = set()
         self._quality_monitored_attributes = quality_monitored_attributes
         self.logger = logger
-        self._dp_factory_signal: Optional[Event] = Event()
+        self._dp_factory_signal: Event = Event()
         self._event_consumer_thread: Optional[Thread] = None
         self._event_consumer_abort_event: Optional[Event] = None
 

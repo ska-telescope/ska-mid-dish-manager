@@ -5,8 +5,14 @@ from unittest.mock import Mock, patch
 import pytest
 from ska_control_model import ResultCode, TaskStatus
 
-from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from tests.utils import ComponentStateStore
+# check_communicating decorator needs to be patched before DishManagerComponentManager is imported
+# see more here https://alexmarandon.com/articles/python_mock_gotchas/, not pretty FIXME
+patch("ska_tango_base.base.check_communicating", lambda x: x).start()
+
+from ska_mid_dish_manager.component_managers.dish_manager_cm import (  # noqa: E402
+    DishManagerComponentManager,
+)
+from tests.utils import ComponentStateStore  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
 
