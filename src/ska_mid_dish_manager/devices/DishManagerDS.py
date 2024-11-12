@@ -21,7 +21,6 @@ from tango import AttrWriteType, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_class import ImmediateSlowCommand
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
@@ -1354,7 +1353,7 @@ class DishManager(SKAController):
                     try:
                         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
                         spfrx_com_man.execute_command("MonitorPing", None)
-                    except LostConnection:
+                    except ConnectionError:
                         self.logger.error(
                             "Could not connect to [%s] for MonitorPing", self.SPFRxDeviceFqdn
                         )
