@@ -3,16 +3,10 @@ from collections.abc import Generator
 from unittest.mock import Mock, patch
 
 import pytest
-from ska_control_model import ResultCode, TaskStatus
+from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 
-# check_communicating decorator needs to be patched before DishManagerComponentManager is imported
-# see more here https://alexmarandon.com/articles/python_mock_gotchas/, not pretty FIXME
-patch("ska_tango_base.base.check_communicating", lambda x: x).start()
-
-from ska_mid_dish_manager.component_managers.dish_manager_cm import (  # noqa: E402
-    DishManagerComponentManager,
-)
-from tests.utils import ComponentStateStore  # noqa: E402
+from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from tests.utils import ComponentStateStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -58,7 +52,7 @@ def component_manager(mock_command_tracker: Mock, callbacks: dict) -> Generator:
         write_attribute_value=Mock(),
         execute_command=Mock(),
     ):
-        yield DishManagerComponentManager(
+        dish_manager_cm = DishManagerComponentManager(
             LOGGER,
             mock_command_tracker,
             callbacks["build_state_cb"],
@@ -70,3 +64,7 @@ def component_manager(mock_command_tracker: Mock, callbacks: dict) -> Generator:
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
         )
+        # all the command handlers are decorated with check_communicating
+        # transition communication to the component as ESTABLISHED
+        dish_manager_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
+        yield dish_manager_cm
