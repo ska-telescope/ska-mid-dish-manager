@@ -199,10 +199,10 @@ of the command. An example of the JSON command is shown below:
    * - Incorrect Dish Antenna/ID 
      - Command rejected. The Dish id <dish_id> and the Antenna's value <antenna_id> are not equal.
      - ResultCode.REJECTED
-   * - Lostconnection, Tango: DevFailed
+   * - ConnectionError, Tango: DevFailed
      - <related error message>
      - ResultCode.FAILED
-   * - Lostconnection, Invalid JSON
+   * - ConnectionError, Invalid JSON
      - <related error message>
      - ResultCode.REJECTED
 

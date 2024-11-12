@@ -9,31 +9,11 @@ from typing import Any, Callable, Optional, Tuple
 import numpy as np
 import tango
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
+from ska_tango_base.base import check_communicating
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
-
-
-def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
-    """
-    Connection check decorator.
-
-    This is a workaround for decorators in classes.
-
-    Execute the method, if communication fails, commence reconnection.
-    """
-
-    def _decorator(self, *args: Any, **kwargs: Any) -> Callable:  # type: ignore
-        if self.communication_state != CommunicationStatus.ESTABLISHED:
-            raise LostConnection("Communication status not ESTABLISHED")
-        return func(self, *args, **kwargs)  # pylint: disable=E1102
-
-    return _decorator
-
-
-class LostConnection(Exception):
-    """Exception for losing connection to the Tango device"""
 
 
 # pylint: disable=abstract-method, too-many-instance-attributes, no-member, too-many-arguments
@@ -58,10 +38,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._events_queue: Queue = Queue()
         self._trl = trl
         self._monitored_attributes = monitored_attributes
-        self._live_attr_event_subscriptions: set[str] = set()
+        self._active_attr_event_subscriptions: set[str] = set()
         self._quality_monitored_attributes = quality_monitored_attributes
         self.logger = logger
         self._dp_factory_signal: Optional[Event] = Event()
+        self._event_consumer_thread: Optional[Thread] = None
+        self._event_consumer_abort_event: Optional[Event] = None
 
         self._tango_device_proxy = DeviceProxyManager(self.logger, self._dp_factory_signal)
         self._tango_device_monitor = TangoDeviceMonitor(
@@ -72,9 +54,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             logger,
             self._sync_communication_to_subscription,
         )
-
-        self._event_consumer_thread: Optional[Thread] = None
-        self._event_consumer_abort_event: Optional[Event] = None
 
         super().__init__(
             logger,
@@ -97,7 +76,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """
         # save a copy of the subscribed attributes. this will be
         # evaluated by the function processing the valid events
-        self._live_attr_event_subscriptions = set(subscribed_attrs)
+        self._active_attr_event_subscriptions = set(subscribed_attrs)
         # add some logging somewhere to show that this is a better approach
         all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
         if all_subscribed:
@@ -120,6 +99,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if attr_name not in self._component_state:
             self._component_state[attr_name] = None
 
+        # review why we are catching broad level exeption
         quality = event_data.attr_value.quality
         try:
             if attr_name in self._quality_monitored_attributes:
@@ -137,8 +117,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error occured updating component state")
 
+            # if the error event stops does tango emit a valid event for all the error
+            # events we got for the various attribute subscription? else we have an issue
+            # of never reporting established
+
             # update the communication state in case the error event callback flipped it
-            self._live_attr_event_subscriptions.add(attr_name)
+            self._active_attr_event_subscriptions.add(attr_name)
             self.sync_communication_to_valid_event()
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
@@ -162,7 +146,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             errors,
         )
         try:
-            self._live_attr_event_subscriptions.remove(attr_name)
+            self._active_attr_event_subscriptions.remove(attr_name)
         except KeyError:
             pass
 
@@ -183,7 +167,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Sync communication state with valid events from monitored attributes"""
         # add some logging somewhere to show that this is a better approach
         all_monitored_events_valid = (
-            set(self._monitored_attributes) == self._live_attr_event_subscriptions
+            set(self._monitored_attributes) == self._active_attr_event_subscriptions
         )
         if all_monitored_events_valid:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
@@ -332,7 +316,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         result = None
         try:
             result = self.execute_command(command_name, command_arg)
-        except (LostConnection, tango.DevFailed) as err:
+        except (ConnectionError, tango.DevFailed) as err:
             self.logger.exception(err)
             if task_callback:
                 task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
@@ -345,7 +329,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if task_callback:
             task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(result)))
 
-    @_check_connection
+    @check_communicating
     def execute_command(self, command_name: str, command_arg: Any) -> Any:
         """Check the connection and execute the command on the Tango device"""
         self.logger.debug(
@@ -375,7 +359,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             )
         return result
 
-    @_check_connection
+    @check_communicating
     def read_attribute_value(self, attribute_name: str) -> Any:
         """Check the connection and read an attribute"""
         self.logger.debug(
@@ -402,7 +386,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             )
             return result
 
-    @_check_connection
+    @check_communicating
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
         """Check the connection and write an attribute"""
         self.logger.debug(
