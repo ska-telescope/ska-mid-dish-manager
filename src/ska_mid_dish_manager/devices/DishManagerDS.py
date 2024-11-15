@@ -1358,6 +1358,24 @@ class DishManager(SKAController):
                 f" valid range is [{DSC_MIN_POWER_LIMIT_KW}, {DSC_MAX_POWER_LIMIT_KW}]."
             )
 
+    @attribute(
+        dtype=int,
+        access=AttrWriteType.READ_WRITE,
+        doc="""
+            The timeout, in seconds, until Dish will automatically stow if TMCHeartbeat command is
+            not called. (A value of 0 will disable the check).
+            """,
+    )
+    def tmcHeartbeatStowTimeout(self):
+        """Returns the tmcHeartbeatStowTimeout"""
+        return self.component_manager.component_state.get("tmcheartbeatstowtimeout", 0)
+
+    @tmcHeartbeatStowTimeout.write
+    def tmcHeartbeatStowTimeout(self, value):
+        """Set the tmcHeartbeatStowTimeout"""
+        self.logger.debug("Write to tmcHeartbeatStowTimeout, %s", value)
+        self.component_manager.update_tmc_heartbeat_stow_timeout(value)
+
     # --------
     # Commands
     # --------
@@ -2063,6 +2081,12 @@ class DishManager(SKAController):
     def Reset(self) -> DevVarLongStringArrayType:
         """The Reset command inherited from base classes."""
         raise NotImplementedError("DishManager does not implement the Reset command.")
+
+    @command(dtype_in=None, dtype_out=None)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def TMCHeartbeat(self) -> None:
+        """The Reset command inherited from base classes."""
+        self.component_manager.tmc_heartbeat()
 
 
 def main(args=None, **kwargs):

@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import time
 from functools import partial
 from threading import Lock
 from typing import Callable, List, Optional, Tuple
@@ -16,6 +17,7 @@ from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_map import CommandMap
+from ska_mid_dish_manager.models.command_scheduler import CommandScheduler
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DSC_MIN_POWER_LIMIT_KW,
@@ -110,6 +112,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
+            tmcheartbeatstowtimeout=0,
+            tmclastheartbeat=0,
             **kwargs,
         )
         self.logger = logger
@@ -120,6 +124,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
+        self._command_scheduler: CommandScheduler = CommandScheduler()
 
         self._device_to_comm_attr_map = {
             Device.DS: "dsConnectionState",
@@ -810,12 +815,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         try:
             ds_cm.execute_command("Stow", None)
         except (LostConnection, tango.DevFailed) as err:
-            task_callback(status=TaskStatus.FAILED, exception=err)
+            if task_callback:
+                task_callback(status=TaskStatus.FAILED, exception=err)
             self.logger.exception("DishManager has failed to execute Stow DSManager")
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
-        task_callback(
-            progress="Stow called, monitor dishmode for LRC completed", status=TaskStatus.COMPLETED
-        )
+
+        if task_callback:
+            task_callback(
+                progress="Stow called, monitor dishmode for LRC completed",
+                status=TaskStatus.COMPLETED,
+            )
         # abort queued tasks on the task executor's threadpoolexecutor
         self.abort_commands()
         # abort the task on the subservient devices
@@ -1255,6 +1264,59 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except tango.DevFailed:
             self.logger.debug(
                 "Could not update memorized attributes. Failed to connect to database."
+            )
+
+    def tmc_heartbeat(self):
+        """Record a successful heartbeat from TMC."""
+        self.logger.debug("Received heartbeat from TMC")
+        self._component_state["tmclastheartbeat"] = time.time()
+
+    def _check_tmc_heartbeat(self):
+        """
+        Check the last successful heartbeat from TMC and stow the dish if it is outside of the set
+        timeout.
+        """
+        self.logger.debug("Executing CheckTMCHeartbeat")
+        time_since_last_heartbeat = time.time() - self.component_state["tmclastheartbeat"]
+        self.logger.debug(
+            "CheckTMCHeartbeat: Time of last heartbeat (%.2fs). Time since (%.2fs)",
+            self.component_state["tmclastheartbeat"],
+            time_since_last_heartbeat,
+        )
+        if time_since_last_heartbeat > self.component_state["tmcheartbeatstowtimeout"]:
+            self.logger.warning(
+                "CheckTMCHeartbeat: Check failed, %.2fs since last heartbeat. Stow timeout is"
+                "%.2fs",
+                time_since_last_heartbeat,
+                self.component_state["tmcheartbeatstowtimeout"],
+            )
+            if self.component_state["dishmode"] != DishMode.STOW:
+                self.logger.warning("CheckTMCHeartbeat: Stowing dish.")
+                self.set_stow_mode()
+            else:
+                self.logger.warning("CheckTMCHeartbeat: Dish already stowed.")
+
+    def update_tmc_heartbeat_stow_timeout(self, value):
+        """Update the TMC heartbeat stow timeout."""
+        if value >= 0:
+            cmd_name = "_check_tmc_heartbeat"
+            if value > 0:
+                if self._command_scheduler.is_command_scheduled(cmd_name):
+                    self._command_scheduler.update_command_period(cmd_name, value)
+                else:
+                    self._command_scheduler.submit_command(
+                        self._check_tmc_heartbeat, cmd_name, value
+                    )
+
+                self.logger.debug("Set %s poll period to %ss", cmd_name, value)
+            elif value == 0 and self._command_scheduler.is_command_scheduled(cmd_name):
+                self._command_scheduler.remove_command(cmd_name)
+                self.logger.debug("Removed command %s from command scheduler", cmd_name)
+
+            self._update_component_state(tmcheartbeatstowtimeout=value)
+        else:
+            raise ValueError(
+                f"Invalid value, {value}, for TMC Heartbeat timeout. Value must be >= 0."
             )
 
     def stop_communicating(self):
