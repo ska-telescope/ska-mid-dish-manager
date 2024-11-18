@@ -8,10 +8,15 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Added unit and range verification checks to `ApplyPointingModel`command
+- Added in Read/Write dscPowerLimitKw attribute to be used when SetStandbyFPMode, SetStandbyLPMode and Slew are invoked.
+- Upgraded ska-mid-dish-ds-manager chart to v2.2.0
 - Updated SPFRx operatingMode from DATA_CAPTURE to OPERATE to match Rev 4 ICD
 - Added in Read/Write dscPowerLimitKw attribute to be used when FP, LP and Slew are invoked.
 - Using DS Manager v2.2.0
 - Updated periodicNoiseDiodePars and pseudoRandomNoiseDiodePars to be DevULong
+- Added `Abort` tango command which cancels any task and restores the dish to FP mode
+
+  - `AbortCommmands` implements the same handler as `Abort`
 
 Version 5.0.1
 *************
@@ -21,12 +26,18 @@ Version 5.0.1
 Version 5.0.0
 *************
 - Upgraded ska-mid-dish-simulators to v4.1.2
+
   - Servo loops simulator implemented to represent dish movement
+
 - Upgraded ska-mid-dish-ds-manger chart to v2.1.1
+
   - DSC states and modes updated to align with ITF PLC
+
 - Added in a command called `ApplyPointingModel` that updates bands using a json input
 - Added Slew command execution preconditions on DishMode and PointingState
+
   - `DishMode` required to be in `OPERATE` and `PointingState` required to be `READY`
+
 - Updated ska-tango-base and ska-tango-util to version 0.4.12
 - Added an atrtribute called `last_commanded_pointing_params` that reports the last updated pointing parameters. 
 

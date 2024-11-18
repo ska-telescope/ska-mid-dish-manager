@@ -1,11 +1,19 @@
 - class: DishManager
   meta:
     commands:
+    - name: Abort
+      disp_level: OPERATOR
+      doc_in: Abort currently executing long running command on DishManager including
+        stopping dish movement and transitioning dishMode to StandbyFP. For details
+        consult DishManager documentation
+      doc_out: Uninitialised
+      dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: AbortCommands
       disp_level: OPERATOR
-      doc_in: Abort currently executing long running command on DishManager and subservient
-        devices. Empties out the queue on DishManager and rejects any scheduled commands.
-        For details consult DishManager documentation
+      doc_in: Abort currently executing long running command on DishManager including
+        stopping dish movement and transitioning dishMode to StandbyFP. For details
+        consult DishManager documentation
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
