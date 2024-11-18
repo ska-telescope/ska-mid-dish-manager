@@ -124,7 +124,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._sub_communication_state_change_lock = Lock()
-        self._command_scheduler: CommandScheduler = CommandScheduler()
+        self._command_scheduler: CommandScheduler = CommandScheduler(self.logger)
 
         self._device_to_comm_attr_map = {
             Device.DS: "dsConnectionState",
