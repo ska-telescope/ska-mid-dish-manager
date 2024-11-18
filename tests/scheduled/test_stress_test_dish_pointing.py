@@ -74,11 +74,6 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     dish_manager_proxy.Slew([0, 35])
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=300)
 
-    # Dish goes to FP mode after moving. Request Operate again
-    # TODO Remove this after bug is fixed
-    [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
-
     # Generate NUMBER_OF_TABLE_SAMPLES sized list of pointing coords
     current_pointing = dish_manager_proxy.achievedPointing
     current_az = current_pointing[1]
