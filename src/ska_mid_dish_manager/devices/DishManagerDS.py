@@ -442,6 +442,7 @@ class DishManager(SKAController):
                 "lastCommandedMode",
                 "lastCommandedPointingParams",
                 "dscPowerLimitKw",
+                "tmcHeartbeatStowTimeout",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
