@@ -1,11 +1,14 @@
 """Unit tests for CommandScheduler class."""
 
+import logging
 import time
 from functools import partial
 
 import pytest
 
 from ska_mid_dish_manager.models.command_scheduler import CommandScheduler
+
+LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.unit
@@ -14,7 +17,7 @@ class TestCommandScheduler:
 
     def setup_method(self):
         """Set up context"""
-        self.command_scheduler = CommandScheduler()
+        self.command_scheduler = CommandScheduler(LOGGER)
 
     def _counting_command(self, name, command_tracker):
         """Command which will increment a counter in command_tracker at each call."""

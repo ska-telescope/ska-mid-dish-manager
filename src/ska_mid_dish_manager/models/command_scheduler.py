@@ -1,4 +1,5 @@
 """Module containing the CommandScheduler class"""
+import logging
 import threading
 import time
 from heapq import heapify, heappop, heappush
@@ -104,7 +105,7 @@ class CommandScheduler:
 
 
 if __name__ == "__main__":
-    command_scheduler = CommandScheduler()
+    command_scheduler = CommandScheduler(logging.getLogger(__name__))
 
     def test_cmd():
         """Test command"""
