@@ -2085,7 +2085,14 @@ class DishManager(SKAController):
     @command(dtype_in=None, dtype_out=None)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def TMCHeartbeat(self) -> None:
-        """The Reset command inherited from base classes."""
+        """
+        Command called intermittently by TMC, used by Dish.LMC to monitor the TMC to Dish.LMC
+        connection. If the command is not called for tmcHeartbeatStowTimeout seconds, then Dish.LMC
+        will automatically stow the dish structure.
+
+        tmcHeartbeatStowTimeout is a tango attribute on the DishManager device used to configure
+        the timeout. A value of 0 will disable the check.
+        """
         self.component_manager.tmc_heartbeat()
 
 

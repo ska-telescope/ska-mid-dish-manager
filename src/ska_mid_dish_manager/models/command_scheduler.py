@@ -10,7 +10,8 @@ class CommandScheduler:
     This class provides functionality to schedule commands to be executed at regular intervals.
     """
 
-    def __init__(self):
+    def __init__(self, logger):
+        self.logger = logger
         self.commands = []  # Min-heap to store commands to run: (next_run_time, period, command)
         self._lock = threading.Lock()  # Lock for thread-safe access to commands
         self._commands_list_updated_event = threading.Event()
@@ -19,7 +20,7 @@ class CommandScheduler:
 
     def _run(self):
         """Thread that runs commands based on their scheduled times."""
-        # print("Scheduler runner thread started")
+        self.logger.debug("Scheduler runner thread started")
 
         command_to_run = None
         wait_time = 0
@@ -29,29 +30,26 @@ class CommandScheduler:
                 next_run_time, command, command_name, period = heappop(self.commands)
                 current_time = time.time()
 
-                # print(f"Scheduler, next command to run: {command_name} {period} {next_run_time}")
-
                 if next_run_time > current_time:
                     wait_time = next_run_time - current_time
-                    # print(f"Not yet time, adding {command_name} back to heap")
                     heappush(self.commands, (next_run_time, command, command_name, period))
                 else:
                     # Assign the command to run outside of the lock so we don't hold on to it
                     command_to_run = command
-                    next_run_time = current_time + period
                     # Reschedule the command
-                    # print(f"Rescheduling {command_name} back to heap")
+                    next_run_time = current_time + period
                     heappush(self.commands, (next_run_time, command, command_name, period))
 
             if command_to_run:
-                # print("Executing", command_to_run)
+                self.logger.debug("Executing command %s", command_to_run)
                 command_to_run()
                 command_to_run = None
             elif wait_time > 0:
-                # print("Waiting", wait_time)
+                self.logger.debug("Waiting %ss", wait_time)
                 self._commands_list_updated_event.clear()
                 self._commands_list_updated_event.wait(wait_time)
                 wait_time = 0
+        self.logger.debug("Scheduler runner thread exited")
 
     def _is_runner_thread_running(self):
         """Check if the classes runner thread is running."""
@@ -60,7 +58,6 @@ class CommandScheduler:
     def _start_runner_thread(self):
         """The the classes runner thread."""
         if not self._is_runner_thread_running():
-            # print("Starting runner thread")
             self._stop_event.clear()
             self._thread = threading.Thread(target=self._run)
             self._thread.start()
@@ -74,10 +71,8 @@ class CommandScheduler:
 
     def submit_command(self, command, command_name, period):
         """Adds a new command to run every `period` seconds."""
-        # print("Submitting command to heap")
         next_run_time = time.time() + period
         with self._lock:
-            # add the command to the heap
             heappush(self.commands, (next_run_time, command, command_name, period))
             self._commands_list_updated_event.set()
 
@@ -87,16 +82,13 @@ class CommandScheduler:
     def remove_command(self, command_name_to_remove):
         """Removes a scheduled command."""
         with self._lock:
-            # Rebuild the heap
             self.commands = [cmd for cmd in self.commands if cmd[2] != command_name_to_remove]
-            heapify(self.commands)  # Re-heapify after removal
+            heapify(self.commands)
             self._commands_list_updated_event.set()
 
     def update_command_period(self, command_name_to_update, new_period):
         """Updates the scheduled commands period."""
-        # print("Updating command period", command_name_to_update, new_period)
         with self._lock:
-            # Mark the command as invalid by setting it to None
             for i, (_, command, command_name, _) in enumerate(self.commands):
                 if command_name == command_name_to_update:
                     next_run_time = time.time() + new_period
