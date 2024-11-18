@@ -11,6 +11,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Updated SPFRx operatingMode from DATA_CAPTURE to OPERATE to match Rev 4 ICD
 - Added in Read/Write dscPowerLimitKw attribute to be used when FP, LP and Slew are invoked.
 - Using DS Manager v2.2.0
+- Updated periodicNoiseDiodePars and pseudoRandomNoiseDiodePars to be DevULong
 
 Version 5.0.1
 *************
