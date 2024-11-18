@@ -7,3 +7,5 @@ User Guide
 
    Getting Started<getting_started>
    How To<how_to>
+   Abort on DishManager<abort>
+   Apply Pointing Model<apply_pointing_model> 

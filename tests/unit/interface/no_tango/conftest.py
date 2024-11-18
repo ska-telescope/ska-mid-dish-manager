@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Generator
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
@@ -12,25 +12,25 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.fixture()
-def mock_command_tracker() -> Mock:
+def mock_command_tracker() -> MagicMock:
     """"""
-    return Mock()
+    return MagicMock()
 
 
 @pytest.fixture()
 def callbacks() -> dict:
     """Return a dictionary of callbacks."""
     return {
-        "conn_state_cb": Mock(),
-        "quality_state_cb": Mock(),
-        "comm_state_cb": Mock(),
+        "conn_state_cb": MagicMock(),
+        "quality_state_cb": MagicMock(),
+        "comm_state_cb": MagicMock(),
         "comp_state_cb": ComponentStateStore(),
-        "task_cb": Mock(),
+        "task_cb": MagicMock(),
     }
 
 
 @pytest.fixture()
-def component_manager(mock_command_tracker: Mock, callbacks: dict) -> Generator:
+def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Generator:
     """
     Fixture that returns the component manager under test.
 
@@ -45,12 +45,16 @@ def component_manager(mock_command_tracker: Mock, callbacks: dict) -> Generator:
         task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(None)))
         return TaskStatus.QUEUED, "message"
 
+    def _simulate_execute_command(*args):
+        return [[ResultCode.OK], [f"{args[0]} completed"]]
+
     with patch.multiple(
         "ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceComponentManager",
-        run_device_command=Mock(side_effect=_simulate_lrc_callbacks),
-        update_state_from_monitored_attributes=Mock(),
-        write_attribute_value=Mock(),
-        execute_command=Mock(),
+        read_attribute_value=MagicMock(),
+        write_attribute_value=MagicMock(),
+        update_state_from_monitored_attributes=MagicMock(),
+        execute_command=MagicMock(side_effect=_simulate_execute_command),
+        run_device_command=MagicMock(side_effect=_simulate_lrc_callbacks),
     ):
         yield DishManagerComponentManager(
             LOGGER,
