@@ -1513,14 +1513,14 @@
       writable_attr_name: noiseDiodeMode
     - name: periodicNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevDouble
+      data_type: DevULong
       description: "\n            Periodic noise diode pars (units are in time quanta).\n\
         \n            [0]: period, [1]: duty cycle, [2]: phase shift\n\n         \
         \   Note: This attribute does not persist after a power cycle. A default value\
         \ is included\n            as a device property on the SPFRx.\n        "
       disp_level: OPERATOR
       display_unit: No display unit
-      format: '%6.2f'
+      format: '%d'
       label: periodicNoiseDiodePars
       max_alarm: Not specified
       max_dim_x: 3
@@ -1646,7 +1646,7 @@
       writable_attr_name: programTrackTable
     - name: pseudoRandomNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevDouble
+      data_type: DevULong
       description: "\n            Pseudo random noise diode pars (units are in time\
         \ quanta).\n\n            [0]: binary polynomial, [1]: seed, [2]: dwell\n\n\
         \            Note: This attribute does not persist after a power cycle. A\
@@ -1654,7 +1654,7 @@
         \        "
       disp_level: OPERATOR
       display_unit: No display unit
-      format: '%6.2f'
+      format: '%d'
       label: pseudoRandomNoiseDiodePars
       max_alarm: Not specified
       max_dim_x: 3
