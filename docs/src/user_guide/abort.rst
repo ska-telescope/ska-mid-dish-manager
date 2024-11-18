@@ -41,8 +41,8 @@ See `abort documentation`_ for discussion and flow diagram
 
 .. warning::
     An ongoing STOW can be interrupted if Abort is triggered. SetStowMode can
-    be requ again to resume STOW movement. STOW is primarily a SAFETY request
-    is the user's responsibility to avoid unintended consequences by issuing Abort.
+    be requested again to resume STOW movement. STOW is primarily a SAFETY request
+    is the user's responsibility to avoid unintended consequences.
 
 .. _documentation: https://developer.skao.int/projects/ska-tango-base/en/latest/concepts/long-running-commands.html
 .. _abort documentation: https://confluence.skatelescope.org/x/cMiJEQ
