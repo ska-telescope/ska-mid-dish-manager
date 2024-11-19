@@ -213,11 +213,7 @@ class TangoDeviceMonitor:
             dev_proxy = self._tango_device_proxy(self._trl)
             if dev_proxy:
                 on_verified_callback(exit_thread_event)
-            else:
-                self._logger.error(
-                    f"Communication to device at {self._trl} failed. Retry StartCommunication."
-                )
-            return
+                return
 
     def monitor(self) -> None:
         """
