@@ -66,11 +66,11 @@ autodoc_default_options = {
 # -- Project information -----------------------------------------------------
 
 project = "SKA Mid Dish Manager"
-copyright = "2023, KAROO Team"
+copyright = "2024, KAROO Team"
 author = "KAROO Team"
 
 # The full version, including alpha/beta/rc tags
-release = "5.0.1"
+release = "6.0.0"
 
 
 # -- General configuration ---------------------------------------------------

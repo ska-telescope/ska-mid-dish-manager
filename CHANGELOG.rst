@@ -5,14 +5,14 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
-## unreleased
+Version 6.0.0
 *************
 - Added unit and range verification checks to `ApplyPointingModel`command
 - Added in Read/Write dscPowerLimitKw attribute to be used when SetStandbyFPMode, SetStandbyLPMode and Slew are invoked.
-- Upgraded ska-mid-dish-ds-manager chart to v2.2.0
+- Upgraded ska-mid-dish-ds-manager chart to v3.0.0
+- Upgraded ska-mid-dish-simulators to v4.2.1
 - Updated SPFRx operatingMode from DATA_CAPTURE to OPERATE to match Rev 4 ICD
 - Added in Read/Write dscPowerLimitKw attribute to be used when FP, LP and Slew are invoked.
-- Using DS Manager v2.2.0
 - Updated periodicNoiseDiodePars and pseudoRandomNoiseDiodePars to be DevULong
 - Added `Abort` tango command which cancels any task and restores the dish to FP mode
 
