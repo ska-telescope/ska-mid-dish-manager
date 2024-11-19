@@ -11,6 +11,7 @@ Version 6.0.0
 - Added in Read/Write dscPowerLimitKw attribute to be used when SetStandbyFPMode, SetStandbyLPMode and Slew are invoked.
 - Upgraded ska-mid-dish-ds-manager chart to v3.0.0
 - Upgraded ska-mid-dish-simulators to v4.2.1
+- Upgraded to ska-tango-util and ska-tango-base to v0.4.13
 - Updated SPFRx operatingMode from DATA_CAPTURE to OPERATE to match Rev 4 ICD
 - Added in Read/Write dscPowerLimitKw attribute to be used when FP, LP and Slew are invoked.
 - Updated periodicNoiseDiodePars and pseudoRandomNoiseDiodePars to be DevULong
