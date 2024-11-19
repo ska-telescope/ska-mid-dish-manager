@@ -4,8 +4,8 @@ import json
 import logging
 import os
 from functools import partial
-from threading import Lock
-from typing import Callable, List, Optional, Tuple
+from threading import Event, Lock, Thread
+from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -15,6 +15,7 @@ from ska_tango_base.executor import TaskExecutorComponentManager
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
+from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
@@ -41,6 +42,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
+from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 
 
 # pylint: disable=abstract-method
@@ -66,7 +68,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         *args,
         **kwargs,
     ):
-        """"""
         # pylint: disable=useless-super-delegation
         self.tango_device_name = tango_device_name
         self.sub_component_managers = None
@@ -119,6 +120,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
+        self._abort_thread: Optional[Thread] = None
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -202,6 +204,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_tracker,
             self.logger,
         )
+        self._cmd_allowed_checks = CommandAllowedChecks(self)
+
 
         self.direct_mapped_attrs = {
             "DS": [
@@ -220,6 +224,57 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
+        # ----------------
+        # Command Handlers
+        # ----------------
+        self._abort_handler = Abort(self, self._command_map, self._command_tracker, logger=logger)
+
+    # --------------
+    # Helper methods
+    # --------------
+
+    def is_dish_moving(self) -> bool:
+        """
+        Report whether or not the dish is moving
+
+        :returns: boolean dish movement activity
+        """
+        pointing_state = self.component_state.get("pointingstate")
+        if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
+            return True
+        return False
+
+    def get_currently_executing_lrcs(
+        self,
+        statuses_to_check: Tuple[TaskStatus] = (
+            TaskStatus.STAGING,
+            TaskStatus.QUEUED,
+            TaskStatus.IN_PROGRESS,
+        ),
+    ) -> List[str]:
+        """
+        Report command ids that are running or waiting to be executed from the task executor
+
+        :param statuses_to_check: TaskStatuses which count as lrc is executing
+        :returns: a list of all lrcs currently executing or queued
+        """
+        command_idx = 0
+        status_idx = 1
+        cmd_ids = []
+
+        command_statuses = self._command_tracker.command_statuses
+        filtered_command_statuses = [
+            cmd_status
+            for cmd_status in command_statuses
+            if cmd_status[status_idx] in statuses_to_check
+        ]
+
+        if filtered_command_statuses:
+            cmd_ids = [cmd_status[command_idx] for cmd_status in filtered_command_statuses]
+            return cmd_ids
+        # there are no commands in statuses_to_check
+        return cmd_ids
+
     def is_device_ignored(self, device: str):
         """Check whether the given device is ignored."""
         if device == "SPF":
@@ -228,15 +283,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return self.component_state["ignorespfrx"]
         return False
 
-    def _get_active_sub_component_managers(self) -> List:
+    def get_active_sub_component_managers(self) -> Dict:
         """Get a list of subservient device component managers which are not being ignored."""
-        active_component_managers = [self.sub_component_managers["DS"]]
+        active_component_managers = {"DS": self.sub_component_managers["DS"]}
 
         if not self.is_device_ignored("SPF"):
-            active_component_managers.append(self.sub_component_managers["SPF"])
+            active_component_managers["SPF"] = self.sub_component_managers["SPF"]
 
         if not self.is_device_ignored("SPFRX"):
-            active_component_managers.append(self.sub_component_managers["SPFRX"])
+            active_component_managers["SPFRX"] = self.sub_component_managers["SPFRX"]
 
         return active_component_managers
 
@@ -329,10 +384,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # this is too much, reconsider doing this only once
         # self._build_state_callback(device, communication_state)
 
-        active_sub_component_managers = self._get_active_sub_component_managers()
+        active_sub_component_managers = self.get_active_sub_component_managers()
         sub_devices_communication_states = [
             sub_component_manager.communication_state
-            for sub_component_manager in active_sub_component_managers
+            for sub_component_manager in active_sub_component_managers.values()
         ]
         if all(
             communication_state == CommunicationStatus.ESTABLISHED
@@ -583,9 +638,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 self._update_component_state(**{attr_lower: new_value})
 
-    # ---------------------------------
-    # Command/ attribute write handlers
-    # ---------------------------------
+    # ----------------------------------------
+    # Command object/ attribute write handlers
+    # ----------------------------------------
 
     def start_communicating(self):
         """Connect from monitored devices"""
@@ -665,6 +720,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except ValueError:
             self.logger.exception("Failed to update %s", attr)
             raise
+
+    def abort_commands(self, task_callback: Optional[Callable] = None) -> None:
+        """Abort commands on dish manager and its subservient devices
+
+        :param task_callback: callback when the status changes
+        """
+        self.logger.debug("Aborting long running commands")
+        super().abort_commands(task_callback)
+        sub_component_mgrs = self.get_active_sub_component_managers()
+        for component_mgr in sub_component_mgrs.values():
+            # dont use the same taskcallback else we get completed 4x on the same command id
+            component_mgr.abort_commands()
 
     def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
@@ -827,11 +894,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STOW mode
-
-        Note: To expedite the command, it does not
-        implement _is_track_stow_cmd_allowed() because by
-        default it is allowed to run at all states.
+        """
+        Transition the dish to STOW mode
         """
         ds_cm = self.sub_component_managers["DS"]
         try:
@@ -841,14 +905,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.exception("DishManager has failed to execute Stow DSManager")
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
         task_callback(
-            progress="Stow called, monitor dishmode for LRC completed", status=TaskStatus.COMPLETED
+            status=TaskStatus.COMPLETED, progress="Stow called, monitor dishmode for LRC completed"
         )
-        # abort queued tasks on the task executor's threadpoolexecutor
+        # abort queued tasks on the task executor
         self.abort_commands()
-        # abort the task on the subservient devices
-        sub_component_mgrs = self._get_active_sub_component_managers()
-        for component_mgr in sub_component_mgrs:
-            component_mgr.abort_commands()
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
 
@@ -1020,7 +1080,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Process the JSON data
         try:
             data = json.loads(json_object)
-        except (ConnectionError, json.JSONDecodeError) as err:
+        except json.JSONDecodeError as err:
             self.logger.exception("Invalid json supplied")
             message = str(err)
             return result_code, message
@@ -1220,6 +1280,79 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         return (ResultCode.OK, "Successfully updated pseudoRandomNoiseDiodePars on SPFRx")
+
+    @check_communicating
+    def abort(
+        self, task_callback: Optional[Callable] = None, task_abort_event: Optional[Event] = Event()
+    ) -> Tuple[TaskStatus, str]:
+        """
+        Issue abort sequence
+
+        :param task_callback: Callback for task (default: {None})
+        :param task_abort_event: Event holding abort info (default: {Event()})
+        """
+        # NOTE we dont want to pass the existing abort event object
+        # i.e. self._task_executor._abort_event to this function
+        # since it might prevent the sequence from being continued
+        # when event.is_set() is performed after abort_commands finishes
+
+        # This will be a short lived thread. It hands over the work to the
+        # executor to do the heavy lifting. But perform the check nonetheless
+        if self._abort_thread is not None and self._abort_thread.is_alive():
+            self.logger.info("Abort rejected: there is an ongoing abort sequence.")
+            if task_callback:
+                task_callback(
+                    status=TaskStatus.REJECTED,
+                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
+                )
+            return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
+
+        if not self._cmd_allowed_checks.is_abort_allowed():
+            self.logger.info("Abort rejected: command not allowed in MAINTENANCE mode")
+            if task_callback:
+                task_callback(
+                    status=TaskStatus.REJECTED,
+                    result=(
+                        ResultCode.REJECTED,
+                        "Command not allowed during in MAINTENANCE mode",
+                    ),
+                )
+            return TaskStatus.REJECTED, "Command not allowed during MAINTENANCE mode"
+
+        cmds_in_progress = self.get_currently_executing_lrcs(
+            statuses_to_check=(TaskStatus.QUEUED, TaskStatus.IN_PROGRESS)
+        )
+        abort_command_id = None
+        if cmds_in_progress:
+            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
+                self.logger.info("Abort rejected: there is an ongoing abort sequence.")
+                if task_callback:
+                    task_callback(
+                        status=TaskStatus.REJECTED,
+                        result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
+                    )
+                return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
+
+            self.logger.debug("Aborting LRCs from Abort sequence")
+            abort_command_id = self._command_tracker.new_command(
+                "abort-sequence:abort-lrc", completed_callback=None
+            )
+            abort_task_cb = partial(self._command_tracker.update_command_info, abort_command_id)
+            self.abort_commands(task_callback=abort_task_cb)
+
+        self._abort_thread = Thread(
+            target=self._abort_handler,
+            args=[
+                abort_command_id,
+                task_abort_event,
+            ],
+            kwargs={
+                "task_callback": task_callback,
+            },
+        )
+        self._abort_thread.name = "abort_thread"
+        self._abort_thread.start()
+        return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     def set_dsc_power_limit_kw(
         self,
