@@ -88,9 +88,9 @@ class DeviceProxyManager:
             try:
                 device_proxy = self.create_tango_device_proxy(trl)
             except (tango.DevFailed, RuntimeError):
-                self._logger.warning(f"DeviceProxy to {trl} was not created. NoneType returned")
-                self.device_proxies[trl] = None
-                return None
+                self._logger.warning(f"Failed creating DeviceProxy to device at {trl}")
+                self.device_proxies[trl] = device_proxy
+                return device_proxy
             self.device_proxies[trl] = device_proxy
         else:
             self._logger.debug(f"Returning existing DeviceProxy to device at {trl}")
@@ -99,7 +99,7 @@ class DeviceProxyManager:
             try:
                 self._wait_for_device(device_proxy)
             except (tango.DevFailed, RuntimeError):
-                self._logger.warning(f"Reconnection DeviceProxy to {trl} failed")
+                self._logger.warning(f"Device at {trl} is unresponsive.")
 
         return device_proxy
 
