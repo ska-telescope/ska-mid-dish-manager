@@ -8,21 +8,26 @@ and the subservient devices
 """
 
 import json
-import logging
 import weakref
 from functools import reduce
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
-from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-from tango import AttrWriteType, DispLevel
+from ska_tango_base.commands import SubmittedSlowCommand
+from tango import AttrWriteType, DevULong, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
-from ska_mid_dish_manager.models.command_class import ImmediateSlowCommand
+from ska_mid_dish_manager.models.command_class import (
+    AbortCommand,
+    AbortCommandsDeprecatedCommand,
+    ApplyPointingModelCommand,
+    SetKValueCommand,
+    StowCommand,
+)
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_DISH_ID,
@@ -191,7 +196,7 @@ class DishManager(SKAController):
 
         self.register_command_object(
             "SetStowMode",
-            ImmediateSlowCommand(
+            StowCommand(
                 "SetStowMode",
                 self._command_tracker,
                 self.component_manager,
@@ -202,18 +207,37 @@ class DishManager(SKAController):
         )
 
         self.register_command_object(
+            "Abort",
+            AbortCommand(
+                "Abort",
+                self._command_tracker,
+                self.component_manager,
+                "abort",
+                callback=None,
+                logger=self.logger,
+            ),
+        )
+
+        self.register_command_object(
             "AbortCommands",
-            self.AbortCommandsCommand(self.component_manager, self.logger),
+            AbortCommandsDeprecatedCommand(
+                "AbortCommands",
+                self._command_tracker,
+                self.component_manager,
+                "abort",
+                callback=None,
+                logger=self.logger,
+            ),
         )
 
         self.register_command_object(
             "SetKValue",
-            self.SetKValueCommand(self.component_manager, self.logger),
+            SetKValueCommand(self.component_manager, self.logger),
         )
 
         self.register_command_object(
             "ApplyPointingModel",
-            self.ApplyPointingModelCommand(self.component_manager, self.logger),
+            ApplyPointingModelCommand(self.component_manager, self.logger),
         )
 
     def _connection_state_update(self, device: Device):
@@ -441,7 +465,6 @@ class DishManager(SKAController):
                 "trackTableLoadMode",
                 "lastCommandedMode",
                 "lastCommandedPointingParams",
-                "dscPowerLimitKw",
                 "tmcHeartbeatStowTimeout",
                 "tmcCommsAlive",
             ):
@@ -1028,7 +1051,7 @@ class DishManager(SKAController):
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
-        result_code, result_message = self.component_manager._track_load_table(
+        result_code, result_message = self.component_manager.track_load_table(
             sequence_length, table, self._track_table_load_mode
         )
 
@@ -1272,7 +1295,7 @@ class DishManager(SKAController):
         self.component_manager.set_noise_diode_mode(mode)
 
     @attribute(
-        dtype=(float,),
+        dtype=(DevULong,),
         max_dim_x=3,
         doc="""
             Periodic noise diode pars (units are in time quanta).
@@ -1295,7 +1318,7 @@ class DishManager(SKAController):
         self.component_manager.set_periodic_noise_diode_pars(values)
 
     @attribute(
-        dtype=(float,),
+        dtype=(DevULong,),
         max_dim_x=3,
         doc="""
             Pseudo random noise diode pars (units are in time quanta).
@@ -1419,52 +1442,30 @@ class DishManager(SKAController):
                     except tango.DevFailed:
                         pass
 
-    # pylint: disable=too-few-public-methods
-    class AbortCommandsCommand(SlowCommand):
-        """The command class for the AbortCommand command."""
+    @command(
+        doc_in="Abort currently executing long running command on "
+        "DishManager including stopping dish movement and transitioning "
+        "dishMode to StandbyFP. For details consult DishManager documentation",
+        display_level=DispLevel.OPERATOR,
+        dtype_out="DevVarLongStringArray",
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def Abort(self) -> DevVarLongStringArrayType:
+        """
+        Empty out long running commands in queue.
 
-        def __init__(
-            self,
-            component_manager: DishManagerComponentManager,
-            logger: Optional[logging.Logger] = None,
-        ) -> None:
-            """
-            Initialise a new AbortCommandsCommand instance.
-
-            :param component_manager: contains the queue manager which
-                manages the worker thread and the LRC attributes
-            :param logger: the logger to be used by this Command. If not
-                provided, then a default module logger will be used.
-            """
-            self._component_manager = component_manager
-            super().__init__(None, logger=logger)
-
-        # pylint: disable=arguments-differ
-        def do(self) -> Tuple[ResultCode, str]:  # type: ignore[override]
-            """
-            Abort long running commands.
-
-            Abort the currently executing LRC and remove all enqueued
-            LRCs.
-
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            # abort the task on dish manager
-            self._component_manager.abort_commands()
-            # abort the task on the subservient devices
-            sub_component_managers = self._component_manager._get_active_sub_component_managers()
-            for component_mgr in sub_component_managers:
-                component_mgr.abort_commands()
-
-            return (ResultCode.STARTED, "Aborting commands")
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        handler = self.get_command_object("Abort")
+        (return_code, message) = handler()
+        return ([return_code], [message])
 
     @command(
         doc_in="Abort currently executing long running command on "
-        "DishManager and subservient devices. Empties out the queue "
-        "on DishManager and rejects any scheduled commands. For "
-        "details consult DishManager documentation",
+        "DishManager including stopping dish movement and transitioning "
+        "dishMode to StandbyFP. For details consult DishManager documentation",
         display_level=DispLevel.OPERATOR,
         dtype_out="DevVarLongStringArray",
     )
@@ -1878,38 +1879,6 @@ class DishManager(SKAController):
         result_code, unique_id = handler(values)
         return ([result_code], [unique_id])
 
-    class SetKValueCommand(FastCommand):
-        """Class for handling the SetKValue command."""
-
-        def __init__(
-            self,
-            component_manager: DishManagerComponentManager,
-            logger: Optional[logging.Logger] = None,
-        ) -> None:
-            """
-            Initialise a new SetKValueCommand instance.
-
-            :param component_manager: the device to which this command belongs.
-            :param logger: a logger for this command to use.
-            """
-            self._component_manager = component_manager
-            super().__init__(logger)
-
-        def do(
-            self,
-            *args: Any,
-            **kwargs: Any,
-        ) -> tuple[ResultCode, str]:
-            """
-            Implement SetKValue command functionality.
-
-            :param args: k value.
-            :return: A tuple containing a return code and a string
-                message indicating status. The message is for
-                information purpose only.
-            """
-            return self._component_manager.set_kvalue(*args)
-
     @command(
         dtype_in="DevLong64",
         dtype_out="DevVarLongStringArray",
@@ -1925,56 +1894,6 @@ class DishManager(SKAController):
         handler = self.get_command_object("SetKValue")
         return_code, message = handler(value)
         return ([return_code], [message])
-
-    class ApplyPointingModelCommand(FastCommand):
-        """Class for handling band pointing parameters given a JSON input."""
-
-        def __init__(
-            self,
-            component_manager: DishManagerComponentManager,
-            logger: Optional[logging.Logger] = None,
-        ) -> None:
-            """
-            Initialise a new ApplyPointingModelCommand instance.
-
-            :param component_manager: the device to which this command belongs.
-            :param logger: a logger for this command to use.
-            """
-            self._component_manager = component_manager
-            super().__init__(logger)
-
-        def do(
-            self,
-            *args: Any,
-            **kwargs: Any,
-        ) -> tuple[ResultCode, str]:
-            """
-            Implement ApplyPointingModel command functionality.
-
-            :param json_object: JSON object with a schema similar to this,
-                {
-                    "interface": "...",
-                    "antenna": "....",
-                    "band": "Band_...",
-                    "attrs": {...},
-                    "coefficients": {
-                        "IA": {...},
-                        ...
-                        ...
-                        "HESE8":{...}
-                    },
-                    "rms_fits":
-                    {
-                        "xel_rms": {...},
-                        "el_rms": {...},
-                        "sky_rms": {...}
-                    }
-                }
-
-            :return: A tuple containing a return code and a string
-                message indicating status.
-            """
-            return self._component_manager.apply_pointing_model(*args)
 
     @command(
         dtype_in="DevString",

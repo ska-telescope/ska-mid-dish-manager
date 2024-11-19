@@ -14,8 +14,8 @@ from ska_mid_dish_manager.models.dish_enums import NoiseDiodeMode
     ("attribute, valid_write_value"),
     [
         ("noiseDiodeMode", NoiseDiodeMode.PERIODIC),
-        ("periodicnoisediodepars", [1.1, 2.2, 3.3]),
-        ("pseudorandomnoisediodepars", [1.1, 2.2, 3.3]),
+        ("periodicnoisediodepars", [1, 2, 3]),
+        ("pseudorandomnoisediodepars", [1, 2, 3]),
     ],
 )
 def test_set_noise_diode_attribute(
