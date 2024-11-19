@@ -114,6 +114,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
             tmcheartbeatstowtimeout=0,
             tmclastheartbeat=0,
+            tmccommsalive=False,
             **kwargs,
         )
         self.logger = logger
@@ -1270,6 +1271,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Record a successful heartbeat from TMC."""
         self.logger.debug("Received heartbeat from TMC")
         self._component_state["tmclastheartbeat"] = time.time()
+        if not self.component_state["tmccommsalive"]:
+            self._update_component_state(tmccommsalive=True)
 
     def _check_tmc_heartbeat(self):
         """
@@ -1290,11 +1293,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 time_since_last_heartbeat,
                 self.component_state["tmcheartbeatstowtimeout"],
             )
-            if self.component_state["dishmode"] != DishMode.STOW:
+
+            tmc_comms_was_alive = self.component_state["tmccommsalive"]
+
+            # ensure the dish is only stowed the first time comms is lost:
+            if tmc_comms_was_alive and self.component_state["dishmode"] != DishMode.STOW:
                 self.logger.warning("CheckTMCHeartbeat: Stowing dish.")
                 self.set_stow_mode()
+            elif not tmc_comms_was_alive and self.component_state["dishmode"] != DishMode.STOW:
+                self.logger.warning("CheckTMCHeartbeat: Dish already stowing.")
             else:
                 self.logger.warning("CheckTMCHeartbeat: Dish already stowed.")
+
+            if tmc_comms_was_alive:
+                self._update_component_state(tmccommsalive=False)
 
     def update_tmc_heartbeat_stow_timeout(self, value):
         """Update the TMC heartbeat stow timeout."""

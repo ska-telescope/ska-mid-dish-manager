@@ -41,11 +41,13 @@ def test_dish_lmc_stows_on_tmc_comms_failure(
         # assert that nothing happened on the dish since the heartbeat was within the stow timeout
         assert dish_manager_proxy.pointingState == PointingState.READY
         assert dish_manager_proxy.dishMode == current_dish_mode
+        assert dish_manager_proxy.tmcCommsAlive
 
         # wait for the timeout to elapse
         time.sleep(5)
 
-        # assert that the dish stows
+        # assert that the comms alive attribute is updated and the dish stows
+        assert not dish_manager_proxy.tmcCommsAlive
         main_event_store.wait_for_value(DishMode.STOW, timeout=10)
     finally:
         # clean up for other tests

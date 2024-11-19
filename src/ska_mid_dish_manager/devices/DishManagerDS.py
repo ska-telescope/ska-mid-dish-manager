@@ -443,6 +443,7 @@ class DishManager(SKAController):
                 "lastCommandedPointingParams",
                 "dscPowerLimitKw",
                 "tmcHeartbeatStowTimeout",
+                "tmcCommsAlive",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
@@ -1376,6 +1377,15 @@ class DishManager(SKAController):
         """Set the tmcHeartbeatStowTimeout"""
         self.logger.debug("Write to tmcHeartbeatStowTimeout, %s", value)
         self.component_manager.update_tmc_heartbeat_stow_timeout(value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ,
+        doc="Report the status of the TMC heartbeat check",
+    )
+    def tmcCommsAlive(self):
+        """Returns the status of the TMC heartbeat check"""
+        return self.component_manager.component_state.get("tmccommsalive", False)
 
     # --------
     # Commands
