@@ -118,8 +118,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
-        self._state_update_lock = Lock()  # does not seem to be used
-        self._sub_communication_state_change_lock = Lock()
+        self._state_update_lock = Lock()
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -325,31 +324,29 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "Communication state changed on %s device: %s.", device.name, communication_state
         )
 
-        # there is a shared lock so this is not necessary
-        with self._sub_communication_state_change_lock:
-            # report the communication state of the sub device on the connectionState attribute
-            self._update_connection_state_attribute(device.name, communication_state)
-            # this is too much, reconsider doing this only once
-            # self._build_state_callback(device, communication_state)
+        # report the communication state of the sub device on the connectionState attribute
+        self._update_connection_state_attribute(device.name, communication_state)
+        # this is too much, reconsider doing this only once
+        # self._build_state_callback(device, communication_state)
 
-            active_sub_component_managers = self._get_active_sub_component_managers()
-            sub_devices_communication_states = [
-                sub_component_manager.communication_state
-                for sub_component_manager in active_sub_component_managers
-            ]
-            if all(
-                communication_state == CommunicationStatus.ESTABLISHED
-                for communication_state in sub_devices_communication_states
-            ):
-                self._update_communication_state(CommunicationStatus.ESTABLISHED)
+        active_sub_component_managers = self._get_active_sub_component_managers()
+        sub_devices_communication_states = [
+            sub_component_manager.communication_state
+            for sub_component_manager in active_sub_component_managers
+        ]
+        if all(
+            communication_state == CommunicationStatus.ESTABLISHED
+            for communication_state in sub_devices_communication_states
+        ):
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
-            elif any(
-                communication_state == CommunicationStatus.NOT_ESTABLISHED
-                for communication_state in sub_devices_communication_states
-            ):
-                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-            else:
-                self._update_communication_state(CommunicationStatus.DISABLED)
+        elif any(
+            communication_state == CommunicationStatus.NOT_ESTABLISHED
+            for communication_state in sub_devices_communication_states
+        ):
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        else:
+            self._update_communication_state(CommunicationStatus.DISABLED)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _component_state_changed(self, device: Device, *args, **kwargs):
