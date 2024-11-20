@@ -206,7 +206,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._cmd_allowed_checks = CommandAllowedChecks(self)
 
-
         self.direct_mapped_attrs = {
             "DS": [
                 "achievedPointing",
