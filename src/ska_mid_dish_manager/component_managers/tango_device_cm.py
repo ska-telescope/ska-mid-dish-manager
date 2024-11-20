@@ -9,29 +9,10 @@ from typing import Any, Callable, Optional, Tuple
 import numpy as np
 import tango
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
+from ska_tango_base.base import check_communicating
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
-
-
-def _check_connection(func: Any) -> Any:  # pylint: disable=E0213
-    """Connection check decorator.
-
-    This is a workaround for decorators in classes.
-
-    Execute the method, if communication fails, commence reconnection.
-    """
-
-    def _decorator(self, *args: Any, **kwargs: Any) -> Callable:  # type: ignore
-        if self.communication_state != CommunicationStatus.ESTABLISHED:
-            raise LostConnection("Communication status not ESTABLISHED")
-        return func(self, *args, **kwargs)  # pylint: disable=E1102
-
-    return _decorator
-
-
-class LostConnection(Exception):
-    """Exception for losing connection to the Tango device"""
 
 
 # pylint: disable=abstract-method, too-many-instance-attributes, no-member, too-many-arguments
@@ -281,7 +262,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         result = None
         try:
             result = self.execute_command(command_name, command_arg)
-        except (LostConnection, tango.DevFailed) as err:
+        except (ConnectionError, tango.DevFailed) as err:
             self.logger.exception(err)
             if task_callback:
                 task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
@@ -294,7 +275,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if task_callback:
             task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(result)))
 
-    @_check_connection
+    @check_communicating
     def execute_command(self, command_name: str, command_arg: Any) -> Any:
         """Check the connection and execute the command on the Tango device"""
         self.logger.debug(
@@ -324,7 +305,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             )
         return result
 
-    @_check_connection
+    @check_communicating
     def read_attribute_value(self, attribute_name: str) -> Any:
         """Check the connection and read an attribute"""
         self.logger.debug(
@@ -343,7 +324,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             )
             return result
 
-    @_check_connection
+    @check_communicating
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
         """Check the connection and write an attribute"""
         self.logger.debug(
