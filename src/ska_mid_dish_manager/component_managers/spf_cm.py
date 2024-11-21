@@ -21,7 +21,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
 
     def __init__(
         self,
-        tango_device_fqdn: str,
+        tango_device_trl: str,
         logger: logging.Logger,
         state_update_lock: Lock,
         *args: Any,
@@ -42,7 +42,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b5bCapabilityState",
         )
         super().__init__(
-            tango_device_fqdn,
+            tango_device_trl,
             logger,
             self._monitored_attr_names,
             *args,

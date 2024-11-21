@@ -84,9 +84,9 @@ class DishManager(SKAController):
     # -----------------
     # these values will be overwritten by values in
     # /charts/ska-mid-dish-manager/data in k8s deployment
-    DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
-    SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
-    SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
+    DSDeviceTrl = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
+    SPFDeviceTrl = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
+    SPFRxDeviceTrl = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
 
     def _create_lrc_attributes(self) -> None:
@@ -146,9 +146,9 @@ class DishManager(SKAController):
         """
 
         self._release_info = ReleaseInfo(
-            ds_manager_address=self.DSDeviceFqdn,
-            spfc_address=self.SPFDeviceFqdn,
-            spfrx_address=self.SPFRxDeviceFqdn,
+            ds_manager_address=self.DSDeviceTrl,
+            spfc_address=self.SPFDeviceTrl,
+            spfrx_address=self.SPFRxDeviceTrl,
         )
         self._build_state = self._release_info.get_build_state()
 
@@ -158,9 +158,9 @@ class DishManager(SKAController):
             self._connection_state_update,
             self._attr_quality_state_changed,
             self.get_name(),
-            self.DSDeviceFqdn,
-            self.SPFDeviceFqdn,
-            self.SPFRxDeviceFqdn,
+            self.DSDeviceTrl,
+            self.SPFDeviceTrl,
+            self.SPFRxDeviceTrl,
             communication_state_callback=None,
             component_state_callback=self._component_state_changed,
         )
@@ -1408,7 +1408,7 @@ class DishManager(SKAController):
                         spfrx_com_man.execute_command("MonitorPing", None)
                     except LostConnection:
                         self.logger.error(
-                            "Could not connect to [%s] for MonitorPing", self.SPFRxDeviceFqdn
+                            "Could not connect to [%s] for MonitorPing", self.SPFRxDeviceTrl
                         )
                     except tango.DevFailed:
                         pass

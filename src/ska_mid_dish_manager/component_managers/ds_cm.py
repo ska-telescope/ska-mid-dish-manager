@@ -21,7 +21,7 @@ class DSComponentManager(TangoDeviceComponentManager):
 
     def __init__(
         self,
-        tango_device_fqdn: Any,
+        tango_device_trl: Any,
         logger: logging.Logger,
         state_update_lock: Lock,
         *args: Any,
@@ -52,7 +52,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "dscpowerlimitkw",
         )
         super().__init__(
-            tango_device_fqdn,
+            tango_device_trl,
             logger,
             self._monitored_attr_names,
             *args,

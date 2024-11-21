@@ -19,11 +19,11 @@ def empty_func(*args, **kwargs):  # pylint: disable=unused-argument
 
 
 # pylint:disable=unused-argument
-def test_device_monitor(monitor_tango_servers, caplog, spf_device_fqdn):
+def test_device_monitor(monitor_tango_servers, caplog, spf_device_trl):
     """Device monitoring sanity check"""
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    tdm = TangoDeviceMonitor(spf_device_fqdn, ["powerState"], event_queue, LOGGER, empty_func)
+    tdm = TangoDeviceMonitor(spf_device_trl, ["powerState"], event_queue, LOGGER, empty_func)
     tdm.monitor()
     event = event_queue.get(timeout=4)
     # Make sure we end up connected, may take a second or so to come through
@@ -32,7 +32,7 @@ def test_device_monitor(monitor_tango_servers, caplog, spf_device_fqdn):
     assert not event_data.err
     assert event_data.attr_value.name == "powerState"
     assert event_queue.empty()
-    spf_device = tango.DeviceProxy(spf_device_fqdn)
+    spf_device = tango.DeviceProxy(spf_device_trl)
     spf_device.powerState = 1
     spf_device.powerState = 2
     event = event_queue.get(timeout=4)
@@ -42,7 +42,7 @@ def test_device_monitor(monitor_tango_servers, caplog, spf_device_fqdn):
     assert event.item.attr_value.value == 2
 
 
-def test_multi_monitor(caplog, spf_device_fqdn):
+def test_multi_monitor(caplog, spf_device_trl):
     """Device monitoring check multi attributes"""
     test_attributes = (
         "operatingmode",
@@ -58,7 +58,7 @@ def test_multi_monitor(caplog, spf_device_fqdn):
     )
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
-    tdm = TangoDeviceMonitor(spf_device_fqdn, test_attributes, event_queue, LOGGER, empty_func)
+    tdm = TangoDeviceMonitor(spf_device_trl, test_attributes, event_queue, LOGGER, empty_func)
     tdm.monitor()
     test_attributes_list = list(test_attributes)
     for _ in range(len(test_attributes)):
@@ -68,7 +68,7 @@ def test_multi_monitor(caplog, spf_device_fqdn):
     assert not test_attributes_list
 
 
-def test_device_monitor_stress(spf_device_fqdn):
+def test_device_monitor_stress(spf_device_trl):
     """Reconnect many times to see if it recovers"""
     logs_queue = Queue()
 
@@ -81,7 +81,7 @@ def test_device_monitor_stress(spf_device_fqdn):
 
     event_queue = Queue()
     tdm = TangoDeviceMonitor(
-        spf_device_fqdn, ["powerState"], event_queue, mocked_logger, empty_func
+        spf_device_trl, ["powerState"], event_queue, mocked_logger, empty_func
     )
     for i in range(10):
         tdm.monitor()

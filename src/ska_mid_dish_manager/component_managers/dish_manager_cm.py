@@ -62,9 +62,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         connection_state_callback,
         quality_state_callback,
         tango_device_name: str,
-        ds_device_fqdn: str,
-        spf_device_fqdn: str,
-        spfrx_device_fqdn: str,
+        ds_device_trl: str,
+        spf_device_trl: str,
+        spfrx_device_trl: str,
         *args,
         **kwargs,
     ):
@@ -132,7 +132,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
-                spf_device_fqdn,
+                spf_device_trl,
                 logger,
                 self._state_update_lock,
                 operatingmode=SPFOperatingMode.UNKNOWN,
@@ -152,7 +152,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
             ),
             "DS": DSComponentManager(
-                ds_device_fqdn,
+                ds_device_trl,
                 logger,
                 self._state_update_lock,
                 healthstate=HealthState.UNKNOWN,
@@ -181,7 +181,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
             ),
             "SPFRX": SPFRxComponentManager(
-                spfrx_device_fqdn,
+                spfrx_device_trl,
                 logger,
                 self._state_update_lock,
                 operatingmode=SPFRxOperatingMode.UNKNOWN,

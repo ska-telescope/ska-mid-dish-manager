@@ -22,7 +22,7 @@ def test_component_manager_continues_reconnecting_when_device_is_unreachable(
 ):
     caplog.set_level(logging.DEBUG)
     _, _ = mock_tango_device_proxy_instance
-    tc_manager = TangoDeviceComponentManager("fake/fqdn/1", LOGGER, ("fake_attr",))
+    tc_manager = TangoDeviceComponentManager("fake/trl/1", LOGGER, ("fake_attr",))
     tc_manager.start_communicating()
     while "try number 3" not in caplog.text:
         pass

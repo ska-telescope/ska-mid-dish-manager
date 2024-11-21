@@ -99,7 +99,7 @@ class TangoDeviceMonitor:
     # pylint:disable=too-many-arguments
     def __init__(
         self,
-        tango_fqdn: str,
+        trl: str,
         monitored_attributes: Tuple[str, ...],
         event_queue: Queue,
         logger: logging.Logger,
@@ -107,8 +107,8 @@ class TangoDeviceMonitor:
     ) -> None:
         """Create the TangoDeviceMonitor
 
-        :param: tango_fqdn: Tango device name
-        :type tango_fqdn: str
+        :param: trl: Tango device name
+        :type trl: str
         :param monitored_attributes: Tuple of attributes to monitor
         :type monitored_attributes: Tuple[str]
         :param event_queue: Queue where events are sent
@@ -116,7 +116,7 @@ class TangoDeviceMonitor:
         :param logger: logger
         :type logger: logging.Logger
         """
-        self._tango_fqdn = tango_fqdn
+        self._trl = trl
         self._monitored_attributes = monitored_attributes
         self._event_queue = event_queue
         self._logger = logger
@@ -132,7 +132,7 @@ class TangoDeviceMonitor:
     def stop_monitoring(self) -> None:
         """Close all the monitroing threads"""
         self._subscription_tracker.clear_subscriptions()
-        self._logger.info("Stopped monitoring thread on %s", self._tango_fqdn)
+        self._logger.info("Stopped monitoring thread on %s", self._trl)
 
         # Stop any existing start monitoring thread
         if self._start_monitoring_thread.is_alive():
@@ -151,20 +151,18 @@ class TangoDeviceMonitor:
         :param exit_thread_event: Signals when to exit the thread
         :type exit_thread_event: Event
         """
-        self._logger.info("Check %s is up", self._tango_fqdn)
+        self._logger.info("Check %s is up", self._trl)
         try_count = 0
 
         while not exit_thread_event.is_set():
             try:
                 with tango.EnsureOmniThread():
-                    proxy = tango.DeviceProxy(self._tango_fqdn)
+                    proxy = tango.DeviceProxy(self._trl)
                     proxy.ping()
                 on_verified_callback(exit_thread_event)
                 return
             except tango.DevFailed:
-                self._logger.info(
-                    "Cannot connect to %s try number %s", self._tango_fqdn, try_count
-                )
+                self._logger.info("Cannot connect to %s try number %s", self._trl, try_count)
                 try_count += 1
                 exit_thread_event.wait(TEST_CONNECTION_PERIOD)
 
@@ -197,7 +195,7 @@ class TangoDeviceMonitor:
         :param exit_thread_event: Signals when to exit the thread
         :type exit_thread_event: Event
         """
-        self._logger.info("Setting up monitoring on %s", self._tango_fqdn)
+        self._logger.info("Setting up monitoring on %s", self._trl)
 
         with tango.EnsureOmniThread():
             retry_counts = {name: 0 for name in self._monitored_attributes}
@@ -210,7 +208,7 @@ class TangoDeviceMonitor:
             device_proxy = None
             while not exit_thread_event.is_set():
                 try:
-                    device_proxy = tango.DeviceProxy(self._tango_fqdn)
+                    device_proxy = tango.DeviceProxy(self._trl)
                     device_proxy.ping()
 
                     # Subscribe to all monitored attributes
@@ -228,11 +226,9 @@ class TangoDeviceMonitor:
                         subscriptions[attribute_name] = subscription_id
                         self._subscription_tracker.subscription_started(attribute_name)
 
-                        self._logger.info(
-                            "Subscribed on %s to attr %s", self._tango_fqdn, attribute_name
-                        )
+                        self._logger.info("Subscribed on %s to attr %s", self._trl, attribute_name)
 
-                    self._logger.info("Monitoring threads started for %s", self._tango_fqdn)
+                    self._logger.info("Monitoring threads started for %s", self._trl)
 
                     # Thread will wait here for events to happen
                     while not exit_thread_event.wait(SLEEP_BETWEEN_EVENTS):
@@ -240,7 +236,7 @@ class TangoDeviceMonitor:
                 except tango.DevFailed:
                     self._logger.exception(
                         (
-                            f"Tango error on {self._tango_fqdn} for attr {attribute_name}, "
+                            f"Tango error on {self._trl} for attr {attribute_name}, "
                             f"try number {retry_counts[attribute_name]}"
                         )
                     )
@@ -248,7 +244,7 @@ class TangoDeviceMonitor:
                 except Exception:  # pylint: disable=W0703
                     self._logger.exception(
                         (
-                            f"Error on {self._tango_fqdn} for attr {attribute_name}, "
+                            f"Error on {self._trl} for attr {attribute_name}, "
                             f"try number {retry_counts[attribute_name]}"
                         )
                     )
@@ -261,7 +257,7 @@ class TangoDeviceMonitor:
                             device_proxy.unsubscribe_event(subscriptions[attribute_name])
                             self._logger.info(
                                 "Unsubscribed from %s for attr %s",
-                                self._tango_fqdn,
+                                self._trl,
                                 attribute_name,
                             )
 
@@ -271,7 +267,7 @@ class TangoDeviceMonitor:
                         self._logger.exception(err)
                         self._logger.info(
                             "Could not unsubscribe from %s for attr %s",
-                            self._tango_fqdn,
+                            self._trl,
                             attribute_name,
                         )
 

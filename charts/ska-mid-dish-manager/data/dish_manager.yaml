@@ -30,24 +30,24 @@ server:
                 - name: "GroupDefinitions"
                   values:
                     - ""
-                - name: "DSDeviceFqdn"
+                - name: "DSDeviceTrl"
                   values:
-    {{ if $.Values.dishmanager.ds.fqdn }}
-                    - "{{ $.Values.dishmanager.ds.fqdn}}"
+    {{ if $.Values.dishmanager.ds.trl }}
+                    - "{{ $.Values.dishmanager.ds.trl}}"
     {{ else }}
                     - "{{ $.Values.dishmanager.ds.domain_name }}/{{ $.Values.dishmanager.ds.family_name }}/SKA{{ printf "%01s" . }}"
     {{ end }}
-                - name: "SPFDeviceFqdn"
+                - name: "SPFDeviceTrl"
                   values:
-    {{ if $.Values.dishmanager.spf.fqdn }}
-                    - "{{ $.Values.dishmanager.spf.fqdn}}"
+    {{ if $.Values.dishmanager.spf.trl }}
+                    - "{{ $.Values.dishmanager.spf.trl}}"
     {{ else }}
                     - "{{ $.Values.dishmanager.spf.domain_name }}/{{ $.Values.dishmanager.spf.family_name }}/SKA{{ printf "%01s" . }}"
     {{ end }}
-                - name: "SPFRxDeviceFqdn"
+                - name: "SPFRxDeviceTrl"
                   values:
-    {{ if $.Values.dishmanager.spfrx.fqdn }}
-                    - "{{ $.Values.dishmanager.spfrx.fqdn}}"
+    {{ if $.Values.dishmanager.spfrx.trl }}
+                    - "{{ $.Values.dishmanager.spfrx.trl}}"
     {{ else }}
                     - "{{ $.Values.dishmanager.spfrx.domain_name }}/{{ $.Values.dishmanager.spfrx.family_name }}/SKA{{ printf "%01s" . }}"
     {{ end }}

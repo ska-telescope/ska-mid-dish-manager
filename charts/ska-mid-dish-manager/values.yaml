@@ -51,23 +51,23 @@ dishmanager:
     tag: 6.0.0
     pullPolicy: IfNotPresent
 
-  # Setting fqdn assumes you are only deploying one Dish Manager
+  # Setting trl assumes you are only deploying one Dish Manager
   # with custom sub devices addresses
   # Otherwise device names will follow "mid-dish/<family_name>/ska0<N>" for N dishes
   spf:
     ignored: False
-    fqdn: ""
+    trl: ""
     domain_name: "mid-dish"
     family_name: "simulator-spfc"
 
   ds:
-    fqdn: ""
+    trl: ""
     domain_name: "mid-dish"
     family_name: "ds-manager"
 
   spfrx:
     ignored: False
-    fqdn: ""
+    trl: ""
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"
 

@@ -1,4 +1,5 @@
 """Release information for ska-mid-dish-manager Python Package."""
+
 import json
 from dataclasses import asdict
 from importlib.metadata import PackageNotFoundError, version

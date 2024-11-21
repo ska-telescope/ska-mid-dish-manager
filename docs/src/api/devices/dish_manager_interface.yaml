@@ -1849,14 +1849,14 @@
       writable: READ
       writable_attr_name: None
     properties:
-    - name: DSDeviceFqdn
+    - name: DSDeviceTrl
     - name: DishId
     - name: GroupDefinitions
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
     - name: MaxCapabilities
     - name: ReceptorNumber
-    - name: SPFDeviceFqdn
-    - name: SPFRxDeviceFqdn
+    - name: SPFDeviceTrl
+    - name: SPFRxDeviceTrl
     - name: SkaLevel
     - name: polled_cmd

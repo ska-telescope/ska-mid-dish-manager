@@ -15,16 +15,16 @@ LOGGER = logging.getLogger(__name__)
 # pylint:disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
+def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_trl):
     """Stress test component updates"""
-    device_proxy = tango.DeviceProxy(ds_device_fqdn)
+    device_proxy = tango.DeviceProxy(ds_device_trl)
     # Get into a known state
     device_proxy.Stow()
 
     state_update_lock = Lock()
 
     com_man = DSComponentManager(
-        ds_device_fqdn,
+        ds_device_trl,
         LOGGER,
         state_update_lock,
         component_state_callback=component_state_store,

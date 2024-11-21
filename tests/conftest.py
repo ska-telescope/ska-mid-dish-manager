@@ -47,8 +47,8 @@ def mock_tango_device_proxy_instance(mocker, open_port):
     _DeviceProxy = tango.DeviceProxy
     mocker.patch(
         "tango.DeviceProxy",
-        wraps=lambda fqdn, *args, **kwargs: _DeviceProxy(
-            f"tango://{HOST}:{PORT}/{fqdn}#dbase=no",
+        wraps=lambda trl, *args, **kwargs: _DeviceProxy(
+            f"tango://{HOST}:{PORT}/{trl}#dbase=no",
             *args,
             **kwargs,
         ),
@@ -75,43 +75,43 @@ def component_state_store():
 
 
 @pytest.fixture
-def dish_manager_device_fqdn():
+def dish_manager_device_trl():
     return DEFAULT_DISH_MANAGER_TRL
 
 
 @pytest.fixture
-def ds_device_fqdn():
+def ds_device_trl():
     return DEFAULT_DS_MANAGER_TRL
 
 
 @pytest.fixture
-def spf_device_fqdn():
+def spf_device_trl():
     return DEFAULT_SPFC_TRL
 
 
 @pytest.fixture
-def spfrx_device_fqdn():
+def spfrx_device_trl():
     return DEFAULT_SPFRX_TRL
 
 
 @pytest.fixture
-def dish_manager_proxy(dish_manager_device_fqdn):
-    return tango.DeviceProxy(dish_manager_device_fqdn)
+def dish_manager_proxy(dish_manager_device_trl):
+    return tango.DeviceProxy(dish_manager_device_trl)
 
 
 @pytest.fixture
-def ds_device_proxy(ds_device_fqdn):
-    return tango.DeviceProxy(ds_device_fqdn)
+def ds_device_proxy(ds_device_trl):
+    return tango.DeviceProxy(ds_device_trl)
 
 
 @pytest.fixture
-def spf_device_proxy(spf_device_fqdn):
-    return tango.DeviceProxy(spf_device_fqdn)
+def spf_device_proxy(spf_device_trl):
+    return tango.DeviceProxy(spf_device_trl)
 
 
 @pytest.fixture
-def spfrx_device_proxy(spfrx_device_fqdn):
-    return tango.DeviceProxy(spfrx_device_fqdn)
+def spfrx_device_proxy(spfrx_device_trl):
+    return tango.DeviceProxy(spfrx_device_trl)
 
 
 @dataclass

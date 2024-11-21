@@ -16,12 +16,12 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_tango_device_component_manager_state(
-    monitor_tango_servers, component_state_store, ds_device_fqdn
+    monitor_tango_servers, component_state_store, ds_device_trl
 ):
     """Test commands and monitoring"""
     mock_callable = MockCallable(timeout=5)
 
-    device_proxy = tango.DeviceProxy(ds_device_fqdn)
+    device_proxy = tango.DeviceProxy(ds_device_trl)
 
     # testMode is not polled
     device_proxy.poll_attribute("testMode", 100)
@@ -29,7 +29,7 @@ def test_tango_device_component_manager_state(
     assert device_proxy.ping()
 
     com_man = TangoDeviceComponentManager(
-        ds_device_fqdn,
+        ds_device_trl,
         LOGGER,
         ("operatingMode", "healthState", "testmode"),
         component_state_callback=component_state_store,
@@ -55,12 +55,12 @@ def test_tango_device_component_manager_state(
 
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_stress_component_monitor(monitor_tango_servers, component_state_store, ds_device_fqdn):
+def test_stress_component_monitor(monitor_tango_servers, component_state_store, ds_device_trl):
     """Stress test component updates"""
     mock_callable = MockCallable(timeout=5)
 
     com_man = TangoDeviceComponentManager(
-        ds_device_fqdn,
+        ds_device_trl,
         LOGGER,
         ("testMode",),
         component_state_callback=component_state_store,
@@ -71,7 +71,7 @@ def test_stress_component_monitor(monitor_tango_servers, component_state_store, 
 
     mock_callable.assert_call(CommunicationStatus.ESTABLISHED, lookahead=3)
 
-    device_proxy = tango.DeviceProxy(ds_device_fqdn)
+    device_proxy = tango.DeviceProxy(ds_device_trl)
     # testMode is not polled
     device_proxy.poll_attribute("testMode", 100)
 

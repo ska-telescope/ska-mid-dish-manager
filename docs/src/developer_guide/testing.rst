@@ -77,7 +77,7 @@ This can be run in an isolated environment (virtual environment, docker containe
         `deploy DSManager in ska-mid-dish-ds-manager/src/ska_mid_dish_ds_manager/`
         $ python DSManager.py SKA001 -v4 -nodb -host 127.0.0.1 -port 12345 -dlist mid-dish/ds-manager/SKA001
 
-        `deploy DishManager (this will require updating fqdn property values to point to addresses for the sub devices)`
+        `deploy DishManager (this will require updating TRL property values to point to addresses for the sub devices)`
         `keep the simulators and DSManager running while continuously re-running DishManager to test new changes`
         $ python DishManagerDS.py SKA001 -v4 -nodb -host 127.0.0.1 -port 23456 -dlist mid-dish/dish-manager/SKA001
 
