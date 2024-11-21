@@ -9,12 +9,12 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
+from ska_tango_base.base import check_communicating
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
-from ska_mid_dish_manager.component_managers.tango_device_cm import LostConnection
 from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
@@ -440,8 +440,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
             # update the bandInFocus of SPF before configuredBand
             spf_component_manager = self.sub_component_managers["SPF"]
-            spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
-            spf_component_state["bandinfocus"] = band_in_focus
+            try:
+                spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
+            except (ConnectionError, tango.DevFailed):
+                # this will impact configuredBand calculation on dish manager
+                self.logger.warning(
+                    "Encountered an error writing bandInFocus %s on SPF", band_in_focus
+                )
+            else:
+                spf_component_state["bandinfocus"] = band_in_focus
 
         # spfrx attenuation
         if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
@@ -641,7 +648,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
             ds_com_man = self.sub_component_managers["DS"]
             ds_com_man.write_attribute_value(attr, values)
-        except tango.DevFailed:
+        except (ConnectionError, tango.DevFailed):
             self.logger.exception("Failed to write to %s on DSManager", attr)
             raise
         except ValueError:
@@ -678,12 +685,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         result_message = ""
         try:
             [[result_code], [result_message]] = ds_cm.execute_command("TrackLoadTable", float_list)
-        except (LostConnection, tango.DevFailed) as err:
+        except (ConnectionError, tango.DevFailed) as err:
             self.logger.exception("TrackLoadTable on DSManager failed")
             result_code = ResultCode.FAILED
             result_message = str(err)
         return (result_code, result_message)
 
+    @check_communicating
     def set_standby_lp_mode(
         self,
         task_callback: Optional[Callable] = None,
@@ -704,6 +712,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    @check_communicating
     def set_standby_fp_mode(
         self,
         task_callback: Optional[Callable] = None,
@@ -724,6 +733,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    @check_communicating
     def set_operate_mode(
         self,
         task_callback: Optional[Callable] = None,
@@ -744,6 +754,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    @check_communicating
     def track_cmd(
         self,
         task_callback: Optional[Callable] = None,
@@ -773,6 +784,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    @check_communicating
     def track_stop_cmd(
         self,
         task_callback: Optional[Callable] = None,
@@ -794,6 +806,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    @check_communicating
     def configure_band_cmd(
         self,
         band_number,
@@ -828,7 +841,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_cm = self.sub_component_managers["DS"]
         try:
             ds_cm.execute_command("Stow", None)
-        except (LostConnection, tango.DevFailed) as err:
+        except (ConnectionError, tango.DevFailed) as err:
             task_callback(status=TaskStatus.FAILED, exception=err)
             self.logger.exception("DishManager has failed to execute Stow DSManager")
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
@@ -840,6 +853,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
 
+    @check_communicating
     def slew(
         self,
         values: list[float],
@@ -921,6 +935,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             result=(ResultCode.OK, "EndScan completed"),
         )
 
+    @check_communicating
     def track_load_static_off(
         self,
         values: list[float],
@@ -957,7 +972,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "SetKValue",
                 result,
             )
-        except (LostConnection, tango.DevFailed) as err:
+        except (ConnectionError, tango.DevFailed) as err:
             self.logger.exception("SetKvalue on SPFRx failed")
             return (ResultCode.FAILED, err)
         return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
@@ -1107,7 +1122,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"Successfully wrote the following values {coefficients} "
                 f"to band {band_value} on DS"
             )
-        except (LostConnection, tango.DevFailed) as err:
+        except (ConnectionError, tango.DevFailed) as err:
             self.logger.exception("%s. The error response is: %s", (ResultCode.FAILED, err))
             result_code = ResultCode.FAILED
             message = str(err)
@@ -1123,7 +1138,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         try:
             ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
             self.logger.debug("Successfully updated trackInterpolationMode on DSManager.")
-        except LostConnection:
+        except ConnectionError:
             self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
         return (ResultCode.OK, "Successfully updated trackInterpolationMode on DSManager")
@@ -1137,7 +1152,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         try:
             spfrx_cm.write_attribute_value("noiseDiodeMode", noise_diode_mode)
             self.logger.debug("Successfully updated noiseDiodeMode on SPFRx.")
-        except (LostConnection, tango.DevFailed):
+        except (ConnectionError, tango.DevFailed):
             self.logger.error("Failed to update noiseDiodeMode on SPFRx.")
             raise
         return (ResultCode.OK, "Successfully updated noiseDiodeMode on SPFRx")
@@ -1161,7 +1176,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             try:
                 spfrx_cm.write_attribute_value("periodicNoiseDiodePars", values)
                 self.logger.debug("Successfully updated periodicNoiseDiodePars on SPFRx.")
-            except (LostConnection, tango.DevFailed):
+            except (ConnectionError, tango.DevFailed):
                 self.logger.error("Failed to update periodicNoiseDiodePars on SPFRx.")
                 raise
         else:
@@ -1192,7 +1207,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             try:
                 spfrx_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
                 self.logger.debug("Successfully updated pseudoRandomNoiseDiodePars on SPFRx.")
-            except (LostConnection, tango.DevFailed):
+            except (ConnectionError, tango.DevFailed):
                 self.logger.error("Failed to update pseudoRandomNoiseDiodePars on SPFRx.")
                 raise
         else:
@@ -1328,7 +1343,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ds_cm.write_attribute_value("dscPowerLimitKw", power_limit)
             self.logger.debug("Successfully updated dscPowerLimitKw on DS.")
             self._update_component_state(dscpowerlimitkw=power_limit)
-        except (LostConnection, tango.DevFailed):
+        except (ConnectionError, tango.DevFailed):
             self.logger.error("Failed to update dscPowerLimitKw on DS.")
             raise
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
