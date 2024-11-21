@@ -157,7 +157,7 @@ class DishManager(SKAController):
             self._update_version_of_subdevice_on_success,
             self._attr_quality_state_changed,
             self.get_name(),
-            self.DSDeviceFqdn,  # to be changed to TRL?
+            self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
             component_state_callback=self._component_state_changed,
