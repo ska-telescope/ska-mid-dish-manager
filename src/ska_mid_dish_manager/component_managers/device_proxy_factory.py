@@ -25,7 +25,7 @@ def retry_connection(func: Callable) -> Any:
     :return: the wrapped function
     """
 
-    # pylint: disable=protected-access
+    # pylint: disable=protected-access, line-too-long
     @wraps(func)
     def _wrapper(device_proxy_manager: Any, *args: Any, **kwargs: Any) -> Any:
         """
@@ -39,10 +39,18 @@ def retry_connection(func: Callable) -> Any:
                 RunTimeError: if stop communication is invoked
         :return: whatever the wrapped function returns
         """
+        # threshold after which retry ceases
+        max_retries = 5
+
+        # iniital wait between retry attempts.
+        # requests to DeviceProxy.reconnect should be >= 1s
+        # see https://gitlab.com/tango-controls/cppTango/-/blob/c1d7fabad06133ff1548674254f6bd6a931f9fda/src/client/devapi_base.cpp#L732  # noqa: E501
+        retry_time = 1
+
+        # retry_time factor multiplier
+        back_off = 1.5
+
         try_count = 1
-        max_retries = 5  # threshold after which retry ceases
-        retry_time = 1  # iniital wait between retry attempts
-        back_off = 1.5  # retry_time factor multiplier
         while max_retries > 1 and not device_proxy_manager._event_signal.is_set():
             kwargs["retry_time"] = retry_time
             kwargs["try_count"] = try_count
@@ -57,7 +65,7 @@ def retry_connection(func: Callable) -> Any:
         # handle case where stop monitoring is triggered during
         # proxy creation or attempt to reconnect
         if device_proxy_manager._event_signal.is_set():
-            raise RuntimeError("something something")
+            raise RuntimeError("Connection interrupted")
 
         # let the final retry attempt raise an error if an exception occurs
         kwargs["retry_time"] = retry_time
@@ -130,7 +138,7 @@ class DeviceProxyManager:
         self,
         tango_device_proxy: tango.DeviceProxy,
         try_count: int = 1,
-        retry_time: int = 1,  # connection request should be <= 1000ms
+        retry_time: int = 1,
     ) -> None:
         """
         Wait until it the client has established a connection with

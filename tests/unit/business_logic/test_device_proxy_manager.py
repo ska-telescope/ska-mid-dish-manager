@@ -56,6 +56,21 @@ class TestDeviceProxyManager:
                 f"failed to connect to tango device a/b/c, retrying in {retry_time}s" in logs
             )
 
+    def test_device_proxy_creation_retry_is_stopped_by_event_signal(self, patch_dp, caplog):
+        """Test dp creation and reconnection retry can be cancelled"""
+        caplog.set_level(logging.WARNING)
+
+        # configure a mock device proxy
+        patch_dp.side_effect = tango.DevFailed("FAIL")
+
+        trl = "a/device/address"
+        self.signal.set()
+        dev_proxy = self.dev_factory(trl)
+
+        assert dev_proxy is None
+        logs = [record.message for record in caplog.records]
+        assert f"Failed creating DeviceProxy to device at {trl}" in logs
+
     def test_device_proxy_is_verified_as_alive_before_returned(self, patch_dp):
         """Test dp is tested before returned to caller."""
         # configure a mock device proxy
