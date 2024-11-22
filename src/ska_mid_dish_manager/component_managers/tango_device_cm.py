@@ -38,9 +38,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._events_queue: Queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
+        self._active_attr_event_subscriptions: set[str] = set()
         self._quality_monitored_attributes = quality_monitored_attributes
         self.logger = logger
         self._dp_factory_signal: Event = Event()
+        self._event_consumer_thread: Optional[Thread] = None
+        self._event_consumer_abort_event: Optional[Event] = None
 
         self._device_proxy_factory = DeviceProxyManager(self.logger, self._dp_factory_signal)
         self._tango_device_monitor = TangoDeviceMonitor(
@@ -52,9 +55,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._update_communication_state,
         )
 
-        self._event_consumer_thread: Optional[Thread] = None
-        self._event_consumer_abort_event: Optional[Event] = None
-
         super().__init__(
             logger,
             *args,
@@ -63,11 +63,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
-        self._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
 
-        # Default to NOT_ESTABLISHED
-        if self._communication_state_callback:
-            self._communication_state_callback()  # type: ignore
+    def sync_communication_to_valid_event(self) -> None:
+        """Sync communication state with valid events from monitored attributes"""
+        # add some logging somewhere to show that this is a better approach
+        all_monitored_events_valid = (
+            set(self._monitored_attributes) == self._active_attr_event_subscriptions
+        )
+        if all_monitored_events_valid:
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
     def clear_monitored_attributes(self) -> None:
         """
@@ -90,7 +94,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._component_state[monitored_attribute] = 0
 
     def update_state_from_monitored_attributes(self) -> None:
-        """Update the component state by reading the monitored attributes
+        """
+        Update the component state by reading the monitored attributes
 
         When an attribute on the device does not match the component_state
         it won't update unless it changes value (changes are updated via
@@ -156,6 +161,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error updating component state")
 
+            # if the error event stops does tango emit a valid event for all
+            # the error events we got for the various attribute subscription.
+            # update the communication state in case the error event callback flipped it
+            self._active_attr_event_subscriptions.add(attr_name)
+            self.sync_communication_to_valid_event()
+
     def _stop_event_consumer_thread(self) -> None:
         """Stop the event consumer thread if it is alive."""
         if (
@@ -207,42 +218,38 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 pass
 
     def _event_consumer_cb(self, event_data: tango.EventData) -> None:
-        """Just log the error event
+        """
+        Handle error events from attr subscription
 
         :param event_data: data representing tango event
         :type event_data: tango.EventData
         """
         attr_name = event_data.attr_name
-        received_timestamp = event_data.reception_date.totime()
-        event_type = event_data.event
-        value = event_data.attr_value
         errors = event_data.errors
-        # Events with errors do not send the attribute value
-        # so regard its reading as invalid.
-        quality = tango.AttrQuality.ATTR_INVALID
 
         self.logger.debug(
             (
-                "Error event was emitted by device [%s] with the following details: "
-                "attr_name: %s"
-                "received_timestamp: %s"
-                "event_type: %s"
-                "value: %s"
-                "quality: %s"
+                "Error event was emitted by device %s with the following details: "
+                "attr_name: %s, "
                 "errors: %s"
             ),
             self._tango_device_fqdn,
             attr_name,
-            received_timestamp,
-            event_type,
-            value,
-            quality,
             errors,
         )
+        try:
+            self._active_attr_event_subscriptions.remove(attr_name)
+        except KeyError:
+            pass
 
-        if self.communication_state == CommunicationStatus.ESTABLISHED:
-            self.logger.info("Reconnecting to %s", self._tango_device_fqdn)
-            self._tango_device_monitor.monitor()
+        # this is a hack at the moment to get comms to stay as established
+        # needs a broader discussion on what to do about this especially
+        # since this affects e.g. write_attribute_value function
+        error_reason = errors[-1].reason
+        if error_reason in ["API_EventTimeout", "API_MissedEvents"]:
+            return
+
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     def run_device_command(
         self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore
@@ -377,6 +384,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         """Establish communication with the device"""
         self.logger.info(f"Establish communication with {self._tango_device_fqdn}")
         self._dp_factory_signal.clear()
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._tango_device_monitor.monitor()
         self._start_event_consumer_thread()
 
@@ -386,3 +394,4 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._dp_factory_signal.set()
         self._tango_device_monitor.stop_monitoring()
         self._stop_event_consumer_thread()
+        self._update_communication_state(CommunicationStatus.DISABLED)

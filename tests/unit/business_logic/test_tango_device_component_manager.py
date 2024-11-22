@@ -103,24 +103,45 @@ def test_device_goes_away(caplog):
     """
     Start up the component_manager.
     Signal a lost connection via an event
-    Check for reconnect
+    Check for updated communication state
     """
     caplog.set_level(logging.DEBUG)
 
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
         LOGGER,
-        ("some_,attr",),
+        ("some_attr", "some_other_attr"),
     )
 
     tc_manager.start_communicating()
+    # wait a bit for the state to change
+    time.sleep(0.5)
+    assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
-    # TODO update test after error event callback in tango device cm is updated
-    # Set up mock error event
-    mock_error = mock.MagicMock()
+    # Set up an error mock event
+    mock_error = mock.MagicMock(name="mock_error")
     mock_error.err = True
-
-    # Trigger the failure
+    mock_error.name = "some_attr"
+    # Trigger a failure event
     tc_manager._events_queue.put(mock_error)
-    # clean up afterwards
+    # wait a bit for the state to change
+    time.sleep(0.5)
+    assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
+
+    # Set up a valid mock event
+    mock_attr_value = mock.MagicMock(name="mock_attr_value")
+    mock_attr_value.name = "some_attr"
+    mock_attr_value.quality = tango.AttrQuality.ATTR_VALID
+    mock_data = mock.MagicMock(name="mock_data")
+    mock_data.attr_value = mock_attr_value
+    mock_data.err = False
+    # trigger a valid event
+    tc_manager._events_queue.put(mock_data)
+
+    # wait a bit for the state to change
+    time.sleep(0.5)
+    # TODO undo comment after subscription tracker is updated
+    # assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
+
+    # clean up afterwards (THIS SHOULD BE A FINALIZER ELSE THINGS HANG)
     tc_manager.stop_communicating()
