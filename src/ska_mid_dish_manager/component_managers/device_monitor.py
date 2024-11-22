@@ -11,7 +11,8 @@ from typing import Any, Callable, Tuple
 import tango
 from ska_control_model import CommunicationStatus
 
-TEST_CONNECTION_PERIOD = 2
+from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
+
 SLEEP_BETWEEN_EVENTS = 0.5
 
 
@@ -100,6 +101,7 @@ class TangoDeviceMonitor:
     def __init__(
         self,
         tango_fqdn: str,
+        device_proxy_factory: DeviceProxyManager,
         monitored_attributes: Tuple[str, ...],
         event_queue: Queue,
         logger: logging.Logger,
@@ -109,6 +111,8 @@ class TangoDeviceMonitor:
 
         :param: tango_fqdn: Tango device name
         :type tango_fqdn: str
+        :param device_proxy_factory: A factory which creates and manages tango device proxies
+        :type device_proxy_factory: DeviceProxyManager
         :param monitored_attributes: Tuple of attributes to monitor
         :type monitored_attributes: Tuple[str]
         :param event_queue: Queue where events are sent
@@ -117,6 +121,7 @@ class TangoDeviceMonitor:
         :type logger: logging.Logger
         """
         self._tango_fqdn = tango_fqdn
+        self._tango_device_proxy = device_proxy_factory
         self._monitored_attributes = monitored_attributes
         self._event_queue = event_queue
         self._logger = logger
@@ -152,21 +157,12 @@ class TangoDeviceMonitor:
         :type exit_thread_event: Event
         """
         self._logger.info("Check %s is up", self._tango_fqdn)
-        try_count = 0
 
         while not exit_thread_event.is_set():
-            try:
-                with tango.EnsureOmniThread():
-                    proxy = tango.DeviceProxy(self._tango_fqdn)
-                    proxy.ping()
+            dev_proxy = self._tango_device_proxy(self._tango_fqdn)
+            if dev_proxy:
                 on_verified_callback(exit_thread_event)
                 return
-            except tango.DevFailed:
-                self._logger.info(
-                    "Cannot connect to %s try number %s", self._tango_fqdn, try_count
-                )
-                try_count += 1
-                exit_thread_event.wait(TEST_CONNECTION_PERIOD)
 
     def monitor(self) -> None:
         """Kick off device monitoring
@@ -207,12 +203,9 @@ class TangoDeviceMonitor:
                 events_queue.put(tango_event)
 
             # set up all subscriptions
-            device_proxy = None
+            device_proxy = self._tango_device_proxy(self._tango_fqdn)
             while not exit_thread_event.is_set():
                 try:
-                    device_proxy = tango.DeviceProxy(self._tango_fqdn)
-                    device_proxy.ping()
-
                     # Subscribe to all monitored attributes
                     for attribute_name in self._monitored_attributes:
                         if exit_thread_event.is_set():
@@ -279,15 +272,19 @@ class TangoDeviceMonitor:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
+    signal = Event()
+    basic_logger = logging.getLogger(__name__)
+
     def empty_func(*args: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
         """An empty function"""
         pass  # pylint:disable=unnecessary-pass
 
     tdm = TangoDeviceMonitor(
         "tango://localhost:45678/mid-dish/simulator-spf/ska001#dbase=no",
+        DeviceProxyManager(basic_logger, signal),
         ("powerState",),
         Queue(),
-        logging.getLogger(__name__),
+        basic_logger,
         empty_func,
     )
     tdm.monitor()

@@ -13,6 +13,7 @@ from ska_tango_base.base import check_communicating
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
+from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 
 
 # pylint: disable=abstract-method, too-many-instance-attributes, no-member, too-many-arguments
@@ -39,9 +40,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._monitored_attributes = monitored_attributes
         self._quality_monitored_attributes = quality_monitored_attributes
         self.logger = logger
+        self._dp_factory_signal: Event = Event()
 
+        self._device_proxy_factory = DeviceProxyManager(self.logger, self._dp_factory_signal)
         self._tango_device_monitor = TangoDeviceMonitor(
             self._tango_device_fqdn,
+            self._device_proxy_factory,
             self._monitored_attributes,
             self._events_queue,
             logger,
@@ -95,17 +99,27 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         This is a convenience method that can be called to sync up the
         monitored attributes on the device and the component state.
         """
+        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
-            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
             monitored_attribute_values = {}
             for monitored_attribute in self._monitored_attributes:
                 monitored_attribute = monitored_attribute.lower()
 
+                # TODO the line below should not be here. all monitored attributes
+                # should be passed to the component manager when it's instantiated
                 # Add it to component state if not there
                 if monitored_attribute not in self._component_state:
                     self._component_state[monitored_attribute] = None
 
-                value = device_proxy.read_attribute(monitored_attribute).value
+                try:
+                    value = device_proxy.read_attribute(monitored_attribute).value
+                except tango.DevFailed:
+                    self.logger.exception(
+                        "Encountered an error retrieving the current value of %s from %s",
+                        monitored_attribute,
+                        self._tango_device_fqdn,
+                    )
+                    continue
                 if isinstance(value, np.ndarray):
                     value = list(value)
                 monitored_attribute_values[monitored_attribute] = value
@@ -281,9 +295,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._tango_device_fqdn,
             command_arg,
         )
+        result = None
+        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
-            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = None
             try:
                 result = device_proxy.command_inout(command_name, command_arg)
             except tango.DevFailed:
@@ -310,9 +324,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attribute_name,
             self._tango_device_fqdn,
         )
+        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
-            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = getattr(device_proxy, attribute_name)
+            try:
+                result = device_proxy.read_attribute(attribute_name)
+            except tango.DevFailed:
+                self.logger.exception(
+                    "Could not read attribute [%s] on [%s]",
+                    attribute_name,
+                    self._tango_device_fqdn,
+                )
+                raise
             self.logger.debug(
                 "Result of reading [%s] on [%s] is [%s]",
                 attribute_name,
@@ -329,11 +351,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attribute_name,
             self._tango_device_fqdn,
         )
-
-        # Note: If this function is called at a high rate then re-creating the device proxy
-        # here will be inefficient. Consider moving the declaration out of this function.
+        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
-            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
             result = None
             try:
                 result = device_proxy.write_attribute(attribute_name, attribute_value)
@@ -356,13 +375,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @typing.no_type_check
     def start_communicating(self) -> None:
         """Establish communication with the device"""
-        # pylint: disable=no-member
-        self.logger.info("start_communicating")
+        self.logger.info(f"Establish communication with {self._tango_device_fqdn}")
+        self._dp_factory_signal.clear()
         self._tango_device_monitor.monitor()
         self._start_event_consumer_thread()
 
     def stop_communicating(self) -> None:
         """Stop communication with the device"""
-        # pylint: disable=no-member
+        self.logger.info(f"Stop communication with {self._tango_device_fqdn}")
+        self._dp_factory_signal.set()
         self._tango_device_monitor.stop_monitoring()
         self._stop_event_consumer_thread()
