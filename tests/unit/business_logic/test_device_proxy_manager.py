@@ -60,9 +60,6 @@ class TestDeviceProxyManager:
         """Test dp creation and reconnection retry can be cancelled"""
         caplog.set_level(logging.WARNING)
 
-        # configure a mock device proxy
-        patch_dp.side_effect = tango.DevFailed("FAIL")
-
         trl = "a/device/address"
         self.signal.set()
         dev_proxy = self.dev_factory(trl)
