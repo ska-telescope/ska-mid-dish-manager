@@ -31,7 +31,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         quality_monitored_attributes: Tuple[str, ...] = (),
         **kwargs: Any,
     ):
-        self._component_state: dict = {}  # type: ignore
         self._communication_state_callback = communication_state_callback
         self._component_state_callback = component_state_callback
         self._quality_state_callback = quality_state_callback
@@ -39,8 +38,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
         self._quality_monitored_attributes = quality_monitored_attributes
-        if not logger:
-            logger = logging.getLogger()
         self.logger = logger
 
         self._tango_device_monitor = TangoDeviceMonitor(

@@ -48,4 +48,4 @@ def test_end_scan_handler(
         assert kwargs == expected_call_kwargs[count]
 
     # check that the scan id is cleared
-    component_manager.component_state["scanid"] == ""
+    assert component_manager.component_state["scanid"] == ""
