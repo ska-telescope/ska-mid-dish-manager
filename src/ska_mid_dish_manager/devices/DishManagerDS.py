@@ -239,51 +239,45 @@ class DishManager(SKAController):
             ApplyPointingModelCommand(self.component_manager, self.logger),
         )
 
-    def _connection_state_update(self, device: Device):
+    def _connection_state_update(self, device: Device, communication_state: CommunicationStatus):
         if not hasattr(self, "component_manager"):
             self.logger.warning("Init not completed, but communication state is being updated")
             return
 
-        self._update_connection_state_attrs(device)
-        self._update_version_of_subdevice_on_success(device)
+        self._update_connection_state_attrs(device, communication_state)
+        self._update_version_of_subdevice_on_success(device, communication_state)
 
-    def _update_connection_state_attrs(self, device: Device):
+    def _update_connection_state_attrs(self, device: Device, communication_state: CommunicationStatus):
         """
         Push change events on connection state attributes for
         subservient devices communication state changes.
         """
-        if device in self._device_to_comm_attr_map:
-            comms_state = self.component_manager.sub_component_managers[
-                device.value
-            ].communication_state
+        attribute = self._device_to_comm_attr_map[device]
+        if attribute is not None:
             self.push_change_event(
-                self._device_to_comm_attr_map[device],
-                comms_state,
+                attribute,
+                communication_state,
             )
             self.push_archive_event(
-                self._device_to_comm_attr_map[device],
-                comms_state,
+                attribute,
+                communication_state,
             )
 
-    def _update_version_of_subdevice_on_success(self, device: Device):
+    def _update_version_of_subdevice_on_success(self, device: Device, communication_state: CommunicationStatus):
         """Update the version information of subdevice if connection is successful."""
-        if device in self._device_to_comm_attr_map:
-            comms_state = self.component_manager.sub_component_managers[
-                device.value
-            ].communication_state
-            if comms_state == CommunicationStatus.ESTABLISHED:
-                cm = self.component_manager.sub_component_managers[device.value]
-                try:
-                    if device == Device.DS:
-                        build_state = cm.read_attribute_value("buildState")
-                    elif device in [Device.SPF, Device.SPFRX]:
-                        build_state = cm.read_attribute_value("swVersions")
+        if communication_state == CommunicationStatus.ESTABLISHED:
+            cm = self.component_manager.sub_component_managers[device.value]
+            try:
+                if device == Device.DS:
+                    build_state = cm.read_attribute_value("buildState")
+                elif device in [Device.SPF, Device.SPFRX]:
+                    build_state = cm.read_attribute_value("swVersions")
 
-                    self._build_state = self._release_info.update_build_state(device, build_state)
-                except (tango.DevFailed, AttributeError):
-                    self.logger.warning(
-                        "Failed to update build state information for [%s] device.", device
-                    )
+                self._build_state = self._release_info.update_build_state(device, build_state)
+            except (tango.DevFailed, AttributeError):
+                self.logger.warning(
+                    "Failed to update build state information for [%s] device.", device
+                )
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
         # Do not modify or push quality changes before initialization complete
