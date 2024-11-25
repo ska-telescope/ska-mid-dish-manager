@@ -207,7 +207,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
             ),
         }
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
         self._command_map = CommandMap(
             self,

@@ -22,11 +22,11 @@ def test_log_command_inout(patched_dev_factory, caplog: pytest.LogCaptureFixture
     mock_device_proxy = mock.MagicMock(name="DP")
     mock_device_proxy.command_inout.side_effect = tango.DevFailed("Failure Message")
 
-    class _DummyFactory:
+    class DummyFactory:
         def __call__(self, *args, **kwargs):
             return mock_device_proxy
 
-    patched_dev_factory.return_value = _DummyFactory()
+    patched_dev_factory.return_value = DummyFactory()
 
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",

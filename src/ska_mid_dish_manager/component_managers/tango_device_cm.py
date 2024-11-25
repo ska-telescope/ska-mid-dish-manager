@@ -52,7 +52,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._monitored_attributes,
             self._events_queue,
             logger,
-            self._update_communication_state,
+            self._sync_communication_to_subscription,
         )
 
         super().__init__(
@@ -63,6 +63,21 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
+    def _sync_communication_to_subscription(self, subscribed_attrs: list[str]) -> None:
+        """
+        Reflect status of monitored attribute subscription on communication state
+
+        :param subscribed_attrs: the attributes with successful change event subscription
+        :type subscribed_attrs: list
+        """
+        # save a copy of the subscribed attributes. this will be
+        # evaluated by the function processing the valid events
+        self._active_attr_event_subscriptions = set(subscribed_attrs)
+        all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
+        if all_subscribed:
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
+        else:
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     def sync_communication_to_valid_event(self) -> None:
         """Sync communication state with valid events from monitored attributes"""
@@ -195,9 +210,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._event_consumer_cb,
             ],
         )
+
+        self._event_consumer_thread.name = f"{self._tango_device_fqdn}_event_consumer_thread"
         self._event_consumer_thread.start()
 
-    # pylint: disable=too-many-arguments
     @classmethod
     def _event_consumer(
         cls,

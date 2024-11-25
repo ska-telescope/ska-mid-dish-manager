@@ -140,8 +140,7 @@ def test_device_goes_away(caplog):
 
     # wait a bit for the state to change
     time.sleep(0.5)
-    # TODO undo comment after subscription tracker is updated
-    # assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
+    assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # clean up afterwards (THIS SHOULD BE A FINALIZER ELSE THINGS HANG)
     tc_manager.stop_communicating()
