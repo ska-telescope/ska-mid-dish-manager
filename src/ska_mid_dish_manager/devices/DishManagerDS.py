@@ -239,30 +239,10 @@ class DishManager(SKAController):
         )
 
     def _connection_state_update(self, device: Device, communication_state: CommunicationStatus):
-        if not hasattr(self, "component_manager"):
-            self.logger.warning("Init not completed, but communication state is being updated")
-            return
+        pass
 
-        self._update_connection_state_attrs(device, communication_state)
-        # self._update_version_of_subdevice_on_success(device, communication_state)
-
-    def _update_connection_state_attrs(
-        self, device: Device, communication_state: CommunicationStatus
-    ):
-        """
-        Push change events on connection state attributes for
-        subservient devices communication state changes.
-        """
-        connection_attribute = self._device_to_comm_attr_map[device.value]
-        if connection_attribute is not None:
-            self.push_change_event(
-                connection_attribute,
-                communication_state,
-            )
-            self.push_archive_event(
-                connection_attribute,
-                communication_state,
-            )
+    #     self._update_connection_state_attrs(device, communication_state)
+    #     # self._update_version_of_subdevice_on_success(device, communication_state)
 
     def _update_version_of_subdevice_on_success(
         self, device: Device, communication_state: CommunicationStatus
@@ -354,11 +334,6 @@ class DishManager(SKAController):
             device._track_table_load_mode = TrackTableLoadMode.APPEND
             device._last_commanded_mode = ("0.0", "")
             device._last_commanded_pointing_params = ""
-            device._device_to_comm_attr_map = {
-                Device.DS: "dsConnectionState",
-                Device.SPF: "spfConnectionState",
-                Device.SPFRX: "spfrxConnectionState",
-            }
 
             device.op_state_model.perform_action("component_standby")
 

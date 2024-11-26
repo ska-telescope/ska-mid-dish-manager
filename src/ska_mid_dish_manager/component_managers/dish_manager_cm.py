@@ -248,7 +248,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return active_component_managers
 
-    # pylint: disable=unused-argument
+    def _update_connection_state_attribute(
+        self, device: str, connection_state: CommunicationStatus
+    ):
+        state_name = f"{device.lower()}connectionstate"
+        self._update_component_state(**{state_name: connection_state})
+
     def _sub_device_communication_state_changed(
         self, device: Device, communication_state: CommunicationStatus
     ):
@@ -263,14 +268,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         the subservient devices. DishManager reflects this in its connection
         status attributes.
         """
-        # Update the DM component communication states
         self.logger.debug(
             "Communication state changed on %s device: %s.", device.name, communication_state
         )
 
-        # report the communication state of the sub device on the connectionState
-        # attribute and update the release version of the respective sub device
-        self._connection_state_callback(device, communication_state)
+        # report the communication state of the sub device on the connectionState attribute
+        self._update_connection_state_attribute(device.name, communication_state)
 
         active_sub_component_managers = self.get_active_sub_component_managers()
         sub_devices_communication_states = [

@@ -81,7 +81,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
     def sync_communication_to_valid_event(self) -> None:
         """Sync communication state with valid events from monitored attributes"""
-        # add some logging somewhere to show that this is a better approach
         all_monitored_events_valid = (
             set(self._monitored_attributes) == self._active_attr_event_subscriptions
         )
