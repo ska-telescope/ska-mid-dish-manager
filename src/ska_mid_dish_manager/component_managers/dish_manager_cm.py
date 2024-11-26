@@ -280,6 +280,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             sub_component_manager.communication_state
             for sub_component_manager in active_sub_component_managers.values()
         ]
+
         if all(
             communication_state == CommunicationStatus.ESTABLISHED
             for communication_state in sub_devices_communication_states

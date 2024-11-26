@@ -48,6 +48,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackProgramMode,
     TrackTableLoadMode,
 )
+from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
 from ska_mid_dish_manager.utils.decorators import record_mode_change_request
 from ska_mid_dish_manager.utils.track_table_input_validation import (
@@ -142,14 +143,6 @@ class DishManager(SKAController):
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
         """
-
-        # self._release_info = ReleaseInfo(
-        #     ds_manager_address=self.DSDeviceFqdn,
-        #     spfc_address=self.SPFDeviceFqdn,
-        #     spfrx_address=self.SPFRxDeviceFqdn,
-        # )
-        # self._build_state = self._release_info.get_build_state()
-
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
@@ -159,7 +152,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
-            communication_state_callback=None,
+            communication_state_callback=self._update_version_of_subdevice_on_success,
             component_state_callback=self._component_state_changed,
         )
 
@@ -241,25 +234,22 @@ class DishManager(SKAController):
     def _connection_state_update(self, device: Device, communication_state: CommunicationStatus):
         pass
 
-    #     self._update_connection_state_attrs(device, communication_state)
-    #     # self._update_version_of_subdevice_on_success(device, communication_state)
-
-    def _update_version_of_subdevice_on_success(
-        self, device: Device, communication_state: CommunicationStatus
-    ):
+    def _update_version_of_subdevice_on_success(self, communication_state: CommunicationStatus):
         """Update the version information of subdevice if connection is successful."""
         if communication_state == CommunicationStatus.ESTABLISHED:
-            cm = self.component_manager.sub_component_managers[device.value]
+            sub_component_managers = self.component_manager.get_active_sub_component_managers()
+            version_mapping = {"DS": "buildState", "SPF": "swVersions", "SPFRX": "swVersions"}
             try:
-                if device == Device.DS:
-                    build_state = cm.read_attribute_value("buildState")
-                elif device in [Device.SPF, Device.SPFRX]:
-                    build_state = cm.read_attribute_value("swVersions")
-
-                self._build_state = self._release_info.update_build_state(device, build_state)
+                for dev, cm in sub_component_managers.items():
+                    build_state = cm.read_attribute_value(version_mapping[dev])
+                    build_state = str(build_state.value)
+                    dev_type = Device(dev)
+                    self._build_state = self._release_info.update_build_state(
+                        dev_type, build_state
+                    )
             except (tango.DevFailed, AttributeError):
                 self.logger.warning(
-                    "Failed to update build state information for [%s] device.", device.value
+                    "Failed to update build state information for [%s] device.", dev
                 )
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
@@ -334,6 +324,12 @@ class DishManager(SKAController):
             device._track_table_load_mode = TrackTableLoadMode.APPEND
             device._last_commanded_mode = ("0.0", "")
             device._last_commanded_pointing_params = ""
+            device._release_info = ReleaseInfo(
+                ds_manager_address=device.DSDeviceFqdn,
+                spfc_address=device.SPFDeviceFqdn,
+                spfrx_address=device.SPFRxDeviceFqdn,
+            )
+            device._build_state = device._release_info.get_build_state()
 
             device.op_state_model.perform_action("component_standby")
 
