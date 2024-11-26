@@ -26,7 +26,7 @@ class SubscriptionTracker:
         subscription_status_callback: Optional[Callable] = None,
     ):
         """
-        Keep track of which attributes has been subscribed to.
+        Keep track of which attributes have been subscribed to.
 
         Set communication_state to ESTABLISHED only when all are subscribed.
         Set NOT_ESTABLISHED otherwise.
@@ -64,8 +64,8 @@ class SubscriptionTracker:
         """
         with self._update_lock:
             self._subscribed_attrs[attribute_name] = subscription_id
-        if self.subscription_status_callback:
-            self.subscription_status_callback(self._subscribed_attrs.keys())
+            if self.subscription_status_callback:
+                self.subscription_status_callback(self._subscribed_attrs.keys())
 
     def subscription_stopped(self, attribute_name: str) -> None:
         """
@@ -76,8 +76,8 @@ class SubscriptionTracker:
         """
         with self._update_lock:
             self._subscribed_attrs.pop(attribute_name)
-        if self.subscription_status_callback:
-            self.subscription_status_callback(self._subscribed_attrs.keys())
+            if self.subscription_status_callback:
+                self.subscription_status_callback(self._subscribed_attrs.keys())
 
     def setup_event_subscription(
         self, attribute_name: str, device_proxy: tango.DeviceProxy
@@ -112,7 +112,7 @@ class SubscriptionTracker:
         """
         Set all attrs as not subscribed
         """
-        # subscription stopped will update the dictionary being iterated over
+        # subscription_stopped will update the dictionary being iterated over
         # and raise a RuntimeError. grab a copy to use in the iteration
         subscribed_attrs_copy = self._subscribed_attrs.copy()
         with tango.EnsureOmniThread():
@@ -188,7 +188,7 @@ class TangoDeviceMonitor:
             and self._exit_thread_event is not None
             and self._attribute_subscription_thread.is_alive()
         ):
-            # Stop any existing thread performing attribute event subscriptions
+            # Stop any existing thread handling attribute event subscriptions
             self._exit_thread_event.set()
             self._attribute_subscription_thread.join()
             self._logger.info("Stopped monitoring thread on %s", self._tango_fqdn)

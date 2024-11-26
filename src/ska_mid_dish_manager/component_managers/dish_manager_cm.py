@@ -291,7 +291,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_communication_state(CommunicationStatus.DISABLED)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
-    def _sub_device_component_state_changed(self, device: Device, **sub_device_component_state):
+    def _sub_device_component_state_changed(self, device: Device, *args, **kwargs):
         """
         Callback triggered by the component manager of the
         subservient device for component state changes.
@@ -311,14 +311,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Only log non pointing changes
         if not any(
             attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
-            for attr in sub_device_component_state
+            for attr in kwargs
         ):
             self.logger.debug(
                 (
                     "Component state has changed, kwargs [%s], DS [%s], SPF [%s]"
                     ", SPFRx [%s], DM [%s]"
                 ),
-                sub_device_component_state,
+                kwargs,
                 ds_component_state,
                 spf_component_state,
                 spfrx_component_state,
@@ -326,10 +326,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         # Only update dishMode if there are operatingmode changes
-        if (
-            "operatingmode" in sub_device_component_state
-            or "indexerposition" in sub_device_component_state
-        ):
+        if "operatingmode" in kwargs or "indexerposition" in kwargs:
             self.logger.debug(
                 ("Updating dishMode with operatingModes DS [%s], SPF [%s], SPFRX [%s]"),
                 ds_component_state["operatingmode"],
@@ -344,7 +341,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(dishmode=new_dish_mode)
 
         if (
-            "healthstate" in sub_device_component_state
+            "healthstate" in kwargs
             and "healthstate" in ds_component_state
             and "healthstate" in spf_component_state
             and "healthstate" in spfrx_component_state
@@ -362,14 +359,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             self._update_component_state(healthstate=new_health_state)
 
-        if "pointingstate" in sub_device_component_state:
+        if "pointingstate" in kwargs:
             self.logger.debug(
                 ("Newly calculated pointing state [pointing_state] [%s]"),
                 ds_component_state["pointingstate"],
             )
             self._update_component_state(pointingstate=ds_component_state["pointingstate"])
 
-        if "dscpowerlimitkw" in sub_device_component_state:
+        if "dscpowerlimitkw" in kwargs:
             self.logger.debug(
                 ("DSC Power Limit kW changed [%s]"),
                 ds_component_state["dscpowerlimitkw"],
@@ -378,8 +375,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # spf bandInFocus
         if not self.is_device_ignored("SPF") and (
-            "indexerposition" in sub_device_component_state
-            or "configuredband" in sub_device_component_state
+            "indexerposition" in kwargs or "configuredband" in kwargs
         ):
             band_in_focus = self._state_transition.compute_spf_band_in_focus(
                 ds_component_state,
@@ -399,10 +395,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_component_state["bandinfocus"] = band_in_focus
 
         # spfrx attenuation
-        if (
-            "attenuationpolv" in sub_device_component_state
-            or "attenuationpolh" in sub_device_component_state
-        ):
+        if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
             attenuation = {
                 "attenuationpolv": spfrx_component_state["attenuationpolv"],
                 "attenuationpolh": spfrx_component_state["attenuationpolh"],
@@ -410,21 +403,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(**attenuation)
 
         # kvalue
-        if "kvalue" in sub_device_component_state:
+        if "kvalue" in kwargs:
             self._update_component_state(kvalue=spfrx_component_state["kvalue"])
 
         # configuredBand
-        if (
-            "indexerposition" in sub_device_component_state
-            or "bandinfocus" in sub_device_component_state
-            or "configuredband" in sub_device_component_state
-        ):
+        if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
             self.logger.debug(
                 (
                     "Updating configuredBand on DM from change"
                     " [%s] with DS [%s] SPF [%s] SPFRX [%s]"
                 ),
-                sub_device_component_state,
+                kwargs,
                 ds_component_state,
                 spf_component_state,
                 spfrx_component_state,
@@ -438,7 +427,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
-        if "capturingdata" in sub_device_component_state:
+        if "capturingdata" in kwargs:
             self.logger.debug(
                 ("Updating capturing with SPFRx [%s]"),
                 spfrx_component_state,
@@ -448,11 +437,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode
         # or operatingmode changes
-        if (
-            "indexerposition" in sub_device_component_state
-            or "dish_mode" in sub_device_component_state
-            or "operatingmode" in sub_device_component_state
-        ):
+        if "indexerposition" in kwargs or "dish_mode" in kwargs or "operatingmode" in kwargs:
             cap_state_updates = {}
             for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
                 cap_state_name = f"{band}capabilitystate"
@@ -470,7 +455,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # b5 for SPF
         for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
             cap_state_name = f"{band}capabilitystate"
-            if cap_state_name in sub_device_component_state:
+            if cap_state_name in kwargs:
                 new_state = self._state_transition.compute_capability_state(
                     band,
                     ds_component_state,
@@ -484,7 +469,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         for band in ["1", "2", "3", "4", "5a", "5b"]:
             pointing_param_name = f"band{band}pointingmodelparams"
 
-            if pointing_param_name in sub_device_component_state:
+            if pointing_param_name in kwargs:
                 self.logger.debug(
                     ("Updating %s with DS %s %s"),
                     pointing_param_name,
@@ -504,7 +489,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for attr in attrs:
                 attr_lower = attr.lower()
 
-                if attr_lower in sub_device_component_state:
+                if attr_lower in kwargs:
                     new_value = None
                     if dev == "DS":
                         new_value = ds_component_state[attr_lower]
