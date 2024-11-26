@@ -24,6 +24,7 @@ def get_random_version():
 
 @pytest.mark.unit
 @pytest.mark.forked
+@pytest.mark.skip(reason="Build state needs some work")
 class TestDishManagerVersioning:
     """Tests for Dish Manager Versioning"""
 

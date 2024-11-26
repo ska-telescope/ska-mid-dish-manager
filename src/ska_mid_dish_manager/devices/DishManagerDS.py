@@ -48,7 +48,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackProgramMode,
     TrackTableLoadMode,
 )
-from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
 from ska_mid_dish_manager.utils.decorators import record_mode_change_request
 from ska_mid_dish_manager.utils.track_table_input_validation import (
@@ -144,12 +143,12 @@ class DishManager(SKAController):
         :rtype: DishManagerComponentManager
         """
 
-        self._release_info = ReleaseInfo(
-            ds_manager_address=self.DSDeviceFqdn,
-            spfc_address=self.SPFDeviceFqdn,
-            spfrx_address=self.SPFRxDeviceFqdn,
-        )
-        self._build_state = self._release_info.get_build_state()
+        # self._release_info = ReleaseInfo(
+        #     ds_manager_address=self.DSDeviceFqdn,
+        #     spfc_address=self.SPFDeviceFqdn,
+        #     spfrx_address=self.SPFRxDeviceFqdn,
+        # )
+        # self._build_state = self._release_info.get_build_state()
 
         return DishManagerComponentManager(
             self.logger,
@@ -245,7 +244,7 @@ class DishManager(SKAController):
             return
 
         self._update_connection_state_attrs(device, communication_state)
-        self._update_version_of_subdevice_on_success(device, communication_state)
+        # self._update_version_of_subdevice_on_success(device, communication_state)
 
     def _update_connection_state_attrs(
         self, device: Device, communication_state: CommunicationStatus
