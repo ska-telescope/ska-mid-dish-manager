@@ -35,6 +35,7 @@ def test_tango_device_component_manager_state(
         component_state_callback=component_state_store,
         communication_state_callback=mock_callable,
     )
+    assert com_man.communication_state == CommunicationStatus.DISABLED
 
     com_man.start_communicating()
     assert com_man.communication_state == CommunicationStatus.NOT_ESTABLISHED

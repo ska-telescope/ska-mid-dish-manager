@@ -247,23 +247,27 @@ class DishManager(SKAController):
         self._update_connection_state_attrs(device, communication_state)
         self._update_version_of_subdevice_on_success(device, communication_state)
 
-    def _update_connection_state_attrs(self, device: Device, communication_state: CommunicationStatus):
+    def _update_connection_state_attrs(
+        self, device: Device, communication_state: CommunicationStatus
+    ):
         """
         Push change events on connection state attributes for
         subservient devices communication state changes.
         """
-        attribute = self._device_to_comm_attr_map[device]
-        if attribute is not None:
+        connection_attribute = self._device_to_comm_attr_map[device.value]
+        if connection_attribute is not None:
             self.push_change_event(
-                attribute,
+                connection_attribute,
                 communication_state,
             )
             self.push_archive_event(
-                attribute,
+                connection_attribute,
                 communication_state,
             )
 
-    def _update_version_of_subdevice_on_success(self, device: Device, communication_state: CommunicationStatus):
+    def _update_version_of_subdevice_on_success(
+        self, device: Device, communication_state: CommunicationStatus
+    ):
         """Update the version information of subdevice if connection is successful."""
         if communication_state == CommunicationStatus.ESTABLISHED:
             cm = self.component_manager.sub_component_managers[device.value]
@@ -276,15 +280,10 @@ class DishManager(SKAController):
                 self._build_state = self._release_info.update_build_state(device, build_state)
             except (tango.DevFailed, AttributeError):
                 self.logger.warning(
-                    "Failed to update build state information for [%s] device.", device
+                    "Failed to update build state information for [%s] device.", device.value
                 )
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
-        # Do not modify or push quality changes before initialization complete
-        if not hasattr(self, "_component_state_attr_map"):
-            self.logger.warning("Init not completed, rejecting attribute quality update")
-            return
-
         device_attribute_name = self._component_state_attr_map.get(attribute_name, None)
         if device_attribute_name:
             attribute_object = getattr(self, device_attribute_name, None)
@@ -294,10 +293,6 @@ class DishManager(SKAController):
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
-        if not hasattr(self, "_component_state_attr_map"):
-            self.logger.warning("Init not completed, but state is being updated [%s]", kwargs)
-            return
-
         def change_case(attr_name):
             """Convert camel case string to snake case
 
