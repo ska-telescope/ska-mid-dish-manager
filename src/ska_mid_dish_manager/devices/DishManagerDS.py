@@ -146,13 +146,13 @@ class DishManager(SKAController):
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
-            self._connection_state_update,
+            self._update_version_of_subdevice_on_success,
             self._attr_quality_state_changed,
             self.get_name(),
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
-            communication_state_callback=self._update_version_of_subdevice_on_success,
+            communication_state_callback=None,
             component_state_callback=self._component_state_changed,
         )
 
@@ -231,25 +231,23 @@ class DishManager(SKAController):
             ApplyPointingModelCommand(self.component_manager, self.logger),
         )
 
-    def _connection_state_update(self, device: Device, communication_state: CommunicationStatus):
-        pass
-
-    def _update_version_of_subdevice_on_success(self, communication_state: CommunicationStatus):
+    def _update_version_of_subdevice_on_success(
+        self, device: Device, communication_state: CommunicationStatus
+    ):
         """Update the version information of subdevice if connection is successful."""
         if communication_state == CommunicationStatus.ESTABLISHED:
-            sub_component_managers = self.component_manager.get_active_sub_component_managers()
-            version_mapping = {"DS": "buildState", "SPF": "swVersions", "SPFRX": "swVersions"}
+            cm = self.component_manager.sub_component_managers[device.value]
             try:
-                for dev, cm in sub_component_managers.items():
-                    build_state = cm.read_attribute_value(version_mapping[dev])
-                    build_state = str(build_state.value)
-                    dev_type = Device(dev)
-                    self._build_state = self._release_info.update_build_state(
-                        dev_type, build_state
-                    )
+                if device == Device.DS:
+                    build_state = cm.read_attribute_value("buildState")
+                elif device in [Device.SPF, Device.SPFRX]:
+                    build_state = cm.read_attribute_value("swVersions")
+
+                build_state = str(build_state.value)
+                self._build_state = self._release_info.update_build_state(device, build_state)
             except (tango.DevFailed, AttributeError):
                 self.logger.warning(
-                    "Failed to update build state information for [%s] device.", dev
+                    "Failed to update build state information for [%s] device.", device.value
                 )
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
