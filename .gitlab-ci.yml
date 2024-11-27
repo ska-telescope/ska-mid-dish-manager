@@ -60,7 +60,7 @@ mypy:
       src/ska_mid_dish_manager/models/dish_state_transition.py
   allow_failure: true
 
-sync-to-master:
+sync-to-main:
   stage: sync
   script:
     - echo "Synchronizing scheduled testing branch to main branch"
