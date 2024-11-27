@@ -231,6 +231,10 @@ class DishManager(SKAController):
             ApplyPointingModelCommand(self.component_manager, self.logger),
         )
 
+    # ---------
+    # Callbacks
+    # ---------
+
     def _update_version_of_subdevice_on_success(self, device: Device, build_state: str):
         """Update the version information of subdevice if connection is successful."""
         try:
