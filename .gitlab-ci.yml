@@ -8,9 +8,9 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 stages:
+  - sync
   - lint
   - build
-  - sync
   - test
   - publish
   - pages
@@ -63,14 +63,13 @@ mypy:
 sync-to-master:
   stage: sync
   script:
-    - echo "Synchronizing scheduled testing branch to Master branch"
+    - echo "Synchronizing scheduled testing branch to main branch"
     - git fetch origin
-    - git merge origin/master
+    - git merge origin/main
     - if [ $? -eq 0 ]; then 
-        echo "Latest master branch changes successfully merged into scheduled testing branch";
+        echo "Latest main branch changes successfully merged into scheduled testing branch";
       else 
-        echo "Failed to merge master branch into scheduled testing branch due to merge conflicts"; 
+        echo "Failed to merge main branch into scheduled testing branch due to merge conflicts"; 
         exit 1; 
       fi
   allow_failure: true
-  
