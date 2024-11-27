@@ -128,6 +128,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_device_fqdn,
                 logger,
                 self._state_update_lock,
+                buildstate="",
                 operatingmode=SPFOperatingMode.UNKNOWN,
                 powerstate=SPFPowerState.UNKNOWN,
                 healthstate=HealthState.UNKNOWN,
@@ -150,6 +151,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ds_device_fqdn,
                 logger,
                 self._state_update_lock,
+                buildstate="",
                 healthstate=HealthState.UNKNOWN,
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=PointingState.UNKNOWN,
@@ -181,6 +183,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_device_fqdn,
                 logger,
                 self._state_update_lock,
+                buildstate="",
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
                 capturingdata=False,
@@ -272,6 +275,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "Communication state changed on %s device: %s.", device.name, communication_state
         )
 
+        # report the communication state of the sub device on the connectionState attribute
+        self._update_connection_state_attribute(device.name, communication_state)
+
         active_sub_component_managers = self.get_active_sub_component_managers()
         sub_devices_communication_states = [
             sub_component_manager.communication_state
@@ -290,12 +296,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         else:
             self._update_communication_state(CommunicationStatus.DISABLED)
-
-        # populate the build state for the respective sub device
-        # can this be reduced to happen only once?
-        self._build_state_callback(device, communication_state)
-        # report the communication state of the sub device on the connectionState attribute
-        self._update_connection_state_attribute(device.name, communication_state)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _sub_device_component_state_changed(self, device: Device, *args, **kwargs):
@@ -331,6 +331,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_component_state,
                 self.component_state,
             )
+
+        if "buildstate" in kwargs:
+            self._build_state_callback(device, kwargs["buildstate"])
+            return
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs or "indexerposition" in kwargs:

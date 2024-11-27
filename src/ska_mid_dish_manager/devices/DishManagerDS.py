@@ -231,24 +231,14 @@ class DishManager(SKAController):
             ApplyPointingModelCommand(self.component_manager, self.logger),
         )
 
-    def _update_version_of_subdevice_on_success(
-        self, device: Device, communication_state: CommunicationStatus
-    ):
+    def _update_version_of_subdevice_on_success(self, device: Device, build_state: str):
         """Update the version information of subdevice if connection is successful."""
-        if communication_state == CommunicationStatus.ESTABLISHED:
-            cm = self.component_manager.sub_component_managers[device.value]
-            try:
-                if device == Device.DS:
-                    build_state = cm.read_attribute_value("buildState")
-                elif device in [Device.SPF, Device.SPFRX]:
-                    build_state = cm.read_attribute_value("swVersions")
-
-                build_state = str(build_state.value)
-                self._build_state = self._release_info.update_build_state(device, build_state)
-            except (tango.DevFailed, AttributeError):
-                self.logger.warning(
-                    "Failed to update build state information for [%s] device.", device.value
-                )
+        try:
+            self._build_state = self._release_info.update_build_state(device, build_state)
+        except AttributeError:
+            self.logger.warning(
+                "Failed to update build state information for [%s] device.", device.value
+            )
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
         device_attribute_name = self._component_state_attr_map.get(attribute_name, None)

@@ -4,7 +4,6 @@ import json
 from unittest.mock import Mock, patch
 
 import pytest
-from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -77,7 +76,7 @@ class TestDishManagerVersioning:
         cm = self.dish_manager_cm.sub_component_managers[device]
         setattr(cm, "read_attribute_value", Mock(return_value=mock_build_state))
         # trigger a build state update
-        cm._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
+        cm._sync_communication_to_subscription(cm._monitored_attributes)
 
         build_state = self._dish_manager_proxy.buildState
         build_state_json = json.loads(build_state)
@@ -94,7 +93,7 @@ class TestDishManagerVersioning:
         cm = self.dish_manager_cm.sub_component_managers["DS"]
         setattr(cm, "read_attribute_value", Mock(return_value=mock_build_state))
         # trigger a build state update
-        cm._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
+        cm._sync_communication_to_subscription(cm._monitored_attributes)
 
         build_state = self._dish_manager_proxy.buildState
         build_state_json = json.loads(build_state)
