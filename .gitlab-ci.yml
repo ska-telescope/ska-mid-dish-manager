@@ -10,6 +10,7 @@ variables:
 stages:
   - lint
   - build
+  - sync
   - test
   - publish
   - pages
@@ -57,4 +58,18 @@ mypy:
       src/ska_mid_dish_manager/component_managers/spfrx_cm.py
       src/ska_mid_dish_manager/models/dish_mode_model.py
       src/ska_mid_dish_manager/models/dish_state_transition.py
+  allow_failure: true
+
+sync-to-master:
+  stage: sync
+  script:
+    - echo "Synchronizing scheduled testing branch to Master branch"
+    - git fetch origin
+    - git merge origin/master
+    - if [ $? -eq 0 ]; then 
+        echo "Latest master branch changes successfully merged into scheduled testing branch";
+      else 
+        echo "Failed to merge master branch into scheduled testing branch due to merge conflicts"; 
+        exit 1; 
+      fi
   allow_failure: true
