@@ -65,22 +65,15 @@ sync-to-main:
   script:
     - echo "Synchronizing scheduled testing branch to main branch"
     - git fetch origin
-    - git merge origin/main
-    - if [ $? -eq 0 ]; then 
-        echo "Latest main branch changes successfully merged into scheduled testing branch";
-      else 
-        echo "Failed to merge main branch into scheduled testing branch due to merge conflicts"; 
-        exit 1; 
+    # Attempt to merge main into testing branch and skip if already up to date
+    - if git merge origin/main | grep "Already up to date."; then
+        echo "Scheduled testing branch already up to date" # Handy but not needed, remove
+        exit 0;
       fi
-    # TODO: Will ultimately want to skip merging if the branch is already up to date
     # Commit merge using current users details as author
     - git config user.email "$GITLAB_USER_EMAIL" 
     - git config user.name "$GITLAB_USER_NAME"
     - git commit -m "KAR-1167 Merge branch main into kar-1167-scheduled-testing"
-    - if [ $? -ne 0 ]; then 
-        echo "Commit exited with non-zero code. There may be no changes to commit
-        exit 0;
-      fi
     # Push to permantently apply changes and prevent loop of pipeline runs from being triggered by skipping the ci pipeline
     # TODO: Initial test using personal token but ultimately a project token is preferred
     - git push https://$GITLAB_USER_LOGIN:$GITLAB_TOKEN@gitlab.com/ska-telescope/ska-mid-dish-manager.git kar-1167-scheduled-testing -o ci.skip;
