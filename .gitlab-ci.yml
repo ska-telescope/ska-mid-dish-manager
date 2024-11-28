@@ -72,12 +72,13 @@ sync-to-main:
         echo "Failed to merge main branch into scheduled testing branch due to merge conflicts"; 
         exit 1; 
       fi
+    # TODO: Will ultimately want to skip merging if the branch is already up to date
     # Commit merge using current users details as author
     - git config user.email "$GITLAB_USER_EMAIL" 
     - git config user.name "$GITLAB_USER_NAME"
     - git commit -m "KAR-1167 Merge branch main into kar-1167-scheduled-testing"
     # Push to permantently apply changes and prevent loop of pipeline runs from being triggered by skipping the ci pipeline
-    # Initial test using personal token but ultimately a project token is preferred
+    # TODO: Initial test using personal token but ultimately a project token is preferred
     - git push https://$GITLAB_USER_LOGIN:$GITLAB_TOKEN@gitlab.com/ska-telescope/ska-mid-dish-manager.git kar-1167-scheduled-testing -o ci.skip;
     - if [ $? -ne 0 ]; then 
         echo "Failed to push merged branch to repository as $GITLAB_USER_NAME. Please make sure the access token is valid and configured in the pipeline scheduler";
