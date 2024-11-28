@@ -75,5 +75,6 @@ sync-to-main:
     # Push merge changes to the branch on repo to ensure changes are permanently applied
     - git commit -m "KAR-1167 Merge branch main into kar-1167-scheduled-testing"
     # Prevent loop of pipeline runs from being triggered by push operation
-    - git push origin kar-1167-scheduled-testing -o ci.skip;
+    - git push https://$GITLAB_USERNAME:$GITLAB_PASSWORD@gitlab.com/ska-telescope/ska-mid-dish-manager.git kar-1167-scheduled-testing -o ci.skip;
+
   allow_failure: true
