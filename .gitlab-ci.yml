@@ -67,7 +67,6 @@ sync-to-main:
     - git fetch origin
     # Attempt to merge main into testing branch and skip if already up to date
     - if git merge origin/main | grep "Already up to date."; then
-        echo "Scheduled testing branch already up to date" # Handy but not needed, remove
         exit 0;
       fi
     # Commit merge using current users details as author
