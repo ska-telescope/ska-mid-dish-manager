@@ -77,5 +77,8 @@ sync-to-main:
     # Prevent loop of pipeline runs from being triggered by push operation
     # Initial test using personal token but ultimately a project token is preferred
     - git push https://$GITLAB_USER_LOGIN:$GITLAB_TOKEN@gitlab.com/ska-telescope/ska-mid-dish-manager.git kar-1167-scheduled-testing -o ci.skip;
-
-  allow_failure: true
+    - if [ $? -ne 0 ]; then 
+        echo "Failed to push merged branch to repository as $GITLAB_USER_NAME. Please make sure the access token is valid and configured in the pipeline scheduler";
+        exit 1;
+      fi
+  allow_failure: false
