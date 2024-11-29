@@ -73,11 +73,11 @@ sync-to-main:
     - git config user.email "$GITLAB_USER_EMAIL" 
     - git config user.name "$GITLAB_USER_NAME"
     - git commit -m "KAR-1167 Merge branch main into kar-1167-scheduled-testing"
-    # Push to permantently apply changes and prevent loop of pipeline runs from being triggered by skipping the ci pipeline
-    # TODO: Initial test using personal token but ultimately a project token is preferred
+    # Push changes to branch and prevent loop of pipeline runs from being triggered by skipping ci pipeline
+    # Note: GITLAB_TOKEN is a project access token defined in the pipeline scheduler
     - git push https://$GITLAB_USER_LOGIN:$GITLAB_TOKEN@gitlab.com/ska-telescope/ska-mid-dish-manager.git kar-1167-scheduled-testing -o ci.skip;
     - if [ $? -ne 0 ]; then 
-        echo "Failed to push merged branch to repository as $GITLAB_USER_NAME. Please make sure the access token is valid and configured in the pipeline scheduler";
+        echo "Failed to push merged branch to repository as $GITLAB_USER_NAME. Please ensure that the access token is valid and configured in the pipeline scheduler menu";
         exit 1;
       fi
   allow_failure: false
