@@ -25,7 +25,7 @@ def retry_connection(func: Callable) -> Any:
     :return: the wrapped function
     """
 
-    # pylint: disable=protected-access, line-too-long
+    # pylint: disable=protected-access
     @wraps(func)
     def _wrapper(device_proxy_manager: Any, *args: Any, **kwargs: Any) -> Any:
         """
@@ -39,24 +39,30 @@ def retry_connection(func: Callable) -> Any:
                 RunTimeError: if stop communication is invoked
         :return: whatever the wrapped function returns
         """
-        # threshold after which retry ceases
-        max_retries = 5
-
-        # iniital wait between retry attempts.
-        # requests to DeviceProxy.reconnect should be >= 1s
-        # see https://gitlab.com/tango-controls/cppTango/-/blob/c1d7fabad06133ff1548674254f6bd6a931f9fda/src/client/devapi_base.cpp#L732  # noqa: E501
-        retry_time = 1
-
-        # retry_time factor multiplier
-        back_off = 1.5
+        max_retries = 5  # threshold after which retry ceases
+        retry_time = 1  # iniital wait between retry attempts
+        back_off = 1.5  # retry_time factor multiplier
 
         try_count = 1
-        while max_retries > 1 and not device_proxy_manager._event_signal.is_set():
-            kwargs["retry_time"] = retry_time
-            kwargs["try_count"] = try_count
+        while max_retries > 0 and not device_proxy_manager._event_signal.is_set():
             try:
                 return func(device_proxy_manager, *args, **kwargs)
             except tango.DevFailed:
+                # build up the log message for the specific function
+                if "wait" in func.__name__:
+                    dev_name = args[0].dev_name()
+                    msg = (
+                        f"Try number {try_count}: Failed to reconnect to device "
+                        f"{dev_name}, retrying connection in {retry_time}s"
+                    )
+                else:
+                    trl = args[0]
+                    msg = (
+                        f"Try number {try_count}: An error occured creating a device proxy to "
+                        f"{trl}, retrying in {retry_time}s"
+                    )
+
+                device_proxy_manager._logger.debug(msg)
                 device_proxy_manager._event_signal.wait(retry_time)
                 retry_time = round(back_off * retry_time)
                 max_retries -= 1
@@ -65,11 +71,11 @@ def retry_connection(func: Callable) -> Any:
         # handle case where stop monitoring is triggered during
         # proxy creation or attempt to reconnect
         if device_proxy_manager._event_signal.is_set():
+            device_proxy_manager._logger.debug("Connection to device cancelled")
             raise RuntimeError("Connection interrupted")
 
-        # let the final retry attempt raise an error if an exception occurs
-        kwargs["retry_time"] = retry_time
-        kwargs["try_count"] = try_count
+        # throw in one more retry attempt, why not :p
+        # and allow the error to be raised if an exception occurs
         return func(device_proxy_manager, *args, **kwargs)
 
     return _wrapper
@@ -137,8 +143,6 @@ class DeviceProxyManager:
     def _wait_for_device(
         self,
         tango_device_proxy: tango.DeviceProxy,
-        try_count: int = 1,
-        retry_time: int = 1,
     ) -> None:
         """
         Wait until it the client has established a connection with
@@ -146,49 +150,23 @@ class DeviceProxyManager:
 
         :param tango_device_proxy: a client to the device
         :type tango_device_proxy: tango.DeviceProxy
-        :param try_count: the attempt count of reconnecting to the device proxy
-        :type try_count: int
-        :param retry_time: waits between reconnection attempts
-        :type retry_time: int
 
         :returns: None
         """
         with tango.EnsureOmniThread():
-            try:
-                tango_device_proxy.reconnect(True)
-            except tango.DevFailed:
-                self._logger.exception(
-                    f"Failed to reconnect to device proxy: {tango_device_proxy.dev_name()}"
-                )
-                self._logger.debug(
-                    f"Try number {try_count}: "
-                    f"Attempting reconnection to the device proxy in {retry_time}s"
-                )
-                raise
+            tango_device_proxy.reconnect(True)
 
     @retry_connection
-    def create_tango_device_proxy(self, trl: str, try_count: int = 1, retry_time: int = 1) -> Any:
+    def create_tango_device_proxy(self, trl: str) -> Any:
         """
         Create and store a device proxy to the device at trl
 
         :param trl: the address to the running device
         :type trl: str
-        :param try_count: the attempt count of creating the device proxy
-        :type try_count: int
-        :param retry_time: waits between reconnection attempts
-        :type retry_time: int
 
         :returns: device_proxy tango.DeviceProxy
         """
         with tango.EnsureOmniThread():
-            try:
-                device_proxy = tango.DeviceProxy(trl)
-            except tango.DevFailed:
-                self._logger.exception(f"An error occured creating a device proxy to {trl}")
-                self._logger.debug(
-                    f"Try number {try_count}: failed to connect to tango device"
-                    f" {trl}, retrying in {retry_time}s"
-                )
-                raise
+            device_proxy = tango.DeviceProxy(trl)
 
-            return device_proxy
+        return device_proxy
