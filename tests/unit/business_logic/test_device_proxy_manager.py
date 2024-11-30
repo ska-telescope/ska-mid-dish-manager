@@ -53,12 +53,13 @@ class TestDeviceProxyManager:
         for count, retry_time in enumerate(default_retry_times, start=1):
             assert (
                 f"Try number {count}: "
-                f"failed to connect to tango device a/b/c, retrying in {retry_time}s" in logs
+                f"An error occured creating a device proxy to {trl}, retrying in {retry_time}s"
+                in logs
             )
 
     def test_device_proxy_creation_retry_is_stopped_by_event_signal(self, patch_dp, caplog):
         """Test dp creation and reconnection retry can be cancelled"""
-        caplog.set_level(logging.WARNING)
+        caplog.set_level(logging.DEBUG)
 
         trl = "a/device/address"
         self.signal.set()
@@ -66,7 +67,11 @@ class TestDeviceProxyManager:
 
         assert dev_proxy is None
         logs = [record.message for record in caplog.records]
-        assert f"Failed creating DeviceProxy to device at {trl}" in logs
+        cancellation_log = "Connection to device cancelled"
+        failure_log = f"Failed creating DeviceProxy to device at {trl}"
+
+        assert cancellation_log in logs
+        assert failure_log in logs
 
     def test_device_proxy_is_verified_as_alive_before_returned(self, patch_dp):
         """Test dp is tested before returned to caller."""
