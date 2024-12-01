@@ -25,7 +25,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     BandInFocus,
     CapabilityStates,
-    Device,
+    DishDevice,
     DishMode,
     DSOperatingMode,
     DSPowerState,
@@ -140,10 +140,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 communication_state_callback=partial(
-                    self._sub_device_communication_state_changed, Device.SPF
+                    self._sub_device_communication_state_changed, DishDevice.SPF
                 ),
                 component_state_callback=partial(
-                    self._sub_device_component_state_changed, Device.SPF
+                    self._sub_device_component_state_changed, DishDevice.SPF
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
@@ -173,10 +173,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 actstaticoffsetvaluexel=None,
                 actstaticoffsetvalueel=None,
                 communication_state_callback=partial(
-                    self._sub_device_communication_state_changed, Device.DS
+                    self._sub_device_communication_state_changed, DishDevice.DS
                 ),
                 component_state_callback=partial(
-                    self._sub_device_component_state_changed, Device.DS
+                    self._sub_device_component_state_changed, DishDevice.DS
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
@@ -202,10 +202,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 periodicnoisediodepars=[0.0, 0.0, 0.0],
                 pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
                 communication_state_callback=partial(
-                    self._sub_device_communication_state_changed, Device.SPFRX
+                    self._sub_device_communication_state_changed, DishDevice.SPFRX
                 ),
                 component_state_callback=partial(
-                    self._sub_device_component_state_changed, Device.SPFRX
+                    self._sub_device_component_state_changed, DishDevice.SPFRX
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
@@ -370,7 +370,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._update_component_state(**{state_name: connection_state})
 
     def _sub_device_communication_state_changed(
-        self, device: Device, communication_state: CommunicationStatus
+        self, device: DishDevice, communication_state: CommunicationStatus
     ):
         """
         Callback triggered by the component manager when it establishes
@@ -407,7 +407,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_communication_state(CommunicationStatus.DISABLED)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
-    def _sub_device_component_state_changed(self, device: Device, *args, **kwargs):
+    def _sub_device_component_state_changed(self, device: DishDevice, *args, **kwargs):
         """
         Callback triggered by the component manager of the
         subservient device for component state changes.

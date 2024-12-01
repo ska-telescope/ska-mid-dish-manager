@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from ska_mid_dish_manager.models.dish_enums import Device
+from ska_mid_dish_manager.models.dish_enums import DishDevice
 from ska_mid_dish_manager.release import (
     BAD_JSON_FORMAT_VERSION,
     DISH_MANAGER_PACKAGE_NAME,
@@ -61,11 +61,11 @@ class TestReleaseInfo:
     @pytest.mark.parametrize(
         "device, build_state_key",
         [
-            (Device.SPF, "spfc_device"),
-            (Device.SPFRX, "spfrx_device"),
+            (DishDevice.SPF, "spfc_device"),
+            (DishDevice.SPFRX, "spfrx_device"),
         ],
     )
-    def test_spf_spfrx_version_update(self, device: Device, build_state_key: str):
+    def test_spf_spfrx_version_update(self, device: DishDevice, build_state_key: str):
         """Test that device versions are updated accordingly."""
         build_state_update = generate_random_text()
         self._release_info.update_build_state(device, build_state_update)
@@ -77,7 +77,7 @@ class TestReleaseInfo:
         """Test that device versions are updated accordingly."""
         build_state_update_json = {"version": generate_random_text()}
         build_state_update = json.dumps(build_state_update_json)
-        self._release_info.update_build_state(Device.DS, build_state_update)
+        self._release_info.update_build_state(DishDevice.DS, build_state_update)
         build_state = self._release_info.get_build_state()
         build_state_json = json.loads(build_state)
         assert build_state_json["ds_manager_device"]["version"] == build_state_update_json
@@ -85,7 +85,7 @@ class TestReleaseInfo:
     def test_ds_manager_version_update_bad_formatting(self):
         """Test that bad json formatting is handled for ds manager version."""
         build_state_update = generate_random_text()
-        self._release_info.update_build_state(Device.DS, build_state_update)
+        self._release_info.update_build_state(DishDevice.DS, build_state_update)
         build_state = self._release_info.get_build_state()
         build_state_json = json.loads(build_state)
         assert build_state_json["ds_manager_device"]["version"] == BAD_JSON_FORMAT_VERSION
