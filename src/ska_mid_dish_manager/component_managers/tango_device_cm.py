@@ -55,6 +55,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._sync_communication_to_subscription,
         )
 
+        # make sure everything monitored is in the component state
+        attr_names_lower = map(lambda x: x.lower(), monitored_attributes)
+        attrs_to_be_added = set(attr_names_lower).difference(kwargs.keys())
+        kwargs.update(dict.fromkeys(attrs_to_be_added))
+
         super().__init__(
             logger,
             *args,
@@ -124,12 +129,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             for monitored_attribute in self._monitored_attributes:
                 monitored_attribute = monitored_attribute.lower()
 
-                # TODO the line below should not be here. all monitored attributes
-                # should be passed to the component manager when it's instantiated
-                # Add it to component state if not there
-                if monitored_attribute not in self._component_state:
-                    self._component_state[monitored_attribute] = None
-
                 try:
                     value = device_proxy.read_attribute(monitored_attribute).value
                 except tango.DevFailed:
@@ -153,11 +152,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
-
-        # Add it to component state if not there
-        if attr_name not in self._component_state:
-            self._component_state[attr_name] = None
-
         quality = event_data.attr_value.quality
         try:
             if attr_name in self._quality_monitored_attributes:
@@ -256,13 +250,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._active_attr_event_subscriptions.remove(attr_name)
         except KeyError:
             pass
-
-        # this is a hack at the moment to get comms to stay as established
-        # needs a broader discussion on what to do about this especially
-        # since this affects e.g. write_attribute_value function
-        error_reason = errors[-1].reason
-        if error_reason in ["API_EventTimeout", "API_MissedEvents"]:
-            return
 
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
