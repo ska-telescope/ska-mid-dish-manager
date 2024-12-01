@@ -156,6 +156,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=PointingState.UNKNOWN,
                 achievedtargetlock=None,
+                configuretargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
                 desiredpointingaz=[0.0, 0.0],

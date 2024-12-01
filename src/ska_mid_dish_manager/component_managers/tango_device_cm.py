@@ -55,6 +55,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._sync_communication_to_subscription,
         )
 
+        # make sure everything monitored is in the component state
+        attr_names_lower = map(lambda x: x.lower(), monitored_attributes)
+        attrs_to_be_added = set(attr_names_lower).difference(kwargs.keys())
+        kwargs.update(dict.fromkeys(attrs_to_be_added))
+
         super().__init__(
             logger,
             *args,

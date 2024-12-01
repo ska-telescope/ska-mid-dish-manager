@@ -5,6 +5,11 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+## unreleased
+*************
+- Added a factory class to manage device proxy creation
+- Added some major improvements and refactoring
+
 Version 6.0.0
 *************
 - Added unit and range verification checks to `ApplyPointingModel`command
