@@ -4,8 +4,7 @@ import logging
 from threading import Lock
 from typing import Any, Callable, Optional
 
-import tango
-from ska_control_model import CommunicationStatus, HealthState
+from ska_control_model import HealthState
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import (

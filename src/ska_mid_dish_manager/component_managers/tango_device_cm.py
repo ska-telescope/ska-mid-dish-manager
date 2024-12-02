@@ -68,7 +68,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
-    def _fetch_build_state_information(self):
+    def _fetch_build_state_information(self) -> None:
         build_state_attr = (
             "swVersions" if "spf" in self._tango_device_fqdn.lower() else "buildState"
         )
