@@ -85,6 +85,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
         if all_subscribed:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
+            # send over the build state after all attributes are subscribed
+            self._fetch_build_state_information()
         else:
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
@@ -164,6 +166,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     # --------------
     # helper methods
     # --------------
+
+    def _fetch_build_state_information(self) -> None:
+        build_state_attr = (
+            "swVersions" if "spf" in self._tango_device_fqdn.lower() else "buildState"
+        )
+        try:
+            build_state = self.read_attribute_value(build_state_attr)
+        except tango.DevFailed:
+            build_state = ""
+        else:
+            build_state = str(build_state)
+        self._update_component_state(buildstate=build_state)
 
     def sync_communication_to_valid_event(self) -> None:
         """Sync communication state with valid events from monitored attributes"""
@@ -359,7 +373,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
             try:
-                result = device_proxy.read_attribute(attribute_name)
+                result = device_proxy.read_attribute(attribute_name).value
             except tango.DevFailed:
                 self.logger.exception(
                     "Could not read attribute [%s] on [%s]",

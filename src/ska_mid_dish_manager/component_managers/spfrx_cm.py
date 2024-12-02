@@ -4,8 +4,7 @@ import logging
 from threading import Lock
 from typing import Any, Callable
 
-import tango
-from ska_control_model import CommunicationStatus, HealthState
+from ska_control_model import HealthState
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
@@ -77,32 +76,6 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
                 kwargs[attr] = enum_(kwargs[attr])
 
         super()._update_component_state(**kwargs)
-
-    def _sync_communication_to_subscription(self, subscribed_attrs: list[str]) -> None:
-        """
-        Reflect status of monitored attribute subscription on communication state
-
-        Overrides the callback from the parent class to pass build state information
-
-        :param subscribed_attrs: the attributes with successful change event subscription
-        :type subscribed_attrs: list
-        """
-        # save a copy of the subscribed attributes. this will be
-        # evaluated by the function processing the valid events
-        self._active_attr_event_subscriptions = set(subscribed_attrs)
-        all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
-        if all_subscribed:
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
-            # send over the build state after all attributes are subscribed
-            try:
-                build_state = self.read_attribute_value("swVersions")
-            except tango.DevFailed:
-                build_state = ""
-            else:
-                build_state = str(build_state.value)
-            self._update_component_state(buildstate=build_state)
-        else:
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     # pylint: disable=missing-function-docstring, invalid-name
     def on(self, task_callback: Callable = None) -> Any:  # type: ignore
