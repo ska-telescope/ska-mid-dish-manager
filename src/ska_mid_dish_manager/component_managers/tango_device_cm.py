@@ -169,8 +169,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error updating component state")
 
-            # if the error event stops does tango emit a valid event for all
-            # the error events we got for the various attribute subscription.
+            # TODO if the error event stops does tango emit a valid event for all
+            # the error events we got for the various attribute subscription?
             # update the communication state in case the error event callback flipped it
             self._active_attr_event_subscriptions.add(attr_name)
             self.sync_communication_to_valid_event()
