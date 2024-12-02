@@ -68,6 +68,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
+    def _fetch_build_state_information(self):
+        build_state_attr = (
+            "swVersions" if "spf" in self._tango_device_fqdn.lower() else "buildState"
+        )
+        try:
+            build_state = self.read_attribute_value(build_state_attr)
+        except tango.DevFailed:
+            build_state = ""
+        else:
+            build_state = str(build_state)
+        self._update_component_state(buildstate=build_state)
+
     def _sync_communication_to_subscription(self, subscribed_attrs: list[str]) -> None:
         """
         Reflect status of monitored attribute subscription on communication state
@@ -81,6 +93,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
         if all_subscribed:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
+            # send over the build state after all attributes are subscribed
+            self._fetch_build_state_information()
         else:
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
