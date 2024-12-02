@@ -101,7 +101,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             except tango.DevFailed:
                 build_state = ""
             else:
-                build_state = str(build_state.value)
+                build_state = str(build_state)
             self._update_component_state(buildstate=build_state)
         else:
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)

@@ -70,11 +70,9 @@ class TestDishManagerVersioning:
         """Test that spfc and spfrx build states of subdevices get updated when a the subdevice
         establishes connection."""
         # configure a mock build state
-        mock_build_state = Mock()
         dummy_build_state_version = generate_random_text()
-        mock_build_state.value = dummy_build_state_version
         cm = self.dish_manager_cm.sub_component_managers[device]
-        setattr(cm, "read_attribute_value", Mock(return_value=mock_build_state))
+        setattr(cm, "read_attribute_value", Mock(return_value=dummy_build_state_version))
         # trigger a build state update
         cm._sync_communication_to_subscription(cm._monitored_attributes)
 
@@ -86,12 +84,10 @@ class TestDishManagerVersioning:
         """Test that the ds build state gets updated when a the subdevice establishes
         connection."""
         # configure a mock build state
-        mock_build_state = Mock()
         build_state_update_json = {"version": generate_random_text()}
         build_state_update = json.dumps(build_state_update_json)
-        mock_build_state.value = build_state_update
         cm = self.dish_manager_cm.sub_component_managers["DS"]
-        setattr(cm, "read_attribute_value", Mock(return_value=mock_build_state))
+        setattr(cm, "read_attribute_value", Mock(return_value=build_state_update))
         # trigger a build state update
         cm._sync_communication_to_subscription(cm._monitored_attributes)
 

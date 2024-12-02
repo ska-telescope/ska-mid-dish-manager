@@ -336,7 +336,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
             try:
-                result = device_proxy.read_attribute(attribute_name)
+                result = device_proxy.read_attribute(attribute_name).value
             except tango.DevFailed:
                 self.logger.exception(
                     "Could not read attribute [%s] on [%s]",
