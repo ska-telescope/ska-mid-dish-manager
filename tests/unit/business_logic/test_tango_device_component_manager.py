@@ -142,5 +142,5 @@ def test_device_goes_away(caplog):
     time.sleep(0.5)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
-    # clean up afterwards (THIS SHOULD BE A FINALIZER ELSE THINGS HANG)
+    # TODO clean up afterwards (THIS SHOULD BE A FINALIZER ELSE THINGS HANG)
     tc_manager.stop_communicating()
