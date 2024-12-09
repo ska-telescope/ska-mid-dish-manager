@@ -100,12 +100,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
-
-        # Add it to component state if not there
-        if attr_name not in self._component_state:
-            self._component_state[attr_name] = None
-
-        # review why we are catching broad level exeption
         quality = event_data.attr_value.quality
         try:
             if attr_name in self._quality_monitored_attributes:
@@ -123,7 +117,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error occured updating component state")
 
-            # if the error event stops does tango emit a valid event for all
+            # if the error event stops tango emits a valid event for all
             # the error events we got for the various attribute subscription.
             # update the communication state in case the error event callback flipped it
             self._active_attr_event_subscriptions.add(attr_name)
@@ -153,13 +147,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._active_attr_event_subscriptions.remove(attr_name)
         except KeyError:
             pass
-
-        # this is a hack at the moment to get comms to stay as established
-        # needs a broader discussion on what to do about this especially
-        # since this affects e.g. write_attribute_value function
-        error_reason = errors[-1].reason
-        if error_reason in ["API_EventTimeout", "API_MissedEvents"]:
-            return
 
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
