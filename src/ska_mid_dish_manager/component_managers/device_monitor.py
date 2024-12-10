@@ -84,6 +84,11 @@ class SubscriptionTracker:
     ) -> None:
         """
         Subscribe to change events on the device
+
+        :param attribute_name: The attribute name
+        :type attribute_name: str
+        :param device_proxy: a client to the device
+        :type device_proxy: tango.DeviceProxy
         """
         # dont subscribe to attributes with live subscriptions already
         if attribute_name in self._subscribed_attrs:
@@ -111,6 +116,9 @@ class SubscriptionTracker:
     def clear_subscriptions(self, device_proxy: tango.DeviceProxy) -> None:
         """
         Set all attrs as not subscribed
+
+        :param device_proxy: a client to the device
+        :type device_proxy: tango.DeviceProxy
         """
         # subscription_stopped will update the dictionary being iterated over
         # and raise a RuntimeError. grab a copy to use in the iteration
