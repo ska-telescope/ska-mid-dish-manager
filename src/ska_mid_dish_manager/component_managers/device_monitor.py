@@ -130,8 +130,7 @@ class SubscriptionTracker:
                         attribute_name,
                         device_proxy.dev_name(),
                     )
-                else:
-                    self.subscription_stopped(attribute_name)
+                self.subscription_stopped(attribute_name)
 
 
 # pylint:disable=too-few-public-methods, too-many-instance-attributes
@@ -196,6 +195,8 @@ class TangoDeviceMonitor:
             if self._subscription_tracker.subscribed_attrs:
                 device_proxy = self._device_proxy_factory(self._tango_fqdn)
                 self._subscription_tracker.clear_subscriptions(device_proxy)
+
+            self._device_proxy_factory.factory_reset()
 
     def _verify_connection_up(
         self, on_verified_callback: Callable, exit_thread_event: Event
