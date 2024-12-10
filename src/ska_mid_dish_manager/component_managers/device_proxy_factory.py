@@ -92,10 +92,10 @@ class DeviceProxyManager:
     def __init__(self, logger: logging.Logger, thread_event: Event):
         self._logger = logger
         self._event_signal = thread_event
-        self.device_proxies: Dict[str, tango.DeviceProxy] = {}
+        self._device_proxies: Dict[str, tango.DeviceProxy] = {}
 
     def __call__(self, trl: str) -> Any:
-        device_proxy = self.device_proxies.get(trl)
+        device_proxy = self._device_proxies.get(trl)
 
         if device_proxy is None:
             self._logger.debug(f"Creating DeviceProxy to device at {trl}")
@@ -103,9 +103,9 @@ class DeviceProxyManager:
                 device_proxy = self.create_tango_device_proxy(trl)
             except (tango.DevFailed, RuntimeError):
                 self._logger.warning(f"Failed creating DeviceProxy to device at {trl}")
-                self.device_proxies[trl] = device_proxy
+                self._device_proxies[trl] = device_proxy
                 return device_proxy
-            self.device_proxies[trl] = device_proxy
+            self._device_proxies[trl] = device_proxy
         else:
             self._logger.debug(f"Returning existing DeviceProxy to device at {trl}")
 
@@ -170,3 +170,7 @@ class DeviceProxyManager:
             device_proxy = tango.DeviceProxy(trl)
 
         return device_proxy
+
+    def factory_reset(self) -> Any:
+        """Remove device proxy references to the devices"""
+        self._device_proxies = {}
