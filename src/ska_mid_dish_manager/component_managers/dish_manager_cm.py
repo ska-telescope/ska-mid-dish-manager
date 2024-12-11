@@ -1069,8 +1069,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     )
                     return result_code, message
             else:
-                self.logger.debug("Missing 'value' for key '%s'", key)
                 message = f"Missing 'value' for key '{key}'."
+                self.logger.debug(message)
                 return result_code, message
 
             # Check if unit is None
@@ -1089,8 +1089,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 band_coeffs_values.append(value)
             else:
-                self.logger.debug("Missing 'units' for key '%s'", key)
                 message = f"Missing 'units' for key '{key}'."
+                self.logger.debug(message)
                 return result_code, message
 
         # Extract the band's value after the underscore
