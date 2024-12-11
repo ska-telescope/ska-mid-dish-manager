@@ -1,0 +1,43 @@
+{
+    "interface": "https://schema.skao.int/ska-mid-dish-gpm/1.2",
+    "antenna": "SKA001",
+    "band": "Band_2",
+    "coefficients": {
+      "IA": {
+     },
+      "CA": {
+      },
+      "NPAE": {
+      },
+      "AN": {
+      },
+      "AN0": {
+      },
+      "AW": {
+      },
+      "AW0": {
+      },
+      "ACEC": {
+      },
+      "ACES": {
+     },
+      "ABA": {
+     },
+      "ABphi": {
+      },
+      "IE": {
+      },
+      "ECEC": {
+     },
+      "ECES": {
+      },
+      "HECE4": {
+      },
+      "HESE4": {
+      },
+      "HECE8": {
+     },
+      "HESE8": {
+      }
+    }
+  } 
