@@ -219,9 +219,9 @@ def test_unit_and_range(
     [
         (
             "missing_units.json",
-            "Missing 'value' for key 'IA'.",
+            "Missing 'units' for key 'IA'.",
         ),
-        ("missing_values.json", "Missing 'units' for key 'IA'."),
+        ("missing_values.json", "Missing 'value' for key 'IA'."),
     ],
 )
 def test_missing_units_values(
