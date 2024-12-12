@@ -5,6 +5,10 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+Unreleased
+*************
+- Added validation check with appropriate reply for `value` and `units` keys for the `ApplyPointingModel` command.
+
 Version 6.0.0
 *************
 - Added unit and range verification checks to `ApplyPointingModel`command
