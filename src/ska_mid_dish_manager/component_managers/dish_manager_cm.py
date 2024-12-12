@@ -372,7 +372,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Only log non pointing changes
         if not any(
-            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            attr
+            in [
+                "desiredpointingaz",
+                "desiredpointingel",
+                "achievedpointing",
+                "tracktablecurrentindex",
+                "tracktableendindex",
+            ]
             for attr in kwargs
         ):
             self.logger.debug(
@@ -556,6 +563,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         "desiredpointingaz",
                         "desiredpointingel",
                         "achievedpointing",
+                        "tracktablecurrentindex",
+                        "tracktableendindex",
                     ]:
                         self.logger.debug(
                             ("Updating %s with %s %s [%s]"),
@@ -574,7 +583,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
         if not any(
-            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            attr
+            in [
+                "desiredpointingaz",
+                "desiredpointingel",
+                "achievedpointing",
+                "tracktablecurrentindex",
+                "tracktableendindex",
+            ]
             for attr in kwargs
         ):
             self.logger.debug("Updating dish manager component state with [%s]", kwargs)
