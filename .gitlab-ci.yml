@@ -65,13 +65,13 @@ sync-to-main:
   script:
     - echo "Synchronizing scheduled testing branch to main branch"
     - git fetch origin
+    # Setup commit author
+    - git config user.email "$GITLAB_USER_EMAIL" 
+    - git config user.name "$GITLAB_USER_NAME"
     # Attempt to merge main into testing branch and skip if already up to date
     - if git merge origin/main | grep "Already up to date."; then
         exit 0;
       fi
-    # Commit merge using current users details as author
-    - git config user.email "$GITLAB_USER_EMAIL" 
-    - git config user.name "$GITLAB_USER_NAME"
     - git commit -m "KAR-1167 Merge branch main into kar-1167-scheduled-testing"
     # Ensure username is URL safe/encoded before pushing
     - GITLAB_USER_LOGIN=printf %s $GITLAB_USER_LOGIN | jq -Rr @uri
