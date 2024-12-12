@@ -101,6 +101,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
             actstaticoffsetvaluexel=0.0,
             actstaticoffsetvalueel=0.0,
+            tracktablecurrentindex=0,
+            tracktableendindex=0,
             achievedtargetlock=False,
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
@@ -174,6 +176,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 actstaticoffsetvaluexel=None,
                 actstaticoffsetvalueel=None,
+                tracktablecurrentindex=0,
+                tracktableendindex=0,
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, Device.DS
                 ),
@@ -230,6 +234,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "trackInterpolationMode",
                 "actStaticOffsetValueXel",
                 "actStaticOffsetValueEl",
+                "trackTableCurrentIndex",
+                "trackTableEndIndex",
             ],
             "SPFRX": [
                 "noiseDiodeMode",

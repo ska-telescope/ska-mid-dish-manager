@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 Unreleased
 *************
 - Added validation check with appropriate reply for `value` and `units` keys for the `ApplyPointingModel` command.
+- Added `trackTableCurrentIndex` and `trackTableEndIndex` attributes that reflect track table indexes
 
 Version 6.0.0
 *************

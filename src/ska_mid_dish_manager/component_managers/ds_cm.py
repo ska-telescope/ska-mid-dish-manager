@@ -50,6 +50,8 @@ class DSComponentManager(TangoDeviceComponentManager):
             "actStaticOffsetValueXel",
             "actStaticOffsetValueEl",
             "dscpowerlimitkw",
+            "trackTableCurrentIndex",
+            "trackTableEndIndex",
         )
         super().__init__(
             tango_device_fqdn,
