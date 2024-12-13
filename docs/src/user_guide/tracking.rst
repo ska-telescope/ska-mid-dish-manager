@@ -22,8 +22,7 @@ The attributes related to tracking are:
 * **programTrackTable**
 
   This attribute contains the timestamped points of desired azimuth and elevation that the dish structure controller will try to achieve. Note that the dish structure controller performs 
-  spline interpolation between track table points, hence it is not necessary to provide track tables with short time intervals between points unless agile 
-  maneuvering cannot be achieved with a spline fitting of the provided points.
+  interpolation between track table points, hence it is not necessary to provide track tables with short time intervals between points unless agile maneuvering cannot be achieved.
 
 * **achievedPointing**
 
@@ -61,7 +60,7 @@ The attributes related to tracking are:
 
 * **Track()** 
 
-  This is the command to start tracking. There must be valid entries loaded into the track table for a track to start successfully. Once the tables are consumed in the track table, 
+  This is the command to start tracking. There must be valid entries loaded into the track table for a track to start successfully. Once the entries are consumed in the track table, 
   the dish stops tracking. If one wishes to maintain tracking state, the track table must be replenished with valid entries to track - *valid* in the sense that the timestamp is not in the past.
 
 * **TrackStop()** 
