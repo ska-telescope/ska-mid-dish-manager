@@ -38,14 +38,16 @@ The attributes related to tracking are:
   between the ``trackTableCurrentIndex`` and ``trackTableEndIndex`` represent the valid track table entries that shall be tracked when tracking is active. If 
   the track table points are in the past when being processed (when tracking is active), then the points will be ignored and the next valid point will be used. The circular
   buffer size is defined as 10000. As the buffer type is circular, this maximum size is necessary to calculate the space available at any point in time in the buffer.
-  The number of valid entries in the track table can be calculated according to: 
+  The space available can be calculated as follows: 
   
   .. code-block:: python
     
-    table_len = (trackTableEndIndex - trackTableCurrentIndex) % 10000 + 1
-  
-  Then the space available can be concluded by subtracting ``table_len`` from 10000. 
-  As points in the table are consumed, the ``trackTableCurrentIndex`` moves closer to ``trackTableEndIndex``.
+    if trackTableEndIndex == trackTableCurrentIndex:
+        used_space = 0
+    else:
+        used_space = (trackTableEndIndex - trackTableCurrentIndex) % 10000 + 1
+
+    space_available = 10000 - used_space
 
 * **pointingState** 
 
