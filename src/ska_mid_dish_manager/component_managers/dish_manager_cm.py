@@ -101,6 +101,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
             actstaticoffsetvaluexel=0.0,
             actstaticoffsetvalueel=0.0,
+            tracktablecurrentindex=0,
+            tracktableendindex=0,
             achievedtargetlock=False,
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
@@ -174,6 +176,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 actstaticoffsetvaluexel=None,
                 actstaticoffsetvalueel=None,
+                tracktablecurrentindex=0,
+                tracktableendindex=0,
                 communication_state_callback=partial(
                     self._sub_communication_state_changed, Device.DS
                 ),
@@ -230,6 +234,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "trackInterpolationMode",
                 "actStaticOffsetValueXel",
                 "actStaticOffsetValueEl",
+                "trackTableCurrentIndex",
+                "trackTableEndIndex",
             ],
             "SPFRX": [
                 "noiseDiodeMode",
@@ -366,7 +372,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Only log non pointing changes
         if not any(
-            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            attr
+            in [
+                "desiredpointingaz",
+                "desiredpointingel",
+                "achievedpointing",
+                "tracktablecurrentindex",
+                "tracktableendindex",
+            ]
             for attr in kwargs
         ):
             self.logger.debug(
@@ -550,6 +563,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         "desiredpointingaz",
                         "desiredpointingel",
                         "achievedpointing",
+                        "tracktablecurrentindex",
+                        "tracktableendindex",
                     ]:
                         self.logger.debug(
                             ("Updating %s with %s %s [%s]"),
@@ -568,7 +583,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
         if not any(
-            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            attr
+            in [
+                "desiredpointingaz",
+                "desiredpointingel",
+                "achievedpointing",
+                "tracktablecurrentindex",
+                "tracktableendindex",
+            ]
             for attr in kwargs
         ):
             self.logger.debug("Updating dish manager component state with [%s]", kwargs)

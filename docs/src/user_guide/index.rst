@@ -9,3 +9,4 @@ User Guide
    How To<how_to>
    Abort on DishManager<abort>
    Apply Pointing Model<apply_pointing_model> 
+   Tracking<tracking>

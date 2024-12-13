@@ -67,6 +67,10 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     assert achieved_az == pytest.approx(INIT_AZ)
     assert achieved_el == pytest.approx(INIT_EL)
 
+    yield
+
+    dish_manager_proxy.TrackStop()
+
 
 # pylint: disable=unused-argument,too-many-arguments,too-many-locals,too-many-statements
 @pytest.mark.acceptance
@@ -299,6 +303,144 @@ def test_append_dvs_case(
 
     achieved_pointing_event_store.clear_queue()
     achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=10)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_maximum_capacity(
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+):
+    """Test loading of track tables to maximum capacity."""
+
+    pointing_state_event_store = event_store_class()
+    result_event_store = event_store_class()
+    achieved_pointing_event_store = event_store_class()
+    current_index_event_store = event_store_class()
+    end_index_event_store = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        result_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        pointing_state_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "achievedPointing",
+        tango.EventType.CHANGE_EVENT,
+        achieved_pointing_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "trackTableCurrentIndex",
+        tango.EventType.CHANGE_EVENT,
+        current_index_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "trackTableEndIndex",
+        tango.EventType.CHANGE_EVENT,
+        end_index_event_store,
+    )
+
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+
+    current_pointing = dish_manager_proxy.achievedPointing
+    current_az = current_pointing[1]
+    current_el = current_pointing[2]
+
+    def generate_constant_table(
+        start_time, dt_sample, samples, az_sample, el_sample
+    ) -> list[float]:
+        timestamp = start_time
+        track_table = []
+        for _ in range(samples):
+            row = [timestamp, az_sample, el_sample]
+            track_table.extend(row)
+            timestamp += dt_sample
+
+        return track_table
+
+    track_delay = 40
+    time_now = get_current_tai_timestamp()
+    track_start_tai = time_now + track_delay
+    duration_per_block_s = 5
+    samples_per_block = 50
+    sample_spacing = duration_per_block_s / samples_per_block
+    # 50 samples covering 5 s is equivalent of a points spacing of
+    # 5 / 50 = 0.1s
+    # with a maximum table size of 10000
+    # the total duration that can be capture in the track table is
+    # 10000 * 0.1 = 1000s or ~ 17 minutes
+    track_table = generate_constant_table(
+        track_start_tai, sample_spacing, samples_per_block, current_az, current_el
+    )
+    # reset indexes with NEW load mode
+    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
+    dish_manager_proxy.programTrackTable = track_table
+
+    current_index_event_store.wait_for_value(0)
+    expected_end_index = samples_per_block - 1
+    end_index_event_store.wait_for_value(expected_end_index)
+
+    # append to fill up track table
+    max_track_table_buffer_size = 10000
+    max_track_table_load = int(max_track_table_buffer_size / samples_per_block)
+    for _ in range(max_track_table_load - 1):
+        # use last track table timestamp as a reference for start of new block
+        start_tai = track_table[-3] + sample_spacing
+        track_table = generate_constant_table(
+            start_tai, sample_spacing, samples_per_block, current_az, current_el
+        )
+        dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
+        dish_manager_proxy.programTrackTable = track_table
+
+        expected_end_index += samples_per_block
+        end_index_event_store.wait_for_value(expected_end_index)
+
+    # try to append to a full track table and expect failure
+    start_tai = track_table[-3] + sample_spacing
+    track_table = generate_constant_table(
+        start_tai, sample_spacing, samples_per_block, current_az, current_el
+    )
+    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
+    with pytest.raises(tango.DevFailed):
+        dish_manager_proxy.programTrackTable = track_table
+
+    # ensure load completed before track start time
+    load_complete_time = get_current_tai_timestamp()
+    assert track_start_tai > load_complete_time
+
+    [[_], [unique_id]] = dish_manager_proxy.Track()
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
+    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
+
+    # wait for tracking to start consuming table
+    while get_current_tai_timestamp() < track_start_tai:
+        time.sleep(5)
+    # check that current index has moved from reset
+    assert dish_manager_proxy.trackTableCurrentIndex > 0
+
+    # wait for the first tracking block to be consumed so that space is available
+    while get_current_tai_timestamp() < track_start_tai + duration_per_block_s:
+        time.sleep(5)
+    start_tai = track_table[-3] + sample_spacing
+    track_table = generate_constant_table(
+        start_tai, sample_spacing, samples_per_block, current_az, current_el
+    )
+    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
+    dish_manager_proxy.programTrackTable = track_table
+    # expect a roll over of the circular buffer
+    expected_end_index = samples_per_block - 1
+    end_index_event_store.wait_for_value(expected_end_index)
 
 
 @pytest.mark.acceptance
