@@ -69,7 +69,7 @@ sync-to-main:
     - git config user.email "$GITLAB_USER_EMAIL" 
     - git config user.name "$GITLAB_USER_NAME"
     # Attempt to merge main into testing branch and skip if already up to date
-    - if git merge origin/main | grep "Already up to date."; then
+    - if git merge origin/main --allow-unrelated-histories | grep "Already up to date."; then
         exit 0;
       fi
     - git add -u
