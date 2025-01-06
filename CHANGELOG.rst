@@ -7,7 +7,19 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 Unreleased
 *************
+
+Version 6.0.1
+*************
 - Added validation check with appropriate reply for `value` and `units` keys for the `ApplyPointingModel` command.
+- Added `trackTableCurrentIndex` and `trackTableEndIndex` attributes that reflect track table indexes
+- Upgraded ska-mid-dish-ds-manager chart to v3.0.1
+
+  - Added attributes to reflect track table indexes
+
+- Upgraded ska-mid-dish-simulators to v4.2.2
+
+  - Exposed track table buffer indexes
+  - Excluded zero-padded track table entries from being copied into internal buffer
 
 Version 6.0.0
 *************
