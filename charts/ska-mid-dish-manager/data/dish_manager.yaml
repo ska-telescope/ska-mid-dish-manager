@@ -1,7 +1,7 @@
 name: "dishmanager-{{.Release.Name}}"
 function: telescope-monitoring
 domain: general-monitoring
-command: "python /src/ska_mid_dish_manager/devices/DishManagerDS.py "
+command: "DishManagerDS"
 server:
   name: "DishManagerDS"
   instances:

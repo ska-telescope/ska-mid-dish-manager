@@ -5,8 +5,8 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
-Unreleased
-**********
+## unreleased
+*************
 - Updated dockerfile to use new base images and improved docker image build
 
 Version 6.0.1
