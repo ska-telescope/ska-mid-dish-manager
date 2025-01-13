@@ -1,7 +1,7 @@
 name: "dishmanager-{{.Release.Name}}"
 function: telescope-monitoring
 domain: general-monitoring
-command: "/usr/local/bin/DishManagerDS "
+command: "DishManagerDS"
 server:
   name: "DishManagerDS"
   instances:

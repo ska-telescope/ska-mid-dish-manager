@@ -101,6 +101,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
             actstaticoffsetvaluexel=0.0,
             actstaticoffsetvalueel=0.0,
+            tracktablecurrentindex=0,
+            tracktableendindex=0,
             achievedtargetlock=False,
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
@@ -172,6 +174,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 actstaticoffsetvaluexel=None,
                 actstaticoffsetvalueel=None,
+                tracktablecurrentindex=0,
+                tracktableendindex=0,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, Device.DS
                 ),
@@ -232,6 +236,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "trackInterpolationMode",
                 "actStaticOffsetValueXel",
                 "actStaticOffsetValueEl",
+                "trackTableCurrentIndex",
+                "trackTableEndIndex",
             ],
             "SPFRX": [
                 "noiseDiodeMode",
@@ -318,7 +324,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Only log non pointing changes
         if not any(
-            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            attr
+            in [
+                "desiredpointingaz",
+                "desiredpointingel",
+                "achievedpointing",
+                "tracktablecurrentindex",
+                "tracktableendindex",
+            ]
             for attr in kwargs
         ):
             self.logger.debug(
@@ -513,6 +526,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         "desiredpointingaz",
                         "desiredpointingel",
                         "achievedpointing",
+                        "tracktablecurrentindex",
+                        "tracktableendindex",
                     ]:
                         self.logger.debug(
                             ("Updating %s with %s %s [%s]"),
@@ -531,7 +546,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _update_component_state(self, *args, **kwargs):
         """Log the new component state"""
         if not any(
-            attr in ["desiredpointingaz", "desiredpointingel", "achievedpointing"]
+            attr
+            in [
+                "desiredpointingaz",
+                "desiredpointingel",
+                "achievedpointing",
+                "tracktablecurrentindex",
+                "tracktableendindex",
+            ]
             for attr in kwargs
         ):
             self.logger.debug("Updating dish manager component state with [%s]", kwargs)
@@ -1025,32 +1047,44 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             unit = coefficients[key].get("units")
 
             min_value, max_value = (0, 360) if key == "ABphi" else (-2000, 2000)
-            if not min_value <= value <= max_value:
-                self.logger.debug(
-                    "Value %s for key '%s' is out of range [%s, %s]",
-                    value,
-                    key,
-                    min_value,
-                    max_value,
-                )
-                message = (
-                    f"Value {value} for key '{key}' is out of range [{min_value}, {max_value}]"
-                )
+            # Check if value is None
+            if value is not None:
+                if not min_value <= value <= max_value:
+                    self.logger.debug(
+                        "Value %s for key '%s' is out of range [%s, %s]",
+                        value,
+                        key,
+                        min_value,
+                        max_value,
+                    )
+                    message = (
+                        f"Value {value} for key '{key}' is out of range [{min_value}, {max_value}]"
+                    )
+                    return result_code, message
+            else:
+                message = f"Missing 'value' for key '{key}'."
+                self.logger.debug(message)
                 return result_code, message
 
-            if unit.strip().lower() != expected_unit.strip().lower():
-                self.logger.debug(
-                    "Unit %s for key '%s' is not correct. It should be %s",
-                    unit,
-                    key,
-                    expected_unit,
-                )
-                message = (
-                    f"Unit {unit} for key '{key}' is not correct. It should be {expected_unit}"
-                )
-                return result_code, message
+            # Check if unit is None
+            if unit is not None:
+                if unit.strip().lower() != expected_unit.strip().lower():
+                    self.logger.debug(
+                        "Unit %s for key '%s' is not correct. It should be %s",
+                        unit,
+                        key,
+                        expected_unit,
+                    )
+                    message = (
+                        f"Unit {unit} for key '{key}' is not correct. It should be {expected_unit}"
+                    )
+                    return result_code, message
 
-            band_coeffs_values.append(value)
+                band_coeffs_values.append(value)
+            else:
+                message = f"Missing 'units' for key '{key}'."
+                self.logger.debug(message)
+                return result_code, message
 
         # Extract the band's value after the underscore
         band_value = data.get("band").split("_")[-1]

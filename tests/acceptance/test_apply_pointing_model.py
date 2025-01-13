@@ -210,3 +210,31 @@ def test_unit_and_range(
 
     assert command_resp == resp
     assert result_code == ResultCode.REJECTED
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+@pytest.mark.parametrize(
+    ("file_name, response"),
+    [
+        (
+            "missing_units.json",
+            "Missing 'units' for key 'IA'.",
+        ),
+        ("missing_values.json", "Missing 'value' for key 'IA'."),
+    ],
+)
+def test_missing_units_values(
+    file_name: str,
+    response: str,
+    dish_manager_proxy: tango.DeviceProxy,
+) -> None:
+    """Test ApplyPointingModel command with missing units and value keys."""
+
+    pointing_model_json_str, _ = read_file_contents(file_name)
+
+    [[result_code], [command_resp]] = dish_manager_proxy.ApplyPointingModel(
+        pointing_model_json_str
+    )
+    assert response == command_resp
+    assert result_code == ResultCode.REJECTED
