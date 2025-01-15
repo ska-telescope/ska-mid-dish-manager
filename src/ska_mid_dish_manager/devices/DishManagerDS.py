@@ -365,6 +365,8 @@ class DishManager(SKAController):
                 "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
                 "actstaticoffsetvalueel": "actStaticOffsetValueEl",
                 "dscpowerlimitkw": "dscPowerLimitKw",
+                "tracktablecurrentindex": "trackTableCurrentIndex",
+                "tracktableendindex": "trackTableEndIndex",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -494,6 +496,24 @@ class DishManager(SKAController):
     def achievedTargetLock(self):
         """Returns the achievedTargetLock"""
         return self.component_manager.component_state.get("achievedtargetlock", False)
+
+    @attribute(
+        dtype=int,
+        doc="Actual used index in the track table",
+        access=AttrWriteType.READ,
+    )
+    def trackTableCurrentIndex(self) -> int:
+        """Index of current point being tracked in the track table."""
+        return self.component_manager.component_state.get("tracktablecurrentindex", 0)
+
+    @attribute(
+        dtype=int,
+        doc="End index in the track table",
+        access=AttrWriteType.READ,
+    )
+    def trackTableEndIndex(self) -> int:
+        """Index of last point in the track table."""
+        return self.component_manager.component_state.get("tracktableendindex", 0)
 
     @attribute(
         dtype=float,
