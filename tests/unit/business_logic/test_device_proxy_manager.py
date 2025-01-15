@@ -53,7 +53,7 @@ class TestDeviceProxyManager:
         for count, retry_time in enumerate(default_retry_times, start=1):
             assert (
                 f"Try number {count}: "
-                f"An error occured creating a device proxy to {trl}, retrying in {retry_time}s"
+                f"An error occurred creating a device proxy to {trl}, retrying in {retry_time}s"
                 in logs
             )
 

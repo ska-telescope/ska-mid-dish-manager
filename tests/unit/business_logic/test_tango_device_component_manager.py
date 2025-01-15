@@ -22,7 +22,7 @@ def test_component_manager_continues_reconnecting_when_device_is_unreachable(cap
     caplog.set_level(logging.DEBUG)
     tc_manager = TangoDeviceComponentManager("fake/fqdn/1", LOGGER, ("fake_attr",))
     tc_manager.start_communicating()
-    retry_log = "An error occured creating a device proxy to fake/fqdn/1, retrying in"
+    retry_log = "An error occurred creating a device proxy to fake/fqdn/1, retrying in"
     while retry_log not in caplog.text:
         time.sleep(0.5)
 
