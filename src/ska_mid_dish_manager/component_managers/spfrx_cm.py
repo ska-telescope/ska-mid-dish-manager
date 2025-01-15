@@ -24,7 +24,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         component_state_callback: Any = None,
         **kwargs: Any
     ):
-        self._monitored_attr_names = (
+        monitored_attr_names = (
             "operatingMode",
             "capturingData",
             "configuredBand",
@@ -45,7 +45,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         super().__init__(
             tango_device_fqdn,
             logger,
-            self._monitored_attr_names,
+            monitored_attr_names,
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,

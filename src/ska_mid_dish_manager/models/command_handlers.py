@@ -1,5 +1,5 @@
 """
-Abstracts all the logic for executing commands on the device server
+Abstracts all the logic for executing commands on the device
 """
 
 import logging
