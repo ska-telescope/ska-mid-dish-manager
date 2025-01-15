@@ -40,7 +40,7 @@ def retry_connection(func: Callable) -> Any:
         :return: whatever the wrapped function returns
         """
         max_retries = 5  # threshold after which retry ceases
-        retry_time = 1  # iniital wait between retry attempts
+        retry_time = 1  # initial wait between retry attempts
         back_off = 1.5  # retry_time factor multiplier
 
         try_count = 1
@@ -58,7 +58,7 @@ def retry_connection(func: Callable) -> Any:
                 else:
                     trl = args[0]
                     msg = (
-                        f"Try number {try_count}: An error occured creating a device proxy to "
+                        f"Try number {try_count}: An error occurred creating a device proxy to "
                         f"{trl}, retrying in {retry_time}s"
                     )
 

@@ -60,7 +60,7 @@ class SubscriptionTracker:
         :param attribute_name: The attribute name
         :type attribute_name: str
         :param subscription_id: The subscription descriptor
-        :type subcription_id: int
+        :type subscription_id: int
         """
         with self._update_lock:
             self._subscribed_attrs[attribute_name] = subscription_id
@@ -90,7 +90,7 @@ class SubscriptionTracker:
         :param device_proxy: a client to the device
         :type device_proxy: tango.DeviceProxy
         """
-        # dont subscribe to attributes with live subscriptions already
+        # don't subscribe to attributes with live subscriptions already
         if attribute_name in self._subscribed_attrs:
             return
 
@@ -264,6 +264,7 @@ class TangoDeviceMonitor:
         retry_counts = {name: 1 for name in self._monitored_attributes}
         # set up all subscriptions
         device_proxy = self._device_proxy_factory(self._tango_fqdn)
+        attribute_name = None
         while not exit_thread_event.is_set():
             try:
                 # Subscribe to all monitored attributes
