@@ -4,7 +4,7 @@ from dataclasses import asdict
 from importlib.metadata import PackageNotFoundError, version
 
 from ska_mid_dish_manager.models.data_classes import DeviceInfoDataClass, DmBuildStateDataClass
-from ska_mid_dish_manager.models.dish_enums import Device
+from ska_mid_dish_manager.models.dish_enums import DishDevice
 
 DISH_MANAGER_PACKAGE_NAME = "ska_mid_dish_manager"
 BAD_JSON_FORMAT_VERSION = "Bad JSON formatting."
@@ -28,16 +28,16 @@ class ReleaseInfo:
         )
 
         self._device_to_update_method_map = {
-            Device.DS: self._update_ds_manager_version,
-            Device.SPF: self._update_spfc_version,
-            Device.SPFRX: self._update_spfrx_version,
+            DishDevice.DS: self._update_ds_manager_version,
+            DishDevice.SPF: self._update_spfc_version,
+            DishDevice.SPFRX: self._update_spfrx_version,
         }
 
     def get_build_state(self) -> str:
         """Get JSON string of build state dataclass."""
         return json.dumps(asdict(self._build_state), indent=BUILD_STATE_SPACING)
 
-    def update_build_state(self, device: Device, build_state: str) -> str:
+    def update_build_state(self, device: DishDevice, build_state: str) -> str:
         """Update relevant subdevice build information and return build state."""
         if device in self._device_to_update_method_map:
             self._device_to_update_method_map[device](build_state)

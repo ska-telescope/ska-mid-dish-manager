@@ -39,7 +39,7 @@ from ska_mid_dish_manager.models.constants import (
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
-    Device,
+    DishDevice,
     DishMode,
     NoiseDiodeMode,
     PointingState,
@@ -231,7 +231,11 @@ class DishManager(SKAController):
             ApplyPointingModelCommand(self.component_manager, self.logger),
         )
 
-    def _update_version_of_subdevice_on_success(self, device: Device, build_state: str):
+    # ---------
+    # Callbacks
+    # ---------
+
+    def _update_version_of_subdevice_on_success(self, device: DishDevice, build_state: str):
         """Update the version information of subdevice if connection is successful."""
         try:
             self._build_state = self._release_info.update_build_state(device, build_state)

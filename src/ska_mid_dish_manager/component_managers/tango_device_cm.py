@@ -68,17 +68,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
-    def _fetch_build_state_information(self) -> None:
-        build_state_attr = (
-            "swVersions" if "spf" in self._tango_device_fqdn.lower() else "buildState"
-        )
-        try:
-            build_state = self.read_attribute_value(build_state_attr)
-        except tango.DevFailed:
-            build_state = ""
-        else:
-            build_state = str(build_state)
-        self._update_component_state(buildstate=build_state)
+    # ---------
+    # Callbacks
+    # ---------
 
     def _sync_communication_to_subscription(self, subscribed_attrs: list[str]) -> None:
         """
@@ -97,6 +89,82 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._fetch_build_state_information()
         else:
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
+    def _update_state_from_event(self, event_data: tango.EventData) -> None:
+        """
+        Update component state as the change events come in.
+
+        :param event_data: Tango event
+        :type event_data: tango.EventData
+        """
+        # I get lowercase and uppercase "State" from events
+        # for some reason, stick to lowercase to avoid duplicates
+        attr_name = event_data.attr_value.name.lower()
+        quality = event_data.attr_value.quality
+        try:
+            if attr_name in self._quality_monitored_attributes:
+                self._quality_state_callback(attr_name, quality)
+        except Exception:  # pylint:disable=broad-except
+            self.logger.exception("Error occurred on attribute quality state update")
+
+        if quality is not tango.AttrQuality.ATTR_INVALID:
+            try:
+                value = event_data.attr_value.value
+                if isinstance(value, np.ndarray):
+                    value = list(value)
+                self._update_component_state(**{attr_name: value})
+            # Catch any errors and log it otherwise it remains hidden
+            except Exception:  # pylint:disable=broad-except
+                self.logger.exception("Error occured updating component state")
+
+            # if the error event stops tango emits a valid event for all
+            # the error events we got for the various attribute subscription.
+            # update the communication state in case the error event callback flipped it
+            self._active_attr_event_subscriptions.add(attr_name)
+            self.sync_communication_to_valid_event()
+
+    def _handle_error_events(self, event_data: tango.EventData) -> None:
+        """
+        Handle error events from attr subscription
+
+        :param event_data: data representing tango event
+        :type event_data: tango.EventData
+        """
+        attr_name = event_data.attr_name
+        errors = event_data.errors
+
+        self.logger.debug(
+            (
+                "Error event was emitted by device %s with the following details: "
+                "attr_name: %s, "
+                "errors: %s"
+            ),
+            self._tango_device_fqdn,
+            attr_name,
+            errors,
+        )
+        try:
+            self._active_attr_event_subscriptions.remove(attr_name)
+        except KeyError:
+            pass
+
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
+    # --------------
+    # helper methods
+    # --------------
+
+    def _fetch_build_state_information(self) -> None:
+        build_state_attr = (
+            "swVersions" if "spf" in self._tango_device_fqdn.lower() else "buildState"
+        )
+        try:
+            build_state = self.read_attribute_value(build_state_attr)
+        except tango.DevFailed:
+            build_state = ""
+        else:
+            build_state = str(build_state)
+        self._update_component_state(buildstate=build_state)
 
     def sync_communication_to_valid_event(self) -> None:
         """Sync communication state with valid events from monitored attributes"""
@@ -157,70 +225,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 monitored_attribute_values[monitored_attribute] = value
             self._update_component_state(**monitored_attribute_values)
 
-    def _update_state_from_event(self, event_data: tango.EventData) -> None:
-        """Update component state as the change events come in.
-
-        :param event_data: Tango event
-        :type event_data: tango.EventData
-        """
-        # I get lowercase and uppercase "State" from events
-        # for some reason, stick to lowercase to avoid duplicates
-        attr_name = event_data.attr_value.name.lower()
-        quality = event_data.attr_value.quality
-        try:
-            if attr_name in self._quality_monitored_attributes:
-                self._quality_state_callback(attr_name, quality)
-        except Exception:  # pylint:disable=broad-except
-            self.logger.exception("Error occurred on attribute quality state update")
-
-        if quality is not tango.AttrQuality.ATTR_INVALID:
-            try:
-                value = event_data.attr_value.value
-                if isinstance(value, np.ndarray):
-                    value = list(value)
-                self._update_component_state(**{attr_name: value})
-            # Catch any errors and log it otherwise it remains hidden
-            except Exception:  # pylint:disable=broad-except
-                self.logger.exception("Error updating component state")
-
-            # TODO if the error event stops does tango emit a valid event for all
-            # the error events we got for the various attribute subscription?
-            # update the communication state in case the error event callback flipped it
-            self._active_attr_event_subscriptions.add(attr_name)
-            self.sync_communication_to_valid_event()
-
-    def _stop_event_consumer_thread(self) -> None:
-        """Stop the event consumer thread if it is alive."""
-        if (
-            self._event_consumer_thread is not None
-            and self._event_consumer_abort_event is not None
-            and self._event_consumer_thread.is_alive()
-        ):
-            self._event_consumer_abort_event.set()
-            self._event_consumer_thread.join()
-
-    def _start_event_consumer_thread(self) -> None:
-        """Start the event consumer thread.
-
-        This method is idempotent. When called the existing (if any)
-        event consumer thread is removed and recreated.
-        """
-        self._stop_event_consumer_thread()
-
-        self._event_consumer_abort_event = Event()
-        self._event_consumer_thread = Thread(
-            target=self._event_consumer,
-            args=[
-                self._events_queue,
-                self._update_state_from_event,
-                self._event_consumer_abort_event,
-                self._event_consumer_cb,
-            ],
-        )
-
-        self._event_consumer_thread.name = f"{self._tango_device_fqdn}_event_consumer_thread"
-        self._event_consumer_thread.start()
-
     @classmethod
     def _event_consumer(
         cls,
@@ -240,32 +244,38 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Empty:
                 pass
 
-    def _event_consumer_cb(self, event_data: tango.EventData) -> None:
-        """
-        Handle error events from attr subscription
+    def _stop_event_consumer_thread(self) -> None:
+        """Stop the event consumer thread if it is alive."""
+        if (
+            self._event_consumer_thread is not None
+            and self._event_consumer_abort_event is not None
+            and self._event_consumer_thread.is_alive()
+        ):
+            self._event_consumer_abort_event.set()
+            self._event_consumer_thread.join()
 
-        :param event_data: data representing tango event
-        :type event_data: tango.EventData
+    def _start_event_consumer_thread(self) -> None:
         """
-        attr_name = event_data.attr_name
-        errors = event_data.errors
+        Start the event consumer thread.
 
-        self.logger.debug(
-            (
-                "Error event was emitted by device %s with the following details: "
-                "attr_name: %s, "
-                "errors: %s"
-            ),
-            self._tango_device_fqdn,
-            attr_name,
-            errors,
+        This method is idempotent. When called the existing (if any)
+        event consumer thread is removed and recreated.
+        """
+        self._stop_event_consumer_thread()
+
+        self._event_consumer_abort_event = Event()
+        self._event_consumer_thread = Thread(
+            target=self._event_consumer,
+            args=[
+                self._events_queue,
+                self._update_state_from_event,
+                self._event_consumer_abort_event,
+                self._handle_error_events,
+            ],
         )
-        try:
-            self._active_attr_event_subscriptions.remove(attr_name)
-        except KeyError:
-            pass
 
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        self._event_consumer_thread.name = f"{self._tango_device_fqdn}_event_consumer_thread"
+        self._event_consumer_thread.start()
 
     def run_device_command(
         self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore

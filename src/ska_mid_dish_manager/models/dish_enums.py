@@ -5,7 +5,7 @@
 import enum
 
 
-class Device(str, enum.Enum):
+class DishDevice(str, enum.Enum):
     DS = "DS"
     SPF = "SPF"
     SPFRX = "SPFRX"
