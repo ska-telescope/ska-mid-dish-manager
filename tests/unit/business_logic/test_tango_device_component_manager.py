@@ -90,7 +90,7 @@ def test_unhappy_path(patched_dp, caplog):
     logs = [record.message for record in caplog.records]
     for count, retry_time in enumerate(default_retry_times, start=1):
         assert (
-            f"Try number {count}: An error occured creating a device "
+            f"Try number {count}: An error occurred creating a device "
             f"proxy to a/b/c, retrying in {retry_time}s" in logs
         )
     # clean up afterwards
