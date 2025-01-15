@@ -432,7 +432,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Only log non pointing changes
         pointing_related_attrs = set(
-            ["desiredpointingaz", "desiredpointingel", "achievedpointing", "tracktablecurrentindex", "tracktableendindex"]
+            [
+                "desiredpointingaz",
+                "desiredpointingel",
+                "achievedpointing",
+                "tracktablecurrentindex",
+                "tracktableendindex",
+            ]
         )
         no_pointing_updates = set()
         if pointing_related_attrs.intersection(kwargs) == no_pointing_updates:
