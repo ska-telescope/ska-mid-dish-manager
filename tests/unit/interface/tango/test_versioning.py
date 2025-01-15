@@ -4,7 +4,6 @@ import json
 from unittest.mock import Mock, patch
 
 import pytest
-from ska_control_model import CommunicationStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -47,8 +46,8 @@ class TestDishManagerVersioning:
 
     def test_versioning_before_subdevice_connection(self):
         """Read build state on startup before subdevices connect to dish manager."""
-        buildState = self._dish_manager_proxy.buildState
-        build_state_json = json.loads(buildState)
+        build_state = self._dish_manager_proxy.buildState
+        build_state_json = json.loads(build_state)
         assert (
             build_state_json["dish_manager_version"]
             == ReleaseInfo.get_dish_manager_release_version()
@@ -70,24 +69,28 @@ class TestDishManagerVersioning:
     def test_build_state_update_on_subdevice_connection(self, device: str, build_state_key: str):
         """Test that spfc and spfrx build states of subdevices get updated when a the subdevice
         establishes connection."""
+        # configure a mock build state
         dummy_build_state_version = generate_random_text()
         cm = self.dish_manager_cm.sub_component_managers[device]
-        setattr(cm, "read_attribute_value", Mock())
-        cm.read_attribute_value.return_value = dummy_build_state_version
-        cm._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
-        buildState = self._dish_manager_proxy.buildState
-        build_state_json = json.loads(buildState)
+        setattr(cm, "read_attribute_value", Mock(return_value=dummy_build_state_version))
+        # trigger a build state update
+        cm._sync_communication_to_subscription(cm._monitored_attributes)
+
+        build_state = self._dish_manager_proxy.buildState
+        build_state_json = json.loads(build_state)
         assert build_state_json[build_state_key]["version"] == dummy_build_state_version
 
     def test_ds_version_update_on_subdevice_connection(self):
         """Test that the ds build state gets updated when a the subdevice establishes
         connection."""
+        # configure a mock build state
         build_state_update_json = {"version": generate_random_text()}
         build_state_update = json.dumps(build_state_update_json)
         cm = self.dish_manager_cm.sub_component_managers["DS"]
-        setattr(cm, "read_attribute_value", Mock())
-        cm.read_attribute_value.return_value = build_state_update
-        cm._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
-        buildState = self._dish_manager_proxy.buildState
-        build_state_json = json.loads(buildState)
+        setattr(cm, "read_attribute_value", Mock(return_value=build_state_update))
+        # trigger a build state update
+        cm._sync_communication_to_subscription(cm._monitored_attributes)
+
+        build_state = self._dish_manager_proxy.buildState
+        build_state_json = json.loads(build_state)
         assert build_state_json["ds_manager_device"]["version"] == build_state_update_json

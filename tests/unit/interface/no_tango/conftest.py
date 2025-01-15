@@ -21,7 +21,7 @@ def mock_command_tracker() -> MagicMock:
 def callbacks() -> dict:
     """Return a dictionary of callbacks."""
     return {
-        "conn_state_cb": MagicMock(),
+        "build_state_cb": MagicMock(),
         "quality_state_cb": MagicMock(),
         "comm_state_cb": MagicMock(),
         "comp_state_cb": ComponentStateStore(),
@@ -59,7 +59,7 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
         dish_manager_cm = DishManagerComponentManager(
             LOGGER,
             mock_command_tracker,
-            callbacks["conn_state_cb"],
+            callbacks["build_state_cb"],
             callbacks["quality_state_cb"],
             "device-1",
             "sub-device-1",

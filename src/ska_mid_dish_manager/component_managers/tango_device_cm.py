@@ -13,6 +13,7 @@ from ska_tango_base.base import check_communicating
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
+from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 
 
 # pylint: disable=abstract-method, too-many-instance-attributes, no-member, too-many-arguments
@@ -37,19 +38,27 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._events_queue: Queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
+        self._active_attr_event_subscriptions: set[str] = set()
         self._quality_monitored_attributes = quality_monitored_attributes
         self.logger = logger
+        self._dp_factory_signal: Event = Event()
+        self._event_consumer_thread: Optional[Thread] = None
+        self._event_consumer_abort_event: Optional[Event] = None
 
+        self._device_proxy_factory = DeviceProxyManager(self.logger, self._dp_factory_signal)
         self._tango_device_monitor = TangoDeviceMonitor(
             self._tango_device_fqdn,
+            self._device_proxy_factory,
             self._monitored_attributes,
             self._events_queue,
             logger,
-            self._update_communication_state,
+            self._sync_communication_to_subscription,
         )
 
-        self._event_consumer_thread: Optional[Thread] = None
-        self._event_consumer_abort_event: Optional[Event] = None
+        # make sure everything monitored is in the component state
+        attr_names_lower = map(lambda x: x.lower(), monitored_attributes)
+        attrs_to_be_added = set(attr_names_lower).difference(kwargs.keys())
+        kwargs.update(dict.fromkeys(attrs_to_be_added))
 
         super().__init__(
             logger,
@@ -59,11 +68,43 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
 
-        self._update_communication_state(communication_state=CommunicationStatus.NOT_ESTABLISHED)
+    def _fetch_build_state_information(self) -> None:
+        build_state_attr = (
+            "swVersions" if "spf" in self._tango_device_fqdn.lower() else "buildState"
+        )
+        try:
+            build_state = self.read_attribute_value(build_state_attr)
+        except tango.DevFailed:
+            build_state = ""
+        else:
+            build_state = str(build_state)
+        self._update_component_state(buildstate=build_state)
 
-        # Default to NOT_ESTABLISHED
-        if self._communication_state_callback:
-            self._communication_state_callback()  # type: ignore
+    def _sync_communication_to_subscription(self, subscribed_attrs: list[str]) -> None:
+        """
+        Reflect status of monitored attribute subscription on communication state
+
+        :param subscribed_attrs: the attributes with successful change event subscription
+        :type subscribed_attrs: list
+        """
+        # save a copy of the subscribed attributes. this will be
+        # evaluated by the function processing the valid events
+        self._active_attr_event_subscriptions = set(subscribed_attrs)
+        all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
+        if all_subscribed:
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
+            # send over the build state after all attributes are subscribed
+            self._fetch_build_state_information()
+        else:
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
+    def sync_communication_to_valid_event(self) -> None:
+        """Sync communication state with valid events from monitored attributes"""
+        all_monitored_events_valid = (
+            set(self._monitored_attributes) == self._active_attr_event_subscriptions
+        )
+        if all_monitored_events_valid:
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
     def clear_monitored_attributes(self) -> None:
         """
@@ -86,7 +127,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._component_state[monitored_attribute] = 0
 
     def update_state_from_monitored_attributes(self) -> None:
-        """Update the component state by reading the monitored attributes
+        """
+        Update the component state by reading the monitored attributes
 
         When an attribute on the device does not match the component_state
         it won't update unless it changes value (changes are updated via
@@ -95,17 +137,21 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         This is a convenience method that can be called to sync up the
         monitored attributes on the device and the component state.
         """
+        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
-            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
             monitored_attribute_values = {}
             for monitored_attribute in self._monitored_attributes:
                 monitored_attribute = monitored_attribute.lower()
 
-                # Add it to component state if not there
-                if monitored_attribute not in self._component_state:
-                    self._component_state[monitored_attribute] = None
-
-                value = device_proxy.read_attribute(monitored_attribute).value
+                try:
+                    value = device_proxy.read_attribute(monitored_attribute).value
+                except tango.DevFailed:
+                    self.logger.exception(
+                        "Encountered an error retrieving the current value of %s from %s",
+                        monitored_attribute,
+                        self._tango_device_fqdn,
+                    )
+                    continue
                 if isinstance(value, np.ndarray):
                     value = list(value)
                 monitored_attribute_values[monitored_attribute] = value
@@ -120,11 +166,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
-
-        # Add it to component state if not there
-        if attr_name not in self._component_state:
-            self._component_state[attr_name] = None
-
         quality = event_data.attr_value.quality
         try:
             if attr_name in self._quality_monitored_attributes:
@@ -141,6 +182,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             # Catch any errors and log it otherwise it remains hidden
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error updating component state")
+
+            # TODO if the error event stops does tango emit a valid event for all
+            # the error events we got for the various attribute subscription?
+            # update the communication state in case the error event callback flipped it
+            self._active_attr_event_subscriptions.add(attr_name)
+            self.sync_communication_to_valid_event()
 
     def _stop_event_consumer_thread(self) -> None:
         """Stop the event consumer thread if it is alive."""
@@ -170,9 +217,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self._event_consumer_cb,
             ],
         )
+
+        self._event_consumer_thread.name = f"{self._tango_device_fqdn}_event_consumer_thread"
         self._event_consumer_thread.start()
 
-    # pylint: disable=too-many-arguments
     @classmethod
     def _event_consumer(
         cls,
@@ -193,42 +241,31 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 pass
 
     def _event_consumer_cb(self, event_data: tango.EventData) -> None:
-        """Just log the error event
+        """
+        Handle error events from attr subscription
 
         :param event_data: data representing tango event
         :type event_data: tango.EventData
         """
         attr_name = event_data.attr_name
-        received_timestamp = event_data.reception_date.totime()
-        event_type = event_data.event
-        value = event_data.attr_value
         errors = event_data.errors
-        # Events with errors do not send the attribute value
-        # so regard its reading as invalid.
-        quality = tango.AttrQuality.ATTR_INVALID
 
         self.logger.debug(
             (
-                "Error event was emitted by device [%s] with the following details: "
-                "attr_name: %s"
-                "received_timestamp: %s"
-                "event_type: %s"
-                "value: %s"
-                "quality: %s"
+                "Error event was emitted by device %s with the following details: "
+                "attr_name: %s, "
                 "errors: %s"
             ),
             self._tango_device_fqdn,
             attr_name,
-            received_timestamp,
-            event_type,
-            value,
-            quality,
             errors,
         )
+        try:
+            self._active_attr_event_subscriptions.remove(attr_name)
+        except KeyError:
+            pass
 
-        if self.communication_state == CommunicationStatus.ESTABLISHED:
-            self.logger.info("Reconnecting to %s", self._tango_device_fqdn)
-            self._tango_device_monitor.monitor()
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     def run_device_command(
         self, command_name: str, command_arg: Any, task_callback: Callable = None  # type: ignore
@@ -281,9 +318,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._tango_device_fqdn,
             command_arg,
         )
+        result = None
+        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
-            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = None
             try:
                 result = device_proxy.command_inout(command_name, command_arg)
             except tango.DevFailed:
@@ -310,9 +347,17 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attribute_name,
             self._tango_device_fqdn,
         )
+        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
-            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = getattr(device_proxy, attribute_name)
+            try:
+                result = device_proxy.read_attribute(attribute_name).value
+            except tango.DevFailed:
+                self.logger.exception(
+                    "Could not read attribute [%s] on [%s]",
+                    attribute_name,
+                    self._tango_device_fqdn,
+                )
+                raise
             self.logger.debug(
                 "Result of reading [%s] on [%s] is [%s]",
                 attribute_name,
@@ -329,11 +374,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attribute_name,
             self._tango_device_fqdn,
         )
-
-        # Note: If this function is called at a high rate then re-creating the device proxy
-        # here will be inefficient. Consider moving the declaration out of this function.
+        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
-            device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
             result = None
             try:
                 result = device_proxy.write_attribute(attribute_name, attribute_value)
@@ -356,13 +398,16 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
     @typing.no_type_check
     def start_communicating(self) -> None:
         """Establish communication with the device"""
-        # pylint: disable=no-member
-        self.logger.info("start_communicating")
+        self.logger.info(f"Establish communication with {self._tango_device_fqdn}")
+        self._dp_factory_signal.clear()
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._tango_device_monitor.monitor()
         self._start_event_consumer_thread()
 
     def stop_communicating(self) -> None:
         """Stop communication with the device"""
-        # pylint: disable=no-member
+        self.logger.info(f"Stop communication with {self._tango_device_fqdn}")
+        self._dp_factory_signal.set()
         self._tango_device_monitor.stop_monitoring()
         self._stop_event_consumer_thread()
+        self._update_communication_state(CommunicationStatus.DISABLED)

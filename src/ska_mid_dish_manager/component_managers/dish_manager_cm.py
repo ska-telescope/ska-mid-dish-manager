@@ -59,7 +59,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         logger: logging.Logger,
         command_tracker,
-        connection_state_callback,
+        build_state_callback,
         quality_state_callback,
         tango_device_name: str,
         ds_device_fqdn: str,
@@ -116,20 +116,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             **kwargs,
         )
         self.logger = logger
-        self._connection_state_callback = connection_state_callback
+        self._build_state_callback = build_state_callback
         self._quality_state_callback = quality_state_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
-        self._sub_communication_state_change_lock = Lock()
         self._abort_thread: Optional[Thread] = None
-
-        self._device_to_comm_attr_map = {
-            Device.DS: "dsConnectionState",
-            Device.SPF: "spfConnectionState",
-            Device.SPFRX: "spfrxConnectionState",
-        }
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -137,6 +130,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_device_fqdn,
                 logger,
                 self._state_update_lock,
+                buildstate="",
                 operatingmode=SPFOperatingMode.UNKNOWN,
                 powerstate=SPFPowerState.UNKNOWN,
                 healthstate=HealthState.UNKNOWN,
@@ -148,19 +142,23 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, Device.SPF
+                    self._sub_device_communication_state_changed, Device.SPF
                 ),
-                component_state_callback=self._component_state_changed,
+                component_state_callback=partial(
+                    self._sub_device_component_state_changed, Device.SPF
+                ),
                 quality_state_callback=self._quality_state_callback,
             ),
             "DS": DSComponentManager(
                 ds_device_fqdn,
                 logger,
                 self._state_update_lock,
+                buildstate="",
                 healthstate=HealthState.UNKNOWN,
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=PointingState.UNKNOWN,
                 achievedtargetlock=None,
+                configuretargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
                 desiredpointingaz=[0.0, 0.0],
@@ -179,15 +177,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 tracktablecurrentindex=0,
                 tracktableendindex=0,
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, Device.DS
+                    self._sub_device_communication_state_changed, Device.DS
                 ),
-                component_state_callback=self._component_state_changed,
+                component_state_callback=partial(
+                    self._sub_device_component_state_changed, Device.DS
+                ),
                 quality_state_callback=self._quality_state_callback,
             ),
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
                 logger,
                 self._state_update_lock,
+                buildstate="",
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
                 capturingdata=False,
@@ -205,13 +206,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 periodicnoisediodepars=[0.0, 0.0, 0.0],
                 pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
                 communication_state_callback=partial(
-                    self._sub_communication_state_changed, Device.SPFRX
+                    self._sub_device_communication_state_changed, Device.SPFRX
                 ),
-                component_state_callback=self._component_state_changed,
+                component_state_callback=partial(
+                    self._sub_device_component_state_changed, Device.SPFRX
+                ),
                 quality_state_callback=self._quality_state_callback,
             ),
         }
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
         self._command_map = CommandMap(
             self,
@@ -256,9 +258,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return active_component_managers
 
-    # pylint: disable=unused-argument
-    def _sub_communication_state_changed(
-        self, attribute_name: str, communication_state: Optional[CommunicationStatus] = None
+    def _update_connection_state_attribute(
+        self, device: str, connection_state: CommunicationStatus
+    ):
+        state_name = f"{device.lower()}connectionstate"
+        self._update_component_state(**{state_name: connection_state})
+
+    def _sub_device_communication_state_changed(
+        self, device: Device, communication_state: CommunicationStatus
     ):
         """
         Callback triggered by the component manager when it establishes
@@ -271,80 +278,34 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         the subservient devices. DishManager reflects this in its connection
         status attributes.
         """
-        # Update the DM component communication states
-        self.logger.debug("Sub communication state changed")
+        self.logger.debug(
+            "Communication state changed on %s device: %s.", device.name, communication_state
+        )
 
-        with self._sub_communication_state_change_lock:
-            if self.sub_component_managers:
-                if not self.is_device_ignored("SPF"):
-                    self._update_component_state(
-                        spfconnectionstate=self.sub_component_managers["SPF"].communication_state
-                    )
-                if not self.is_device_ignored("SPFRX"):
-                    self._update_component_state(
-                        spfrxconnectionstate=self.sub_component_managers[
-                            "SPFRX"
-                        ].communication_state
-                    )
-                self._update_component_state(
-                    dsconnectionstate=self.sub_component_managers["DS"].communication_state
-                )
+        # report the communication state of the sub device on the connectionState attribute
+        self._update_connection_state_attribute(device.name, communication_state)
 
-            if self.sub_component_managers:
-                active_sub_component_managers = self.get_active_sub_component_managers()
+        active_sub_component_managers = self.get_active_sub_component_managers()
+        sub_devices_communication_states = [
+            sub_component_manager.communication_state
+            for sub_component_manager in active_sub_component_managers.values()
+        ]
 
-                self.logger.debug(
-                    ("Active component managers [%s]"), active_sub_component_managers
-                )
-
-                # Have all the component states been created
-                if not all(
-                    sub_component_manager.component_state
-                    for sub_component_manager in active_sub_component_managers.values()
-                ):
-                    self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                    self._update_component_state(healthstate=HealthState.UNKNOWN)
-                    return
-
-                # Are all the CommunicationStatus ESTABLISHED
-                if all(
-                    sub_component_manager.communication_state == CommunicationStatus.ESTABLISHED
-                    for sub_component_manager in active_sub_component_managers.values()
-                ):
-                    self.logger.debug("Calculating new HealthState and DishMode")
-                    self._update_communication_state(CommunicationStatus.ESTABLISHED)
-
-                    ds_component_state = self.sub_component_managers["DS"].component_state
-                    spf_component_state = self.sub_component_managers["SPF"].component_state
-                    spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
-
-                    new_health_state = self._state_transition.compute_dish_health_state(
-                        ds_component_state,
-                        spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                        spf_component_state if not self.is_device_ignored("SPF") else None,
-                    )
-                    new_dish_mode = self._state_transition.compute_dish_mode(
-                        ds_component_state,
-                        spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                        spf_component_state if not self.is_device_ignored("SPF") else None,
-                    )
-
-                    self._update_component_state(
-                        healthstate=new_health_state, dishmode=new_dish_mode
-                    )
-                else:
-                    self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                    self._update_component_state(
-                        healthstate=HealthState.UNKNOWN, dishmode=DishMode.UNKNOWN
-                    )
-
-            self._component_state_changed()
-
-            # push change events for the connection state attributes
-            self._connection_state_callback(attribute_name)
+        if all(
+            communication_state == CommunicationStatus.ESTABLISHED
+            for communication_state in sub_devices_communication_states
+        ):
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
+        elif any(
+            communication_state == CommunicationStatus.NOT_ESTABLISHED
+            for communication_state in sub_devices_communication_states
+        ):
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        else:
+            self._update_communication_state(CommunicationStatus.DISABLED)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
-    def _component_state_changed(self, *args, **kwargs):
+    def _sub_device_component_state_changed(self, device: Device, *args, **kwargs):
         """
         Callback triggered by the component manager of the
         subservient device for component state changes.
@@ -357,15 +318,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         Note: This callback is triggered by the component managers of
         the subservient devices only. DishManager also has its own callback.
         """
-        if not self.sub_component_managers:
-            return
-        active_sub_component_managers = self.get_active_sub_component_managers()
-        if not all(
-            sub_component_manager.component_state
-            for sub_component_manager in active_sub_component_managers.values()
-        ):
-            return
-
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
@@ -393,6 +345,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_component_state,
                 self.component_state,
             )
+
+        if "buildstate" in kwargs:
+            self._build_state_callback(device, kwargs["buildstate"])
+            return
 
         # Only update dishMode if there are operatingmode changes
         if "operatingmode" in kwargs or "indexerposition" in kwargs:
@@ -550,7 +506,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
         # Update attributes that are mapped directly from subservient devices
-        for device, attrs in self.direct_mapped_attrs.items():
+        for dev, attrs in self.direct_mapped_attrs.items():
             enum_attr_mapping = {
                 "trackInterpolationMode": TrackInterpolationMode,
                 "noiseDiodeMode": NoiseDiodeMode,
@@ -560,11 +516,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 if attr_lower in kwargs:
                     new_value = None
-                    if device == "DS":
+                    if dev == "DS":
                         new_value = ds_component_state[attr_lower]
-                    elif device == "SPF":
+                    elif dev == "SPF":
                         new_value = spf_component_state[attr_lower]
-                    elif device == "SPFRX":
+                    elif dev == "SPFRX":
                         new_value = spfrx_component_state[attr_lower]
                     if attr_lower not in [
                         "desiredpointingaz",
@@ -576,7 +532,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         self.logger.debug(
                             ("Updating %s with %s %s [%s]"),
                             attr,
-                            device,
+                            dev,
                             attr,
                             (
                                 enum_attr_mapping[attr](new_value)

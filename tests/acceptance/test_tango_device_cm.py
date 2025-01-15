@@ -35,9 +35,10 @@ def test_tango_device_component_manager_state(
         component_state_callback=component_state_store,
         communication_state_callback=mock_callable,
     )
-    assert com_man.communication_state == CommunicationStatus.NOT_ESTABLISHED
+    assert com_man.communication_state == CommunicationStatus.DISABLED
 
     com_man.start_communicating()
+    assert com_man.communication_state == CommunicationStatus.NOT_ESTABLISHED
 
     mock_callable.assert_call(CommunicationStatus.ESTABLISHED, lookahead=3)
 
@@ -50,7 +51,7 @@ def test_tango_device_component_manager_state(
     device_proxy.testmode = test_mode_initial_val
 
     com_man.stop_communicating()
-    assert com_man.communication_state == CommunicationStatus.NOT_ESTABLISHED
+    assert com_man.communication_state == CommunicationStatus.DISABLED
 
 
 @pytest.mark.acceptance
