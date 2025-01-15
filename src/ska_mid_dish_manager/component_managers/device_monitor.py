@@ -264,7 +264,7 @@ class TangoDeviceMonitor:
         retry_counts = {name: 1 for name in self._monitored_attributes}
         # set up all subscriptions
         device_proxy = self._device_proxy_factory(self._tango_fqdn)
-        attribute_name = None
+        attribute_name = ""
         while not exit_thread_event.is_set():
             try:
                 # Subscribe to all monitored attributes
