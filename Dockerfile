@@ -3,37 +3,42 @@ ARG BASE_IMAGE=artefact.skao.int/ska-tango-images-tango-python:0.1.0
 FROM $BUILD_IMAGE as build
 
 # Set up environment variables for Poetry and virtualenv configuration
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1
+ENV VIRTUAL_ENV=/app \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1
+
+RUN set -xe; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        python3-venv; \
+    python3 -m venv $VIRTUAL_ENV; \
+    mkdir /build; \
+    ln -s $VIRTUAL_ENV /build/.venv
+ENV PATH=$VIRTUAL_ENV/bin:$PATH
 
 WORKDIR /build
 
-# Copy project dependency files (pyproject.toml, poetry.lock, etc.)
-COPY pyproject.toml poetry.lock* README.md ./
+# Copy project dependency files
+COPY pyproject.toml poetry.lock* ./
 
 # Install third-party dependencies from PyPI and CAR
-RUN poetry install --no-root --no-directory
+RUN poetry install --only main --no-root --no-directory
 
-# Copy the source code and install only the application code
-COPY src/ ./src
-RUN poetry install --only main
+# Copy the source code and install the application code
+COPY README.md ./
+COPY src ./src
+RUN pip install --no-deps .
+
+# We don't want to copy pip into the runtime image
+RUN pip uninstall -y pip
 
 # Use the base image for the final stage
 FROM $BASE_IMAGE
 
-WORKDIR /app
-
-# Set up virtual environment path
-ENV VIRTUAL_ENV=/build/.venv
+ENV VIRTUAL_ENV=/app
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Copy the virtual environment from the build stage
-COPY --from=build ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-
-# Add source code to the PYTHONPATH so Python can locate the package
-COPY ./src/ska_mid_dish_manager ./ska_mid_dish_manager
-ENV PYTHONPATH=${PYTHONPATH}:/app/
+COPY --from=build $VIRTUAL_ENV $VIRTUAL_ENV
 
 # Metadata labels
 LABEL int.skao.image.team="TEAM KAROO" \
