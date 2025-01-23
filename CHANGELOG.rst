@@ -7,8 +7,14 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Added a factory class to manage device proxy creation
+
+Version 6.0.2
+*************
 - Added some major improvements and refactoring
+
+  - Improved creation and management of device proxy to subservient devices
+  - Fixed unhandled exception emitting events to clients
+
 - Updated dockerfile to use new base images and improved docker image build
 
 Version 6.0.1
