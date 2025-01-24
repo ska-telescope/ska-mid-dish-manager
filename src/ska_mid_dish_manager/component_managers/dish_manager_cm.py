@@ -453,8 +453,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
             # update the bandInFocus of SPF before configuredBand
             spf_component_manager = self.sub_component_managers["SPF"]
-            spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
-            spf_component_state["bandinfocus"] = band_in_focus
+            try:
+                spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
+            except (LostConnection, tango.DevFailed):
+                # this will impact configuredBand calculation on dish manager
+                self.logger.warning(
+                    "Encountered an error writing bandInFocus %s on SPF", band_in_focus
+                )
+            else:
+                spf_component_state["bandinfocus"] = band_in_focus
 
         # spfrx attenuation
         if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
@@ -663,7 +670,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
             ds_com_man = self.sub_component_managers["DS"]
             ds_com_man.write_attribute_value(attr, values)
-        except tango.DevFailed:
+        except (LostConnection, tango.DevFailed):
             self.logger.exception("Failed to write to %s on DSManager", attr)
             raise
         except ValueError:

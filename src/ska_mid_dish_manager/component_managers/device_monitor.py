@@ -237,7 +237,7 @@ class TangoDeviceMonitor:
                     # Thread will wait here for events to happen
                     while not exit_thread_event.wait(SLEEP_BETWEEN_EVENTS):
                         pass
-                except tango.DevFailed:
+                except (tango.DevFailed, tango.EventSystemFailed):
                     self._logger.exception(
                         (
                             f"Tango error on {self._tango_fqdn} for attr {attribute_name}, "

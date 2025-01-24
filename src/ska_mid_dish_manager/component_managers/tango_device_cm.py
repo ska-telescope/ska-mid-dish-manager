@@ -127,7 +127,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 if monitored_attribute not in self._component_state:
                     self._component_state[monitored_attribute] = None
 
-                value = device_proxy.read_attribute(monitored_attribute).value
+                try:
+                    value = device_proxy.read_attribute(monitored_attribute).value
+                except tango.DevFailed:
+                    self.logger.exception(
+                        "Encountered an error retrieving the current value of %s from %s",
+                        monitored_attribute,
+                        self._tango_device_fqdn,
+                    )
+                    continue
                 if isinstance(value, np.ndarray):
                     value = list(value)
                 monitored_attribute_values[monitored_attribute] = value
@@ -334,7 +342,15 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         with tango.EnsureOmniThread():
             device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
-            result = getattr(device_proxy, attribute_name)
+            try:
+                result = device_proxy.read_attribute(attribute_name).value
+            except tango.DevFailed:
+                self.logger.exception(
+                    "Could not read attribute [%s] on [%s]",
+                    attribute_name,
+                    self._tango_device_fqdn,
+                )
+                raise
             self.logger.debug(
                 "Result of reading [%s] on [%s] is [%s]",
                 attribute_name,
