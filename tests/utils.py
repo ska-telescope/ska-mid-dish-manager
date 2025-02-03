@@ -477,34 +477,34 @@ def set_configuredBand_b2(
     config_band_event_store.wait_for_value(Band.B2, timeout=7)
 
 
-def set_ignored_devices(dish_manager_proxy, ignore_spf, ignore_spfrx):
+def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
     """Sets ignored devices on DishManager."""
 
-    if dish_manager_proxy.ignoreSpf != ignore_spf:
+    if device_proxy.ignoreSpf != ignore_spf:
         spf_connection_event_store = EventStore()
-        dish_manager_proxy.subscribe_event(
+        device_proxy.subscribe_event(
             "spfConnectionState",
             tango.EventType.CHANGE_EVENT,
             spf_connection_event_store,
         )
 
-        dish_manager_proxy.ignoreSpf = ignore_spf
+        device_proxy.ignoreSpf = ignore_spf
 
         if ignore_spf:
             spf_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
         else:
             spf_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
 
-    if dish_manager_proxy.ignoreSpfrx != ignore_spfrx:
+    if device_proxy.ignoreSpfrx != ignore_spfrx:
         spfrx_connection_event_store = EventStore()
 
-        dish_manager_proxy.subscribe_event(
+        device_proxy.subscribe_event(
             "spfrxConnectionState",
             tango.EventType.CHANGE_EVENT,
             spfrx_connection_event_store,
         )
 
-        dish_manager_proxy.ignoreSpfrx = ignore_spfrx
+        device_proxy.ignoreSpfrx = ignore_spfrx
 
         if ignore_spfrx:
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)

@@ -11,34 +11,28 @@ from tests.utils import set_ignored_devices
 @pytest.fixture
 def toggle_ignore_spfrx(dish_manager_proxy):
     """Ignore SPFRx"""
-    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=True)
+    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=True)
     yield
-    set_ignored_devices(
-        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
-    )
+    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False)
 
 
 @pytest.fixture
 def toggle_ignore_spf(dish_manager_proxy):
     """Ignore SPF"""
-    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False)
+    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False)
     yield
-    set_ignored_devices(
-        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
-    )
+    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False)
 
 
 @pytest.fixture
 def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
     """Ignore SPF and SPFRx"""
-    set_ignored_devices(dish_manager_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=True)
+    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=True)
     yield
-    set_ignored_devices(
-        dish_manager_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False
-    )
+    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False)
 
 
-@pytest.mark.acceptance
+@pytest.mark.ignore_sub
 @pytest.mark.forked
 def test_ignoring_spf(toggle_ignore_spf, event_store_class, dish_manager_proxy):
     """Test ignoring SPF device."""
@@ -80,7 +74,7 @@ def test_ignoring_spf(toggle_ignore_spf, event_store_class, dish_manager_proxy):
         assert message in events_string
 
 
-@pytest.mark.acceptance
+@pytest.mark.ignore_sub
 @pytest.mark.forked
 def test_ignoring_spfrx(toggle_ignore_spfrx, event_store_class, dish_manager_proxy):
     """Test ignoring SPFRX device."""
