@@ -19,6 +19,7 @@ INIT_AZ = -250
 INIT_EL = 70
 
 
+# pylint: disable=redefined-outer-name
 @pytest.fixture
 def slew_dish_to_init(event_store_class, dish_manager_proxy):
     """Fixture that slews the dish to a init position."""
