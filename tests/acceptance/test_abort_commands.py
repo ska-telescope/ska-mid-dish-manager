@@ -25,7 +25,7 @@ def toggle_skip_attributes(spf_device_proxy):
 
 
 # pylint: disable=unused-argument
-@pytest.mark.acceptance
+@pytest.mark.abort
 @pytest.mark.forked
 def test_abort_commands(
     event_store_class, dish_manager_proxy, spf_device_proxy, toggle_skip_attributes
