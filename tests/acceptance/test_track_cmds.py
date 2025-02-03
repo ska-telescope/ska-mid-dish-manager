@@ -19,7 +19,7 @@ INIT_AZ = -250
 INIT_EL = 70
 
 
-@pytest.fixture(autouse=True, scope="function")
+@pytest.fixture
 def slew_dish_to_init(event_store_class, dish_manager_proxy):
     """Fixture that slews the dish to a init position."""
     main_event_store = event_store_class()
@@ -76,6 +76,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_and_track_stop_cmds(
+    slew_dish_to_init,
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -209,6 +210,7 @@ def test_track_and_track_stop_cmds(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_append_dvs_case(
+    slew_dish_to_init,
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -308,6 +310,7 @@ def test_append_dvs_case(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_maximum_capacity(
+    slew_dish_to_init,
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
