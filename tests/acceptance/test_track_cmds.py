@@ -455,14 +455,34 @@ def test_track_fails_when_track_called_late(
     dish_manager_proxy,
 ):
     """Test Track command fails when the track table is no more valid"""
-
+    main_event_store = event_store_class()
+    band_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
 
+    dish_manager_proxy.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        band_event_store,
+    )
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
     dish_manager_proxy.subscribe_event(
         "pointingState",
         tango.EventType.CHANGE_EVENT,
         pointing_state_event_store,
     )
+    dish_manager_proxy.SetStandbyFPMode()
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5, proxy=dish_manager_proxy)
+
+    dish_manager_proxy.ConfigureBand1(True)
+    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
+    band_event_store.wait_for_value(Band.B1, timeout=10)
+
+    dish_manager_proxy.SetOperateMode()
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
