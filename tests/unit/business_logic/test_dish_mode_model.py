@@ -13,7 +13,7 @@ def dish_mode_model():
     return DishModeModel()
 
 
-@pytest.mark.unit
+@pytest.mark.fast
 def test_model_node_matches_dish_mode_enums(dish_mode_model):
     assert dish_mode_model.dishmode_graph.number_of_nodes() == len(
         DishMode

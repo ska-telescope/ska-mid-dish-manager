@@ -3,7 +3,13 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    DishMode,
+    PointingState,
+    TrackTableLoadMode,
+)
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
 # pylint: disable=invalid-name, redefined-outer-name
@@ -93,3 +99,110 @@ def test_abort_commands(
     # Check that the Dish Manager transitioned to FP as part of the Abort sequence
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+
+
+# pylint: disable=unused-argument
+@pytest.mark.abort
+@pytest.mark.forked
+def test_abort_commands_during_track(
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+):
+    """Test call of Track command and stop"""
+
+    main_event_store = event_store_class()
+    band_event_store = event_store_class()
+    result_event_store = event_store_class()
+    progress_event_store = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        band_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandProgress",
+        tango.EventType.CHANGE_EVENT,
+        progress_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        result_event_store,
+    )
+
+    dish_manager_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+
+    dish_manager_proxy.SetStandbyFPMode()
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5, proxy=dish_manager_proxy)
+
+    dish_manager_proxy.ConfigureBand1(True)
+    band_event_store.wait_for_value(Band.B1, timeout=30)
+
+    dish_manager_proxy.SetOperateMode()
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
+
+    # Load a track table
+    current_az, current_el = dish_manager_proxy.achievedPointing[1:]
+    current_time_tai_s = get_current_tai_timestamp()
+
+    # Directions to move values
+    az_dir = 1 if current_az < 350 else -1
+    el_dir = 1 if current_el < 80 else -1
+
+    # create a long track table with last three reference positions the same
+    track_table = [
+        current_time_tai_s + 3,
+        current_az + 1 * az_dir,
+        current_el + 1 * el_dir,
+        current_time_tai_s + 5,
+        current_az + 2 * az_dir,
+        current_el + 2 * el_dir,
+        current_time_tai_s + 7,
+        current_az + 3 * az_dir,
+        current_el + 3 * el_dir,
+        current_time_tai_s + 20,
+        current_az + 3 * az_dir,
+        current_el + 3 * el_dir,
+        current_time_tai_s + 30,
+        current_az + 3 * az_dir,
+        current_el + 3 * el_dir,
+    ]
+
+    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
+    dish_manager_proxy.programTrackTable = track_table
+
+    [[_], [unique_id]] = dish_manager_proxy.Track()
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    main_event_store.wait_for_value(PointingState.SLEW, timeout=6)
+    main_event_store.wait_for_value(PointingState.TRACK, timeout=6)
+
+    expected_progress_update = (
+        "Track command has been executed on DS. "
+        "Monitor the achievedTargetLock attribute to determine when the dish is on source."
+    )
+
+    # Wait for the track command to complete
+    progress_event_store.wait_for_progress_update(expected_progress_update, timeout=6)
+
+    # Call AbortCommands on DishManager
+    result_event_store.clear_queue()
+    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    # result_event_store.wait_for_command_result(unique_id, '[0, "Abort sequence completed"]')
+    main_event_store.get_queue_values(timeout=10)
+    assert (
+        dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+    )  # this will fail and rather report OPERATE
