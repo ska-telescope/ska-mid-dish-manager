@@ -102,7 +102,6 @@ def test_abort_commands(
 
 
 # pylint: disable=unused-argument
-@pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_track(
     monitor_tango_servers,
