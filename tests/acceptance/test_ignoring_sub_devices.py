@@ -32,7 +32,7 @@ def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
     set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False)
 
 
-@pytest.mark.ignore_sub
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_ignoring_spf(toggle_ignore_spf, event_store_class, dish_manager_proxy):
     """Test ignoring SPF device."""
@@ -74,7 +74,7 @@ def test_ignoring_spf(toggle_ignore_spf, event_store_class, dish_manager_proxy):
         assert message in events_string
 
 
-@pytest.mark.ignore_sub
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_ignoring_spfrx(toggle_ignore_spfrx, event_store_class, dish_manager_proxy):
     """Test ignoring SPFRX device."""
@@ -130,7 +130,7 @@ def test_ignoring_spfrx(toggle_ignore_spfrx, event_store_class, dish_manager_pro
         assert message in events_string
 
 
-@pytest.mark.ignore_sub
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_ignoring_all(toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy):
     """Test ignoring both SPF and SPFRx devices."""
