@@ -25,7 +25,7 @@ def toggle_skip_attributes(spf_device_proxy):
 
 
 # pylint: disable=unused-argument
-@pytest.mark.abort
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands(
     event_store_class, dish_manager_proxy, spf_device_proxy, toggle_skip_attributes
@@ -102,14 +102,14 @@ def test_abort_commands(
 
 
 # pylint: disable=unused-argument
-@pytest.mark.abort
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_track(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test call of Track command and stop"""
+    """Test call to AbortCommands during track"""
 
     main_event_store = event_store_class()
     band_event_store = event_store_class()
