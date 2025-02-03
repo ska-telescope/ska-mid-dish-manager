@@ -203,6 +203,16 @@ def test_abort_commands_during_track(
     [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
     # result_event_store.wait_for_command_result(unique_id, '[0, "Abort sequence completed"]')
     main_event_store.get_queue_values(timeout=10)
+
+    # this will fail and rather report OPERATE
+    # assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+
+    # the dish is stuck in operate mode
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    # and any further commands to move it gets stuck
+    dish_manager_proxy.SetStandbyFPMode()
+
+    # this will fail and rather report OPERATE
     assert (
         dish_manager_proxy.dishMode == DishMode.STANDBY_FP
-    )  # this will fail and rather report OPERATE
+    ), dish_manager_proxy.longRunningCommandStatus
