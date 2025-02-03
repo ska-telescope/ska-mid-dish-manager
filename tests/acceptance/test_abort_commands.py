@@ -209,16 +209,24 @@ def test_abort_commands_during_track(
 ):
     """Test that AbortCommands aborts the executing track command"""
     result_event_store = event_store_class()
+    main_event_store = event_store_class()
+
     dish_manager_proxy.subscribe_event(
         "longRunningCommandResult",
         tango.EventType.CHANGE_EVENT,
         result_event_store,
     )
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
 
     # Call AbortCommands on DishManager
-    [[_], [_]] = dish_manager_proxy.AbortCommands()
-    # result_event_store.clear_queue()
-    # result_event_store.wait_for_command_result(unique_id, '[0, "Abort sequence completed"]')
-    result_event_store.get_queue_values(timeout=10)
-    # this will fail and rather report OPERATE
+    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "Abort sequence completed"]', timeout=120
+    )
+
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP

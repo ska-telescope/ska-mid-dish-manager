@@ -7,6 +7,7 @@ from functools import partial
 from threading import Event
 from typing import Any, Callable, Optional
 
+import numpy as np
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState, TrackTableLoadMode
@@ -40,19 +41,42 @@ class Abort:
         """
         Write the last achievedPointing back to the trackTable in loadmode NEW
         """
-        current_pointing = self._component_manager.component_state.get("achievedpointing")
+        reset_point = self._component_manager.component_state.get("achievedpointing")
         timestamp = get_current_tai_timestamp()
-        current_pointing[0] = timestamp
+        reset_point[0] = timestamp
         sequence_length = 1
         load_mode = TrackTableLoadMode.NEW
 
         result_code, result_message = self._component_manager.track_load_table(
-            sequence_length, current_pointing, load_mode
+            sequence_length, reset_point, load_mode
         )
         if result_code == ResultCode.OK:
-            # need to find a way to bubble up this table
-            # to dish manager._program_track_table and _load_mode
-            pass
+            dish_settled_event = Event()
+            while True:
+                self.logger.debug("Waiting for the dish to settle")
+                # wait for the dish to settle
+                dish_has_stopped = (
+                    self._component_manager.component_state.get("pointingstate")
+                    == PointingState.READY
+                )
+                az_el = self._component_manager.component_state.get("achievedpointing")[1:]
+                az_is_close = np.isclose(az_el[0], reset_point[1])
+                el_is_close = np.isclose(az_el[1], reset_point[2])
+                dish_is_pointing_close_to_reset_point = az_is_close and el_is_close
+                self.logger.debug(
+                    "Close to target calculation: %s, az_el: %s reset_point: %s",
+                    dish_is_pointing_close_to_reset_point,
+                    az_el,
+                    reset_point[1:],
+                )
+                # if dish_has_stopped and dish_is_pointing_close_to_reset_point:
+                if dish_has_stopped:
+                    self.logger.debug(
+                        "Dish has stopped moving and is pointing close to the reset point"
+                    )
+
+                    break
+                dish_settled_event.wait(1.0)  # Avoid busy waiting
         else:
             self.logger.warning(
                 "Failed to reset programTrackTable in Abort sequence: %s", result_message
@@ -112,6 +136,7 @@ class Abort:
         self.logger.debug("Issuing SetStandbyFPMode from Abort sequence")
         self._ensure_transition_to_fp_mode(task_abort_event, standby_fp_task_cb)
 
+        self.logger.debug("Abort sequence completed")
         if task_callback:
             task_callback(
                 status=TaskStatus.COMPLETED, result=(ResultCode.OK, "Abort sequence completed")
