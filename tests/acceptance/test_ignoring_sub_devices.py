@@ -130,8 +130,7 @@ def test_ignoring_spfrx(toggle_ignore_spfrx, event_store_class, dish_manager_pro
         assert message in events_string
 
 
-@pytest.mark.skip(reason="Locking device issue to be resolved in tango base")
-@pytest.mark.acceptance
+@pytest.mark.ignore_sub
 @pytest.mark.forked
 def test_ignoring_all(toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy):
     """Test ignoring both SPF and SPFRx devices."""
