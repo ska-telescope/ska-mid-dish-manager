@@ -107,8 +107,11 @@ def test_ignoring_spfrx(toggle_ignore_spfrx, event_store_class, dish_manager_pro
         dish_mode_event_store,
     )
 
+    current_el = dish_manager_proxy.achievedPointing[2]
+    stow_position = 85.0
+    stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
     [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    dish_mode_event_store.wait_for_value(DishMode.STOW)
+    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=stow_duration + 10)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -160,8 +163,11 @@ def test_ignoring_all(toggle_ignore_spf_and_spfrx, event_store_class, dish_manag
         dish_mode_event_store,
     )
 
+    current_el = dish_manager_proxy.achievedPointing[2]
+    stow_position = 85.0
+    stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
     [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    dish_mode_event_store.wait_for_value(DishMode.STOW)
+    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=stow_duration + 10)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
