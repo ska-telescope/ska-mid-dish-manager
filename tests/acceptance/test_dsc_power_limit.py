@@ -6,6 +6,7 @@ import pytest
 import tango
 
 from ska_mid_dish_manager.models.dish_enums import PointingState
+from tests.utils import az_el_slew_position
 
 DEFAULT_POWER_LIMIT = 10
 
@@ -163,7 +164,7 @@ def test_fp_lp_power_limit_used(
         ds_device_proxy.SetStandbyFPMode()
     else:
         ds_device_proxy.SetStandbyLPMode()
-    # Check that the
+
     progress_event_store.wait_for_progress_update(expected_progress, timeout=6)
 
 
@@ -188,7 +189,9 @@ def test_dsc_current_limit_used(
 
     clean_up(ds_device_proxy, dish_manager_proxy, event_store_class)
 
-    ds_device_proxy.Slew([170.0, 40.0])
+    current_az, current_el = dish_manager_proxy.achievedPointing[1:]
+    az, el = az_el_slew_position(current_az, current_el, 10.0, 10.0)
+    ds_device_proxy.Slew([az, el])
     progress_event_store.wait_for_progress_update(
         (
             "Slew called with Azimuth speed: 3.0 deg/s, Elevation speed: 1.0 deg/s "
@@ -198,7 +201,5 @@ def test_dsc_current_limit_used(
     )
 
     # wait for the slew to finish
-    current_el = dish_manager_proxy.achievedPointing[2]
-    requested_elevation = 40.0
-    estimate_slew_duration = requested_elevation - current_el
+    estimate_slew_duration = el - current_el
     pointing_state_events.wait_for_value(PointingState.READY, timeout=estimate_slew_duration + 10)

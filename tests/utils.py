@@ -414,3 +414,37 @@ def generate_random_text(length=10):
     """Generate a random string."""
     letters = string.ascii_letters
     return "".join(random.choice(letters) for _ in range(length))
+
+
+def az_el_slew_position(current_az, current_el, offset_az, offset_el):
+    """
+    Moves a point by specified offsets in azimuth and elevation,
+    ensuring the result stays within defined constraints.
+
+    :param current_az: Current azimuth value.
+    :type value: float
+    :param current_el: Current elevation value.
+    :type value: float
+    :param offset_az: Azimuth offset (positive or negative).
+    :type value: float
+    :param offset_el: Elevation offset (positive or negative).
+    :type value: float
+    :return: Tuple containing the constrained azimuth and elevation values.
+    :rtype: Tuple[float, float]
+    """
+    # dish constraints
+    MAX_ELEVATION = 85.0
+    MIN_ELEVATION = 14.8
+    MAX_AZIMUTH = 270.0
+    MIN_AZIMUTH = -270.0
+
+    # Calculate requested values
+    requested_az = current_az + offset_az
+    requested_el = current_el + offset_el
+
+    # Constrained azimuth
+    requested_az = min(MAX_AZIMUTH, max(MIN_AZIMUTH, requested_az))
+    # Constrained elevation
+    requested_el = min(MAX_ELEVATION, max(MIN_ELEVATION, requested_el))
+
+    return requested_az, requested_el
