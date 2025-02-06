@@ -178,7 +178,7 @@ class StowCommand(SubmittedSlowCommand):
 
         # the stow command is not tracked from this point
         # dont return the command id to the client
-        if status == TaskStatus.IN_PROGRESS:
+        if status == TaskStatus.COMPLETED:
             return ResultCode.STARTED, "Stow called on Dish Structure, monitor dishmode for STOW"
         return (
             ResultCode.FAILED,

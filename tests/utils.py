@@ -9,14 +9,6 @@ import numpy as np
 import tango
 from ska_control_model import CommunicationStatus
 
-from ska_mid_dish_manager.models.dish_enums import (
-    Band,
-    BandInFocus,
-    DishMode,
-    IndexerPosition,
-    SPFRxOperatingMode,
-)
-
 
 class ComponentStateStore:
     """Store component state changes with useful functionality"""
@@ -383,100 +375,6 @@ class EventStore:
         return [(event.attr_value.name, event.attr_value.value) for event in events]
 
 
-def set_dish_manager_to_standby_lp(event_store, dish_manager_proxy):
-    """Ensure dishManager is in a known state"""
-    if dish_manager_proxy.dishMode != DishMode.STANDBY_LP:
-        dish_manager_proxy.subscribe_event(
-            "dishMode",
-            tango.EventType.CHANGE_EVENT,
-            event_store,
-        )
-
-        # Set it to a known mode, can Stow from any state
-        if dish_manager_proxy.dishMode != DishMode.STOW:
-            dish_manager_proxy.SetStowMode()
-            event_store.wait_for_value(DishMode.STOW)
-
-        dish_manager_proxy.SetStandbyLPMode()
-        event_store.wait_for_value(DishMode.STANDBY_LP)
-
-
-def set_configuredBand_b1(
-    dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
-):
-    """
-    Set B1 configuredBand
-    Rules:
-    DS.indexerposition  == 'IndexerPosition.B1'
-    SPFRX.configuredband  == 'Band.B1'
-    SPF.bandinfocus == 'BandInFocus.B1'
-    """
-    config_band_event_store = EventStore()
-    indexer_event_store = EventStore()
-
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        config_band_event_store,
-    )
-
-    ds_device_proxy.subscribe_event(
-        "indexerPosition",
-        tango.EventType.CHANGE_EVENT,
-        indexer_event_store,
-    )
-
-    # Force at least one update
-    ds_device_proxy.SetIndexPosition(IndexerPosition.B2)
-    indexer_event_store.wait_for_value(IndexerPosition.B2)
-
-    ds_device_proxy.SetIndexPosition(IndexerPosition.B1)
-    indexer_event_store.wait_for_value(IndexerPosition.B1)
-
-    spf_device_proxy.bandInFocus = BandInFocus.B1
-    spfrx_device_proxy.configuredband = Band.B1
-    # accompany spfrx configuredband change with operatingMode change
-    spfrx_device_proxy.operatingMode = SPFRxOperatingMode.OPERATE
-
-    try:
-        config_band_event_store.wait_for_value(Band.B1, timeout=7)
-    except RuntimeError as err:
-        ds_indexer_pos = ds_device_proxy.indexerPosition
-        spf_band_in_focus = spf_device_proxy.bandInFocus
-        spfrx_configured_band = spfrx_device_proxy.configuredband
-        spfrx_operating_mode = spfrx_device_proxy.operatingMode
-        dish_manager_configured_band = dish_manager_proxy.configuredBand
-        raise RuntimeError(f"\nState when error occured:\n{locals()}\n") from err
-
-
-def set_configuredBand_b2(
-    dish_manager_proxy, ds_device_proxy, spf_device_proxy, spfrx_device_proxy
-):
-    """
-    Set B1 configuredBand
-    Rules:
-    DS.indexerposition  == 'IndexerPosition.B2'
-    SPFRX.configuredband  == 'Band.B2'
-    SPF.bandinfocus == 'BandInFocus.B2'
-    """
-    config_band_event_store = EventStore()
-
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        config_band_event_store,
-    )
-
-    if ds_device_proxy.indexerPosition != IndexerPosition.B2:
-        ds_device_proxy.SetIndexPosition(IndexerPosition.B2)
-    spf_device_proxy.bandInFocus = BandInFocus.B2
-    spfrx_device_proxy.configuredband = Band.B2
-    # accompany spfrx configuredband change with operatingMode change
-    spfrx_device_proxy.operatingMode = SPFRxOperatingMode.OPERATE
-
-    config_band_event_store.wait_for_value(Band.B2, timeout=7)
-
-
 def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
     """Sets ignored devices on DishManager."""
 
@@ -516,3 +414,37 @@ def generate_random_text(length=10):
     """Generate a random string."""
     letters = string.ascii_letters
     return "".join(random.choice(letters) for _ in range(length))
+
+
+def az_el_slew_position(current_az, current_el, offset_az, offset_el):
+    """
+    Moves a point by specified offsets in azimuth and elevation,
+    ensuring the result stays within defined constraints.
+
+    :param current_az: Current azimuth value.
+    :type value: float
+    :param current_el: Current elevation value.
+    :type value: float
+    :param offset_az: Azimuth offset (positive or negative).
+    :type value: float
+    :param offset_el: Elevation offset (positive or negative).
+    :type value: float
+    :return: Tuple containing the constrained azimuth and elevation values.
+    :rtype: Tuple[float, float]
+    """
+    # dish constraints
+    MAX_ELEVATION = 85.0
+    MIN_ELEVATION = 14.8
+    MAX_AZIMUTH = 270.0
+    MIN_AZIMUTH = -270.0
+
+    # Calculate requested values
+    requested_az = current_az + offset_az
+    requested_el = current_el + offset_el
+
+    # Constrained azimuth
+    requested_az = min(MAX_AZIMUTH, max(MIN_AZIMUTH, requested_az))
+    # Constrained elevation
+    requested_el = min(MAX_ELEVATION, max(MIN_ELEVATION, requested_el))
+
+    return requested_az, requested_el

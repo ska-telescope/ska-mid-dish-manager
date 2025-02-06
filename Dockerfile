@@ -1,6 +1,6 @@
 ARG BUILD_IMAGE=artefact.skao.int/ska-build-python:0.1.1
 ARG BASE_IMAGE=artefact.skao.int/ska-tango-images-tango-python:0.1.0
-FROM $BUILD_IMAGE as build
+FROM $BUILD_IMAGE AS build
 
 # Set up environment variables for Poetry and virtualenv configuration
 ENV VIRTUAL_ENV=/app \

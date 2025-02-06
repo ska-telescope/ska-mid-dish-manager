@@ -34,7 +34,9 @@ def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
 
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_ignoring_spf(toggle_ignore_spf, event_store_class, dish_manager_proxy):
+def test_ignoring_spf(
+    monitor_tango_servers, toggle_ignore_spf, event_store_class, dish_manager_proxy
+):
     """Test ignoring SPF device."""
 
     result_event_store = event_store_class()
@@ -76,7 +78,9 @@ def test_ignoring_spf(toggle_ignore_spf, event_store_class, dish_manager_proxy):
 
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_ignoring_spfrx(toggle_ignore_spfrx, event_store_class, dish_manager_proxy):
+def test_ignoring_spfrx(
+    monitor_tango_servers, toggle_ignore_spfrx, event_store_class, dish_manager_proxy
+):
     """Test ignoring SPFRX device."""
 
     result_event_store = event_store_class()
@@ -102,10 +106,10 @@ def test_ignoring_spfrx(toggle_ignore_spfrx, event_store_class, dish_manager_pro
     )
 
     current_el = dish_manager_proxy.achievedPointing[2]
-    stow_position = 85.0
-    stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
+    stow_position = 90.2
+    estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
     [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=stow_duration + 10)
+    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -132,7 +136,9 @@ def test_ignoring_spfrx(toggle_ignore_spfrx, event_store_class, dish_manager_pro
 
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_ignoring_all(toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy):
+def test_ignoring_all(
+    monitor_tango_servers, toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy
+):
     """Test ignoring both SPF and SPFRx devices."""
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -157,10 +163,10 @@ def test_ignoring_all(toggle_ignore_spf_and_spfrx, event_store_class, dish_manag
     )
 
     current_el = dish_manager_proxy.achievedPointing[2]
-    stow_position = 85.0
-    stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
+    stow_position = 90.2
+    estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
     [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=stow_duration + 10)
+    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
