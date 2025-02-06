@@ -190,8 +190,8 @@ def test_dsc_current_limit_used(
     clean_up(ds_device_proxy, dish_manager_proxy, event_store_class)
 
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
-    az, el = az_el_slew_position(current_az, current_el, 10.0, 10.0)
-    ds_device_proxy.Slew([az, el])
+    requested_az, requested_el = az_el_slew_position(current_az, current_el, 10.0, 10.0)
+    ds_device_proxy.Slew([requested_az, requested_el])
     progress_event_store.wait_for_progress_update(
         (
             "Slew called with Azimuth speed: 3.0 deg/s, Elevation speed: 1.0 deg/s "
@@ -201,5 +201,5 @@ def test_dsc_current_limit_used(
     )
 
     # wait for the slew to finish
-    estimate_slew_duration = el - current_el
+    estimate_slew_duration = requested_el - current_el
     pointing_state_events.wait_for_value(PointingState.READY, timeout=estimate_slew_duration + 10)
