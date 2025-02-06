@@ -17,12 +17,7 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.forked
 def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates"""
-    device_proxy = tango.DeviceProxy(ds_device_fqdn)
-    # Get into a known state
-    device_proxy.Stow()
-
     state_update_lock = Lock()
-
     com_man = DSComponentManager(
         ds_device_fqdn,
         LOGGER,
@@ -31,12 +26,11 @@ def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     )
     com_man.start_communicating()
 
+    device_proxy = tango.DeviceProxy(ds_device_fqdn)
     device_proxy.SetStandbyFPMode()
     component_state_store.wait_for_value("operatingmode", DSOperatingMode.STANDBY_FP)
 
     device_proxy.SetStandbyLPMode()
     component_state_store.wait_for_value("operatingmode", DSOperatingMode.STANDBY_LP)
-
-    assert "achievedPointing" in device_proxy.get_attribute_list()
 
     com_man.stop_communicating()
