@@ -9,6 +9,7 @@ import numpy as np
 import tango
 from ska_control_model import CommunicationStatus
 
+
 class ComponentStateStore:
     """Store component state changes with useful functionality"""
 
