@@ -59,6 +59,7 @@ class Abort:
                     self._component_manager.component_state.get("pointingstate")
                     == PointingState.READY
                 )
+                # TODO add a timeout so that this doesnt run forever
                 az_el = self._component_manager.component_state.get("achievedpointing")[1:]
                 az_is_close = np.isclose(az_el[0], reset_point[1])
                 el_is_close = np.isclose(az_el[1], reset_point[2])

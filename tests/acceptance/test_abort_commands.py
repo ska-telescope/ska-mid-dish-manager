@@ -25,7 +25,7 @@ def toggle_skip_attributes(spf_device_proxy):
 
 
 # pylint: disable=unused-argument
-@pytest.mark.abort
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands(
     event_store_class, dish_manager_proxy, spf_device_proxy, toggle_skip_attributes
@@ -199,7 +199,7 @@ def track_a_sample(
 
 
 # pylint: disable=unused-argument
-@pytest.mark.abort
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_track(
     monitor_tango_servers,
@@ -225,7 +225,7 @@ def test_abort_commands_during_track(
     # Call AbortCommands on DishManager
     [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "Abort sequence completed"]', timeout=120
+        unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
 
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
