@@ -5,6 +5,8 @@ from typing import Any
 import pytest
 import tango
 
+from ska_mid_dish_manager.models.dish_enums import PointingState
+
 DEFAULT_POWER_LIMIT = 10
 
 
@@ -173,13 +175,20 @@ def test_dsc_current_limit_used(
 ):
     """Test the dscPowerLimitkW value used when invoking Slew."""
     progress_event_store = event_store_class()
+    pointing_state_events = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "pointingState", tango.EventType.CHANGE_EVENT, pointing_state_events
+    )
     ds_device_proxy.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
         progress_event_store,
     )
+
     clean_up(ds_device_proxy, dish_manager_proxy, event_store_class)
-    ds_device_proxy.Slew([80.0, 90.0])
+
+    ds_device_proxy.Slew([170.0, 40.0])
     progress_event_store.wait_for_progress_update(
         (
             "Slew called with Azimuth speed: 3.0 deg/s, Elevation speed: 1.0 deg/s "
@@ -187,3 +196,9 @@ def test_dsc_current_limit_used(
         ),
         timeout=6,
     )
+
+    # wait for the slew to finish
+    current_el = dish_manager_proxy.achievedPointing[2]
+    requested_elevation = 40.0
+    estimate_slew_duration = requested_elevation - current_el
+    pointing_state_events.wait_for_value(PointingState.READY, timeout=estimate_slew_duration + 10)
