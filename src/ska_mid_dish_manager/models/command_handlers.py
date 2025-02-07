@@ -5,7 +5,7 @@ Abstracts all the logic for executing commands on the device
 import logging
 import math
 from functools import partial
-from threading import Event
+from threading import Event, Thread
 from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
@@ -37,6 +37,29 @@ class Abort:
     ) -> None:
         self.abort(abort_command_id, task_abort_event, task_callback=task_callback)
 
+    def _wait_for_dish_to_settle(self, dish_settled_event: Event, reset_point: list) -> None:
+        while not dish_settled_event.is_set():
+            self.logger.debug("Waiting for the dish to settle")
+
+            az_el = self._component_manager.component_state.get("achievedpointing")[1:]
+            az_is_close = math.isclose(az_el[0], reset_point[1], rel_tol=0.5)
+            el_is_close = math.isclose(az_el[1], reset_point[2], rel_tol=0.5)
+            dish_close_to_reset_point = az_is_close and el_is_close
+
+            current_pointing_state = self._component_manager.component_state.get("pointingstate")
+
+            dish_has_stopped = (
+                current_pointing_state == PointingState.READY and dish_close_to_reset_point
+            )
+            if dish_has_stopped:
+                self.logger.debug(
+                    "Dish has stopped moving and is pointing close to the reset point"
+                )
+                dish_settled_event.set()  # Signal the event and exit the loop
+                break
+
+            dish_settled_event.wait(1.0)  # Avoid busy waiting
+
     def _reset_track_table(self) -> None:
         """
         Write the last achievedPointing back to the trackTable in loadmode NEW
@@ -51,31 +74,20 @@ class Abort:
             sequence_length, reset_point, load_mode
         )
         if result_code == ResultCode.OK:
-            # TODO add a timeout so that this doesnt run forever
             dish_settled_event = Event()
-            # wait for the dish to settle
-            while True:
-                self.logger.debug("Waiting for the dish to settle")
+            dish_is_stopping = Thread(
+                target=self._wait_for_dish_to_settle, args=(dish_settled_event, reset_point)
+            )
+            dish_is_stopping.start()
 
-                az_el = self._component_manager.component_state.get("achievedpointing")[1:]
-                az_is_close = math.isclose(az_el[0], reset_point[1], rel_tol=0.5)
-                el_is_close = math.isclose(az_el[1], reset_point[2], rel_tol=0.5)
-                dish_close_to_reset_point = az_is_close and el_is_close
+            # Wait for the event to be set or for the timeout
+            dish_settled_event.wait(timeout=10)
 
-                current_pointing_state = self._component_manager.component_state.get(
-                    "pointingstate"
-                )
-
-                dish_has_stopped = (
-                    current_pointing_state == PointingState.READY and dish_close_to_reset_point
-                )
-                if dish_has_stopped:
-                    self.logger.debug(
-                        "Dish has stopped moving and is pointing close to the reset point"
-                    )
-
-                    break
-                dish_settled_event.wait(1.0)  # Avoid busy waiting
+            # After 10 seconds, ensure the thread exits by setting the event
+            if not dish_settled_event.is_set():
+                dish_settled_event.set()
+            # Ensure the thread terminates before moving on
+            dish_is_stopping.join()
         else:
             self.logger.warning(
                 "Failed to reset programTrackTable in Abort sequence: %s", result_message
