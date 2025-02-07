@@ -5,6 +5,12 @@ ska-mid-dish-simulators:
 
 ska-mid-dish-ds-manager:
   enabled: false
+  dishstructuremanager:
+    image:
+      registry: registry.gitlab.com/ska-telescope/ska-mid-dish-ds-manager
+      image: ska-mid-dish-ds-manager
+      tag: 3.0.1-dev.cce5b0da5
+      pullPolicy: IfNotPresent
 
 system: SW-infrastructure
 subsystem: ska-dish-lmc
@@ -86,11 +92,3 @@ deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
     enabled: true
-
-ska-mid-dish-ds-manager:
-  dishstructuremanager:
-    image:
-      registry: registry.gitlab.com/ska-telescope/ska-mid-dish-ds-manager
-      image: ska-mid-dish-ds-manager
-      tag: 3.0.1-dev.cce5b0da5
-      pullPolicy: IfNotPresent
