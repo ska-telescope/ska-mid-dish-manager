@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Provided fix for SKB-751
 - Added a factory class to manage device proxy creation
 - Added some major improvements and refactoring
 - Updated dockerfile to use new base images and improved docker image build
