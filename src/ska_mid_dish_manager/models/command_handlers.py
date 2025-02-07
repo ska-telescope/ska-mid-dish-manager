@@ -85,6 +85,9 @@ class Abort:
 
             # After 10 seconds, ensure the thread exits by setting the event
             if not dish_settled_event.is_set():
+                self.logger.debug(
+                    "Timeout reached waiting for dish to settle at reset point %s", reset_point
+                )
                 dish_settled_event.set()
             # Ensure the thread terminates before moving on
             dish_is_stopping.join()
