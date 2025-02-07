@@ -201,5 +201,5 @@ def test_dsc_current_limit_used(
     )
 
     # wait for the slew to finish
-    estimate_slew_duration = requested_el - current_el
+    estimate_slew_duration = abs(requested_el - current_el)
     pointing_state_events.wait_for_value(PointingState.READY, timeout=estimate_slew_duration + 10)
