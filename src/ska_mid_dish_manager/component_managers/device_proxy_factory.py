@@ -106,8 +106,6 @@ class DeviceProxyManager:
                 self._device_proxies[trl] = device_proxy
                 return device_proxy
             self._device_proxies[trl] = device_proxy
-        else:
-            self.logger.debug(f"Returning existing DeviceProxy to device at {trl}")
 
         if not self._is_tango_device_running(device_proxy):
             try:

@@ -32,10 +32,7 @@ class TestDeviceProxyManager:
         dp = self.dev_factory(trl)
         assert new_dp_log in caplog.text
 
-        existing_dp_log = f"Returning existing DeviceProxy to device at {trl}"
         dp1 = self.dev_factory("some/device/address")
-        assert existing_dp_log in caplog.text
-
         # check that both device proxy instances point to the same object
         assert id(dp) == id(dp1)
 

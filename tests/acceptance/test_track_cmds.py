@@ -19,7 +19,8 @@ INIT_AZ = -250
 INIT_EL = 70
 
 
-@pytest.fixture(autouse=True, scope="function")
+# pylint: disable=redefined-outer-name
+@pytest.fixture
 def slew_dish_to_init(event_store_class, dish_manager_proxy):
     """Fixture that slews the dish to a init position."""
     main_event_store = event_store_class()
@@ -30,12 +31,17 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
         tango.EventType.CHANGE_EVENT,
         band_event_store,
     )
-
     dish_manager_proxy.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
+    dish_manager_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+
     dish_manager_proxy.SetStandbyFPMode()
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5, proxy=dish_manager_proxy)
 
@@ -54,10 +60,13 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     )
     achieved_pointing_event_store.clear_queue()
 
+    current_az, current_el = dish_manager_proxy.achievedPointing[1:]
+    estimate_slew_duration = max(abs(INIT_EL - current_el), (abs(INIT_AZ - current_az) / 3))
     dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
+    main_event_store.wait_for_value(PointingState.READY, timeout=estimate_slew_duration + 10)
 
     # wait until no updates
-    data_points = achieved_pointing_event_store.get_queue_values(timeout=5)
+    data_points = achieved_pointing_event_store.get_queue_values()
     # timeout return empty list
     assert data_points
     # returned data is an array of tuple consisting of attribute name and value
@@ -76,6 +85,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_and_track_stop_cmds(
+    slew_dish_to_init,
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -209,6 +219,7 @@ def test_track_and_track_stop_cmds(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_append_dvs_case(
+    slew_dish_to_init,
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -308,6 +319,7 @@ def test_append_dvs_case(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_maximum_capacity(
+    slew_dish_to_init,
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -451,14 +463,34 @@ def test_track_fails_when_track_called_late(
     dish_manager_proxy,
 ):
     """Test Track command fails when the track table is no more valid"""
-
+    main_event_store = event_store_class()
+    band_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
 
+    dish_manager_proxy.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        band_event_store,
+    )
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
     dish_manager_proxy.subscribe_event(
         "pointingState",
         tango.EventType.CHANGE_EVENT,
         pointing_state_event_store,
     )
+    dish_manager_proxy.SetStandbyFPMode()
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5, proxy=dish_manager_proxy)
+
+    dish_manager_proxy.ConfigureBand1(True)
+    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
+    band_event_store.wait_for_value(Band.B1, timeout=10)
+
+    dish_manager_proxy.SetOperateMode()
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 

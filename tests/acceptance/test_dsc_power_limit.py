@@ -5,6 +5,9 @@ from typing import Any
 import pytest
 import tango
 
+from ska_mid_dish_manager.models.dish_enums import PointingState
+from tests.utils import az_el_slew_position
+
 DEFAULT_POWER_LIMIT = 10
 
 
@@ -161,7 +164,7 @@ def test_fp_lp_power_limit_used(
         ds_device_proxy.SetStandbyFPMode()
     else:
         ds_device_proxy.SetStandbyLPMode()
-    # Check that the
+
     progress_event_store.wait_for_progress_update(expected_progress, timeout=6)
 
 
@@ -173,13 +176,22 @@ def test_dsc_current_limit_used(
 ):
     """Test the dscPowerLimitkW value used when invoking Slew."""
     progress_event_store = event_store_class()
+    pointing_state_events = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "pointingState", tango.EventType.CHANGE_EVENT, pointing_state_events
+    )
     ds_device_proxy.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
         progress_event_store,
     )
+
     clean_up(ds_device_proxy, dish_manager_proxy, event_store_class)
-    ds_device_proxy.Slew([80.0, 90.0])
+
+    current_az, current_el = dish_manager_proxy.achievedPointing[1:]
+    requested_az, requested_el = az_el_slew_position(current_az, current_el, 10.0, 10.0)
+    ds_device_proxy.Slew([requested_az, requested_el])
     progress_event_store.wait_for_progress_update(
         (
             "Slew called with Azimuth speed: 3.0 deg/s, Elevation speed: 1.0 deg/s "
@@ -187,3 +199,7 @@ def test_dsc_current_limit_used(
         ),
         timeout=6,
     )
+
+    # wait for the slew to finish
+    estimate_slew_duration = abs(requested_el - current_el)
+    pointing_state_events.wait_for_value(PointingState.READY, timeout=estimate_slew_duration + 10)

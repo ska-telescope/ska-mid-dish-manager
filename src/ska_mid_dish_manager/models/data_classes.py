@@ -1,4 +1,5 @@
 """Contains data classes used."""
+
 from dataclasses import dataclass
 from typing import Optional
 
