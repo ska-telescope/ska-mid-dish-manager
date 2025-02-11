@@ -6,8 +6,8 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
-    IndexerPosition,
     SPFOperatingMode,
+    SPFRxOperatingMode,
 )
 
 
@@ -40,39 +40,40 @@ def setup_and_teardown(
     # command status for every issued command as part of its assert
     event_store.get_queue_events(timeout=5)
 
-    spfrx_device_proxy.ResetToDefault()
-    spf_device_proxy.ResetToDefault()
-
-    ds_device_proxy.subscribe_event(
-        "operatingMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    ds_device_proxy.subscribe_event(
-        "indexerPosition",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-
-    if ds_device_proxy.operatingMode != DSOperatingMode.STOW:
-        ds_device_proxy.Stow()
-        assert event_store.wait_for_value(DSOperatingMode.STOW, timeout=120)
-
-    if ds_device_proxy.indexerPosition != IndexerPosition.B1:
-        ds_device_proxy.SetIndexPosition(IndexerPosition.B1)
-        assert event_store.wait_for_value(IndexerPosition.B1, timeout=9)
-
-    ds_device_proxy.SetStandbyLPMode()
-    assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=9)
-
     spf_device_proxy.subscribe_event(
         "operatingMode",
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=7)
+    spfrx_device_proxy.subscribe_event(
+        "operatingMode",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    ds_device_proxy.subscribe_event(
+        "operatingMode",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    # clear the queue before the resets start
     event_store.clear_queue()
 
+    spf_device_proxy.ResetToDefault()
+    assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=10)
+
+    spfrx_device_proxy.ResetToDefault()
+    assert event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=10)
+
+    if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY_LP:
+        if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY_FP:
+            # go to FP ...
+            ds_device_proxy.SetStandbyFPMode()
+            assert event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=30)
+        # ... and then to LP
+        ds_device_proxy.SetStandbyLPMode()
+        assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=30)
+
+    event_store.clear_queue()
     dish_manager_proxy.SyncComponentStates()
 
     dish_manager_proxy.subscribe_event(
@@ -82,7 +83,7 @@ def setup_and_teardown(
     )
 
     try:
-        event_store.wait_for_value(DishMode.STANDBY_LP, timeout=7)
+        event_store.wait_for_value(DishMode.STANDBY_LP, timeout=30)
     except RuntimeError as err:
         component_states = dish_manager_proxy.GetComponentStates()
         raise RuntimeError(f"DishManager not in STANDBY_LP:\n {component_states}\n") from err

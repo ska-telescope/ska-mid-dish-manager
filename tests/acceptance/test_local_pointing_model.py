@@ -14,6 +14,7 @@ from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LEN
 @pytest.mark.parametrize(
     "tango_attribute",
     [
+        ("band0PointingModelParams"),
         ("band1PointingModelParams"),
         ("band2PointingModelParams"),
         ("band3PointingModelParams"),
@@ -37,6 +38,7 @@ def test_read_band_static_pointing_model_parameters(
 @pytest.mark.parametrize(
     "tango_attribute",
     [
+        ("band0PointingModelParams"),
         ("band1PointingModelParams"),
         ("band2PointingModelParams"),
         ("band3PointingModelParams"),
