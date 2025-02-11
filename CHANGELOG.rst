@@ -8,7 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
-Version 6.1.0
+Version 7.0.0
 *************
 - Added a factory class to manage device proxy creation
 - Added some major improvements and refactoring
