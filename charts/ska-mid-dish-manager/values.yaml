@@ -2,7 +2,7 @@ enabled: true
 
 ska-mid-dish-simulators:
   enabled: false
-  dishstructuremanager:
+  dishsimulators:
     image:
       registry: registry.gitlab.com/ska-telescope/ska-mid-dish-simulators
       image: ska-mid-dish-simulators
