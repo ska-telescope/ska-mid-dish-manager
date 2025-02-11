@@ -623,6 +623,28 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: band0PointingModelParams
+      data_format: SPECTRUM
+      data_type: DevDouble
+      description: "\n            Parameters for (local) Band 0 pointing models used\
+        \ by Dish to do pointing corrections.\n\n            When writing to this\
+        \ attribute, the selected band for correction will be set to B0.\n\n     \
+        \       Band pointing model parameters are:\n            [0] IA, [1] CA, [2]\
+        \ NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n          \
+        \  [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,\n     \
+        \       [15] HESE4, [16] HECE8, [17] HESE8\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: band0PointingModelParams
+      max_alarm: Not specified
+      max_dim_x: 18
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: band0PointingModelParams
     - name: band1PointingModelParams
       data_format: SPECTRUM
       data_type: DevDouble
@@ -666,7 +688,7 @@
       data_type: DevDouble
       description: "\n            Parameters for (local) Band 2 pointing models used\
         \ by Dish to do pointing corrections.\n\n            When writing to this\
-        \ attribute, the selected band for correction will be set to B1.\n\n     \
+        \ attribute, the selected band for correction will be set to B2.\n\n     \
         \       Band pointing model parameters are:\n            [0] IA, [1] CA, [2]\
         \ NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n          \
         \  [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,\n     \
@@ -704,7 +726,7 @@
       data_type: DevDouble
       description: "\n            Parameters for (local) Band 3 pointing models used\
         \ by Dish to do pointing corrections.\n\n            When writing to this\
-        \ attribute, the selected band for correction will be set to B1.\n\n     \
+        \ attribute, the selected band for correction will be set to B3.\n\n     \
         \       Band pointing model parameters are:\n            [0] IA, [1] CA, [2]\
         \ NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n          \
         \  [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,\n     \
@@ -742,7 +764,7 @@
       data_type: DevDouble
       description: "\n            Parameters for (local) Band 4 pointing models used\
         \ by Dish to do pointing corrections.\n\n            When writing to this\
-        \ attribute, the selected band for correction will be set to B1.\n\n     \
+        \ attribute, the selected band for correction will be set to B4.\n\n     \
         \       Band pointing model parameters are:\n            [0] IA, [1] CA, [2]\
         \ NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,\n          \
         \  [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,\n     \
