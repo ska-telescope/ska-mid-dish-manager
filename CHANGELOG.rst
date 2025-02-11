@@ -10,6 +10,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added a factory class to manage device proxy creation
 - Added some major improvements and refactoring
 - Updated dockerfile to use new base images and improved docker image build
+- Added Band0PointingModelParams attribute
 
 Version 6.0.1
 *************

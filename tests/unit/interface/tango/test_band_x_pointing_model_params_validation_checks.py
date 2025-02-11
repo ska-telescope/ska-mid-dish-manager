@@ -10,6 +10,7 @@ import tango
 @pytest.mark.parametrize(
     "tango_attribute,write_values",
     [
+        ("band0PointingModelParams", [1.2, 3.4, 5.6]),
         ("band1PointingModelParams", [1.2]),
         ("band2PointingModelParams", [5.6, 7.8, 3.0]),
         (

@@ -88,6 +88,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            band0pointingmodelparams=[],
             band1pointingmodelparams=[],
             band2pointingmodelparams=[],
             band3pointingmodelparams=[],
@@ -164,6 +165,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 desiredpointingaz=[0.0, 0.0],
                 desiredpointingel=[0.0, 0.0],
                 achievedpointing=[0.0, 0.0, 0.0],
+                band0pointingmodelparams=[],
                 band1pointingmodelparams=[],
                 band2pointingmodelparams=[],
                 band3pointingmodelparams=[],
@@ -630,7 +632,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(**{cap_state_name: new_state})
 
         # Update the pointing model params if they change
-        for band in ["1", "2", "3", "4", "5a", "5b"]:
+        for band in ["0", "1", "2", "3", "4", "5a", "5b"]:
             pointing_param_name = f"band{band}pointingmodelparams"
 
             if pointing_param_name in kwargs:
@@ -1208,6 +1210,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Write to the appropriate band
         band_map = {
+            "0": "band0PointingModelParams",
             "1": "band1PointingModelParams",
             "2": "band2PointingModelParams",
             "3": "band3PointingModelParams",
