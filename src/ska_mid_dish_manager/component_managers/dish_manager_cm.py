@@ -88,6 +88,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            band0pointingmodelparams=[],
             band1pointingmodelparams=[],
             band2pointingmodelparams=[],
             band3pointingmodelparams=[],
@@ -164,6 +165,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 desiredpointingaz=[0.0, 0.0],
                 desiredpointingel=[0.0, 0.0],
                 achievedpointing=[0.0, 0.0, 0.0],
+                band0pointingmodelparams=[],
                 band1pointingmodelparams=[],
                 band2pointingmodelparams=[],
                 band3pointingmodelparams=[],
@@ -1191,6 +1193,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Write to the appropriate band
         band_map = {
+            "0": "band0PointingModelParams",
             "1": "band1PointingModelParams",
             "2": "band2PointingModelParams",
             "3": "band3PointingModelParams",

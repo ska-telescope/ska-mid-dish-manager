@@ -57,6 +57,7 @@ def read_file_contents(
 @pytest.mark.parametrize(
     "band_selection",
     [
+        ("band0PointingModelParams", "Band_0", "global_pointing_model.json"),
         ("band1PointingModelParams", "Band_1", "global_pointing_model.json"),
         ("band2PointingModelParams", "Band_2", "global_pointing_model.json"),
         ("band3PointingModelParams", "Band_3", "global_pointing_model.json"),

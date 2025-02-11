@@ -343,6 +343,7 @@ class DishManager(SKAController):
                 "desiredpointingaz": "desiredPointingAz",
                 "desiredpointingel": "desiredPointingEl",
                 "achievedpointing": "achievedPointing",
+                "band0pointingmodelparams": "band0PointingModelParams",
                 "band1pointingmodelparams": "band1PointingModelParams",
                 "band2pointingmodelparams": "band2PointingModelParams",
                 "band3pointingmodelparams": "band3PointingModelParams",
@@ -588,6 +589,36 @@ class DishManager(SKAController):
         dtype=(float,),
         max_dim_x=BAND_POINTING_MODEL_PARAMS_LENGTH,
         doc="""
+            Parameters for (local) Band 0 pointing models used by Dish to do pointing corrections.
+
+            When writing to this attribute, the selected band for correction will be set to B0.
+
+            Band pointing model parameters are:
+            [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
+            [9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
+            [15] HESE4, [16] HECE8, [17] HESE8
+        """,
+        access=AttrWriteType.READ_WRITE,
+    )
+    def band0PointingModelParams(self):
+        """Returns the band0PointingModelParams"""
+        return self.component_manager.component_state.get("band0pointingmodelparams", [])
+
+    @band0PointingModelParams.write
+    def band0PointingModelParams(self, value):
+        """Set the band0PointingModelParams"""
+        self.logger.debug("band0PointingModelParams write method called with params %s", value)
+
+        if hasattr(self, "component_manager"):
+            self.component_manager.update_pointing_model_params("band0PointingModelParams", value)
+        else:
+            self.logger.warning("No component manager to write band0PointingModelParams yet")
+            raise RuntimeError("Failed to write to band0PointingModelParams on DishManager")
+
+    @attribute(
+        dtype=(float,),
+        max_dim_x=BAND_POINTING_MODEL_PARAMS_LENGTH,
+        doc="""
             Parameters for (local) Band 1 pointing models used by Dish to do pointing corrections.
 
             When writing to this attribute, the selected band for correction will be set to B1.
@@ -620,7 +651,7 @@ class DishManager(SKAController):
         doc="""
             Parameters for (local) Band 2 pointing models used by Dish to do pointing corrections.
 
-            When writing to this attribute, the selected band for correction will be set to B1.
+            When writing to this attribute, the selected band for correction will be set to B2.
 
             Band pointing model parameters are:
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
@@ -650,7 +681,7 @@ class DishManager(SKAController):
         doc="""
             Parameters for (local) Band 3 pointing models used by Dish to do pointing corrections.
 
-            When writing to this attribute, the selected band for correction will be set to B1.
+            When writing to this attribute, the selected band for correction will be set to B3.
 
             Band pointing model parameters are:
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
@@ -680,7 +711,7 @@ class DishManager(SKAController):
         doc="""
             Parameters for (local) Band 4 pointing models used by Dish to do pointing corrections.
 
-            When writing to this attribute, the selected band for correction will be set to B1.
+            When writing to this attribute, the selected band for correction will be set to B4.
 
             Band pointing model parameters are:
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
