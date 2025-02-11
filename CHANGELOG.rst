@@ -7,9 +7,17 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 6.1.0
+*************
 - Added a factory class to manage device proxy creation
 - Added some major improvements and refactoring
 - Updated dockerfile to use new base images and improved docker image build
+- Added Band0PointingModelParams
+- Updated ska-tango-util to v0.4.15
+- Updated ska-tango-base to v0.4.15
+- Updated simulators version to 4.2.3
+- Replaced component manager with a new implementation using sculib
 
 Version 6.0.1
 *************
