@@ -615,7 +615,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(**{cap_state_name: new_state})
 
         # Update the pointing model params if they change
-        for band in ["1", "2", "3", "4", "5a", "5b"]:
+        for band in ["0", "1", "2", "3", "4", "5a", "5b"]:
             pointing_param_name = f"band{band}pointingmodelparams"
 
             if pointing_param_name in kwargs:
