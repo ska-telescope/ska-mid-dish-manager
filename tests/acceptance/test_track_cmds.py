@@ -36,11 +36,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
-    dish_manager_proxy.subscribe_event(
-        "pointingState",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
 
     dish_manager_proxy.SetStandbyFPMode()
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5, proxy=dish_manager_proxy)
@@ -63,10 +58,11 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
     estimate_slew_duration = max(abs(INIT_EL - current_el), (abs(INIT_AZ - current_az) / 3))
     dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
-    main_event_store.wait_for_value(PointingState.READY, timeout=estimate_slew_duration + 10)
 
     # wait until no updates
-    data_points = achieved_pointing_event_store.get_queue_values()
+    data_points = achieved_pointing_event_store.get_queue_values(
+        timeout=estimate_slew_duration + 10
+    )
     # timeout return empty list
     assert data_points
     # returned data is an array of tuple consisting of attribute name and value
