@@ -53,7 +53,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
         tango.EventType.CHANGE_EVENT,
         achieved_pointing_event_store,
     )
-    achieved_pointing_event_store.clear_queue()
 
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
     estimate_slew_duration = max(abs(INIT_EL - current_el), (abs(INIT_AZ - current_az) / 3))

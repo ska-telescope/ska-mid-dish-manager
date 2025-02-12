@@ -7,11 +7,20 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 7.0.0
+*************
+- Updated ska-mid-dish-simulators to v4.3.0
 - Provided fix for SKB-751
 - Added a factory class to manage device proxy creation
 - Added some major improvements and refactoring
 - Updated dockerfile to use new base images and improved docker image build
-- Added Band0PointingModelParams attribute
+- Implemented Band0PointingModelParams attribute
+- Updated ska-tango-util to v0.4.15
+- Updated ska-tango-base to v0.4.15
+- Upgraded ska-mid-dish-ds-manager chart to v3.1.0
+
+  - Replaced component manager with a new implementation using sculib
 
 Version 6.0.1
 *************
