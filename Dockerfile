@@ -17,5 +17,6 @@ COPY . .
 RUN poetry install --only-root
 
 RUN pip install --force-reinstall pytango-9.5.0-cp310-cp310-manylinux_2_35_x86_64.whl
+RUN pip install numpy==1.26.4
 
 USER tango
