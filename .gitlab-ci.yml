@@ -58,3 +58,13 @@ mypy:
       src/ska_mid_dish_manager/models/dish_mode_model.py
       src/ska_mid_dish_manager/models/dish_state_transition.py
   allow_failure: true
+
+
+# create a job to run multiple k8s-test-runs
+k8s-test-runner-parallel:
+  extends: k8s-test-runner
+  parallel: 3
+  when: manual
+  allow_failure: true
+  variables:
+    KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-$CI_NODE_INDEX"
