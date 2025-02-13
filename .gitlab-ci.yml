@@ -64,3 +64,5 @@ mypy:
 k8s-test-runner-parallel:
   extends: k8s-test-runner
   parallel: 3
+  when: manual
+  allow_failure: true
