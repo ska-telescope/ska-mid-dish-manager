@@ -9,7 +9,9 @@ from ska_mid_dish_manager.models.dish_enums import CapabilityStates, DishMode
 # pylint:disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_manager_proxy):
+def test_capability_state_b1(
+    monitor_tango_servers, record_event_from_zmq, event_store_class, dish_manager_proxy
+):
     """Test transition on CapabilityState b1"""
     main_event_store = event_store_class()
     cap_state_event_store = event_store_class()

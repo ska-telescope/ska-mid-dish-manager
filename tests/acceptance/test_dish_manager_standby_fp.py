@@ -7,7 +7,9 @@ import tango
 # pylint:disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_manager_proxy):
+def test_standby_fp_transition(
+    monitor_tango_servers, record_event_from_zmq, event_store_class, dish_manager_proxy
+):
     """Test transition to Standby_FP"""
     result_event_store = event_store_class()
     progress_event_store = event_store_class()

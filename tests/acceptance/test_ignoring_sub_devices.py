@@ -1,6 +1,6 @@
 """Test ignoring subservient devices."""
 
-# pylint: disable=invalid-name,redefined-outer-name,unused-argument
+# pylint: disable=invalid-name,redefined-outer-name,unused-argument,too-many-locals
 import pytest
 import tango
 
@@ -35,7 +35,11 @@ def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_ignoring_spf(
-    monitor_tango_servers, toggle_ignore_spf, event_store_class, dish_manager_proxy
+    monitor_tango_servers,
+    record_event_from_zmq,
+    toggle_ignore_spf,
+    event_store_class,
+    dish_manager_proxy,
 ):
     """Test ignoring SPF device."""
 
@@ -79,7 +83,11 @@ def test_ignoring_spf(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_ignoring_spfrx(
-    monitor_tango_servers, toggle_ignore_spfrx, event_store_class, dish_manager_proxy
+    monitor_tango_servers,
+    record_event_from_zmq,
+    toggle_ignore_spfrx,
+    event_store_class,
+    dish_manager_proxy,
 ):
     """Test ignoring SPFRX device."""
 
@@ -137,7 +145,11 @@ def test_ignoring_spfrx(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_ignoring_all(
-    monitor_tango_servers, toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy
+    monitor_tango_servers,
+    record_event_from_zmq,
+    toggle_ignore_spf_and_spfrx,
+    event_store_class,
+    dish_manager_proxy,
 ):
     """Test ignoring both SPF and SPFRx devices."""
     result_event_store = event_store_class()

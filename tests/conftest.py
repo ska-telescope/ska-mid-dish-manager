@@ -32,6 +32,12 @@ def pytest_addoption(parser):
         default=None,
         help="File path to store event tracking files to",
     )
+    parser.addoption(
+        "--zmq-events-path",
+        action="store",
+        default=None,
+        help="File path to store zmq events",
+    )
 
 
 @pytest.fixture(scope="module", name="open_port")
@@ -228,7 +234,7 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
 # pylint: disable=line-too-long,unspecified-encoding
 @pytest.fixture
 def record_event_from_zmq(request):
-    event_files_dir = request.config.getoption("--event-storage-files-path")
+    event_files_dir = request.config.getoption("--zmq-events-path")
     if not os.path.exists(event_files_dir):
         os.makedirs(event_files_dir)
 
