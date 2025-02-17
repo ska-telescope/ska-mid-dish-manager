@@ -76,6 +76,8 @@ sync-to-main:
     - git commit -m "KAR-1167 Merge branch main into kar-1167-scheduled-testing"
     # Ensure username is URL safe/encoded before pushing
     - GITLAB_USER_LOGIN=$(printf %s "$GITLAB_USER_LOGIN" | jq -Rr @uri)
+    # Not needed for the final implementation but show references from the context of the runner
+    - git show-ref
     # Push changes to branch and prevent loop of pipeline runs from being triggered by skipping ci pipeline
     # Note: GITLAB_TOKEN is a project access token defined in the pipeline scheduler
     - git push https://$GITLAB_USER_LOGIN:$GITLAB_TOKEN@gitlab.com/ska-telescope/ska-mid-dish-manager.git origin/kar-1167-scheduled-testing -o ci.skip;
