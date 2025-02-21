@@ -146,7 +146,6 @@ class DishManager(SKAController):
             * 2,  # cmd name and progress for each command
             self.longRunningCommandProgress,
         )
-        
 
     def create_component_manager(self) -> DishManagerComponentManager:
         """Create the component manager for DishManager
