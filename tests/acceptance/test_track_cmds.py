@@ -54,14 +54,12 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
         achieved_pointing_event_store,
     )
 
-    current_az, current_el = dish_manager_proxy.achievedPointing[1:]
-    estimate_slew_duration = max(abs(INIT_EL - current_el), (abs(INIT_AZ - current_az) / 3))
+    # current_az, current_el = dish_manager_proxy.achievedPointing[1:]
+    # estimate_slew_duration = max(abs(INIT_EL - current_el), (abs(INIT_AZ - current_az) / 3))
     dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
 
     # wait until no updates
-    data_points = achieved_pointing_event_store.get_queue_values(
-        timeout=estimate_slew_duration + 10
-    )
+    data_points = achieved_pointing_event_store.get_queue_values(timeout=0.1)
     # timeout return empty list
     assert data_points
     # returned data is an array of tuple consisting of attribute name and value
