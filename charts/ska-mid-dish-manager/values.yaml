@@ -20,7 +20,7 @@ ska-mid-dish-ds-manager:
 
 
 signoz:
-  enabled: true
+  enabled: false
 
 system: SW-infrastructure
 subsystem: ska-dish-lmc
