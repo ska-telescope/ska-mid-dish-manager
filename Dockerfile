@@ -35,6 +35,11 @@ RUN pip uninstall -y pip
 # Use the base image for the final stage
 FROM $BASE_IMAGE
 
+ENV TANGO_TELEMETRY_ENABLE=off
+ENV TANGO_TELEMETRY_TRACES_EXPORTER=grpc
+ENV TANGO_TELEMETRY_TRACES_ENDPOINT=grpc://dev-signoz-otel-collector:4317
+ENV TANGO_TELEMETRY_LOGS_EXPORTER=none
+
 ENV VIRTUAL_ENV=/app
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 

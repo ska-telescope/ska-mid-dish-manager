@@ -111,6 +111,16 @@ class DishManager(SKAController):
             _MAXIMUM_STATUS_QUEUE_SIZE,
         )
         self._create_attribute(
+            "lrcQueue",
+            self._status_queue_size,
+            self.lrcQueue,
+        )
+        self._create_attribute(
+            "lrcExecuting",
+            self.component_manager.max_executing_tasks + 1,  # for Abort command
+            self.lrcExecuting,
+        )
+        self._create_attribute(
             "longRunningCommandStatus",
             self._status_queue_size * 2,  # 2 per command
             self.longRunningCommandStatus,
@@ -136,6 +146,7 @@ class DishManager(SKAController):
             * 2,  # cmd name and progress for each command
             self.longRunningCommandProgress,
         )
+        
 
     def create_component_manager(self) -> DishManagerComponentManager:
         """Create the component manager for DishManager
