@@ -765,11 +765,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         :param task_callback: callback when the status changes
         """
         self.logger.debug("Aborting long running commands")
-        super().abort_commands(task_callback)
+        super().abort_tasks(task_callback)
         sub_component_mgrs = self.get_active_sub_component_managers()
         for component_mgr in sub_component_mgrs.values():
             # dont use the same taskcallback else we get completed 4x on the same command id
-            component_mgr.abort_commands()
+            component_mgr.abort_tasks()
 
     def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
