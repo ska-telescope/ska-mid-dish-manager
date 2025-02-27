@@ -81,7 +81,7 @@ sync-to-main:
     # Push changes to branch and prevent loop of pipeline runs from being triggered by skipping ci pipeline
     # Note: GITLAB_TOKEN is a project access token defined in the pipeline scheduler
     - git remote set-url origin "https://oauth2:${API_DOC_GEN_TOKEN}@gitlab.com/ska-telescope/ska-mid-dish-manager.git"
-    - git push --verbose https://$GITLAB_USER_LOGIN:$GITLAB_TOKEN@gitlab.com/ska-telescope/ska-mid-dish-manager.git origin/kar-1167-scheduled-testing -o ci.skip;
+    - git push --verbose origin/kar-1167-scheduled-testing -o ci.skip;
     - if [ $? -ne 0 ]; then 
         echo "Failed to push merged branch to repository as $GITLAB_USER_NAME. Please ensure that the access token is valid and configured in the pipeline scheduler menu";
         exit 1;
