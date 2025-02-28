@@ -33,7 +33,7 @@ PYTHON_LINE_LENGTH = 99
 # Set the specific environment variables required for pytest
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
-PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --zmq-events-path="build/zmq-events"
+PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events"
 
 python-test: MARK = unit
 k8s-test-runner: MARK = acceptance
@@ -52,6 +52,7 @@ endif
 #############################
 # OCI, K8s, Helm
 #############################
+OCI_IMAGE_FILE_PATH = build-with-custom-whl/Dockerfile
 OCI_TAG = $(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
 
 CI_REGISTRY ?= registry.gitlab.com

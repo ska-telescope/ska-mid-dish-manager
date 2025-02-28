@@ -4,11 +4,7 @@
 
 import os
 import socket
-import sys
-import threading
-import time
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import List, Tuple
 
 import pytest
@@ -31,12 +27,6 @@ def pytest_addoption(parser):
         action="store",
         default=None,
         help="File path to store event tracking files to",
-    )
-    parser.addoption(
-        "--zmq-events-path",
-        action="store",
-        default=None,
-        help="File path to store zmq events",
     )
 
 
@@ -229,63 +219,3 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
         with open(file_path, "a", encoding="utf-8") as open_file:
             open_file.write("\n\nEvents set up, test starting\n")
         yield
-
-
-# pylint: disable=line-too-long,unspecified-encoding
-@pytest.fixture
-def record_event_from_zmq(request):
-    event_files_dir = request.config.getoption("--zmq-events-path")
-    if not os.path.exists(event_files_dir):
-        os.makedirs(event_files_dir)
-
-    file_name = ".".join((f"events_{request.node.name}", "json"))
-    file_path = os.path.join(event_files_dir, file_name)
-
-    dp = tango.DeviceProxy("mid-dish/dish-manager/SKA001")
-    if dp.info().dev_class != "DServer":
-        adm_name = dp.adm_name()
-        dp = tango.DeviceProxy(adm_name)
-
-    if "QueryEventSystem" not in dp.get_command_list():
-        pytest.fail("QueryEventSystem command not available in the device")
-
-    # Function to monitor the event system
-    def monitor_event_system(stop_event):
-        with open(file_path, "a") as f:
-            dp.StartEventSystemPerfMon()
-            while not stop_event.is_set():
-                next_poll = time.time() + 10
-                try:
-                    data = dp.QueryEventSystem()
-                    f.write(
-                        f'{{"time":"{datetime.now().isoformat()}","name":"{adm_name}","data":{data}}}\n'  # noqa: E501
-                    )
-                except tango.DevFailed as exc:
-                    print(exc, file=sys.stderr)
-                    f.write(
-                        f'{{"time":"{datetime.now().isoformat()}","name":"{adm_name}","error":"{repr(exc)}"}}\n'  # noqa: E501
-                    )
-
-                f.flush()
-                sleep_for = next_poll - time.time()
-                if sleep_for > 0.001:
-                    time.sleep(sleep_for)
-                elif sleep_for < 0:
-                    print(f"poll time missed by {-sleep_for}s", file=sys.stderr)
-
-            dp.StopEventSystemPerfMon()
-
-    # Create a thread to run the monitoring function
-    stop_event = threading.Event()
-    monitor_thread = threading.Thread(target=monitor_event_system, args=(stop_event,))
-    monitor_thread.start()
-
-    # Teardown function to stop the monitoring and clean up
-    def cleanup():
-        stop_event.set()
-        monitor_thread.join()
-        dp.StopEventSystemPerfMon()
-
-    request.addfinalizer(cleanup)
-
-    return file_path

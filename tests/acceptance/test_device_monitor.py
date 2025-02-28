@@ -21,7 +21,7 @@ def empty_func(*args, **kwargs):  # pylint: disable=unused-argument
 
 
 # pylint:disable=unused-argument
-def test_device_monitor(monitor_tango_servers, record_event_from_zmq, caplog, spf_device_fqdn):
+def test_device_monitor(monitor_tango_servers, caplog, spf_device_fqdn):
     """Device monitoring sanity check"""
     # TODO all the tests dont have a marker so are not executed, fix this
     caplog.set_level(logging.DEBUG)

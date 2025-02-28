@@ -11,7 +11,6 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 @pytest.mark.forked
 def test_configure_band_2(
     monitor_tango_servers,
-    record_event_from_zmq,
     event_store_class,
     dish_manager_proxy,
 ):

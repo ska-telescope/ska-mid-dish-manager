@@ -29,10 +29,6 @@ COPY README.md ./
 COPY src ./src
 RUN pip install --no-deps .
 
-# install custom pytango wheel from gitlab registry
-RUN pip install pytango --force-reinstall --index-url https://gitlab.com/api/v4/projects/67270251/packages/pypi/simple
-RUN pip install numpy==1.26.4
-
 # We don't want to copy pip into the runtime image
 RUN pip uninstall -y pip
 

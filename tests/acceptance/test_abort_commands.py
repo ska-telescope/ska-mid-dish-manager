@@ -203,7 +203,6 @@ def track_a_sample(
 @pytest.mark.forked
 def test_abort_commands_during_track(
     monitor_tango_servers,
-    record_event_from_zmq,
     track_a_sample,
     event_store_class,
     dish_manager_proxy,
