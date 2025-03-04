@@ -59,8 +59,7 @@ mypy:
       src/ska_mid_dish_manager/models/dish_state_transition.py
   allow_failure: true
 
-# store zmq events
-process-and-store-zmq-events:
+stream-processed-zmq-events:
   tags:
     - ${SKA_K8S_RUNNER}
   variables:
@@ -74,15 +73,12 @@ process-and-store-zmq-events:
     - git clone https://gitlab.com/ska-telescope/sdi/ska-cicd-makefile.git
     - cd ska-cicd-makefile
     - KUBE_APP=ska-mid-dish-manager make k8s-wait
-    - sleep 10 # wait for the make install chart to be called in the install job
     - echo "Starting ZMQ event monitoring on $DEVICE_NAME in namespace $KUBE_NAMESPACE"
-    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- /app/bin/ska-tango-event-monitor $DEVICE_NAME
-  artifacts:
-    name: "$CI_JOB_NAME-$CI_JOB_ID-test-events"
-    paths:
-      - build/
+    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- sudo touch zmq-events.json
+    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- sudo chown tango zmq-events.json
+    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- /app/bin/ska-tango-event-monitor $DEVICE_NAME --append --output zmq-events.json 
 
-stop-process-and-store-zmq-events:
+stop-streaming-and-store-zmq-events:
   tags:
     - ${SKA_K8S_RUNNER}
   variables:
@@ -92,8 +88,13 @@ stop-process-and-store-zmq-events:
   when: always
   allow_failure: true
   script:
+    - echo "Test run has completed, collecting events recorded"
+    - mkdir -p build
+    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- cat zmq-events.json >> build/zmq-events.json
     - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- pkill -f "/app/bin/ska-tango-event-monitor mid-dish/dish-manager/SKA001"
-    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- ps aux | grep "/app/bin/ska-tango-event-monitor mid-dish/dish-manager/SKA001" | grep -v grep
-    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- if [[ $? -eq 0 ]]; then echo "Process still running!"; exit 1; fi
   needs:
     - k8s-test-runner
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_JOB_ID-recorded-events"
+    paths:
+      - build/

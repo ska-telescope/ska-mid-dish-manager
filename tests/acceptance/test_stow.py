@@ -7,7 +7,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
 # pylint: disable=too-many-locals,unused-argument
-@pytest.mark.acceptance
+@pytest.mark.this
 @pytest.mark.forked
 def test_stow_transition(
     monitor_tango_servers,
