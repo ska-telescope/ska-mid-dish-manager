@@ -53,7 +53,7 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
 
 
-@pytest.mark.this
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_slew_transition(event_store_class, dish_manager_proxy):
     """Test transition to SLEW"""
