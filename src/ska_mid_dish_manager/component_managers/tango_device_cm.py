@@ -117,11 +117,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error occured updating component state")
 
-            # if the error event stops tango emits a valid event for all
-            # the error events we got for the various attribute subscription.
-            # update the communication state in case the error event callback flipped it
-            self._active_attr_event_subscriptions.add(attr_name)
-            self.sync_communication_to_valid_event()
+        # if the error event stops, tango emits a valid event for all
+        # the error events we got for the various attribute subscription.
+        # update the communication state in case the error event callback flipped it
+        self._active_attr_event_subscriptions.add(attr_name)
+        self.sync_communication_to_valid_event()
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
         """
@@ -143,12 +143,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attr_name,
             errors,
         )
-        try:
-            self._active_attr_event_subscriptions.remove(attr_name)
-        except KeyError:
-            pass
+        # try:
+        #     self._active_attr_event_subscriptions.remove(attr_name)
+        # except KeyError:
+        #     pass
 
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        # self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     # --------------
     # helper methods
