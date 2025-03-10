@@ -74,9 +74,8 @@ stream-processed-zmq-events:
     - cd ska-cicd-makefile
     - KUBE_APP=ska-mid-dish-manager make k8s-wait
     - echo "Starting ZMQ event monitoring on $DEVICE_NAME in namespace $KUBE_NAMESPACE"
-    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- sudo touch zmq-events.json
-    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- sudo chown tango zmq-events.json
-    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- /app/bin/ska-tango-event-monitor $DEVICE_NAME --append --output zmq-events.json 
+    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- python -c "import tango; dp = tango.DeviceProxy('$DEVICE_NAME'); dp_adm = tango.DeviceProxy(dp.adm_name()); dp_adm.StartEventSystemPerfMon();"
+    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- bash -c "sudo touch zmq-events.json && sudo chown tango zmq-events.json && /app/bin/ska-tango-event-monitor $DEVICE_NAME --append --output zmq-events.json"
 
 stop-streaming-and-store-zmq-events:
   tags:
