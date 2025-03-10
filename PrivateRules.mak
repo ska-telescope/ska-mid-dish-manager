@@ -1,6 +1,6 @@
 
 LOCAL_DEPLOYMENT = --set global.minikube=$(MINIKUBE) \
-	--set global.operator=$(SKA_TANGO_OPERATOR) \
+	--set global.operator=false \
 	--set ska-mid-dish-simulators.enabled=true \
 	--set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
 	--set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
