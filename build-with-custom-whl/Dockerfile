@@ -33,7 +33,7 @@ RUN pip install --no-deps .
 RUN pip install pytango --force-reinstall --index-url https://gitlab.com/api/v4/projects/67270251/packages/pypi/simple
 RUN pip install numpy==1.26.4
 # install ska-tango-event-monitor from gitlab registry
-RUN pip install ska-tango-event-monitor --index-url https://gitlab.com/api/v4/projects/67270251/packages/pypi/simple
+RUN pip install ska-tango-event-monitor==0.0.0+dev.c451b5192 --index-url https://gitlab.com/api/v4/projects/67270251/packages/pypi/simple
 
 # We don't want to copy pip into the runtime image
 RUN pip uninstall -y pip

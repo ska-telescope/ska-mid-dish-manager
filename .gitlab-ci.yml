@@ -65,7 +65,8 @@ stream-processed-zmq-events:
   variables:
     KUBE_NAMESPACE: 'ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA'
     DISH_MANAGER_POD: ds-dishmanager-001-0
-    DEVICE_NAME: mid-dish/dish-manager/SKA001
+    DISH_MGR: mid-dish/dish-manager/SKA001
+    DS_MGR: mid-dish/ds-manager/SKA001
   allow_failure: true
   when: always
   stage: test
@@ -73,9 +74,8 @@ stream-processed-zmq-events:
     - git clone https://gitlab.com/ska-telescope/sdi/ska-cicd-makefile.git
     - cd ska-cicd-makefile
     - KUBE_APP=ska-mid-dish-manager make k8s-wait
-    - echo "Starting ZMQ event monitoring on $DEVICE_NAME in namespace $KUBE_NAMESPACE"
-    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- python -c "import tango; dp = tango.DeviceProxy('$DEVICE_NAME'); dp_adm = tango.DeviceProxy(dp.adm_name()); dp_adm.StartEventSystemPerfMon();"
-    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- bash -c "sudo touch zmq-events.json && sudo chown tango zmq-events.json && /app/bin/ska-tango-event-monitor $DEVICE_NAME --append --output zmq-events.json"
+    - echo "Starting ZMQ event monitoring on $DISH_MGR and $DS_MGR in namespace $KUBE_NAMESPACE"
+    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- bash -c "sudo touch zmq-events.json && sudo chown tango zmq-events.json && /app/bin/ska-tango-event-monitor $DISH_MGR $DISH_MGR --monitor-perf --append --output zmq-events.json"
 
 stop-streaming-and-store-zmq-events:
   tags:
