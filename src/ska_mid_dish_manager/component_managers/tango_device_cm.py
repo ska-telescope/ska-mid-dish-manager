@@ -9,11 +9,11 @@ from typing import Any, Callable, Optional, Tuple
 import numpy as np
 import tango
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
-from ska_tango_base.base import check_communicating
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
+from ska_mid_dish_manager.utils.decorators import check_communicating
 
 
 # pylint: disable=abstract-method, too-many-instance-attributes, no-member, too-many-arguments
