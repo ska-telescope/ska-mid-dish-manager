@@ -313,7 +313,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         result = None
         try:
             result = self.execute_command(command_name, command_arg)
-        except (ConnectionError, tango.DevFailed) as err:
+        except tango.DevFailed as err:
             self.logger.exception(err)
             if task_callback:
                 task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))

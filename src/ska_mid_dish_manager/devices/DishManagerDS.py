@@ -1399,15 +1399,13 @@ class DishManager(SKAController):
         ):
             if hasattr(self, "component_manager"):
                 if "SPFRX" in self.component_manager.sub_component_managers:
+                    spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
                     try:
-                        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
                         spfrx_com_man.execute_command("MonitorPing", None)
-                    except ConnectionError:
-                        self.logger.error(
-                            "Could not connect to [%s] for MonitorPing", self.SPFRxDeviceFqdn
-                        )
                     except tango.DevFailed:
-                        pass
+                        self.logger.error(
+                            "Failed to execute MonitorPing command on %s", self.SPFRxDeviceFqdn
+                        )
 
     @command(
         doc_in="Abort currently executing long running command on "
