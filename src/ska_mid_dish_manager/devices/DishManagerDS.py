@@ -16,7 +16,7 @@ import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
-from tango import AttrWriteType, DevULong, DispLevel
+from tango import AttrWriteType, DevState, DevULong, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -152,7 +152,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
-            communication_state_callback=None,
+            communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )
 
@@ -252,6 +252,21 @@ class DishManager(SKAController):
                 if attribute_object.get_quality() is not new_attribute_quality:
                     attribute_object.set_quality(new_attribute_quality, True)
 
+    def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
+        action_map = {
+            CommunicationStatus.NOT_ESTABLISHED: None,
+            CommunicationStatus.ESTABLISHED: "component_on",
+            CommunicationStatus.DISABLED: "component_disconnected",
+        }
+        action = action_map[communication_state]
+        if action is None:
+            self._update_state(
+                DevState.ALARM,
+                "Event channel on a sub-device is not responding anymore or change event subscription is not complete",
+            )
+        else:
+            self.op_state_model.perform_action(action)
+
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
         def change_case(attr_name):
@@ -322,8 +337,6 @@ class DishManager(SKAController):
                 spfrx_address=device.SPFRxDeviceFqdn,
             )
             device._build_state = device._release_info.get_build_state()
-
-            device.op_state_model.perform_action("component_standby")
 
             # push change events, needed to use testing library
 
@@ -423,6 +436,7 @@ class DishManager(SKAController):
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
             device.component_manager.start_communicating()
+            device.op_state_model.perform_action("component_on")
             return (ResultCode(result_code), message)
 
     # ----------
