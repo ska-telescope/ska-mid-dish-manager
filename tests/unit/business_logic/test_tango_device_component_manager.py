@@ -33,7 +33,7 @@ def test_component_manager_continues_reconnecting_when_device_is_unreachable(cap
 
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango")
-def test_happy_path(caplog):
+def test_happy_path(patched_tango, caplog):
     """Tango device is reachable and communicates with component manager
 
     Tango layer is mocked and checks are made on the mock for expected
@@ -99,7 +99,7 @@ def test_unhappy_path(patched_dp, caplog):
 
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
-def test_device_goes_away(caplog):
+def test_device_goes_away(patch_dp, caplog):
     """
     Start up the component_manager.
     Signal a lost connection via an event
@@ -112,16 +112,29 @@ def test_device_goes_away(caplog):
         LOGGER,
         ("some_attr", "some_other_attr"),
     )
+    tc_manager._fetch_build_state_information = mock.MagicMock(name="mock_build_state")
 
     tc_manager.start_communicating()
     # wait a bit for the state to change
     time.sleep(0.5)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
-    # Set up an error mock event
+    # Set up an error mock event (API_MissedEvent), no action taken
+    mock_dev_errors = mock.MagicMock(name="mock_dev_errors")
+    mock_dev_errors.reason = "API_MissedEvent"
     mock_error = mock.MagicMock(name="mock_error")
     mock_error.err = True
-    mock_error.name = "some_attr"
+    mock_error.attr_name = "some_attr"
+    mock_error.errors = (mock_dev_errors,)
+    # Trigger a failure event
+    tc_manager._events_queue.put(mock_error)
+    # wait a bit for the state to change
+    time.sleep(0.5)
+    assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
+
+    # Set up an error mock event (API_EventTimeout)
+    mock_dev_errors.reason = "API_EventTimeout"
+    mock_error.errors = (mock_dev_errors,)
     # Trigger a failure event
     tc_manager._events_queue.put(mock_error)
     # wait a bit for the state to change
