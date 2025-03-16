@@ -118,7 +118,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 self.logger.exception("Error occured updating component state")
 
         # if the error event stops, tango emits a valid event for all
-        # the error events we got for the various attribute subscription.
+        # the error events we got for the various attribute subscriptions.
         # update the communication state in case the error event callback flipped it
         self._active_attr_event_subscriptions.add(attr_name)
         self.sync_communication_to_valid_event()
@@ -135,7 +135,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
 
         self.logger.debug(
             (
-                "Error event was emitted by device %s with the following details: "
+                "Error event was emitted by device %s with the following details "
                 "attr_name: %s, "
                 "errors: %s"
             ),
@@ -143,12 +143,19 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attr_name,
             errors,
         )
-        # try:
-        #     self._active_attr_event_subscriptions.remove(attr_name)
-        # except KeyError:
-        #     pass
 
-        # self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        # Tango error events are emitted for a number of reasons. Errors like `API_MissedEvents`
+        # is tango's acknowledgement that something was dropped along the wire but doesn't mean
+        # the heart beat has failed. For now, only heart beat failures on the event channel will
+        # be further actioned after logging.
+        dev_error = errors[0]
+        if dev_error.reason == "API_EventTimeout":
+            try:
+                self._active_attr_event_subscriptions.remove(attr_name)
+            except KeyError:
+                pass
+
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     # --------------
     # helper methods
