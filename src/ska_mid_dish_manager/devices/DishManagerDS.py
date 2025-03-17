@@ -12,7 +12,6 @@ import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
 
-import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
@@ -260,9 +259,13 @@ class DishManager(SKAController):
         }
         action = action_map[communication_state]
         if action is None:
+            status = (
+                "Event channel on a sub-device is not responding anymore "
+                "or change event subscription is not complete"
+            )
             self._update_state(
                 DevState.ALARM,
-                "Event channel on a sub-device is not responding anymore or change event subscription is not complete",
+                status,
             )
         else:
             self.op_state_model.perform_action(action)
@@ -1394,32 +1397,6 @@ class DishManager(SKAController):
     # --------
     # Commands
     # --------
-
-    @command(
-        dtype_in=None,
-        polling_period=30000,
-        doc_in="Called periodically with the polling thread to keep connections alive",
-        dtype_out=None,
-    )
-    def MonitoringPing(self):
-        """SPFRx needs to be pinged periodically to ensure it knows it is connected.
-        This is a best effort, fire and forgot ping that is tried continually.
-        Connection status is not monitored from here.
-        TODO: Move this into DeviceMonitor
-        """
-        if (
-            not self.component_manager.component_state.get("ignorespfrx", False)
-            and self.dev_state() != tango.DevState.INIT
-        ):
-            if hasattr(self, "component_manager"):
-                if "SPFRX" in self.component_manager.sub_component_managers:
-                    spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-                    try:
-                        spfrx_com_man.execute_command("MonitorPing", None)
-                    except tango.DevFailed:
-                        self.logger.error(
-                            "Failed to execute MonitorPing command on %s", self.SPFRxDeviceFqdn
-                        )
 
     @command(
         doc_in="Abort currently executing long running command on "

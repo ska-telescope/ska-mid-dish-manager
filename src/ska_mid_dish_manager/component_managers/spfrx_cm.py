@@ -1,16 +1,52 @@
 """Specialization for SPFRx functionality"""
 
 import logging
-from threading import Lock
-from typing import Any, Callable
+import threading
+from typing import Any, Callable, Optional
 
 from ska_control_model import HealthState
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
 
-
 # pylint: disable=invalid-name, missing-function-docstring, signature-differs
+
+
+class MonitorPing(threading.Thread):
+    """
+    A thread that executes SPFRx's MonitorPing command at a specified interval
+    """
+
+    def __init__(self, interval: float, function: Callable[..., Any], *args: Any, **kwargs: Any):
+        """
+        Initialize the MonitorPing thread.
+
+        :param interval: Time interval in seconds between function calls.
+        :param function: The function to be called periodically.
+        :param args: Positional arguments to pass to the function.
+        :param kwargs: Keyword arguments to pass to the function.
+        """
+        super().__init__()
+        self.interval = interval
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        self._stop_event = threading.Event()
+
+    def run(self) -> None:
+        """
+        Execute the function at regular intervals until the stop event is set.
+        """
+        while not self._stop_event.is_set():
+            self.function(*self.args, **self.kwargs)
+            # Wait for the next interval or until stopped
+            self._stop_event.wait(self.interval)
+
+    def stop(self) -> None:
+        """Stop the periodic function execution."""
+        self._stop_event.set()
+
+
 class SPFRxComponentManager(TangoDeviceComponentManager):
     """Specialization for SPFRx functionality"""
 
@@ -18,7 +54,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         self,
         tango_device_fqdn: str,
         logger: logging.Logger,
-        state_update_lock: Lock,
+        state_update_lock: threading.Lock,
         *args: Any,
         communication_state_callback: Any = None,
         component_state_callback: Any = None,
@@ -55,6 +91,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             ),
             **kwargs
         )
+        self._periodically_ping_device: Optional[MonitorPing] = None
         self._communication_state_lock = state_update_lock
         self._component_state_lock = state_update_lock
 
@@ -76,6 +113,27 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
                 kwargs[attr] = enum_(kwargs[attr])
 
         super()._update_component_state(**kwargs)
+
+    def start_communicating(self) -> None:
+        """Start communication and initiate the periodic ping."""
+        super().start_communicating()
+        if (
+            self._periodically_ping_device is not None
+            and self._periodically_ping_device.is_alive()
+        ):
+            self._periodically_ping_device.stop()
+
+        self._periodically_ping_device = MonitorPing(3, self.execute_command, "MonitorPing", None)
+        self._periodically_ping_device.start()
+
+    def stop_communicating(self) -> None:
+        """Stop communication and stop the periodic ping."""
+        if (
+            self._periodically_ping_device is not None
+            and self._periodically_ping_device.is_alive()
+        ):
+            self._periodically_ping_device.stop()
+        super().stop_communicating()
 
     # pylint: disable=missing-function-docstring, invalid-name
     def on(self, task_callback: Callable = None) -> Any:  # type: ignore
