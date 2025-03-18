@@ -252,23 +252,17 @@ class DishManager(SKAController):
                     attribute_object.set_quality(new_attribute_quality, True)
 
     def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
+        alarm_status_msg = (
+            "Event channel on a sub-device is not responding anymore "
+            "or change event subscription is not complete"
+        )
         action_map = {
-            CommunicationStatus.NOT_ESTABLISHED: None,
-            CommunicationStatus.ESTABLISHED: "component_on",
-            CommunicationStatus.DISABLED: "component_disconnected",
+            CommunicationStatus.NOT_ESTABLISHED: (DevState.ALARM, alarm_status_msg),
+            CommunicationStatus.ESTABLISHED: (DevState.ON, None),
+            CommunicationStatus.DISABLED: (DevState.DISABLE, None),
         }
-        action = action_map[communication_state]
-        if action is None:
-            status = (
-                "Event channel on a sub-device is not responding anymore "
-                "or change event subscription is not complete"
-            )
-            self._update_state(
-                DevState.ALARM,
-                status,
-            )
-        else:
-            self.op_state_model.perform_action(action)
+        dev_state, dev_status = action_map[communication_state]
+        self._update_state(dev_state, dev_status)
 
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
