@@ -31,16 +31,15 @@ def test_monitor_ping_is_executed_on_spfrx_while_communication_is_sought(patch_t
 
     # set up more mocks
     spfrx_cm._fetch_build_state_information = mock.MagicMock(name="mock_build_state")
-    spfrx_cm.execute_command = mock.MagicMock(name="mock_exec_command")
+    spfrx_cm.execute_monitor_ping = mock.MagicMock(name="mock_monitor_ping_command")
 
     spfrx_cm.start_communicating()
     timer_interval = 3
     time.sleep(timer_interval * 2)
 
-    # the command should have been called more than once in the interval period
-    assert spfrx_cm.execute_command.call_count >= 2
-    assert spfrx_cm.execute_command.call_args_list[0].args == ("MonitorPing", None)
+    # the command should have been called at least twice in the interval period
+    assert spfrx_cm.execute_monitor_ping.call_count >= 2
 
-    spfrx_cm.execute_command.reset_mock()
+    spfrx_cm.execute_monitor_ping.reset_mock()
     spfrx_cm.stop_communicating()
-    assert spfrx_cm.execute_command.call_count == 0
+    assert spfrx_cm.execute_monitor_ping.call_count == 0
