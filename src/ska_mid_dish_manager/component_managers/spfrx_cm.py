@@ -107,7 +107,6 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         """Start the MonitorPing thread."""
         self._stop_ping_thread()  # Ensure any existing ping thread is stopped
 
-        self.logger.info("Starting MonitorPing thread.")
         self._periodically_ping_device = MonitorPing(
             self._MONITOR_PING_INTERVAL, self.execute_monitor_ping
         )
