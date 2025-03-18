@@ -110,7 +110,7 @@ def test_device_goes_away(patch_dp, caplog):
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
         LOGGER,
-        ("some_attr", "some_other_attr"),
+        ("some_Attr", "some_other_attr"),
     )
     tc_manager._fetch_build_state_information = mock.MagicMock(name="mock_build_state")
 
@@ -124,7 +124,7 @@ def test_device_goes_away(patch_dp, caplog):
     mock_dev_errors.reason = "API_MissedEvent"
     mock_error = mock.MagicMock(name="mock_error")
     mock_error.err = True
-    mock_error.attr_name = "some_attr"
+    mock_error.attr_name = "tango://1.2.3.4:10000/some/tango/device/some_attr"
     mock_error.errors = (mock_dev_errors,)
     # Trigger a failure event
     tc_manager._events_queue.put(mock_error)
