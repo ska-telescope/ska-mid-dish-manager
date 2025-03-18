@@ -37,11 +37,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._quality_state_callback = quality_state_callback
         self._events_queue: Queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn
-        self._monitored_attributes = monitored_attributes
         self._monitored_attributes = [attr.lower() for attr in monitored_attributes]
         self._active_attr_event_subscriptions: set[str] = set()
-        self._quality_monitored_attributes = quality_monitored_attributes
-        self._quality_monitored_attributes = [attr.lower() for attr in quality_monitored_attributes]
+        self._quality_monitored_attributes = [
+            attr.lower() for attr in quality_monitored_attributes
+        ]
         self.logger = logger
         self._dp_factory_signal: Event = Event()
         self._event_consumer_thread: Optional[Thread] = None
