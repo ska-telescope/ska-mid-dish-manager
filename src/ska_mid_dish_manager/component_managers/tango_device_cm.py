@@ -38,8 +38,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._events_queue: Queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = monitored_attributes
+        self._monitored_attributes = [attr.lower() for attr in monitored_attributes]
         self._active_attr_event_subscriptions: set[str] = set()
         self._quality_monitored_attributes = quality_monitored_attributes
+        self._quality_monitored_attributes = [attr.lower() for attr in quality_monitored_attributes]
         self.logger = logger
         self._dp_factory_signal: Event = Event()
         self._event_consumer_thread: Optional[Thread] = None
@@ -130,7 +132,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: data representing tango event
         :type event_data: tango.EventData
         """
-        attr_name = event_data.attr_name
+        # Error events come through with attr_name being the full TRL so extract just the attribute
+        # name to match what is added in _update_state_from_event
+        attr_name = event_data.attr_name.split("/")[-1].lower()
         errors = event_data.errors
 
         self.logger.debug(
