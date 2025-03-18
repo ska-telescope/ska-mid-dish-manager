@@ -53,6 +53,7 @@ def test_happy_path(patched_tango, caplog):
         communication_state_callback=comm_state_cb,
         component_state_callback=comp_state_cb,
     )
+    tc_manager._fetch_build_state_information = mock.MagicMock(name="mock_build_state")
 
     tc_manager.start_communicating()
     assert comm_state_cb.called
@@ -144,7 +145,6 @@ def test_device_goes_away(patch_dp, caplog):
     # Set up a valid mock event
     mock_attr_value = mock.MagicMock(name="mock_attr_value")
     mock_attr_value.name = "some_attr"
-    mock_attr_value.quality = tango.AttrQuality.ATTR_VALID
     mock_data = mock.MagicMock(name="mock_data")
     mock_data.attr_value = mock_attr_value
     mock_data.err = False
