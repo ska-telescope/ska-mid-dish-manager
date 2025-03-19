@@ -700,7 +700,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if "SPF" in self.sub_component_managers:
                     self.sub_component_managers["SPF"].stop_communicating()
                     self.sub_component_managers["SPF"].clear_monitored_attributes()
-                self._update_component_state(spfconnectionstate=CommunicationStatus.DISABLED)
             else:
                 self.sub_component_managers["SPF"].start_communicating()
 
@@ -713,7 +712,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if "SPFRX" in self.sub_component_managers:
                     self.sub_component_managers["SPFRX"].stop_communicating()
                     self.sub_component_managers["SPFRX"].clear_monitored_attributes()
-                self._update_component_state(spfrxconnectionstate=CommunicationStatus.DISABLED)
             else:
                 self.sub_component_managers["SPFRX"].start_communicating()
 
