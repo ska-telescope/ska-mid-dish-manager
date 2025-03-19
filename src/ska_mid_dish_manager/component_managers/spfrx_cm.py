@@ -18,7 +18,14 @@ class MonitorPing(threading.Thread):
     A thread that executes SPFRx's MonitorPing command at a specified interval.
     """
 
-    def __init__(self, interval: float, function: Callable[..., Any], *args: Any, **kwargs: Any):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        interval: float,
+        function: Callable[..., Any],
+        *args: Any,
+        **kwargs: Any,
+    ):
         """
         Initialize the MonitorPing thread.
 
@@ -28,6 +35,7 @@ class MonitorPing(threading.Thread):
         :param kwargs: Keyword arguments to pass to the function.
         """
         super().__init__(name="MonitorPingThread")
+        self.logger = logger
         self.interval = interval
         self.function = function
         self.args = args
@@ -37,7 +45,10 @@ class MonitorPing(threading.Thread):
     def run(self) -> None:
         """Execute the function at regular intervals until the stop event is set."""
         while not self._stop_event.is_set():
-            self.function(*self.args, **self.kwargs)
+            try:
+                self.function(*self.args, **self.kwargs)
+            except Exception as e:  # pylint:disable=broad-except
+                self.logger.warning(f"Failed to execute MonitorPing on SPFRx: {e}")
             # Wait for the next interval or until stopped
             self._stop_event.wait(self.interval)
 
@@ -98,7 +109,6 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
 
     def _stop_ping_thread(self) -> None:
         """Stop the periodic MonitorPing thread if it is running."""
-        self.logger.debug("Stopping MonitorPing thread.")
         if self._periodically_ping_device and self._periodically_ping_device.is_alive():
             self._periodically_ping_device.stop()
             self._periodically_ping_device.join()
@@ -108,9 +118,8 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         """Start the MonitorPing thread."""
         self._stop_ping_thread()  # Ensure any existing ping thread is stopped
 
-        self.logger.debug("Starting MonitorPing thread.")
         self._periodically_ping_device = MonitorPing(
-            self._MONITOR_PING_INTERVAL, self.execute_monitor_ping
+            self.logger, self._MONITOR_PING_INTERVAL, self.execute_monitor_ping
         )
         self._periodically_ping_device.start()
 
@@ -142,9 +151,9 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
 
         self.execute_command is not used to prevent spam logs about MonitorPing.
         """
-        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
             try:
+                device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
                 device_proxy.command_inout("MonitorPing", None)
             except tango.DevFailed:
                 self.logger.error(
@@ -156,11 +165,15 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
     def start_communicating(self) -> None:
         """Start communication and initiate the periodic ping."""
         super().start_communicating()
+
+        self.logger.debug("Starting MonitorPing thread.")
         self._start_ping_thread()
 
     def stop_communicating(self) -> None:
         """Stop communication and stop the periodic ping."""
+        self.logger.debug("Stopping MonitorPing thread.")
         self._stop_ping_thread()
+
         super().stop_communicating()
 
     # pylint: disable=missing-function-docstring, invalid-name
