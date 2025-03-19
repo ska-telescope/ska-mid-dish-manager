@@ -445,12 +445,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         no_pointing_updates = set()
         if pointing_related_attrs.intersection(kwargs) == no_pointing_updates:
             self.logger.debug(
-                "%s component state has changed new value: [%s]",
+                "%s component state has changed \nnew value: [%s]"
+                "\ncurrent dish manager component state: [%s]",
                 device.value,
                 kwargs,
-            )
-            self.logger.debug(
-                "dish manager component state: [%s]",
                 self.component_state,
             )
 

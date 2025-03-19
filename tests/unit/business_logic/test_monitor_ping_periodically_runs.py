@@ -1,5 +1,5 @@
 # pylint: disable=protected-access
-"""Unit tests checking generic component manager behaviour."""
+"""Unit tests checking SPFRx component manager periodically calls MonitorPing."""
 
 import logging
 import threading
