@@ -10,7 +10,7 @@ from ska_control_model import HealthState
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
 
-# pylint: disable=invalid-name,missing-function-docstring,signature-differs,too-many-instance-attributes
+# pylint: disable=too-many-arguments,too-many-instance-attributes
 
 
 class MonitorPing(threading.Thread):
