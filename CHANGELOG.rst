@@ -15,6 +15,17 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Device State reports ON when device is started.
 - Periodic calls to `MonitorPing` on SPFRx is handled by component manager instead of polled command.
 
+Version 7.0.1
+*************
+- Address SKB-809:
+
+  - DishLMC warns client when command is issued during lost communication to a component and continues anyway.
+  - Device State reports ALARM when communication is lost.
+
+- Device State reports ON when device is started.
+- Periodic calls to `MonitorPing` on SPFRx is handled by component manager instead of polled command.
+- Upgraded ska-mid-dish-ds-manager chart to v3.1.2
+
 Version 7.0.0
 *************
 - Updated ska-mid-dish-simulators to v4.3.0
