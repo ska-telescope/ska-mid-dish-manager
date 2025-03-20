@@ -9,11 +9,11 @@ from typing import Any, Callable, Optional, Tuple
 import numpy as np
 import tango
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
-from ska_tango_base.base import check_communicating
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
+from ska_mid_dish_manager.utils.decorators import check_communicating
 
 
 # pylint: disable=abstract-method, too-many-instance-attributes, no-member, too-many-arguments
@@ -37,9 +37,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._quality_state_callback = quality_state_callback
         self._events_queue: Queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn
-        self._monitored_attributes = monitored_attributes
+        self._monitored_attributes = tuple(attr.lower() for attr in monitored_attributes)
+        self._quality_monitored_attributes = tuple(
+            attr.lower() for attr in quality_monitored_attributes
+        )
         self._active_attr_event_subscriptions: set[str] = set()
-        self._quality_monitored_attributes = quality_monitored_attributes
         self.logger = logger
         self._dp_factory_signal: Event = Event()
         self._event_consumer_thread: Optional[Thread] = None
@@ -117,11 +119,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error occured updating component state")
 
-            # if the error event stops tango emits a valid event for all
-            # the error events we got for the various attribute subscription.
-            # update the communication state in case the error event callback flipped it
-            self._active_attr_event_subscriptions.add(attr_name)
-            self.sync_communication_to_valid_event()
+        # if the error event stops, tango emits a valid event for all
+        # the error events we got for the various attribute subscriptions.
+        # update the communication state in case the error event callback flipped it
+        self._active_attr_event_subscriptions.add(attr_name)
+        self.sync_communication_to_valid_event()
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
         """
@@ -130,12 +132,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: data representing tango event
         :type event_data: tango.EventData
         """
-        attr_name = event_data.attr_name
+        # Error events come through with attr_name being the full TRL so extract just the attribute
+        # name to match what is added in _update_state_from_event
+        attr_name = event_data.attr_name.split("/")[-1].lower()
         errors = event_data.errors
 
         self.logger.debug(
             (
-                "Error event was emitted by device %s with the following details: "
+                "Error event was emitted by device %s with the following details "
                 "attr_name: %s, "
                 "errors: %s"
             ),
@@ -143,12 +147,19 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             attr_name,
             errors,
         )
-        try:
-            self._active_attr_event_subscriptions.remove(attr_name)
-        except KeyError:
-            pass
 
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+        # Tango error events are emitted for a number of reasons. Errors like `API_MissedEvents`
+        # is tango's acknowledgement that something was dropped along the wire but doesn't mean
+        # the heart beat has failed. For now, only heart beat failures on the event channel will
+        # be further actioned after logging.
+        dev_error = errors[0]
+        if dev_error.reason == "API_EventTimeout":
+            try:
+                self._active_attr_event_subscriptions.remove(attr_name)
+            except KeyError:
+                pass
+
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     # --------------
     # helper methods
@@ -306,7 +317,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         result = None
         try:
             result = self.execute_command(command_name, command_arg)
-        except (ConnectionError, tango.DevFailed) as err:
+        except tango.DevFailed as err:
             self.logger.exception(err)
             if task_callback:
                 task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))

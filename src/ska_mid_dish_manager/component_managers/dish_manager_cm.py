@@ -9,7 +9,6 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
-from ska_tango_base.base import check_communicating
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
@@ -43,6 +42,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
+from ska_mid_dish_manager.utils.decorators import check_communicating
 
 
 # pylint: disable=abstract-method
@@ -445,12 +445,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         no_pointing_updates = set()
         if pointing_related_attrs.intersection(kwargs) == no_pointing_updates:
             self.logger.debug(
-                "%s component state has changed new value: [%s]",
+                "%s component state has changed \nnew value: [%s]"
+                "\ncurrent dish manager component state: [%s]",
                 device.value,
                 kwargs,
-            )
-            self.logger.debug(
-                "dish manager component state: [%s]",
                 self.component_state,
             )
 
@@ -531,7 +529,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spf_component_manager = self.sub_component_managers["SPF"]
             try:
                 spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
-            except (ConnectionError, tango.DevFailed):
+            except tango.DevFailed:
                 # this will impact configuredBand calculation on dish manager
                 self.logger.warning(
                     "Encountered an error writing bandInFocus %s on SPF", band_in_focus
@@ -702,11 +700,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if "SPF" in self.sub_component_managers:
                     self.sub_component_managers["SPF"].stop_communicating()
                     self.sub_component_managers["SPF"].clear_monitored_attributes()
-                self._update_component_state(spfconnectionstate=CommunicationStatus.DISABLED)
             else:
-                self._update_component_state(
-                    spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED
-                )
                 self.sub_component_managers["SPF"].start_communicating()
 
     def set_spfrx_device_ignored(self, ignored: bool):
@@ -718,11 +712,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if "SPFRX" in self.sub_component_managers:
                     self.sub_component_managers["SPFRX"].stop_communicating()
                     self.sub_component_managers["SPFRX"].clear_monitored_attributes()
-                self._update_component_state(spfrxconnectionstate=CommunicationStatus.DISABLED)
             else:
-                self._update_component_state(
-                    spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED
-                )
                 self.sub_component_managers["SPFRX"].start_communicating()
 
             self._update_component_state(ignorespfrx=ignored)
@@ -752,7 +742,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
             ds_com_man = self.sub_component_managers["DS"]
             ds_com_man.write_attribute_value(attr, values)
-        except (ConnectionError, tango.DevFailed):
+        except tango.DevFailed:
             self.logger.exception("Failed to write to %s on DSManager", attr)
             raise
         except ValueError:
@@ -782,7 +772,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         result_message = ""
         try:
             [[result_code], [result_message]] = ds_cm.execute_command("TrackLoadTable", float_list)
-        except (ConnectionError, tango.DevFailed) as err:
+        except tango.DevFailed as err:
             self.logger.exception("TrackLoadTable on DSManager failed")
             result_code = ResultCode.FAILED
             result_message = str(err)
@@ -938,7 +928,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_cm = self.sub_component_managers["DS"]
         try:
             ds_cm.execute_command("Stow", None)
-        except (ConnectionError, tango.DevFailed) as err:
+        except tango.DevFailed as err:
             task_callback(status=TaskStatus.FAILED, exception=err)
             self.logger.exception("DishManager has failed to execute Stow DSManager")
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
@@ -1069,7 +1059,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "SetKValue",
                 result,
             )
-        except (ConnectionError, tango.DevFailed) as err:
+        except tango.DevFailed as err:
             self.logger.exception("SetKvalue on SPFRx failed")
             return (ResultCode.FAILED, err)
         return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
@@ -1232,7 +1222,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"Successfully wrote the following values {coefficients} "
                 f"to band {band_value} on DS"
             )
-        except (ConnectionError, tango.DevFailed) as err:
+        except tango.DevFailed as err:
             self.logger.exception("%s. The error response is: %s", (ResultCode.FAILED, err))
             result_code = ResultCode.FAILED
             message = str(err)
@@ -1248,7 +1238,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         try:
             ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
             self.logger.debug("Successfully updated trackInterpolationMode on DSManager.")
-        except ConnectionError:
+        except tango.DevFailed:
             self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
         return (ResultCode.OK, "Successfully updated trackInterpolationMode on DSManager")
@@ -1262,7 +1252,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         try:
             spfrx_cm.write_attribute_value("noiseDiodeMode", noise_diode_mode)
             self.logger.debug("Successfully updated noiseDiodeMode on SPFRx.")
-        except (ConnectionError, tango.DevFailed):
+        except tango.DevFailed:
             self.logger.error("Failed to update noiseDiodeMode on SPFRx.")
             raise
         return (ResultCode.OK, "Successfully updated noiseDiodeMode on SPFRx")
@@ -1286,7 +1276,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             try:
                 spfrx_cm.write_attribute_value("periodicNoiseDiodePars", values)
                 self.logger.debug("Successfully updated periodicNoiseDiodePars on SPFRx.")
-            except (ConnectionError, tango.DevFailed):
+            except tango.DevFailed:
                 self.logger.error("Failed to update periodicNoiseDiodePars on SPFRx.")
                 raise
         else:
@@ -1317,7 +1307,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             try:
                 spfrx_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
                 self.logger.debug("Successfully updated pseudoRandomNoiseDiodePars on SPFRx.")
-            except (ConnectionError, tango.DevFailed):
+            except tango.DevFailed:
                 self.logger.error("Failed to update pseudoRandomNoiseDiodePars on SPFRx.")
                 raise
         else:
@@ -1412,7 +1402,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ds_cm.write_attribute_value("dscPowerLimitKw", power_limit)
             self.logger.debug("Successfully updated dscPowerLimitKw on DS.")
             self._update_component_state(dscpowerlimitkw=power_limit)
-        except (ConnectionError, tango.DevFailed):
+        except tango.DevFailed:
             self.logger.error("Failed to update dscPowerLimitKw on DS.")
             raise
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")

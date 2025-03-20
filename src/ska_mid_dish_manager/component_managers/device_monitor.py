@@ -132,7 +132,7 @@ class SubscriptionTracker:
                         attribute_name,
                         device_proxy.dev_name(),
                     )
-                except tango.EventSystemFailed:
+                except (tango.EventSystemFailed, KeyError):
                     self._logger.exception(
                         "Could not unsubscribe from %s attr on %s",
                         attribute_name,
