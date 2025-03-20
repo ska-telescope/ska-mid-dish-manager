@@ -432,8 +432,8 @@ class DishManager(SKAController):
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
-            device.component_manager.start_communicating()
             device.op_state_model.perform_action("component_on")
+            device.component_manager.start_communicating()
             return (ResultCode(result_code), message)
 
     # ----------
