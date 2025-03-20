@@ -39,10 +39,9 @@ class MonitorPing(threading.Thread):
         self._logger = logger
         self._interval = interval
         self._stop_event = stop_event
-        self._tango_device_fqdn = device_fqdn
-
+        self._spfrx_trl = device_fqdn
         self._log_counter = 0
-        self._device_proxy = tango.DeviceProxy(self._tango_device_fqdn)
+        self._device_proxy = None
 
     def run(self) -> None:
         """Execute the function at regular intervals until the stop event is set."""
@@ -51,6 +50,14 @@ class MonitorPing(threading.Thread):
             # Wait for the next interval or until stopped
             self._stop_event.wait(self._interval)
 
+    def _create_device_proxy(self) -> None:
+        """Create the Tango DeviceProxy if not already created."""
+        if self._device_proxy is None:
+            try:
+                self._device_proxy = tango.DeviceProxy(self._spfrx_trl)
+            except tango.DevFailed:
+                pass
+
     def _execute_monitor_ping(self) -> None:
         """
         Execute MonitorPing on the SPFRx controller.
@@ -58,13 +65,14 @@ class MonitorPing(threading.Thread):
         self.execute_command is not used to prevent spam logs about MonitorPing.
         """
         with tango.EnsureOmniThread():
+            self._create_device_proxy()
             try:
                 self._device_proxy.command_inout("MonitorPing", None)
             except Exception:
                 if self._log_counter < self.PING_ERROR_LOG_REPEAT:
                     self._logger.exception(
                         "Failed to execute [MonitorPing] on [%s]",
-                        self._tango_device_fqdn,
+                        self._spfrx_trl,
                     )
                     self._log_counter += 1
 
