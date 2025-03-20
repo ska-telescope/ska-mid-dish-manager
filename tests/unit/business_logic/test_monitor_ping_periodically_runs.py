@@ -3,7 +3,6 @@
 
 import logging
 import threading
-import time
 from unittest import mock
 
 import pytest
@@ -36,9 +35,7 @@ def test_monitor_ping_is_executed_on_spfrx_while_communication_is_sought(patch_t
     with mock.patch(
         "ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing._execute_monitor_ping"
     ) as mocked_monitor_ping:
-        with mock.patch(
-            "ska_mid_dish_manager.component_managers.spfrx_cm.tango.DeviceProxy"
-        ) as mocked_dp:
+        with mock.patch("ska_mid_dish_manager.component_managers.spfrx_cm.tango.DeviceProxy"):
             spfrx_cm.start_communicating()
             assert spfrx_cm._monitor_ping_thread
             assert spfrx_cm._monitor_ping_thread.is_alive()
