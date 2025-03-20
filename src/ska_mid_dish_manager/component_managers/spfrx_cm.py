@@ -10,7 +10,7 @@ from ska_control_model import HealthState
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
 
-# pylint: disable=invalid-name, missing-function-docstring, signature-differs
+# pylint: disable=too-many-arguments,too-many-instance-attributes
 
 
 class MonitorPing(threading.Thread):
@@ -20,7 +20,7 @@ class MonitorPing(threading.Thread):
 
     def __init__(
         self,
-        trl,
+        trl: str,
         logger: logging.Logger,
         interval: float,
         function: Callable[..., Any],
@@ -62,8 +62,8 @@ class MonitorPing(threading.Thread):
             self._create_device_proxy()
             try:
                 self.function(self._device_proxy, *self.args, **self.kwargs)
-            except Exception as e:  # pylint:disable=broad-except
-                self.logger.warning(f"Failed to execute MonitorPing: {e}")
+            except Exception as exc:  # pylint:disable=broad-except
+                self.logger.warning(f"Failed to execute MonitorPing: {exc}")
             # Wait for the next interval or until stopped
             self._stop_event.wait(self.interval)
 
