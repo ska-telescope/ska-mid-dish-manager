@@ -64,16 +64,20 @@ class MonitorPing(threading.Thread):
 
         self.execute_command is not used to prevent spam logs about MonitorPing.
         """
+        error_msg = {
+            "type_error": f"DeviceProxy to {self._spfrx_trl} failed for MonitorPing",
+            "other_errors": f"Failed to execute MonitorPing on {self._spfrx_trl}",
+        }
         with tango.EnsureOmniThread():
             self._create_device_proxy()
             try:
-                self._device_proxy.command_inout("MonitorPing", None)
+                self._device_proxy.command_inout("MonitorPing", None)  # type: ignore
             except Exception:
                 if self._log_counter < self.PING_ERROR_LOG_REPEAT:
-                    self._logger.exception(
-                        "Failed to execute [MonitorPing] on [%s]",
-                        self._spfrx_trl,
-                    )
+                    if self._device_proxy is None:
+                        self._logger.error(error_msg["type_error"])
+                    else:
+                        self._logger.exception(error_msg["other_errors"])
                     self._log_counter += 1
 
 
