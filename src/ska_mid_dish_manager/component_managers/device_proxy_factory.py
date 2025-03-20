@@ -171,4 +171,10 @@ class DeviceProxyManager:
 
     def factory_reset(self) -> Any:
         """Remove device proxy references to the devices"""
-        self._device_proxies = {}
+        # delete all references to the device proxies to prevent potential memory leak
+        trls = list(self._device_proxies.keys())
+        for trl in trls:
+            del self._device_proxies[trl]
+
+        # finally, clear any remaining proxies (if any) to ensure memory cleanup
+        self._device_proxies.clear()

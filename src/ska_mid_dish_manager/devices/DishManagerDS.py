@@ -12,11 +12,10 @@ import weakref
 from functools import reduce
 from typing import List, Optional, Tuple
 
-import tango
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
-from tango import AttrWriteType, DevULong, DispLevel
+from tango import AttrWriteType, DevState, DevULong, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -152,7 +151,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
-            communication_state_callback=None,
+            communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )
 
@@ -252,6 +251,19 @@ class DishManager(SKAController):
                 if attribute_object.get_quality() is not new_attribute_quality:
                     attribute_object.set_quality(new_attribute_quality, True)
 
+    def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
+        alarm_status_msg = (
+            "Event channel on a sub-device is not responding anymore "
+            "or change event subscription is not complete"
+        )
+        action_map = {
+            CommunicationStatus.NOT_ESTABLISHED: (DevState.ALARM, alarm_status_msg),
+            CommunicationStatus.ESTABLISHED: (DevState.ON, None),
+            CommunicationStatus.DISABLED: (DevState.DISABLE, None),
+        }
+        dev_state, dev_status = action_map[communication_state]
+        self._update_state(dev_state, dev_status)
+
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
         def change_case(attr_name):
@@ -322,8 +334,6 @@ class DishManager(SKAController):
                 spfrx_address=device.SPFRxDeviceFqdn,
             )
             device._build_state = device._release_info.get_build_state()
-
-            device.op_state_model.perform_action("component_standby")
 
             # push change events, needed to use testing library
 
@@ -422,6 +432,7 @@ class DishManager(SKAController):
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
+            device.op_state_model.perform_action("component_on")
             device.component_manager.start_communicating()
             return (ResultCode(result_code), message)
 
@@ -1380,34 +1391,6 @@ class DishManager(SKAController):
     # --------
     # Commands
     # --------
-
-    @command(
-        dtype_in=None,
-        polling_period=30000,
-        doc_in="Called periodically with the polling thread to keep connections alive",
-        dtype_out=None,
-    )
-    def MonitoringPing(self):
-        """SPFRx needs to be pinged periodically to ensure it knows it is connected.
-        This is a best effort, fire and forgot ping that is tried continually.
-        Connection status is not monitored from here.
-        TODO: Move this into DeviceMonitor
-        """
-        if (
-            not self.component_manager.component_state.get("ignorespfrx", False)
-            and self.dev_state() != tango.DevState.INIT
-        ):
-            if hasattr(self, "component_manager"):
-                if "SPFRX" in self.component_manager.sub_component_managers:
-                    try:
-                        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-                        spfrx_com_man.execute_command("MonitorPing", None)
-                    except ConnectionError:
-                        self.logger.error(
-                            "Could not connect to [%s] for MonitorPing", self.SPFRxDeviceFqdn
-                        )
-                    except tango.DevFailed:
-                        pass
 
     @command(
         doc_in="Abort currently executing long running command on "

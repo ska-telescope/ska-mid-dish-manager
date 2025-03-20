@@ -201,10 +201,10 @@ Command Feedback: A collection to command responses and their meanings
    * - Incorrect Dish Antenna/ID 
      - Command rejected. The Dish id <dish_id> and the Antenna's value <antenna_id> are not equal.
      - ResultCode.REJECTED
-   * - ConnectionError, Tango: DevFailed
+   * - Tango: DevFailed
      - <related error message>
      - ResultCode.FAILED
-   * - ConnectionError, Invalid JSON
+   * - Invalid JSON
      - <related error message>
      - ResultCode.REJECTED
 

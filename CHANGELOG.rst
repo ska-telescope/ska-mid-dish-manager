@@ -7,6 +7,13 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Address SKB-809:
+
+  - DishLMC warns client when command is issued during lost communication to a component and continues anyway.
+  - Device State reports ALARM when communication is lost.
+
+- Device State reports ON when device is started.
+- Periodic calls to `MonitorPing` on SPFRx is handled by component manager instead of polled command.
 
 Version 7.0.1
 *************
