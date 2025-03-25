@@ -126,9 +126,16 @@ class Abort:
         if task_callback:
             task_callback(status=TaskStatus.IN_PROGRESS)
 
-        # is the dish moving
-        pointing_state = self._component_manager.component_state.get("pointingstate")
-        if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
+        if self._component_manager.is_dish_moving():
+            # stop the dish if it's slewing, note: this will also impact a stow
+            pointing_state = self._component_manager.component_state.get("pointingstate")
+            if pointing_state == PointingState.SLEW:
+                track_stop_command_id = self._command_tracker.new_command(
+                    "abort-sequence:trackstop", completed_callback=None
+                )
+                track_stop_task_cb = partial(task_cb, track_stop_command_id)
+                self._component_manager.track_stop_cmd(track_stop_task_cb)
+
             # clear the scan id
             end_scan_command_id = self._command_tracker.new_command(
                 "abort-sequence:endscan", completed_callback=None
