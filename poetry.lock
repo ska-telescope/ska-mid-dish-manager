@@ -1927,31 +1927,35 @@ reference = "ska-nexus"
 
 [[package]]
 name = "ska-tango-base"
-version = "1.0.0"
+version = "1.3.1"
 description = "SKA Tango base classes"
 optional = false
-python-versions = "^3.10"
-files = []
-develop = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "ska_tango_base-1.3.1-py3-none-any.whl", hash = "sha256:ed2fb67e53991fe454f0ad4b41a5bc49533ff55d069af959b02cfbfc17f78271"},
+    {file = "ska_tango_base-1.3.1.tar.gz", hash = "sha256:a426fcb7bf80339a29cb42b3aa361b21b22f31be26ca4c2e191089c23fb1f299"},
+]
 
 [package.dependencies]
-debugpy = "^1.6.2"
-jsonschema = "^4.17.3"
+debugpy = ">=1.6.2,<2.0.0"
+jsonschema = ">=4.17.3,<5.0.0"
 numpy = [
     {version = ">=1.21.6", markers = "python_version == \"3.10\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
     {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
 ]
-pytango = "^9.4.2"
-ska-control-model = "^1.0.0"
-ska-ser-logging = "^0.4.3"
-transitions = "^0.9.0"
+pytango = ">=9.4.2,<11.0.0"
+ska-control-model = ">=1.0.0,<2.0.0"
+ska-ser-logging = ">=0.4.3,<0.5.0"
+transitions = ">=0.9.0,<0.10.0"
+
+[package.extras]
+telemetry = ["opentelemetry-exporter-otlp (>=1.29.0)", "opentelemetry-sdk (>=1.29.0)"]
 
 [package.source]
-type = "git"
-url = "https://gitlab.com/ska-telescope/ska-tango-base.git"
-reference = "kar-995-increase-size-of-lrc-in-progress"
-resolved_reference = "186236607dc724432fc5ab713766ff8315aafbf2"
+type = "legacy"
+url = "https://artefact.skao.int/repository/pypi-internal/simple"
+reference = "ska-nexus"
 
 [[package]]
 name = "ska-tango-testing"
@@ -2550,4 +2554,4 @@ reference = "PyPI-public"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "90313ba184dc32036e6148b2f43be222ef667b6dc1008deaac0f20c7223bb58e"
+content-hash = "35d366c7beddf776de1e428cc526a06faaa581416d1fbb2427e7dc8e15e3de0e"

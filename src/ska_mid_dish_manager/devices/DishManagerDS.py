@@ -1575,7 +1575,7 @@ class DishManager(SKAController):
         """
         The Dish records the scanID for an ongoing scan
 
-        :param args: the scanID in string format
+        :param scanid: the scanID in string format
         """
         handler = self.get_command_object("Scan")
         result_code, unique_id = handler(scanid)
