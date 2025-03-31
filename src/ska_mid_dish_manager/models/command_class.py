@@ -1,4 +1,4 @@
-""""Custom command classes for commands requiring overrides to do()."""
+"""Custom command classes for commands requiring overrides to do()."""
 
 import functools
 import logging
