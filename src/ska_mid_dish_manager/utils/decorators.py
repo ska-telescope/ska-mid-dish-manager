@@ -70,7 +70,8 @@ def check_communicating(func: Any) -> Any:
                 "Commmunication with sub-components is disabled, issue `StartCommunication`"
             )
 
-        # For communication which is actively being sort but with unknown status warn and continue
+        # If communication is being actively attempted but
+        # the status is uncertain, log a warning and proceed
         if component_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED:
             warning_message = (
                 "Communication with component is not established: "
