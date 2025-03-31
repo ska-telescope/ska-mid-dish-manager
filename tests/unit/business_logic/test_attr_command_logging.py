@@ -1,4 +1,5 @@
 "Test log of command and attribute write failures"
+
 # pylint: disable=no-member,protected-access
 import logging
 
