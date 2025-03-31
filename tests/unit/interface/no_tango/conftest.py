@@ -3,7 +3,7 @@ from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
-from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
+from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from tests.utils import ComponentStateStore
@@ -55,6 +55,8 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
         update_state_from_monitored_attributes=MagicMock(),
         execute_command=MagicMock(side_effect=_simulate_execute_command),
         run_device_command=MagicMock(side_effect=_simulate_lrc_callbacks),
+    ), patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager"), patch(
+        "ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"
     ):
         dish_manager_cm = DishManagerComponentManager(
             LOGGER,
@@ -68,7 +70,5 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
         )
-        # all the command handlers are decorated with check_communicating
-        # transition communication to the component as ESTABLISHED
-        dish_manager_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
+        dish_manager_cm.start_communicating()
         yield dish_manager_cm

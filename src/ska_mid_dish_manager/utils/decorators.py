@@ -63,7 +63,16 @@ def check_communicating(func: Any) -> Any:
 
         :return: whatever the wrapped function returns
         """
-        if component_manager.communication_state != CommunicationStatus.ESTABLISHED:
+        # Don't bother to run the function if the client
+        # intentionally severed connection to the component
+        if component_manager.communication_state == CommunicationStatus.DISABLED:
+            raise ConnectionError(
+                "Commmunication with sub-components is disabled, issue `StartCommunication`"
+            )
+
+        # If communication is being actively attempted but
+        # the status is uncertain, log a warning and proceed
+        if component_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED:
             warning_message = (
                 "Communication with component is not established: "
                 f"'{type(component_manager).__name__}.{func.__name__}' may fail."
