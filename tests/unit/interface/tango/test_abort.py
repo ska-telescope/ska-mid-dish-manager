@@ -82,7 +82,6 @@ def test_abort_is_rejected_in_maintenance_dishmode(
 
 
 # pylint:disable=protected-access
-@pytest.mark.xfail(reason="Review SLEW state handling in test: flaky")
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -92,7 +91,9 @@ def test_abort_is_rejected_in_maintenance_dishmode(
         ("AbortCommands", PointingState.TRACK),
     ],
 )
-def test_abort(dish_manager_resources, event_store_class, abort_cmd, pointing_state):
+def test_abort_during_dish_movement(
+    dish_manager_resources, event_store_class, abort_cmd, pointing_state
+):
     """Verify Abort/AbortCommands executes the abort sequence"""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
@@ -154,6 +155,17 @@ def test_abort(dish_manager_resources, event_store_class, abort_cmd, pointing_st
         "SetStandbyFPMode called on DS",
         "Awaiting dishmode change to STANDBY_FP",
     ]
+
+    if pointing_state == PointingState.SLEW:
+        slew_progress_updates = [
+            "TrackStop called on DS",
+            "Awaiting pointingstate change to READY",
+            "DS pointingstate changed to 0",
+            "TrackStop completed",
+        ]
+        expected_progress_updates = slew_progress_updates + expected_progress_updates
+
+    ds_cm._update_component_state(pointingstate=PointingState.READY)
     events = progress_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=30
     )
