@@ -22,7 +22,7 @@ def dish_manager_resources():
             "ska_mid_dish_manager.component_managers.tango_device_cm."
             "TangoDeviceComponentManager.start_communicating"
         )
-    ):
+    ), patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"):
         tango_context = DeviceTestContext(DishManager)
         tango_context.start()
         device_proxy = tango_context.device
@@ -54,7 +54,6 @@ def dish_manager_resources():
 
         # set up mocks for methods creating a device proxy to the sub component
         candidate_stub_methods = [
-            "start_communicating",
             "update_state_from_monitored_attributes",
             "write_attribute_value",
             "read_attribute_value",

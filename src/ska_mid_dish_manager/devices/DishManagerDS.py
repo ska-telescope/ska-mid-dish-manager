@@ -1787,7 +1787,7 @@ class DishManager(SKAController):
         """
         Implemented as a Long Running Command
 
-        When the TrackStop command Is received the Dish will stop tracking
+        When the TrackStop command is received the Dish will stop moving
         but will not apply brakes.
 
         :return: A tuple containing a return code and a string
