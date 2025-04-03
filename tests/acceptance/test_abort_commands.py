@@ -234,7 +234,7 @@ def test_abort_commands_during_track(
 
 
 # pylint: disable=unused-argument
-@pytest.mark.this
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_slew(
     monitor_tango_servers,
@@ -287,8 +287,7 @@ def test_abort_commands_during_slew(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
 
-    # main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
-    main_event_store.get_queue_values(timeout=180)
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     # Check that the dish is in standby FP mode
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     # Check that the dish did not slew to the requested position
@@ -298,7 +297,7 @@ def test_abort_commands_during_slew(
 
 
 # pylint: disable=unused-argument
-@pytest.mark.this
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_stow(
     monitor_tango_servers,
@@ -335,8 +334,7 @@ def test_abort_commands_during_stow(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
 
-    # main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
-    main_event_store.get_queue_values(timeout=600)
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     # Check that the dish is in standby FP mode
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     # Check that the dish did not slew to the stow position
