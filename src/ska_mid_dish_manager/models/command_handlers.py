@@ -3,9 +3,9 @@ Abstracts all the logic for executing commands on the device
 """
 
 import logging
-import math
+import time
 from functools import partial
-from threading import Event, Thread
+from threading import Event
 from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
@@ -39,6 +39,7 @@ class Abort:
 
     def _stop_dish_slew(self, task_abort_event: Event, task_callback: Optional[Callable] = None):
         if task_abort_event.is_set():
+            self.logger.debug("abort-sequence: failed to stop dish slew")
             if task_callback:
                 task_callback(status=TaskStatus.FAILED)
             return
@@ -53,38 +54,31 @@ class Abort:
             task_abort_event.set()
             self.logger.error("abort-sequence: failed to stop dish slew: %s", str(exc))
 
-    def _wait_for_dish_to_settle(self, dish_settled_event: Event, reset_point: list) -> None:
+    def _wait_for_dish_to_settle(self, task_abort_event: Event) -> None:
         self.logger.debug("abort-sequence: waiting for the dish to settle")
-        while not dish_settled_event.is_set():
-
-            az_el = self._component_manager.component_state.get("achievedpointing")[1:]
-            az_is_close = math.isclose(az_el[0], reset_point[1], rel_tol=0.5)
-            el_is_close = math.isclose(az_el[1], reset_point[2], rel_tol=0.5)
-            dish_close_to_reset_point = az_is_close and el_is_close
-
+        start_time = time.time()
+        timeout = 30  # seconds
+        while time.time() - start_time <= timeout:
             current_pointing_state = self._component_manager.component_state.get("pointingstate")
-
-            dish_has_stopped = (
-                current_pointing_state == PointingState.READY and dish_close_to_reset_point
-            )
-            if dish_has_stopped:
+            if current_pointing_state == PointingState.READY:
                 self.logger.debug(
                     "abort-sequence: dish has stopped moving "
                     "and is pointing close to the reset point"
                 )
-                dish_settled_event.set()  # Signal the event and exit the loop
                 break
-
-            dish_settled_event.wait(1.0)  # Avoid busy waiting
+            task_abort_event.wait(1.0)  # Avoid busy waiting
+        else:
+            task_abort_event.set()
 
     def _reset_track_table(self, task_abort_event: Event) -> None:
         """Writes the last achievedPointing back to the trackTable in loadmode NEW."""
         if task_abort_event.is_set():
+            self.logger.debug("abort-sequence: failed to reset programTrackTable")
             return
 
         self.logger.debug("abort-sequence: resetting the programTrackTable")
         reset_point = self._component_manager.component_state.get("achievedpointing")
-        timestamp = get_current_tai_timestamp()
+        timestamp = get_current_tai_timestamp() + 5  # add 5 seconds lead time
         reset_point = [timestamp, reset_point[1], reset_point[2]]
         sequence_length = 1
         load_mode = TrackTableLoadMode.NEW
@@ -93,29 +87,12 @@ class Abort:
             sequence_length, reset_point, load_mode
         )
         if result_code == ResultCode.OK:
-            dish_settled_event = Event()
-            dish_is_stopping = Thread(
-                name="dish_stopping",
-                target=self._wait_for_dish_to_settle,
-                args=(dish_settled_event, reset_point),
-            )
-            dish_is_stopping.daemon = True  # kill thread when main thread exits
-            dish_is_stopping.start()
-
-            # Wait for the event to be set or for the timeout
-            dish_settled_event.wait(timeout=10)
-
-            # After 10 seconds, ensure the thread exits by setting the event
-            if not dish_settled_event.is_set():
+            self._wait_for_dish_to_settle(task_abort_event)
+            if task_abort_event.is_set():
                 self.logger.debug(
                     "abort-sequence: timeout reached waiting for dish to settle at reset point %s",
                     reset_point,
                 )
-                task_abort_event.set()
-                # Set the event to ensure the thread terminates
-                dish_settled_event.set()
-            # Ensure the thread terminates before moving on
-            dish_is_stopping.join(timeout=1)  # avoid indefinite blocking
         else:
             task_abort_event.set()
             self.logger.debug(
@@ -129,6 +106,7 @@ class Abort:
         task_callback: Optional[Callable] = None,
     ) -> None:
         if task_abort_event.is_set():
+            self.logger.debug("abort-sequence: failed to transition to StandbyFP mode")
             if task_callback:
                 task_callback(status=TaskStatus.FAILED)
             return
