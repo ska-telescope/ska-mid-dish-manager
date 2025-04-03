@@ -49,7 +49,7 @@ class Abort:
             self.logger.debug("abort-sequence: dish slew has been successfully stopped")
         except Exception as exc:  # pylint:disable=broad-except
             if task_callback:
-                task_callback(status=TaskStatus.FAILED)
+                task_callback(status=TaskStatus.FAILED, exception=exc)
             task_abort_event.set()
             self.logger.error("abort-sequence: failed to stop dish slew: %s", str(exc))
 
@@ -85,7 +85,7 @@ class Abort:
         self.logger.debug("abort-sequence: resetting the programTrackTable")
         reset_point = self._component_manager.component_state.get("achievedpointing")
         timestamp = get_current_tai_timestamp()
-        reset_point = [timestamp, reset_point[1], reset_point[2]]  # Ensure timestamp is updated
+        reset_point = [timestamp, reset_point[1], reset_point[2]]
         sequence_length = 1
         load_mode = TrackTableLoadMode.NEW
 
@@ -115,7 +115,7 @@ class Abort:
                 # Set the event to ensure the thread terminates
                 dish_settled_event.set()
             # Ensure the thread terminates before moving on
-            dish_is_stopping.join(timeout=1)  # Add a timeout to avoid indefinite blocking
+            dish_is_stopping.join(timeout=1)  # avoid indefinite blocking
         else:
             task_abort_event.set()
             self.logger.debug(
@@ -152,7 +152,7 @@ class Abort:
             self.logger.debug("abort-sequence: SetStandbyFPMode command completed successfully")
         except Exception as exc:  # pylint:disable=broad-except
             if task_callback:
-                task_callback(status=TaskStatus.FAILED)
+                task_callback(status=TaskStatus.FAILED, exception=exc)
             task_abort_event.set()
             self.logger.error(
                 "abort-sequence: failed to transition dish to StandbyFP mode: %s", str(exc)
