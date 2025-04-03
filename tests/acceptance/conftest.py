@@ -65,14 +65,13 @@ def setup_and_teardown(
         spfrx_device_proxy.ResetToDefault()
         assert event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=10)
 
-        if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY_LP:
-            if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY_FP:
-                # go to FP ...
-                ds_device_proxy.SetStandbyFPMode()
-                assert event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=30)
-            # ... and then to LP
-            ds_device_proxy.SetStandbyLPMode()
-            assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=30)
+        if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY_FP:
+            # go to FP ...
+            ds_device_proxy.SetStandbyFPMode()
+            assert event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=30)
+        # ... and then to LP
+        ds_device_proxy.SetStandbyLPMode()
+        assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=30)
     except (RuntimeError, AssertionError):
         # if expected events are not received after reset, allow
         # SyncComponentStates to be called before giving up
