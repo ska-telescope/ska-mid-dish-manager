@@ -687,6 +687,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def stop_communicating(self):
         """Disconnect from monitored devices"""
+        # TODO: indicate attribute reads cannot be trusted
+        # (or mark quality as INVALID) after communication is stopped
         if self.sub_component_managers:
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()

@@ -7,14 +7,12 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Address SKB-809:
+- Upgraded ska-tango-util to v0.4.18
+- Upgraded ska-tango-base to v0.4.18
+- Updated `Abort` to handle dish slew movement
+- Block clients from sending commands when the dish state is DISABLED
 
-  - DishLMC warns client when command is issued during lost communication to a component and continues anyway.
-  - Device State reports ALARM when communication is lost.
-
-- Device State reports ON when device is started.
-- Periodic calls to `MonitorPing` on SPFRx is handled by component manager instead of polled command.
-- Log handling included for when the device's communication state is `DISABLED` or `NOT_ESTABLISHED`
+  - `StartCommunication` should be called before any other command
 
 Version 7.0.1
 *************
