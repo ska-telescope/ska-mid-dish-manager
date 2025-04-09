@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 7.1.0
+*************
 - Address SKB-809:
 
   - DishLMC warns client when command is issued during lost communication to a component and continues anyway.
@@ -15,6 +18,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Device State reports ON when device is started.
 - Periodic calls to `MonitorPing` on SPFRx is handled by component manager instead of polled command.
 - Log handling included for when the device's communication state is `DISABLED` or `NOT_ESTABLISHED`
+- Upgraded ska-mid-dish-ds-manager chart to v4.0.0 
 
 Version 7.0.1
 *************
