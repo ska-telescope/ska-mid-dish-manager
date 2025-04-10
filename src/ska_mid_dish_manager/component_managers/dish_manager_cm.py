@@ -258,7 +258,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         ds_cm = self.sub_component_managers["DS"]
         try:
-            return ds_cm.execute_command("GetCurrentTAIOffset")
+            return ds_cm.execute_command("GetCurrentTAIOffset", None)
         except tango.DevFailed:
             self.logger.warning(
                 "Could not execute GetCurrentTAIOffset on DSManager, calculating TAI offset"
