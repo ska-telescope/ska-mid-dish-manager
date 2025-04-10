@@ -2,8 +2,6 @@
 
 from typing import List
 
-from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
-
 
 class TrackTableTimestampError(ValueError):
     """Class that is used to represent timestamp errors in the track load table"""
@@ -13,7 +11,9 @@ class TrackTableTimestampError(ValueError):
 class TrackLoadTableFormatting:
     """Class that encapsulates related validation and mapping for TrackLoadTable command"""
 
-    def check_track_table_input_valid(self, table: List[float], lead_time: int) -> None:
+    def check_track_table_input_valid(
+        self, table: List[float], lead_time: int, current_tai_timestamp: float
+    ) -> None:
         """
         Entry point for track table validation.
 
@@ -37,11 +37,17 @@ class TrackLoadTableFormatting:
                     "(timestamp, azimuth coordinate, elevation coordinate) as expected."
                 )
             try:
-                self._check_timestamp(table, length_of_table, lead_time)
+                self._check_timestamp(table, length_of_table, lead_time, current_tai_timestamp)
             except TrackTableTimestampError as timestamp_error:
                 raise timestamp_error
 
-    def _check_timestamp(self, table: List[float], length_of_table: int, lead_time: float) -> None:
+    def _check_timestamp(
+        self,
+        table: List[float],
+        length_of_table: int,
+        lead_time: float,
+        current_tai_timestamp: float,
+    ) -> None:
         """
         Check that the timestamps are in the future by at least lead_time in seconds and that
         they are monotonically increasing.
@@ -56,20 +62,17 @@ class TrackLoadTableFormatting:
 
         :return: None
         """
-        # use current time as reference for checking all the timestamps in the array
-        # as this operation should complete fast in comparison to lead_time
-        current_time_tai_s = get_current_tai_timestamp()
         prev_timestamp = -1
         for i in range(0, length_of_table, 3):
             timestamp_tai_s = table[i]
             # check for lead_time violation
-            delta = timestamp_tai_s - current_time_tai_s
+            delta = timestamp_tai_s - current_tai_timestamp
             if delta < lead_time:
                 raise TrackTableTimestampError(
                     "Check track table parameters."
                     f" Timestamps less than {lead_time}s into the future."
                     f" Violation detected for timestamp ({timestamp_tai_s}) which is less than "
-                    f" {lead_time}s ahead of current time ({current_time_tai_s})."
+                    f" {lead_time}s ahead of current time ({current_tai_timestamp})."
                 )
             # check for monotonically increasing
             if i != 0:
