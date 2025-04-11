@@ -395,8 +395,8 @@ def test_maximum_capacity(
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
     dish_manager_proxy.programTrackTable = track_table
 
-    current_index_event_store.wait_for_value(0)
-    expected_end_index = samples_per_block - 1
+    current_index_event_store.wait_for_value(1)
+    expected_end_index = samples_per_block
     end_index_event_store.wait_for_value(expected_end_index)
 
     # append to fill up track table
@@ -448,7 +448,7 @@ def test_maximum_capacity(
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
     dish_manager_proxy.programTrackTable = track_table
     # expect a roll over of the circular buffer
-    expected_end_index = samples_per_block - 1
+    expected_end_index = samples_per_block
     end_index_event_store.wait_for_value(expected_end_index)
 
 
