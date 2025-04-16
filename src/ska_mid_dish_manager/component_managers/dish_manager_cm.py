@@ -256,10 +256,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         Try and get the TAI offset from the DSManager device or calulate it manually if that fails.
         """
-        ds_cm = self.sub_component_managers["DS"]
         try:
+            ds_cm = self.sub_component_managers["DS"]
             return ds_cm.execute_command("GetCurrentTAIOffset", None)
-        except (tango.DevFailed, ConnectionError):
+        except (tango.DevFailed, ConnectionError, KeyError):
             self.logger.warning(
                 "Could not execute GetCurrentTAIOffset on DSManager, calculating TAI offset"
                 " manually."
