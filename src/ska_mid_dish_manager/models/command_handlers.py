@@ -11,7 +11,6 @@ from typing import Any, Callable, Optional
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState, TrackTableLoadMode
-from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
 class Abort:
@@ -65,8 +64,7 @@ class Abort:
         Write the last achievedPointing back to the trackTable in loadmode NEW
         """
         reset_point = self._component_manager.component_state.get("achievedpointing")
-        timestamp = get_current_tai_timestamp()
-        reset_point[0] = timestamp
+        reset_point[0] = self._component_manager.get_current_tai_offset_with_manual_fallback()
         sequence_length = 1
         load_mode = TrackTableLoadMode.NEW
 

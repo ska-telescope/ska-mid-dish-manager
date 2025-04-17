@@ -9,7 +9,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
-from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
 # pylint: disable=invalid-name, redefined-outer-name
@@ -105,6 +104,7 @@ def test_abort_commands(
 def track_a_sample(
     event_store_class,
     dish_manager_proxy,
+    ds_device_proxy,
 ):
     """Execute a track command to slew the dish to a new position"""
 
@@ -154,7 +154,7 @@ def track_a_sample(
 
     # Load a track table
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
-    current_time_tai_s = get_current_tai_timestamp()
+    current_time_tai_s = ds_device_proxy.GetCurrentTAIOffset()
 
     # Directions to move values
     az_dir = 1 if current_az < 350 else -1
