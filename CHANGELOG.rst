@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 7.2.0
+*************
+- Use TAIoffset as reported by DSManager when validating track table and for testing
+
 Version 7.1.0
 *************
 - Log handling included for when the device's communication state is `DISABLED` or `NOT_ESTABLISHED`
