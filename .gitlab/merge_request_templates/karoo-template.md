@@ -1,4 +1,4 @@
-/assign_reviewer @jventer @samueltwum1 @yreddi1 @phelokazi_dube @DevonPetrie @barbsapili @alethole @ucsilere @Mpumelelo_Nzama
+/assign_reviewer @jventer @samueltwum1 @yreddi1 @DevonPetrie @barbsapili @alethole @ucsilere @Mpumelelo_Nzama
 
 ### Describe your changes
 

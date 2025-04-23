@@ -11,7 +11,6 @@ from typing import Any, Callable, Optional
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState, TrackTableLoadMode
-from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
 class Abort:
@@ -78,7 +77,7 @@ class Abort:
 
         self.logger.debug("abort-sequence: resetting the programTrackTable")
         reset_point = self._component_manager.component_state.get("achievedpointing")
-        timestamp = get_current_tai_timestamp() + 5  # add 5 seconds lead time
+        timestamp = self._component_manager.get_current_tai_offset_with_manual_fallback() + 5  # add 5 seconds lead time
         reset_point = [timestamp, reset_point[1], reset_point[2]]
         sequence_length = 1
         load_mode = TrackTableLoadMode.NEW

@@ -12,7 +12,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
-from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 TRACKING_POSITION_THRESHOLD_ERROR_DEG = 0.05
 INIT_AZ = -250
@@ -84,6 +83,7 @@ def test_track_and_track_stop_cmds(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
+    ds_device_proxy,
 ):
     """Test call of Track command and stop"""
 
@@ -123,7 +123,7 @@ def test_track_and_track_stop_cmds(
     current_az = current_pointing[1]
     current_el = current_pointing[2]
 
-    current_time_tai_s = get_current_tai_timestamp()
+    current_time_tai_s = ds_device_proxy.GetCurrentTAIOffset()
 
     # Directions to move values
     az_dir = 1 if current_az < 350 else -1
@@ -218,6 +218,7 @@ def test_append_dvs_case(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
+    ds_device_proxy,
 ):
     """Test Track with Append for DVS case"""
 
@@ -267,7 +268,7 @@ def test_append_dvs_case(
 
         return track_table_temp
 
-    start_tai = get_current_tai_timestamp() + track_delay
+    start_tai = ds_device_proxy.GetCurrentTAIOffset() + track_delay
     track_table = generate_next_1_second_table(start_tai, samples_per_append)
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
     dish_manager_proxy.programTrackTable = track_table
@@ -294,7 +295,7 @@ def test_append_dvs_case(
         time.sleep(1)
 
     last_timestamp_in_table = track_table[-3]
-    while get_current_tai_timestamp() < last_timestamp_in_table + 5:
+    while ds_device_proxy.GetCurrentTAIOffset() < last_timestamp_in_table + 5:
         time.sleep(1)
 
     # Check that we get to last entry
@@ -318,6 +319,7 @@ def test_maximum_capacity(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
+    ds_device_proxy,
 ):
     """Test loading of track tables to maximum capacity."""
 
@@ -376,7 +378,7 @@ def test_maximum_capacity(
         return track_table
 
     track_delay = 50
-    time_now = get_current_tai_timestamp()
+    time_now = ds_device_proxy.GetCurrentTAIOffset()
     track_start_tai = time_now + track_delay
     duration_per_block_s = 5
     samples_per_block = 50
@@ -393,8 +395,8 @@ def test_maximum_capacity(
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
     dish_manager_proxy.programTrackTable = track_table
 
-    current_index_event_store.wait_for_value(0)
-    expected_end_index = samples_per_block - 1
+    current_index_event_store.wait_for_value(1)
+    expected_end_index = samples_per_block
     end_index_event_store.wait_for_value(expected_end_index)
 
     # append to fill up track table
@@ -422,7 +424,7 @@ def test_maximum_capacity(
         dish_manager_proxy.programTrackTable = track_table
 
     # ensure load completed before track start time
-    load_complete_time = get_current_tai_timestamp()
+    load_complete_time = ds_device_proxy.GetCurrentTAIOffset()
     assert track_start_tai > load_complete_time
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
@@ -431,13 +433,13 @@ def test_maximum_capacity(
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
 
     # wait for tracking to start consuming table
-    while get_current_tai_timestamp() < track_start_tai:
+    while ds_device_proxy.GetCurrentTAIOffset() < track_start_tai:
         time.sleep(5)
     # check that current index has moved from reset
     assert dish_manager_proxy.trackTableCurrentIndex > 0
 
     # wait for the first tracking block to be consumed so that space is available
-    while get_current_tai_timestamp() < track_start_tai + duration_per_block_s:
+    while ds_device_proxy.GetCurrentTAIOffset() < track_start_tai + duration_per_block_s:
         time.sleep(5)
     start_tai = track_table[-3] + sample_spacing
     track_table = generate_constant_table(
@@ -446,7 +448,7 @@ def test_maximum_capacity(
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
     dish_manager_proxy.programTrackTable = track_table
     # expect a roll over of the circular buffer
-    expected_end_index = samples_per_block - 1
+    expected_end_index = samples_per_block
     end_index_event_store.wait_for_value(expected_end_index)
 
 
@@ -456,6 +458,7 @@ def test_track_fails_when_track_called_late(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
+    ds_device_proxy,
 ):
     """Test Track command fails when the track table is no more valid"""
     main_event_store = event_store_class()
@@ -491,7 +494,7 @@ def test_track_fails_when_track_called_late(
 
     # Construct track table
     track_table_delay_s = 2
-    start_time = get_current_tai_timestamp() + track_table_delay_s
+    start_time = ds_device_proxy.GetCurrentTAIOffset() + track_table_delay_s
     track_table_duration_s = 4
     track_table = []
     for i in range(track_table_duration_s):
@@ -502,7 +505,7 @@ def test_track_fails_when_track_called_late(
     dish_manager_proxy.programTrackTable = track_table
 
     # wait until the table is not valid
-    while get_current_tai_timestamp() <= track_table[-3] + 1:
+    while ds_device_proxy.GetCurrentTAIOffset() <= track_table[-3] + 1:
         time.sleep(1)
 
     # we don't have any way yet to confirm that the track command failed

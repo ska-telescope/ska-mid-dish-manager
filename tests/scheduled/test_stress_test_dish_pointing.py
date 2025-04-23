@@ -13,7 +13,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
-from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 LOGGER = logging.getLogger(__name__)
 NUMBER_OF_TABLE_SAMPLES = 500  # amounts to 10 calls to track table
@@ -83,7 +82,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     el_dir = 1 if current_el < 45 else -1
 
     loaded_sample_count = 1
-    start_time_tai_s = get_current_tai_timestamp() + LEAD_TIME
+    start_time_tai_s = ds_device_proxy.GetCurrentTAIOffset() + LEAD_TIME
 
     # have a huge jump in the first point to guarantee a slew
     track_table = [

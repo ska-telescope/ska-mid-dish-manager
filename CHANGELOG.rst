@@ -7,9 +7,20 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+- Updated `Abort` to handle dish slew movement
+
+Version 7.2.0
+*************
+- Use TAIoffset as reported by DSManager when validating track table and for testing
+- Upgraded ska-mid-dish-simulators chart to v4.4.0
+- Upgraded ska-mid-dish-ds-manager chart to v4.1.0
+
+Version 7.1.0
+*************
 - Upgraded ska-tango-util to v0.4.18
 - Upgraded ska-tango-base to v0.4.18
-- Updated `Abort` to handle dish slew movement
+- Upgraded ska-mid-dish-ds-manager chart to v4.0.0
 - Block clients from sending commands when the dish state is DISABLED
 
   - `StartCommunication` should be called before any other command

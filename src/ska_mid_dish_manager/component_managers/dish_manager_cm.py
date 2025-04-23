@@ -43,6 +43,7 @@ from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
 # pylint: disable=abstract-method
@@ -251,6 +252,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # --------------
     # Helper methods
     # --------------
+    def get_current_tai_offset_with_manual_fallback(self) -> float:
+        """
+        Try and get the TAI offset from the DSManager device or calulate it manually if that fails.
+        """
+        try:
+            ds_cm = self.sub_component_managers["DS"]
+            return ds_cm.execute_command("GetCurrentTAIOffset", None)
+        except (tango.DevFailed, ConnectionError, KeyError):
+            self.logger.exception(
+                "Could not execute GetCurrentTAIOffset on DSManager, calculating TAI offset"
+                " manually."
+            )
+            return get_current_tai_timestamp()
 
     def is_dish_moving(self) -> bool:
         """
