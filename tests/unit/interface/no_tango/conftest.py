@@ -53,7 +53,7 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
         read_attribute_value=MagicMock(),
         write_attribute_value=MagicMock(),
         update_state_from_monitored_attributes=MagicMock(),
-        execute_command=MagicMock(side_effect=_simulate_execute_command),
+        execute_command=MagicMock(),
         run_device_command=MagicMock(side_effect=_simulate_lrc_callbacks),
     ), patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager"), patch(
         "ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"
