@@ -46,9 +46,6 @@ def dish_manager_resources():
             task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(None)))
             return TaskStatus.QUEUED, "message"
 
-        def _simulate_execute_command(*args):
-            return [[ResultCode.OK], [f"{args[0]} completed"]]
-
         for com_man in [ds_cm, spf_cm, spfrx_cm]:
             com_man.run_device_command = Mock(side_effect=_simulate_lrc_callbacks)
 

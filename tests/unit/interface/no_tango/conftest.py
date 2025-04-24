@@ -45,9 +45,6 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
         task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(None)))
         return TaskStatus.QUEUED, "message"
 
-    def _simulate_execute_command(*args):
-        return [[ResultCode.OK], [f"{args[0]} completed"]]
-
     with patch.multiple(
         "ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceComponentManager",
         read_attribute_value=MagicMock(),
