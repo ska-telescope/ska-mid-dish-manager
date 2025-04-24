@@ -135,10 +135,10 @@ def test_abort_during_dish_movement(
     cmds_in_queue_store.clear_queue()
 
     # tracktable will be reset when the dish is tracking. this will make another call to
-    # DS to fetch a value. just replace that object to use the manual tai calculation
+    # DS to fetch a tai calculation. just replace that object to use the manual approach
     if pointing_state == PointingState.TRACK:
         dish_manager_cm.get_current_tai_offset_with_manual_fallback = get_current_tai_timestamp
-        # mock the reply from ds to load a track table (happens during the reset)
+        # mock the reply from ds to load a track table (happens during the table reset)
         mock_response = Mock()
         mock_response.return_value = ResultCode.OK, ""
         dish_manager_cm.track_load_table = mock_response

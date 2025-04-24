@@ -7,7 +7,6 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-
 - Updated `Abort` to handle dish slew movement
 
 Version 7.2.0
