@@ -9,6 +9,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
+from tests.utils import az_el_slew_position
 
 
 # pylint: disable=invalid-name, redefined-outer-name
@@ -230,3 +231,113 @@ def test_abort_commands_during_track(
 
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+
+
+# pylint: disable=unused-argument
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_abort_commands_during_slew(
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+):
+    """Test that AbortCommands aborts the executing slew command"""
+    result_event_store = event_store_class()
+    main_event_store = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        result_event_store,
+    )
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+    dish_manager_proxy.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+    dish_manager_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+
+    dish_manager_proxy.SetStandbyFPMode()
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10, proxy=dish_manager_proxy)
+
+    dish_manager_proxy.ConfigureBand1(True)
+    main_event_store.wait_for_value(Band.B1, timeout=30)
+
+    dish_manager_proxy.SetOperateMode()
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
+
+    # Slew the dish
+    current_az, current_el = dish_manager_proxy.achievedPointing[1:]
+    requested_az, requested_el = az_el_slew_position(current_az, current_el, 30.0, 15.0)
+    dish_manager_proxy.Slew([requested_az, requested_el])
+    main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
+
+    # Call AbortCommands on DishManager
+    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "Abort sequence completed"]', timeout=30
+    )
+
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+    # Check that the dish is in standby FP mode
+    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+    # Check that the dish did not slew to the requested position
+    achieved_az, achieved_el = dish_manager_proxy.achievedPointing[1:]
+    assert achieved_az != pytest.approx(requested_az)
+    assert achieved_el != pytest.approx(requested_el)
+
+
+# pylint: disable=unused-argument
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_abort_commands_during_stow(
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+):
+    """Test that AbortCommands aborts the executing stow command"""
+    result_event_store = event_store_class()
+    main_event_store = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        result_event_store,
+    )
+    dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+    dish_manager_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+
+    # Stow the dish
+    dish_manager_proxy.SetStowMode()
+    main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
+
+    # Call AbortCommands on DishManager
+    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "Abort sequence completed"]', timeout=30
+    )
+
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+    # Check that the dish is in standby FP mode
+    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+    # Check that the dish did not slew to the stow position
+    stow_position = 90.2
+    achieved_el = dish_manager_proxy.achievedPointing[2]
+    assert achieved_el != pytest.approx(stow_position)

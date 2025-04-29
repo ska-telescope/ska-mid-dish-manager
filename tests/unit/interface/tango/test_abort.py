@@ -1,5 +1,7 @@
 """Unit tests for Abort/AbortCommands command."""
 
+from unittest.mock import Mock
+
 import pytest
 import tango
 from ska_control_model import ResultCode
@@ -11,6 +13,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp
 
 
 @pytest.mark.unit
@@ -82,7 +85,6 @@ def test_abort_is_rejected_in_maintenance_dishmode(
 
 
 # pylint:disable=protected-access
-@pytest.mark.xfail(reason="Review SLEW state handling in test: flaky")
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -92,7 +94,9 @@ def test_abort_is_rejected_in_maintenance_dishmode(
         ("AbortCommands", PointingState.TRACK),
     ],
 )
-def test_abort(dish_manager_resources, event_store_class, abort_cmd, pointing_state):
+def test_abort_during_dish_movement(
+    dish_manager_resources, event_store_class, abort_cmd, pointing_state
+):
     """Verify Abort/AbortCommands executes the abort sequence"""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
@@ -130,6 +134,15 @@ def test_abort(dish_manager_resources, event_store_class, abort_cmd, pointing_st
     # event received after subscription to prevent false reporting
     cmds_in_queue_store.clear_queue()
 
+    # tracktable will be reset when the dish is tracking. this will make another call to
+    # DS to fetch a tai calculation. just replace that object to use the manual approach
+    if pointing_state == PointingState.TRACK:
+        dish_manager_cm.get_current_tai_offset_with_manual_fallback = get_current_tai_timestamp
+        # mock the reply from ds to load a track table (happens during the table reset)
+        mock_response = Mock()
+        mock_response.return_value = ResultCode.OK, ""
+        dish_manager_cm.track_load_table = mock_response
+
     [[_], [fp_unique_id]] = device_proxy.SetStandbyFPMode()
     # dont update spf operatingMode to mimic skipAttributeUpdate=True
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
@@ -154,6 +167,17 @@ def test_abort(dish_manager_resources, event_store_class, abort_cmd, pointing_st
         "SetStandbyFPMode called on DS",
         "Awaiting dishmode change to STANDBY_FP",
     ]
+
+    if pointing_state == PointingState.SLEW:
+        slew_progress_updates = [
+            "TrackStop called on DS",
+            "Awaiting pointingstate change to READY",
+            "DS pointingstate changed to 0",
+            "TrackStop completed",
+        ]
+        expected_progress_updates = slew_progress_updates + expected_progress_updates
+
+    ds_cm._update_component_state(pointingstate=PointingState.READY)
     events = progress_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=30
     )

@@ -260,10 +260,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ds_cm = self.sub_component_managers["DS"]
             return ds_cm.execute_command("GetCurrentTAIOffset", None)
         except (tango.DevFailed, ConnectionError, KeyError):
-            self.logger.exception(
-                "Could not execute GetCurrentTAIOffset on DSManager, calculating TAI offset"
-                " manually."
-            )
+            self.logger.debug("Calculating TAI offset manually.")
             return get_current_tai_timestamp()
 
     def is_dish_moving(self) -> bool:
@@ -701,6 +698,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def stop_communicating(self):
         """Disconnect from monitored devices"""
+        # TODO: update attribute read callbacks to indicate attribute
+        # reads cannot be trusted after communication is stopped
         if self.sub_component_managers:
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
@@ -895,7 +894,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         def _is_track_stop_cmd_allowed():
             dish_mode = self.component_state["dishmode"]
             pointing_state = self.component_state["pointingstate"]
-            if dish_mode != DishMode.OPERATE and pointing_state != PointingState.TRACK:
+            if dish_mode != DishMode.OPERATE and pointing_state not in [
+                PointingState.TRACK,
+                PointingState.SLEW,
+            ]:
                 return False
             return True
 
@@ -944,7 +946,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ds_cm.execute_command("Stow", None)
         except tango.DevFailed as err:
             task_callback(status=TaskStatus.FAILED, exception=err)
-            self.logger.exception("DishManager has failed to execute Stow DSManager")
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
         task_callback(
             status=TaskStatus.COMPLETED, progress="Stow called, monitor dishmode for LRC completed"
@@ -1065,16 +1066,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         SPFRx has been restarted.
         """
         spfrx_cm = self.sub_component_managers["SPFRX"]
-        self.logger.debug("Calling SetKValue on SPFRX.")
         try:
-            result = spfrx_cm.execute_command("SetKValue", k_value)
-            self.logger.debug(
-                "Result of the call to [%s] on SPFRx is [%s]",
-                "SetKValue",
-                result,
-            )
+            spfrx_cm.execute_command("SetKValue", k_value)
         except tango.DevFailed as err:
-            self.logger.exception("SetKvalue on SPFRx failed")
             return (ResultCode.FAILED, err)
         return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
 

@@ -19,11 +19,10 @@ from ska_mid_dish_manager.models.dish_enums import (
     "current_pointing_state",
     [
         PointingState.READY,
-        PointingState.SLEW,
         PointingState.SCAN,
     ],
 )
-def test_track_stop_cmd_fails_when_pointing_state_is_not_track(
+def test_track_stop_cmd_fails_in_wrong_pointing_state(
     dish_manager_resources,
     event_store_class,
     current_pointing_state,
