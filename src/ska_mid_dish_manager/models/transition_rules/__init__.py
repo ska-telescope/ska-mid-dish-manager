@@ -19,6 +19,8 @@ __all__ = [
     "health_state_rules_spf_ignored",
     "health_state_rules_spfrx_ignored",
     "health_state_rules_ds_only",
+    "power_state_rules_all_devices",
+    "power_state_rules_spf_ignored",
 ]
 
 from .band_configuration import CONFIGURED_BAND_RULES_ALL_DEVICES as config_rules_all_devices
@@ -41,3 +43,5 @@ from .health_state import HEALTH_STATE_RULES_ALL_DEVICES as health_state_rules_a
 from .health_state import HEALTH_STATE_RULES_DS_ONLY as health_state_rules_ds_only
 from .health_state import HEALTH_STATE_RULES_SPF_IGNORED as health_state_rules_spf_ignored
 from .health_state import HEALTH_STATE_RULES_SPFRX_IGNORED as health_state_rules_spfrx_ignored
+from .power_state import POWER_STATE_RULES_ALL_DEVICES as power_state_rules_all_devices
+from .power_state import POWER_STATE_RULES_SPF_IGNORED as power_state_rules_spf_ignored
