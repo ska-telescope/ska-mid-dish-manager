@@ -334,6 +334,7 @@ class DishManager(SKAController):
                 spfrx_address=device.SPFRxDeviceFqdn,
             )
             device._build_state = device._release_info.get_build_state()
+            device._version_id = device._release_info.get_dish_manager_release_version()
 
             # push change events, needed to use testing library
 
