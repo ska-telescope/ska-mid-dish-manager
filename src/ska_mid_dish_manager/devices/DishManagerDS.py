@@ -339,6 +339,7 @@ class DishManager(SKAController):
 
             device._component_state_attr_map = {
                 "dishmode": "dishMode",
+                "powerstate": "powerState",
                 "pointingstate": "pointingState",
                 "configuredband": "configuredBand",
                 "achievedtargetlock": "achievedTargetLock",
@@ -418,7 +419,6 @@ class DishManager(SKAController):
                 "programTrackTable",
                 "pointingBufferSize",
                 "polyTrack",
-                "powerState",
                 "trackProgramMode",
                 "trackTableLoadMode",
                 "lastCommandedMode",
