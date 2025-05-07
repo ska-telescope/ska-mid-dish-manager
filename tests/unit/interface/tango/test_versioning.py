@@ -94,3 +94,8 @@ class TestDishManagerVersioning:
         build_state = self._dish_manager_proxy.buildState
         build_state_json = json.loads(build_state)
         assert build_state_json["ds_manager_device"]["version"] == build_state_update_json
+
+    def test_version_id_matches_release_version(self):
+        """Test that the version ID gets updated with the current release version."""
+        version_id = self._dish_manager_proxy.versionId
+        assert version_id == ReleaseInfo.get_dish_manager_release_version()
