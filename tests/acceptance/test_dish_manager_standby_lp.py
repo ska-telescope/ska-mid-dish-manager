@@ -3,7 +3,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import DishMode, PowerState
 
 
 # pylint:disable=unused-argument
@@ -37,9 +37,6 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
     progress_event_store.clear_queue()
 
     dish_manager_proxy.SetStandbyLPMode()
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
-
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_LP
 
     expected_progress_updates = [
         "SetStandbyLPMode called on DS",
@@ -59,3 +56,6 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
     # in the event store
     for message in expected_progress_updates:
         assert message in events_string
+
+    assert dish_manager_proxy.dishMode == DishMode.STANDBY_LP
+    assert dish_manager_proxy.powerState == PowerState.LOW
