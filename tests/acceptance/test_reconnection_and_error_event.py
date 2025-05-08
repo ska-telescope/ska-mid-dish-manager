@@ -5,7 +5,7 @@ import tango
 from ska_control_model import CommunicationStatus
 
 
-@pytest.mark.ex
+@pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])
 def test_device_goes_away(family, event_store_class, dish_manager_proxy):
