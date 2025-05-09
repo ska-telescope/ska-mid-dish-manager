@@ -55,11 +55,12 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     normal_status_msg = "The device is in ON state."
 
     # ensure dish manager reports the correct states when the device is restarted
-    conn_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=30)
-    state_event_store.wait_for_value(tango.DevState.ALARM, timeout=30)
-    status_event_store.wait_for_value(alarm_status_msg, timeout=30)
+    # wait suffucient time for the device to restart and the events to be received
+    status_event_store.wait_for_value(alarm_status_msg, timeout=90)
+    conn_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
+    state_event_store.wait_for_value(tango.DevState.ALARM)
 
     # check that dish manager normal states are restored after the device is back
-    conn_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
-    state_event_store.wait_for_value(tango.DevState.ON, timeout=30)
-    status_event_store.wait_for_value(normal_status_msg, timeout=30)
+    status_event_store.wait_for_value(normal_status_msg, timeout=90)
+    conn_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+    state_event_store.wait_for_value(tango.DevState.ON)
