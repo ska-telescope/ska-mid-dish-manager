@@ -123,7 +123,7 @@ class TrackTableLoadMode(enum.IntEnum):
 
 
 class PowerState(enum.IntEnum):
-    # TODO: Review enumeration, UPS may not be necessary, see DSPowerState 
+    # TODO: Review enumeration, UPS may not be necessary, see DSPowerState
     UPS = 0
     LOW = 1
     FULL = 2
