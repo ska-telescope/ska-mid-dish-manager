@@ -1,8 +1,13 @@
 """
 Automatic transition rules for power state
 
-These rules are based on assumption that the DS power state is
-the most important and the SPF power state is only supplementary
+* The DSPowerState enumeration only has 2 labels in the latest ICD.
+This will impact the rules defined in this file.
+
+* These rules are based on assumption that the DS power state is
+the most important and the SPF power state is only supplementary.
+
+TODO: Get clarity about the rules and the DSPowerState in the ICD
 """
 
 import rule_engine

@@ -123,6 +123,7 @@ class TrackTableLoadMode(enum.IntEnum):
 
 
 class PowerState(enum.IntEnum):
+    # TODO: Review enumeration, UPS may not be necessary, see DSPowerState 
     UPS = 0
     LOW = 1
     FULL = 2
@@ -136,7 +137,7 @@ class SPFPowerState(enum.IntEnum):
 
 
 class DSPowerState(enum.IntEnum):
-    # enums are from ICD
+    # TODO: Review enumeration, ICD has only 2 enums
     OFF = 0
     UPS = 1
     FULL_POWER = 2
