@@ -13,18 +13,27 @@ BAD_JSON_FORMAT_VERSION = "Bad JSON formatting."
 BUILD_STATE_SPACING = 4
 
 
+def get_time_in_human_readable_format(timestamp) -> str:
+    """Get time in human readable format."""
+    return time.strftime("%d-%m-%Y %H:%M:%S", time.localtime(timestamp))
+
+
 class ReleaseInfo:
     """Class containing version release information."""
 
     def __init__(
-        self, ds_manager_address: str = "", spfc_address: str = "", spfrx_address: str = ""
+        self,
+        timestamp: float = time.time(),
+        ds_manager_address: str = "",
+        spfc_address: str = "",
+        spfrx_address: str = "",
     ) -> None:
+        self._timestamp = get_time_in_human_readable_format(timestamp)
         self._ds_manager_device_info = DeviceInfoDataClass(ds_manager_address)
         self._spfrx_device_info = DeviceInfoDataClass(spfrx_address)
         self._spfc_device_info = DeviceInfoDataClass(spfc_address)
         self._build_state = DmBuildStateDataClass(
-            # Print buildState last updated time in format: dd-mm-yyyy hh:mm:ss
-            last_updated=time.strftime("%d-%m-%Y %H:%M:%S", time.localtime(time.time())),
+            last_updated=self._timestamp,
             dish_manager_version=self.get_dish_manager_release_version(),
             ds_manager_device=self._ds_manager_device_info,
             spfrx_device=self._spfrx_device_info,
