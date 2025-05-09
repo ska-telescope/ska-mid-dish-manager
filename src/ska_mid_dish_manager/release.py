@@ -1,6 +1,7 @@
 """Release information for ska-mid-dish-manager Python Package."""
 
 import json
+import time
 from dataclasses import asdict
 from importlib.metadata import PackageNotFoundError, version
 
@@ -22,6 +23,8 @@ class ReleaseInfo:
         self._spfrx_device_info = DeviceInfoDataClass(spfrx_address)
         self._spfc_device_info = DeviceInfoDataClass(spfc_address)
         self._build_state = DmBuildStateDataClass(
+            # Print buildState last updated time in format: dd-mm-yyyy hh:mm:ss
+            last_updated=time.strftime("%d-%m-%Y %H:%M:%S", time.localtime(time.time())),
             dish_manager_version=self.get_dish_manager_release_version(),
             ds_manager_device=self._ds_manager_device_info,
             spfrx_device=self._spfrx_device_info,
