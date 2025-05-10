@@ -1,5 +1,6 @@
 """Tests dish manager component manager start/stop communication command handler"""
 
+
 import pytest
 from ska_control_model import CommunicationStatus
 
@@ -42,6 +43,10 @@ def test_start_stop_communication(
 
     # Now we call start communicating
     component_manager.start_communicating()
+    for sub_component_manager in component_manager.sub_component_managers.values():
+        sub_component_manager._update_communication_state(CommunicationStatus.ESTABLISHED)
+    # check that dish manager communication state is established
+    assert component_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # Change the DishMode to LP - to see if it will work now that
     # start_comm was called and the status is established.

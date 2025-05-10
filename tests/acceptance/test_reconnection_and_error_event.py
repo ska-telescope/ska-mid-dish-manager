@@ -1,11 +1,13 @@
 """Test reconnection and error event handling"""
 
+import time
+
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
 
 
-@pytest.mark.acceptance
+@pytest.mark.exx
 @pytest.mark.forked
 @pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])
 def test_device_goes_away(family, event_store_class, dish_manager_proxy):
@@ -15,6 +17,12 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
         "simulator-spfc": "spfConnectionState",
         "simulator-spfrx": "spfrxConnectionState",
     }
+
+    alarm_status_msg = (
+        "Event channel on a sub-device is not responding "
+        "anymore or change event subscription is not complete"
+    )
+    normal_status_msg = "The device is in ON state."
 
     conn_state_event_store = event_store_class()
     state_event_store = event_store_class()
@@ -48,19 +56,24 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     admin_device = tango.DeviceProxy(device.adm_name())
     admin_device.RestartServer()
 
-    alarm_status_msg = (
-        "Event channel on a sub-device is not responding "
-        "anymore or change event subscription is not complete"
-    )
-    normal_status_msg = "The device is in ON state."
+    # check dish manager reported the correct states when the device died
+    conn_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=30)
+    state_event_store.wait_for_value(tango.DevState.ALARM, timeout=30)
+    status_event_store.wait_for_value(alarm_status_msg, timeout=30)
 
-    # ensure dish manager reports the correct states when the device is restarted
-    # wait suffucient time for the device to restart and the events to be received
-    status_event_store.wait_for_value(alarm_status_msg, timeout=90)
-    conn_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-    state_event_store.wait_for_value(tango.DevState.ALARM)
+    start_time = time.time()
+    while True:
+        if time.time() - start_time > 60:
+            # if the device is unreachable after 60 seconds of restart, we can break the loop
+            break
+        try:
+            device.ping()
+            # if the device is reachable, we can break the loop
+            break
+        except tango.DevFailed:
+            time.sleep(0.5)
 
-    # check that dish manager normal states are restored after the device is back
-    status_event_store.wait_for_value(normal_status_msg, timeout=90)
-    conn_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-    state_event_store.wait_for_value(tango.DevState.ON)
+    # check that dish manager reports the correct states after the device restarts
+    conn_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
+    state_event_store.wait_for_value(tango.DevState.ON, timeout=30)
+    status_event_store.wait_for_value(normal_status_msg, timeout=30)

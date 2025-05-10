@@ -448,3 +448,14 @@ def az_el_slew_position(current_az, current_el, offset_az, offset_el):
     requested_el = min(MAX_ELEVATION, max(MIN_ELEVATION, requested_el))
 
     return requested_az, requested_el
+
+
+def wait_for_attribute_value(device, attribute_name, expected_value, event_cb, timeout):
+    """Subscribe to a Tango attribute and wait until it reaches the expected value."""
+    sub_id = device.subscribe_event(
+        attribute_name,
+        tango.EventType.CHANGE_EVENT,
+        event_cb,
+    )
+    assert event_cb.wait_for_value(value=expected_value, timeout=timeout)
+    device.unsubscribe_event(sub_id)
