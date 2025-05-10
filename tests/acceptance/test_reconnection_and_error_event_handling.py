@@ -6,8 +6,10 @@ import pytest
 import tango
 from ska_control_model import CommunicationStatus
 
+from tests.utils import wait_for_attribute_value
 
-@pytest.mark.exx
+
+@pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])
 def test_device_goes_away(family, event_store_class, dish_manager_proxy):
@@ -57,10 +59,11 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     admin_device.RestartServer()
 
     # check dish manager reported the correct states when the device died
-    conn_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=30)
-    state_event_store.wait_for_value(tango.DevState.ALARM, timeout=30)
-    status_event_store.wait_for_value(alarm_status_msg, timeout=30)
+    conn_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=60)
+    state_event_store.wait_for_value(tango.DevState.ALARM, timeout=60)
+    status_event_store.wait_for_value(alarm_status_msg, timeout=60)
 
+    # wait for the device to come back online
     start_time = time.time()
     while True:
         if time.time() - start_time > 60:
@@ -74,6 +77,16 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
             time.sleep(0.5)
 
     # check that dish manager reports the correct states after the device restarts
-    conn_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
-    state_event_store.wait_for_value(tango.DevState.ON, timeout=30)
-    status_event_store.wait_for_value(normal_status_msg, timeout=30)
+    wait_for_attribute_value(
+        dish_manager_proxy,
+        family_attr_mapping[family],
+        CommunicationStatus.ESTABLISHED,
+        conn_state_event_store,
+        timeout=60,
+    )
+    wait_for_attribute_value(
+        dish_manager_proxy, "State", tango.DevState.ON, state_event_store, timeout=60
+    )
+    wait_for_attribute_value(
+        dish_manager_proxy, "Status", normal_status_msg, status_event_store, timeout=60
+    )

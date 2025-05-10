@@ -12,7 +12,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
-from tests.utils import az_el_slew_position
 
 TRACKING_POSITION_THRESHOLD_ERROR_DEG = 0.05
 INIT_AZ = -250
@@ -55,11 +54,8 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     )
 
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
-    requested_az, requested_el = az_el_slew_position(current_az, current_el, 10, 10)
-    estimate_slew_duration = max(
-        abs(requested_el - current_el), (abs(requested_az - current_az) / 3)
-    )
-    dish_manager_proxy.Slew([requested_az, requested_el])
+    estimate_slew_duration = max(abs(INIT_EL - current_el), (abs(INIT_AZ - current_az) / 3))
+    dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
 
     # wait until no updates
     data_points = achieved_pointing_event_store.get_queue_values(
@@ -71,16 +67,16 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     last_az_el = data_points[-1][1]
     # check last az and el received and compare with reference
     achieved_az, achieved_el = last_az_el[1], last_az_el[2]
-    assert achieved_az == pytest.approx(requested_az)
-    assert achieved_el == pytest.approx(requested_el)
+    assert achieved_az == pytest.approx(INIT_AZ)
+    assert achieved_el == pytest.approx(INIT_EL)
 
-    yield requested_az, requested_el
+    yield
 
     dish_manager_proxy.TrackStop()
 
 
 # pylint: disable=unused-argument,too-many-arguments,too-many-locals,too-many-statements
-@pytest.mark.exx
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_and_track_stop_cmds(
     slew_dish_to_init,
@@ -90,6 +86,7 @@ def test_track_and_track_stop_cmds(
     ds_device_proxy,
 ):
     """Test call of Track command and stop"""
+
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -214,7 +211,7 @@ def test_track_and_track_stop_cmds(
         assert message in events_string
 
 
-@pytest.mark.exx
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_append_dvs_case(
     slew_dish_to_init,
@@ -224,7 +221,7 @@ def test_append_dvs_case(
     ds_device_proxy,
 ):
     """Test Track with Append for DVS case"""
-    req_az, req_el = slew_dish_to_init
+
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
@@ -263,8 +260,8 @@ def test_append_dvs_case(
         track_table_temp = []
         for i in range(samples):
             timestamp = start_time + i * sampling_time
-            azimuth = az_amplitude * sin(2 * pi * timestamp / az_sin_period) + req_az
-            elevation = el_amplitude * sin(2 * pi * timestamp / el_sin_period) + req_el
+            azimuth = az_amplitude * sin(2 * pi * timestamp / az_sin_period) + INIT_AZ
+            elevation = el_amplitude * sin(2 * pi * timestamp / el_sin_period) + INIT_EL
             track_table_temp.append(timestamp)
             track_table_temp.append(azimuth)
             track_table_temp.append(elevation)
@@ -315,7 +312,7 @@ def test_append_dvs_case(
     achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=10)
 
 
-@pytest.mark.exx
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_maximum_capacity(
     slew_dish_to_init,
@@ -455,7 +452,7 @@ def test_maximum_capacity(
     end_index_event_store.wait_for_value(expected_end_index)
 
 
-@pytest.mark.exx
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_fails_when_track_called_late(
     monitor_tango_servers,
