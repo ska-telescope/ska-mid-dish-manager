@@ -1049,7 +1049,6 @@ class DishManager(SKAController):
             TrackLoadTableFormatting().check_track_table_input_valid(
                 table,
                 TRACK_LOAD_FUTURE_THRESHOLD_SEC,
-                self.component_manager.get_current_tai_offset_with_manual_fallback(),
             )
         except TrackTableTimestampError as te:
             self.logger.warning("Track table timestamp warning: %s", te)

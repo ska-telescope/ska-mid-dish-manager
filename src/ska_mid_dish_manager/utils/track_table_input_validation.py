@@ -2,6 +2,8 @@
 
 from typing import List
 
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
+
 
 class TrackTableTimestampError(ValueError):
     """Class that is used to represent timestamp errors in the track load table"""
@@ -12,7 +14,7 @@ class TrackLoadTableFormatting:
     """Class that encapsulates related validation and mapping for TrackLoadTable command"""
 
     def check_track_table_input_valid(
-        self, table: List[float], lead_time: int, current_tai_timestamp: float
+        self, table: List[float], lead_time: int
     ) -> None:
         """
         Entry point for track table validation.
@@ -37,7 +39,7 @@ class TrackLoadTableFormatting:
                     "(timestamp, azimuth coordinate, elevation coordinate) as expected."
                 )
             try:
-                self._check_timestamp(table, length_of_table, lead_time, current_tai_timestamp)
+                self._check_timestamp(table, length_of_table, lead_time)
             except TrackTableTimestampError as timestamp_error:
                 raise timestamp_error
 
@@ -46,7 +48,6 @@ class TrackLoadTableFormatting:
         table: List[float],
         length_of_table: int,
         lead_time: float,
-        current_tai_timestamp: float,
     ) -> None:
         """
         Check that the timestamps are in the future by at least lead_time in seconds and that
@@ -62,6 +63,7 @@ class TrackLoadTableFormatting:
 
         :return: None
         """
+        current_tai_timestamp = get_current_tai_timestamp_from_unix_time()
         prev_timestamp = -1
         for i in range(0, length_of_table, 3):
             timestamp_tai_s = table[i]

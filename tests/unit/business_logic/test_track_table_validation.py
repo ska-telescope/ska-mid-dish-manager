@@ -5,7 +5,7 @@ from time import time
 import pytest
 
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import (
-    get_current_tai_timestamp,
+    get_current_tai_timestamp_from_unix_time,
     get_tai_timestamp_from_unix_s,
 )
 from ska_mid_dish_manager.utils.track_table_input_validation import (
@@ -33,7 +33,7 @@ class TestTrackLoadTableFormatting:
         time_future_tai = get_tai_timestamp_from_unix_s(time_future_unix)
         table = [time_future_tai, 2.0, 3.0]
         self.track_table_formatter.check_track_table_input_valid(
-            table, self.future_time_s, get_current_tai_timestamp()
+            table, self.future_time_s, get_current_tai_timestamp_from_unix_time()
         )
 
     def test_track_table_input_invalid_time(self):
@@ -44,7 +44,7 @@ class TestTrackLoadTableFormatting:
         table = [time_future_tai, 2.0, 3.0]
         with pytest.raises(TrackTableTimestampError):
             self.track_table_formatter.check_track_table_input_valid(
-                table, self.future_time_s, get_current_tai_timestamp()
+                table, self.future_time_s, get_current_tai_timestamp_from_unix_time()
             )
 
     def test_track_table_input_invalid_length(self):
@@ -54,14 +54,14 @@ class TestTrackLoadTableFormatting:
         table = [time_future_unix, 2.0, 3.0, 4.0]
         with pytest.raises(ValueError):
             self.track_table_formatter.check_track_table_input_valid(
-                table, self.future_time_s, get_current_tai_timestamp()
+                table, self.future_time_s, get_current_tai_timestamp_from_unix_time()
             )
 
     def test_track_table_input_empty_list(self):
         """Test when table length is empty"""
         table = []
         self.track_table_formatter.check_track_table_input_valid(
-            table, self.future_time_s, get_current_tai_timestamp()
+            table, self.future_time_s, get_current_tai_timestamp_from_unix_time()
         )
 
     def test_track_table_time_monotonically_inc(self):
@@ -80,5 +80,5 @@ class TestTrackLoadTableFormatting:
 
         with pytest.raises(TrackTableTimestampError):
             self.track_table_formatter.check_track_table_input_valid(
-                track_table, self.future_time_s, get_current_tai_timestamp()
+                track_table, self.future_time_s, get_current_tai_timestamp_from_unix_time()
             )
