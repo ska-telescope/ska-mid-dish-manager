@@ -3,6 +3,7 @@
 
 import logging
 import time
+from threading import Event
 from unittest import mock
 
 import pytest
@@ -42,18 +43,22 @@ def test_happy_path(patched_tango, caplog):
     """
     caplog.set_level(logging.DEBUG)
 
-    # set up mocks
-    comm_state_cb = mock.MagicMock()
-    comp_state_cb = mock.MagicMock()
-
     tc_manager = TangoDeviceComponentManager(
         "a/b/c",
         LOGGER,
         ("some_attr",),
-        communication_state_callback=comm_state_cb,
-        component_state_callback=comp_state_cb,
     )
+
+    # configure mock
     tc_manager._fetch_build_state_information = mock.MagicMock(name="mock_build_state")
+    # mock communication state callback
+    communication_state_changed = Event()
+
+    def comm_state_callback(*args, **kwargs):
+        if tc_manager.communication_state == CommunicationStatus.ESTABLISHED:
+            communication_state_changed.set()
+
+    tc_manager._communication_state_callback = comm_state_callback
 
     tc_manager.start_communicating()
 
@@ -68,7 +73,7 @@ def test_happy_path(patched_tango, caplog):
     tc_manager._events_queue.put(mock_some_attr_change_event)
 
     # wait a bit for the state to change
-    time.sleep(0.5)
+    communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # clean up afterwards
@@ -127,7 +132,17 @@ def test_device_goes_away(patch_dp, caplog):
         LOGGER,
         ("some_Attr", "some_other_attr"),
     )
+
+    # configure mock
     tc_manager._fetch_build_state_information = mock.MagicMock(name="mock_build_state")
+    # mock communication state callback
+    communication_state_changed = Event()
+
+    def comm_state_callback(*args, **kwargs):
+        if tc_manager.communication_state == CommunicationStatus.ESTABLISHED:
+            communication_state_changed.set()
+
+    tc_manager._communication_state_callback = comm_state_callback
 
     tc_manager.start_communicating()
 
@@ -149,7 +164,8 @@ def test_device_goes_away(patch_dp, caplog):
     tc_manager._events_queue.put(mock_some_attr_change_event)
     tc_manager._events_queue.put(mock_some_other_attr_change_event)
     # wait a bit for the state to change
-    time.sleep(0.5)
+    communication_state_changed.wait(timeout=1)
+    communication_state_changed.clear()
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # Set up an error mock event (API_MissedEvent), no action taken
@@ -162,7 +178,8 @@ def test_device_goes_away(patch_dp, caplog):
     # Trigger a failure event
     tc_manager._events_queue.put(mock_error)
     # wait a bit for the state to change
-    time.sleep(0.5)  # we can use a mock comm state cb here to remove the sleep
+    communication_state_changed.wait(timeout=1)
+    communication_state_changed.clear()
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # Set up an error mock event (API_EventTimeout)
@@ -171,13 +188,14 @@ def test_device_goes_away(patch_dp, caplog):
     # Trigger a failure event
     tc_manager._events_queue.put(mock_error)
     # wait a bit for the state to change
-    time.sleep(0.5)
+    communication_state_changed.wait(timeout=1)
+    communication_state_changed.clear()
     assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
 
     # trigger a valid event
     tc_manager._events_queue.put(mock_some_attr_change_event)
     # wait a bit for the state to change
-    time.sleep(0.5)
+    communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # TODO clean up afterwards (THIS SHOULD BE A FINALIZER ELSE THINGS HANG)
