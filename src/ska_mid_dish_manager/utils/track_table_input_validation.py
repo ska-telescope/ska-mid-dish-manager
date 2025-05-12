@@ -13,9 +13,7 @@ class TrackTableTimestampError(ValueError):
 class TrackLoadTableFormatting:
     """Class that encapsulates related validation and mapping for TrackLoadTable command"""
 
-    def check_track_table_input_valid(
-        self, table: List[float], lead_time: int
-    ) -> None:
+    def check_track_table_input_valid(self, table: List[float], lead_time: int) -> None:
         """
         Entry point for track table validation.
 
