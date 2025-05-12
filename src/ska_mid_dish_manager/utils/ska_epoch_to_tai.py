@@ -30,6 +30,6 @@ def get_tai_timestamp_from_datetime(datetime_obj: datetime.datetime) -> float:
     return source_timestamp_tai - ska_epoch_tai
 
 
-def get_current_tai_timestamp() -> float:
+def get_current_tai_timestamp_from_unix_time() -> float:
     """Get the current time as a TAI timestamp."""
     return get_tai_timestamp_from_unix_s(time.time())
