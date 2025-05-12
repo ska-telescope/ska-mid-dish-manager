@@ -4,7 +4,13 @@ from typing import Optional
 
 from ska_control_model import HealthState
 
-from ska_mid_dish_manager.models.dish_enums import Band, CapabilityStates, DishMode, SPFBandInFocus
+from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    CapabilityStates,
+    DishMode,
+    PowerState,
+    SPFBandInFocus,
+)
 from ska_mid_dish_manager.models.transition_rules import (
     band_focus_rules_all_devices,
     band_focus_rules_spfrx_ignored,
@@ -24,6 +30,8 @@ from ska_mid_dish_manager.models.transition_rules import (
     health_state_rules_ds_only,
     health_state_rules_spf_ignored,
     health_state_rules_spfrx_ignored,
+    power_state_rules_all_devices,
+    power_state_rules_spf_ignored,
 )
 
 
@@ -226,6 +234,35 @@ class StateTransition:
             if rule.matches(dish_manager_states):
                 return SPFBandInFocus[band_number]
         return SPFBandInFocus.UNKNOWN
+
+    def compute_power_state(
+        self,
+        ds_component_state: dict,  # type: ignore
+        spf_component_state: Optional[dict] = None,  # type: ignore
+    ) -> PowerState:
+        """Compute the powerstate based off component_states
+
+        :param ds_component_state: DS device component state
+        :type ds_component_state: dict
+        :param spf_component_state: SPF device component state
+        :type spf_component_state: dict
+        :return: the calculated powerstate
+        :rtype: PowerState
+        """
+        dish_manager_states = self._collapse(
+            ds_component_state, spf_component_state=spf_component_state
+        )
+        rules_to_use = power_state_rules_all_devices
+        if not spf_component_state:
+            rules_to_use = power_state_rules_spf_ignored
+
+        for power_state, rule in rules_to_use.items():
+            if rule.matches(dish_manager_states):
+                if power_state.startswith("UPS"):
+                    return PowerState[power_state]
+                power_state = power_state.split("_")[0]  # pylint: disable=use-maxsplit-arg
+                return PowerState[power_state]
+        return PowerState.LOW
 
     @classmethod
     def _collapse(

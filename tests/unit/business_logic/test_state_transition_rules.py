@@ -9,10 +9,13 @@ from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     IndexerPosition,
+    PowerState,
     SPFBandInFocus,
     SPFCapabilityStates,
     SPFOperatingMode,
+    SPFPowerState,
     SPFRxCapabilityStates,
     SPFRxOperatingMode,
 )
@@ -1402,3 +1405,103 @@ def test_capability_state_rules_unknown(
         )
         == cap_state
     )
+
+
+# pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("ds_comp_state, spf_comp_state, expected_power_state"),
+    [
+        (
+            dict(powerstate=DSPowerState.UPS),
+            dict(powerstate=SPFPowerState.UNKNOWN),
+            PowerState.UPS,
+        ),
+        (
+            dict(powerstate=DSPowerState.OFF),
+            dict(powerstate=SPFPowerState.UNKNOWN),
+            PowerState.UPS,
+        ),
+        (
+            dict(powerstate=DSPowerState.LOW_POWER),
+            dict(powerstate=SPFPowerState.LOW_POWER),
+            PowerState.LOW,
+        ),
+        (
+            dict(powerstate=DSPowerState.UNKNOWN),
+            dict(powerstate=SPFPowerState.UNKNOWN),
+            PowerState.LOW,
+        ),
+        (
+            dict(powerstate=DSPowerState.LOW_POWER),
+            dict(powerstate=SPFPowerState.FULL_POWER),
+            PowerState.LOW,
+        ),
+        (
+            dict(powerstate=DSPowerState.FULL_POWER),
+            dict(powerstate=SPFPowerState.LOW_POWER),
+            PowerState.FULL,
+        ),
+        (
+            dict(powerstate=DSPowerState.FULL_POWER),
+            dict(powerstate=SPFPowerState.FULL_POWER),
+            PowerState.FULL,
+        ),
+    ],
+)
+def test_compute_power_state(
+    ds_comp_state,
+    spf_comp_state,
+    expected_power_state,
+    state_transition,
+):
+    actual_power_state = state_transition.compute_power_state(
+        ds_comp_state,
+        spf_comp_state,
+    )
+    assert expected_power_state == actual_power_state
+
+
+# pylint: disable=use-dict-literal
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("ds_comp_state, spf_comp_state, expected_power_state"),
+    [
+        (
+            dict(powerstate=DSPowerState.UPS),
+            None,
+            PowerState.UPS,
+        ),
+        (
+            dict(powerstate=DSPowerState.OFF),
+            None,
+            PowerState.UPS,
+        ),
+        (
+            dict(powerstate=DSPowerState.LOW_POWER),
+            None,
+            PowerState.LOW,
+        ),
+        (
+            dict(powerstate=DSPowerState.UNKNOWN),
+            None,
+            PowerState.LOW,
+        ),
+        (
+            dict(powerstate=DSPowerState.FULL_POWER),
+            None,
+            PowerState.FULL,
+        ),
+    ],
+)
+def test_compute_power_state_ignoring_spf(
+    ds_comp_state,
+    spf_comp_state,
+    expected_power_state,
+    state_transition,
+):
+    actual_power_state = state_transition.compute_power_state(
+        ds_comp_state,
+        spf_comp_state,
+    )
+    assert expected_power_state == actual_power_state

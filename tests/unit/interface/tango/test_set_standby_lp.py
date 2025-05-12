@@ -7,7 +7,10 @@ from ska_control_model import ResultCode
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
+    DSPowerState,
+    PowerState,
     SPFOperatingMode,
+    SPFPowerState,
     SPFRxOperatingMode,
 )
 
@@ -53,12 +56,19 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     dish_mode_event_store = event_store_class()
+    power_state_event_store = event_store_class()
     progress_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
         dish_mode_event_store,
+    )
+
+    device_proxy.subscribe_event(
+        "powerState",
+        tango.EventType.CHANGE_EVENT,
+        power_state_event_store,
     )
 
     device_proxy.subscribe_event(
@@ -70,10 +80,15 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     assert device_proxy.dishMode == DishMode.STANDBY_LP
     # Force dishManager dishMode to go to STANDBY-FP
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+    ds_cm._update_component_state(powerstate=DSPowerState.FULL_POWER)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+    spf_cm._update_component_state(powerstate=SPFPowerState.FULL_POWER)
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
     assert device_proxy.dishMode == DishMode.STANDBY_FP
+    power_state_event_store.wait_for_value(PowerState.FULL)
+    assert device_proxy.powerState == PowerState.FULL
 
     # Transition DishManager to STANDBY_LP issuing a command
     [[result_code], [_]] = device_proxy.SetStandbyLPMode()
@@ -87,11 +102,15 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     # need to change the component state of SPFRX since it's in the
     # expected operating mode
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+    ds_cm._update_component_state(powerstate=DSPowerState.LOW_POWER)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
+    spf_cm._update_component_state(powerstate=SPFPowerState.LOW_POWER)
 
-    # we can now expect dishMode to transition to STANDBY_LP
+    # we can now expect dishMode to transition to STANDBY_LP and powerState to LOW
     assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
     assert device_proxy.dishMode == DishMode.STANDBY_LP
+    assert power_state_event_store.wait_for_value(PowerState.LOW)
+    assert device_proxy.powerState == PowerState.LOW
 
     expected_progress_updates = [
         "SetStandbyLPMode called on DS",

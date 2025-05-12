@@ -31,6 +31,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     IndexerPosition,
     NoiseDiodeMode,
     PointingState,
+    PowerState,
     SPFCapabilityStates,
     SPFOperatingMode,
     SPFPowerState,
@@ -112,6 +113,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             attenuationpolh=0.0,
             attenuationpolv=0.0,
             dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
+            powerstate=PowerState.LOW,
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
@@ -462,6 +464,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 kwargs,
                 self.component_state,
             )
+
+        if "powerstate" in kwargs:
+            new_power_state = self._state_transition.compute_power_state(
+                ds_component_state,
+                spf_component_state if not self.is_device_ignored("SPF") else None,
+            )
+            self.logger.debug(
+                (
+                    "Updating dish manager powerState with: [%s]. "
+                    "Sub-components powerState DS [%s], SPF [%s]"
+                ),
+                new_power_state,
+                ds_component_state["powerstate"],
+                spf_component_state["powerstate"],
+            )
+            self._update_component_state(powerstate=new_power_state)
 
         if "buildstate" in kwargs:
             self._build_state_callback(device, kwargs["buildstate"])

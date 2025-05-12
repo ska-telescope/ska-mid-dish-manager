@@ -7,7 +7,14 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 7.2.1
+*************
 - Updated `Abort` to handle dish slew movement
+- Upgraded ska-mid-dish-simulators chart to v4.4.1
+- Updated `versionID` to report the package version of the dish manager
+- Extended functionality to handle `powerState` attribute updates
+- Upgraded ska-mid-dish-ds-manager chart to v4.2.0
 
 Version 7.2.0
 *************

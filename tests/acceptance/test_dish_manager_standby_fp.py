@@ -3,6 +3,8 @@
 import pytest
 import tango
 
+from ska_mid_dish_manager.models.dish_enums import DishMode, PowerState
+
 
 # pylint:disable=unused-argument
 @pytest.mark.acceptance
@@ -44,3 +46,6 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
     # in the event store
     for message in expected_progress_updates:
         assert message in events_string
+
+    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+    assert dish_manager_proxy.powerState == PowerState.FULL
