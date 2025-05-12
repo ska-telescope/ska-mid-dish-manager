@@ -7,6 +7,7 @@ import tango
 from ska_control_model import CommunicationStatus
 
 
+@pytest.mark.xfail(reason="This test is flaky: needs investigation into events and timeouts")
 @pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])

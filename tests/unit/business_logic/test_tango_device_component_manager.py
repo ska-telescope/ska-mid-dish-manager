@@ -2,7 +2,8 @@
 """Unit tests checking generic component manager behaviour."""
 
 import logging
-import time
+import threading
+from functools import partial
 from threading import Event
 from unittest import mock
 
@@ -15,6 +16,14 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceC
 LOGGER = logging.getLogger(__name__)
 
 
+def comm_state_callback(
+    signal: threading.Event,
+    communication_state: CommunicationStatus,
+):
+    if communication_state == CommunicationStatus.ESTABLISHED:
+        signal.set()
+
+
 # pylint: disable=invalid-name, missing-function-docstring
 @pytest.mark.timeout(5)
 @pytest.mark.forked
@@ -23,9 +32,10 @@ def test_component_manager_continues_reconnecting_when_device_is_unreachable(cap
     caplog.set_level(logging.DEBUG)
     tc_manager = TangoDeviceComponentManager("fake/fqdn/1", LOGGER, ("fake_attr",))
     tc_manager.start_communicating()
+    signal = Event()
     retry_log = "An error occurred creating a device proxy to fake/fqdn/1, retrying in"
     while retry_log not in caplog.text:
-        time.sleep(0.5)
+        signal.wait(0.1)
 
     assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
     # clean up afterwards
@@ -49,17 +59,12 @@ def test_happy_path(patched_tango, caplog):
         ("some_attr",),
     )
 
-    # configure mock
+    # configure mock and start communication
     tc_manager._fetch_build_state_information = mock.MagicMock(name="mock_build_state")
-    # mock communication state callback
     communication_state_changed = Event()
-
-    def comm_state_callback(*args, **kwargs):
-        if tc_manager.communication_state == CommunicationStatus.ESTABLISHED:
-            communication_state_changed.set()
-
-    tc_manager._communication_state_callback = comm_state_callback
-
+    tc_manager._communication_state_callback = partial(
+        comm_state_callback, communication_state_changed
+    )
     tc_manager.start_communicating()
 
     # Set up a valid mock event for some_attr
@@ -105,7 +110,8 @@ def test_unhappy_path(patched_dp, caplog):
 
     default_retry_times = [1, 2, 3, 4, 6]
     # wait a bit
-    time.sleep(sum(default_retry_times))
+    signal = Event()
+    signal.wait(sum(default_retry_times))
 
     logs = [record.message for record in caplog.records]
     for count, retry_time in enumerate(default_retry_times, start=1):
@@ -133,17 +139,12 @@ def test_device_goes_away(patch_dp, caplog):
         ("some_Attr", "some_other_attr"),
     )
 
-    # configure mock
+    # configure mock and start communication
     tc_manager._fetch_build_state_information = mock.MagicMock(name="mock_build_state")
-    # mock communication state callback
     communication_state_changed = Event()
-
-    def comm_state_callback(*args, **kwargs):
-        if tc_manager.communication_state == CommunicationStatus.ESTABLISHED:
-            communication_state_changed.set()
-
-    tc_manager._communication_state_callback = comm_state_callback
-
+    tc_manager._communication_state_callback = partial(
+        comm_state_callback, communication_state_changed
+    )
     tc_manager.start_communicating()
 
     # Set up a valid mock event for some_attr
@@ -198,5 +199,6 @@ def test_device_goes_away(patch_dp, caplog):
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
-    # TODO clean up afterwards (THIS SHOULD BE A FINALIZER ELSE THINGS HANG)
+    # clean up afterwards
+    # TODO this should be a finalizer
     tc_manager.stop_communicating()
