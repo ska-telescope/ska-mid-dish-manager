@@ -16,12 +16,32 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceC
 LOGGER = logging.getLogger(__name__)
 
 
-def comm_state_callback(
-    signal: threading.Event,
-    communication_state: CommunicationStatus,
-):
+def comm_state_callback(signal: threading.Event, communication_state: CommunicationStatus):
     if communication_state == CommunicationStatus.ESTABLISHED:
         signal.set()
+
+
+def construct_mock_valid_event_data(attr_name: str) -> tango.EventData:
+    """Construct a mock valid event data for a given attribute."""
+    mock_attr_value = mock.MagicMock(name=f"mock_{attr_name}_value")
+    mock_attr_value.name = attr_name
+
+    mock_valid_event_data = mock.MagicMock(name=f"mock_{attr_name}valid_event")
+    mock_valid_event_data.attr_value = mock_attr_value
+    mock_valid_event_data.err = False
+    return mock_valid_event_data
+
+
+def construct_mock_error_event_data(attr_name: str, reason: str) -> tango.EventData:
+    """Construct a mock error event data for a given attribute"""
+    mock_dev_errors = mock.MagicMock(name=f"mock{attr_name}_dev_errors")
+    mock_dev_errors.reason = reason
+
+    mock_error_event_data = mock.MagicMock(name=f"mock_{attr_name}_error_event")
+    mock_error_event_data.attr_name = f"tango://1.2.3.4:10000/some/tango/device/{attr_name}"
+    mock_error_event_data.err = True
+    mock_error_event_data.errors = (mock_dev_errors,)
+    return mock_error_event_data
 
 
 # pylint: disable=invalid-name, missing-function-docstring
@@ -68,14 +88,9 @@ def test_happy_path(patched_tango, caplog):
     tc_manager.start_communicating()
 
     # Set up a valid mock event for some_attr
-    mock_some_attr_value = mock.MagicMock(name="mock_some_attr_value")
-    mock_some_attr_value.name = "some_attr"
-    mock_some_attr_change_event = mock.MagicMock(name="mock_some_attr_change_event")
-    mock_some_attr_change_event.attr_value = mock_some_attr_value
-    mock_some_attr_change_event.err = False
-    # send valid events to the queue
-    # this should trigger the valid event callback
-    tc_manager._events_queue.put(mock_some_attr_change_event)
+    mock_some_attr_event_data = construct_mock_valid_event_data("some_attr")
+    # send valid events to the queue to trigger the valid event callback
+    tc_manager._events_queue.put(mock_some_attr_event_data)
 
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
@@ -147,54 +162,41 @@ def test_device_goes_away(patch_dp, caplog):
     )
     tc_manager.start_communicating()
 
-    # Set up a valid mock event for some_attr
-    mock_some_attr_value = mock.MagicMock(name="mock_some_attr_value")
-    mock_some_attr_value.name = "some_attr"
-    mock_some_attr_change_event = mock.MagicMock(name="mock_some_attr_change_event")
-    mock_some_attr_change_event.attr_value = mock_some_attr_value
-    mock_some_attr_change_event.err = False
-    # Set up a valid mock event for some_other_attr
-    mock_some_other_attr_value = mock.MagicMock(name="mock_some_other_attr_value")
-    mock_some_other_attr_value.name = "some_other_attr"
-    mock_some_other_attr_change_event = mock.MagicMock(name="mock_some_other_attr_change_event")
-    mock_some_other_attr_change_event.attr_value = mock_some_other_attr_value
-    mock_some_other_attr_change_event.err = False
-
-    # send valid events to the queue
-    # this should trigger the valid event callback
-    tc_manager._events_queue.put(mock_some_attr_change_event)
-    tc_manager._events_queue.put(mock_some_other_attr_change_event)
+    # Set up a valid mock event for some_attr and some_other_attr
+    mock_some_attr_event_data = construct_mock_valid_event_data("some_attr")
+    mock_some_other_attr_event_data = construct_mock_valid_event_data("some_other_attr")
+    # send valid events to the queue to trigger the valid event callback
+    tc_manager._events_queue.put(mock_some_attr_event_data)
+    tc_manager._events_queue.put(mock_some_other_attr_event_data)
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
     communication_state_changed.clear()
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # Set up an error mock event (API_MissedEvent), no action taken
-    mock_dev_errors = mock.MagicMock(name="mock_dev_errors")
-    mock_dev_errors.reason = "API_MissedEvent"
-    mock_error = mock.MagicMock(name="mock_error")
-    mock_error.err = True
-    mock_error.attr_name = "tango://1.2.3.4:10000/some/tango/device/some_attr"
-    mock_error.errors = (mock_dev_errors,)
+    mock_some_attr_error_event_data = construct_mock_error_event_data(
+        "some_attr", "API_MissedEvent"
+    )
     # Trigger a failure event
-    tc_manager._events_queue.put(mock_error)
+    tc_manager._events_queue.put(mock_some_attr_error_event_data)
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
     communication_state_changed.clear()
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # Set up an error mock event (API_EventTimeout)
-    mock_dev_errors.reason = "API_EventTimeout"
-    mock_error.errors = (mock_dev_errors,)
+    mock_some_attr_error_event_data = construct_mock_error_event_data(
+        "some_attr", "API_EventTimeout"
+    )
     # Trigger a failure event
-    tc_manager._events_queue.put(mock_error)
+    tc_manager._events_queue.put(mock_some_attr_error_event_data)
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
     communication_state_changed.clear()
     assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
 
     # trigger a valid event
-    tc_manager._events_queue.put(mock_some_attr_change_event)
+    tc_manager._events_queue.put(mock_some_attr_event_data)
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
