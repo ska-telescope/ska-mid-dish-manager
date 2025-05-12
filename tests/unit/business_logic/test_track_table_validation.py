@@ -4,10 +4,7 @@ from time import time
 
 import pytest
 
-from ska_mid_dish_manager.utils.ska_epoch_to_tai import (
-    get_current_tai_timestamp_from_unix_time,
-    get_tai_timestamp_from_unix_s,
-)
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_tai_timestamp_from_unix_s
 from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
