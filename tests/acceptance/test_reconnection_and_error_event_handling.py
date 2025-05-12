@@ -1,10 +1,10 @@
 """Test reconnection and error event handling"""
 
-import time
-
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
+
+from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 
 
 @pytest.mark.xfail(reason="This test is flaky: needs investigation into events and timeouts")
@@ -13,6 +13,7 @@ from ska_control_model import CommunicationStatus
 @pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])
 def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     """Test dish manager reacts to devices restarting"""
+    dp_manager = DeviceProxyManager()
     family_attr_mapping = {
         "ds-manager": "dsConnectionState",
         "simulator-spfc": "spfConnectionState",
@@ -45,12 +46,11 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     conn_state_event_store.clear_queue()
     state_event_store.clear_queue()
     status_event_store.clear_queue()
-    dummy_event_store = event_store_class()
 
     # restart the sub-component device
-    device = tango.DeviceProxy(f"mid-dish/{family}/SKA001")
-    admin_device = tango.DeviceProxy(device.adm_name())
-    admin_device.RestartServer()
+    device_proxy = dp_manager(f"mid-dish/{family}/SKA001")
+    admin_device_proxy = dp_manager(device_proxy.adm_name())
+    admin_device_proxy.RestartServer()
 
     alarm_status_msg = (
         "Event channel on a sub-device is not responding "
@@ -64,17 +64,11 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     status_event_store.wait_for_value(alarm_status_msg, timeout=30)
 
     # wait for the device to come back online
-    start_time = time.time()
-    while True:
-        if time.time() - start_time > 60:
-            # if the device is unreachable after 60 seconds of restart, we can break the loop
-            break
-        try:
-            device.ping()
-            # if the device is reachable, we can break the loop
-            break
-        except tango.DevFailed:
-            dummy_event_store.get_queue_values()
+    try:
+        dp_manager.wait_for_device(device_proxy)
+    except tango.DevFailed:
+        pass
+    dp_manager.factory_reset()
 
     # check dish manager reports normal states after the device is restarted
     conn_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
