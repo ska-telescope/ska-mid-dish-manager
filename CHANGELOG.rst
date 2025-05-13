@@ -8,6 +8,14 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 7.3.0
+*************
+- Upgraded ska-mid-dish-simulators chart to v4.4.2
+
+  - Removed intermediate `READY` PointingState to align with PLC and resolve SKB-768
+  
+- Upgraded ska-mid-dish-ds-manager chart to v4.2.1
+
 Version 7.2.1
 *************
 - Updated `Abort` to handle dish slew movement
