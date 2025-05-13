@@ -66,6 +66,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
+            buildstate="", # this needed for buildState refresh
             **kwargs,
         )
 
