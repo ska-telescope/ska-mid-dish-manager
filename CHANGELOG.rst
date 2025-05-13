@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Upgraded ska-tango-util to v0.4.19
+- Upgraded ska-tango-base to v0.4.19
+
 
 Version 7.3.0
 *************

@@ -54,7 +54,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._monitored_attributes,
             self._events_queue,
             logger,
-            self._sync_communication_to_subscription,
         )
 
         # make sure everything monitored is in the component state
@@ -67,30 +66,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
+            buildstate="",  # this needed for buildState refresh
             **kwargs,
         )
 
     # ---------
     # Callbacks
     # ---------
-
-    def _sync_communication_to_subscription(self, subscribed_attrs: list[str]) -> None:
-        """
-        Reflect status of monitored attribute subscription on communication state
-
-        :param subscribed_attrs: the attributes with successful change event subscription
-        :type subscribed_attrs: list
-        """
-        # save a copy of the subscribed attributes. this will be
-        # evaluated by the function processing the valid events
-        self._active_attr_event_subscriptions = set(subscribed_attrs)
-        all_subscribed = set(self._monitored_attributes) == set(subscribed_attrs)
-        if all_subscribed:
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
-            # send over the build state after all attributes are subscribed
-            self._fetch_build_state_information()
-        else:
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     def _update_state_from_event(self, event_data: tango.EventData) -> None:
         """
@@ -184,6 +166,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         if all_monitored_events_valid:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
+            self._fetch_build_state_information()
 
     def clear_monitored_attributes(self) -> None:
         """

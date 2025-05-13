@@ -6,7 +6,7 @@ import logging
 from functools import partial
 from queue import Queue
 from threading import Event, Lock, Thread
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 import tango
 
@@ -23,7 +23,6 @@ class SubscriptionTracker:
         self,
         event_queue: Queue,
         logger: logging.Logger,
-        subscription_status_callback: Optional[Callable] = None,
     ):
         """
         Keep track of which attributes have been subscribed to.
@@ -35,11 +34,8 @@ class SubscriptionTracker:
         :type event_queue: Queue
         :param logger: Logger
         :type logger: logging.Logger
-        :param subscription_status_callback: Update communication status based on the subscription
-        :type subscription_status_callback: Callable
         """
         self._event_queue = event_queue
-        self.subscription_status_callback = subscription_status_callback
         self._logger = logger
         self._subscribed_attrs: Dict[str, int] = {}
         self._update_lock = Lock()
@@ -64,8 +60,6 @@ class SubscriptionTracker:
         """
         with self._update_lock:
             self._subscribed_attrs[attribute_name] = subscription_id
-            if self.subscription_status_callback:
-                self.subscription_status_callback(self._subscribed_attrs.keys())
 
     def subscription_stopped(self, attribute_name: str) -> None:
         """
@@ -76,8 +70,6 @@ class SubscriptionTracker:
         """
         with self._update_lock:
             self._subscribed_attrs.pop(attribute_name)
-            if self.subscription_status_callback:
-                self.subscription_status_callback(self._subscribed_attrs.keys())
 
     def setup_event_subscription(
         self, attribute_name: str, device_proxy: tango.DeviceProxy
@@ -157,7 +149,6 @@ class TangoDeviceMonitor:
         monitored_attributes: Tuple[str, ...],
         event_queue: Queue,
         logger: logging.Logger,
-        subscription_status_callback: Optional[Callable] = None,
     ) -> None:
         """
         Create the TangoDeviceMonitor.
@@ -172,8 +163,6 @@ class TangoDeviceMonitor:
         :type event_queue: Queue
         :param logger: logger
         :type logger: logging.Logger
-        :param subscription_status_callback: Sync communication to subscription
-        :type subscription_status_callback: Callable
         """
         self._tango_fqdn = tango_fqdn
         self._device_proxy_factory = device_proxy_factory
@@ -184,9 +173,7 @@ class TangoDeviceMonitor:
         self._exit_thread_event: Optional[Event] = None
         self._attribute_subscription_thread: Optional[Thread] = None
 
-        self._subscription_tracker = SubscriptionTracker(
-            self._event_queue, self._logger, subscription_status_callback
-        )
+        self._subscription_tracker = SubscriptionTracker(self._event_queue, self._logger)
 
     def stop_monitoring(self) -> None:
         """Close all live attribute subscriptions"""
@@ -311,16 +298,11 @@ if __name__ == "__main__":
     signal = Event()
     basic_logger = logging.getLogger(__name__)
 
-    def empty_func(*args: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
-        """An empty function"""
-        pass  # pylint:disable=unnecessary-pass
-
     tdm = TangoDeviceMonitor(
         "tango://localhost:45678/mid-dish/simulator-spf/ska001#dbase=no",
         DeviceProxyManager(basic_logger, signal),
         ("powerState",),
         Queue(),
         basic_logger,
-        empty_func,
     )
     tdm.monitor()
