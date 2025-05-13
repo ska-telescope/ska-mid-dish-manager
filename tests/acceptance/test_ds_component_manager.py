@@ -22,7 +22,6 @@ def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
         ds_device_fqdn,
         LOGGER,
         state_update_lock,
-        buildstate="",
         component_state_callback=component_state_store,
     )
     com_man.start_communicating()

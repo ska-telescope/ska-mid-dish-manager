@@ -23,7 +23,6 @@ class SubscriptionTracker:
         self,
         event_queue: Queue,
         logger: logging.Logger,
-        subscription_status_callback: Optional[Callable] = None,
     ):
         """
         Keep track of which attributes have been subscribed to.
@@ -174,9 +173,7 @@ class TangoDeviceMonitor:
         self._exit_thread_event: Optional[Event] = None
         self._attribute_subscription_thread: Optional[Thread] = None
 
-        self._subscription_tracker = SubscriptionTracker(
-            self._event_queue, self._logger
-        )
+        self._subscription_tracker = SubscriptionTracker(self._event_queue, self._logger)
 
     def stop_monitoring(self) -> None:
         """Close all live attribute subscriptions"""

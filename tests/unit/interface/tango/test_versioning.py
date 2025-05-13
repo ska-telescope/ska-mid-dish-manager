@@ -67,21 +67,21 @@ class TestDishManagerVersioning:
         ],
     )
     def test_build_state_update_on_subdevice_connection(self, device: str, build_state_key: str):
-        """Test that spfc and spfrx build states of subdevices get updated when a the subdevice
+        """Test that spfc and spfrx build states of subdevices get updated when a subdevice
         establishes connection."""
         # configure a mock build state
         dummy_build_state_version = generate_random_text()
         cm = self.dish_manager_cm.sub_component_managers[device]
         setattr(cm, "read_attribute_value", Mock(return_value=dummy_build_state_version))
         # trigger a build state update
-        cm._sync_communication_to_subscription(cm._monitored_attributes)
+        cm._fetch_build_state_information()
 
         build_state = self._dish_manager_proxy.buildState
         build_state_json = json.loads(build_state)
         assert build_state_json[build_state_key]["version"] == dummy_build_state_version
 
     def test_ds_version_update_on_subdevice_connection(self):
-        """Test that the ds build state gets updated when a the subdevice establishes
+        """Test that the ds build state gets updated when the subdevice establishes
         connection."""
         # configure a mock build state
         build_state_update_json = {"version": generate_random_text()}
@@ -89,7 +89,7 @@ class TestDishManagerVersioning:
         cm = self.dish_manager_cm.sub_component_managers["DS"]
         setattr(cm, "read_attribute_value", Mock(return_value=build_state_update))
         # trigger a build state update
-        cm._sync_communication_to_subscription(cm._monitored_attributes)
+        cm._fetch_build_state_information()
 
         build_state = self._dish_manager_proxy.buildState
         build_state_json = json.loads(build_state)

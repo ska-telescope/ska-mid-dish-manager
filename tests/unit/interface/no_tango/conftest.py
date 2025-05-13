@@ -3,7 +3,7 @@ from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
-from ska_control_model import ResultCode, TaskStatus
+from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from tests.utils import ComponentStateStore
@@ -68,4 +68,9 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             component_state_callback=callbacks["comp_state_cb"],
         )
         dish_manager_cm.start_communicating()
+        # since the devices are mocks, no change events
+        # will be emitted to transition the state to ESTABLISHED
+        for sub_component_manager in dish_manager_cm.sub_component_managers.values():
+            sub_component_manager._update_communication_state(CommunicationStatus.ESTABLISHED)
+
         yield dish_manager_cm
