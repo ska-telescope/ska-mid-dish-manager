@@ -104,6 +104,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     # Send first table in NEW mode
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
     dish_manager_proxy.programTrackTable = track_table[:TRACK_TABLE_LIMIT]
+    pointing_state_event_store.clear_queue()
     dish_manager_proxy.Track()
 
     # Rapid fire the remaining entries in append mode
@@ -130,11 +131,11 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     pointing_state_values = pointing_state_event_store.get_queue_values(timeout=300)
     pointing_state_values = [event_value[1] for event_value in pointing_state_values]
 
-    # Check that the dish transitioned through READY, SLEW and TRACK pointing states
-    assert len(pointing_state_values) >= 3
-    assert pointing_state_values.count(PointingState["READY"]) >= 1, pointing_state_values
-    assert pointing_state_values.count(PointingState["TRACK"]) == 1, pointing_state_values
+    # Check that the dish transitioned through SLEW, TRACK and READY pointing states
+    assert len(pointing_state_values) == 3
     assert pointing_state_values.count(PointingState["SLEW"]) == 1, pointing_state_values
+    assert pointing_state_values.count(PointingState["TRACK"]) == 1, pointing_state_values
+    assert pointing_state_values.count(PointingState["READY"]) == 1, pointing_state_values
 
     destination_coord = dish_manager_proxy.programTrackTable
     last_requested_az = destination_coord[-2]

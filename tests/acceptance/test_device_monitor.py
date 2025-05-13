@@ -15,11 +15,6 @@ from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceP
 LOGGER = logging.getLogger(__name__)
 
 
-def empty_func(*args, **kwargs):  # pylint: disable=unused-argument
-    """An empty function"""
-    pass  # pylint:disable=unnecessary-pass
-
-
 # pylint:disable=unused-argument
 def test_device_monitor(monitor_tango_servers, caplog, spf_device_fqdn):
     """Device monitoring sanity check"""
@@ -28,7 +23,7 @@ def test_device_monitor(monitor_tango_servers, caplog, spf_device_fqdn):
     event_queue = Queue()
     device_proxy_factory = DeviceProxyManager(LOGGER, Event())
     tdm = TangoDeviceMonitor(
-        spf_device_fqdn, device_proxy_factory, ["powerState"], event_queue, LOGGER, empty_func
+        spf_device_fqdn, device_proxy_factory, ["powerState"], event_queue, LOGGER
     )
     tdm.monitor()
     event = event_queue.get(timeout=4)
@@ -66,7 +61,7 @@ def test_multi_monitor(caplog, spf_device_fqdn):
     event_queue = Queue()
     device_proxy_factory = DeviceProxyManager(LOGGER, Event())
     tdm = TangoDeviceMonitor(
-        spf_device_fqdn, device_proxy_factory, test_attributes, event_queue, LOGGER, empty_func
+        spf_device_fqdn, device_proxy_factory, test_attributes, event_queue, LOGGER
     )
     tdm.monitor()
     test_attributes_list = list(test_attributes)
@@ -91,12 +86,7 @@ def test_device_monitor_stress(spf_device_fqdn):
     event_queue = Queue()
     device_proxy_factory = DeviceProxyManager(mocked_logger, Event())
     tdm = TangoDeviceMonitor(
-        spf_device_fqdn,
-        device_proxy_factory,
-        ["powerState"],
-        event_queue,
-        mocked_logger,
-        empty_func,
+        spf_device_fqdn, device_proxy_factory, ["powerState"], event_queue, mocked_logger
     )
     for i in range(10):
         tdm.monitor()
@@ -135,7 +125,7 @@ def test_connection_error(caplog):
     event_queue = Queue()
     device_proxy_factory = DeviceProxyManager(LOGGER, Event())
     tdm = TangoDeviceMonitor(
-        "fake_device", device_proxy_factory, ["powerState"], event_queue, LOGGER, empty_func
+        "fake_device", device_proxy_factory, ["powerState"], event_queue, LOGGER
     )
     tdm.monitor()
     with pytest.raises(Empty):
