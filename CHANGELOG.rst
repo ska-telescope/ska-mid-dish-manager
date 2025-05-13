@@ -7,9 +7,6 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Upgraded ska-tango-util to v0.4.19
-- Upgraded ska-tango-base to v0.4.19
-
 
 Version 7.3.0
 *************
@@ -18,6 +15,9 @@ Version 7.3.0
   - Removed intermediate `READY` PointingState to align with PLC and resolve SKB-768
   
 - Upgraded ska-mid-dish-ds-manager chart to v4.2.1
+- Upgraded ska-tango-util to v0.4.19
+- Upgraded ska-tango-base to v0.4.19
+- Updated build state logic to update `buildState` on connection of subservient devices
 
 Version 7.2.1
 *************
