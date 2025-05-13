@@ -131,10 +131,10 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     pointing_state_values = [event_value[1] for event_value in pointing_state_values]
 
     # Check that the dish transitioned through READY, SLEW and TRACK pointing states
-    assert len(pointing_state_values) >= 3
-    assert pointing_state_values.count(PointingState["READY"]) >= 1, pointing_state_values
-    assert pointing_state_values.count(PointingState["TRACK"]) == 1, pointing_state_values
+    assert len(pointing_state_values) == 3
+    assert pointing_state_values.count(PointingState["READY"]) == 1, pointing_state_values
     assert pointing_state_values.count(PointingState["SLEW"]) == 1, pointing_state_values
+    assert pointing_state_values.count(PointingState["TRACK"]) == 1, pointing_state_values
 
     destination_coord = dish_manager_proxy.programTrackTable
     last_requested_az = destination_coord[-2]
