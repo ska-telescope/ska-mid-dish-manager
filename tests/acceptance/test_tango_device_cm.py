@@ -32,6 +32,7 @@ def test_tango_device_component_manager_state(
         ds_device_fqdn,
         LOGGER,
         ("operatingMode", "healthState", "testmode"),
+        buildstate="",
         component_state_callback=component_state_store,
         communication_state_callback=mock_callable,
     )
@@ -64,6 +65,7 @@ def test_stress_component_monitor(monitor_tango_servers, component_state_store, 
         ds_device_fqdn,
         LOGGER,
         ("testMode",),
+        buildstate="",
         component_state_callback=component_state_store,
         communication_state_callback=mock_callable,
     )

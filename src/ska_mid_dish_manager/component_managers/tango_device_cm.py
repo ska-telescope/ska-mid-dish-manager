@@ -166,6 +166,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         )
         if all_monitored_events_valid:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
+            self._fetch_build_state_information()
 
     def clear_monitored_attributes(self) -> None:
         """
