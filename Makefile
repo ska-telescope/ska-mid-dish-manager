@@ -36,7 +36,7 @@ PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events"
 
 python-test: MARK = unit
-k8s-test-runner: MARK = acceptance
+k8s-test-runner: MARK = this
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
 # this variable is used for running stress tests in the nightly stress jobs
@@ -61,10 +61,6 @@ ifneq ($(CI_JOB_ID),)
 CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
 	--set dishmanager.image.tag=$(OCI_TAG) \
-	--set ska-mid-dish-simulators.enabled=true \
-	--set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
-	--set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
-	--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
 	--set ska-mid-dish-ds-manager.enabled=true \
 	--set ska-tango-base.enabled=true \
 	--set global.dishes="{001,111}"
