@@ -414,5 +414,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self.logger.info(f"Stop communication with {self._tango_device_fqdn}")
         self._dp_factory_signal.set()
         self._tango_device_monitor.stop_monitoring()
+        self._active_attr_event_subscriptions.clear()
         self._stop_event_consumer_thread()
+        self._events_queue.queue.clear()
         self._update_communication_state(CommunicationStatus.DISABLED)
