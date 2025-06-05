@@ -269,7 +269,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             ],
         )
 
-        self._event_consumer_thread.name = f"{self._tango_device_fqdn}_event_consumer_thread"
+        self._event_consumer_thread.name = f"{self._tango_device_fqdn}.event_consumer_thread"
         self._event_consumer_thread.start()
 
     def run_device_command(
