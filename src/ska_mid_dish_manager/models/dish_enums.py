@@ -39,7 +39,6 @@ class SPFRxOperatingMode(enum.IntEnum):
     STANDBY = 2
     OPERATE = 3
     CONFIGURE = 4
-    MAINTENANCE = 5
 
 
 class DSOperatingMode(enum.IntEnum):
