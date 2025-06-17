@@ -142,6 +142,38 @@ class CommandMap:
             [DishMode.OPERATE],
         )
 
+    def set_maintenance_mode(
+        self,
+        task_abort_event=None,
+        task_callback: Optional[Callable] = None,
+    ):
+        """Transition the dish to MAINTENANCE mode"""
+
+        commands_for_sub_devices = {
+            "SPF": {
+                "command": "SetMaintenanceMode",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
+            },
+        }
+
+        status_message = (
+            "SetMaintenanceMode command actioned on subdevices. Completion of "
+            "transition to MAINTENANCE expected following DS completion of STOW operation."
+        )
+
+        # Confirm whether the outcome here is mode maintenance given the other
+        # calls to set admin mode and different Stow implementation
+        self._run_long_running_command(
+            task_callback,
+            task_abort_event,
+            commands_for_sub_devices,
+            "SetMaintenanceMode",
+            ["dishmode"],
+            [DishMode.MAINTENANCE],
+            status_message,
+        )
+
     # pylint: disable = no-value-for-parameter
     def track_cmd(
         self,

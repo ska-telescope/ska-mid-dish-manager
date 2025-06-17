@@ -8,7 +8,7 @@ from threading import Event, Lock, Thread
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
-from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
+from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
@@ -207,6 +207,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 noisediodemode=NoiseDiodeMode.OFF,
                 periodicnoisediodepars=[0.0, 0.0, 0.0],
                 pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
+                adminmode=AdminMode.OFFLINE,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPFRX
                 ),
@@ -481,8 +482,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "buildstate" in kwargs:
             self._build_state_callback(device, kwargs["buildstate"])
 
-        # Only update dishMode if there are operatingmode changes
-        if "operatingmode" in kwargs or "indexerposition" in kwargs:
+        # Update dishMode if there are operatingmode, indexerposition or adminmode changes
+        if "operatingmode" in kwargs or "indexerposition" in kwargs or "adminmode" in kwargs:
             new_dish_mode = self._state_transition.compute_dish_mode(
                 ds_component_state,
                 spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
@@ -491,12 +492,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug(
                 (
                     "Updating dish manager dishMode with: [%s]. "
-                    "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s]"
+                    "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s]. "
+                    "SPFRx adminMode [%s]"
                 ),
                 new_dish_mode,
                 ds_component_state["operatingmode"],
                 spf_component_state["operatingmode"],
                 spfrx_component_state["operatingmode"],
+                spfrx_component_state["adminmode"],
             )
             self._update_component_state(dishmode=new_dish_mode)
 
@@ -865,6 +868,55 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_map.set_operate_mode,
             args=[],
             is_cmd_allowed=_is_set_operate_mode_allowed,
+            task_callback=task_callback,
+        )
+        return status, response
+
+    @check_communicating
+    def set_maintenance_mode(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Transition the dish to MAINTENANCE mode"""
+
+        _is_set_maintenance_mode_allowed = partial(
+            self._dish_mode_model.is_command_allowed,
+            "SetMaintenanceMode",
+            component_manager=self,
+            task_callback=task_callback,
+        )
+
+        if not self.is_device_ignored("SPFRX"):
+            spfrx_cm = self.sub_component_managers["SPFRX"]
+            try:
+                spfrx_cm.write_attribute_value("adminmode", AdminMode.ENGINEERING)
+            except tango.DevFailed as err:
+                self.logger.exception(
+                    "Failed to configure SPFRx adminMode ENGINEERING"
+                    " on call to SetMaintenanceMode. The error response"
+                    " is: %s",
+                    err,
+                )
+                task_callback(status=TaskStatus.FAILED, exception=err)
+                return (
+                    TaskStatus.FAILED,
+                    "SPFRx adminMode attribute write on call to SetMaintenanceMode failed",
+                )
+
+        # Should the maintenance mode stow prevent other commands like the regular stow
+        # request does? If so, just use the command directly
+        ds_cm = self.sub_component_managers["DS"]
+        try:
+            ds_cm.execute_command("Stow", None)
+            task_callback(progress="SetMaintenanceMode requested STOW")
+        except tango.DevFailed as err:
+            task_callback(status=TaskStatus.FAILED, exception=err)
+            return TaskStatus.FAILED, "SetMaintenanceMode request to STOW failed"
+
+        status, response = self.submit_task(
+            self._command_map.set_maintenance_mode,
+            args=[],
+            is_cmd_allowed=_is_set_maintenance_mode_allowed,
             task_callback=task_callback,
         )
         return status, response
