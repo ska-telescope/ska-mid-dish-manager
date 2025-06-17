@@ -1346,7 +1346,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "operatingmode"
         ]
 
-        if spfrx_operating_mode in [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.MAINTENANCE]:
+        if spfrx_operating_mode == SPFRxOperatingMode.STANDBY:
             spfrx_cm = self.sub_component_managers["SPFRX"]
             try:
                 spfrx_cm.write_attribute_value("periodicNoiseDiodePars", values)
@@ -1357,7 +1357,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         else:
             raise AssertionError(
                 "Cannot write to periodicNoiseDiodePars."
-                " Device is not in STANDBY or MAINTENANCE state."
+                " Device is not in STANDBY state."
                 f" Current state: {spfrx_operating_mode.name}"
             )
 
@@ -1377,7 +1377,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "operatingmode"
         ]
 
-        if spfrx_operating_mode in [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.MAINTENANCE]:
+        if spfrx_operating_mode == SPFRxOperatingMode.STANDBY:
             spfrx_cm = self.sub_component_managers["SPFRX"]
             try:
                 spfrx_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
@@ -1388,7 +1388,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         else:
             raise AssertionError(
                 "Cannot write to pseudoRandomNoiseDiodePars."
-                " Device is not in STANDBY or MAINTENANCE state."
+                " Device is not in STANDBY state."
                 f" Current state: {spfrx_operating_mode.name}"
             )
 
