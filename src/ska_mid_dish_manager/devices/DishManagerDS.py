@@ -1599,7 +1599,7 @@ class DishManager(SKAController):
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
-    def SetMaintenanceMode(self):
+    def SetMaintenanceMode(self) -> DevVarLongStringArrayType:
         """
         This command triggers the Dish to transition to the MAINTENANCE
         Dish Element Mode, and returns to the caller. To go into a state

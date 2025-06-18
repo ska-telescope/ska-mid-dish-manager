@@ -26,7 +26,7 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
         progress_event_store,
     )
 
-    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
+    [[_], [unique_id]] = dish_manager_proxy.SetMaintenanceMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
