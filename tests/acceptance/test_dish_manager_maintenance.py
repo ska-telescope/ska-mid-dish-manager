@@ -3,7 +3,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, PowerState
+from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
 # pylint:disable=unused-argument
