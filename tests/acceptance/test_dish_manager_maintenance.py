@@ -26,6 +26,13 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
         progress_event_store,
     )
 
+    # SetMaintenanceMode triggers a stow request. Taking
+    # elevation speed at 1 degree per second, a suitable
+    # timeout for the SetMaintenance can be calculated later
+    current_el = dish_manager_proxy.achievedPointing[2]
+    stow_position = 90.2
+    estimate_stow_duration = stow_position - current_el
+
     [[_], [unique_id]] = dish_manager_proxy.SetMaintenanceMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
@@ -37,7 +44,7 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
     ]
 
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
+        expected_progress_updates[-1], timeout=estimate_stow_duration + 10
     )
 
     events_string = "".join([str(event) for event in events])
