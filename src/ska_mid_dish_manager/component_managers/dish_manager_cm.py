@@ -493,13 +493,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 (
                     "Updating dish manager dishMode with: [%s]. "
                     "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s]. "
-                    "SPFRx adminMode [%s]"
                 ),
                 new_dish_mode,
                 ds_component_state["operatingmode"],
                 spf_component_state["operatingmode"],
                 spfrx_component_state["operatingmode"],
-                spfrx_component_state["adminmode"],
             )
             self._update_component_state(dishmode=new_dish_mode)
 
