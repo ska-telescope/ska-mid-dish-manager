@@ -822,6 +822,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback=task_callback,
         )
 
+        # TODO: Confirm with Maple team/new SPFRX ICD
+        spfrx_cm = self.sub_component_managers["SPFRX"]
+        if spfrx_cm.component_state["adminmode"] == AdminMode.ENGINEERING:
+            try:
+                spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)
+            except tango.DevFailed:
+                return (
+                    TaskStatus.FAILED,
+                    "Failed to transition SPFRx from AdminMode ENGINEERING to ONLINE",
+                )
+
         status, response = self.submit_task(
             self._command_map.set_standby_lp_mode,
             args=[],
@@ -842,6 +853,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             component_manager=self,
             task_callback=task_callback,
         )
+
+        # TODO: Confirm with Maple team/new SPFRX ICD
+        spfrx_cm = self.sub_component_managers["SPFRX"]
+        if spfrx_cm.component_state["adminmode"] == AdminMode.ENGINEERING:
+            try:
+                spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)
+            except tango.DevFailed:
+                return (
+                    TaskStatus.FAILED,
+                    "Failed to transition SPFRx from AdminMode ENGINEERING to ONLINE",
+                )
 
         status, response = self.submit_task(
             self._command_map.set_standby_fp_mode,
@@ -902,16 +924,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     TaskStatus.FAILED,
                     "SPFRx adminMode attribute write on call to SetMaintenanceMode failed",
                 )
-
-        # Should the maintenance mode stow prevent other commands like the regular stow
-        # request does? If so, just use the command directly
-        ds_cm = self.sub_component_managers["DS"]
-        try:
-            ds_cm.execute_command("Stow", None)
-            task_callback(progress="SetMaintenanceMode requested STOW")
-        except tango.DevFailed as err:
-            task_callback(status=TaskStatus.FAILED, exception=err)
-            return TaskStatus.FAILED, "SetMaintenanceMode request to STOW failed"
 
         status, response = self.submit_task(
             self._command_map.set_maintenance_mode,

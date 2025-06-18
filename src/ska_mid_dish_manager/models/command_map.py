@@ -155,15 +155,13 @@ class CommandMap:
                 "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
             },
+            "DS": {
+                "command": "Stow",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [DSOperatingMode.STOW],
+            },
         }
 
-        status_message = (
-            "SetMaintenanceMode command actioned on subdevices. Completion of "
-            "transition to MAINTENANCE expected following DS completion of STOW operation."
-        )
-
-        # Confirm whether the outcome here is mode maintenance given the other
-        # calls to set admin mode and different Stow implementation
         self._run_long_running_command(
             task_callback,
             task_abort_event,
@@ -171,7 +169,6 @@ class CommandMap:
             "SetMaintenanceMode",
             ["dishmode"],
             [DishMode.MAINTENANCE],
-            status_message,
         )
 
     # pylint: disable = no-value-for-parameter
