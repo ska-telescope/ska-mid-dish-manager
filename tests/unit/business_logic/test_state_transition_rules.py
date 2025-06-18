@@ -134,7 +134,7 @@ def test_compute_dish_mode(
         (
             dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
             None,
-            dict(adminmode=AdminMode.ENGINEERING),
+            dict(adminmode=AdminMode.ENGINEERING, operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.MAINTENANCE,
         ),
         (
@@ -170,7 +170,7 @@ def test_compute_dish_mode(
         (
             dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
             None,
-            dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN, adminmode=AdminMode.ONLINE),
             DishMode.STOW,
         ),
         (
