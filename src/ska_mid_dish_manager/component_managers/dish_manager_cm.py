@@ -492,12 +492,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug(
                 (
                     "Updating dish manager dishMode with: [%s]. "
-                    "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s]. "
+                    "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s], "
+                    "SPFRX adminMode [%s]."
                 ),
                 new_dish_mode,
                 ds_component_state["operatingmode"],
                 spf_component_state["operatingmode"],
                 spfrx_component_state["operatingmode"],
+                spfrx_component_state["adminmode"],
             )
             self._update_component_state(dishmode=new_dish_mode)
 
@@ -820,16 +822,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback=task_callback,
         )
 
-        spfrx_cm = self.sub_component_managers["SPFRX"]
-        if spfrx_cm.component_state["adminmode"] == AdminMode.ENGINEERING:
-            try:
-                spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)
-            except tango.DevFailed:
-                return (
-                    TaskStatus.FAILED,
-                    "Failed to transition SPFRx from AdminMode ENGINEERING to ONLINE",
-                )
-
         status, response = self.submit_task(
             self._command_map.set_standby_lp_mode,
             args=[],
@@ -893,23 +885,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             component_manager=self,
             task_callback=task_callback,
         )
-
-        if not self.is_device_ignored("SPFRX"):
-            spfrx_cm = self.sub_component_managers["SPFRX"]
-            try:
-                spfrx_cm.write_attribute_value("adminmode", AdminMode.ENGINEERING)
-            except tango.DevFailed as err:
-                self.logger.exception(
-                    "Failed to configure SPFRx adminMode ENGINEERING"
-                    " on call to SetMaintenanceMode. The error response"
-                    " is: %s",
-                    err,
-                )
-                task_callback(status=TaskStatus.FAILED, exception=err)
-                return (
-                    TaskStatus.FAILED,
-                    "SPFRx adminMode attribute write on call to SetMaintenanceMode failed",
-                )
 
         status, response = self.submit_task(
             self._command_map.set_maintenance_mode,
