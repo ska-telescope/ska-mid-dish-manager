@@ -113,11 +113,6 @@ class CommandMap:
                     "awaitedAttributes": ["operatingmode"],
                     "awaitedValuesList": [DSOperatingMode.STANDBY_FP],
                 },
-                "SPFRX": {
-                    "command": "SetStandbyMode",
-                    "awaitedAttributes": ["operatingmode"],
-                    "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
-                },
             }
         else:
             commands_for_sub_devices = {
@@ -197,9 +192,7 @@ class CommandMap:
             except tango.DevFailed as err:
                 self.logger.exception(
                     "Failed to configure SPFRx adminMode ENGINEERING"
-                    " on call to SetMaintenanceMode. The error response"
-                    " is: %s",
-                    err,
+                    " on call to SetMaintenanceMode."
                 )
                 task_callback(status=TaskStatus.FAILED, exception=err)
                 return

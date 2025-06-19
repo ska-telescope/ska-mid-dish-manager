@@ -5,6 +5,9 @@ import tango
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
+WAIT_FOR_RESULT_BUFFER_SEC = 10
+WAIT_FOR_PROGRESS_TIMEOUT = 6
+
 
 # pylint:disable=unused-argument
 @pytest.mark.acceptance
@@ -34,7 +37,9 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
     estimate_stow_duration = stow_position - current_el
 
     [[_], [unique_id]] = dish_manager_proxy.SetMaintenanceMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    result_event_store.wait_for_command_id(
+        unique_id, timeout=estimate_stow_duration + WAIT_FOR_RESULT_BUFFER_SEC
+    )
 
     expected_progress_updates = [
         "SetMaintenanceMode called on SPF",
@@ -44,7 +49,7 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
     ]
 
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=estimate_stow_duration + 10
+        expected_progress_updates[-1], timeout=WAIT_FOR_PROGRESS_TIMEOUT
     )
 
     events_string = "".join([str(event) for event in events])
