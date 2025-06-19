@@ -48,9 +48,7 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
         "SetMaintenanceMode completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=WAIT_FOR_PROGRESS_TIMEOUT
-    )
+    events = progress_event_store.wait_for_progress_update(expected_progress_updates[-1])
 
     events_string = "".join([str(event) for event in events])
 
