@@ -8,7 +8,12 @@ from datetime import datetime
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SPFOperatingMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 
 
 @pytest.mark.unit
@@ -18,6 +23,7 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
+    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -41,6 +47,7 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
 
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
 
     # Sample events:
     # ('longrunningcommandresult',
@@ -52,10 +59,14 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     # '[0, "result"]'))
 
     # ('longrunningcommandresult',
+    # ('1750330735.48074_95486534307625_SPFRX_SetStandbyMode',
+    # '[0, "result"]'))
+
+    # ('longrunningcommandresult',
     # ('1680213846.5427592_258218647656556_SetStandbyFPMode',
     # '[0, "SetStandbyFPMode completed"]'))
 
-    events = result_event_store.wait_for_n_events(3, timeout=5)
+    events = result_event_store.wait_for_n_events(4, timeout=5)
     event_values = result_event_store.get_data_from_events(events)
     event_ids = [
         event_value[1][0] for event_value in event_values if event_value[1] and event_value[1][0]
@@ -66,6 +77,7 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
         "SetOperateMode",
         "SetStandbyFPMode",
         "SetStandbyFPMode",
+        "SetStandbyMode",
     ]
 
 
