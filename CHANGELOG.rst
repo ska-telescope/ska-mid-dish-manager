@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added SetMaintenanceMode implementation logic to dish manager component manager
 
 Version 7.3.0
 *************

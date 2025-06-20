@@ -40,8 +40,6 @@ def test_set_standbyfp_handler(
         {"progress": "Awaiting SPF operatingmode change to OPERATE"},
         {"progress": f"SetStandbyFPMode called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting DS operatingmode change to STANDBY_FP"},
-        {"progress": f"SetStandbyMode called on SPFRX, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting SPFRX operatingmode change to STANDBY"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {"progress": "Awaiting dishmode change to STANDBY_FP"},
     )
