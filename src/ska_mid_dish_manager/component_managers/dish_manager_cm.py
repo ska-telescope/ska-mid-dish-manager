@@ -8,7 +8,7 @@ from threading import Event, Lock, Thread
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
-from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
+from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
@@ -207,6 +207,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 noisediodemode=NoiseDiodeMode.OFF,
                 periodicnoisediodepars=[0.0, 0.0, 0.0],
                 pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
+                adminmode=AdminMode.OFFLINE,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPFRX
                 ),
@@ -481,8 +482,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "buildstate" in kwargs:
             self._build_state_callback(device, kwargs["buildstate"])
 
-        # Only update dishMode if there are operatingmode changes
-        if "operatingmode" in kwargs or "indexerposition" in kwargs:
+        # Update dishMode if there are operatingmode, indexerposition or adminmode changes
+        if "operatingmode" in kwargs or "indexerposition" in kwargs or "adminmode" in kwargs:
             new_dish_mode = self._state_transition.compute_dish_mode(
                 ds_component_state,
                 spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
@@ -491,12 +492,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug(
                 (
                     "Updating dish manager dishMode with: [%s]. "
-                    "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s]"
+                    "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s], "
+                    "SPFRX adminMode [%s]."
                 ),
                 new_dish_mode,
                 ds_component_state["operatingmode"],
                 spf_component_state["operatingmode"],
                 spfrx_component_state["operatingmode"],
+                spfrx_component_state["adminmode"],
             )
             self._update_component_state(dishmode=new_dish_mode)
 
@@ -865,6 +868,28 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._command_map.set_operate_mode,
             args=[],
             is_cmd_allowed=_is_set_operate_mode_allowed,
+            task_callback=task_callback,
+        )
+        return status, response
+
+    @check_communicating
+    def set_maintenance_mode(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Transition the dish to MAINTENANCE mode"""
+
+        _is_set_maintenance_mode_allowed = partial(
+            self._dish_mode_model.is_command_allowed,
+            "SetMaintenanceMode",
+            component_manager=self,
+            task_callback=task_callback,
+        )
+
+        status, response = self.submit_task(
+            self._command_map.set_maintenance_mode,
+            args=[],
+            is_cmd_allowed=_is_set_maintenance_mode_allowed,
             task_callback=task_callback,
         )
         return status, response
@@ -1294,7 +1319,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "operatingmode"
         ]
 
-        if spfrx_operating_mode in [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.MAINTENANCE]:
+        if spfrx_operating_mode == SPFRxOperatingMode.STANDBY:
             spfrx_cm = self.sub_component_managers["SPFRX"]
             try:
                 spfrx_cm.write_attribute_value("periodicNoiseDiodePars", values)
@@ -1305,7 +1330,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         else:
             raise AssertionError(
                 "Cannot write to periodicNoiseDiodePars."
-                " Device is not in STANDBY or MAINTENANCE state."
+                " Device is not in STANDBY state."
                 f" Current state: {spfrx_operating_mode.name}"
             )
 
@@ -1325,7 +1350,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "operatingmode"
         ]
 
-        if spfrx_operating_mode in [SPFRxOperatingMode.STANDBY, SPFRxOperatingMode.MAINTENANCE]:
+        if spfrx_operating_mode == SPFRxOperatingMode.STANDBY:
             spfrx_cm = self.sub_component_managers["SPFRX"]
             try:
                 spfrx_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
@@ -1336,7 +1361,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         else:
             raise AssertionError(
                 "Cannot write to pseudoRandomNoiseDiodePars."
-                " Device is not in STANDBY or MAINTENANCE state."
+                " Device is not in STANDBY state."
                 f" Current state: {spfrx_operating_mode.name}"
             )
 

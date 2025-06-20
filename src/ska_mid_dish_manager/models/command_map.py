@@ -4,7 +4,8 @@ import enum
 import json
 from typing import Any, Callable, List, Optional
 
-from ska_control_model import ResultCode, TaskStatus
+import tango
+from ska_control_model import AdminMode, ResultCode, TaskStatus
 from ska_tango_base.commands import SubmittedSlowCommand
 
 from ska_mid_dish_manager.models.dish_enums import (
@@ -42,6 +43,21 @@ class CommandMap:
 
     def set_standby_lp_mode(self, task_callback: Optional[Callable] = None, task_abort_event=None):
         """Transition the dish to STANDBY_LP mode"""
+        if not self._dish_manager_cm.is_device_ignored("SPFRX"):
+            spfrx_cm = self._dish_manager_cm.sub_component_managers["SPFRX"]
+            if spfrx_cm.component_state["adminmode"] == AdminMode.ENGINEERING:
+                try:
+                    spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)
+                except tango.DevFailed:
+                    task_callback(
+                        status=TaskStatus.FAILED,
+                        result=(
+                            ResultCode.FAILED,
+                            "Failed to transition SPFRx from AdminMode ENGINEERING to ONLINE",
+                        ),
+                    )
+                    return
+
         commands_for_sub_devices = {
             "SPF": {
                 "command": "SetStandbyLPMode",
@@ -75,13 +91,47 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Transition the dish to STANDBY_FP mode"""
+
         if self._dish_manager_cm.component_state["dishmode"].name == "OPERATE":
             commands_for_sub_devices = {
                 "DS": {
                     "command": "SetStandbyFPMode",
                     "awaitedAttributes": ["operatingmode"],
                     "awaitedValuesList": [DSOperatingMode.STANDBY_FP],
-                }
+                },
+            }
+        elif self._dish_manager_cm.component_state["dishmode"].name == "MAINTENANCE":
+            if not self._dish_manager_cm.is_device_ignored("SPFRX"):
+                spfrx_cm = self._dish_manager_cm.sub_component_managers["SPFRX"]
+                if spfrx_cm.component_state["adminmode"] == AdminMode.ENGINEERING:
+                    try:
+                        spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)
+                    except tango.DevFailed:
+                        task_callback(
+                            status=TaskStatus.FAILED,
+                            result=(
+                                ResultCode.FAILED,
+                                "Failed to transition SPFRx from AdminMode ENGINEERING to ONLINE",
+                            ),
+                        )
+                        return
+
+            commands_for_sub_devices = {
+                "SPF": {
+                    "command": "SetOperateMode",
+                    "awaitedAttributes": ["operatingmode"],
+                    "awaitedValuesList": [SPFOperatingMode.OPERATE],
+                },
+                "DS": {
+                    "command": "SetStandbyFPMode",
+                    "awaitedAttributes": ["operatingmode"],
+                    "awaitedValuesList": [DSOperatingMode.STANDBY_FP],
+                },
+                "SPFRX": {
+                    "command": "SetStandbyMode",
+                    "awaitedAttributes": ["operatingmode"],
+                    "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
+                },
             }
         else:
             commands_for_sub_devices = {
@@ -140,6 +190,47 @@ class CommandMap:
             "SetOperateMode",
             ["dishmode"],
             [DishMode.OPERATE],
+        )
+
+    def set_maintenance_mode(
+        self,
+        task_abort_event=None,
+        task_callback: Optional[Callable] = None,
+    ):
+        """Transition the dish to MAINTENANCE mode"""
+
+        if not self._dish_manager_cm.is_device_ignored("SPFRX"):
+            spfrx_cm = self._dish_manager_cm.sub_component_managers["SPFRX"]
+            try:
+                spfrx_cm.write_attribute_value("adminmode", AdminMode.ENGINEERING)
+            except tango.DevFailed as err:
+                self.logger.exception(
+                    "Failed to configure SPFRx adminMode ENGINEERING"
+                    " on call to SetMaintenanceMode."
+                )
+                task_callback(status=TaskStatus.FAILED, exception=err)
+                return
+
+        commands_for_sub_devices = {
+            "SPF": {
+                "command": "SetMaintenanceMode",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
+            },
+            "DS": {
+                "command": "Stow",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [DSOperatingMode.STOW],
+            },
+        }
+
+        self._run_long_running_command(
+            task_callback,
+            task_abort_event,
+            commands_for_sub_devices,
+            "SetMaintenanceMode",
+            ["dishmode"],
+            [DishMode.MAINTENANCE],
         )
 
     # pylint: disable = no-value-for-parameter

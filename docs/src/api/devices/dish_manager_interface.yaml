@@ -183,7 +183,7 @@
       doc_in: Uninitialised
       doc_out: Uninitialised
       dtype_in: DevVoid
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: SetOperateMode
       disp_level: OPERATOR
       doc_in: Uninitialised

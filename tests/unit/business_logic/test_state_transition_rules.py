@@ -2,7 +2,7 @@
 
 # pylint: disable=too-many-lines,missing-function-docstring,C0302
 import pytest
-from ska_control_model import HealthState
+from ska_control_model import AdminMode, HealthState
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -134,7 +134,7 @@ def test_compute_dish_mode(
         (
             dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
             None,
-            dict(operatingmode=SPFRxOperatingMode.MAINTENANCE),
+            dict(adminmode=AdminMode.ENGINEERING, operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.MAINTENANCE,
         ),
         (
@@ -170,7 +170,7 @@ def test_compute_dish_mode(
         (
             dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
             None,
-            dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN, adminmode=AdminMode.ONLINE),
             DishMode.STOW,
         ),
         (
