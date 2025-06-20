@@ -6,7 +6,6 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 WAIT_FOR_RESULT_BUFFER_SEC = 10
-WAIT_FOR_PROGRESS_TIMEOUT = 6
 
 
 # pylint:disable=unused-argument
