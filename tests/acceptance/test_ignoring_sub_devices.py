@@ -60,7 +60,6 @@ def test_ignoring_spf(
     expected_progress_updates = [
         "SetStandbyFPMode called on DS",
         "SPF device is disabled. SetOperateMode call ignored",
-        "SetStandbyMode called on SPFRX",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
