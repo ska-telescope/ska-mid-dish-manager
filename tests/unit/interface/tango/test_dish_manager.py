@@ -8,12 +8,7 @@ from datetime import datetime
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import (
-    DishMode,
-    DSOperatingMode,
-    SPFOperatingMode,
-    SPFRxOperatingMode,
-)
+from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SPFOperatingMode
 
 
 @pytest.mark.unit
@@ -23,7 +18,6 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
-    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -47,7 +41,6 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
 
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
 
     # Sample events:
     # ('longrunningcommandresult',
