@@ -13,8 +13,8 @@ Version 7.4.0
 - Added SetMaintenanceMode implementation logic to dish manager component manager
 - Upgraded ska-mid-dish-simulators chart to v4.4.3
 - Upgraded ska-mid-dish-ds-manager chart to v5.0.0
-- Upgraded ska-tango-util to v0.4.20
-- Upgraded ska-tango-base to v0.4.20
+- Upgraded ska-tango-util to v0.4.21
+- Upgraded ska-tango-base to v0.4.21
 
 Version 7.3.0
 *************
