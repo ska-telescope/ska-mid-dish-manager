@@ -162,6 +162,7 @@ class DishManager(SKAController):
         for command_name, method_name in [
             ("SetStandbyLPMode", "set_standby_lp_mode"),
             ("SetOperateMode", "set_operate_mode"),
+            ("SetMaintenanceMode", "set_maintenance_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("TrackStop", "track_stop_cmd"),
@@ -1595,10 +1596,10 @@ class DishManager(SKAController):
 
         return ([result_code], [unique_id])
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
-    def SetMaintenanceMode(self):
+    def SetMaintenanceMode(self) -> DevVarLongStringArrayType:
         """
         This command triggers the Dish to transition to the MAINTENANCE
         Dish Element Mode, and returns to the caller. To go into a state
@@ -1608,7 +1609,10 @@ class DishManager(SKAController):
         engineers and maintainers to upgrade SW and FW. Dish also enters this
         mode when an emergency stop button is pressed.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("SetMaintenanceMode")
+        result_code, unique_id = handler()
+
+        return ([result_code], [unique_id])
 
     @command(
         dtype_in=None,

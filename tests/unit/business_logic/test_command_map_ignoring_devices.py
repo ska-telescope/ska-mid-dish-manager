@@ -6,6 +6,7 @@ from unittest import mock
 
 # pylint: disable=too-many-lines
 import pytest
+from ska_control_model import AdminMode
 
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.dish_enums import (
@@ -28,7 +29,12 @@ class TestCommandMapIgnoringDevices:
         sub_component_managers_mock = {
             "DS": mock.MagicMock(component_state={"operatingmode": DSOperatingMode.STANDBY_LP}),
             "SPF": mock.MagicMock(component_state={"operatingmode": SPFOperatingMode.STANDBY_LP}),
-            "SPFRX": mock.MagicMock(component_state={"operatingmode": SPFRxOperatingMode.STANDBY}),
+            "SPFRX": mock.MagicMock(
+                component_state={
+                    "operatingmode": SPFRxOperatingMode.STANDBY,
+                    "adminmode": AdminMode.ONLINE,
+                }
+            ),
         }
 
         self.dish_manager_cm_mock = mock.MagicMock(

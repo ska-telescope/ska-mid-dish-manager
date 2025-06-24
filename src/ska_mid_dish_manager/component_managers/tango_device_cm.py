@@ -101,11 +101,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             except Exception:  # pylint:disable=broad-except
                 self.logger.exception("Error occured updating component state")
 
-        # if the error event stops, tango emits a valid event for all
+        # when the error events stop, tango emits a valid event for all
         # the error events we got for the various attribute subscriptions.
         # update the communication state in case the error event callback flipped it
-        self._active_attr_event_subscriptions.add(attr_name)
-        self.sync_communication_to_valid_event()
+        self.sync_communication_to_valid_event(attr_name)
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
         """
@@ -159,12 +158,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             build_state = str(build_state)
         self._update_component_state(buildstate=build_state)
 
-    def sync_communication_to_valid_event(self) -> None:
+    def sync_communication_to_valid_event(self, event_attr_name: str) -> None:
         """Sync communication state with valid events from monitored attributes"""
-        all_monitored_events_valid = (
-            set(self._monitored_attributes) == self._active_attr_event_subscriptions
-        )
-        if all_monitored_events_valid:
+        monitored_attrs = set(self._monitored_attributes)
+        previously_synced = monitored_attrs == self._active_attr_event_subscriptions
+        self._active_attr_event_subscriptions.add(event_attr_name)
+        currently_synced = monitored_attrs == self._active_attr_event_subscriptions
+
+        if not previously_synced and currently_synced:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
             self._fetch_build_state_information()
 
@@ -268,7 +269,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             ],
         )
 
-        self._event_consumer_thread.name = f"{self._tango_device_fqdn}_event_consumer_thread"
+        self._event_consumer_thread.name = f"{self._tango_device_fqdn}.event_consumer_thread"
         self._event_consumer_thread.start()
 
     def run_device_command(
@@ -413,5 +414,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self.logger.info(f"Stop communication with {self._tango_device_fqdn}")
         self._dp_factory_signal.set()
         self._tango_device_monitor.stop_monitoring()
+        self._active_attr_event_subscriptions.clear()
         self._stop_event_consumer_thread()
+        self._events_queue.queue.clear()
         self._update_communication_state(CommunicationStatus.DISABLED)

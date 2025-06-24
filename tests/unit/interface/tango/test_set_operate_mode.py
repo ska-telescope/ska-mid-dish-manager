@@ -1,4 +1,4 @@
-"""Unit tests for setstandbylp command."""
+"""Unit tests for setoperatemode command."""
 
 import pytest
 import tango

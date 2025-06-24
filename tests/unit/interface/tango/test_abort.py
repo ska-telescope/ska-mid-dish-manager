@@ -4,14 +4,13 @@ from unittest.mock import Mock
 
 import pytest
 import tango
-from ska_control_model import ResultCode
+from ska_control_model import AdminMode, ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
     PointingState,
     SPFOperatingMode,
-    SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
@@ -75,7 +74,7 @@ def test_abort_is_rejected_in_maintenance_dishmode(
 
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.MAINTENANCE)
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.MAINTENANCE)
+    spfrx_cm._update_component_state(adminmode=AdminMode.ENGINEERING)
 
     dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
