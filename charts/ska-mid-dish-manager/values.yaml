@@ -91,8 +91,26 @@ ska-mid-wms:
   ska-tango-base:
     enabled: false
   deviceServers:
+    # Default TRL: mid/wms/<instance number> eg: mid/wms/0
+    # Else, uncomment the below to set a custom URL
     wms0:
       enabled: true
+      # server:
+      #   name: "WMSDevice"
+      #   instances:
+      #   - name: "wms0"
+      #     classes:
+      #     - name: WMSDevice
+      #       devices:
+      #         - dev01:
+      #           name: "custom/wmsInstance/0"
+      #           properties:
+      #           - name: "Host"
+      #             values:
+      #             - "wms-sim-0"
+      #           - name: "Port"
+      #             values:
+      #             - "1502"
     wms1:
       enabled: false
     wms2:
