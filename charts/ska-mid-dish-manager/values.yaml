@@ -86,3 +86,24 @@ deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
     enabled: true
+
+ska-mid-wms:
+  ska-tango-base:
+    enabled: false
+  deviceServers:
+    wms0:
+      enabled: true
+    wms1:
+      enabled: false
+    wms2:
+      enabled: false
+    wms3:
+      enabled: false
+    wms4:
+      enabled: false
+  # Specify set of simulated WMS servers to connect to
+  # each WMSDevice instance where hardware is unavailable 
+  # eg: if "wm0" and "wm1" enabled, then simulator config is
+  # weatherStations: ["0", "1"].
+  simulator:
+    weatherStations: ["0"]
