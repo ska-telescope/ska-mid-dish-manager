@@ -67,7 +67,9 @@ CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
 	--set ska-mid-dish-ds-manager.enabled=true \
 	--set ska-tango-base.enabled=true \
-	--set global.dishes="{001,111}"
+	--set global.dishes="{001,111}" \
+	--set ska-mid-wms.deviceServers.wms0.enabled=true \
+	--set ska-mid-wms.simulator.weatherStations="{"0"}"
 K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 K8S_TIMEOUT=600s
 endif
