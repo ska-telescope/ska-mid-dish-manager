@@ -12,6 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
+from tests.utils import calculate_slew_target
 
 TRACKING_POSITION_THRESHOLD_ERROR_DEG = 0.05
 INIT_AZ = -250
@@ -32,6 +33,11 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     )
     dish_manager_proxy.subscribe_event(
         "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+    dish_manager_proxy.subscribe_event(
+        "pointingState",
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
@@ -73,6 +79,11 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     yield
 
     dish_manager_proxy.TrackStop()
+    main_event_store.clear_queue()
+    current_az, current_el = dish_manager_proxy.achievedPointing[1:]
+    req_az, req_el = calculate_slew_target(current_az, current_el, 5, 5)
+    dish_manager_proxy.Slew([req_az, req_el])
+    main_event_store.wait_for_value(PointingState.READY, timeout=10, proxy=dish_manager_proxy)
 
 
 # pylint: disable=unused-argument,too-many-arguments,too-many-locals,too-many-statements
@@ -214,7 +225,6 @@ def test_track_and_track_stop_cmds(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_append_dvs_case(
-    slew_dish_to_init,
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -255,13 +265,15 @@ def test_append_dvs_case(
     track_delay = 15
     samples_per_append = 5
 
+    current_az, current_el = dish_manager_proxy.achievedPointing[1:]
+
     def generate_next_1_second_table(start_time, samples):
         sampling_time = 1 / samples
         track_table_temp = []
         for i in range(samples):
             timestamp = start_time + i * sampling_time
-            azimuth = az_amplitude * sin(2 * pi * timestamp / az_sin_period) + INIT_AZ
-            elevation = el_amplitude * sin(2 * pi * timestamp / el_sin_period) + INIT_EL
+            azimuth = az_amplitude * sin(2 * pi * timestamp / az_sin_period) + current_az
+            elevation = el_amplitude * sin(2 * pi * timestamp / el_sin_period) + current_el
             track_table_temp.append(timestamp)
             track_table_temp.append(azimuth)
             track_table_temp.append(elevation)
@@ -309,14 +321,12 @@ def test_append_dvs_case(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_maximum_capacity(
-    slew_dish_to_init,
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
     ds_device_proxy,
 ):
     """Test loading of track tables to maximum capacity."""
-
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
@@ -423,7 +433,6 @@ def test_maximum_capacity(
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
-    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
 
     # wait for tracking to start consuming table
