@@ -165,6 +165,13 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._active_attr_event_subscriptions.add(event_attr_name)
         currently_synced = monitored_attrs == self._active_attr_event_subscriptions
 
+        if self.communication_state != CommunicationStatus.ESTABLISHED:
+            remaining_attributes = monitored_attrs - self._active_attr_event_subscriptions
+            self.logger.debug(
+                "Communication not established yet. "
+                f"Waiting for these [{remaining_attributes}] attributes."
+            )
+
         if not previously_synced and currently_synced:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
             self._fetch_build_state_information()
