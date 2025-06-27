@@ -92,7 +92,7 @@ ska-mid-wms:
     enabled: false
   deviceServers:
     # Default TRL: mid/wms/<instance number> eg: mid/wms/0
-    # Else, uncomment the below to set a custom URL
+    # Uncomment the below to set a custom TRL, host or port
     wms0:
       enabled: false
       # server:
@@ -110,11 +110,7 @@ ska-mid-wms:
       #             - "wms-sim-0"
       #           - name: "Port"
       #             values:
-      #             - "1502"
-      #           # Supply a unique config file
-      #           # - name: "ConfigFile"
-      #           #   values:
-      #           #     ["data/custom_weather_station.yaml"]      
+      #             - "1502" 
     wms1:
       enabled: false
     wms2:

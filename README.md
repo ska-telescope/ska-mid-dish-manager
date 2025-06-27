@@ -75,6 +75,9 @@ $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
 --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
 --set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
 --set ska-mid-dish-ds-manager.enabled=true
+--set ska-mid-wms.enabled=true \
+--set ska-mid-wms.deviceServers.wms0.enabled=true \
+--set ska-mid-wms.simulator.weatherStations="{"0"}"
 ```
 
 `ska-tango-base` is not deployed by default, to deploy it add the `--set` below:
@@ -99,6 +102,9 @@ $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
 --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
 --set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
 --set ska-mid-dish-ds-manager.enabled=true
+--set ska-mid-wms.enabled=true \
+--set ska-mid-wms.deviceServers.wms0.enabled=true \
+--set ska-mid-wms.simulator.weatherStations="{"0"}"
 ```
 
 - Then start DishManager in the commandline
