@@ -79,6 +79,23 @@ Deploy DishManager with Simulators
          ska-mid-dish-ds-manager:
          enabled: true
 
+         ska-mid-wms:
+            ska-tango-base:
+               enabled: false
+            deviceServers:
+               wms0:
+                  enabled: true
+               wms1:
+                  enabled: false
+               wms2:
+                  enabled: false
+               wms3:
+                  enabled: false
+               wms4:
+                  enabled: false
+            simulator:
+               weatherStations: ["0"]
+
 
       Pass `extra variables`_ to your make target to set the parameters for deployment.
 
@@ -91,7 +108,10 @@ Deploy DishManager with Simulators
          --set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
          --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
          --set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
-         --set ska-mid-dish-ds-manager.enabled=true'
+         --set ska-mid-dish-ds-manager.enabled=true
+         --set ska-mid-wms.enabled=true \
+         --set ska-mid-wms.deviceServers.wms0.enabled=true \
+         --set ska-mid-wms.simulator.weatherStations="{"0"}"'
          make k8s-install-chart
 
       .. note:: Tango DB is not deployed by default, to deploy it add ``--set ska-tango-base.enabled=true``
@@ -105,6 +125,7 @@ The deployment will constitute pods for:
 * DishManager
 * DSManager
 * Simulators: SPF, SPFRx & OPCUA server
+* WeatherMonitoringSystem (WMS) and WMS simulator server 
 
 All these pods have to be up in the ``ska-mid-dish-manager`` namespace to have a
 fully functional software to interact. The pod of particular interest will be
