@@ -86,3 +86,42 @@ deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
     enabled: true
+
+ska-mid-wms:
+  ska-tango-base:
+    enabled: false
+  deviceServers:
+    # Default TRL: mid/wms/<instance number> eg: mid/wms/0
+    # Uncomment the below to set a custom TRL, host or port
+    wms0:
+      enabled: false
+      # server:
+      #   name: "WMSDevice"
+      #   instances:
+      #   - name: "wms0"
+      #     classes:
+      #     - name: WMSDevice
+      #       devices:
+      #         - dev01:
+      #           name: "custom/wmsTrl/0"
+      #           properties:
+      #           - name: "Host"
+      #             values:
+      #             - "wms-sim-0"
+      #           - name: "Port"
+      #             values:
+      #             - "1502" 
+    wms1:
+      enabled: false
+    wms2:
+      enabled: false
+    wms3:
+      enabled: false
+    wms4:
+      enabled: false
+  # Specify set of simulated WMS servers to connect to
+  # each WMSDevice instance where hardware is unavailable 
+  # eg: if "wm0" and "wm1" enabled, then simulator config is
+  # weatherStations: ["0", "1"].
+  simulator:
+    weatherStations: []
