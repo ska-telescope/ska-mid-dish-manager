@@ -504,7 +504,6 @@ def generate_track_table(
         -EL_SPEED_LIMIT_DEG_PER_S * total_track_duration_seconds,
         EL_SPEED_LIMIT_DEG_PER_S * total_track_duration_seconds,
     )
-
     end_el = start_el + el_change_actual
     el_values = np.linspace(start_el, end_el, num_samples)
 

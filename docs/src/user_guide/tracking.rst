@@ -72,7 +72,7 @@ The attributes related to tracking are:
 .. Note::
     **KAROO simulator:**
     If one encounters an error when loading track tables, the client receives an exception with a message containing 
-    a failure message from the dish structure manager and the simulator.  In most cases, it is likely that the track 
+    a failure message from the dish structure manager and the simulator. In most cases, it is likely that the track 
     table buffer is full - this can be confirmed from the simulator logs. If a buffer overflow occurs while tracking, 
     then the rate of track table loading is greater than the consumption. Note that due to computational jitter timing 
     drift can result in supplying tables faster than they are consumed in long tracking operations. It is advised for 
