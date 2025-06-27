@@ -416,7 +416,7 @@ def generate_random_text(length=10):
     return "".join(random.choice(letters) for _ in range(length))
 
 
-def az_el_slew_position(current_az, current_el, offset_az, offset_el):
+def calculate_slew_target(current_az, current_el, offset_az, offset_el):
     """
     Moves a point by specified offsets in azimuth and elevation,
     ensuring the result stays within defined constraints.
