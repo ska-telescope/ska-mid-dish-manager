@@ -1,6 +1,8 @@
 import gc
 import logging
 import threading
+import time
+import weakref
 from unittest import mock
 
 import pytest
@@ -8,6 +10,16 @@ import pytest
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 
 LOGGER = logging.getLogger(__name__)
+
+
+def force_gc_on_weak_ref(weak_ref: weakref.ref) -> None:
+    """Force garbage collection of the component manager referenced by a weak reference."""
+    for _ in range(10):
+        if weak_ref() is None:
+            break
+        time.sleep(0.1)
+        # Force garbage collection
+        gc.collect()
 
 
 @pytest.mark.unit
@@ -30,13 +42,12 @@ def test_component_manager_gracefully_cleans_up_resources(patch_dp, caplog):
             "sub-device-2",
             "sub-device-3",
         )
+        weak_ref = weakref.ref(component_manager)
         component_manager.start_communicating()
         component_manager.stop_communicating()
-        # explicitly remove this reference to make the object eligible for collection sooner
+        # remove strong reference and force garbage collection
         del component_manager
-
-    # Force garbage collection to help ensure cleanup
-    gc.collect()
+        force_gc_on_weak_ref(weak_ref)
 
     # Ensure there are no thread leaks
     # the assertion allows a difference of up to 2 threads because some background threads
