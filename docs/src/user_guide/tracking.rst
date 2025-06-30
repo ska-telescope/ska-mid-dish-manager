@@ -71,14 +71,17 @@ The attributes related to tracking are:
 
 .. Note::
     **KAROO simulator:**
-    If one encounters an error when loading track tables, it is most likely that the track table buffer is full. 
-    One can confirm this from the simulator logs. If a buffer overflow occurs while tracking, then the rate of
-    track table loading is greater than the consumption. Note that due to computational jitter timing drift can 
-    result in supplying tables faster than they are consumed in long tracking operations. 
-    It is advised for the clients to monitor their lead time. The lead time for a track table is defined as the 
-    **duration between when the track table is constructed to the start time of the track table block**.
-    The lead time should remain fairly constant. If the lead time drifts, it indicates that track tables are being 
-    supplied faster or slower than being consumed.
+    If one encounters an error when loading track tables, the client receives an exception with a failure message  
+    from the dish structure manager and the simulator. In most cases, it is likely that the track table buffer is 
+    full - this can be confirmed from the simulator logs. If a buffer overflow occurs while tracking, then the rate 
+    of track table loading is greater than the consumption. Note that due to computational jitter timing drift can 
+    result in supplying tables faster than they are consumed in long tracking operations. It is advised for the clients 
+    to monitor their lead time. The lead time for a track table is defined as the **duration between when the track table 
+    is constructed to the start time of the track table block**. The lead time should remain fairly constant. If the lead 
+    time drifts, it indicates that track tables are being supplied faster or slower than being consumed. On rare occasions, 
+    the error can also be caused by delays on the network traffic or some other unknown cause resulting in a timeout on the 
+    client side. The client should be able to retry loading the track table - a further intervention will be to increase the 
+    default client timeout value (3000ms) using `set_timeout_millis(ms_value)`.
     
     In the KAROO simulator, expired track table entries are only skipped over while tracking
     is **active** i.e. one can fill the buffer with invalid/expired entries and cause a buffer overflow. It is only while

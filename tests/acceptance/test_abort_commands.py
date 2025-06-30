@@ -9,7 +9,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
-from tests.utils import az_el_slew_position
+from tests.utils import calculate_slew_target
 
 
 # pylint: disable=invalid-name, redefined-outer-name
@@ -277,7 +277,7 @@ def test_abort_commands_during_slew(
 
     # Slew the dish
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
-    requested_az, requested_el = az_el_slew_position(current_az, current_el, 30.0, 15.0)
+    requested_az, requested_el = calculate_slew_target(current_az, current_el, 30.0, 15.0)
     dish_manager_proxy.Slew([requested_az, requested_el])
     main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 

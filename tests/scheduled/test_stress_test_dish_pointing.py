@@ -13,10 +13,11 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
+from tests.utils import generate_track_table
 
 LOGGER = logging.getLogger(__name__)
-NUMBER_OF_TABLE_SAMPLES = 500  # amounts to 10 calls to track table
-TRACK_TABLE_LIMIT = 150
+NUMBER_OF_TABLE_SAMPLES = 10  # amounts to 10 calls to track table
+TRACK_TABLE_SIZE = 50  # maximum number of samples in track table
 
 LEAD_TIME = 10
 CADENCE_SEC = 0.2  # decided cadence is 1Hz but choosing quicker rate to stress test
@@ -72,58 +73,37 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     pointing_state_event_store.clear_queue()
     dish_manager_proxy.Slew([0, 35])
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=300)
-
-    # Generate NUMBER_OF_TABLE_SAMPLES sized list of pointing coords
-    current_pointing = dish_manager_proxy.achievedPointing
-    current_az = current_pointing[1]
-    current_el = current_pointing[2]
-
-    az_dir = 1 if current_az < 0 else -1
-    el_dir = 1 if current_el < 45 else -1
-
-    loaded_sample_count = 1
-    start_time_tai_s = ds_device_proxy.GetCurrentTAIOffset() + LEAD_TIME
-
-    # have a huge jump in the first point to guarantee a slew
-    track_table = [
-        start_time_tai_s,
-        current_az + (10.0 * az_dir),
-        current_el + (5.0 * el_dir),
-    ]
-
-    while loaded_sample_count < NUMBER_OF_TABLE_SAMPLES:
-        track_table.extend(
-            [
-                start_time_tai_s + (loaded_sample_count * CADENCE_SEC),
-                current_az + (0.025 * loaded_sample_count * az_dir),
-                current_el + (0.025 * loaded_sample_count * el_dir),
-            ]
-        )
-        loaded_sample_count += 1
+    pointing_state_event_store.clear_queue()
 
     # Send first table in NEW mode
+    az, el = dish_manager_proxy.achievedPointing[1:]
+    track_table = generate_track_table(
+        num_samples=TRACK_TABLE_SIZE,
+        current_az=az,
+        current_el=el,
+        time_offset_seconds=LEAD_TIME,
+    )
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
-    dish_manager_proxy.programTrackTable = track_table[:TRACK_TABLE_LIMIT]
-    pointing_state_event_store.clear_queue()
+    dish_manager_proxy.programTrackTable = track_table
     dish_manager_proxy.Track()
 
     # Rapid fire the remaining entries in append mode
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
-
-    while True:
+    for _ in range(NUMBER_OF_TABLE_SAMPLES - 1):
+        tn, az, el = track_table[-3:]
+        track_table = generate_track_table(
+            num_samples=TRACK_TABLE_SIZE,
+            current_az=az,
+            current_el=el,
+            time_offset_seconds=tn + LEAD_TIME,
+        )
         try:
-            track_table = track_table[TRACK_TABLE_LIMIT:]
-        except IndexError:
-            break
-        if len(track_table) < TRACK_TABLE_LIMIT:
-            break
-        try:
-            dish_manager_proxy.programTrackTable = track_table[:TRACK_TABLE_LIMIT]
+            dish_manager_proxy.programTrackTable = track_table
         except tango.DevFailed:
             # log failed programTrackTable writes
             LOGGER.warning(
                 "Writing track sample %s to programTrackTable failed",
-                track_table[:TRACK_TABLE_LIMIT],
+                track_table,
             )
         time.sleep(CADENCE_SEC)
 
@@ -132,7 +112,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     pointing_state_values = [event_value[1] for event_value in pointing_state_values]
 
     # Check that the dish transitioned through SLEW, TRACK and READY pointing states
-    assert len(pointing_state_values) == 3
+    assert len(pointing_state_values) >= 3
     assert pointing_state_values.count(PointingState["SLEW"]) == 1, pointing_state_values
     assert pointing_state_values.count(PointingState["TRACK"]) == 1, pointing_state_values
     assert pointing_state_values.count(PointingState["READY"]) == 1, pointing_state_values

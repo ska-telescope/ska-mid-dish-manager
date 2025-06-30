@@ -6,7 +6,7 @@ import pytest
 import tango
 
 from ska_mid_dish_manager.models.dish_enums import PointingState
-from tests.utils import az_el_slew_position
+from tests.utils import calculate_slew_target
 
 DEFAULT_POWER_LIMIT = 10
 
@@ -190,7 +190,7 @@ def test_dsc_current_limit_used(
     clean_up(ds_device_proxy, dish_manager_proxy, event_store_class)
 
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
-    requested_az, requested_el = az_el_slew_position(current_az, current_el, 10.0, 10.0)
+    requested_az, requested_el = calculate_slew_target(current_az, current_el, 10.0, 10.0)
     ds_device_proxy.Slew([requested_az, requested_el])
     progress_event_store.wait_for_progress_update(
         (

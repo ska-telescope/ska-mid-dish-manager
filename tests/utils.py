@@ -9,6 +9,15 @@ import numpy as np
 import tango
 from ska_control_model import CommunicationStatus
 
+from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
+
+MAX_ELEVATION = 85.0
+MIN_ELEVATION = 14.8
+MAX_AZIMUTH = 270.0
+MIN_AZIMUTH = -270.0
+AZ_SPEED_LIMIT_DEG_PER_S = 3.0
+EL_SPEED_LIMIT_DEG_PER_S = 1.0
+
 
 class ComponentStateStore:
     """Store component state changes with useful functionality"""
@@ -416,7 +425,7 @@ def generate_random_text(length=10):
     return "".join(random.choice(letters) for _ in range(length))
 
 
-def az_el_slew_position(current_az, current_el, offset_az, offset_el):
+def calculate_slew_target(current_az, current_el, offset_az, offset_el):
     """
     Moves a point by specified offsets in azimuth and elevation,
     ensuring the result stays within defined constraints.
@@ -432,12 +441,6 @@ def az_el_slew_position(current_az, current_el, offset_az, offset_el):
     :return: Tuple containing the constrained azimuth and elevation values.
     :rtype: Tuple[float, float]
     """
-    # dish constraints
-    MAX_ELEVATION = 85.0
-    MIN_ELEVATION = 14.8
-    MAX_AZIMUTH = 270.0
-    MIN_AZIMUTH = -270.0
-
     # Calculate requested values
     requested_az = current_az + offset_az
     requested_el = current_el + offset_el
@@ -448,3 +451,66 @@ def az_el_slew_position(current_az, current_el, offset_az, offset_el):
     requested_el = min(MAX_ELEVATION, max(MIN_ELEVATION, requested_el))
 
     return requested_az, requested_el
+
+
+# pylint: disable=too-many-locals
+def generate_track_table(
+    num_samples: int = 50,
+    current_az: float = 0.0,
+    current_el: float = 45.0,
+    time_offset_seconds: float = 5,
+    total_track_duration_seconds: float = 5,
+) -> List[float]:
+    """
+    Generate a track table with smoothly varying azimuth and elevation values,
+    starting from the current pointing.
+
+    :param time_offset_seconds: The number of seconds from the current TAI time
+                                at which the track generation should start.
+    :param num_samples: The number of samples to generate in the track data.
+    :param total_track_duration_seconds: The total duration of the track in seconds.
+    :param current_az: The current azimuth to start from.
+    :param current_el: The current elevation to start from.
+
+    :returns: A list of floats representing [tai_timestamp, az_degrees, el_degrees]
+              for all samples.
+    """
+    # --- Azimuth Logic ---
+    start_az = np.clip(current_az, MIN_AZIMUTH, MAX_AZIMUTH)
+    # Determine the preferred end azimuth based on which limit start_az is closer to.
+    preferred_end_az = (
+        MAX_AZIMUTH if abs(start_az - MIN_AZIMUTH) < abs(start_az - MAX_AZIMUTH) else MIN_AZIMUTH
+    )
+    # Calculate the actual change in azimuth, clipped by speed limits.
+    az_change_actual = np.clip(
+        preferred_end_az - start_az,
+        -AZ_SPEED_LIMIT_DEG_PER_S * total_track_duration_seconds,
+        AZ_SPEED_LIMIT_DEG_PER_S * total_track_duration_seconds,
+    )
+    end_az = start_az + az_change_actual
+    az_values = np.linspace(start_az, end_az, num_samples)
+
+    # --- Elevation Logic ---
+    start_el = np.clip(current_el, MIN_ELEVATION, MAX_ELEVATION)
+    # Determine the preferred end elevation.
+    preferred_end_el = (
+        MAX_ELEVATION
+        if abs(start_el - MIN_ELEVATION) < abs(start_el - MAX_ELEVATION)
+        else MIN_ELEVATION
+    )
+    # Calculate the actual change in elevation, clipped by speed limits.
+    el_change_actual = np.clip(
+        preferred_end_el - start_el,
+        -EL_SPEED_LIMIT_DEG_PER_S * total_track_duration_seconds,
+        EL_SPEED_LIMIT_DEG_PER_S * total_track_duration_seconds,
+    )
+    end_el = start_el + el_change_actual
+    el_values = np.linspace(start_el, end_el, num_samples)
+
+    # --- Generate TAI timestamps ---
+    start_time_tai = get_current_tai_timestamp_from_unix_time() + time_offset_seconds
+    time_step = total_track_duration_seconds / num_samples
+    times_tai = start_time_tai + np.arange(num_samples) * time_step
+
+    # --- Generate the final flat track table ---
+    return [val for coordinate in zip(times_tai, az_values, el_values) for val in coordinate]
