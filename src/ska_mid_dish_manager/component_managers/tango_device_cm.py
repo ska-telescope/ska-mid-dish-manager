@@ -91,6 +91,8 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._fetch_build_state_information()
         else:
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+            self.logger.debug("SPFRX_TEST: Monitored [%s].", set(self._monitored_attributes))
+            self.logger.debug("SPFRX_TEST: subscribed [%s].", set(subscribed_attrs))
 
     def _update_state_from_event(self, event_data: tango.EventData) -> None:
         """
@@ -182,15 +184,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         all_monitored_events_valid = (
             set(self._monitored_attributes) == self._active_attr_event_subscriptions
         )
-        if self.communication_state != CommunicationStatus.ESTABLISHED:
-            self.logger.debug(f"Received attribute {attr_name}")
-            remaining_attributes = (
-                self._monitored_attributes - self._active_attr_event_subscriptions
-            )
-            self.logger.debug(
-                f"Communication with {self._tango_device_fqdn} not established yet. "
-                f"Waiting for these [{remaining_attributes}] attributes."
-            )
+        self.logger.debug("SPFRX_TEST: Comm status [%s].", self.communication_state)
+        self.logger.debug("SPFRX_TEST: Attribute [%s] received.", attr_name)
+        self.logger.debug("SPFRX_TEST: Active sub [%s].", self._active_attr_event_subscriptions)
+        self.logger.debug("SPFRX_TEST: Monitored sub [%s].", set(self._monitored_attributes))
         if all_monitored_events_valid:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
 
