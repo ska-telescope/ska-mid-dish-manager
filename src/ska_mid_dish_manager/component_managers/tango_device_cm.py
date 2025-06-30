@@ -105,7 +105,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         # the error events we got for the various attribute subscriptions.
         # update the communication state in case the error event callback flipped it
         self._active_attr_event_subscriptions.add(attr_name)
-        self.sync_communication_to_valid_event()
+        self.sync_communication_to_valid_event(attr_name)
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
         """
@@ -159,11 +159,21 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             build_state = str(build_state)
         self._update_component_state(buildstate=build_state)
 
-    def sync_communication_to_valid_event(self) -> None:
+    def sync_communication_to_valid_event(self, attr_name) -> None:
         """Sync communication state with valid events from monitored attributes"""
         all_monitored_events_valid = (
             set(self._monitored_attributes) == self._active_attr_event_subscriptions
         )
+        if self.communication_state != CommunicationStatus.ESTABLISHED:
+            self.logger.debug(f"Received attribute {attr_name}")
+            remaining_attributes = (
+                self._monitored_attributes - self._active_attr_event_subscriptions
+            )
+            self.logger.debug(
+                f"Communication with {self._tango_device_fqdn} not established yet. "
+                f"Waiting for these [{remaining_attributes}] attributes."
+            )
+
         if all_monitored_events_valid:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
             self._fetch_build_state_information()
