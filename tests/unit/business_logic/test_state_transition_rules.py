@@ -1,6 +1,5 @@
 """Unit tests verifying model against dishMode transitions."""
 
-# pylint: disable=too-many-lines,missing-function-docstring,C0302
 import pytest
 from ska_control_model import AdminMode, HealthState
 
@@ -22,15 +21,13 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 
-# pylint: disable=redefined-outer-name
 @pytest.fixture(scope="module")
 def state_transition():
-    """Instance of StateTransition"""
+    """Instance of StateTransition."""
     return StateTransition()
 
 
 # Order DS, SPF, SPFRX
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
@@ -120,7 +117,6 @@ def test_compute_dish_mode(
 
 
 # Order DS, SPF, SPFRX
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
@@ -201,7 +197,6 @@ def test_compute_dish_mode_ignoring_spf(
 
 
 # Order DS, SPF, SPFRX
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
@@ -270,7 +265,6 @@ def test_compute_dish_mode_ignoring_spfrx(
 
 
 # Order DS, SPF, SPFRX
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
@@ -330,7 +324,6 @@ def test_compute_dish_mode_ignoring_spf_and_spfrx(
     assert expected_dish_mode == actual_dish_mode
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
@@ -416,7 +409,6 @@ def test_compute_dish_healthstate(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
@@ -514,7 +506,6 @@ def test_compute_dish_healthstate_ignoring_spf(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
@@ -612,7 +603,6 @@ def test_compute_dish_healthstate_ignoring_spfrx(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
@@ -656,7 +646,6 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
@@ -730,7 +719,6 @@ def test_compute_configured_band(
     assert expected_band_number == actual_band_number
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
@@ -804,7 +792,6 @@ def test_compute_configured_band_ignoring_spf(
     assert expected_band_number == actual_band_number
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
@@ -872,7 +859,6 @@ def test_compute_configured_band_ignoring_spfrx(
     assert expected_band_number == actual_band_number
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
@@ -935,7 +921,6 @@ def test_compute_configured_band_ignoring_spf_and_spfrx(
     assert expected_band_number == actual_band_number
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spfrx_comp_state, expected_band_number"),
@@ -995,7 +980,6 @@ def test_compute_spf_band_in_focus(
     assert expected_band_number == actual_band_number
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spfrx_comp_state, expected_band_number"),
@@ -1407,7 +1391,6 @@ def test_capability_state_rules_unknown(
     )
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, expected_power_state"),
@@ -1462,7 +1445,6 @@ def test_compute_power_state(
     assert expected_power_state == actual_power_state
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, expected_power_state"),

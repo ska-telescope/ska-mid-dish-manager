@@ -1,4 +1,4 @@
-"""Test reconnection and error event handling"""
+"""Test reconnection and error event handling."""
 
 import pytest
 import tango
@@ -12,7 +12,7 @@ from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceP
 @pytest.mark.forked
 @pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])
 def test_device_goes_away(family, event_store_class, dish_manager_proxy):
-    """Test dish manager reacts to devices restarting"""
+    """Test dish manager reacts to devices restarting."""
     dp_manager = DeviceProxyManager()
     family_attr_mapping = {
         "ds-manager": "dsConnectionState",

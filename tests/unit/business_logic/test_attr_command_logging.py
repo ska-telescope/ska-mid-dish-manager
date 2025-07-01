@@ -1,6 +1,5 @@
-"Test log of command and attribute write failures"
+"""Test log of command and attribute write failures."""
 
-# pylint: disable=no-member,protected-access
 import logging
 
 import mock
@@ -16,7 +15,7 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager")
 def test_log_command_inout(patched_dev_factory, caplog: pytest.LogCaptureFixture):
-    """Check that exceptions for command_inout is logged"""
+    """Check that exceptions for command_inout is logged."""
     caplog.set_level(logging.DEBUG)
 
     # Set up mocks
@@ -50,7 +49,7 @@ def test_log_command_inout(patched_dev_factory, caplog: pytest.LogCaptureFixture
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager")
 def test_log_write_attribute(patched_dev_factory, caplog: pytest.LogCaptureFixture):
-    """Check that exceptions for write_attribute_value is logged"""
+    """Check that exceptions for write_attribute_value is logged."""
     caplog.set_level(logging.DEBUG)
 
     # Set up mocks

@@ -1,4 +1,4 @@
-"""Test StandbyLP"""
+"""Test StandbyLP."""
 
 import pytest
 import tango
@@ -6,11 +6,10 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import DishMode, PowerState
 
 
-# pylint:disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_manager_proxy):
-    """Test transition to Standby_LP"""
+    """Test transition to Standby_LP."""
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
 

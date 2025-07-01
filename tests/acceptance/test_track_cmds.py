@@ -1,4 +1,4 @@
-"""Test that DS goes into Track and dishManager reports it"""
+"""Test that DS goes into Track and dishManager reports it."""
 
 import time
 from math import pi, sin
@@ -18,7 +18,6 @@ INIT_AZ = -250
 INIT_EL = 70
 
 
-# pylint: disable=redefined-outer-name
 @pytest.fixture
 def slew_dish_to_init(event_store_class, dish_manager_proxy):
     """Fixture that slews the dish to a init position."""
@@ -75,7 +74,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     dish_manager_proxy.TrackStop()
 
 
-# pylint: disable=unused-argument,too-many-arguments,too-many-locals,too-many-statements
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_and_track_stop_cmds(
@@ -85,8 +83,7 @@ def test_track_and_track_stop_cmds(
     dish_manager_proxy,
     ds_device_proxy,
 ):
-    """Test call of Track command and stop"""
-
+    """Test call of Track command and stop."""
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -220,8 +217,7 @@ def test_append_dvs_case(
     dish_manager_proxy,
     ds_device_proxy,
 ):
-    """Test Track with Append for DVS case"""
-
+    """Test Track with Append for DVS case."""
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
@@ -316,7 +312,6 @@ def test_maximum_capacity(
     ds_device_proxy,
 ):
     """Test loading of track tables to maximum capacity."""
-
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
@@ -454,7 +449,7 @@ def test_track_fails_when_track_called_late(
     dish_manager_proxy,
     ds_device_proxy,
 ):
-    """Test Track command fails when the track table is no more valid"""
+    """Test Track command fails when the track table is no more valid."""
     main_event_store = event_store_class()
     band_event_store = event_store_class()
     pointing_state_event_store = event_store_class()

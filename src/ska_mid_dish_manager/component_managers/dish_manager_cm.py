@@ -1,5 +1,5 @@
-# pylint: disable=protected-access,too-many-lines,too-many-public-methods
-"""Component manager for a DishManager tango device"""
+"""Component manager for a DishManager tango device."""
+
 import json
 import logging
 import os
@@ -47,11 +47,8 @@ from ska_mid_dish_manager.utils.decorators import check_communicating
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
 
-# pylint: disable=abstract-method
-# pylint: disable=too-many-instance-attributes
-# pylint: disable=too-many-arguments,too-many-public-methods
 class DishManagerComponentManager(TaskExecutorComponentManager):
-    """A component manager for DishManager
+    """A component manager for DishManager.
 
     It watches the component managers of the subservient devices
     (DS, SPF, SPFRX) to reflect the state of the Dish LMC.
@@ -253,8 +250,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # Helper methods
     # --------------
     def get_current_tai_offset_from_dsc_with_manual_fallback(self) -> float:
-        """
-        Try and get the TAI offset from the DSManager device or calulate it manually if that fails.
+        """Try and get the TAI offset from the DSManager device.
+        Or calulate it manually if that fails.
         """
         try:
             ds_cm = self.sub_component_managers["DS"]
@@ -264,8 +261,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return get_current_tai_timestamp_from_unix_time()
 
     def is_dish_moving(self) -> bool:
-        """
-        Report whether or not the dish is moving
+        """Report whether or not the dish is moving.
 
         :returns: boolean dish movement activity
         """
@@ -282,8 +278,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             TaskStatus.IN_PROGRESS,
         ),
     ) -> List[str]:
-        """
-        Report command ids that are running or waiting to be executed from the task executor
+        """Report command ids that are running or waiting to be executed from the task executor.
 
         :param statuses_to_check: TaskStatuses which count as lrc is executing
         :returns: a list of all lrcs currently executing or queued
@@ -326,8 +321,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return active_component_managers
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
-        """
-        Read memorized attributes values from TangoDB.
+        """Read memorized attributes values from TangoDB.
 
         :param: attribute_name: Tango attribute name
         :type attribute_name: str
@@ -391,9 +385,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _sub_device_communication_state_changed(
         self, device: DishDevice, communication_state: CommunicationStatus
     ):
-        """
-        Callback triggered by the component manager when it establishes
-        a connection with the underlying (subservient) device
+        """Callback triggered by the component manager when it establishes
+        a connection with the underlying (subservient) device.
 
         Note: This callback is triggered by the component manangers of
         the subservient devices. DishManager reflects this in its connection
@@ -427,8 +420,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _sub_device_component_state_changed(self, device: DishDevice, *args, **kwargs):
-        """
-        Callback triggered by the component manager of the
+        """Callback triggered by the component manager of the
         subservient device for component state changes.
 
         This aggregates the component values and computes the final value
@@ -708,14 +700,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # ----------------------------------------
 
     def start_communicating(self):
-        """Connect from monitored devices"""
+        """Connect from monitored devices."""
         if self.sub_component_managers:
             for device_name, component_manager in self.sub_component_managers.items():
                 if not self.is_device_ignored(device_name):
                     component_manager.start_communicating()
 
     def stop_communicating(self):
-        """Disconnect from monitored devices"""
+        """Disconnect from monitored devices."""
         # TODO: update attribute read callbacks to indicate attribute
         # reads cannot be trusted after communication is stopped
         if self.sub_component_managers:
@@ -749,8 +741,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(ignorespfrx=ignored)
 
     def sync_component_states(self):
-        """
-        Sync monitored attributes on component managers with their respective sub devices
+        """Sync monitored attributes on component managers with their respective sub devices.
 
         Clear the monitored attributes of all subservient device component managers,
         then re-read all the monitored attributes from their respective tango device
@@ -781,7 +772,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             raise
 
     def abort_commands(self, task_callback: Optional[Callable] = None) -> None:
-        """Abort commands on dish manager and its subservient devices
+        """Abort commands on dish manager and its subservient devices.
 
         :param task_callback: callback when the status changes
         """
@@ -814,7 +805,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STANDBY_LP mode"""
+        """Transition the dish to STANDBY_LP mode."""
         _is_set_standby_lp_allowed = partial(
             self._dish_mode_model.is_command_allowed,
             "SetStandbyLPMode",
@@ -835,7 +826,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to STANDBY_FP mode"""
+        """Transition the dish to STANDBY_FP mode."""
         _is_set_standby_fp_allowed = partial(
             self._dish_mode_model.is_command_allowed,
             "SetStandbyFPMode",
@@ -856,8 +847,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to OPERATE mode"""
-
+        """Transition the dish to OPERATE mode."""
         _is_set_operate_mode_allowed = partial(
             self._dish_mode_model.is_command_allowed,
             "SetOperateMode",
@@ -877,8 +867,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to MAINTENANCE mode"""
-
+        """Transition the dish to MAINTENANCE mode."""
         _is_set_maintenance_mode_allowed = partial(
             self._dish_mode_model.is_command_allowed,
             "SetMaintenanceMode",
@@ -899,7 +888,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Track the commanded pointing position"""
+        """Track the commanded pointing position."""
 
         def _is_track_cmd_allowed():
             if self.component_state["dishmode"] != DishMode.OPERATE:
@@ -929,7 +918,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Stop tracking"""
+        """Stop tracking."""
 
         def _is_track_stop_cmd_allowed():
             dish_mode = self.component_state["dishmode"]
@@ -956,7 +945,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         synchronise,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Configure frequency band"""
+        """Configure frequency band."""
         req_cmd = f"ConfigureBand{band_number}"
 
         _is_configure_band_cmd_allowed = partial(
@@ -978,9 +967,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """
-        Transition the dish to STOW mode
-        """
+        """Transition the dish to STOW mode."""
         ds_cm = self.sub_component_managers["DS"]
         try:
             ds_cm.execute_command("Stow", None)
@@ -1271,7 +1258,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"to band {band_value} on DS"
             )
         except tango.DevFailed as err:
-            self.logger.exception("%s. The error response is: %s", (ResultCode.FAILED, err))
+            self.logger.exception("%s. The error response is: %s", ResultCode.FAILED, err)
             result_code = ResultCode.FAILED
             message = str(err)
 
@@ -1371,8 +1358,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def abort(
         self, task_callback: Optional[Callable] = None, task_abort_event: Optional[Event] = Event()
     ) -> Tuple[TaskStatus, str]:
-        """
-        Issue abort sequence
+        """Issue abort sequence.
 
         :param task_callback: Callback for task (default: {None})
         :param task_abort_event: Event holding abort info (default: {Event()})

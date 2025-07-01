@@ -1,4 +1,4 @@
-"""Tango device component manager tests"""
+"""Tango device component manager tests."""
 
 import logging
 
@@ -12,13 +12,12 @@ from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceC
 LOGGER = logging.getLogger(__name__)
 
 
-# pylint:disable=protected-access,unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_tango_device_component_manager_state(
     monitor_tango_servers, component_state_store, ds_device_fqdn
 ):
-    """Test commands and monitoring"""
+    """Test commands and monitoring."""
     mock_callable = MockCallable(timeout=5)
 
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
@@ -57,7 +56,7 @@ def test_tango_device_component_manager_state(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_stress_component_monitor(monitor_tango_servers, component_state_store, ds_device_fqdn):
-    """Stress test component updates"""
+    """Stress test component updates."""
     mock_callable = MockCallable(timeout=5)
 
     com_man = TangoDeviceComponentManager(

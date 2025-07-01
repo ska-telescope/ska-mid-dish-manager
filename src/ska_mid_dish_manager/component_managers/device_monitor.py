@@ -1,6 +1,4 @@
-"""
-This module contains TangoDeviceMonitor that monitors attributes on Tango devices
-"""
+"""This module contains TangoDeviceMonitor that monitors attributes on Tango devices."""
 
 import logging
 from functools import partial
@@ -17,15 +15,14 @@ SLEEP_BETWEEN_EVENTS = 0.5
 
 
 class SubscriptionTracker:
-    """Thread safe way to track which attributes are subscribed"""
+    """Thread safe way to track which attributes are subscribed."""
 
     def __init__(
         self,
         event_queue: Queue,
         logger: logging.Logger,
     ):
-        """
-        Keep track of which attributes have been subscribed to.
+        """Keep track of which attributes have been subscribed to.
 
         Set communication_state to ESTABLISHED only when all are subscribed.
         Set NOT_ESTABLISHED otherwise.
@@ -42,16 +39,14 @@ class SubscriptionTracker:
 
     @property
     def subscribed_attrs(self) -> list:
-        """
-        Get the list of attributes with change events
+        """Get the list of attributes with change events.
 
         :return: list of attribute names
         """
         return list(self._subscribed_attrs.keys())
 
     def subscription_started(self, attribute_name: str, subscription_id: int) -> None:
-        """
-        Mark attr as subscribed
+        """Mark attr as subscribed.
 
         :param attribute_name: The attribute name
         :type attribute_name: str
@@ -62,8 +57,7 @@ class SubscriptionTracker:
             self._subscribed_attrs[attribute_name] = subscription_id
 
     def subscription_stopped(self, attribute_name: str) -> None:
-        """
-        Mark attr as unsubscribed
+        """Mark attr as unsubscribed.
 
         :param attribute_name: The attribute name
         :type attribute_name: str
@@ -74,8 +68,7 @@ class SubscriptionTracker:
     def setup_event_subscription(
         self, attribute_name: str, device_proxy: tango.DeviceProxy
     ) -> None:
-        """
-        Subscribe to change events on the device
+        """Subscribe to change events on the device.
 
         :param attribute_name: The attribute name
         :type attribute_name: str
@@ -106,8 +99,7 @@ class SubscriptionTracker:
         self.subscription_started(attribute_name, subscription_id)
 
     def clear_subscriptions(self, device_proxy: tango.DeviceProxy) -> None:
-        """
-        Set all attrs as not subscribed
+        """Set all attrs as not subscribed.
 
         :param device_proxy: a client to the device
         :type device_proxy: tango.DeviceProxy
@@ -133,10 +125,8 @@ class SubscriptionTracker:
                 self.subscription_stopped(attribute_name)
 
 
-# pylint:disable=too-few-public-methods, too-many-instance-attributes
 class TangoDeviceMonitor:
-    """
-    Connects to and monitors a Tango device.
+    """Connects to and monitors a Tango device.
 
     Creates a device proxy in a thread to subscribe to change events on specified attributes
     """
@@ -150,8 +140,7 @@ class TangoDeviceMonitor:
         event_queue: Queue,
         logger: logging.Logger,
     ) -> None:
-        """
-        Create the TangoDeviceMonitor.
+        """Create the TangoDeviceMonitor.
 
         :param: tango_fqdn: Tango device name
         :type tango_fqdn: str
@@ -176,7 +165,7 @@ class TangoDeviceMonitor:
         self._subscription_tracker = SubscriptionTracker(self._event_queue, self._logger)
 
     def stop_monitoring(self) -> None:
-        """Close all live attribute subscriptions"""
+        """Close all live attribute subscriptions."""
         if (
             self._attribute_subscription_thread is not None
             and self._exit_thread_event is not None
@@ -196,9 +185,8 @@ class TangoDeviceMonitor:
     def _verify_connection_up(
         self, on_verified_callback: Callable, exit_thread_event: Event
     ) -> None:
-        """
-        Verify connection to the device by pinging it.
-        Starts attribute monitoring thread once the connection is verified
+        """Verify connection to the device by pinging it.
+        Starts attribute monitoring thread once the connection is verified.
 
         :param on_verified_callback: Callback for when connection is verified
         :type on_verified_callback: Callable
@@ -214,8 +202,7 @@ class TangoDeviceMonitor:
                 return
 
     def monitor(self) -> None:
-        """
-        Kick off device monitoring
+        """Kick off device monitoring.
 
         This method is idempotent. When called the existing (if any)
         monitoring threads are removed and recreated.
@@ -240,8 +227,7 @@ class TangoDeviceMonitor:
 
     # pylint:disable=too-many-arguments
     def _monitor_attributes_in_a_thread(self, exit_thread_event: Event) -> None:
-        """
-        Monitor all attributes
+        """Monitor all attributes.
 
         :param exit_thread_event: Signals when to exit the thread
         :type exit_thread_event: Event

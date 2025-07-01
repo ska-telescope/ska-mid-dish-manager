@@ -1,7 +1,5 @@
 """Unit tests checking DishManager behaviour."""
 
-# pylint: disable=protected-access
-
 import json
 from datetime import datetime
 
@@ -14,7 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SP
 @pytest.mark.unit
 @pytest.mark.forked
 def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
-    """Test that SetStandbyFPMode does 3 result updates. DishManager, DS, SPF"""
+    """Test that SetStandbyFPMode does 3 result updates. DishManager, DS, SPF."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
@@ -72,7 +70,7 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
 @pytest.mark.unit
 @pytest.mark.forked
 def test_component_states(dish_manager_resources):
-    """Test that GetComponentStates for 3 devices are returned"""
+    """Test that GetComponentStates for 3 devices are returned."""
     device_proxy, _ = dish_manager_resources
 
     json_string = json.loads(device_proxy.GetComponentStates())
