@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Fix re/connection issues to SPFRx hardware related to attributes with invalid quality
 
 Version 7.4.0
 *************
