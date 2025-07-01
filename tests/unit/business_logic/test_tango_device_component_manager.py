@@ -31,6 +31,7 @@ def construct_mock_valid_event_data(attr_name: str) -> tango.EventData:
     mock_valid_event_data.err = False
     return mock_valid_event_data
 
+
 def construct_mock_invalid_quality_event_data(attr_name: str) -> tango.EventData:
     """Construct a mock attribute with invalid quality for a given attribute."""
     mock_attr_value = mock.MagicMock(name=f"mock_{attr_name}_value")
@@ -110,6 +111,7 @@ def test_happy_path(patched_tango, caplog):
     # clean up afterwards
     tc_manager.stop_communicating()
 
+
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango")
 def test_connection_with_invalid_attr(patched_tango, caplog):
@@ -141,6 +143,7 @@ def test_connection_with_invalid_attr(patched_tango, caplog):
 
     # clean up afterwards
     tc_manager.stop_communicating()
+
 
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
