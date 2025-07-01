@@ -1,4 +1,4 @@
-"""Tests that check that the Dish Manager conforms to the ICD"""
+"""Tests that check that the Dish Manager conforms to the ICD."""
 
 import pytest
 from tango_simlib.utilities.validate_device import validate_device_from_url
@@ -26,7 +26,7 @@ SPEC_URLS = {
 @pytest.mark.acceptance
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_wide_spec(dish_manager_proxy):
-    """Test that the interface conforms to the base tango interface"""
+    """Test that the interface conforms to the base tango interface."""
     result = validate_device_from_url(
         dish_manager_proxy.name(),
         SPEC_URLS["ska_tango_guide_ska_wide"],
@@ -38,7 +38,7 @@ def test_dish_manager_conforms_to_ska_wide_spec(dish_manager_proxy):
 @pytest.mark.acceptance
 @pytest.mark.xfail(reason="Pending changes on telescope model to dtype_out")
 def test_dish_manager_conforms_to_dish_master_spec(dish_manager_proxy):
-    """Test that the device interface conforms to the Dish Manager interface"""
+    """Test that the device interface conforms to the Dish Manager interface."""
     result = validate_device_from_url(
         dish_manager_proxy.name(),
         SPEC_URLS["dish_manager"],
@@ -50,7 +50,7 @@ def test_dish_manager_conforms_to_dish_master_spec(dish_manager_proxy):
 @pytest.mark.acceptance
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_controller_spec(dish_manager_proxy):
-    """Test that the device interface conforms to the Dish Manager interface"""
+    """Test that the device interface conforms to the Dish Manager interface."""
     result = validate_device_from_url(
         dish_manager_proxy.name(),
         SPEC_URLS["ska_controller"],
@@ -62,7 +62,7 @@ def test_dish_manager_conforms_to_ska_controller_spec(dish_manager_proxy):
 @pytest.mark.acceptance
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_tango_base_spec(dish_manager_proxy):
-    """Test that the device interface conforms to the Dish Manager interface"""
+    """Test that the device interface conforms to the Dish Manager interface."""
     result = validate_device_from_url(
         dish_manager_proxy.name(),
         SPEC_URLS["ska_tango_base"],

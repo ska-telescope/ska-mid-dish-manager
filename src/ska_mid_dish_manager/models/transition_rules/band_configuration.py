@@ -1,4 +1,4 @@
-"""Automatic transition rules for configuredBand"""
+"""Automatic transition rules for configuredBand."""
 
 import rule_engine
 
@@ -72,12 +72,10 @@ CONFIGURED_BAND_RULES_SPFRX_IGNORED = {
         "DS.indexerposition  == 'IndexerPosition.B4' and SPF.bandinfocus == 'SPFBandInFocus.B4'"
     ),
     "B5a": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and "
-        "SPF.bandinfocus == 'SPFBandInFocus.B5a'"
+        "DS.indexerposition  == 'IndexerPosition.B5' and SPF.bandinfocus == 'SPFBandInFocus.B5a'"
     ),
     "B5b": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and "
-        "SPF.bandinfocus == 'SPFBandInFocus.B5b'"
+        "DS.indexerposition  == 'IndexerPosition.B5' and SPF.bandinfocus == 'SPFBandInFocus.B5b'"
     ),
 }
 

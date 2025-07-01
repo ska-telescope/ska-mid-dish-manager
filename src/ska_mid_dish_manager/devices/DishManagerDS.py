@@ -1,7 +1,4 @@
-# pylint: disable=invalid-name,access-member-before-definition
-# pylint: disable=C0302,W0212,W0201
-"""
-This module implements the dish manager device for DishLMC.
+"""This module implements the dish manager device for DishLMC.
 
 It exposes the attributes and commands which control the dish
 and the subservient devices
@@ -67,12 +64,8 @@ _MAXIMUM_STATUS_QUEUE_SIZE = 32
 _DISH_SUB_COMPONENTS_CONTROLLED = 3
 
 
-# pylint: disable=too-many-instance-attributes
-# pylint: disable=too-many-public-methods
 class DishManager(SKAController):
-    """
-    The Dish Manager of the Dish LMC subsystem
-    """
+    """The Dish Manager of the Dish LMC subsystem."""
 
     # Access instances for debugging
     instances = weakref.WeakValueDictionary()
@@ -88,8 +81,7 @@ class DishManager(SKAController):
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
 
     def _create_lrc_attributes(self) -> None:
-        """
-        Create attributes for the long running commands.
+        """Create attributes for the long running commands.
 
         This is an override to update the max_dim_x of longRunningCommandInProgress.
         DishManager reports progress from its running command and from the sub devices
@@ -98,12 +90,12 @@ class DishManager(SKAController):
         :raises AssertionError: if max_queued_tasks or max_executing_tasks is not
             equal to or greater than 0 or 1 respectively.
         """
-        assert (
-            self.component_manager.max_queued_tasks >= 0
-        ), "max_queued_tasks property must be equal to or greater than 0."
-        assert (
-            self.component_manager.max_executing_tasks >= 1
-        ), "max_executing_tasks property must be equal to or greater than 1."
+        assert self.component_manager.max_queued_tasks >= 0, (
+            "max_queued_tasks property must be equal to or greater than 0."
+        )
+        assert self.component_manager.max_executing_tasks >= 1, (
+            "max_executing_tasks property must be equal to or greater than 1."
+        )
         self._status_queue_size = max(
             self.component_manager.max_queued_tasks * 2
             + self.component_manager.max_executing_tasks,
@@ -137,7 +129,7 @@ class DishManager(SKAController):
         )
 
     def create_component_manager(self) -> DishManagerComponentManager:
-        """Create the component manager for DishManager
+        """Create the component manager for DishManager.
 
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
@@ -156,7 +148,7 @@ class DishManager(SKAController):
         )
 
     def init_command_objects(self) -> None:
-        """Initialise the command handlers"""
+        """Initialise the command handlers."""
         super().init_command_objects()
 
         for command_name, method_name in [
@@ -268,7 +260,7 @@ class DishManager(SKAController):
     # pylint: disable=unused-argument
     def _component_state_changed(self, *args, **kwargs):
         def change_case(attr_name):
-            """Convert camel case string to snake case
+            """Convert camel case string to snake case.
 
             The snake case output is prefixed by an underscore to
             match the naming convention of the attribute variables.
@@ -280,9 +272,12 @@ class DishManager(SKAController):
 
             Source: https://www.geeksforgeeks.org/
             python-program-to-convert-camel-case-string-to-snake-case/
+
             """
             # pylint: disable=line-too-long
-            return f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
+            return (
+                f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
+            )
 
         for comp_state_name, comp_state_value in kwargs.items():
             attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
@@ -292,17 +287,13 @@ class DishManager(SKAController):
             self.push_archive_event(attribute_name, comp_state_value)
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
-        """
-        A class for the Dish Manager's init_device() method
-        """
+        """A class for the Dish Manager's init_device() method."""
 
         # pylint: disable=invalid-name
         # pylint: disable=too-many-statements
         # pylint: disable=arguments-differ
         def do(self):
-            """
-            Initializes the attributes and properties of the DishManager
-            """
+            """Initializes the attributes and properties of the DishManager."""
             device: DishManager = self._device
             # pylint: disable=protected-access
             device._achieved_pointing_az = [0.0, 0.0]
@@ -453,7 +444,7 @@ class DishManager(SKAController):
         ),
     )
     def lastCommandedMode(self) -> tuple[str, str]:
-        """Return the last commanded mode"""
+        """Return the last commanded mode."""
         return self._last_commanded_mode
 
     # pylint: disable=invalid-name
@@ -463,7 +454,7 @@ class DishManager(SKAController):
         doc="Displays connection status to SPF device",
     )
     def spfConnectionState(self):
-        """Returns the spf connection state"""
+        """Returns the spf connection state."""
         return self.component_manager.component_state.get(
             "spfconnectionstate", CommunicationStatus.NOT_ESTABLISHED
         )
@@ -474,7 +465,7 @@ class DishManager(SKAController):
         doc="Displays connection status to SPFRx device",
     )
     def spfrxConnectionState(self):
-        """Returns the spfrx connection state"""
+        """Returns the spfrx connection state."""
         return self.component_manager.component_state.get(
             "spfrxconnectionstate", CommunicationStatus.NOT_ESTABLISHED
         )
@@ -485,7 +476,7 @@ class DishManager(SKAController):
         doc="Displays connection status to DS device",
     )
     def dsConnectionState(self):
-        """Returns the ds connection state"""
+        """Returns the ds connection state."""
         return self.component_manager.component_state.get(
             "dsconnectionstate", CommunicationStatus.NOT_ESTABLISHED
         )
@@ -508,7 +499,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
     )
     def achievedTargetLock(self):
-        """Returns the achievedTargetLock"""
+        """Returns the achievedTargetLock."""
         return self.component_manager.component_state.get("achievedtargetlock", False)
 
     @attribute(
@@ -536,12 +527,12 @@ class DishManager(SKAController):
         "signal chain for the configuredband.",
     )
     def attenuationPolH(self):
-        """Returns the attenuationPolH"""
+        """Returns the attenuationPolH."""
         return self.component_manager.component_state.get("attenuationpolh", 0.0)
 
     @attenuationPolH.write
     def attenuationPolH(self, value):
-        """Set the attenuationPolH"""
+        """Set the attenuationPolH."""
         # pylint: disable=attribute-defined-outside-init
         spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
         spfrx_cm.write_attribute_value("attenuationPolH", value)
@@ -549,16 +540,15 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ_WRITE,
-        doc="Indicates the SPFRx attenuation in the vertical "
-        "signal chain for the configuredband.",
+        doc="Indicates the SPFRx attenuation in the vertical signal chain for the configuredband.",
     )
     def attenuationPolV(self):
-        """Returns the attenuationPolV"""
+        """Returns the attenuationPolV."""
         return self.component_manager.component_state.get("attenuationpolv", 0.0)
 
     @attenuationPolV.write
     def attenuationPolV(self, value):
-        """Set the attenuationPolV("""
+        """Set the attenuation Pol V."""
         # pylint: disable=attribute-defined-outside-init
         spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
         spfrx_cm.write_attribute_value("attenuationPolV", value)
@@ -569,7 +559,7 @@ class DishManager(SKAController):
         doc="Returns the kValue for SPFRX",
     )
     def kValue(self):
-        """Returns the kValue for SPFRX"""
+        """Returns the kValue for SPFRX."""
         return self.component_manager.component_state["kvalue"]
 
     @attribute(
@@ -577,7 +567,7 @@ class DishManager(SKAController):
         doc="Indicates that the Dish has moved beyond an azimuth wrap limit.",
     )
     def azimuthOverWrap(self):
-        """Returns the azimuthOverWrap"""
+        """Returns the azimuthOverWrap."""
         return self._azimuth_over_wrap
 
     @attribute(
@@ -614,12 +604,12 @@ class DishManager(SKAController):
         access=AttrWriteType.READ_WRITE,
     )
     def band0PointingModelParams(self):
-        """Returns the band0PointingModelParams"""
+        """Returns the band0PointingModelParams."""
         return self.component_manager.component_state.get("band0pointingmodelparams", [])
 
     @band0PointingModelParams.write
     def band0PointingModelParams(self, value):
-        """Set the band0PointingModelParams"""
+        """Set the band0PointingModelParams."""
         self.logger.debug("band0PointingModelParams write method called with params %s", value)
 
         if hasattr(self, "component_manager"):
@@ -644,12 +634,12 @@ class DishManager(SKAController):
         access=AttrWriteType.READ_WRITE,
     )
     def band1PointingModelParams(self):
-        """Returns the band1PointingModelParams"""
+        """Returns the band1PointingModelParams."""
         return self.component_manager.component_state.get("band1pointingmodelparams", [])
 
     @band1PointingModelParams.write
     def band1PointingModelParams(self, value):
-        """Set the band1PointingModelParams"""
+        """Set the band1PointingModelParams."""
         self.logger.debug("band1PointingModelParams write method called with params %s", value)
 
         if hasattr(self, "component_manager"):
@@ -674,12 +664,12 @@ class DishManager(SKAController):
         access=AttrWriteType.READ_WRITE,
     )
     def band2PointingModelParams(self):
-        """Returns the band2PointingModelParams"""
+        """Returns the band2PointingModelParams."""
         return self.component_manager.component_state.get("band2pointingmodelparams", [])
 
     @band2PointingModelParams.write
     def band2PointingModelParams(self, value):
-        """Set the band2PointingModelParams"""
+        """Set the band2PointingModelParams."""
         self.logger.debug("band2PointingModelParams write method called with params %s", value)
 
         if hasattr(self, "component_manager"):
@@ -704,12 +694,12 @@ class DishManager(SKAController):
         access=AttrWriteType.READ_WRITE,
     )
     def band3PointingModelParams(self):
-        """Returns the band3PointingModelParams"""
+        """Returns the band3PointingModelParams."""
         return self.component_manager.component_state.get("band3pointingmodelparams", [])
 
     @band3PointingModelParams.write
     def band3PointingModelParams(self, value):
-        """Set the band3PointingModelParams"""
+        """Set the band3PointingModelParams."""
         self.logger.debug("band3PointingModelParams write method called with params %s", value)
 
         if hasattr(self, "component_manager"):
@@ -734,12 +724,12 @@ class DishManager(SKAController):
         access=AttrWriteType.READ_WRITE,
     )
     def band4PointingModelParams(self):
-        """Returns the band4PointingModelParams"""
+        """Returns the band4PointingModelParams."""
         return self.component_manager.component_state.get("band4pointingmodelparams", [])
 
     @band4PointingModelParams.write
     def band4PointingModelParams(self, value):
-        """Set the band4PointingModelParams"""
+        """Set the band4PointingModelParams."""
         self.logger.debug("band4PointingModelParams write method called with params %s", value)
 
         if hasattr(self, "component_manager"):
@@ -756,12 +746,12 @@ class DishManager(SKAController):
         "do pointing corrections.",
     )
     def band5aPointingModelParams(self):
-        """Returns the band5aPointingModelParams"""
+        """Returns the band5aPointingModelParams."""
         return self._band5a_pointing_model_params
 
     @band5aPointingModelParams.write
     def band5aPointingModelParams(self, value):
-        """Set the band5aPointingModelParams"""
+        """Set the band5aPointingModelParams."""
         self.logger.debug("band5aPointingModelParams write method called with params %s", value)
         if hasattr(self, "component_manager"):
             self.component_manager.update_pointing_model_params("band5aPointingModelParams", value)
@@ -777,12 +767,12 @@ class DishManager(SKAController):
         "do pointing corrections.",
     )
     def band5bPointingModelParams(self):
-        """Returns the band5bPointingModelParams"""
+        """Returns the band5bPointingModelParams."""
         return self._band5b_pointing_model_params
 
     @band5bPointingModelParams.write
     def band5bPointingModelParams(self, value):
-        """Set the band5bPointingModelParams"""
+        """Set the band5bPointingModelParams."""
         self.logger.debug("band5bPointingModelParams write method called with params %s", value)
 
         if hasattr(self, "component_manager"):
@@ -797,12 +787,12 @@ class DishManager(SKAController):
         doc="BAND1 absolute sampler clock frequency (base plus offset).",
     )
     def band1SamplerFrequency(self):
-        """Returns the band1SamplerFrequency"""
+        """Returns the band1SamplerFrequency."""
         return self._band1_sampler_frequency
 
     @band1SamplerFrequency.write
     def band1SamplerFrequency(self, value):
-        """Set the band1SamplerFrequency"""
+        """Set the band1SamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
         self._band1_sampler_frequency = value
         self.push_change_event("band1SamplerFrequency", value)
@@ -814,12 +804,12 @@ class DishManager(SKAController):
         doc="BAND2 absolute sampler clock frequency (base plus offset).",
     )
     def band2SamplerFrequency(self):
-        """Returns the band2SamplerFrequency"""
+        """Returns the band2SamplerFrequency."""
         return self._band2_sampler_frequency
 
     @band2SamplerFrequency.write
     def band2SamplerFrequency(self, value):
-        """Set the band2SamplerFrequency"""
+        """Set the band2SamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
         self._band2_sampler_frequency = value
         self.push_change_event("band2SamplerFrequency", value)
@@ -831,12 +821,12 @@ class DishManager(SKAController):
         doc="BAND3 absolute sampler clock frequency (base plus offset).",
     )
     def band3SamplerFrequency(self):
-        """Returns the band3SamplerFrequency"""
+        """Returns the band3SamplerFrequency."""
         return self._band3_sampler_frequency
 
     @band3SamplerFrequency.write
     def band3SamplerFrequency(self, value):
-        """Set the band3SamplerFrequency"""
+        """Set the band3SamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
         self._band3_sampler_frequency = value
         self.push_change_event("band3SamplerFrequency", value)
@@ -848,12 +838,12 @@ class DishManager(SKAController):
         doc="BAND4 absolute sampler clock frequency (base plus offset).",
     )
     def band4SamplerFrequency(self):
-        """Returns the band4SamplerFrequency"""
+        """Returns the band4SamplerFrequency."""
         return self._band4_sampler_frequency
 
     @band4SamplerFrequency.write
     def band4SamplerFrequency(self, value):
-        """Set the band4SamplerFrequency"""
+        """Set the band4SamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
         self._band4_sampler_frequency = value
         self.push_change_event("band4SamplerFrequency", value)
@@ -865,12 +855,12 @@ class DishManager(SKAController):
         doc="BAND5a absolute sampler clock frequency (base plus offset).",
     )
     def band5aSamplerFrequency(self):
-        """Returns the band5aSamplerFrequency"""
+        """Returns the band5aSamplerFrequency."""
         return self._band5a_sampler_frequency
 
     @band5aSamplerFrequency.write
     def band5aSamplerFrequency(self, value):
-        """Set the band5aSamplerFrequency"""
+        """Set the band5aSamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
         self._band5a_sampler_frequency = value
         self.push_change_event("band5aSamplerFrequency", value)
@@ -882,12 +872,12 @@ class DishManager(SKAController):
         doc="BAND5b absolute sampler clock frequency (base plus offset).",
     )
     def band5bSamplerFrequency(self):
-        """Returns the band5bSamplerFrequency"""
+        """Returns the band5bSamplerFrequency."""
         return self._band5b_sampler_frequency
 
     @band5bSamplerFrequency.write
     def band5bSamplerFrequency(self, value):
-        """Set the band5bSamplerFrequency"""
+        """Set the band5bSamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
         self._band5b_sampler_frequency = value
         self.push_change_event("band5bSamplerFrequency", value)
@@ -898,7 +888,7 @@ class DishManager(SKAController):
         doc="Indicates whether Dish is capturing data in the configured band or not.",
     )
     def capturing(self):
-        """Returns the capturing"""
+        """Returns the capturing."""
         return self.component_manager.component_state.get("capturing", False)
 
     @attribute(
@@ -906,7 +896,7 @@ class DishManager(SKAController):
         doc="The frequency band that the Dish is configured to capture data in.",
     )
     def configuredBand(self):
-        """Returns the configuredBand"""
+        """Returns the configuredBand."""
         return self.component_manager.component_state.get("configuredband", Band.UNKNOWN)
 
     @attribute(
@@ -916,12 +906,12 @@ class DishManager(SKAController):
         doc="[0] Pointing error\n[1] Time period",
     )
     def configureTargetLock(self):
-        """Returns the configureTargetLock"""
+        """Returns the configureTargetLock."""
         return self._configure_target_lock
 
     @configureTargetLock.write
     def configureTargetLock(self, value):
-        """Set the configureTargetLock"""
+        """Set the configureTargetLock."""
         # pylint: disable=attribute-defined-outside-init
         self._configure_target_lock = value
         ds_com_man = self.component_manager.sub_component_managers["DS"]
@@ -954,7 +944,7 @@ class DishManager(SKAController):
         doc="Dish rolled-up operating mode in Dish Control Model (SCM) notation",
     )
     def dishMode(self):
-        """Returns the dishMode"""
+        """Returns the dishMode."""
         return self.component_manager.component_state.get("dishmode", DishMode.UNKNOWN)
 
     @attribute(
@@ -965,12 +955,12 @@ class DishManager(SKAController):
         "dshPowerCurtailment is [TRUE]. The default value is 13.5.",
     )
     def dshMaxShortTermPower(self):
-        """Returns the dshMaxShortTermPower"""
+        """Returns the dshMaxShortTermPower."""
         return self._dsh_max_short_term_power
 
     @dshMaxShortTermPower.write
     def dshMaxShortTermPower(self, value):
-        """Set the dshMaxShortTermPower"""
+        """Set the dshMaxShortTermPower."""
         # pylint: disable=attribute-defined-outside-init
         self._dsh_max_short_term_power = value
         self.push_change_event("dshMaxShortTermPower", value)
@@ -989,12 +979,12 @@ class DishManager(SKAController):
         "maximum slew rates).",
     )
     def dshPowerCurtailment(self):
-        """Returns the dshPowerCurtailment"""
+        """Returns the dshPowerCurtailment."""
         return self._dsh_power_curtailment
 
     @dshPowerCurtailment.write
     def dshPowerCurtailment(self, value):
-        """Set the dshPowerCurtailment"""
+        """Set the dshPowerCurtailment."""
         # pylint: disable=attribute-defined-outside-init
         self._dsh_power_curtailment = value
         self.push_change_event("dshPowerCurtailment", value)
@@ -1002,17 +992,17 @@ class DishManager(SKAController):
 
     @attribute(dtype=(((float),),), max_dim_x=1024, max_dim_y=1024)
     def frequencyResponse(self):
-        """Returns the frequencyResponse"""
+        """Returns the frequencyResponse."""
         return self._frequency_response
 
     @attribute(dtype=(float,), access=AttrWriteType.WRITE)
     def noiseDiodeConfig(self):
-        """Returns the noiseDiodeConfig"""
+        """Returns the noiseDiodeConfig."""
         return self._noise_diode_config
 
     @noiseDiodeConfig.write
     def noiseDiodeConfig(self, value):
-        """Set the noiseDiodeConfig"""
+        """Set the noiseDiodeConfig."""
         # pylint: disable=attribute-defined-outside-init
         self._noise_diode_config = value
         self.push_change_event("noiseDiodeConfig", value)
@@ -1020,7 +1010,7 @@ class DishManager(SKAController):
 
     @attribute(dtype=PointingState)
     def pointingState(self):
-        """Returns the pointingState"""
+        """Returns the pointingState."""
         return self.component_manager.component_state.get("pointingstate", PointingState.UNKNOWN)
 
     @attribute(
@@ -1034,12 +1024,12 @@ class DishManager(SKAController):
         "coordinate in table (max 50 coordinates) given in degrees",
     )
     def programTrackTable(self):
-        """Returns the programTrackTable"""
+        """Returns the programTrackTable."""
         return self._program_track_table
 
     @programTrackTable.write
     def programTrackTable(self, table):
-        """Set the programTrackTable"""
+        """Set the programTrackTable."""
         # pylint: disable=attribute-defined-outside-init
         # Spectrum that is a multiple of 3 values:
         # - (timestamp, azimuth coordinate, elevation coordinate)
@@ -1081,7 +1071,7 @@ class DishManager(SKAController):
         "record.",
     )
     def pointingBufferSize(self):
-        """Returns the pointingBufferSize"""
+        """Returns the pointingBufferSize."""
         return self._pointing_buffer_size
 
     @attribute(
@@ -1093,12 +1083,12 @@ class DishManager(SKAController):
         "[6] Elevation acceleration\n[7] Azimuth jerk\n[8] Elevation jerk",
     )
     def polyTrack(self):
-        """Returns the polyTrack"""
+        """Returns the polyTrack."""
         return self._poly_track
 
     @polyTrack.write
     def polyTrack(self, value):
-        """Set the polyTrack"""
+        """Set the polyTrack."""
         # pylint: disable=attribute-defined-outside-init
         self._poly_track = value
         self.push_change_event("polyTrack", value)
@@ -1106,7 +1096,7 @@ class DishManager(SKAController):
 
     @attribute(dtype=PowerState)
     def powerState(self):
-        """Returns the powerState"""
+        """Returns the powerState."""
         return self._power_state
 
     @attribute(
@@ -1115,12 +1105,12 @@ class DishManager(SKAController):
         doc="Selects the type of interpolation to be used in program tracking.",
     )
     def trackInterpolationMode(self):
-        """Returns the trackInterpolationMode"""
+        """Returns the trackInterpolationMode."""
         return self._track_interpolation_mode
 
     @trackInterpolationMode.write
     def trackInterpolationMode(self, value):
-        """Set the trackInterpolationMode"""
+        """Set the trackInterpolationMode."""
         self.component_manager.set_track_interpolation_mode(value)
 
     @attribute(
@@ -1131,12 +1121,12 @@ class DishManager(SKAController):
         "programTrackTable attribute are loaded in ACU in the selected table.",
     )
     def trackProgramMode(self):
-        """Returns the trackProgramMode"""
+        """Returns the trackProgramMode."""
         return self._track_program_mode
 
     @trackProgramMode.write
     def trackProgramMode(self, value):
-        """Set the trackProgramMode"""
+        """Set the trackProgramMode."""
         # pylint: disable=attribute-defined-outside-init
         self._track_program_mode = value
         self.push_change_event("trackProgramMode", value)
@@ -1153,12 +1143,12 @@ class DishManager(SKAController):
         "programTrackTable attribute.",
     )
     def trackTableLoadMode(self):
-        """Returns the trackTableLoadMode"""
+        """Returns the trackTableLoadMode."""
         return self._track_table_load_mode
 
     @trackTableLoadMode.write
     def trackTableLoadMode(self, value):
-        """Set the trackTableLoadMode"""
+        """Set the trackTableLoadMode."""
         # pylint: disable=attribute-defined-outside-init
         self._track_table_load_mode = value
         self.push_change_event("trackTableLoadMode", value)
@@ -1170,7 +1160,7 @@ class DishManager(SKAController):
         doc="Report the device b1CapabilityState",
     )
     def b1CapabilityState(self):
-        """Returns the b1CapabilityState"""
+        """Returns the b1CapabilityState."""
         return self.component_manager.component_state.get(
             "b1capabilitystate", CapabilityStates.UNKNOWN
         )
@@ -1181,7 +1171,7 @@ class DishManager(SKAController):
         doc="Report the device b2CapabilityState",
     )
     def b2CapabilityState(self):
-        """Returns the b2CapabilityState"""
+        """Returns the b2CapabilityState."""
         return self.component_manager.component_state.get(
             "b2capabilitystate", CapabilityStates.UNKNOWN
         )
@@ -1192,7 +1182,7 @@ class DishManager(SKAController):
         doc="Report the device b3CapabilityState",
     )
     def b3CapabilityState(self):
-        """Returns the b3CapabilityState"""
+        """Returns the b3CapabilityState."""
         return self.component_manager.component_state.get(
             "b3capabilitystate", CapabilityStates.UNKNOWN
         )
@@ -1203,7 +1193,7 @@ class DishManager(SKAController):
         doc="Report the device b4CapabilityState",
     )
     def b4CapabilityState(self):
-        """Returns the b4CapabilityState"""
+        """Returns the b4CapabilityState."""
         return self.component_manager.component_state.get(
             "b4capabilitystate", CapabilityStates.UNKNOWN
         )
@@ -1214,7 +1204,7 @@ class DishManager(SKAController):
         doc="Report the device b5aCapabilityState",
     )
     def b5aCapabilityState(self):
-        """Returns the b5aCapabilityState"""
+        """Returns the b5aCapabilityState."""
         return self.component_manager.component_state.get(
             "b5acapabilitystate", CapabilityStates.UNKNOWN
         )
@@ -1225,7 +1215,7 @@ class DishManager(SKAController):
         doc="Report the device b5bCapabilityState",
     )
     def b5bCapabilityState(self):
-        """Returns the b5aCapabilityState"""
+        """Returns the b5aCapabilityState."""
         return self.component_manager.component_state.get(
             "b5bcapabilitystate", CapabilityStates.UNKNOWN
         )
@@ -1236,12 +1226,12 @@ class DishManager(SKAController):
         doc="Report the scanID for Scan",
     )
     def scanID(self):
-        """Returns the scanID"""
+        """Returns the scanID."""
         return self.component_manager.component_state.get("scanid", "")
 
     @scanID.write
     def scanID(self, scanid):
-        """Sets the scanID"""
+        """Sets the scanID."""
         self.component_manager._update_component_state(scanid=scanid)
 
     @attribute(
@@ -1253,12 +1243,12 @@ class DishManager(SKAController):
         memorized=True,
     )
     def ignoreSpf(self):
-        """Returns ignoreSpf"""
+        """Returns ignoreSpf."""
         return self.component_manager.component_state.get("ignorespf", False)
 
     @ignoreSpf.write
     def ignoreSpf(self, value):
-        """Sets ignoreSpf"""
+        """Sets ignoreSpf."""
         self.logger.debug("Write to ignoreSpf, %s", value)
         self.component_manager.set_spf_device_ignored(value)
 
@@ -1271,12 +1261,12 @@ class DishManager(SKAController):
         memorized=True,
     )
     def ignoreSpfrx(self):
-        """Returns ignoreSpfrx"""
+        """Returns ignoreSpfrx."""
         return self.component_manager.component_state.get("ignorespfrx", False)
 
     @ignoreSpfrx.write
     def ignoreSpfrx(self, value):
-        """Sets ignoreSpfrx"""
+        """Sets ignoreSpfrx."""
         self.logger.debug("Write to ignoreSpfrx, %s", value)
         self.component_manager.set_spfrx_device_ignored(value)
 
@@ -1357,8 +1347,7 @@ class DishManager(SKAController):
         ),
     )
     def lastCommandedPointingParams(self) -> str:
-        """
-        Tango string attribute that returns the
+        """Tango string attribute that returns the
         last JSON input passed to the ApplyPointingModel command.
         Defaults to an empty string.
         """
@@ -1374,14 +1363,14 @@ class DishManager(SKAController):
             """,
     )
     def dscPowerLimitKw(self):
-        """Returns the DSC Power Limit (Kw)"""
+        """Returns the DSC Power Limit (Kw)."""
         return self.component_manager.component_state.get(
             "dscpowerlimitkw", DSC_MIN_POWER_LIMIT_KW
         )
 
     @dscPowerLimitKw.write
     def dscPowerLimitKw(self, value):
-        """Sets the DSC Power Limit (Kw)"""
+        """Sets the DSC Power Limit (Kw)."""
         # pylint: disable=attribute-defined-outside-init
         if DSC_MIN_POWER_LIMIT_KW <= value <= DSC_MAX_POWER_LIMIT_KW:
             self.component_manager.set_dsc_power_limit_kw(value)
@@ -1404,8 +1393,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Abort(self) -> DevVarLongStringArrayType:
-        """
-        Empty out long running commands in queue.
+        """Empty out long running commands in queue.
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -1424,8 +1412,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def AbortCommands(self) -> DevVarLongStringArrayType:
-        """
-        Empty out long running commands in queue.
+        """Empty out long running commands in queue.
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for
@@ -1445,8 +1432,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand1(self, synchronise) -> DevVarLongStringArrayType:
-        """
-        This command triggers the Dish to transition to the CONFIG Dish
+        """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 1. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
@@ -1470,8 +1456,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand2(self, synchronise) -> DevVarLongStringArrayType:
-        """
-        Implemented as a Long Running Command
+        """Implemented as a Long Running Command.
 
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
@@ -1497,8 +1482,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand3(self, synchronise):  # pylint: disable=unused-argument
-        """
-        This command triggers the Dish to transition to the CONFIG Dish
+        """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 3. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
@@ -1516,8 +1500,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand4(self, synchronise):  # pylint: disable=unused-argument
-        """
-        This command triggers the Dish to transition to the CONFIG Dish
+        """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 4. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
@@ -1537,8 +1520,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand5a(self, synchronise):  # pylint: disable=unused-argument
-        """
-        This command triggers the Dish to transition to the CONFIG Dish
+        """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 5a. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
@@ -1558,8 +1540,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def ConfigureBand5b(self, synchronise):  # pylint: disable=unused-argument
-        """
-        This command triggers the Dish to transition to the CONFIG Dish
+        """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 5b. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
@@ -1575,8 +1556,7 @@ class DishManager(SKAController):
     @command(dtype_in=str, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Scan(self, scanid) -> DevVarLongStringArrayType:
-        """
-        The Dish records the scanID for an ongoing scan
+        """The Dish records the scanID for an ongoing scan.
 
         :param args: the scanID in string format
         """
@@ -1588,9 +1568,7 @@ class DishManager(SKAController):
     @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def EndScan(self) -> DevVarLongStringArrayType:
-        """
-        This command clears out the scan_id
-        """
+        """This command clears out the scan_id."""
         handler = self.get_command_object("EndScan")
         result_code, unique_id = handler()
 
@@ -1600,8 +1578,7 @@ class DishManager(SKAController):
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
     def SetMaintenanceMode(self) -> DevVarLongStringArrayType:
-        """
-        This command triggers the Dish to transition to the MAINTENANCE
+        """This command triggers the Dish to transition to the MAINTENANCE
         Dish Element Mode, and returns to the caller. To go into a state
         that is safe to approach the Dish by a maintainer, and to enable the
         Engineering interface to allow direct access to low level control and
@@ -1622,8 +1599,7 @@ class DishManager(SKAController):
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
     def SetOperateMode(self) -> DevVarLongStringArrayType:
-        """
-        Implemented as a Long Running Command
+        """Implemented as a Long Running Command.
 
         This command triggers the Dish to transition to the OPERATE Dish
         Element Mode, and returns to the caller. This mode fulfils the main
@@ -1647,8 +1623,7 @@ class DishManager(SKAController):
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
     def SetStandbyLPMode(self) -> DevVarLongStringArrayType:
-        """
-        Implemented as a Long Running Command
+        """Implemented as a Long Running Command.
 
         This command triggers the Dish to transition to the STANDBY‐LP Dish
         Element Mode, and returns to the caller. Standby_LP is the default
@@ -1679,8 +1654,7 @@ class DishManager(SKAController):
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
     def SetStandbyFPMode(self) -> DevVarLongStringArrayType:
-        """
-        Implemented as a Long Running Command
+        """Implemented as a Long Running Command.
 
         This command triggers the Dish to transition to the STANDBY‐FP Dish
         Element Mode, and returns to the caller.
@@ -1703,8 +1677,7 @@ class DishManager(SKAController):
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
     def SetStowMode(self) -> DevVarLongStringArrayType:
-        """
-        Implemented as a Long Running Command
+        """Implemented as a Long Running Command.
 
         This command immediately triggers the Dish to transition to STOW Dish Element
         Mode. It subsequently aborts all queued LRC tasks and then returns to the caller.
@@ -1728,8 +1701,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Slew(self, values):  # pylint: disable=unused-argument
-        """
-        Trigger the Dish to start moving to the commanded (Az,El) position.
+        """Trigger the Dish to start moving to the commanded (Az,El) position.
 
         :param argin: the az, el for the pointing in stringified json format
 
@@ -1743,8 +1715,7 @@ class DishManager(SKAController):
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def Synchronise(self):
-        """
-        Reset configured band sample counters. Command only valid in
+        """Reset configured band sample counters. Command only valid in
         SPFRx OPERATE mode.
         """
         raise NotImplementedError
@@ -1756,8 +1727,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def Track(self) -> DevVarLongStringArrayType:
-        """
-        Implemented as a Long Running Command
+        """Implemented as a Long Running Command.
 
         When the Track command is received the Dish will start tracking the
         commanded positions.
@@ -1790,8 +1760,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def TrackStop(self) -> DevVarLongStringArrayType:
-        """
-        Implemented as a Long Running Command
+        """Implemented as a Long Running Command.
 
         When the TrackStop command is received the Dish will stop moving
         but will not apply brakes.
@@ -1824,13 +1793,11 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def TrackLoadStaticOff(self, values) -> DevVarLongStringArrayType:
-        """
-        Loads the given static pointing model offsets.
+        """Loads the given static pointing model offsets.
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-
         handler = self.get_command_object("TrackLoadStaticOff")
         result_code, unique_id = handler(values)
         return ([result_code], [unique_id])
@@ -1842,8 +1809,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetKValue(self, value) -> DevVarLongStringArrayType:
-        """
-        This command sets the kValue on SPFRx.
+        """This command sets the kValue on SPFRx.
         Note that it will only take effect after
         SPFRx has been restarted.
         """
@@ -1899,25 +1865,24 @@ class DishManager(SKAController):
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def StopCommunication(self):
-        """Stop communicating with monitored devices"""
+        """Stop communicating with monitored devices."""
         self.component_manager.stop_communicating()
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def StartCommunication(self):
-        """Start communicating with monitored devices"""
+        """Start communicating with monitored devices."""
         self.component_manager.start_communicating()
 
     @command(
         dtype_in=None,
         dtype_out=str,
         display_level=DispLevel.OPERATOR,
-        doc_out=("Retrieve the states of SPF, SPFRx" " and DS as DishManager sees it."),
+        doc_out=("Retrieve the states of SPF, SPFRx and DS as DishManager sees it."),
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def GetComponentStates(self):
-        """
-        Get the current component states of subservient devices.
+        """Get the current component states of subservient devices.
 
         Subservient devices constiture SPF, SPFRx and DS. Used for debugging.
         """
@@ -1937,8 +1902,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SyncComponentStates(self) -> None:
-        """
-        Sync each subservient device component state with its tango device
+        """Sync each subservient device component state with its tango device
         to refresh the dish manager component state.
         """
         if hasattr(self, "component_manager"):

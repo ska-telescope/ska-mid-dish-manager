@@ -1,4 +1,4 @@
-"""Test DS component manager"""
+"""Test DS component manager."""
 
 import logging
 from threading import Lock
@@ -12,11 +12,10 @@ from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
 LOGGER = logging.getLogger(__name__)
 
 
-# pylint:disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
-    """Stress test component updates"""
+    """Stress test component updates."""
     state_update_lock = Lock()
     com_man = DSComponentManager(
         ds_device_fqdn,

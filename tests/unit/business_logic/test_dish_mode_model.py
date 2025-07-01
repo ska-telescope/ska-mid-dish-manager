@@ -1,13 +1,11 @@
 """Unit tests verifying model against dishMode transitions."""
 
-# pylint: disable=too-many-lines
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
 
-# pylint: disable=missing-function-docstring, redefined-outer-name
 @pytest.fixture(scope="module")
 def dish_mode_model():
     return DishModeModel()
@@ -15,9 +13,9 @@ def dish_mode_model():
 
 @pytest.mark.unit
 def test_model_node_matches_dish_mode_enums(dish_mode_model):
-    assert dish_mode_model.dishmode_graph.number_of_nodes() == len(
-        DishMode
-    ), "Nodes on DishMode model are not equal to DishMode enums"
+    assert dish_mode_model.dishmode_graph.number_of_nodes() == len(DishMode), (
+        "Nodes on DishMode model are not equal to DishMode enums"
+    )
 
     for dish_mode_enum in DishMode:
         assert dish_mode_enum.name in dish_mode_model.dishmode_graph.nodes

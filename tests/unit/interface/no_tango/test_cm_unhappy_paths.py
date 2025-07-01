@@ -1,4 +1,4 @@
-"""Tests dish manager component manager unhappy paths for command handlers"""
+"""Tests dish manager component manager unhappy paths for command handlers."""
 
 import pytest
 from ska_control_model import TaskStatus
@@ -11,8 +11,7 @@ def test_slew_with_invalid_input(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of Slew command using invalid input.
+    """Verify behaviour of Slew command using invalid input.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -28,8 +27,7 @@ def test_track_load_static_off_with_invalid_input(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of Trackloadoffstatic command using invalid input.
+    """Verify behaviour of Trackloadoffstatic command using invalid input.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -46,8 +44,7 @@ def test_track_load_static_off_with_invalid_input(
 def test_periodic_noise_diode_pars_with_invalid_input(
     component_manager: DishManagerComponentManager,
 ) -> None:
-    """
-    Verify behaviour of set_periodic_noise_diode_pars command using invalid input.
+    """Verify behaviour of set_periodic_noise_diode_pars command using invalid input.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -61,8 +58,7 @@ def test_periodic_noise_diode_pars_with_invalid_input(
 def test_periodic_noise_diode_pars_with_invalid_states(
     component_manager: DishManagerComponentManager,
 ) -> None:
-    """
-    Verify behaviour of set_periodic_noise_diode_pars command with invalid states.
+    """Verify behaviour of set_periodic_noise_diode_pars command with invalid states.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -81,8 +77,7 @@ def test_periodic_noise_diode_pars_with_invalid_states(
 def test_pseudo_random_noise_diode_pars_with_invalid_input(
     component_manager: DishManagerComponentManager,
 ) -> None:
-    """
-    Verify behaviour of set_pseudo_random_noise_diode_pars command using invalid input.
+    """Verify behaviour of set_pseudo_random_noise_diode_pars command using invalid input.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -96,8 +91,7 @@ def test_pseudo_random_noise_diode_pars_with_invalid_input(
 def test_pseudo_random_noise_diode_pars_with_invalid_states(
     component_manager: DishManagerComponentManager,
 ) -> None:
-    """
-    Verify behaviour of set_periodic_noise_diode_pars command with invalid states.
+    """Verify behaviour of set_periodic_noise_diode_pars command with invalid states.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to

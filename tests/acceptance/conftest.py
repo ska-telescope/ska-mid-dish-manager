@@ -1,4 +1,4 @@
-"""Fixtures for running ska-mid-dish-manager acceptance tests"""
+"""Fixtures for running ska-mid-dish-manager acceptance tests."""
 
 import pytest
 import tango
@@ -13,7 +13,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 @pytest.fixture
 def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
-    """Undo any updates to raiseCmdException in SPF and SPFRx"""
+    """Undo any updates to raiseCmdException in SPF and SPFRx."""
     yield
     spf_device_proxy.raiseCmdException = False
     spfrx_device_proxy.raiseCmdException = False
@@ -27,7 +27,7 @@ def setup_and_teardown(
     spf_device_proxy,
     spfrx_device_proxy,
 ):
-    """Reset the tango devices to a fresh state before each test"""
+    """Reset the tango devices to a fresh state before each test."""
     # this wait is very important for our AUTOMATED tests!!!
     # wait for task status updates to finish before resetting the
     # sub devices to a clean state for the next test. Reasons are:

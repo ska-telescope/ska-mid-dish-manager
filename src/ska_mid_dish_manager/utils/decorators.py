@@ -1,4 +1,4 @@
-"Utility decorators"
+"""Utility decorators."""
 
 import functools
 import logging
@@ -9,7 +9,7 @@ from ska_control_model import CommunicationStatus
 
 
 def record_mode_change_request(func: Any) -> Any:
-    """Record a mode change request"""
+    """Record a mode change request."""
 
     @functools.wraps(func)
     def wrapper_record_mode_change_request(*args: Any, **kwargs: Any) -> Any:
@@ -25,8 +25,7 @@ def record_mode_change_request(func: Any) -> Any:
 
 
 def check_communicating(func: Any) -> Any:
-    """
-    Return a function that checks component communication before calling a function.
+    """Return a function that checks component communication before calling a function.
 
     The component manager needs to have established communications with
     the component before the function is called but if there is no communication
@@ -37,8 +36,7 @@ def check_communicating(func: Any) -> Any:
     .. code-block:: python
 
         @check_communicating
-        def slew(self):
-            ...
+        def slew(self): ...
 
     :param func: the wrapped function
 
@@ -51,8 +49,7 @@ def check_communicating(func: Any) -> Any:
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        """
-        Check for component communication before calling the function.
+        """Check for component communication before calling the function.
 
         This is a wrapper function that implements the functionality of
         the decorator.

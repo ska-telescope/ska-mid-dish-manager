@@ -1,4 +1,4 @@
-"""Test dish manager handles and publishes change events on attribute quality update"""
+"""Test dish manager handles and publishes change events on attribute quality update."""
 
 import itertools
 
@@ -22,13 +22,12 @@ from tests.utils import EventStore
             ],
             2,
         )
-    )[
-        :10
-    ],  # Just the first 10 for now
+    )[:10],  # Just the first 10 for now
 )
 def test_transitions(dish_manager_proxy, spfrx_device_proxy, qual_before, qual_after):
     """Test quality of dishmanager exposed attribute mirrors the quality of the underlying
-    subservient device attribute"""
+    subservient device attribute.
+    """
     dm_event_store = EventStore()
     spfrx_event_store = EventStore()
 

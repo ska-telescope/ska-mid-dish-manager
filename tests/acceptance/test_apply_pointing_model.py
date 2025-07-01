@@ -1,6 +1,5 @@
-# pylint: disable=too-many-locals
+"""Test Apply Pointing Model Command."""
 
-"""Test Apply Pointing Model Command"""
 import json
 import logging
 from pathlib import Path
@@ -21,7 +20,7 @@ def read_file_contents(
     value_range: Optional[bool] = False,
     coeff: Optional[str] = None,
 ) -> tuple[str, dict]:
-    """Read out the JSON file. Object used when calling ApplyPointingModel command"""
+    """Read out the JSON file. Object used when calling ApplyPointingModel command."""
     # Ingest the file as JSON string and configure band selection
     # Get the directory where the test file is located
     test_dir = Path(__file__).parent
@@ -37,13 +36,13 @@ def read_file_contents(
         if band is not None:
             pointing_model_definition["band"] = band
         if unit:
-            pointing_model_definition["coefficients"]["IA"][
-                "units"
-            ] = "deg"  # Change units from arcsec to deg
+            pointing_model_definition["coefficients"]["IA"]["units"] = (
+                "deg"  # Change units from arcsec to deg
+            )
         if value_range and coeff == "IA":
-            pointing_model_definition["coefficients"]["IA"][
-                "value"
-            ] = 3000  # force out of range value
+            pointing_model_definition["coefficients"]["IA"]["value"] = (
+                3000  # force out of range value
+            )
         if value_range and coeff == "ABphi":
             pointing_model_definition["coefficients"]["ABphi"][
                 "value"
@@ -69,7 +68,7 @@ def read_file_contents(
 def test_best_case_json(
     band_selection: tuple[str, str], dish_manager_proxy: tango.DeviceProxy, event_store_class: Any
 ) -> None:
-    """Test that global pointing parameters are applied correctly from incoming JSON definition"""
+    """Test that global pointing parameters are applied correctly from incoming JSON definition."""
     pointing_model_param_events = event_store_class()
     attribute, band_number, file_name = band_selection
     dish_manager_proxy.subscribe_event(
@@ -96,7 +95,7 @@ def test_best_case_json(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -> None:
-    "Test the `lastCommandedPointingParams` attribute of the dish manager."
+    """Test the `lastCommandedPointingParams` attribute of the dish manager."""
     pointing_model_json_str, _ = read_file_contents("global_pointing_model.json", "Band_2")
     # Command execution
     dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
@@ -109,9 +108,9 @@ def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -
         raise ValueError(
             "lastCommandedPointingParams is not valid JSON or it is default empty string"
         ) from json_error
-    assert last_requested_parameters == json.loads(
-        pointing_model_json_str
-    ), "The JSON strings did not match as expected"
+    assert last_requested_parameters == json.loads(pointing_model_json_str), (
+        "The JSON strings did not match as expected"
+    )
 
 
 @pytest.mark.acceptance
@@ -132,7 +131,6 @@ def test_inconsistent_json(
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
     """Test ApplyPointingModel command with incorrect (Wrong antenna and band) JSON inputs."""
-
     pointing_model_json_str, _ = read_file_contents(file_name)
 
     [[result_code], [command_resp]] = dish_manager_proxy.ApplyPointingModel(
@@ -148,7 +146,6 @@ def test_missing_coeffs_json(
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
     """Test ApplyPointingModel command with missing pointing coefficients."""
-
     file_name = "incorrect_total_coeff.json"
     response = "Coefficients are missing. The coefficients found in the JSON object were {coeff}"
 
@@ -170,7 +167,6 @@ def test_out_of_order_pointing_coeff_json(
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
     """Test ApplyPointingModel command with coefficients in a non-standard order."""
-
     file_name = "coeff_order.json"
     response = "Successfully wrote the following values {coeff} to band 2 on DS"
 
@@ -199,7 +195,7 @@ def test_out_of_order_pointing_coeff_json(
 def test_unit_and_range(
     resp, unit, value_range, coeff, dish_manager_proxy: tango.DeviceProxy
 ) -> None:
-    """Test that units and ranges"""
+    """Test that units and ranges."""
     file_name = "global_pointing_model.json"
     pointing_model_json_str, _ = read_file_contents(
         file_name, unit=unit, value_range=value_range, coeff=coeff
@@ -231,7 +227,6 @@ def test_missing_units_values(
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
     """Test ApplyPointingModel command with missing units and value keys."""
-
     pointing_model_json_str, _ = read_file_contents(file_name)
 
     [[result_code], [command_resp]] = dish_manager_proxy.ApplyPointingModel(

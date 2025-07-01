@@ -1,4 +1,4 @@
-"""Test to stress test dish pointing by appending pointing coordinates at rate of 200ms"""
+"""Test to stress test dish pointing by appending pointing coordinates at rate of 200ms."""
 
 import logging
 import time
@@ -27,7 +27,7 @@ TOLERANCE = 1e-2
 
 @pytest.mark.stress
 def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_store_class):
-    """Dish pointing stress test implementation"""
+    """Dish pointing stress test implementation."""
     result_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
     band_event_store = event_store_class()
