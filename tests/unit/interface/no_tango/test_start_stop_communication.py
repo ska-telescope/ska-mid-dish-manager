@@ -1,4 +1,4 @@
-"""Tests dish manager component manager start/stop communication command handler"""
+"""Tests dish manager component manager start/stop communication command handler."""
 
 import pytest
 from ska_control_model import CommunicationStatus
@@ -12,8 +12,7 @@ def test_start_stop_communication(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of start_communication/ stop_communication command handler.
+    """Verify behaviour of start_communication/ stop_communication command handler.
 
     :param component_manager: the component manager under test
     :callbacks

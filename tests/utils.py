@@ -1,5 +1,5 @@
-# pylint: disable=invalid-name,possibly-unused-variable,no-value-for-parameter
-"""General utils for test devices"""
+"""General utils for test devices."""
+
 import queue
 import random
 import string
@@ -20,13 +20,13 @@ EL_SPEED_LIMIT_DEG_PER_S = 1.0
 
 
 class ComponentStateStore:
-    """Store component state changes with useful functionality"""
+    """Store component state changes with useful functionality."""
 
     def __init__(self) -> None:
         self._queue = queue.Queue()
 
     def __call__(self, *args, **kwargs):
-        """Store the update component_state
+        """Store the update component_state.
 
         :param event: latest_state
         :type event: dict
@@ -34,7 +34,7 @@ class ComponentStateStore:
         self._queue.put(kwargs)
 
     def get_queue_values(self, timeout: int = 3):
-        """Get the values from the queue"""
+        """Get the values from the queue."""
         items = []
         try:
             while True:
@@ -46,7 +46,7 @@ class ComponentStateStore:
     def wait_for_value(  # pylint:disable=inconsistent-return-statements
         self, key: str, value: Any, timeout: int = 3
     ):
-        """Wait for a value to arrive
+        """Wait for a value to arrive.
 
         Wait `timeout` seconds for each fetch.
 
@@ -69,27 +69,24 @@ class ComponentStateStore:
                 component_state.append(state)
         except queue.Empty as err:
             raise RuntimeError(
-                (
-                    f"Never got a state with key [{key}], value "
-                    f"[{value}], got [{component_state}]"
-                )
+                (f"Never got a state with key [{key}], value [{value}], got [{component_state}]")
             ) from err
 
     def clear_queue(self):
-        """Clear out the queue"""
+        """Clear out the queue."""
         while not self._queue.empty():
             self._queue.get()
 
 
 class EventStore:
-    """Store events with useful functionality"""
+    """Store events with useful functionality."""
 
     def __init__(self) -> None:
-        """Init Store"""
+        """Init Store."""
         self._queue = queue.Queue()
 
     def push_event(self, event: tango.EventData):
-        """Store the event
+        """Store the event.
 
         :param event: Tango event
         :type event: tango.EventData
@@ -102,7 +99,7 @@ class EventStore:
         timeout: int = 3,
         proxy: Any = None,
     ):
-        """Wait for a value to arrive
+        """Wait for a value to arrive.
 
         Wait `timeout` seconds for each fetch.
 
@@ -114,7 +111,6 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
-
         try:
             events = []
             while True:
@@ -169,7 +165,7 @@ class EventStore:
     def wait_for_quality(  # pylint:disable=inconsistent-return-statements
         self, value: tango.AttrQuality, timeout: int = 3
     ):
-        """Wait for a quality value to arrive
+        """Wait for a quality value to arrive.
 
         Wait `timeout` seconds for each fetch.
 
@@ -181,7 +177,6 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
-
         try:
             events = []
             while True:
@@ -199,7 +194,7 @@ class EventStore:
 
     # pylint:disable=inconsistent-return-statements
     def wait_for_command_result(self, command_id: str, command_result: Any, timeout: int = 3):
-        """Wait for a long running command result
+        """Wait for a long running command result.
 
         Wait `timeout` seconds for each fetch.
 
@@ -227,7 +222,7 @@ class EventStore:
             raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
 
     def wait_for_command_id(self, command_id: str, timeout: int = 3):
-        """Wait for a long running command to complete
+        """Wait for a long running command to complete.
 
         Wait `timeout` seconds for each fetch.
 
@@ -261,7 +256,7 @@ class EventStore:
             ) from err
 
     def wait_for_progress_update(self, progress_message: str, timeout: int = 3):
-        """Wait for a long running command progress update
+        """Wait for a long running command progress update.
 
         Wait `timeout` seconds for each fetch.
 
@@ -299,7 +294,7 @@ class EventStore:
     def filter_id_events(
         cls, events: List[tango.EventData], unique_id: str
     ) -> List[tango.EventData]:
-        """Filter out only events from unique_id
+        """Filter out only events from unique_id.
 
         :param events: Events
         :type events: List[tango.EventData]
@@ -311,7 +306,7 @@ class EventStore:
         return [event for event in events if unique_id in str(event.attr_value.value)]
 
     def wait_for_n_events(self, event_count: int, timeout: int = 3):
-        """Wait for N number of events
+        """Wait for N number of events.
 
         Wait `timeout` seconds for each fetch.
 
@@ -336,13 +331,13 @@ class EventStore:
             ) from err
 
     def clear_queue(self):
-        """Clear out the queue"""
+        """Clear out the queue."""
         while not self._queue.empty():
             self._queue.get()
 
     #  pylint: disable=unused-argument
     def get_queue_events(self, timeout: int = 3):
-        """Get all the events out of the queue"""
+        """Get all the events out of the queue."""
         items = []
         try:
             while True:
@@ -352,7 +347,7 @@ class EventStore:
 
     @classmethod
     def extract_event_values(cls, events: List[tango.EventData]) -> List[Tuple]:
-        """Get the values out of events
+        """Get the values out of events.
 
         :param events: List of events
         :type events: List[tango.EventData]
@@ -365,7 +360,7 @@ class EventStore:
         return event_info
 
     def get_queue_values(self, timeout: int = 3):
-        """Get the values from the queue"""
+        """Get the values from the queue."""
         items = []
         try:
             while True:
@@ -376,7 +371,7 @@ class EventStore:
 
     @classmethod
     def get_data_from_events(cls, events: List[tango.EventData]) -> List[Tuple]:
-        """Retrieve the event info from the events
+        """Retrieve the event info from the events.
 
         :param events: list of
         :type events: List[tango.EventData]
@@ -386,7 +381,6 @@ class EventStore:
 
 def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
     """Sets ignored devices on DishManager."""
-
     if device_proxy.ignoreSpf != ignore_spf:
         spf_connection_event_store = EventStore()
         device_proxy.subscribe_event(
@@ -426,8 +420,7 @@ def generate_random_text(length=10):
 
 
 def calculate_slew_target(current_az, current_el, offset_az, offset_el):
-    """
-    Moves a point by specified offsets in azimuth and elevation,
+    """Moves a point by specified offsets in azimuth and elevation,
     ensuring the result stays within defined constraints.
 
     :param current_az: Current azimuth value.
@@ -453,7 +446,6 @@ def calculate_slew_target(current_az, current_el, offset_az, offset_el):
     return requested_az, requested_el
 
 
-# pylint: disable=too-many-locals
 def generate_track_table(
     num_samples: int = 50,
     current_az: float = 0.0,
@@ -461,8 +453,7 @@ def generate_track_table(
     time_offset_seconds: float = 5,
     total_track_duration_seconds: float = 5,
 ) -> List[float]:
-    """
-    Generate a track table with smoothly varying azimuth and elevation values,
+    """Generate a track table with smoothly varying azimuth and elevation values,
     starting from the current pointing.
 
     :param time_offset_seconds: The number of seconds from the current TAI time

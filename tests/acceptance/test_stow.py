@@ -1,4 +1,4 @@
-"""Test that DS goes into STOW and dishManager reports it"""
+"""Test that DS goes into STOW and dishManager reports it."""
 
 import pytest
 import tango
@@ -6,7 +6,6 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
-# pylint: disable=too-many-locals,unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_stow_transition(
@@ -14,7 +13,7 @@ def test_stow_transition(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test transition to STOW"""
+    """Test transition to STOW."""
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
 

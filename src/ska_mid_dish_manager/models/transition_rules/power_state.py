@@ -1,5 +1,4 @@
-"""
-Automatic transition rules for power state
+"""Automatic transition rules for power state.
 
 * The DSPowerState enumeration only has 2 labels in the latest ICD.
 This will impact the rules defined in this file.
@@ -18,8 +17,7 @@ POWER_STATE_RULES_ALL_DEVICES = {
     "FULL_1": rule_engine.Rule("DS.powerstate  == 'DSPowerState.FULL_POWER'"),
     # consider case where DS is UNKNOWN and only SPF powerState is available
     "LOW_2": rule_engine.Rule(
-        "DS.powerstate  == 'DSPowerState.UNKNOWN' and "
-        "SPF.powerstate  == 'SPFPowerState.LOW_POWER'"
+        "DS.powerstate  == 'DSPowerState.UNKNOWN' and SPF.powerstate  == 'SPFPowerState.LOW_POWER'"
     ),
     "FULL_2": rule_engine.Rule(
         "DS.powerstate  == 'DSPowerState.UNKNOWN' and "
@@ -27,8 +25,7 @@ POWER_STATE_RULES_ALL_DEVICES = {
     ),
     # consider case where both components report UNKNOWN powerstate
     "LOW_3": rule_engine.Rule(
-        "DS.powerstate  == 'DSPowerState.UNKNOWN' and "
-        "SPF.powerstate  == 'SPFPowerState.UNKNOWN'"
+        "DS.powerstate  == 'DSPowerState.UNKNOWN' and SPF.powerstate  == 'SPFPowerState.UNKNOWN'"
     ),
 }
 

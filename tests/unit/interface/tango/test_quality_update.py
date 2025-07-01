@@ -11,7 +11,6 @@ from tango import AttrQuality
 LOGGER = logging.getLogger(__name__)
 
 
-# pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -30,7 +29,7 @@ LOGGER = logging.getLogger(__name__)
     ),
 )
 def test_change(qual_before, qual_after, event_store_class, dish_manager_resources):
-    """Test the change events on the dish manager cm level"""
+    """Test the change events on the dish manager cm level."""
     device_proxy, dish_manager_cm = dish_manager_resources
     event_store = event_store_class()
     device_proxy.subscribe_event(
@@ -46,7 +45,7 @@ def test_change(qual_before, qual_after, event_store_class, dish_manager_resourc
 
 
 def test_event_handling(event_store_class, dish_manager_resources):
-    """Test the change events on the tango device cm level"""
+    """Test the change events on the tango device cm level."""
     device_proxy, dish_manager_cm = dish_manager_resources
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 

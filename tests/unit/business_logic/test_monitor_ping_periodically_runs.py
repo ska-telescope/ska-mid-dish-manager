@@ -1,4 +1,3 @@
-# pylint: disable=protected-access
 """Unit tests checking SPFRx component manager periodically calls MonitorPing."""
 
 import logging
@@ -16,8 +15,7 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango")
 def test_monitor_ping_is_executed_on_spfrx_while_communication_is_sought(patch_tango, caplog):
-    """
-    Test that the 'MonitorPing' command is executed on the
+    """Test that the 'MonitorPing' command is executed on the
     SPFRxComponentManager when communication is initiated.
     """
     caplog.set_level(logging.DEBUG)
@@ -45,8 +43,7 @@ def test_monitor_ping_is_executed_on_spfrx_while_communication_is_sought(patch_t
 
 
 def test_monitor_ping_runs():
-    """Test that MonitorPing is called"""
-
+    """Test that MonitorPing is called."""
     with mock.patch("ska_mid_dish_manager.component_managers.spfrx_cm.tango") as mocked_tango:
         mocked_dp = mock.MagicMock()
         mocked_tango.DeviceProxy.return_value = mocked_dp
@@ -67,8 +64,7 @@ def test_monitor_ping_runs():
 
 
 def test_monitor_ping_log_count():
-    """Test that MonitorPing logs error only PING_ERROR_LOG_REPEAT times"""
-
+    """Test that MonitorPing logs error only PING_ERROR_LOG_REPEAT times."""
     with mock.patch("ska_mid_dish_manager.component_managers.spfrx_cm.tango") as mocked_tango:
         mocked_dp = mock.MagicMock()
         mocked_dp.command_inout.side_effect = DevFailed()

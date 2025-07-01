@@ -45,7 +45,6 @@ def test_only_one_abort_runs_at_a_time(dish_manager_resources):
     assert result_code == ResultCode.REJECTED
 
 
-# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -58,7 +57,7 @@ def test_only_one_abort_runs_at_a_time(dish_manager_resources):
 def test_abort_is_rejected_in_maintenance_dishmode(
     abort_cmd, dish_manager_resources, event_store_class
 ):
-    """Verify Abort/AbortCommands is rejected when DishMode is MAINTENANCE"""
+    """Verify Abort/AbortCommands is rejected when DishMode is MAINTENANCE."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
@@ -83,7 +82,6 @@ def test_abort_is_rejected_in_maintenance_dishmode(
     assert result_code == ResultCode.REJECTED
 
 
-# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -96,7 +94,7 @@ def test_abort_is_rejected_in_maintenance_dishmode(
 def test_abort_during_dish_movement(
     dish_manager_resources, event_store_class, abort_cmd, pointing_state
 ):
-    """Verify Abort/AbortCommands executes the abort sequence"""
+    """Verify Abort/AbortCommands executes the abort sequence."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]

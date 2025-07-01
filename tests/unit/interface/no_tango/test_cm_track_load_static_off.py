@@ -1,4 +1,4 @@
-"""Tests dish manager component manager trackloadstaticoff command handler"""
+"""Tests dish manager component manager trackloadstaticoff command handler."""
 
 from unittest.mock import Mock, patch
 
@@ -15,8 +15,7 @@ def test_track_load_static_off_handler(
     mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of TrackLoadStaticOff command handler.
+    """Verify behaviour of TrackLoadStaticOff command handler.
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: a representing the command tracker class

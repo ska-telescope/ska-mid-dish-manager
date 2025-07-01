@@ -1,4 +1,4 @@
-"""State transition computation"""
+"""State transition computation."""
 
 from typing import Optional
 
@@ -36,7 +36,7 @@ from ska_mid_dish_manager.models.transition_rules import (
 
 
 class StateTransition:
-    """Computes the next state from rules based on component updates"""
+    """Computes the next state from rules based on component updates."""
 
     def compute_dish_mode(
         self,
@@ -44,7 +44,7 @@ class StateTransition:
         spfrx_component_state: Optional[dict] = None,  # type: ignore
         spf_component_state: Optional[dict] = None,  # type: ignore
     ) -> DishMode:
-        """Compute the dishMode based off component_states
+        """Compute the dishMode based off component_states.
 
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
@@ -78,7 +78,7 @@ class StateTransition:
         spfrx_component_state: Optional[dict] = None,  # type: ignore
         spf_component_state: Optional[dict] = None,  # type: ignore
     ) -> HealthState:
-        """Compute the HealthState based off component_states
+        """Compute the HealthState based off component_states.
 
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
@@ -115,7 +115,7 @@ class StateTransition:
         spfrx_component_state: Optional[dict] = None,  # type: ignore
         spf_component_state: Optional[dict] = None,  # type: ignore
     ) -> CapabilityStates:
-        """Compute the capabilityState based off component_states
+        """Compute the capabilityState based off component_states.
 
         The same rules are used regardless of band.
         This method renames b5aCapabilityState to capabilitystate to
@@ -184,7 +184,7 @@ class StateTransition:
         spfrx_component_state: Optional[dict] = None,  # type: ignore
         spf_component_state: Optional[dict] = None,  # type: ignore
     ) -> Band:
-        """Compute the configuredband based off component_states
+        """Compute the configuredband based off component_states.
 
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
@@ -216,7 +216,7 @@ class StateTransition:
         ds_component_state: dict,  # type: ignore
         spfrx_component_state: Optional[dict] = None,  # type: ignore
     ) -> SPFBandInFocus:
-        """Compute the bandinfocus based off component_states
+        """Compute the bandinfocus based off component_states.
 
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
@@ -240,7 +240,7 @@ class StateTransition:
         ds_component_state: dict,  # type: ignore
         spf_component_state: Optional[dict] = None,  # type: ignore
     ) -> PowerState:
-        """Compute the powerstate based off component_states
+        """Compute the powerstate based off component_states.
 
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
@@ -260,8 +260,8 @@ class StateTransition:
             if rule.matches(dish_manager_states):
                 if power_state.startswith("UPS"):
                     return PowerState[power_state]
-                power_state = power_state.split("_")[0]  # pylint: disable=use-maxsplit-arg
-                return PowerState[power_state]
+                _power_state = power_state.split("_")[0]  # pylint: disable=use-maxsplit-arg
+                return PowerState[_power_state]
         return PowerState.LOW
 
     @classmethod
@@ -272,7 +272,7 @@ class StateTransition:
         spf_component_state: Optional[dict] = None,  # type: ignore
         dish_manager_component_state: Optional[dict] = None,  # type: ignore
     ) -> dict:  # type: ignore
-        """Collapse multiple state dicts into one"""
+        """Collapse multiple state dicts into one."""
         dish_manager_states = {"DS": {}}  # type: ignore
 
         for key, val in ds_component_state.items():

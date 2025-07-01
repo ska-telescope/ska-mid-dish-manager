@@ -9,8 +9,7 @@ SKA_EPOCH = "1999-12-31T23:59:28Z"
 
 
 def get_tai_timestamp_from_unix_s(unix_s: float) -> float:
-    """
-    Calculate atomic time in seconds from unix time in seconds.
+    """Calculate atomic time in seconds from unix time in seconds.
 
     :param unix_s: Unix time in seconds
 

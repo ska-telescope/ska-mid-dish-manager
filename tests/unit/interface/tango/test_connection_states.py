@@ -5,7 +5,6 @@ import tango
 from ska_control_model import CommunicationStatus, HealthState
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(

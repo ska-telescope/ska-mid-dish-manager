@@ -1,6 +1,4 @@
-"""Contains pytest fixtures for other tests setup"""
-
-# pylint: disable=too-many-statements,invalid-name,missing-function-docstring,redefined-outer-name
+"""Contains pytest fixtures for other tests setup."""
 
 import os
 import socket
@@ -21,7 +19,7 @@ from tests.utils import ComponentStateStore, EventStore
 
 
 def pytest_addoption(parser):
-    "Add additional options"
+    """Add additional options."""
     parser.addoption(
         "--event-storage-files-path",
         action="store",
@@ -58,19 +56,19 @@ def mock_tango_device_proxy_instance(mocker, open_port):
 
 @pytest.fixture(scope="function")
 def event_store():
-    """Fixture for storing events"""
+    """Fixture for storing events."""
     return EventStore()
 
 
 @pytest.fixture(scope="function")
 def event_store_class():
-    """Fixture for storing events"""
+    """Fixture for storing events."""
     return EventStore
 
 
 @pytest.fixture(scope="function")
 def component_state_store():
-    """Fixture for storing component state changes over time"""
+    """Fixture for storing component state changes over time."""
     return ComponentStateStore()
 
 
@@ -116,7 +114,7 @@ def spfrx_device_proxy(spfrx_device_fqdn):
 
 @dataclass
 class TrackedDevice:
-    """Class to group tracked device information"""
+    """Class to group tracked device information."""
 
     device_proxy: tango.DeviceProxy
     attribute_names: Tuple[str]
@@ -124,7 +122,7 @@ class TrackedDevice:
 
 
 class EventPrinter:
-    """Class that writes to attribte changes to a file"""
+    """Class that writes to attribte changes to a file."""
 
     def __init__(self, filename: str, tracked_devices: Tuple[TrackedDevice] = ()) -> None:
         self.tracked_devices = tracked_devices
@@ -158,7 +156,7 @@ class EventPrinter:
                     attr_value = ev.device.get_attribute_config(attr_name).enum_labels[attr_value]
 
                 open_file.write(
-                    (f"\nEvent\t{ev.reception_date}\t{ev.device}" f"\t{attr_name}\t{attr_value}")
+                    (f"\nEvent\t{ev.reception_date}\t{ev.device}\t{attr_name}\t{attr_value}")
                 )
 
 

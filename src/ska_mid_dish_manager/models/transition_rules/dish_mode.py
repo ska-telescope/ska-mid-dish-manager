@@ -1,4 +1,4 @@
-"""Automatic transition rules for dish mode"""
+"""Automatic transition rules for dish mode."""
 
 import rule_engine
 

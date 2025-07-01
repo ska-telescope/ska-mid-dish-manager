@@ -1,4 +1,4 @@
-"""Test dscPowerLimtkW Attribute"""
+"""Test dscPowerLimtkW Attribute."""
 
 from typing import Any
 
@@ -31,7 +31,7 @@ def test_initial_power_limit(
     ds_device_proxy: tango.DeviceProxy,
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
-    """Tests the dscPowerLimitkW attribute inital value on DS and Dish Manager"""
+    """Tests the dscPowerLimitkW attribute inital value on DS and Dish Manager."""
     initial_value = 10.0
     assert (
         ds_device_proxy.read_attribute("dscPowerLimitkW").value
@@ -49,7 +49,8 @@ def test_correct_power_limit_change(
 ) -> None:
     """Tests the setting of the dscPowerLimitkW attribute (correct). Chaining is
     tested in order to make sure that a change on DS Manager's attribute updates
-    the attribute of Dish Manager and Vice versa."""
+    the attribute of Dish Manager and Vice versa.
+    """
     dm_attribute_event_store = event_store_class()
     ds_attribute_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
@@ -74,7 +75,8 @@ def test_incorrect_power_limit_change(
 ) -> None:
     """Tests the setting of the dscPowerLimitkW attribute (incorrect). Chaining is
     tested in order to make sure that a change on DS Manager's attribute updates the
-    attribute of Dish Manager and Vice versa."""
+    attribute of Dish Manager and Vice versa.
+    """
     clean_up(ds_device_proxy, dish_manager_proxy, event_store_class)
     power_limit_list = [0.9, 0.6]
     for proxy, power_limit in zip([ds_device_proxy, dish_manager_proxy], power_limit_list):
@@ -105,7 +107,8 @@ def test_power_limit_change_set_power_mode(
 ) -> None:
     """Tests the limits of the attribute dscPowerLimitkW through the SetPowerMode. Chaining is
     tested in order to make sure that a change on DS Manager's attribute updates the attribute
-    of Dish Manager and Vice versa."""
+    of Dish Manager and Vice versa.
+    """
     clean_up(ds_device_proxy, dish_manager_proxy, event_store_class)
     ds_attribute_event_store = event_store_class()
     dm_attribute_event_store = event_store_class()
@@ -127,7 +130,6 @@ def test_power_limit_change_set_power_mode(
         dm_attribute_event_store.wait_for_value(DEFAULT_POWER_LIMIT, timeout=6)
 
 
-# pylint: disable=too-many-arguments
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     ("full_power", "expected_progress", "limit_value"),
