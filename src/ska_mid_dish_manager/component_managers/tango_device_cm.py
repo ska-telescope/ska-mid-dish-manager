@@ -241,9 +241,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             try:
                 event_data = event_queue.get(timeout=1)
                 error = event_data.err
-                if event_data.attr_value:
-                    # if error received and marked as invalid, then valid communication
-                    error &= event_data.attr_value.quality != tango.AttrQuality.ATTR_INVALID
+                # If tango error has been flag, due to an invalid attribute, do not
+                # interpret it as communication error.
+                if error and event_data.attr_value:
+                    if event_data.attr_value.quality == tango.AttrQuality.ATTR_INVALID:
+                        error = False
 
                 if error:
                     if error_event_cb:
