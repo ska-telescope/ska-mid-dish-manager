@@ -165,15 +165,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         self._active_attr_event_subscriptions.add(event_attr_name)
         currently_synced = monitored_attrs == self._active_attr_event_subscriptions
 
-        self.logger.debug(
-            "SPFRX_HW_TEST [%s] [Update %s]:\n monitored [%s]\n active [%s]\n comm state [%s]",
-            self._tango_device_fqdn,
-            event_attr_name,
-            monitored_attrs,
-            self._active_attr_event_subscriptions,
-            self._communication_state,
-        )
-
         if not previously_synced and currently_synced:
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
             self._fetch_build_state_information()
