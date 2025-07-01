@@ -31,6 +31,17 @@ def construct_mock_valid_event_data(attr_name: str) -> tango.EventData:
     mock_valid_event_data.err = False
     return mock_valid_event_data
 
+def construct_mock_invalid_quality_event_data(attr_name: str) -> tango.EventData:
+    """Construct a mock attribute with invalid quality for a given attribute."""
+    mock_attr_value = mock.MagicMock(name=f"mock_{attr_name}_value")
+    mock_attr_value.name = attr_name
+    mock_attr_value.quality = tango.AttrQuality.ATTR_INVALID
+
+    mock_valid_event_data = mock.MagicMock(name=f"mock_{attr_name}valid_event")
+    mock_valid_event_data.attr_value = mock_attr_value
+    mock_valid_event_data.err = True
+    return mock_valid_event_data
+
 
 def construct_mock_error_event_data(attr_name: str, reason: str) -> tango.EventData:
     """Construct a mock error event data for a given attribute"""
@@ -99,6 +110,37 @@ def test_happy_path(patched_tango, caplog):
     # clean up afterwards
     tc_manager.stop_communicating()
 
+@pytest.mark.unit
+@mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango")
+def test_connection_with_invalid_attr(patched_tango, caplog):
+    """Tango device establishes connection with invalid attribute quality."""
+    caplog.set_level(logging.DEBUG)
+
+    tc_manager = TangoDeviceComponentManager(
+        "a/b/c",
+        LOGGER,
+        ("some_attr",),
+    )
+
+    # configure mock and start communication
+    tc_manager._fetch_build_state_information = mock.MagicMock(name="mock_build_state")
+    communication_state_changed = Event()
+    tc_manager._communication_state_callback = partial(
+        comm_state_callback, communication_state_changed
+    )
+    tc_manager.start_communicating()
+
+    # Set up an attribute with err and quality invalid
+    mock_some_attr_event_data = construct_mock_invalid_quality_event_data("some_attr")
+    # send valid events to the queue to trigger the valid event callback
+    tc_manager._events_queue.put(mock_some_attr_event_data)
+
+    # wait a bit for the state to change
+    communication_state_changed.wait(timeout=1)
+    assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
+
+    # clean up afterwards
+    tc_manager.stop_communicating()
 
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
