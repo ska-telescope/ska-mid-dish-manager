@@ -201,7 +201,7 @@ source = ["src"]
 [tool.coverage.run]
 data_file = ".coverage/.coverage"
 branch = true
-source = ["ska_mid_dish_simulators"]
+source = ["ska_mid_dish_manager"]
 
 [tool.coverage.report]
 show_missing = false
