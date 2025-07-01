@@ -232,7 +232,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             try:
                 event_data = event_queue.get(timeout=1)
                 error = event_data.err
-                # If tango error has been flag, due to an invalid attribute, do not
+                # If a tango error has been flagged, due to an invalid attribute, do not
                 # interpret it as communication error.
                 if error and event_data.attr_value:
                     if event_data.attr_value.quality == tango.AttrQuality.ATTR_INVALID:
