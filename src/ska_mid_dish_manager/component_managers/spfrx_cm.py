@@ -113,7 +113,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "noisediodemode",
             "periodicnoisediodepars",
             "pseudorandomnoisediodepars",
-            "adminMode",
+            # "adminMode",
         )
         super().__init__(
             tango_device_fqdn,
@@ -125,6 +125,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             quality_monitored_attributes=(
                 "attenuationpolv",
                 "attenuationpolh",
+                "noisediodemode",
             ),
             **kwargs,
         )
