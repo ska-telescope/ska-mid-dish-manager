@@ -231,13 +231,12 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         while task_abort_event and not task_abort_event.is_set():
             try:
                 event_data = event_queue.get(timeout=1)
-                # Attributes received that are invalid must not switch the
-                # communication state to NOT_ESTABLISHED and must be used to
-                # indicate that the client to server communication is operational.
-                if (
-                    event_data.err
-                    and event_data.attr_value.quality is not tango.AttrQuality.ATTR_INVALID
-                ):
+                error = event_data.err
+                if event_data.attr_value:
+                    # if error received and marked as invalid, then valid communication
+                    error &= event_data.attr_value.quality != tango.AttrQuality.ATTR_INVALID
+
+                if error:
                     if error_event_cb:
                         error_event_cb(event_data)
                     continue
