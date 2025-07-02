@@ -14,6 +14,7 @@ from ska_tango_base.executor import TaskExecutorComponentManager
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
+from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
@@ -67,6 +68,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
+        wms_instances,
         *args,
         **kwargs,
     ):
@@ -117,6 +119,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
+            meanwindspeed=0,
             **kwargs,
         )
         self.logger = logger
@@ -215,6 +218,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_device_component_state_changed, DishDevice.SPFRX
                 ),
                 quality_state_callback=self._quality_state_callback,
+            ),
+            "WMS": WMSComponentManager(
+                logger,
+                wms_instances=wms_instances,
+                component_state_callback=self._evaluate_wind_speed_rules,
+                state_update_lock=self._state_update_lock,
+                meanwindspeed=-1,   
             ),
         }
 
@@ -387,6 +397,27 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ):
         state_name = f"{device.lower()}connectionstate"
         self._update_component_state(**{state_name: connection_state})
+
+    def _evaluate_wind_speed_rules(self, **wind_data_params):
+        """Callback responding to mean wind speed or wind gust updates."""
+        if "meanwindspeed" in wind_data_params:
+            computed_wind_speed = wind_data_params["meanwindspeed"]
+
+            # TODO: These are to be properties of the dish manager!!!
+            mean_wind_speed_threshold = 10
+            auto_wind_stow_enabled = True
+
+            # auto_wind_stow_enabled = self.component_state["autostowtoggle"]
+
+            if auto_wind_stow_enabled and (computed_wind_speed >= mean_wind_speed_threshold):
+                self.set_stow_mode()
+                self.logger.info(
+                    f"Mean wind speed {computed_wind_speed}m/s exceeded mean wind speed auto stow threshold of {mean_wind_speed_threshold}m/s. Requesting Stow"
+                )
+            self._update_component_state(meanwindspeed=wind_data_params["meanwindspeed"])
+        elif "windgust" in wind_data_params:
+            # TODO: Add handling when wind gust data is exposed by WMS
+            self.logger.info(f"Wind gust callback triggered with: {wind_data_params}")
 
     def _sub_device_communication_state_changed(
         self, device: DishDevice, communication_state: CommunicationStatus
@@ -703,6 +734,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 self._update_component_state(**{attr_lower: new_value})
 
+    
+
     # ----------------------------------------
     # Command object/ attribute write handlers
     # ----------------------------------------
@@ -985,11 +1018,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         try:
             ds_cm.execute_command("Stow", None)
         except tango.DevFailed as err:
-            task_callback(status=TaskStatus.FAILED, exception=err)
+            if task_callback:
+                task_callback(status=TaskStatus.FAILED, exception=err)
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
-        task_callback(
-            status=TaskStatus.COMPLETED, progress="Stow called, monitor dishmode for LRC completed"
-        )
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED, progress="Stow called, monitor dishmode for LRC completed"
+            )
         # abort queued tasks on the task executor
         self.abort_commands()
 

@@ -94,7 +94,7 @@ ska-mid-wms:
     # Default TRL: mid/wms/<instance number> eg: mid/wms/0
     # Uncomment the below to set a custom TRL, host or port
     wms0:
-      enabled: false
+      enabled: true
       # server:
       #   name: "WMSDevice"
       #   instances:
