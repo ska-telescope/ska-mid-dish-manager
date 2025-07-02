@@ -31,7 +31,7 @@ dependencies:
   condition: ska-tango-base.enabled
 - name: ska-mid-dish-simulators
   version: 4.4.3-dev.c2e2c0a23
-  repository: https://gitlab.com/api/v4/projects/39434619/packages/helm/api/dev/
+  repository: https://gitlab.com/api/v4/projects/39434619/packages/helm/dev
   condition: ska-mid-dish-simulators.enabled
 - name: ska-mid-dish-ds-manager
   version: 5.0.0
