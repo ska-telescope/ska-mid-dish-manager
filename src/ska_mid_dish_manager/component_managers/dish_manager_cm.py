@@ -10,6 +10,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
+from tango import DevVarLongArray
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
@@ -45,8 +46,6 @@ from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
-
-DevVarLong64Array = list[int]
 
 
 # pylint: disable=abstract-method
@@ -1309,7 +1308,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_periodic_noise_diode_pars(
         self,
-        values: DevVarLong64Array,
+        values: DevVarLongArray,
     ) -> None:
         """Set the periodicNoiseDiodePars on the SPFRx."""
         if len(values) != 3:

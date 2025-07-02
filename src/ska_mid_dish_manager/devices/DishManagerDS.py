@@ -16,7 +16,7 @@ from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango import AttrWriteType, DevState, DispLevel
-from tango.server import attribute, command, device_property, run
+from tango.server import DevVarLongArray, attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.command_class import (
@@ -55,7 +55,6 @@ from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackTableTimestampError,
 )
 
-DevVarLong64Array = list[int]
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 
 # Used for input validation. Input samples to tracktable that is less that
@@ -1304,7 +1303,7 @@ class DishManager(SKAController):
         self.component_manager.set_noise_diode_mode(mode)
 
     @attribute(
-        dtype=(DevVarLong64Array,),
+        dtype=(DevVarLongArray,),
         max_dim_x=3,
         doc="""
             Periodic noise diode pars (units are in time quanta).
@@ -1322,12 +1321,12 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get("periodicnoisediodepars", [])
 
     @periodicNoiseDiodePars.write
-    def periodicNoiseDiodePars(self, values: DevVarLong64Array):
+    def periodicNoiseDiodePars(self, values: DevVarLongArray):
         """Set the device periodic noise diode pars."""
         self.component_manager.set_periodic_noise_diode_pars(values)
 
     @attribute(
-        dtype=(DevVarLong64Array,),
+        dtype=(DevVarLongArray,),
         max_dim_x=3,
         doc="""
             Pseudo random noise diode pars (units are in time quanta).
@@ -1345,7 +1344,7 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get("pseudorandomnoisediodepars", [])
 
     @pseudoRandomNoiseDiodePars.write
-    def pseudoRandomNoiseDiodePars(self, values: DevVarLong64Array):
+    def pseudoRandomNoiseDiodePars(self, values: DevVarLongArray):
         """Set the device pseudo random noise diode pars."""
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
 
