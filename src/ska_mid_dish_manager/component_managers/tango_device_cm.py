@@ -226,7 +226,14 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         while task_abort_event and not task_abort_event.is_set():
             try:
                 event_data = event_queue.get(timeout=1)
-                if event_data.err:
+                error = event_data.err
+                # If a tango error has been flagged, due to an invalid attribute, do not
+                # interpret it as communication error.
+                if error and event_data.attr_value:
+                    if event_data.attr_value.quality == tango.AttrQuality.ATTR_INVALID:
+                        error = False
+
+                if error:
                     if error_event_cb:
                         error_event_cb(event_data)
                     continue
