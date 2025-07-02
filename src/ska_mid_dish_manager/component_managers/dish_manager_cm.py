@@ -224,7 +224,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 wms_instances=wms_instances,
                 component_state_callback=self._evaluate_wind_speed_rules,
                 state_update_lock=self._state_update_lock,
-                meanwindspeed=-1,   
+                meanwindspeed=-1,
             ),
         }
 
@@ -734,8 +734,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 self._update_component_state(**{attr_lower: new_value})
 
-    
-
     # ----------------------------------------
     # Command object/ attribute write handlers
     # ----------------------------------------
@@ -1023,7 +1021,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
         if task_callback:
             task_callback(
-                status=TaskStatus.COMPLETED, progress="Stow called, monitor dishmode for LRC completed"
+                status=TaskStatus.COMPLETED,
+                progress="Stow called, monitor dishmode for LRC completed",
             )
         # abort queued tasks on the task executor
         self.abort_commands()

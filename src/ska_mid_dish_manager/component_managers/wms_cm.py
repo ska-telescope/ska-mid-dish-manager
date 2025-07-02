@@ -82,9 +82,15 @@ class WMSComponentManager(BaseComponentManager):
         """Stop WMS attr polling."""
         if self._wms_attr_polling_timer.is_alive():
             self._wms_attr_polling_timer.cancel()
-        # Set AdminMode to OFFLINE
-        # Remove from tango group ?
-        # set comm state to DISABLED
+
+        try:
+            self.write_wms_group_attribute_value("adminMode", AdminMode.OFFLINE)
+            self._wms_device_group.remove_all()
+            self._update_communication_state(CommunicationStatus.DISABLED)
+        except:
+            self.logger.error(
+                "Failed to set WMS device(s) adminMode to OFFLINE. One or more WMS device may be unavailable"
+            )
 
     def _restart_polling_timer(self) -> None:
         """Cancel any old instances of the WMS polling timer and start new instance."""
