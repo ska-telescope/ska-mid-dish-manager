@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
-from tango import AttrWriteType, DevState, DevULong, DispLevel
+from tango import AttrWriteType, DevState, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
