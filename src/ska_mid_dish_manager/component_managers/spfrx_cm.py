@@ -119,6 +119,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             quality_monitored_attributes=(
                 "attenuationpolv",
                 "attenuationpolh",
+                "noisediodemode",
             ),
             **kwargs,
         )
