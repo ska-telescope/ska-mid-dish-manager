@@ -1,4 +1,4 @@
-"""Test noise diode attributes from SPFRx."""
+"""Test SPFRx noise diode attributes."""
 
 from typing import Any
 

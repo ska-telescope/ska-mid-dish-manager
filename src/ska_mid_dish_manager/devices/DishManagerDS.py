@@ -55,6 +55,7 @@ from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackTableTimestampError,
 )
 
+DevVarLong64Array = list[int]
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 
 # Used for input validation. Input samples to tracktable that is less that
@@ -1303,7 +1304,7 @@ class DishManager(SKAController):
         self.component_manager.set_noise_diode_mode(mode)
 
     @attribute(
-        dtype=(DevULong,),
+        dtype=(DevVarLong64Array,),
         max_dim_x=3,
         doc="""
             Periodic noise diode pars (units are in time quanta).
@@ -1321,12 +1322,12 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get("periodicnoisediodepars", [])
 
     @periodicNoiseDiodePars.write
-    def periodicNoiseDiodePars(self, values):
+    def periodicNoiseDiodePars(self, values: DevVarLong64Array):
         """Set the device periodic noise diode pars."""
         self.component_manager.set_periodic_noise_diode_pars(values)
 
     @attribute(
-        dtype=(DevULong,),
+        dtype=(DevVarLong64Array,),
         max_dim_x=3,
         doc="""
             Pseudo random noise diode pars (units are in time quanta).
@@ -1344,7 +1345,7 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get("pseudorandomnoisediodepars", [])
 
     @pseudoRandomNoiseDiodePars.write
-    def pseudoRandomNoiseDiodePars(self, values):
+    def pseudoRandomNoiseDiodePars(self, values: DevVarLong64Array):
         """Set the device pseudo random noise diode pars."""
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
 

@@ -1529,7 +1529,7 @@
       writable_attr_name: noiseDiodeMode
     - name: periodicNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevULong
+      data_type: DevVarLong64Array
       description: "\n            Periodic noise diode pars (units are in time quanta).\n\
         \n            [0]: period, [1]: duty cycle, [2]: phase shift\n\n         \
         \   Note: This attribute does not persist after a power cycle. A default value\
@@ -1662,7 +1662,7 @@
       writable_attr_name: programTrackTable
     - name: pseudoRandomNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevULong
+      data_type: DevVarLong64Array
       description: "\n            Pseudo random noise diode pars (units are in time\
         \ quanta).\n\n            [0]: binary polynomial, [1]: seed, [2]: dwell\n\n\
         \            Note: This attribute does not persist after a power cycle. A\

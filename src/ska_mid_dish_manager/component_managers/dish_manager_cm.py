@@ -46,6 +46,8 @@ from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
+DevVarLong64Array = list[int]
+
 
 # pylint: disable=abstract-method
 # pylint: disable=too-many-instance-attributes
@@ -101,7 +103,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ignorespfrx=False,
             noisediodemode=NoiseDiodeMode.OFF,
             periodicnoisediodepars=[],
-            pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
+            pseudorandomnoisediodepars=[0, 0, 0],
             actstaticoffsetvaluexel=0.0,
             actstaticoffsetvalueel=0.0,
             tracktablecurrentindex=0,
@@ -205,8 +207,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 noisediodemode=NoiseDiodeMode.OFF,
-                periodicnoisediodepars=[0.0, 0.0, 0.0],
-                pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
+                periodicnoisediodepars=[0, 0, 0],
+                pseudorandomnoisediodepars=[0, 0, 0],
                 adminmode=AdminMode.OFFLINE,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPFRX
@@ -1307,7 +1309,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_periodic_noise_diode_pars(
         self,
-        values,
+        values: DevVarLong64Array,
     ) -> None:
         """Set the periodicNoiseDiodePars on the SPFRx."""
         if len(values) != 3:
