@@ -11,7 +11,8 @@ DISH_MODE_RULES_ALL_DEVICES = {
     "MAINTENANCE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.STOW' and "
         "SPF.operatingmode  == 'SPFOperatingMode.MAINTENANCE' and "
-        "SPFRX.adminmode  == 'AdminMode.ENGINEERING'"
+        "( SPFRX.adminmode  == 'AdminMode.ENGINEERING' or "
+        " SPFRX.operatingmode  == 'SPFRxOperatingMode.MAINTENANCE' )"
     ),
     "OPERATE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.POINT' and "

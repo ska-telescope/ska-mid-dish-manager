@@ -107,7 +107,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "noisediodemode",
             "periodicnoisediodepars",
             "pseudorandomnoisediodepars",
-            "adminMode",
+            # "adminMode", TODO: Wait for SPFRx to implement adminMode
         )
         super().__init__(
             tango_device_fqdn,
