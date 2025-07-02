@@ -1,4 +1,4 @@
-"""Unit tests for tracking lastCommandedMode attribute updates"""
+"""Unit tests for tracking lastCommandedMode attribute updates."""
 
 import pytest
 import tango
@@ -14,7 +14,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_last_commanded_mode_attr_records_mode_transition_requests(

@@ -1,4 +1,4 @@
-"""Tests dish manager component manager set_maintenance_mode command handler"""
+"""Tests dish manager component manager set_maintenance_mode command handler."""
 
 from unittest.mock import Mock, patch
 
@@ -20,8 +20,7 @@ def test_set_maintenance_mode_handler(
     mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of SetMaintenanceMode command handler.
+    """Verify behaviour of SetMaintenanceMode command handler.
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: representing the command tracker class

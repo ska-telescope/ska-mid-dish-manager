@@ -1,4 +1,4 @@
-"""Tests dish manager component manager setstandbylp command handler"""
+"""Tests dish manager component manager setstandbylp command handler."""
 
 from unittest.mock import Mock, patch
 
@@ -20,8 +20,7 @@ def test_set_standbylp_handler(
     mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of SetStandbyLP command handler.
+    """Verify behaviour of SetStandbyLP command handler.
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: a representing the command tracker class

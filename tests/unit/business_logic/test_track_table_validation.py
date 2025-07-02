@@ -13,18 +13,17 @@ from ska_mid_dish_manager.utils.track_table_input_validation import (
 MAX_TRACK_LOAD_TABLE_SAMPLES = 50
 
 
-# pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
 class TestTrackLoadTableFormatting:
-    """Tests for TrackLoadTableFormatting"""
+    """Tests for TrackLoadTableFormatting."""
 
     def setup_method(self):
-        """Set up context"""
+        """Set up context."""
         self.future_time_s = 5
         self.track_table_formatter = TrackLoadTableFormatting()
 
     def test_track_table_input_happy(self):
-        """Test happy path when length and future time is appropriate"""
+        """Test happy path when length and future time is appropriate."""
         offset_s = 2.0
         time_future_unix = time() + self.future_time_s + offset_s
         time_future_tai = get_tai_timestamp_from_unix_s(time_future_unix)
@@ -32,7 +31,7 @@ class TestTrackLoadTableFormatting:
         self.track_table_formatter.check_track_table_input_valid(table, self.future_time_s)
 
     def test_track_table_input_invalid_time(self):
-        """Test when future time check fails"""
+        """Test when future time check fails."""
         offset_s = -0.5
         time_future_unix = time() + self.future_time_s + offset_s
         time_future_tai = get_tai_timestamp_from_unix_s(time_future_unix)
@@ -41,7 +40,7 @@ class TestTrackLoadTableFormatting:
             self.track_table_formatter.check_track_table_input_valid(table, self.future_time_s)
 
     def test_track_table_input_invalid_length(self):
-        """Test when table length is invalid"""
+        """Test when table length is invalid."""
         offset_s = -0.1
         time_future_unix = time() + self.future_time_s + offset_s
         table = [time_future_unix, 2.0, 3.0, 4.0]
@@ -49,12 +48,12 @@ class TestTrackLoadTableFormatting:
             self.track_table_formatter.check_track_table_input_valid(table, self.future_time_s)
 
     def test_track_table_input_empty_list(self):
-        """Test when table length is empty"""
+        """Test when table length is empty."""
         table = []
         self.track_table_formatter.check_track_table_input_valid(table, self.future_time_s)
 
     def test_track_table_time_monotonically_inc(self):
-        """Test when time elements are monotonically increasing"""
+        """Test when time elements are monotonically increasing."""
         track_table = []
         time_future_unix = time() + 30
 

@@ -446,6 +446,23 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: attenuationPolV
+    - name: autoStowToggle
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: "\n            Flag to ignore or act on wind speed / wind gust\
+        \ \n            values exeeding the configured threshold.\n            "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: autoStowToggle
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: autoStowToggle
     - name: availableCapabilities
       data_format: SPECTRUM
       data_type: DevString
@@ -1184,7 +1201,7 @@
     - name: frequencyResponse
       data_format: IMAGE
       data_type: DevDouble
-      description: Returns the frequencyResponse
+      description: Returns the frequencyResponse.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1488,10 +1505,28 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: meanWindSpeed
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "\n            The average wind speed in m/s of the last 10 minutes\
+        \ \n            calculated from the connected weather stations.\n        \
+        \    "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: meanWindSpeed
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: noiseDiodeConfig
       data_format: SPECTRUM
       data_type: DevDouble
-      description: Returns the noiseDiodeConfig
+      description: Returns the noiseDiodeConfig.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1569,7 +1604,7 @@
     - name: pointingState
       data_format: SCALAR
       data_type: DevEnum
-      description: Returns the pointingState
+      description: Returns the pointingState.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1623,7 +1658,7 @@
     - name: powerState
       data_format: SCALAR
       data_type: DevEnum
-      description: Returns the powerState
+      description: Returns the powerState.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1908,4 +1943,3 @@
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
     - name: polled_cmd
-

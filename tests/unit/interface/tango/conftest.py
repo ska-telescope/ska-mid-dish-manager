@@ -1,4 +1,4 @@
-"""Contains pytest fixtures for tango unit tests setup"""
+"""Contains pytest fixtures for tango unit tests setup."""
 
 from unittest.mock import Mock, patch
 
@@ -14,15 +14,17 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.fixture
 def dish_manager_resources():
-    with patch(
-        (
-            "ska_mid_dish_manager.component_managers.tango_device_cm."
-            "TangoDeviceComponentManager.start_communicating"
-        )
-    ), patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"):
+    with (
+        patch(
+            (
+                "ska_mid_dish_manager.component_managers.tango_device_cm."
+                "TangoDeviceComponentManager.start_communicating"
+            )
+        ),
+        patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"),
+    ):
         tango_context = DeviceTestContext(DishManager)
         tango_context.start()
         device_proxy = tango_context.device

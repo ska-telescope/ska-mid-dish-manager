@@ -31,8 +31,7 @@ def callbacks() -> dict:
 
 @pytest.fixture()
 def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Generator:
-    """
-    Fixture that returns the component manager under test.
+    """Fixture that returns the component manager under test.
 
     :param callbacks: a dictionary of mocks passed as callbacks
 
@@ -45,15 +44,17 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
         task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(None)))
         return TaskStatus.QUEUED, "message"
 
-    with patch.multiple(
-        "ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceComponentManager",
-        read_attribute_value=MagicMock(),
-        write_attribute_value=MagicMock(),
-        update_state_from_monitored_attributes=MagicMock(),
-        execute_command=MagicMock(),
-        run_device_command=MagicMock(side_effect=_simulate_lrc_callbacks),
-    ), patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager"), patch(
-        "ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"
+    with (
+        patch.multiple(
+            "ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceComponentManager",
+            read_attribute_value=MagicMock(),
+            write_attribute_value=MagicMock(),
+            update_state_from_monitored_attributes=MagicMock(),
+            execute_command=MagicMock(),
+            run_device_command=MagicMock(side_effect=_simulate_lrc_callbacks),
+        ),
+        patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager"),
+        patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"),
     ):
         dish_manager_cm = DishManagerComponentManager(
             LOGGER,

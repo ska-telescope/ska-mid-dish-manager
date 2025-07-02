@@ -1,6 +1,4 @@
-"""
-Abstracts all the logic for executing commands on the device
-"""
+"""Abstracts all the logic for executing commands on the device."""
 
 import logging
 import time
@@ -14,7 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState, Trac
 
 
 class Abort:
-    """Abort command handler"""
+    """Abort command handler."""
 
     def __init__(
         self,
@@ -196,7 +194,7 @@ class Abort:
         task_abort_event: Event,
         task_callback: Optional[Callable] = None,
     ) -> None:
-        """Executes the abort sequence"""
+        """Executes the abort sequence."""
         if abort_command_id is not None:
             while (
                 self._command_tracker.get_command_status(abort_command_id) != TaskStatus.COMPLETED
@@ -213,34 +211,33 @@ class Abort:
         )
 
 
-# pylint: disable=too-few-public-methods
 class SetStandbyLPMode:
-    """SetStandbyLPMode command handler"""
+    """SetStandbyLPMode command handler."""
 
 
 class SetStandbyFPMode:
-    """SetStandbyFPMode command handler"""
+    """SetStandbyFPMode command handler."""
 
 
 class SetOperateMode:
-    """SetOperateMode command handler"""
+    """SetOperateMode command handler."""
 
 
 class Track:
-    """Track command handler"""
+    """Track command handler."""
 
 
 class TrackStop:
-    """TrackStop command handler"""
+    """TrackStop command handler."""
 
 
 class ConfigureBand:
-    """ConfigureBand command handler"""
+    """ConfigureBand command handler."""
 
 
 class SetStowMode:
-    """SetStowMode command handler"""
+    """SetStowMode command handler."""
 
 
 class AnyOtherCommand:
-    """_summary_"""
+    """_summary_."""

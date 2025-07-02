@@ -13,8 +13,7 @@ class AbortCommand(SubmittedSlowCommand):
     """A custom class for Abort Command."""
 
     def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """
-        Stateless hook for command functionality.
+        """Stateless hook for command functionality.
 
         :param args: positional args to the component manager method
         :param kwargs: keyword args to the component manager method
@@ -48,8 +47,7 @@ class AbortCommandsDeprecatedCommand(SubmittedSlowCommand):
     """A custom class for AbortCommands Command."""
 
     def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """
-        Stateless hook for command functionality.
+        """Stateless hook for command functionality.
 
         :param args: positional args to the component manager method
         :param kwargs: keyword args to the component manager method
@@ -88,8 +86,7 @@ class ApplyPointingModelCommand(FastCommand):
     """Class for handling band pointing parameters given a JSON input."""
 
     def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
-        """
-        Initialise a new ApplyPointingModelCommand instance.
+        """Initialise a new ApplyPointingModelCommand instance.
 
         :param component_manager: the device to which this command belongs.
         :param logger: a logger for this command to use.
@@ -98,8 +95,7 @@ class ApplyPointingModelCommand(FastCommand):
         super().__init__(logger)
 
     def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """
-        Implement ApplyPointingModel command functionality.
+        """Implement ApplyPointingModel command functionality.
 
         :param args: JSON object with a schema similar to this::
 
@@ -132,8 +128,7 @@ class SetKValueCommand(FastCommand):
     """Class for handling the SetKValue command."""
 
     def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
-        """
-        Initialise a new SetKValueCommand instance.
+        """Initialise a new SetKValueCommand instance.
 
         :param component_manager: the device to which this command belongs.
         :param logger: a logger for this command to use.
@@ -142,8 +137,7 @@ class SetKValueCommand(FastCommand):
         super().__init__(logger)
 
     def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """
-        Implement SetKValue command functionality.
+        """Implement SetKValue command functionality.
 
         :param args: k value.
         :return: A tuple containing a return code and a string
@@ -157,8 +151,7 @@ class StowCommand(SubmittedSlowCommand):
     """A custom class for Stow Command."""
 
     def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """
-        Stateless hook for command functionality.
+        """Stateless hook for command functionality.
 
         :param args: positional args to the component manager method
         :param kwargs: keyword args to the component manager method

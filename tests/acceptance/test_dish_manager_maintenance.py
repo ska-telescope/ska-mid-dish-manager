@@ -1,4 +1,4 @@
-"""Test Maintenance Mode"""
+"""Test Maintenance Mode."""
 
 import pytest
 import tango
@@ -8,11 +8,10 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 WAIT_FOR_RESULT_BUFFER_SEC = 10
 
 
-# pylint:disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_manager_proxy):
-    """Test transition to MAINTENANCE"""
+    """Test transition to MAINTENANCE."""
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
 

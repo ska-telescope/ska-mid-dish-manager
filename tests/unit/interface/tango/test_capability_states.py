@@ -1,7 +1,4 @@
-"""CapabilityState checks"""
-
-# pylint: disable=protected-access,use-dict-literal,too-many-arguments
-# pylint: disable=protected-access,missing-function-docstring
+"""CapabilityState checks."""
 
 import pytest
 import tango
@@ -19,7 +16,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 @pytest.mark.unit
 @pytest.mark.forked
 def test_capabilitystate_available(dish_manager_resources):
-    """Test cap state present"""
+    """Test cap state present."""
     device_proxy, _ = dish_manager_resources
     attributes = device_proxy.get_attribute_list()
     for capability in ("b1", "b2", "b3", "b4", "b5a", "b5b"):
@@ -34,7 +31,7 @@ def test_b1capabilitystate_change(
     dish_manager_resources,
     event_store_class,
 ):
-    """Test b1CapabilityState"""
+    """Test b1CapabilityState."""
     device_proxy, dish_manager_cm = dish_manager_resources
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
@@ -67,7 +64,7 @@ def test_b2capabilitystate_change(
     dish_manager_resources,
     event_store_class,
 ):
-    """Test b2CapabilityState"""
+    """Test b2CapabilityState."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
@@ -95,7 +92,7 @@ def test_b3capabilitystate_change(
     dish_manager_resources,
     event_store_class,
 ):
-    """Test b3CapabilityState"""
+    """Test b3CapabilityState."""
     device_proxy, dish_manager_cm = dish_manager_resources
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
@@ -122,7 +119,7 @@ def test_b4capabilitystate_change(
     dish_manager_resources,
     event_store_class,
 ):
-    """Test b4CapabilityState"""
+    """Test b4CapabilityState."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
@@ -151,7 +148,7 @@ def test_b5acapabilitystate_change(
     dish_manager_resources,
     event_store_class,
 ):
-    """Test b5aCapabilityState"""
+    """Test b5aCapabilityState."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
@@ -182,7 +179,7 @@ def test_b2capabilitystate_configuring_change(
     dish_manager_resources,
     event_store_class,
 ):
-    """Test Configuring"""
+    """Test Configuring."""
     device_proxy, dish_manager_cm = dish_manager_resources
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]

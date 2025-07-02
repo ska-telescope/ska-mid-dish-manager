@@ -4,7 +4,6 @@ import logging
 from threading import Event
 from unittest import mock
 
-# pylint: disable=too-many-lines
 import pytest
 from ska_control_model import AdminMode
 
@@ -21,11 +20,11 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.unit
 class TestCommandMapIgnoringDevices:
-    """Tests for ignoring devices in CommandMap"""
+    """Tests for ignoring devices in CommandMap."""
 
     # pylint: disable=protected-access,attribute-defined-outside-init
     def setup_method(self):
-        """Set up context"""
+        """Set up context."""
         sub_component_managers_mock = {
             "DS": mock.MagicMock(component_state={"operatingmode": DSOperatingMode.STANDBY_LP}),
             "SPF": mock.MagicMock(component_state={"operatingmode": SPFOperatingMode.STANDBY_LP}),
@@ -59,7 +58,7 @@ class TestCommandMapIgnoringDevices:
         self.command_map = CommandMap(self.dish_manager_cm_mock, command_tracker_mock, LOGGER)
 
     def teardown_method(self):
-        """Tear down context"""
+        """Tear down context."""
         return
 
     def set_devices_ignored(self, spf_ignored, spfrx_ignored):

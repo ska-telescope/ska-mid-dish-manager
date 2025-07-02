@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added connection workaround for SPFRx attributes that have invalid quality on startuo
 
 Version 7.4.0
 *************

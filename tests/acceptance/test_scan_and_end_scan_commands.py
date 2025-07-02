@@ -1,14 +1,13 @@
-"""Test the Scan and EndScan command"""
+"""Test the Scan and EndScan command."""
 
 import pytest
 import tango
 
 
-# pylint: disable=too-many-locals,unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
-    """Test Scan and EndScan command"""
+    """Test Scan and EndScan command."""
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
     attribute_event_store = event_store_class()
