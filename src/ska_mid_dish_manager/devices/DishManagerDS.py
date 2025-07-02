@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
-from tango import AttrWriteType, DevState, DevVarLongArray, DispLevel
+from tango import AttrWriteType, DevLong64, DevState, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -1303,7 +1303,7 @@ class DishManager(SKAController):
         self.component_manager.set_noise_diode_mode(mode)
 
     @attribute(
-        dtype=(DevVarLongArray,),
+        dtype=DevLong64,
         max_dim_x=3,
         doc="""
             Periodic noise diode pars (units are in time quanta).
@@ -1321,12 +1321,12 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get("periodicnoisediodepars", [])
 
     @periodicNoiseDiodePars.write
-    def periodicNoiseDiodePars(self, values: DevVarLongArray):
+    def periodicNoiseDiodePars(self, values: DevLong64):
         """Set the device periodic noise diode pars."""
         self.component_manager.set_periodic_noise_diode_pars(values)
 
     @attribute(
-        dtype=(DevVarLongArray,),
+        dtype=DevLong64,
         max_dim_x=3,
         doc="""
             Pseudo random noise diode pars (units are in time quanta).
@@ -1344,7 +1344,7 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get("pseudorandomnoisediodepars", [])
 
     @pseudoRandomNoiseDiodePars.write
-    def pseudoRandomNoiseDiodePars(self, values: DevVarLongArray):
+    def pseudoRandomNoiseDiodePars(self, values: DevLong64):
         """Set the device pseudo random noise diode pars."""
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
 

@@ -10,7 +10,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
-from tango import DevVarLongArray
+from tango import DevLong64
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
@@ -1308,7 +1308,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_periodic_noise_diode_pars(
         self,
-        values: DevVarLongArray,
+        values: DevLong64,
     ) -> None:
         """Set the periodicNoiseDiodePars on the SPFRx."""
         if len(values) != 3:
@@ -1339,7 +1339,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_pseudo_random_noise_diode_pars(
         self,
-        values,
+        values: DevLong64,
     ) -> None:
         """Set the pseudoRandomNoiseDiodePars on the SPFRx."""
         if len(values) != 3:
