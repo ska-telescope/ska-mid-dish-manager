@@ -372,6 +372,8 @@ class DishManager(SKAController):
                 "dscpowerlimitkw": "dscPowerLimitKw",
                 "tracktablecurrentindex": "trackTableCurrentIndex",
                 "tracktableendindex": "trackTableEndIndex",
+                "meanwindspeed": "meanWindSpeed",
+                "autoStowToggle": "autoStowToggle",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1379,6 +1381,37 @@ class DishManager(SKAController):
                 f"Invalid value, {value}, for DSC Power Limit (kW),"
                 f" valid range is [{DSC_MIN_POWER_LIMIT_KW}, {DSC_MAX_POWER_LIMIT_KW}]."
             )
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
+        doc="""
+            The average wind speed in m/s of the last 10 minutes
+            calculated from the connected weather stations.
+            """,
+    )
+    def meanWindSpeed(self):
+        """Returns the mean wind speed from connected weather stations."""
+        return self.component_manager.component_state.get("meanwindspeed", -1)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="""
+            Flag to ignore or act on wind speed / wind gust
+            values exeeding the configured threshold.
+            """,
+        memorized=True,
+    )
+    def autoStowToggle(self):
+        """Returns the autoStowToggle."""
+        return self.component_manager.component_state.get("autostowtoggle", False)
+
+    @autoStowToggle.write
+    def autoStowToggle(self, toggle):
+        """Sets the autoStowToggle."""
+        self.logger.debug("autoStowToggle updated to, %s", toggle)
+        self.component_manager._update_component_state(autostowtoggle=toggle)
 
     # --------
     # Commands

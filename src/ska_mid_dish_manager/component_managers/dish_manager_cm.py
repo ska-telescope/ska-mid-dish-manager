@@ -114,6 +114,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
+            autostowtoggle=True,
+            meanWindSpeed=-1,
             **kwargs,
         )
         self.logger = logger
