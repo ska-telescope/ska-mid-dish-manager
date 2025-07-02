@@ -15,11 +15,10 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_standbylp_cmd_fails_from_standbylp_dish_mode(dish_manager_resources, event_store_class):
-    """Execute tests"""
+    """Execute tests."""
     device_proxy, _ = dish_manager_resources
 
     dish_mode_event_store = event_store_class()
@@ -43,13 +42,12 @@ def test_standbylp_cmd_fails_from_standbylp_dish_mode(dish_manager_resources, ev
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
 
-# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     dish_manager_resources, event_store_class
 ):
-    """Execute tests"""
+    """Execute tests."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
@@ -132,13 +130,12 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
         assert message in events_string
 
 
-# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_standbylp_cmd_succeeds_from_maintenance_dish_mode(
     dish_manager_resources, event_store_class
 ):
-    """Execute tests"""
+    """Execute tests."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]

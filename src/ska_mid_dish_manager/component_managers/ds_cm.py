@@ -1,4 +1,4 @@
-"""Specialization for DS functionality"""
+"""Specialization for DS functionality."""
 
 import logging
 from threading import Lock
@@ -15,9 +15,8 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint: disable=invalid-name, missing-function-docstring, signature-differs
 class DSComponentManager(TangoDeviceComponentManager):
-    """Specialization for DS functionality"""
+    """Specialization for DS functionality."""
 
     def __init__(
         self,
@@ -27,7 +26,7 @@ class DSComponentManager(TangoDeviceComponentManager):
         *args: Any,
         communication_state_callback: Optional[Callable] = None,
         component_state_callback: Optional[Callable] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         monitored_attr_names = (
             "operatingMode",
@@ -61,14 +60,13 @@ class DSComponentManager(TangoDeviceComponentManager):
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
-            **kwargs
+            **kwargs,
         )
         self._communication_state_lock = state_update_lock
         self._component_state_lock = state_update_lock
 
     def _update_component_state(self, **kwargs) -> None:  # type: ignore
-        """Update the int we get from the event to the Enum"""
-
+        """Update the int we get from the event to the Enum."""
         enum_conversion = {
             "operatingmode": DSOperatingMode,
             "powerstate": DSPowerState,

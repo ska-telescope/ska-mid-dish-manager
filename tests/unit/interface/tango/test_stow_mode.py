@@ -6,7 +6,6 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_stow_mode(dish_manager_resources, event_store_class):

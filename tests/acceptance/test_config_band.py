@@ -1,4 +1,4 @@
-"""Test ConfigureBand2"""
+"""Test ConfigureBand2."""
 
 import pytest
 import tango
@@ -6,7 +6,6 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 
-# pylint: disable=too-many-locals,unused-argument,too-many-arguments
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_configure_band_2(
@@ -14,7 +13,7 @@ def test_configure_band_2(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test ConfigureBand2"""
+    """Test ConfigureBand2."""
     main_event_store = event_store_class()
     result_event_store = event_store_class()
     progress_event_store = event_store_class()

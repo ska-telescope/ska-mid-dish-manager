@@ -1,8 +1,9 @@
-[tool.poetry]
+[project]
 name = "ska-mid-dish-manager"
 version = "7.4.0"
 description = "SKA Dish Manager TANGO device server"
-authors = ["Team Karoo"]
+authors = [{name = "Team Karoo"}]
+maintainers = [{name = "Team Karoo"}]
 license = "BSD-3-Clause"
 readme = 'README.md'
 classifiers = [
@@ -21,33 +22,37 @@ packages = [
 include = [
     { path = 'tests'},
 ]
+requires-python = ">=3.10,<4.0"
+package-mode = false
+dependencies = [
+    "pytango==9.5.0",
+    "numpy<2.0.0",
+    "ska-control-model>=1.0.0",
+    "ska-ser-logging>=0.4.1",
+    "ska-tango-base==1.0.0",
+    "networkx==2.6.3",
+    "rule-engine==3.5.0",
+    "astropy>=6.0.1",
+    "typing-extensions>=4.3.0"
+]
 
-[tool.poetry.scripts]
+[project.urls]
+Documentation = "https://developer.skao.int/projects/ska-mid-dish-manager/en/latest/?badge=latest"
+Repository = "https://gitlab.com/ska-telescope/ska-mid-dish-manager"
+
+[project.scripts]
 DishManagerDS = 'ska_mid_dish_manager.devices.DishManagerDS:main'
 
 [[tool.poetry.source]]
-name = 'ska-nexus'
-url = 'https://artefact.skao.int/repository/pypi-internal/simple'
+name = "ska-nexus"
+url = "https://artefact.skao.int/repository/pypi-internal/simple"
+priority = "primary"
 
 [[tool.poetry.source]]
-name = "PyPI-public"
-url = 'https://pypi.org/simple'
+name = "pypi-public"
+url = "https://pypi.org/simple/"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-pytango = "9.5.0"
-ska-ser-logging = "^0.4.1"
-ska-tango-base = "1.0.0"
-networkx = "2.6.3"
-rule-engine = "^3.5.0"
-numpy = "^1.23.0"
-typing-extensions = "^4.3.0"
-astropy = "^6.0.0"
-
-[tool.pylint.messages_control]
-disable = ["duplicate-code", "fixme"]
-
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^22.3.0"
 isort = "^5.6.4"
 flake8 = "^3.8.4"
@@ -67,6 +72,7 @@ tango-simlib = "^0.9.4"
 requests = "^2.28.1"
 mypy = "^0.982"
 ska-tango-testing = "0.2.0"
+ruff = "^0.12.0"
 
 [tool.poetry.group.docs]
 optional = true
@@ -92,17 +98,103 @@ markers = [
     "stress"
 ]
 
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    ".vscode",
+    "build",
+    "dist",
+    "docs",
+    "notebooks",
+    "resources",
+    "scripts",
+]
+ 
+# Same as Black.
+line-length = 99
+indent-width = 4
+ 
+[tool.ruff.lint]
+select = [
+    "A", # flake8-builtins
+    "D", # pydocstyle
+    "E", # pycodestyle-error
+    "W", # pycodestyle-warning
+    "F", # pyflakes
+    "I", # isort
+    "N", # pep8-naming
+    "PL" # pylint
+]
+ignore = [
+    "D205", # 1 blank line required between summary line and description
+    "D419", # Docstring is empty
+    "D401", # Imperitive mood first line
+    "PLR2004", # Magic constant
+    "D104", # Missing docstring in public package
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring in public method
+    "D107", # Missing docstring in `__init__`
+    "D103", # Missing docstring in public function
+    "D105", # Missing docstring in magic method
+    "D100", # Missing docstring in public module
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments in function definition
+    "PLR0915", # Too many statements
+    "N802", # Function name should be lower case
+    "D404", # First word should not be "This"
+    "N806", # Variable in function should be lowercase
+    "N811", # Constant imported as non-constant
+    "N999", # Invalid module name
+    "PLR0911", # Too many return statements
+]
+ 
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+ 
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+ 
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+ 
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+ 
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+ 
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+ 
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+docstring-code-format = true
+ 
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = 70
+
+
 [tool.isort]
 multi_line_output = 3
 include_trailing_comma = true
 force_grid_wrap = 0
 line_length = 99
-
-[tool.black]
-line-length = 99
-
-[tool.flake8]
-max-line-length = 99
 
 [tool.coverage.paths]
 source = ["src"]
@@ -116,5 +208,6 @@ source = ["ska_mid_dish_manager"]
 show_missing = false
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+

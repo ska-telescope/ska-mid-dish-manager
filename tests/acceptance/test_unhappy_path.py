@@ -11,7 +11,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint:disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_dish_handles_unhappy_path_in_command_execution(
@@ -21,7 +20,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     spf_device_proxy,
     spfrx_device_proxy,
 ):
-    """Test DishManager handles errors in SPFC and SPFRx"""
+    """Test DishManager handles errors in SPFC and SPFRx."""
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
     band_event_store = event_store_class()

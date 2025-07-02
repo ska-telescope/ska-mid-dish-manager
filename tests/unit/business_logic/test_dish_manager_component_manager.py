@@ -25,8 +25,7 @@ def force_gc_on_weak_ref(weak_ref: weakref.ref) -> None:
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
 def test_component_manager_gracefully_cleans_up_resources(patch_dp, caplog):
-    """
-    Test that the DishManagerComponentManager can be created,
+    """Test that the DishManagerComponentManager can be created,
     started and destroyed without resource leaks or errors.
     """
     caplog.set_level(logging.WARNING)

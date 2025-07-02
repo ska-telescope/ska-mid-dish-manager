@@ -24,7 +24,7 @@ def get_random_version():
 @pytest.mark.unit
 @pytest.mark.forked
 class TestDishManagerVersioning:
-    """Tests for Dish Manager Versioning"""
+    """Tests for Dish Manager Versioning."""
 
     def setup_method(self):
         """Set up context."""
@@ -41,7 +41,7 @@ class TestDishManagerVersioning:
             self.dish_manager_cm = class_instance.component_manager
 
     def teardown_method(self):
-        """Tear down context"""
+        """Tear down context."""
         self.tango_context.stop()
 
     def test_versioning_before_subdevice_connection(self):
@@ -68,7 +68,8 @@ class TestDishManagerVersioning:
     )
     def test_build_state_update_on_subdevice_connection(self, device: str, build_state_key: str):
         """Test that spfc and spfrx build states of subdevices get updated when a subdevice
-        establishes connection."""
+        establishes connection.
+        """
         # configure a mock build state
         dummy_build_state_version = generate_random_text()
         cm = self.dish_manager_cm.sub_component_managers[device]
@@ -82,7 +83,8 @@ class TestDishManagerVersioning:
 
     def test_ds_version_update_on_subdevice_connection(self):
         """Test that the ds build state gets updated when the subdevice establishes
-        connection."""
+        connection.
+        """
         # configure a mock build state
         build_state_update_json = {"version": generate_random_text()}
         build_state_update = json.dumps(build_state_update_json)

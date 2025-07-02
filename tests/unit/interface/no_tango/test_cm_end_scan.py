@@ -1,4 +1,4 @@
-"""Tests dish manager component manager endscan command handler"""
+"""Tests dish manager component manager endscan command handler."""
 
 from unittest.mock import Mock, patch
 
@@ -14,8 +14,7 @@ def test_end_scan_handler(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of EndScan command handler.
+    """Verify behaviour of EndScan command handler.
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: a representing the command tracker class

@@ -19,10 +19,10 @@ from tests.utils import generate_random_text
 
 @pytest.mark.unit
 class TestReleaseInfo:
-    """Tests for ReleaseInfo"""
+    """Tests for ReleaseInfo."""
 
     def setup_method(self):
-        """Set up context"""
+        """Set up context."""
         self._timestamp = time.time()
         self._ds_manager_add = generate_random_text()
         self._spfc_add = generate_random_text()

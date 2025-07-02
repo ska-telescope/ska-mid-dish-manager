@@ -1,4 +1,4 @@
-"""Test AbortCommands"""
+"""Test AbortCommands."""
 
 import pytest
 import tango
@@ -12,10 +12,9 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import calculate_slew_target
 
 
-# pylint: disable=invalid-name, redefined-outer-name
 @pytest.fixture
 def toggle_skip_attributes(spf_device_proxy):
-    """Ensure that attribute updates on spf is restored"""
+    """Ensure that attribute updates on spf is restored."""
     # Set a flag on SPF to skip attribute updates.
     # This is useful to ensure that the long running command
     # does not finish executing before AbortCommands is triggered
@@ -24,13 +23,12 @@ def toggle_skip_attributes(spf_device_proxy):
     spf_device_proxy.skipAttributeUpdates = False
 
 
-# pylint: disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands(
     event_store_class, dish_manager_proxy, spf_device_proxy, toggle_skip_attributes
 ):
-    """Test AbortCommands aborts the executing long running command"""
+    """Test AbortCommands aborts the executing long running command."""
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
@@ -107,8 +105,7 @@ def track_a_sample(
     dish_manager_proxy,
     ds_device_proxy,
 ):
-    """Execute a track command to slew the dish to a new position"""
-
+    """Execute a track command to slew the dish to a new position."""
     main_event_store = event_store_class()
     band_event_store = event_store_class()
     result_event_store = event_store_class()
@@ -199,7 +196,6 @@ def track_a_sample(
     yield
 
 
-# pylint: disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_track(
@@ -208,7 +204,7 @@ def test_abort_commands_during_track(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test that AbortCommands aborts the executing track command"""
+    """Test that AbortCommands aborts the executing track command."""
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 
@@ -233,7 +229,6 @@ def test_abort_commands_during_track(
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
 
 
-# pylint: disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_slew(
@@ -241,7 +236,7 @@ def test_abort_commands_during_slew(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test that AbortCommands aborts the executing slew command"""
+    """Test that AbortCommands aborts the executing slew command."""
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 
@@ -296,7 +291,6 @@ def test_abort_commands_during_slew(
     assert achieved_el != pytest.approx(requested_el)
 
 
-# pylint: disable=unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_stow(
@@ -304,7 +298,7 @@ def test_abort_commands_during_stow(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test that AbortCommands aborts the executing stow command"""
+    """Test that AbortCommands aborts the executing stow command."""
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 

@@ -1,4 +1,4 @@
-"""Automatic transition rules for health state"""
+"""Automatic transition rules for health state."""
 
 import rule_engine
 

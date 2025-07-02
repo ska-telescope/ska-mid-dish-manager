@@ -1,4 +1,4 @@
-"""Tests dish manager component manager configureband command handler"""
+"""Tests dish manager component manager configureband command handler."""
 
 from unittest.mock import Mock, patch
 
@@ -20,8 +20,7 @@ def test_configureband_handler(
     mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of ConfigureBand[x] command handler.
+    """Verify behaviour of ConfigureBand[x] command handler.
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: a representing the command tracker class

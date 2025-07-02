@@ -6,16 +6,14 @@ from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestam
 
 
 class TrackTableTimestampError(ValueError):
-    """Class that is used to represent timestamp errors in the track load table"""
+    """Class that is used to represent timestamp errors in the track load table."""
 
 
-# pylint: disable=too-few-public-methods
 class TrackLoadTableFormatting:
-    """Class that encapsulates related validation and mapping for TrackLoadTable command"""
+    """Class that encapsulates related validation and mapping for TrackLoadTable command."""
 
     def check_track_table_input_valid(self, table: List[float], lead_time: int) -> None:
-        """
-        Entry point for track table validation.
+        """Entry point for track table validation.
 
         :param table: Track table input that is to be validated
         :param lead_time: The amount of time in seconds from the current time timestamps are
@@ -47,8 +45,7 @@ class TrackLoadTableFormatting:
         length_of_table: int,
         lead_time: float,
     ) -> None:
-        """
-        Check that the timestamps are in the future by at least lead_time in seconds and that
+        """Check that the timestamps are in the future by at least lead_time in seconds and that
         they are monotonically increasing.
 
         :param table: Track table input that is to be validated

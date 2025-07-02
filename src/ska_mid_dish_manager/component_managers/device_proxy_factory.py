@@ -1,4 +1,4 @@
-"""A factory for creating and managing tango device proxies"""
+"""A factory for creating and managing tango device proxies."""
 
 import logging
 from functools import wraps
@@ -9,16 +9,14 @@ import tango
 
 
 def retry_connection(func: Callable) -> Any:
-    """
-    Return a function that retries connection to a tango device if it is not available.
+    """Return a function that retries connection to a tango device if it is not available.
 
     This function is intended to be used as a decorator:
 
     .. code-block:: python
 
         @retry_connection
-        def _create_tango_device_proxy(trl):
-            ...
+        def _create_tango_device_proxy(trl): ...
 
     :param func: the wrapped function
 
@@ -28,8 +26,7 @@ def retry_connection(func: Callable) -> Any:
     # pylint: disable=protected-access
     @wraps(func)
     def _wrapper(device_proxy_manager: Any, *args: Any, **kwargs: Any) -> Any:
-        """
-        Wrapper function that implements the functionality of the decorator.
+        """Wrapper function that implements the functionality of the decorator.
 
         :param device_proxy_manager: an instance of the DeviceProxyManager
         :param args: positional arguments to the wrapped function
@@ -82,8 +79,7 @@ def retry_connection(func: Callable) -> Any:
 
 
 class DeviceProxyManager:
-    """
-    Manage tango.DeviceProxy with a connection to a device
+    """Manage tango.DeviceProxy with a connection to a device.
 
     Too many device proxy objects to the same device is unnecessary and probably
     risky; i.e. any device proxy thread dying can crash the device server process
@@ -97,7 +93,7 @@ class DeviceProxyManager:
         self.event_signal = thread_event
 
     def __del__(self) -> None:
-        """Remove all device proxies when the object is deleted"""
+        """Remove all device proxies when the object is deleted."""
         self.factory_reset()
 
     def __call__(self, trl: str) -> Any:
@@ -122,8 +118,7 @@ class DeviceProxyManager:
         return device_proxy
 
     def _is_tango_device_running(self, tango_device_proxy: tango.DeviceProxy) -> bool:
-        """
-        Checks if the TANGO device is running.
+        """Checks if the TANGO device is running.
 
         :param tango_device_proxy: a client to the device
         :type tango_device_proxy: tango.DeviceProxy
@@ -147,8 +142,7 @@ class DeviceProxyManager:
         self,
         tango_device_proxy: tango.DeviceProxy,
     ) -> None:
-        """
-        Wait until it the client has established a connection with
+        """Wait until it the client has established a connection with
         the device and/or for the device to be up and running.
 
         :param tango_device_proxy: a client to the device
@@ -161,8 +155,7 @@ class DeviceProxyManager:
 
     @retry_connection
     def _create_tango_device_proxy(self, trl: str) -> Any:
-        """
-        Create and store a device proxy to the device at trl
+        """Create and store a device proxy to the device at trl.
 
         :param trl: the address to the running device
         :type trl: str
@@ -175,7 +168,7 @@ class DeviceProxyManager:
         return device_proxy
 
     def factory_reset(self) -> Any:
-        """Remove device proxy references to the devices"""
+        """Remove device proxy references to the devices."""
         # delete all references to the device proxies to prevent potential memory leak
         trls = list(self._device_proxies.keys())
         for trl in trls:

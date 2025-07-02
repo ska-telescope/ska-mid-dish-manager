@@ -1,4 +1,4 @@
-"""Automatic transition rules for capability states"""
+"""Automatic transition rules for capability states."""
 
 import rule_engine
 

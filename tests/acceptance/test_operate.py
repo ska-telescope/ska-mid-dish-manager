@@ -1,4 +1,4 @@
-"""Test Operate"""
+"""Test Operate."""
 
 import pytest
 import tango
@@ -6,7 +6,6 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 
-# pylint: disable=too-many-locals,unused-argument,too-many-arguments
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_set_operate(
@@ -14,7 +13,7 @@ def test_set_operate(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test transition to OPERATE"""
+    """Test transition to OPERATE."""
     main_event_store = event_store_class()
     band_event_store = event_store_class()
     progress_event_store = event_store_class()

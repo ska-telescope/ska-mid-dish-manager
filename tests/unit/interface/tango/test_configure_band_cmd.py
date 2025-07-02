@@ -14,7 +14,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -27,7 +26,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     command, band_number, dish_manager_resources, event_store_class
 ):
-    """Test ConfigureBand"""
+    """Test ConfigureBand."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]

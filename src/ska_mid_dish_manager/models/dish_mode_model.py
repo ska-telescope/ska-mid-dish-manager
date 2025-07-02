@@ -1,11 +1,8 @@
-"""
-This model enforces the legal transitions when a command is triggered. It assesses the current
+"""This model enforces the legal transitions when a command is triggered. It assesses the current
 state of the device to decide if the requested state is a nearby node to allow or reject a command.
 """
 
 import typing
-
-# pylint: disable=too-few-public-methods
 from typing import Any, Callable
 
 import networkx as nx
@@ -35,7 +32,7 @@ DISH_MODE_NODES = (
 
 
 class DishModeModel:
-    """A representation of the mode transition diagram"""
+    """A representation of the mode transition diagram."""
 
     def __init__(self) -> None:
         self.dishmode_graph = self._build_model()
@@ -109,8 +106,7 @@ class DishModeModel:
         component_manager: Any | None = None,
         task_callback: Callable | None = None,
     ) -> bool:
-        """
-        Determine if requested tango command is allowed based on current dish mode
+        """Determine if requested tango command is allowed based on current dish mode.
 
         This method is used by the executor to evaluate the command pre-condition after it's
         taken off the queue. To ensure the evaluation is always performed using an updated

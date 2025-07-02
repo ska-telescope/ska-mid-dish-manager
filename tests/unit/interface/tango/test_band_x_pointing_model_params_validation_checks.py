@@ -1,5 +1,6 @@
 """Test that the DishManager bandXPointingModelParams attributes
-rejects invalid input."""
+rejects invalid input.
+"""
 
 import pytest
 import tango
@@ -34,5 +35,5 @@ def test_band_X_pointing_model_params_validation_checks(
     try:
         device_proxy.write_attribute(tango_attribute, write_values)
     except tango.DevFailed as err:
-        expected_desc = "ValueError: Expected 18 arguments " f"but got {len(write_values)} arg(s)."
+        expected_desc = f"ValueError: Expected 18 arguments but got {len(write_values)} arg(s)."
         assert (err.args[0].desc).strip() == expected_desc
