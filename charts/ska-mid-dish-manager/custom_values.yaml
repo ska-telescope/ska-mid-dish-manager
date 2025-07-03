@@ -40,6 +40,6 @@ ska-mid-wms:
     instances: ["3"]
   deviceServers:
     wms:
-    enabled: true
+      enabled: true
   simulator:
     enabled: True
