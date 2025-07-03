@@ -71,6 +71,12 @@ dishmanager:
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"
 
+  windLimits:
+    # Wind speed in m/s
+    MeanWindSpeedThreshold: "10.0"
+    # Wind gust in m/s
+    MeanWindGustThreshold: "15.0"
+
 dev_pod:
   enabled: false
 
@@ -88,40 +94,19 @@ deviceServers:
     enabled: true
 
 ska-mid-wms:
+  enabled: true
   ska-tango-base:
     enabled: false
+    itango:
+      enabled: false
+  wmsConfig:
+    Host: ["wms-sim-3"] # hostname of the modbus devices
+    Port: ["1502"] # port of the modbus devices (default sim port is 1502)
+    # List of WMS instances to deploy (also corresponds to simulator IDs)
+    # Each item in this list will create a device server instance.
+    instances: ["3"]
   deviceServers:
-    # Default TRL: mid/wms/<instance number> eg: mid/wms/0
-    # Uncomment the below to set a custom TRL, host or port
-    wms0:
-      enabled: false
-      # server:
-      #   name: "WMSDevice"
-      #   instances:
-      #   - name: "wms0"
-      #     classes:
-      #     - name: WMSDevice
-      #       devices:
-      #         - dev01:
-      #           name: "custom/wmsTrl/0"
-      #           properties:
-      #           - name: "Host"
-      #             values:
-      #             - "wms-sim-0"
-      #           - name: "Port"
-      #             values:
-      #             - "1502" 
-    wms1:
-      enabled: false
-    wms2:
-      enabled: false
-    wms3:
-      enabled: false
-    wms4:
-      enabled: false
-  # Specify set of simulated WMS servers to connect to
-  # each WMSDevice instance where hardware is unavailable 
-  # eg: if "wm0" and "wm1" enabled, then simulator config is
-  # weatherStations: ["0", "1"].
+    wms:
+    enabled: true
   simulator:
-    weatherStations: []
+    enabled: True

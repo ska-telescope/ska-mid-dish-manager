@@ -64,6 +64,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
+        wms_instances: List[int],
         *args,
         **kwargs,
     ):
