@@ -79,6 +79,11 @@ class DishManager(SKAController):
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
+    # TODO declare the defaults in a constant
+    MeanWindSpeedThreshold = device_property(dtype=float, default_value=1000.0)
+    MeanWindGustThreshold = device_property(dtype=float, default_value=1000.0)
+    # The instance used to populate the device name in the format mid/wms/<instance_number>
+    WMSInstances = device_property(dtype=List[int], default_value=[1])
 
     def _create_lrc_attributes(self) -> None:
         """Create attributes for the long running commands.
@@ -143,6 +148,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
+            self.WMSInstances,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )
@@ -373,7 +379,7 @@ class DishManager(SKAController):
                 "tracktablecurrentindex": "trackTableCurrentIndex",
                 "tracktableendindex": "trackTableEndIndex",
                 "meanwindspeed": "meanWindSpeed",
-                "autoStowToggle": "autoStowToggle",
+                "autowindstowenabled": "autoWindStowEnabled",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1398,20 +1404,20 @@ class DishManager(SKAController):
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
         doc="""
-            Flag to ignore or act on wind speed / wind gust
-            values exeeding the configured threshold.
+            Toggle to enable or disable auto wind stow on wind speed
+            or wind gust for values exeeding the configured threshold.
             """,
         memorized=True,
     )
-    def autoStowToggle(self):
-        """Returns the autoStowToggle."""
-        return self.component_manager.component_state.get("autostowtoggle", False)
+    def autoWindStowEnabled(self):
+        """Returns the value for the auto wind stow toggle."""
+        return self.component_manager.component_state.get("autowindstowenabled", True)
 
-    @autoStowToggle.write
-    def autoStowToggle(self, toggle):
-        """Sets the autoStowToggle."""
-        self.logger.debug("autoStowToggle updated to, %s", toggle)
-        self.component_manager._update_component_state(autostowtoggle=toggle)
+    @autoWindStowEnabled.write
+    def autoWindStowEnabled(self, toggle: bool):
+        """Toggle the auto wind stow on or off."""
+        self.logger.debug("autoWindStowEnabled updated to, %s", toggle)
+        self.component_manager._update_component_state(autowindstowenabled=toggle)
 
     # --------
     # Commands

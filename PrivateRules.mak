@@ -1,13 +1,9 @@
+CUSTOM_VALUES = --set global.minikube=$(MINIKUBE) \
+	--set global.operator=false
 
-LOCAL_DEPLOYMENT = --set global.minikube=$(MINIKUBE) \
-	--set global.operator=$(SKA_TANGO_OPERATOR) \
-	--set ska-mid-dish-simulators.enabled=true \
-	--set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
-	--set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
-	--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
-	--set ska-mid-dish-ds-manager.enabled=true \
-	--set ska-tango-base.enabled=true
+VALUES_FILE = charts/ska-mid-dish-manager/custom_values.yaml
 
 ifeq ($(GITLAB_CI),false)
-K8S_CHART_PARAMS = $(LOCAL_DEPLOYMENT)
+K8S_CHART_PARAMS = $(CUSTOM_VALUES) \
+	--values $(VALUES_FILE)
 endif
