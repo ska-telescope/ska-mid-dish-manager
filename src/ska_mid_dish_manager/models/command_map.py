@@ -195,9 +195,13 @@ class CommandMap:
     ):
         """Transition the dish to MAINTENANCE mode."""
         if not self._dish_manager_cm.is_device_ignored("SPFRX"):
-            spfrx_cm = self._dish_manager_cm.sub_component_managers["SPFRX"]
+            spfrx_cm = self._dish_manager_cm.sub_component_managers["SPFRX"]  # noqa: F841
             try:
-                spfrx_cm.write_attribute_value("adminmode", AdminMode.ENGINEERING)
+                # TODO: Wait for the SPFRx to implement maintenance mode
+                task_callback(
+                    progress="Nothing done on SPFRx, awaiting implementation on it.",
+                )
+                # spfrx_cm.write_attribute_value("adminmode", AdminMode.ENGINEERING)
             except tango.DevFailed as err:
                 self.logger.exception(
                     "Failed to configure SPFRx adminMode ENGINEERING"

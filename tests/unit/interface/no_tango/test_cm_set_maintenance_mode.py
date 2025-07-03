@@ -34,6 +34,8 @@ def test_set_maintenance_mode_handler(
 
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
+        # TODO: Remove below. Waiting for SPFRx to implement maintenance mode
+        {"progress": "Nothing done on SPFRx, awaiting implementation on it."},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"SetMaintenanceMode called on SPF, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},
