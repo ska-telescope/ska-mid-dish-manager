@@ -5,7 +5,7 @@ command: "DishManagerDS"
 server:
   name: "DishManagerDS"
   instances:
-    {{- range .Values.coalesced_dishes }}
+  {{- range .Values.coalesced_dishes }}
     - name: "{{ . }}"
       classes:
         - name: "DishManager"
@@ -56,13 +56,13 @@ server:
                     - "SKA{{ printf "%01s" . }}"
                 - name: "MeanWindSpeedThreshold"
                   values:
-                    - "{{ $.Values.windLimits.MeanWindSpeedThreshold }}"
+                    - "{{ $.Values.dishmanager.windLimits.MeanWindSpeedThreshold }}"
                 - name: "MeanWindGustThreshold"
                   values:
-                    - "{{ $.Values.windLimits.MeanWindGustThreshold }}"
+                    - "{{ $.Values.dishmanager.windLimits.MeanWindGustThreshold }}"
                 - name: "WMSInstances"
                   values:
-                    - "{{ $.Values.ska-mid-wms.wmsConfig.instances }}"
+                    - "{{ (get $.Values "ska-mid-wms").wmsConfig.instances | join "," }}"
               attribute_properties:
                 - attribute: "ignoreSpf"
                   properties:
