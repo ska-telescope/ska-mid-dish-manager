@@ -65,7 +65,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
-        wms_instances: List[int],
+        wms_instances: List[str],
         *args,
         **kwargs,
     ):
@@ -219,8 +219,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
             ),
             "WMS": WMSComponentManager(
-                logger,
-                wms_instances=wms_instances,
+                wms_instances,
+                logger=logger,
                 component_state_callback=self._evaluate_wind_speed_rules,
                 state_update_lock=self._state_update_lock,
                 meanwindspeed=-1,

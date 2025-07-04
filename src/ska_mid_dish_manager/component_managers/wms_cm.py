@@ -28,7 +28,7 @@ class WMSComponentManager(BaseComponentManager):
         component_state_callback: Optional[Callable] = None,
         state_update_lock: Optional[threading.Lock] = None,
         wms_polling_period: Optional[float] = 1.0,
-        wind_speed_moving_average_period: Optional[float] = 30.0,
+        wind_speed_moving_average_period: Optional[float] = 600.0,
         wind_gust_average_period: Optional[float] = 3.0,
         **kwargs: Any,
     ):
@@ -80,7 +80,7 @@ class WMSComponentManager(BaseComponentManager):
         self._stop_monitoring_flag.clear()
 
         for new_wms_instance in self._wms_instances:
-            wms_device_name = "mid/wms/" + str(new_wms_instance)
+            wms_device_name = "mid/wms/" + new_wms_instance
             self._wms_device_group.add(wms_device_name, timeout_ms=GROUP_REQUEST_TIMEOUT_MS)
 
         # Create a thread to recursively attempt a write to the adminMode=ONLINE attr and once
@@ -117,6 +117,7 @@ class WMSComponentManager(BaseComponentManager):
         self._stop_monitoring_flag.set()
 
         self._wind_speed_buffer.clear()
+        self._wind_gust_buffer.clear()
 
         try:
             self.write_wms_group_attribute_value("adminMode", AdminMode.OFFLINE)
@@ -140,21 +141,12 @@ class WMSComponentManager(BaseComponentManager):
 
     def _poll_wms_wind_speed_data(self):
         """Fetch WMS windspeed data and publish it to the rolling avg calc."""
-        retry_count = 0
-        while retry_count <= MAX_READ_RETRIES:
-            try:
-                wind_speed_list = self.read_wms_group_attribute_value("wind_speed")
-                wind_speed_list.sort()
-                # Pass only the largest wind speed value to wind gust buffer
-                self._process_wind_gust(wind_speed_list[-1])
-                self._compute_mean_wind_speed(wind_speed_list)
-                self._update_communication_state(CommunicationStatus.ESTABLISHED)
-                break
-            except (Exception, tango.DevFailed):
-                retry_count += 1
-                if retry_count > MAX_READ_RETRIES:
-                    self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                self._stop_monitoring_flag.wait(1)
+        try:
+            wind_speed_list = self.read_wms_group_attribute_value("wind_speed")
+            self._process_wind_gust(max(wind_speed_list))
+            self._compute_mean_wind_speed(wind_speed_list)
+        except (Exception, tango.DevFailed):
+            pass
 
         self._restart_polling_timer()
 
@@ -162,26 +154,21 @@ class WMSComponentManager(BaseComponentManager):
         """Calculate the mean wind speed and update the component state."""
         self._wind_speed_buffer.extendleft(wind_speed_data)
 
+        self.logger.info("LLL Compute mean wind speed called")
         if len(self._wind_speed_buffer) == self._wind_speed_buffer_length:
             _mean_wind_speed = sum(self._wind_speed_buffer) / self._wind_speed_buffer_length
             self._update_component_state(meanwindspeed=_mean_wind_speed)
 
     def _process_wind_gust(self, max_instantaneous_wind_speed) -> None:
         """Determine wind gust from maximum instantaneous wind speed in the buffer."""
-        self._wind_gust_buffer.extendleft(max_instantaneous_wind_speed)
+        self._wind_gust_buffer.extendleft([max_instantaneous_wind_speed])
 
         if len(self._wind_gust_buffer) == self._wind_gust_buffer_length:
-            _wind_gust_avg = sum(self._wind_gust_buffer) / self._wind_gust_buffer_length
+            _wind_gust_avg = max(self._wind_gust_buffer)
             self._update_component_state(windgust=_wind_gust_avg)
 
     def read_wms_group_attribute_value(self, attribute_name: str) -> Any:
         """Return list of group attributes."""
-        self.logger.debug(
-            "About to read attribute [%s] on group [%s] containing [%s]",
-            attribute_name,
-            self._wms_device_group.get_name(),
-            self._wms_device_group.get_device_list(),
-        )
         reply_values = []
         try:
             grp_reply = self._wms_device_group.read_attribute(attribute_name)
@@ -202,17 +189,10 @@ class WMSComponentManager(BaseComponentManager):
                 self._wms_device_group.get_name(),
             )
             raise
-
         return reply_values
 
     def write_wms_group_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
         """Write data to WMS tango group devices."""
-        self.logger.debug(
-            "About to write attribute [%s] on group [%s] containing [%s]",
-            attribute_name,
-            self._wms_device_group.get_name(),
-            self._wms_device_group.get_device_list(),
-        )
         try:
             grp_reply = self._wms_device_group.write_attribute(attribute_name, attribute_value)
             for reply in grp_reply:
