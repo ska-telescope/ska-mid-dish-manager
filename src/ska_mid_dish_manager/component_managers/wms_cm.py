@@ -164,17 +164,15 @@ class WMSComponentManager(BaseComponentManager):
 
         if len(self._wind_speed_buffer) == self._wind_speed_buffer_length:
             _mean_wind_speed = sum(self._wind_speed_buffer) / self._wind_speed_buffer_length
-            self.logger.info(f"Computed mean wind speed: {_mean_wind_speed}")
             self._update_component_state(meanwindspeed=_mean_wind_speed)
 
     def _process_wind_gust(self, max_instantaneous_wind_speed) -> None:
         """Determine wind gust from maximum instantaneous wind speed in the buffer."""
-        self._wind_gust_buffer.extend(max_instantaneous_wind_speed)
+        self._wind_gust_buffer.extendleft(max_instantaneous_wind_speed)
 
         if len(self._wind_gust_buffer) == self._wind_gust_buffer_length:
             _wind_gust_avg = sum(self._wind_gust_buffer) / self._wind_gust_buffer_length
             self._update_component_state(windgust=_wind_gust_avg)
-            self._wind_gust_buffer.clear()
 
     def read_wms_group_attribute_value(self, attribute_name: str) -> Any:
         """Return list of group attributes."""
