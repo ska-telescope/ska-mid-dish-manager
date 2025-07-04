@@ -14,7 +14,7 @@ MINIKUBE ?= true ## Minikube or not
 SKA_TANGO_OPERATOR = true
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
-VALUES_FILE ?= charts/ska-mid-dish-manager/custom_values.yaml
+VALUES_FILE ?= charts/ska-mid-dish-manager/helm_flags.yaml
 
 -include .make/base.mk
 
@@ -51,6 +51,7 @@ endif
 
 python-do-format:
 	$(PYTHON_RUNNER) ruff format $(PYTHON_LINT_TARGET)
+	$(PYTHON_RUNNER) ruff check --fix $(PYTHON_LINT_TARGET)
 
 python-do-lint:
 	@mkdir -p build/reports
@@ -82,9 +83,7 @@ K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 K8S_TIMEOUT=600s
 endif
 
-K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
-	--set global.tango_host=$(TANGO_HOST) \
-	--set global.operator=$(SKA_TANGO_OPERATOR) \
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) \
 	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
 	$(CUSTOM_VALUES) \
 	--values $(VALUES_FILE)

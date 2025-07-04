@@ -446,15 +446,16 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: attenuationPolV
-    - name: autoStowToggle
+    - name: autoWindStowEnabled
       data_format: SCALAR
       data_type: DevBoolean
-      description: "\n            Flag to ignore or act on wind speed / wind gust\
-        \ \n            values exeeding the configured threshold.\n            "
+      description: "\n            Toggle to enable or disable auto wind stow on wind\
+        \ speed\n            or wind gust for values exeeding the configured threshold.\n\
+        \            "
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
-      label: autoStowToggle
+      label: autoWindStowEnabled
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
@@ -462,7 +463,7 @@
       min_value: Not specified
       standard_unit: No standard unit
       writable: READ_WRITE
-      writable_attr_name: autoStowToggle
+      writable_attr_name: autoWindStowEnabled
     - name: availableCapabilities
       data_format: SPECTRUM
       data_type: DevString
@@ -1508,9 +1509,8 @@
     - name: meanWindSpeed
       data_format: SCALAR
       data_type: DevDouble
-      description: "\n            The average wind speed in m/s of the last 10 minutes\
-        \ \n            calculated from the connected weather stations.\n        \
-        \    "
+      description: "\n            The average wind speed in m/s of the last 10 minutes\n\
+        \            calculated from the connected weather stations.\n            "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1931,6 +1931,23 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: windGust
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "\n            The average wind speed in m/s of the last 3 seconds\n\
+        \            calculated from the connected weather stations.\n            "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: windGust
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     properties:
     - name: DSDeviceFqdn
     - name: DishId
@@ -1938,11 +1955,11 @@
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
     - name: MaxCapabilities
-    - name: MeanWindGustThreshold
     - name: MeanWindSpeedThreshold
     - name: ReceptorNumber
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
     - name: WMSInstances
+    - name: WindGustThreshold
     - name: polled_cmd

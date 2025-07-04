@@ -75,7 +75,7 @@ dishmanager:
     # Wind speed in m/s
     MeanWindSpeedThreshold: "10.0"
     # Wind gust in m/s
-    MeanWindGustThreshold: "15.0"
+    WindGustThreshold: "15.0"
 
 dev_pod:
   enabled: false
