@@ -12,7 +12,7 @@ from typing import List, Optional, Tuple
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
-from tango import AttrWriteType, DevState, DevULong, DispLevel
+from tango import AttrWriteType, DevState, DevVarStringArray, DevULong, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -83,7 +83,7 @@ class DishManager(SKAController):
     MeanWindSpeedThreshold = device_property(dtype=float, default_value=1000.0)
     WindGustThreshold = device_property(dtype=float, default_value=1000.0)
     # The instance used to populate the device name in the format mid/wms/<instance_number>
-    WMSInstances = device_property(dtype=List[int], default_value=[1])
+    WMSInstances = device_property(dtype=DevVarStringArray, default_value=["1"])
 
     def _create_lrc_attributes(self) -> None:
         """Create attributes for the long running commands.
