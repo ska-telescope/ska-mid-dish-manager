@@ -118,6 +118,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
             autostowtoggle=True,
             meanwindspeed=-1,
+            windgust=-1,
             **kwargs,
         )
         self.logger = logger
@@ -223,6 +224,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 component_state_callback=self._evaluate_wind_speed_rules,
                 state_update_lock=self._state_update_lock,
                 meanwindspeed=-1,
+                windgust=-1,
             ),
         }
 
@@ -396,23 +398,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _evaluate_wind_speed_rules(self, **wind_data_params):
         """Callback responding to mean wind speed or wind gust updates."""
         if "meanwindspeed" in wind_data_params:
-            computed_wind_speed = wind_data_params["meanwindspeed"]
-
-            # TODO: These are to be properties of the dish manager!!!
-            mean_wind_speed_threshold = 10
-            auto_wind_stow_enabled = True
-
-            # auto_wind_stow_enabled = self.component_state["autostowtoggle"]
-
-            if auto_wind_stow_enabled and (computed_wind_speed >= mean_wind_speed_threshold):
-                self.set_stow_mode()
-                self.logger.info(
-                    f"Mean wind speed {computed_wind_speed}m/s exceeded mean wind speed auto stow threshold of {mean_wind_speed_threshold}m/s. Requesting Stow"
-                )
+            # TODO: If it is decided that Dish LMC will make the auto stow decision
+            # add the logic here
             self._update_component_state(meanwindspeed=wind_data_params["meanwindspeed"])
         elif "windgust" in wind_data_params:
-            # TODO: Add handling when wind gust data is exposed by WMS
-            self.logger.info(f"Wind gust callback triggered with: {wind_data_params}")
+            # TODO: If it is decided that Dish LMC will make the auto stow decision
+            # add the logic here
+            self._update_component_state(windgust=wind_data_params["windgust"])
 
     def _sub_device_communication_state_changed(
         self, device: DishDevice, communication_state: CommunicationStatus
