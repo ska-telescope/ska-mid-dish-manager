@@ -51,6 +51,7 @@ endif
 
 python-do-format:
 	$(PYTHON_RUNNER) ruff format $(PYTHON_LINT_TARGET)
+	$(PYTHON_RUNNER) ruff check --fix $(PYTHON_LINT_TARGET)
 
 python-do-lint:
 	@mkdir -p build/reports
