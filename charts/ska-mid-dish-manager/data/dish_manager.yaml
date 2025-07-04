@@ -57,9 +57,9 @@ server:
                 - name: "MeanWindSpeedThreshold"
                   values:
                     - "{{ $.Values.dishmanager.windLimits.MeanWindSpeedThreshold }}"
-                - name: "MeanWindGustThreshold"
+                - name: "WindGustThreshold"
                   values:
-                    - "{{ $.Values.dishmanager.windLimits.MeanWindGustThreshold }}"
+                    - "{{ $.Values.dishmanager.windLimits.WindGustThreshold }}"
                 - name: "WMSInstances"
                   values:
                     - "{{ (get $.Values "ska-mid-wms").wmsConfig.instances | join "," }}"

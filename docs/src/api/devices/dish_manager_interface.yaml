@@ -1938,11 +1938,11 @@
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
     - name: MaxCapabilities
-    - name: MeanWindGustThreshold
     - name: MeanWindSpeedThreshold
     - name: ReceptorNumber
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
     - name: WMSInstances
+    - name: WindGustThreshold
     - name: polled_cmd

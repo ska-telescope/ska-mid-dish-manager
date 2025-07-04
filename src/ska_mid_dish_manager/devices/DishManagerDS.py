@@ -81,7 +81,7 @@ class DishManager(SKAController):
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
     # TODO declare the defaults in a constant
     MeanWindSpeedThreshold = device_property(dtype=float, default_value=1000.0)
-    MeanWindGustThreshold = device_property(dtype=float, default_value=1000.0)
+    WindGustThreshold = device_property(dtype=float, default_value=1000.0)
     # The instance used to populate the device name in the format mid/wms/<instance_number>
     WMSInstances = device_property(dtype=List[int], default_value=[1])
 
@@ -379,6 +379,7 @@ class DishManager(SKAController):
                 "tracktablecurrentindex": "trackTableCurrentIndex",
                 "tracktableendindex": "trackTableEndIndex",
                 "meanwindspeed": "meanWindSpeed",
+                "windgust": "windGust",
                 "autowindstowenabled": "autoWindStowEnabled",
             }
             for attr in device._component_state_attr_map.values():
@@ -1401,13 +1402,24 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get("meanwindspeed", -1)
 
     @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
+        doc="""
+            The average wind speed in m/s of the last 3 seconds
+            calculated from the connected weather stations.
+            """,
+    )
+    def windGust(self):
+        """Returns the mean wind speed over a short window from the weather stations."""
+        return self.component_manager.component_state.get("windgust", -1)
+
+    @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
         doc="""
             Toggle to enable or disable auto wind stow on wind speed
             or wind gust for values exeeding the configured threshold.
             """,
-        memorized=True,
     )
     def autoWindStowEnabled(self):
         """Returns the value for the auto wind stow toggle."""

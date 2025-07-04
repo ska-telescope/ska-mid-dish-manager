@@ -1,15 +1,7 @@
-ska-mid-dish-simulators:
-  enabled: true
-
-  deviceServers:
-    spfdevice:
-      enabled: true
-    spfrxdevice:
-      enabled: true
-
-  dsOpcuaSimulator:
-    enabled: true
-
+global:
+  minikube: true
+  operator: false
+  dishes: ["001","111"]
 
 ska-mid-dish-ds-manager:
   enabled: true
@@ -17,15 +9,22 @@ ska-mid-dish-ds-manager:
 ska-tango-base:
   enabled: true
 
-global:
-  dishes: ["001"]
+ska-mid-dish-simulators:
+  enabled: true
+  deviceServers:
+    spfdevice:
+      enabled: true
+    spfrxdevice:
+      enabled: true
+  dsOpcuaSimulator:
+    enabled: true
 
 dishmanager:
   windLimits:
     # Wind speed in m/s
     MeanWindSpeedThreshold: "10.0"
     # Wind gust in m/s
-    MeanWindGustThreshold: "15.0"
+    WindGustThreshold: "15.0"
 
 ska-mid-wms:
   enabled: true

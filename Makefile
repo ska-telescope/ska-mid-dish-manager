@@ -82,9 +82,7 @@ K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 K8S_TIMEOUT=600s
 endif
 
-K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
-	--set global.tango_host=$(TANGO_HOST) \
-	--set global.operator=$(SKA_TANGO_OPERATOR) \
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) \
 	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
 	$(CUSTOM_VALUES) \
 	--values $(VALUES_FILE)
