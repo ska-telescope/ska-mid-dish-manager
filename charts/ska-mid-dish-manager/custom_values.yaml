@@ -1,6 +1,6 @@
 global:
   minikube: true
-  operator: false
+  operator: true
   dishes: ["001","111"]
 
 ska-mid-dish-ds-manager:
