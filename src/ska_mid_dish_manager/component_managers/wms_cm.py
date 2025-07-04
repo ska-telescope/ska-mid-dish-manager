@@ -1,10 +1,10 @@
 """Specialization for WMS functionality."""
 
-from concurrent.futures import ThreadPoolExecutor
 import logging
 import math
 import threading
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, Optional
 
 import tango
@@ -16,7 +16,7 @@ MAX_READ_RETRIES = 2
 
 
 class WMSComponentManager(BaseComponentManager):
-    """Specialization for WMS functionality"""
+    """Specialization for WMS functionality."""
 
     # TODO: Consider swapping out the BaseComponentManager
     # for the TaskExecutorComponentManager
@@ -139,7 +139,7 @@ class WMSComponentManager(BaseComponentManager):
         self._wms_attr_polling_timer.start()
 
     def _poll_wms_wind_speed_data(self):
-        """Fetch WMS windspeed data and publish it to the rolling avg calc"""
+        """Fetch WMS windspeed data and publish it to the rolling avg calc."""
         retry_count = 0
         while retry_count <= MAX_READ_RETRIES:
             try:
@@ -177,7 +177,7 @@ class WMSComponentManager(BaseComponentManager):
             self._wind_gust_buffer.clear()
 
     def read_wms_group_attribute_value(self, attribute_name: str) -> Any:
-        """Return list of group attributes"""
+        """Return list of group attributes."""
         self.logger.debug(
             "About to read attribute [%s] on group [%s] containing [%s]",
             attribute_name,
