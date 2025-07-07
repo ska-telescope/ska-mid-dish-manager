@@ -14,11 +14,10 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
-    """Execute tests"""
+    """Execute tests."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
@@ -83,11 +82,10 @@ def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
         assert message in events_string
 
 
-# pylint:disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_standby_fp_from_maintenance(dish_manager_resources, event_store_class):
-    """Execute tests"""
+    """Execute tests."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]

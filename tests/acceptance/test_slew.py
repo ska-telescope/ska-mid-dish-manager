@@ -1,4 +1,4 @@
-"""Test that Dish Slews to target Azimuth and Elevation"""
+"""Test that Dish Slews to target Azimuth and Elevation."""
 
 import pytest
 import tango
@@ -9,11 +9,10 @@ ELEV_MECHANICAL_LIMIT_MAX = 85.0
 AZIM_MECHANICAL_LIMIT_MAX = 360.0
 
 
-# pylint: disable=too-many-locals,unused-argument
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_slew_rejected(event_store_class, dish_manager_proxy):
-    """Test slew command rejected when not in OPERATE"""
+    """Test slew command rejected when not in OPERATE."""
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
@@ -56,7 +55,7 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_slew_transition(event_store_class, dish_manager_proxy):
-    """Test transition to SLEW"""
+    """Test transition to SLEW."""
     main_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
         "dishMode",

@@ -14,7 +14,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_set_operate_mode_fails_when_already_in_operate_dish_mode(
@@ -51,7 +50,6 @@ def test_set_operate_mode_fails_when_already_in_operate_dish_mode(
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(

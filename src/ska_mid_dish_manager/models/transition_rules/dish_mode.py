@@ -1,4 +1,4 @@
-"""Automatic transition rules for dish mode"""
+"""Automatic transition rules for dish mode."""
 
 import rule_engine
 
@@ -10,8 +10,9 @@ DISH_MODE_RULES_ALL_DEVICES = {
     ),
     "MAINTENANCE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.STOW' and "
-        "SPF.operatingmode  == 'SPFOperatingMode.MAINTENANCE' and "
-        "SPFRX.adminmode  == 'AdminMode.ENGINEERING'"
+        "SPF.operatingmode  == 'SPFOperatingMode.MAINTENANCE' "
+        # TODO: Not taking SPFRx into consideration until adminMode is implemented
+        # "SPFRX.adminmode  == 'AdminMode.ENGINEERING'"
     ),
     "OPERATE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.POINT' and "

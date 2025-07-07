@@ -1,4 +1,4 @@
-"""Tests dish manager component manager set_maintenance_mode command handler"""
+"""Tests dish manager component manager set_maintenance_mode command handler."""
 
 from unittest.mock import Mock, patch
 
@@ -20,8 +20,7 @@ def test_set_maintenance_mode_handler(
     mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of SetMaintenanceMode command handler.
+    """Verify behaviour of SetMaintenanceMode command handler.
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: representing the command tracker class
@@ -35,6 +34,8 @@ def test_set_maintenance_mode_handler(
 
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
+        # TODO: Remove below. Waiting for SPFRx to implement maintenance mode
+        {"progress": "Nothing done on SPFRx, awaiting implementation on it."},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"SetMaintenanceMode called on SPF, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},

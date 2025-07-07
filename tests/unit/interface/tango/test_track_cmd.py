@@ -13,7 +13,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_track_interpolation_mode_updates(dish_manager_resources, event_store_class):
@@ -39,7 +38,6 @@ def test_track_interpolation_mode_updates(dish_manager_resources, event_store_cl
     assert device_proxy.trackInterpolationMode == test_mode
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -93,7 +91,6 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
 
-# pylint: disable=protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -110,7 +107,7 @@ def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
     event_store_class,
     current_pointing_state,
 ):
-    """Test to verify that call to Track cmd is rejected if pointingState is not READY"""
+    """Test to verify that call to Track cmd is rejected if pointingState is not READY."""
     device_proxy, dish_manager_cm = dish_manager_resources
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
@@ -145,7 +142,6 @@ def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_set_track_cmd_succeeds_when_dish_mode_is_operate(

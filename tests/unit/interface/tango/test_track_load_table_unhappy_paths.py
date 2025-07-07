@@ -6,7 +6,6 @@ from mock import Mock, patch
 from ska_control_model import ResultCode
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_track_load_table_unhappy_paths(

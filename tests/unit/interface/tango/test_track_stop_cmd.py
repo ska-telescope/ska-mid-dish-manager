@@ -12,7 +12,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -52,7 +51,6 @@ def test_track_stop_cmd_fails_in_wrong_pointing_state(
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_track_stop_cmd_succeeds_when_pointing_state_is_track(

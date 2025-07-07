@@ -1,6 +1,5 @@
 """Shared methods in package."""
 
-# pylint: disable=chained-comparison,invalid-name
 from typing import Any
 
 from tango import InfoIt

@@ -1,4 +1,4 @@
-"""Specialization for SPFRx functionality"""
+"""Specialization for SPFRx functionality."""
 
 import logging
 import threading
@@ -10,13 +10,9 @@ from ska_control_model import AdminMode, HealthState
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
 
-# pylint: disable=too-many-arguments,too-many-instance-attributes,broad-exception-caught
-
 
 class MonitorPing(threading.Thread):
-    """
-    A thread that executes SPFRx's MonitorPing command at a specified interval.
-    """
+    """A thread that executes SPFRx's MonitorPing command at a specified interval."""
 
     PING_ERROR_LOG_REPEAT = 5
 
@@ -27,8 +23,7 @@ class MonitorPing(threading.Thread):
         stop_event: threading.Event,
         device_fqdn: str,
     ):
-        """
-        Initialize the MonitorPing thread.
+        """Initialize the MonitorPing thread.
 
         :param logger: Logger to use for logging.
         :param interval: Time interval in seconds between function calls.
@@ -59,8 +54,7 @@ class MonitorPing(threading.Thread):
                 pass
 
     def _execute_monitor_ping(self) -> None:
-        """
-        Execute MonitorPing on the SPFRx controller.
+        """Execute MonitorPing on the SPFRx controller.
 
         self.execute_command is not used to prevent spam logs about MonitorPing.
         """
@@ -113,7 +107,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "noisediodemode",
             "periodicnoisediodepars",
             "pseudorandomnoisediodepars",
-            "adminMode",
+            # "adminMode", TODO: Wait for SPFRx to implement adminMode
         )
         super().__init__(
             tango_device_fqdn,
@@ -125,6 +119,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             quality_monitored_attributes=(
                 "attenuationpolv",
                 "attenuationpolh",
+                "noisediodemode",
             ),
             **kwargs,
         )

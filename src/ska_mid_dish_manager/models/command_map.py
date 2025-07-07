@@ -1,4 +1,4 @@
-"""Module to manage the mapping of commands to subservient devices"""
+"""Module to manage the mapping of commands to subservient devices."""
 
 import enum
 import json
@@ -19,11 +19,8 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint: disable=too-few-public-methods
 class CommandMap:
-    """
-    Command fan out to handle the mapping of DishManager commands to subservient devices.
-    """
+    """Command fan out to handle the mapping of DishManager commands to subservient devices."""
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -42,7 +39,7 @@ class CommandMap:
         return self._dish_manager_cm.is_device_ignored(device)
 
     def set_standby_lp_mode(self, task_callback: Optional[Callable] = None, task_abort_event=None):
-        """Transition the dish to STANDBY_LP mode"""
+        """Transition the dish to STANDBY_LP mode."""
         if not self._dish_manager_cm.is_device_ignored("SPFRX"):
             spfrx_cm = self._dish_manager_cm.sub_component_managers["SPFRX"]
             if spfrx_cm.component_state["adminmode"] == AdminMode.ENGINEERING:
@@ -90,8 +87,7 @@ class CommandMap:
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
-        """Transition the dish to STANDBY_FP mode"""
-
+        """Transition the dish to STANDBY_FP mode."""
         if self._dish_manager_cm.component_state["dishmode"].name == "OPERATE":
             commands_for_sub_devices = {
                 "DS": {
@@ -161,7 +157,7 @@ class CommandMap:
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
-        """Transition the dish to OPERATE mode"""
+        """Transition the dish to OPERATE mode."""
         if self._dish_manager_cm.component_state["configuredband"] in [Band.NONE, Band.UNKNOWN]:
             task_callback(
                 progress="No configured band: SetOperateMode execution not allowed",
@@ -197,12 +193,15 @@ class CommandMap:
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
-        """Transition the dish to MAINTENANCE mode"""
-
+        """Transition the dish to MAINTENANCE mode."""
         if not self._dish_manager_cm.is_device_ignored("SPFRX"):
-            spfrx_cm = self._dish_manager_cm.sub_component_managers["SPFRX"]
+            spfrx_cm = self._dish_manager_cm.sub_component_managers["SPFRX"]  # noqa: F841
             try:
-                spfrx_cm.write_attribute_value("adminmode", AdminMode.ENGINEERING)
+                # TODO: Wait for the SPFRx to implement maintenance mode
+                task_callback(
+                    progress="Nothing done on SPFRx, awaiting implementation on it.",
+                )
+                # spfrx_cm.write_attribute_value("adminmode", AdminMode.ENGINEERING)
             except tango.DevFailed as err:
                 self.logger.exception(
                     "Failed to configure SPFRx adminMode ENGINEERING"
@@ -239,7 +238,7 @@ class CommandMap:
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
-        """Transition the dish to Track mode"""
+        """Transition the dish to Track mode."""
         commands_for_sub_devices = {
             "DS": {
                 "command": "Track",
@@ -266,7 +265,7 @@ class CommandMap:
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
-        """Stop Tracking"""
+        """Stop Tracking."""
         commands_for_sub_devices = {
             "DS": {
                 "command": "TrackStop",
@@ -291,7 +290,7 @@ class CommandMap:
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
-        """Configure band on DS and SPFRx"""
+        """Configure band on DS and SPFRx."""
         band_enum = Band[f"B{band_number}"]
         indexer_enum = IndexerPosition[f"B{band_number}"]
         requested_cmd = f"ConfigureBand{band_number}"
@@ -334,7 +333,7 @@ class CommandMap:
     def slew(
         self, argin: list[float], task_abort_event=None, task_callback: Optional[Callable] = None
     ):
-        """Transition the dish to Slew mode"""
+        """Transition the dish to Slew mode."""
         commands_for_sub_devices = {
             "DS": {
                 "command": "Slew",
@@ -359,7 +358,7 @@ class CommandMap:
 
     # pylint: disable=unused-argument
     def scan(self, task_abort_event=None, task_callback: Optional[Callable] = None):
-        """Transition the dish to Scan mode"""
+        """Transition the dish to Scan mode."""
         # TODO: This is a temporary workaround (Pending further implementation details)
         # to support TMC integration.
         self.logger.info("Scan command called")
@@ -374,7 +373,7 @@ class CommandMap:
     def track_load_static_off(
         self, off_xel, off_el, task_abort_event=None, task_callback: Optional[Callable] = None
     ):
-        """Transition the dish to Track Load Static Off mode"""
+        """Transition the dish to Track Load Static Off mode."""
         commands_for_sub_devices = {
             "DS": {
                 "command": "TrackLoadStaticOff",
@@ -394,7 +393,7 @@ class CommandMap:
         )
 
     def _fan_out_cmd(self, task_callback, device, fan_out_args):
-        """Fan out the respective command to the subservient devices"""
+        """Fan out the respective command to the subservient devices."""
         command_name = fan_out_args["command"]
         command_argument = fan_out_args.get("commandArgument")
 
@@ -433,14 +432,14 @@ class CommandMap:
         return command_id
 
     def _fanout_command_has_failed(self, command_id):
-        """Check the status of the fanned out command on the subservient device"""
+        """Check the status of the fanned out command on the subservient device."""
         current_status = self._command_tracker.get_command_status(command_id)
         if current_status == TaskStatus.FAILED:
             return True
         return False
 
     def _report_fan_out_cmd_progress(self, task_callback, device, fan_out_args):
-        """Report and update the progress of the fanned out command"""
+        """Report and update the progress of the fanned out command."""
         awaited_attributes = fan_out_args["awaitedAttributes"]
         awaited_values_list = fan_out_args["awaitedValuesList"]
         device_cm_component_state = self._dish_manager_cm.sub_component_managers[

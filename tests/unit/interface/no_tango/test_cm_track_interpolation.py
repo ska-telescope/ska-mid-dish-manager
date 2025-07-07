@@ -1,4 +1,4 @@
-"""Tests dish manager component manager trackInterpolation command handler"""
+"""Tests dish manager component manager trackInterpolation command handler."""
 
 import pytest
 from ska_control_model import ResultCode
@@ -10,8 +10,7 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
 def test_set_track_interpolation_mode_handler(
     component_manager: DishManagerComponentManager,
 ) -> None:
-    """
-    Verify behaviour of SetTrackInterpolationMode command handler.
+    """Verify behaviour of SetTrackInterpolationMode command handler.
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: a representing the command tracker class

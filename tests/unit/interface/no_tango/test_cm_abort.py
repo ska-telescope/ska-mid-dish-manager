@@ -1,4 +1,4 @@
-"""Tests dish manager component manager abort command handler"""
+"""Tests dish manager component manager abort command handler."""
 
 from unittest.mock import MagicMock, patch
 
@@ -14,8 +14,7 @@ def test_abort_handler_runs_only_one_sequence_at_a_time(
     component_manager: DishManagerComponentManager,
     mock_command_tracker: MagicMock,
 ) -> None:
-    """
-    Verify only one Abort sequence can be requested at a time.
+    """Verify only one Abort sequence can be requested at a time.
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: a representing the command tracker class
@@ -44,8 +43,7 @@ def test_abort_handler(
     mock_command_tracker: MagicMock,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of Abort command handler.
+    """Verify behaviour of Abort command handler.
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: a representing the command tracker class
