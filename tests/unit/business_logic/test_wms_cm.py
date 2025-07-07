@@ -136,4 +136,3 @@ def test_wms_wind_gust_circular_buffer():
         wms._process_wind_gust(current_max_wind_speed)
         if exp_wind_gust is not None:
             comp_state_mock.assert_called_with(windgust=exp_wind_gust)
-
