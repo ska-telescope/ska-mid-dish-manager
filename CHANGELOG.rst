@@ -9,6 +9,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - Added connection workaround for SPFRx attributes that have invalid quality on startup
 - Partial SetMaintenanceMode implementation. It may not work as expected until SPFRx implements the changes to adminMode
+- Add test_track_pattern acceptance test to run tracking test with track table input from csv files
+  - Add manual job (k8s-test-runner-track-patterns) to gitlab pipeline to run test_track_pattern acceptance test
 
 Version 7.4.0
 *************
