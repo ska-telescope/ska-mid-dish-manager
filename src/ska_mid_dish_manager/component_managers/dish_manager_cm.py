@@ -10,7 +10,6 @@ from typing import Callable, Dict, List, Optional, Tuple
 import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
-from tango import DevLong64
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
