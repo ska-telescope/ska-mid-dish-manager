@@ -1,9 +1,12 @@
 """Tests to verify weather station device attributes are readable and are configured as read types."""
 
-from time import time
+import threading
 import pytest
 import tango
 from tango import AttrWriteType, DeviceProxy
+
+MIN_WIND_GUST_UPDATE_TIME_S = 3
+MIN_MEAN_WIND_SPEED_WAIT_TIME_S = 600
 
 
 @pytest.mark.acceptance
@@ -18,22 +21,44 @@ def test_wms_read_attribute_type(dish_manager_proxy: DeviceProxy) -> None:
 
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_wms_attributes_are_readable(dish_manager_proxy: DeviceProxy, event_store_class) -> None:
+def test_wms_wind_gust_is_readable(dish_manager_proxy: DeviceProxy, event_store_class) -> None:
     """Test the wms attribute configurations are readable."""
-    main_event_store = event_store_class()
-    dish_manager_proxy.subscribe_event(
-        "windGust",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
+    # main_event_store = event_store_class()
+    # dish_manager_proxy.subscribe_event(
+    #     "windGust",
+    #     tango.EventType.CHANGE_EVENT,
+    #     main_event_store,
+    # )
 
-    # wind_speed_default_val = -1
-    wind_gust_default_val = -1.0
-    time.sleep(10)
+    wind_gust_default_val = -1
+
+    wait_event = threading.Event()
+    wait_event.wait(MIN_WIND_GUST_UPDATE_TIME_S)
+    
     # main_event_store.wait_for_n_events(1, timeout=6)
-    mean_wg = dish_manager_proxy.read_attribute("windGust").value
-    print(f"meanWG: {mean_wg}")
 
     # assert dish_manager_proxy.read_attribute("meanWindSpeed").value != wind_speed_default_val
     assert dish_manager_proxy.read_attribute("windGust").value != wind_gust_default_val
-    main_event_store.clear_queue()
+    # main_event_store.clear_queue()
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_wms_mean_wind_speed_is_readable(dish_manager_proxy: DeviceProxy, event_store_class) -> None:
+    """Test the wms attribute configurations are readable."""
+    # main_event_store = event_store_class()
+    # dish_manager_proxy.subscribe_event(
+    #     "windGust",
+    #     tango.EventType.CHANGE_EVENT,
+    #     main_event_store,
+    # )
+
+    wind_speed_default_val = -1
+
+    wait_event = threading.Event()
+    wait_event.wait(MIN_MEAN_WIND_SPEED_WAIT_TIME_S)
+    
+    # main_event_store.wait_for_n_events(1, timeout=6)
+
+    # assert dish_manager_proxy.read_attribute("meanWindSpeed").value != wind_speed_default_val
+    assert dish_manager_proxy.read_attribute("meanWindSpeed").value != wind_speed_default_val
+    # main_event_store.clear_queue()
