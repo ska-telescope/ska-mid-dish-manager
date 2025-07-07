@@ -7,7 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Updated periodicNoiseDiodePars and pseudoRandomNoiseDiodePars to be DevVarLong64Array - DevLong64
+- Updated periodicNoiseDiodePars and pseudoRandomNoiseDiodePars to be DevVarLong64Array - (DevLong64,)
 
 Version 7.4.0
 *************
