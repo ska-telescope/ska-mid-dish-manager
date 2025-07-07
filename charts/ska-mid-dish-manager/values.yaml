@@ -6,7 +6,7 @@ ska-mid-dish-simulators:
     image:
       registry: registry.gitlab.com/ska-telescope/ska-mid-dish-simulators
       image: ska-mid-dish-simulators
-      tag: 4.4.3-dev.c2e2c0a23
+      tag: 4.4.3-dev.c3a5e9e44
       pullPolicy: IfNotPresent
 
 ska-mid-dish-ds-manager:

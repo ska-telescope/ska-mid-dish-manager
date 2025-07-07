@@ -1308,7 +1308,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_periodic_noise_diode_pars(
         self,
-        values: DevLong64,
+        values,
     ) -> None:
         """Set the periodicNoiseDiodePars on the SPFRx."""
         if len(values) != 3:
@@ -1339,7 +1339,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_pseudo_random_noise_diode_pars(
         self,
-        values: DevLong64,
+        values,
     ) -> None:
         """Set the pseudoRandomNoiseDiodePars on the SPFRx."""
         if len(values) != 3:

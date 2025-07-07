@@ -1303,7 +1303,7 @@ class DishManager(SKAController):
         self.component_manager.set_noise_diode_mode(mode)
 
     @attribute(
-        dtype=DevLong64,
+        dtype=(DevLong64,),
         max_dim_x=3,
         doc="""
             Periodic noise diode pars (units are in time quanta).
@@ -1321,12 +1321,12 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get("periodicnoisediodepars", [])
 
     @periodicNoiseDiodePars.write
-    def periodicNoiseDiodePars(self, values: DevLong64):
+    def periodicNoiseDiodePars(self, values):
         """Set the device periodic noise diode pars."""
         self.component_manager.set_periodic_noise_diode_pars(values)
 
     @attribute(
-        dtype=DevLong64,
+        dtype=(DevLong64,),
         max_dim_x=3,
         doc="""
             Pseudo random noise diode pars (units are in time quanta).
@@ -1344,7 +1344,7 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get("pseudorandomnoisediodepars", [])
 
     @pseudoRandomNoiseDiodePars.write
-    def pseudoRandomNoiseDiodePars(self, values: DevLong64):
+    def pseudoRandomNoiseDiodePars(self, values):
         """Set the device pseudo random noise diode pars."""
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
 
