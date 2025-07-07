@@ -18,8 +18,6 @@ MAX_READ_RETRIES = 2
 class WMSComponentManager(BaseComponentManager):
     """Specialization for WMS functionality."""
 
-    # TODO: Consider swapping out the BaseComponentManager
-    # for the TaskExecutorComponentManager
     def __init__(
         self,
         wms_instances,
@@ -95,7 +93,7 @@ class WMSComponentManager(BaseComponentManager):
             try:
                 self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)
                 break
-            except tango.DevFailed:
+            except (tango.DevFailed, RuntimeError):
                 self.logger.error(
                     "Failed to set WMS device(s) adminMode to ONLINE. One or more"
                     " WMS device(s) may be unavailable. Retrying"
@@ -122,7 +120,7 @@ class WMSComponentManager(BaseComponentManager):
         try:
             self.write_wms_group_attribute_value("adminMode", AdminMode.OFFLINE)
             self._wms_device_group.remove_all()
-        except tango.DevFailed:
+        except (tango.DevFailed, RuntimeError):
             self.logger.error(
                 "Failed to set WMS device(s) adminMode to OFFLINE. "
                 "One or more WMS device(s) may be unavailable"
@@ -145,7 +143,7 @@ class WMSComponentManager(BaseComponentManager):
             wind_speed_list = self.read_wms_group_attribute_value("wind_speed")
             self._process_wind_gust(max(wind_speed_list))
             self._compute_mean_wind_speed(wind_speed_list)
-        except (Exception, tango.DevFailed):
+        except (RuntimeError, tango.DevFailed):
             pass
 
         self._restart_polling_timer()
@@ -154,18 +152,17 @@ class WMSComponentManager(BaseComponentManager):
         """Calculate the mean wind speed and update the component state."""
         self._wind_speed_buffer.extendleft(wind_speed_data)
 
-        self.logger.info("LLL Compute mean wind speed called")
         if len(self._wind_speed_buffer) == self._wind_speed_buffer_length:
             _mean_wind_speed = sum(self._wind_speed_buffer) / self._wind_speed_buffer_length
             self._update_component_state(meanwindspeed=_mean_wind_speed)
 
     def _process_wind_gust(self, max_instantaneous_wind_speed) -> None:
         """Determine wind gust from maximum instantaneous wind speed in the buffer."""
-        self._wind_gust_buffer.extendleft([max_instantaneous_wind_speed])
+        self._wind_gust_buffer.append(max_instantaneous_wind_speed)
 
         if len(self._wind_gust_buffer) == self._wind_gust_buffer_length:
-            _wind_gust_avg = max(self._wind_gust_buffer)
-            self._update_component_state(windgust=_wind_gust_avg)
+            _wind_gust_buffer_max = max(self._wind_gust_buffer)
+            self._update_component_state(windgust=_wind_gust_buffer_max)
 
     def read_wms_group_attribute_value(self, attribute_name: str) -> Any:
         """Return list of group attributes."""
@@ -174,13 +171,14 @@ class WMSComponentManager(BaseComponentManager):
             grp_reply = self._wms_device_group.read_attribute(attribute_name)
             for reply in grp_reply:
                 if reply.has_failed():
-                    self.logger.error(
+                    err_msg = (
                         "Failed to read attribute [%s] on device [%s] of group [%s]",
                         attribute_name,
                         reply.dev_name(),
                         self._wms_device_group.get_name(),
                     )
-                    raise Exception
+                    self.logger.error(err_msg)
+                    raise RuntimeError(err_msg)
                 reply_values.append(reply.get_data().value)
         except tango.DevFailed:
             self.logger.error(
@@ -197,13 +195,14 @@ class WMSComponentManager(BaseComponentManager):
             grp_reply = self._wms_device_group.write_attribute(attribute_name, attribute_value)
             for reply in grp_reply:
                 if reply.has_failed():
-                    self.logger.error(
+                    err_msg = (
                         "Failed to write attribute [%s] on device [%s] of group [%s]",
                         attribute_name,
                         reply.dev_name(),
                         self._wms_device_group.get_name(),
                     )
-                    raise Exception
+                    self.logger.error(err_msg)
+                    raise RuntimeError(err_msg)
         except tango.DevFailed:
             self.logger.error(
                 "Exception raised on attempt to write attribute [%s] of group [%s].",
