@@ -65,8 +65,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
-        wms_instances: List[str],
         *args,
+        wms_instances: Optional[List[str]] = [],
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
@@ -774,7 +774,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Syncing component states")
         if self.sub_component_managers:
             for device, component_manager in self.sub_component_managers.items():
-                if not self.is_device_ignored(device):
+                if not self.is_device_ignored(device) and device != "WMS":
                     component_manager.clear_monitored_attributes()
                     component_manager.update_state_from_monitored_attributes()
 
