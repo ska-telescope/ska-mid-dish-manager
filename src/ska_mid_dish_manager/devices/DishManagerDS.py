@@ -83,7 +83,7 @@ class DishManager(SKAController):
     MeanWindSpeedThreshold = device_property(dtype=float, default_value=1000.0)
     WindGustThreshold = device_property(dtype=float, default_value=1000.0)
     # The instance used to populate the device name in the format mid/wms/<instance_number>
-    WMSInstances = device_property(dtype=DevVarStringArray, default_value=[])
+    WMSDeviceNames = device_property(dtype=DevVarStringArray, default_value=[])
 
     def _create_lrc_attributes(self) -> None:
         """Create attributes for the long running commands.
@@ -148,7 +148,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
-            wms_instances=self.WMSInstances,
+            wms_device_names=self.WMSDeviceNames,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )
