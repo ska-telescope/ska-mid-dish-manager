@@ -1,7 +1,7 @@
 global:
   minikube: true
   operator: true
-  dishes: ["001","111"]
+  dishes: ["001"]
 
 ska-mid-dish-ds-manager:
   enabled: true
@@ -22,9 +22,9 @@ ska-mid-dish-simulators:
 dishmanager:
   windLimits:
     # Wind speed in m/s
-    MeanWindSpeedThreshold: "10.0"
+    MeanWindSpeedThreshold: "11.1"
     # Wind gust in m/s
-    WindGustThreshold: "15.0"
+    WindGustThreshold: "16.9"
 
 ska-mid-wms:
   enabled: true
@@ -35,11 +35,8 @@ ska-mid-wms:
   deviceServers:
     wms:
       enabled: true
-  wmsConfig:
-    Host: ["wms-sim-3"] # hostname of the modbus devices
-    Port: ["1502"] # port of the modbus devices (default sim port is 1502)
-    # List of WMS instances to deploy (also corresponds to simulator IDs)
-    # Each item in this list will create a device server instance.
-    instances: ["3"]
+      station_ids: ["1"]
+      modbus_server_hostnames: ["wms-sim-1"]
+      modbus_server_ports: ["1502"]
   simulator:
     enabled: True

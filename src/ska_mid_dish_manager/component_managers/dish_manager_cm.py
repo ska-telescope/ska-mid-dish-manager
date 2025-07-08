@@ -66,7 +66,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
         *args,
-        wms_instances: Optional[List[str]] = [],
+        wms_device_names: Optional[List[str]] = [],
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
@@ -116,7 +116,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
-            autowindstowenabled=True,
+            autowindstowenabled=False,
             meanwindspeed=-1,
             windgust=-1,
             **kwargs,
