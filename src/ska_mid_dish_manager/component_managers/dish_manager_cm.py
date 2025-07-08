@@ -115,7 +115,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
-            autowindstowenabled=True,
+            autowindstowenabled=False,
             meanwindspeed=-1,
             windgust=-1,
             **kwargs,

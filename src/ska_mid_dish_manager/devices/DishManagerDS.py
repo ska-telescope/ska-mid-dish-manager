@@ -31,6 +31,8 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_SPFRX_TRL,
     DSC_MAX_POWER_LIMIT_KW,
     DSC_MIN_POWER_LIMIT_KW,
+    MEAN_WIND_SPEED_THRESHOLD_MS,
+    WIND_GUST_THRESHOLD_MS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -79,11 +81,18 @@ class DishManager(SKAController):
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
-    # TODO declare the defaults in a constant
-    MeanWindSpeedThreshold = device_property(dtype=float, default_value=1000.0)
-    WindGustThreshold = device_property(dtype=float, default_value=1000.0)
-    # The instance used to populate the device name in the format mid/wms/<instance_number>
+    # wms device names (e.g. mid/wms/1) to connect to
     WMSDeviceNames = device_property(dtype=DevVarStringArray, default_value=[])
+    MeanWindSpeedThreshold = device_property(
+        dtype=float,
+        doc="Threshold value for mean wind speed (in m/s) used to trigger stow.",
+        default_value=MEAN_WIND_SPEED_THRESHOLD_MS,
+    )
+    WindGustThreshold = device_property(
+        dtype=float,
+        doc="Threshold value for wind gust speed (in m/s) used to trigger stow.",
+        default_value=WIND_GUST_THRESHOLD_MS,
+    )
 
     def _create_lrc_attributes(self) -> None:
         """Create attributes for the long running commands.
@@ -1423,7 +1432,7 @@ class DishManager(SKAController):
     )
     def autoWindStowEnabled(self):
         """Returns the value for the auto wind stow toggle."""
-        return self.component_manager.component_state.get("autowindstowenabled", True)
+        return self.component_manager.component_state.get("autowindstowenabled", False)
 
     @autoWindStowEnabled.write
     def autoWindStowEnabled(self, toggle: bool):

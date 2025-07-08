@@ -22,9 +22,9 @@ ska-mid-dish-simulators:
 dishmanager:
   windLimits:
     # Wind speed in m/s
-    MeanWindSpeedThreshold: "10.0"
+    MeanWindSpeedThreshold: "11.1"
     # Wind gust in m/s
-    WindGustThreshold: "15.0"
+    WindGustThreshold: "16.9"
 
 ska-mid-wms:
   enabled: true
