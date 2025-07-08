@@ -74,7 +74,13 @@ class WMSComponentManager(BaseComponentManager):
     def start_communicating(self) -> None:
         """Add WMS device to group and initiate WMS attr polling."""
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-        # Should we check for an empty list of instances here????
+        if not self._wms_instances:
+            self.logger.warning(
+                "WMS component manager instantiated "
+                "without any WMS device server instances provided. "
+            )
+            return
+
         self._stop_monitoring_flag.clear()
 
         for device_name in self._wms_device_names:
@@ -144,6 +150,9 @@ class WMSComponentManager(BaseComponentManager):
             self._compute_mean_wind_speed(wind_speed_list)
         except (RuntimeError, tango.DevFailed):
             pass
+        except ValueError as err:
+            # Raised by max() on an empty list
+            self.logger.error(f"Exception raised on processing windspeed data: {err}")
 
         self._restart_polling_timer()
 
