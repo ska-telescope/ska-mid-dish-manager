@@ -25,15 +25,10 @@ def test_wms_group_activation_and_polling_starts():
     test_weather_station_instances = ["1", "2", "3"]
     logger = logging.getLogger(__name__)
 
-    comp_state_updates = []
-
-    def comp_state_callback(**incoming_comp_state_change):
-        comp_state_updates.append(incoming_comp_state_change)
-
     wms = WMSComponentManager(
         test_weather_station_instances,
         logger=logger,
-        component_state_callback=comp_state_callback,
+        component_state_callback=MagicMock(),
         wms_polling_period=WMS_POLLING_PERIOD,
         wind_speed_moving_average_period=MEAN_WIND_SPEED_PERIOD,
         wind_gust_average_period=WIND_GUST_PERIOD,
@@ -43,7 +38,6 @@ def test_wms_group_activation_and_polling_starts():
     wms._poll_wms_wind_speed_data = Mock()
 
     wms.start_communicating()
-    wms.communication_state
 
     expected_devices = []
     for instance in test_weather_station_instances:
@@ -62,17 +56,15 @@ def test_wms_wind_gust_and_mean_wind_speed_updates():
     test_weather_station_instances = ["1", "2", "3"]
     logger = logging.getLogger(__name__)
 
-    comp_state_updates = {}
+    component_state = {}
 
-    def comp_state_callback(**incoming_comp_state_change):
-        print(f"Comp state callback triggered with: {incoming_comp_state_change}")
-        for key, value in incoming_comp_state_change.items():
-            comp_state_updates[key] = value
+    def component_state_callback(**incoming_comp_state_change):
+        component_state.update(incoming_comp_state_change)
 
     wms = WMSComponentManager(
         test_weather_station_instances,
         logger=logger,
-        component_state_callback=comp_state_callback,
+        component_state_callback=component_state_callback,
         wms_polling_period=WMS_POLLING_PERIOD,
         wind_speed_moving_average_period=MEAN_WIND_SPEED_PERIOD,
         wind_gust_average_period=WIND_GUST_PERIOD,
@@ -97,8 +89,8 @@ def test_wms_wind_gust_and_mean_wind_speed_updates():
     assert wms.communication_state == CommunicationStatus.DISABLED
     wms.write_wms_group_attribute_value.assert_called_with("adminMode", AdminMode.OFFLINE)
     assert wms.read_wms_group_attribute_value.call_count == 11
-    assert comp_state_updates["windgust"] == 20
-    assert comp_state_updates["meanwindspeed"] == 15
+    assert component_state["windgust"] == 20
+    assert component_state["meanwindspeed"] == 15
 
 
 @pytest.mark.unit
