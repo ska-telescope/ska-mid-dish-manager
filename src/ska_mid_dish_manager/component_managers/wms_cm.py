@@ -74,10 +74,9 @@ class WMSComponentManager(BaseComponentManager):
     def start_communicating(self) -> None:
         """Add WMS device to group and initiate WMS attr polling."""
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-        if not self._wms_instances:
+        if not self._wms_device_names:
             self.logger.warning(
-                "WMS component manager instantiated "
-                "without any WMS device server instances provided. "
+                "WMS component manager instantiated without any WMS device names provided."
             )
             return
 

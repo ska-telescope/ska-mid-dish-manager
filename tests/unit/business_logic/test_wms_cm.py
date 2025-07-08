@@ -92,7 +92,7 @@ def test_wms_wind_gust_circular_buffer():
     comp_state_mock = MagicMock()
 
     wms = WMSComponentManager(
-        ["mid/wms/1", "mid/wms/2", "mid/wms/3"],
+        ["mid/wms/1"],
         logger=LOGGER,
         component_state_callback=comp_state_mock,
         wms_polling_period=WMS_POLLING_PERIOD,
