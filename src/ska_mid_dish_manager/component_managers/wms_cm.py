@@ -40,7 +40,7 @@ class WMSComponentManager(BaseComponentManager):
         self._wms_device_group = tango.Group("wms_devices")
 
         # Determine the max buffer length. Once the buffer is full we will have enough data
-        # points to determine the rolling average (mean wind speed)
+        # points to determine the 10 min mean wind speed and 3 sec wind gust
         self._wind_speed_buffer_length = self._wms_instance_count * (
             self._wind_speed_moving_average_period / self._wms_polling_period
         )
@@ -74,7 +74,13 @@ class WMSComponentManager(BaseComponentManager):
     def start_communicating(self) -> None:
         """Add WMS device to group and initiate WMS attr polling."""
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-        # Should we check for an empty list of instances here????
+        if not self._wms_instances:
+            self.logger.warning(
+                "WMS component manager instantiated "
+                "without any WMS device server instances provided. "
+            )
+            return
+
         self._stop_monitoring_flag.clear()
 
         for new_wms_instance in self._wms_instances:
@@ -145,6 +151,9 @@ class WMSComponentManager(BaseComponentManager):
             self._compute_mean_wind_speed(wind_speed_list)
         except (RuntimeError, tango.DevFailed):
             pass
+        except ValueError as err:
+            # Raised by max() on an empty list
+            self.logger.error(f"Exception raised on processing windspeed data: {err}")
 
         self._restart_polling_timer()
 
