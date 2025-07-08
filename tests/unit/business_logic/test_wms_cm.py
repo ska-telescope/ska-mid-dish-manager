@@ -13,6 +13,7 @@ from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 WMS_POLLING_PERIOD = 1.0
 WIND_GUST_PERIOD = 3.0
 MEAN_WIND_SPEED_PERIOD = 10.0
+LOGGER = logging.getLogger(__name__)
 
 
 def comm_state_callback(signal: threading.Event, communication_state: CommunicationStatus):
@@ -22,12 +23,11 @@ def comm_state_callback(signal: threading.Event, communication_state: Communicat
 @pytest.mark.forked
 @pytest.mark.unit
 def test_wms_group_activation_and_polling_starts():
-    test_weather_station_instances = ["1", "2", "3"]
-    logger = logging.getLogger(__name__)
+    test_wms_device_names = ["mid/wms/1", "mid/wms/2", "mid/wms/3"]
 
     wms = WMSComponentManager(
-        test_weather_station_instances,
-        logger=logger,
+        test_wms_device_names,
+        logger=LOGGER,
         component_state_callback=MagicMock(),
         wms_polling_period=WMS_POLLING_PERIOD,
         wind_speed_moving_average_period=MEAN_WIND_SPEED_PERIOD,
@@ -39,13 +39,10 @@ def test_wms_group_activation_and_polling_starts():
 
     wms.start_communicating()
 
-    expected_devices = []
-    for instance in test_weather_station_instances:
-        expected_devices.append("mid/wms/" + instance)
-
     # Assert all expected device successfully added to device group
-    for device_name in expected_devices:
-        assert device_name in wms._wms_device_group.get_device_list()
+    tango_group_device_list = wms._wms_device_group.get_device_list()
+    for device_name in test_wms_device_names:
+        assert device_name in tango_group_device_list
 
     wms.write_wms_group_attribute_value.assert_called_once_with("adminMode", AdminMode.ONLINE)
     wms._poll_wms_wind_speed_data.assert_called()
@@ -53,17 +50,14 @@ def test_wms_group_activation_and_polling_starts():
 
 @pytest.mark.unit
 def test_wms_wind_gust_and_mean_wind_speed_updates():
-    test_weather_station_instances = ["1", "2", "3"]
-    logger = logging.getLogger(__name__)
-
     component_state = {}
 
     def component_state_callback(**incoming_comp_state_change):
         component_state.update(incoming_comp_state_change)
 
     wms = WMSComponentManager(
-        test_weather_station_instances,
-        logger=logger,
+        ["mid/wms/1", "mid/wms/2", "mid/wms/3"],
+        logger=LOGGER,
         component_state_callback=component_state_callback,
         wms_polling_period=WMS_POLLING_PERIOD,
         wind_speed_moving_average_period=MEAN_WIND_SPEED_PERIOD,
@@ -95,14 +89,11 @@ def test_wms_wind_gust_and_mean_wind_speed_updates():
 
 @pytest.mark.unit
 def test_wms_wind_gust_circular_buffer():
-    test_weather_station_instances = ["1"]
-    logger = logging.getLogger(__name__)
-
     comp_state_mock = MagicMock()
 
     wms = WMSComponentManager(
-        test_weather_station_instances,
-        logger=logger,
+        ["mid/wms/1", "mid/wms/2", "mid/wms/3"],
+        logger=LOGGER,
         component_state_callback=comp_state_mock,
         wms_polling_period=WMS_POLLING_PERIOD,
         wind_speed_moving_average_period=MEAN_WIND_SPEED_PERIOD,

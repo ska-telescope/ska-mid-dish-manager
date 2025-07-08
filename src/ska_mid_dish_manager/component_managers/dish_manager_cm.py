@@ -219,7 +219,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
             ),
             "WMS": WMSComponentManager(
-                wms_instances,
+                wms_device_names,
                 logger=logger,
                 component_state_callback=self._evaluate_wind_speed_rules,
                 state_update_lock=self._state_update_lock,

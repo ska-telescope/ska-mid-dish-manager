@@ -5,7 +5,7 @@ import math
 import threading
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable, Optional
+from typing import Any, Callable, List, Optional
 
 import tango
 from ska_control_model import AdminMode, CommunicationStatus
@@ -20,7 +20,7 @@ class WMSComponentManager(BaseComponentManager):
 
     def __init__(
         self,
-        wms_instances,
+        wms_device_names: List[str],
         *args: Any,
         logger: Optional[logging.Logger] = logging.getLogger(__name__),
         component_state_callback: Optional[Callable] = None,
@@ -31,8 +31,8 @@ class WMSComponentManager(BaseComponentManager):
         **kwargs: Any,
     ):
         self.logger = logger
-        self._wms_instances = wms_instances
-        self._wms_instance_count = len(wms_instances)
+        self._wms_device_names = wms_device_names
+        self._wms_devices_count = len(wms_device_names)
         self._wms_polling_period = wms_polling_period
         self._wind_speed_moving_average_period = wind_speed_moving_average_period
         self._wind_gust_average_period = wind_gust_average_period
@@ -41,11 +41,11 @@ class WMSComponentManager(BaseComponentManager):
 
         # Determine the max buffer length. Once the buffer is full we will have enough data
         # points to determine the rolling average (mean wind speed)
-        self._wind_speed_buffer_length = self._wms_instance_count * (
+        self._wind_speed_buffer_length = self._wms_devices_count * (
             self._wind_speed_moving_average_period / self._wms_polling_period
         )
         self._wind_speed_buffer_length = int(
-            math.ceil(self._wind_speed_buffer_length) + self._wms_instance_count
+            math.ceil(self._wind_speed_buffer_length) + self._wms_devices_count
         )
         self._wind_gust_buffer_length = int(
             self._wind_gust_average_period / self._wms_polling_period
@@ -77,9 +77,8 @@ class WMSComponentManager(BaseComponentManager):
         # Should we check for an empty list of instances here????
         self._stop_monitoring_flag.clear()
 
-        for new_wms_instance in self._wms_instances:
-            wms_device_name = "mid/wms/" + new_wms_instance
-            self._wms_device_group.add(wms_device_name, timeout_ms=GROUP_REQUEST_TIMEOUT_MS)
+        for device_name in self._wms_device_names:
+            self._wms_device_group.add(device_name, timeout_ms=GROUP_REQUEST_TIMEOUT_MS)
 
         # Create a thread to recursively attempt a write to the adminMode=ONLINE attr and once
         # the write succeeds, the callback should kick off the wms data polling
