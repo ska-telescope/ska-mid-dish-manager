@@ -14,7 +14,7 @@ MINIKUBE ?= true ## Minikube or not
 SKA_TANGO_OPERATOR = true
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
-VALUES_FILE ?= charts/ska-mid-dish-manager/helm_flags.yaml
+VALUES_FILE ?= charts/ska-mid-dish-manager/custom_helm_flags.yaml
 
 -include .make/base.mk
 

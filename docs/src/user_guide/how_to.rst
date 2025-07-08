@@ -30,10 +30,12 @@ Deploy DishManager with Simulators
       .. code-block:: console
         
         $ cd ska-mid-dish-manager
-        $ GITLAB_CI=false make k8s-install-chart
+        $ K8S_CHART_PARAMS='--values charts/ska-mid-dish-manager/custom_helm_flags.yaml' make k8s-install-chart
+        $ # alternatively, you can use the helm command directly
+        $ helm upgrade --install test charts/ska-mid-dish-manager -n dish-manager -f charts/ska-mid-dish-manager/custom_helm_flags.yaml
 
 
-3. Advanced: Deploy ska-mid-dish-manager from your repository
+1. Advanced: Deploy ska-mid-dish-manager from your repository
 
 .. tabs::
 
@@ -61,7 +63,7 @@ Deploy DishManager with Simulators
 
       .. code-block:: rst
          
-         # in values.yaml
+         # in your custom values.yaml
          ...
          ska-mid-dish-manager:
          enabled: true
@@ -80,39 +82,19 @@ Deploy DishManager with Simulators
          enabled: true
 
          ska-mid-wms:
+            enabled: true
             ska-tango-base:
                enabled: false
+               itango:
+                  enabled: false
             deviceServers:
-               wms0:
+               wms:
                   enabled: true
-               wms1:
-                  enabled: false
-               wms2:
-                  enabled: false
-               wms3:
-                  enabled: false
-               wms4:
-                  enabled: false
+                  station_ids: ["1"]
+                  modbus_server_hostnames: ["wms-sim-1"]
+                  modbus_server_ports: ["1502"]
             simulator:
-               weatherStations: ["0"]
-
-
-      Pass `extra variables`_ to your make target to set the parameters for deployment.
-
-      .. code-block:: console
-         
-         $ K8S_CHART_PARAMS='--set global.minikube=true \
-         --set global.operator=true \
-         --set global.dishes={001,002} \
-         --set ska-mid-dish-simulators.enabled=true \
-         --set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
-         --set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
-         --set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
-         --set ska-mid-dish-ds-manager.enabled=true
-         --set ska-mid-wms.enabled=true \
-         --set ska-mid-wms.deviceServers.wms0.enabled=true \
-         --set ska-mid-wms.simulator.weatherStations="{"0"}"'
-         make k8s-install-chart
+               enabled: True
 
       .. note:: Tango DB is not deployed by default, to deploy it add ``--set ska-tango-base.enabled=true``
          if it's not part of your existing deployment. Also, use ``false`` for the global operator
