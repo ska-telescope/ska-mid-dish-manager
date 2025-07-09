@@ -1,7 +1,6 @@
 """Specialization for WMS functionality."""
 
 import logging
-import math
 import threading
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
@@ -40,11 +39,9 @@ class WMSComponentManager(BaseComponentManager):
 
         # Determine the max buffer length. Once the buffer is full we will have enough data
         # points to determine the mean wind speed and wind gust values
-        self._wind_speed_buffer_length = self._wms_devices_count * (
-            self._wind_speed_moving_average_period / self._wms_polling_period
-        )
         self._wind_speed_buffer_length = int(
-            math.ceil(self._wind_speed_buffer_length) + self._wms_devices_count
+            self._wms_devices_count
+            * (self._wind_speed_moving_average_period / self._wms_polling_period)
         )
         self._wind_gust_buffer_length = int(
             self._wind_gust_average_period / self._wms_polling_period
@@ -203,3 +200,13 @@ class WMSComponentManager(BaseComponentManager):
                 self._wms_device_group.get_name(),
             )
             raise
+
+    def _update_component_state(self, **component_state):
+        """Send updates with values."""
+        # remove None values from component state update
+        new_component_state = {
+            wind_param: average
+            for wind_param, average in component_state.items()
+            if average is not None
+        }
+        super()._update_component_state(**new_component_state)
