@@ -401,7 +401,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # TODO: If it is decided that Dish LMC will make the auto stow decision
             # add the logic here
             self._update_component_state(meanwindspeed=wind_data_params["meanwindspeed"])
-        elif "windgust" in wind_data_params:
+        if "windgust" in wind_data_params:
             # TODO: If it is decided that Dish LMC will make the auto stow decision
             # add the logic here
             self._update_component_state(windgust=wind_data_params["windgust"])

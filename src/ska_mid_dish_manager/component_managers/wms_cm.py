@@ -40,7 +40,7 @@ class WMSComponentManager(BaseComponentManager):
         self._wms_device_group = tango.Group("wms_devices")
 
         # Determine the max buffer length. Once the buffer is full we will have enough data
-        # points to determine the rolling average (mean wind speed)
+        # points to determine the mean wind speed and wind gust values
         self._wind_speed_buffer_length = self._wms_devices_count * (
             self._wind_speed_moving_average_period / self._wms_polling_period
         )
@@ -56,9 +56,7 @@ class WMSComponentManager(BaseComponentManager):
         self._wind_speed_buffer = deque(maxlen=self._wind_speed_buffer_length)
         self._wind_gust_buffer = deque(maxlen=self._wind_gust_buffer_length)
 
-        self._wms_attr_polling_timer = threading.Timer(
-            self._wms_polling_period, self._poll_wms_wind_speed_data
-        )
+        self.executor = ThreadPoolExecutor(max_workers=1)
 
         self._stop_monitoring_flag = threading.Event()
 
@@ -73,6 +71,8 @@ class WMSComponentManager(BaseComponentManager):
 
     def start_communicating(self) -> None:
         """Add WMS device to group and initiate WMS attr polling."""
+        self.stop_communicating()
+
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         if not self._wms_device_names:
             self.logger.warning(
@@ -85,38 +85,28 @@ class WMSComponentManager(BaseComponentManager):
         for device_name in self._wms_device_names:
             self._wms_device_group.add(device_name, timeout_ms=GROUP_REQUEST_TIMEOUT_MS)
 
-        # Create a thread to recursively attempt a write to the adminMode=ONLINE attr and once
-        # the write succeeds, the callback should kick off the wms data polling
-        executor = ThreadPoolExecutor(max_workers=1)
-        _wms_activated_future = executor.submit(self._activate_wms_devices)
-        _wms_activated_future.add_done_callback(self._wms_communication_established)
+        _wms_monitoring_started_future = self.executor.submit(self._start_monitoring)
+        _wms_monitoring_started_future.add_done_callback(self._run_wms_group_polling)
 
-    def _activate_wms_devices(self) -> None:
+    def _start_monitoring(self) -> None:
         """Start WMS monitoring of weather station servers."""
-        while not self._stop_monitoring_flag.is_set():
+        while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
                 self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)
+                self._update_communication_state(CommunicationStatus.ESTABLISHED)
                 break
             except (tango.DevFailed, RuntimeError):
                 self.logger.error(
                     "Failed to set WMS device(s) adminMode to ONLINE. One or more"
                     " WMS device(s) may be unavailable. Retrying"
                 )
-                self._stop_monitoring_flag.wait(timeout=1)
-
-    def _wms_communication_established(self, *args) -> None:
-        """Set communication state established and begin attr polling."""
-        if self._stop_monitoring_flag.is_set():
-            return
-        self._update_communication_state(CommunicationStatus.ESTABLISHED)
-        self._poll_wms_wind_speed_data()
 
     def stop_communicating(self) -> None:
         """Stop WMS attr polling and clean up windspeed data buffer."""
-        if self._wms_attr_polling_timer.is_alive():
-            self._wms_attr_polling_timer.cancel()
-
         self._stop_monitoring_flag.set()
+
+        self.executor.shutdown(wait=True, cancel_futures=True)
+        self.executor = ThreadPoolExecutor(max_workers=1)
 
         self._wind_speed_buffer.clear()
         self._wind_gust_buffer.clear()
@@ -131,45 +121,42 @@ class WMSComponentManager(BaseComponentManager):
             )
         self._update_communication_state(CommunicationStatus.DISABLED)
 
-    def _restart_polling_timer(self) -> None:
-        """Cancel any old instances of the WMS polling timer and start new instance."""
-        if self._wms_attr_polling_timer.is_alive():
-            self._wms_attr_polling_timer.cancel()
-        self._wms_attr_polling_timer = threading.Timer(
-            self._wms_polling_period,
-            self._poll_wms_wind_speed_data,
-        )
-        self._wms_attr_polling_timer.start()
-
-    def _poll_wms_wind_speed_data(self):
+    def _run_wms_group_polling(self, *args):
         """Fetch WMS windspeed data and publish it to the rolling avg calc."""
-        try:
-            wind_speed_list = self.read_wms_group_attribute_value("wind_speed")
-            self._process_wind_gust(max(wind_speed_list))
-            self._compute_mean_wind_speed(wind_speed_list)
-        except (RuntimeError, tango.DevFailed):
-            pass
-        except ValueError as err:
-            # Raised by max() on an empty list
-            self.logger.error(f"Exception raised on processing windspeed data: {err}")
+        while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
+            try:
+                wind_speed_data_list = self.read_wms_group_attribute_value("wind_speed")
+                wg = self._process_wind_gust(max(wind_speed_data_list))
+                mws = self._compute_mean_wind_speed(wind_speed_data_list)
+                self._update_component_state(
+                    meanwindspeed=mws,
+                    windgust=wg,
+                )
+            except (RuntimeError, tango.DevFailed):
+                pass
+            except ValueError as err:
+                # Raised by max() on an empty list
+                self.logger.error(f"Exception raised on processing windspeed data: {err}")
 
-        self._restart_polling_timer()
-
-    def _compute_mean_wind_speed(self, wind_speed_data) -> None:
+    def _compute_mean_wind_speed(self, wind_speed_data) -> Any:
         """Calculate the mean wind speed and update the component state."""
+        _mean_wind_speed = None
         self._wind_speed_buffer.extendleft(wind_speed_data)
 
         if len(self._wind_speed_buffer) == self._wind_speed_buffer_length:
             _mean_wind_speed = sum(self._wind_speed_buffer) / self._wind_speed_buffer_length
-            self._update_component_state(meanwindspeed=_mean_wind_speed)
+
+        return _mean_wind_speed
 
     def _process_wind_gust(self, max_instantaneous_wind_speed) -> None:
         """Determine wind gust from maximum instantaneous wind speed in the buffer."""
+        _wind_gust = None
         self._wind_gust_buffer.append(max_instantaneous_wind_speed)
 
         if len(self._wind_gust_buffer) == self._wind_gust_buffer_length:
-            _wind_gust_buffer_max = max(self._wind_gust_buffer)
-            self._update_component_state(windgust=_wind_gust_buffer_max)
+            _wind_gust = max(self._wind_gust_buffer)
+
+        return _wind_gust
 
     def read_wms_group_attribute_value(self, attribute_name: str) -> Any:
         """Return list of group attributes."""
