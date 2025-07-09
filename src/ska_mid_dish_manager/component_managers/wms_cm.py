@@ -12,7 +12,6 @@ from ska_control_model import AdminMode, CommunicationStatus
 from ska_tango_base.base import BaseComponentManager
 
 GROUP_REQUEST_TIMEOUT_MS = 3000
-MAX_READ_RETRIES = 2
 
 
 class WMSComponentManager(BaseComponentManager):
