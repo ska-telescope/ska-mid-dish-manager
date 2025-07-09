@@ -10,6 +10,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added connection workaround for SPFRx attributes that have invalid quality on startup
 - Partial SetMaintenanceMode implementation. It may not work as expected until SPFRx implements the changes to adminMode
 - Updated periodicNoiseDiodePars and pseudoRandomNoiseDiodePars to be DevVarLong64Array - (DevLong64,)
+- Upgraded ska-mid-dish-simulators chart to v4.5.0
 
 Version 7.4.0
 *************
