@@ -44,9 +44,7 @@ class WMSComponentManager(BaseComponentManager):
             self._wms_devices_count
             * (self._wind_speed_moving_average_period / self._wms_polling_period)
         )
-        self._wind_gust_buffer_length = int(
-            self._wind_gust_period / self._wms_polling_period
-        )
+        self._wind_gust_buffer_length = int(self._wind_gust_period / self._wms_polling_period)
         # TODO: Evaluate whether some form of protection is needed if the mean
         # and gust periods exceed the polling period
 
@@ -79,8 +77,6 @@ class WMSComponentManager(BaseComponentManager):
 
         self._stop_monitoring_flag.clear()
 
-        # Add device list directly
-        self._wms_device_names = ['mid/wms/1', 'mid/wms/2', 'mid/wms/3']
         self._wms_device_group.add(self._wms_device_names, timeout_ms=GROUP_REQUEST_TIMEOUT_MS)
 
         _wms_monitoring_started_future = self.executor.submit(self._start_monitoring)
@@ -124,17 +120,14 @@ class WMSComponentManager(BaseComponentManager):
         self._polling_start_timestamp = time.time()
         while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
-                # Now returns: [[ts,ws1],[ts,ws2],[ts,ws3][ts,ws4][ts,ws5]]
                 wind_speed_data_list = self.read_wms_group_attribute_value("wind_speed")
-                self.logger.info(f"Contents of windspeed data list: {wind_speed_data_list}")
-                
+
                 _current_time = wind_speed_data_list[0][0]
                 _elapsed_polling_time = _current_time - self._polling_start_timestamp
 
-                self.logger.info(f"Elapsed time: {_elapsed_polling_time}")
-
-                mws = self._compute_mean_wind_speed(wind_speed_data_list, 
-                    _current_time, 
+                mws = self._compute_mean_wind_speed(
+                    wind_speed_data_list,
+                    _current_time,
                     _elapsed_polling_time,
                 )
 
@@ -145,7 +138,6 @@ class WMSComponentManager(BaseComponentManager):
                     inst_ws.append(ws[1])
                 max_inst_ws_index = inst_ws.index(max(inst_ws))
 
-                self.logger.info(f"Max wind speed to be passed:{wind_speed_data_list[max_inst_ws_index]}")
                 wg = self._process_wind_gust(
                     wind_speed_data_list[max_inst_ws_index],
                     _current_time,
@@ -171,9 +163,8 @@ class WMSComponentManager(BaseComponentManager):
         self._wind_speed_buffer.extend(wind_speed_data)
 
         if elapsed_time >= self._wind_speed_moving_average_period:
-            self._prune_stale_windspeed_data(current_time, 
-                self._wind_speed_buffer, 
-                self._wind_speed_moving_average_period
+            self._prune_stale_windspeed_data(
+                current_time, self._wind_speed_buffer, self._wind_speed_moving_average_period
             )
             _mean_wind_speed = sum(ws[1] for ws in self._wind_speed_buffer) / len(
                 self._wind_speed_buffer
@@ -187,22 +178,27 @@ class WMSComponentManager(BaseComponentManager):
         self._wind_gust_buffer.append(max_instantaneous_wind_speed)
 
         if elapsed_time >= self._wind_gust_period:
-            self._prune_stale_windspeed_data(current_time, 
-                self._wind_gust_buffer, 
+            self._prune_stale_windspeed_data(
+                current_time,
+                self._wind_gust_buffer,
                 self._wind_gust_period,
             )
             _wind_gust = max(ws[1] for ws in self._wind_gust_buffer)
 
         return _wind_gust
-    
-    def _prune_stale_windspeed_data(self, current_time, wind_speed_buffer, computation_window_period) -> None:
+
+    def _prune_stale_windspeed_data(
+        self, current_time, wind_speed_buffer, computation_window_period
+    ) -> None:
         """Remove stale windspeed data points from the wind speed data buffer."""
-        self.logger.info(f"Pre pruning buffer: {wind_speed_buffer}")
+        # TODO: Consider offloading this work to a separate thread or event loop
+        # due to the high processing time added by this operation. In doing so
+        # be sure to ensure that the cleaning up of the buffers is in sync with the
+        # wind speed/gust computation so that old data isnt used
         _data_point_expiry_time = current_time - computation_window_period
         # wind_speed_buffer[0][0] represents the timestamp of the oldest buffer datapoint
         while wind_speed_buffer and (wind_speed_buffer[0][0] < _data_point_expiry_time):
             wind_speed_buffer.popleft()
-        self.logger.info(f"Post pruning buffer: {wind_speed_buffer}")
 
     def read_wms_group_attribute_value(self, attribute_name: str) -> Any:
         """Return list of lists containing group attr read values with timestamp."""
@@ -231,7 +227,6 @@ class WMSComponentManager(BaseComponentManager):
 
     def write_wms_group_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
         """Write data to WMS tango group devices."""
-        self.logger.info(f"HHHH Group device list: {self._wms_device_group.get_device_list()}")
         try:
             grp_reply = self._wms_device_group.write_attribute(attribute_name, attribute_value)
             for reply in grp_reply:
