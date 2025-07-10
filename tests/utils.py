@@ -715,6 +715,15 @@ def spherical_to_vector(az_value_rad: float, el_value_rad: float) -> tuple[float
     return x_value, y_value, z_value
 
 
+def radians_to_arcsec(radians: float) -> float:
+    """Convert an angle from radians to arcseconds.
+
+    :param radians: Angle in radians
+    :return: Angle in arcseconds
+    """
+    return radians * (180 / math.pi) * 3600
+
+
 def calculate_on_source_dev(
     p_desired: tuple[float, float, float], p_actual: tuple[float, float, float]
 ) -> float:
@@ -729,7 +738,7 @@ def calculate_on_source_dev(
     except ValueError:
         print("Check vectors are normalized. arccos argument is > 1 or < -1.")
         raise
-    return err
+    return radians_to_arcsec(err)
 
 
 def get_angular_error_between_points(az_1: float, el_1: float, az_2: float, el_2: float) -> float:
