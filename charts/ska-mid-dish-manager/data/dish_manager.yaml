@@ -62,12 +62,10 @@ server:
                     - "{{ $.Values.dishmanager.windLimits.WindGustThreshold }}"
                 - name: "WMSDeviceNames"
                   values:
-                    - "{{- $station_ids := (get $.Values "ska-mid-wms").deviceServers.wms.station_ids -}}
-                      {{- $wms_dev_names := list -}}
-                      {{- range $id := $station_ids }}
-                        {{- $wms_dev_names = append $wms_dev_names (printf "mid/wms/%s" $id) }}
-                      {{- end }}
-                      {{- join "," $wms_dev_names }}" # note this depends on the wms device names being in the format "mid/wms/<station_id>"
+                    {{- $station_ids := (get $.Values "ska-mid-wms").deviceServers.wms.station_ids -}}
+                    {{- range $station_id := $station_ids }}
+                    - "mid/wms/{{ $station_id }}"
+                    {{- end }}
               attribute_properties:
                 - attribute: "ignoreSpf"
                   properties:
