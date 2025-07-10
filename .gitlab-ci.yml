@@ -74,5 +74,5 @@ k8s-test-runner-track-patterns:
   when: manual
   allow_failure: true
   variables:
-    MARK: "track_patterns"
+    K8S_TEST_RUNNER_MARK: "track_patterns"
     KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-track-patterns"
