@@ -95,7 +95,6 @@ def test_wms_wind_gust_and_mean_wind_speed_updates():
     wait_event.wait(COMM_STATE_UPDATE_WAIT)
     assert wms.communication_state == CommunicationStatus.DISABLED
     wms.write_wms_group_attribute_value.assert_called_with("adminMode", AdminMode.OFFLINE)
-    print(component_state)
     assert wms.read_wms_group_attribute_value.call_count == 10
     assert component_state["windgust"] == 20
     assert component_state["meanwindspeed"] == 15

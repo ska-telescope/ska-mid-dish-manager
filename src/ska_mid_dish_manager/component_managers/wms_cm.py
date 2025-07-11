@@ -120,6 +120,7 @@ class WMSComponentManager(BaseComponentManager):
         self._polling_start_timestamp = time.time()
         while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
+                polling_cycle_start_time = time.perf_counter()
                 wind_speed_data_list = self.read_wms_group_attribute_value("wind_speed")
 
                 _current_time = wind_speed_data_list[0][0]
@@ -143,11 +144,15 @@ class WMSComponentManager(BaseComponentManager):
                     _current_time,
                     _elapsed_polling_time,
                 )
+                polling_cycle_end_time = time.perf_counter()
+
 
                 self._update_component_state(
                     meanwindspeed=mws,
                     windgust=wg,
                 )
+                comp_state_update_time = time.perf_counter()
+                self.logger.info(f"Polling calculation time: {polling_cycle_end_time - polling_cycle_start_time}. Comp state update time: {comp_state_update_time - polling_cycle_end_time}")
             except (RuntimeError, tango.DevFailed):
                 pass
             except IndexError as err:
