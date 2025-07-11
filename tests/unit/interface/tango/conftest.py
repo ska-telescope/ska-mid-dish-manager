@@ -17,13 +17,15 @@ from ska_mid_dish_manager.models.dish_enums import (
 @pytest.fixture
 def dish_manager_resources():
     with (
-        patch(
-            (
-                "ska_mid_dish_manager.component_managers.tango_device_cm."
-                "TangoDeviceComponentManager.start_communicating"
-            )
-        ),
         patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"),
+        patch(
+            "ska_mid_dish_manager.component_managers.tango_device_cm."
+            "TangoDeviceComponentManager.start_communicating"
+        ),
+        patch(
+            "ska_mid_dish_manager.component_managers.wms_cm."
+            "WMSComponentManager.start_communicating"
+        ),
     ):
         tango_context = DeviceTestContext(DishManager)
         tango_context.start()
