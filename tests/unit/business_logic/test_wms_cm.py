@@ -142,8 +142,8 @@ def test_wms_wind_gust_circular_buffer():
 
         current_wind_speed_data_time = test_start_time + elapsed_time
         computed_wind_gust = wms._process_wind_gust(
-            [[current_wind_speed_data_time, current_max_wind_speed]], 
-            test_start_time, 
+            [[current_wind_speed_data_time, current_max_wind_speed]],
+            test_start_time,
             elapsed_time,
         )
         assert computed_wind_gust == exp_wind_gust
