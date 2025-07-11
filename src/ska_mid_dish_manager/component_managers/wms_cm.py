@@ -68,12 +68,12 @@ class WMSComponentManager(BaseComponentManager):
         """Add WMS device to group and initiate WMS attr polling."""
         self.stop_communicating()
 
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         if not self._wms_device_names:
             self.logger.warning(
                 "WMS component manager instantiated without any WMS device names provided."
             )
             return
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
         self._stop_monitoring_flag.clear()
 

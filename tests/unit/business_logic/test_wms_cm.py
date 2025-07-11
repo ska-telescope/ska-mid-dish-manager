@@ -2,6 +2,7 @@
 
 import logging
 import threading
+import time
 from functools import partial
 from unittest.mock import MagicMock, Mock
 
@@ -13,6 +14,7 @@ from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 WMS_POLLING_PERIOD = 1.0
 WIND_GUST_PERIOD = 3.0
 MEAN_WIND_SPEED_PERIOD = 10.0
+COMM_STATE_UPDATE_WAIT = 0.3
 LOGGER = logging.getLogger(__name__)
 
 
@@ -35,7 +37,7 @@ def test_wms_group_activation_and_polling_starts():
     )
 
     wms.write_wms_group_attribute_value = Mock()
-    wms._poll_wms_wind_speed_data = Mock()
+    wms._run_wms_group_polling = Mock()
 
     wms.start_communicating()
 
@@ -44,8 +46,11 @@ def test_wms_group_activation_and_polling_starts():
     for device_name in test_wms_device_names:
         assert device_name in tango_group_device_list
 
-    wms.write_wms_group_attribute_value.assert_called_once_with("adminMode", AdminMode.ONLINE)
-    wms._poll_wms_wind_speed_data.assert_called()
+    wait_event = threading.Event()
+    wait_event.wait(timeout=wms._wms_polling_period)
+
+    wms.write_wms_group_attribute_value.assert_called_with("adminMode", AdminMode.ONLINE)
+    wms._run_wms_group_polling.assert_called()
 
 
 @pytest.mark.unit
@@ -70,19 +75,28 @@ def test_wms_wind_gust_and_mean_wind_speed_updates():
 
     wms.write_wms_group_attribute_value = Mock()
     wms.read_wms_group_attribute_value = Mock()
-    wms.read_wms_group_attribute_value.return_value = [10, 20, 15]
+
+    def current_time():
+        return time.time()
+
+    wms.read_wms_group_attribute_value.side_effect = lambda *args, **kwargs: [
+        [current_time(), 10],
+        [current_time(), 20],
+        [current_time(), 15],
+    ]
 
     wms.start_communicating()
-    wait_event.wait(0.5)
+    wait_event.wait(wms._wms_polling_period + COMM_STATE_UPDATE_WAIT)
     assert wms.communication_state == CommunicationStatus.ESTABLISHED
 
     wait_event.wait(10)
 
     wms.stop_communicating()
-    wait_event.wait(0.5)
+    wait_event.wait(COMM_STATE_UPDATE_WAIT)
     assert wms.communication_state == CommunicationStatus.DISABLED
     wms.write_wms_group_attribute_value.assert_called_with("adminMode", AdminMode.OFFLINE)
-    assert wms.read_wms_group_attribute_value.call_count == 11
+    print(component_state)
+    assert wms.read_wms_group_attribute_value.call_count == 10
     assert component_state["windgust"] == 20
     assert component_state["meanwindspeed"] == 15
 
