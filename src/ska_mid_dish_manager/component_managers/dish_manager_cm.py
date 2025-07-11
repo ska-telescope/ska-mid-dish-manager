@@ -1154,6 +1154,30 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    @check_communicating
+    def configure_band_with_json(
+        self,
+        data: dict,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Configure frequency band."""
+        # req_cmd = f"ConfigureBand{band_number}"
+
+        # _is_configure_band_cmd_allowed = partial(
+        #     self._dish_mode_model.is_command_allowed,
+        #     req_cmd,
+        #     component_manager=self,
+        #     task_callback=task_callback,
+        # )
+
+        # status, response = self.submit_task(
+        #     self._command_map.configure_band_cmd,
+        #     args=[band_number, synchronise],
+        #     is_cmd_allowed=_is_configure_band_cmd_allowed,
+        #     task_callback=task_callback,
+        # )
+        return status, response
+
     def set_stow_mode(
         self,
         task_callback: Optional[Callable] = None,
