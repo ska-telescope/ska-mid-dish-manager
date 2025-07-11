@@ -27,7 +27,7 @@ def force_gc_on_weak_ref(weak_ref: weakref.ref) -> None:
 @mock.patch.multiple(
     "ska_mid_dish_manager.component_managers.wms_cm.WMSComponentManager",
     write_wms_group_attribute_value=mock.MagicMock(),
-    _poll_wms_wind_speed_data=mock.MagicMock(),
+    _run_wms_group_polling=mock.MagicMock(),
 )
 def test_component_manager_gracefully_cleans_up_resources(patch_dp, caplog):
     """Test that the DishManagerComponentManager can be created,
@@ -41,6 +41,7 @@ def test_component_manager_gracefully_cleans_up_resources(patch_dp, caplog):
             mock.MagicMock(name="mock_command_tracker"),
             mock.MagicMock(name="mock_build_state_callback"),
             mock.MagicMock(name="mock_attr_quality_callback"),
+            mock.MagicMock(name="mock_wind_stow_callback"),
             "device-1",
             "sub-device-1",
             "sub-device-2",

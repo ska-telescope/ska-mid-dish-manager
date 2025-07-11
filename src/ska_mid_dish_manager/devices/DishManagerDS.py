@@ -153,6 +153,7 @@ class DishManager(SKAController):
             self._command_tracker,
             self._update_version_of_subdevice_on_success,
             self._attr_quality_state_changed,
+            self._wind_stow_inform,
             self.get_name(),
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
@@ -306,7 +307,7 @@ class DishManager(SKAController):
             self.push_change_event(attribute_name, comp_state_value)
             self.push_archive_event(attribute_name, comp_state_value)
 
-    def wind_stow_inform(self, **alarm_threshold):
+    def _wind_stow_inform(self, **alarm_threshold):
         wind_stow_active = self.component_manager.wind_stow_active
         reset_alarm = self.component_manager.reset_alarm
 
