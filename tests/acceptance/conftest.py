@@ -38,7 +38,7 @@ def setup_and_teardown(
 
     # another approach will be to ensure that all tests check the
     # command status for every issued command as part of its assert
-    event_store.get_queue_events(timeout=15)
+    event_store.get_queue_events(timeout=20)
 
     spf_device_proxy.subscribe_event(
         "operatingMode",
