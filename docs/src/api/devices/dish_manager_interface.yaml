@@ -42,6 +42,32 @@
       doc_out: Uninitialised
       dtype_in: DevString
       dtype_out: DevString
+    - name: ConfigureBand
+      disp_level: OPERATOR
+      doc_in: "The command accepts a JSON string containing data to configure the\
+        \ SPFRx.\n        The JSON structure is as follows:\n        {\n         \
+        \   \"receiver_band\": <string>,\n            \"sub_band\": <integer>,\n  \
+        \          \"spfrx_processing_parameters\": {\n                \"dishes\"\
+        : List[<string>],\n                \"sync_pps\":  <bool>,\n              \
+        \  \"attenuation_pol_x\": <float>,\n                \"attenuation_pol_y\"\
+        : <float>,\n                \"attenuation_1_pol_x\": <float>,\n          \
+        \      \"attenuation_1_pol_y\": <float>,\n                \"attenuation_2_pol_x\"\
+        : <float>,\n                \"attenuation_2_pol_y\": <float>,\n          \
+        \      \"saturation_threshold\": <float>,\n                \"noise_diode\"\
+        : {\n                    \"pseudo_random\": {\n                        \"\
+        binary_polynomial\": <long>,\n                        \"seed\": <long>,\n\
+        \                        \"dwell\": <long>,\n                    },\n    \
+        \                \"periodic\": {\n                        \"period\": <long>,\n\
+        \                        \"duty_cycle\": <long>,\n                       \
+        \ \"phase_shift\": <long>,\n                    }\n                }\n   \
+        \         }\n        }\n        where 'receiver_band', 'dishes' and 'sync_pps'\
+        \ are mandatory fields.\n        when 'receiver_band' is set to '5b', the\
+        \ 'sub_band' field is mandatory.\n        The dishes field is a list of dish\
+        \ names that the SPFRx should be configured for,\n        if 'all' is specified\
+        \ in the list, the SPFRx will be configured for all dishes.\n        "
+      doc_out: Uninitialised
+      dtype_in: DevString
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand1
       disp_level: OPERATOR
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
@@ -1108,7 +1134,8 @@
     - name: dscCtrlState
       data_format: SCALAR
       data_type: DevEnum
-      description: DSC Control State - an aggregation of DSC Command Authority and DSC State
+      description: DSC Control State - an aggregation of DSC Command Authority and
+        DSC State
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -2069,5 +2096,6 @@
     - name: SkaLevel
     - name: WMSDeviceNames
     - name: WindGustThreshold
+    - name: __SubDevices
     - name: polled_cmd
 

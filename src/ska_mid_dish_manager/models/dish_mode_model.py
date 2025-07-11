@@ -16,6 +16,7 @@ CONFIG_COMMANDS = (
     "ConfigureBand4",
     "ConfigureBand5a",
     "ConfigureBand5b",
+    "ConfigureBand",
 )
 
 DISH_MODE_NODES = (

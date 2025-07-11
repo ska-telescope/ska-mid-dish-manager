@@ -19,6 +19,10 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
+class ConfigureBandValidationError(Exception):
+    """Exception raised for errors in the configure band input validation."""
+
+
 class CommandMap:
     """Command fan out to handle the mapping of DishManager commands to subservient devices."""
 
@@ -283,6 +287,72 @@ class CommandMap:
             [PointingState.READY],
         )
 
+    def configure_band(
+        self,
+        data: str,
+        task_abort_event=None,
+        task_callback: Optional[Callable] = None,
+    ):
+        """Configure band on DS, SPFRx and B5DC."""
+        requested_cmd = "ConfigureBand"
+        self.logger.info(f"{requested_cmd} called with payload = {data}")
+
+        try:
+            data_json = self._validate_configure_band_input(data)
+        except ConfigureBandValidationError as err:
+            task_callback(status=TaskStatus.FAILED, result=(ResultCode.FAILED, str(err)))
+            return
+
+        dish_data = data_json.get("dish")
+        receiver_band = dish_data.get("receiver_band")
+
+        band_enum = Band[f"B{receiver_band}"]
+        indexer_enum = IndexerPosition[f"B{receiver_band}"]
+
+        if self._dish_manager_cm.component_state["configuredband"] == band_enum:
+            task_callback(
+                progress=f"Already in band {band_enum.name}",
+                status=TaskStatus.COMPLETED,
+                result=(ResultCode.OK, f"{requested_cmd} completed."),
+            )
+            return
+
+        commands_for_sub_devices = {
+            "DS": {
+                "command": "SetIndexPosition",
+                "commandArgument": band_enum.value,
+                "awaitedAttributes": ["indexerposition"],
+                "awaitedValuesList": [indexer_enum.value],
+            },
+            "SPFRX": {
+                "command": requested_cmd,
+                "commandArgument": data,
+                "awaitedAttributes": ["configuredband"],
+                "awaitedValuesList": [band_enum],
+            },
+        }
+
+        # TODO: Once we integrate B5DC
+        # if configure_b5dc:
+        #     import ska-mid-dish-dcp-lib
+        #     b5dc_f = B5dcFrequency(dish_data.get("sub_band"))
+        #     commands_for_sub_devices["B5DC"] = {
+        #         "command": "SetFrequency",
+        #         "commandArgument": data,
+        #         "awaitedAttributes": ["rfcmFrequency"],
+        #         "awaitedValuesList": [b5dc_f.value],
+        #     }
+
+        self._run_long_running_command(
+            task_callback,
+            task_abort_event,
+            commands_for_sub_devices,
+            requested_cmd,
+            ["configuredband"],
+            [band_enum],
+        )
+
+    # DEPRECATED: To be removed in future. Use configure_band instead.
     def configure_band_cmd(
         self,
         band_number,
@@ -455,6 +525,29 @@ class CommandMap:
             else:
                 got_all_awaited_values = False
         return got_all_awaited_values
+
+    def _validate_configure_band_input(self, data: str) -> dict:
+        """Validate the input JSON for configure_band command.
+
+        :param data: JSON string containing the configure band parameters.
+        :raises ConfigureBandValidationError: If the input JSON is invalid.
+        :return: Parsed JSON as a dictionary if valid.
+        """
+        try:
+            data_json = json.loads(data)
+            dish_data = data_json.get("dish")
+            receiver_band = dish_data.get("receiver_band")
+            if receiver_band not in ["1", "2", "3", "4", "5a", "5b"]:
+                raise ConfigureBandValidationError("Invalid receiver band in JSON.")
+            if receiver_band == "5b":
+                sub_band = dish_data.get("sub_band")
+                if sub_band not in [1, 2, 3]:
+                    raise ConfigureBandValidationError("Invalid sub-band in JSON.")
+        except (json.JSONDecodeError, AttributeError) as err:
+            self.logger.error("Error parsing JSON for configure band command.")
+            raise ConfigureBandValidationError("Error parsing JSON.") from err
+
+        return data_json
 
     def convert_enums_to_names(self, values) -> list[str]:
         """Convert any enums in the given list to their names."""
