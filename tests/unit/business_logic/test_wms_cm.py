@@ -115,6 +115,13 @@ def test_wms_wind_gust_circular_buffer():
         windgust=-1,
     )
 
+    test_start_time = time.time()
+
+    # The wms component manager initially waits for the "polling period" amount
+    # of time before the WMS devices are actually polled. This wait will later
+    # be added to the elapsed time with each polling period/increment
+    initial_wait_time_before_polling = wms._wms_polling_period
+
     max_inst_wind_speed_and_expected_gust = [
         (10, None),
         (10, None),
@@ -126,9 +133,17 @@ def test_wms_wind_gust_circular_buffer():
         (15, 30),
         (15, 15),
     ]
-    for _, (current_max_wind_speed, exp_wind_gust) in enumerate(
+    for polling_time, (current_max_wind_speed, exp_wind_gust) in enumerate(
         max_inst_wind_speed_and_expected_gust
     ):
-        wms._process_wind_gust(current_max_wind_speed)
-        if exp_wind_gust is not None:
-            comp_state_mock.assert_called_with(windgust=exp_wind_gust)
+        # polling_time, which is the current list index, is used to simulate the
+        # 1 second that passed each time the WMS Devices are polled
+        elapsed_time = polling_time + initial_wait_time_before_polling
+
+        current_wind_speed_data_time = test_start_time + elapsed_time
+        computed_wind_gust = wms._process_wind_gust(
+            [[current_wind_speed_data_time, current_max_wind_speed]], 
+            test_start_time, 
+            elapsed_time,
+        )
+        assert computed_wind_gust == exp_wind_gust

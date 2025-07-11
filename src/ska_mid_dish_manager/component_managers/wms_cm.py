@@ -120,7 +120,6 @@ class WMSComponentManager(BaseComponentManager):
         self._polling_start_timestamp = time.time()
         while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
-                polling_cycle_start_time = time.perf_counter()
                 wind_speed_data_list = self.read_wms_group_attribute_value("wind_speed")
 
                 _current_time = wind_speed_data_list[0][0]
@@ -132,27 +131,16 @@ class WMSComponentManager(BaseComponentManager):
                     _elapsed_polling_time,
                 )
 
-                # Traverse windspeed list, getting the index of the maximum
-                # instantaneous windspeed value to pass for wind gust processing
-                inst_ws = []
-                for ws in wind_speed_data_list:
-                    inst_ws.append(ws[1])
-                max_inst_ws_index = inst_ws.index(max(inst_ws))
-
                 wg = self._process_wind_gust(
-                    wind_speed_data_list[max_inst_ws_index],
+                    wind_speed_data_list,
                     _current_time,
                     _elapsed_polling_time,
                 )
-                polling_cycle_end_time = time.perf_counter()
-
 
                 self._update_component_state(
                     meanwindspeed=mws,
                     windgust=wg,
                 )
-                comp_state_update_time = time.perf_counter()
-                self.logger.info(f"Polling calculation time: {polling_cycle_end_time - polling_cycle_start_time}. Comp state update time: {comp_state_update_time - polling_cycle_end_time}")
             except (RuntimeError, tango.DevFailed):
                 pass
             except IndexError as err:
@@ -177,10 +165,20 @@ class WMSComponentManager(BaseComponentManager):
 
         return _mean_wind_speed
 
-    def _process_wind_gust(self, max_instantaneous_wind_speed, current_time, elapsed_time) -> None:
+    def _process_wind_gust(self, wind_speed_data_list, current_time, elapsed_time) -> None:
         """Determine wind gust from maximum instantaneous wind speed in the buffer."""
+        # Traverse windspeed list, getting the index of the maximum
+        # instantaneous windspeed value to pass for wind gust processing
+        if len(wind_speed_data_list) > 1:
+            inst_ws = []
+            for ws in wind_speed_data_list:
+                inst_ws.append(ws[1])
+            max_inst_ws_index = inst_ws.index(max(inst_ws))
+            self._wind_gust_buffer.append(wind_speed_data_list[max_inst_ws_index])
+        else:
+            self._wind_gust_buffer.append(wind_speed_data_list[0])
+
         _wind_gust = None
-        self._wind_gust_buffer.append(max_instantaneous_wind_speed)
 
         if elapsed_time >= self._wind_gust_period:
             self._prune_stale_windspeed_data(
