@@ -34,18 +34,13 @@ PYTHON_LINE_LENGTH = 99
 # Set the specific environment variables required for pytest
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
-PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events"
+PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --pointing-files-path=build/pointing
+
+K8S_TEST_RUNNER_MARK ?= acceptance
 
 python-test: MARK = unit
-k8s-test-runner: MARK = acceptance
+k8s-test-runner: MARK = $(K8S_TEST_RUNNER_MARK)
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
-
-# this variable is used for running stress tests in the nightly stress jobs
-# the values nothing or the marker to select all the test which should run in the stress job
-STRESS_TEST_MARKER ?=
-ifeq ($(STRESS_TEST_MARKER), stress)
-k8s-test-runner: MARK = stress
-endif
 
 -include .make/python.mk
 
