@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import time
 from functools import partial
 from threading import Event, Lock, Thread
 from typing import Callable, Dict, List, Optional, Tuple
@@ -20,6 +21,8 @@ from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DSC_MIN_POWER_LIMIT_KW,
+    MEAN_WIND_SPEED_THRESHOLD_MS,
+    WIND_GUST_THRESHOLD_MS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -61,6 +64,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         command_tracker,
         build_state_callback,
         quality_state_callback,
+        wind_stow_callback,
         tango_device_name: str,
         ds_device_fqdn: str,
         spf_device_fqdn: str,
@@ -124,11 +128,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger = logger
         self._build_state_callback = build_state_callback
         self._quality_state_callback = quality_state_callback
+        self._wind_stow_callback = wind_stow_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._abort_thread: Optional[Thread] = None
+        self._wind_stow_active = False
+        self._reset_alarm = False
+        self._wind_limits_cache = {
+            "timestamp": time.time(),
+            "limits": {
+                "WindGustThreshold": WIND_GUST_THRESHOLD_MS,
+                "MeanWindSpeedThreshold": MEAN_WIND_SPEED_THRESHOLD_MS,
+            },
+        }
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -221,7 +235,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "WMS": WMSComponentManager(
                 wms_device_names,
                 logger=logger,
-                component_state_callback=self._evaluate_wind_speed_rules,
+                component_state_callback=self._evaluate_wind_speed_averages,
                 state_update_lock=self._state_update_lock,
                 meanwindspeed=-1,
                 windgust=-1,
@@ -258,6 +272,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Command Handlers
         # ----------------
         self._abort_handler = Abort(self, self._command_map, self._command_tracker, logger=logger)
+
+    @property
+    def wind_stow_active(self) -> bool:
+        return self._wind_stow_active
+
+    @wind_stow_active.setter
+    def wind_stow_active(self, value):
+        self._wind_stow_active = value
+
+    @property
+    def reset_alarm(self) -> bool:
+        return self._reset_alarm
+
+    @reset_alarm.setter
+    def reset_alarm(self, value):
+        self._reset_alarm = value
 
     # --------------
     # Helper methods
@@ -385,6 +415,56 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Could not update memorized attributes. Failed to connect to database."
             )
 
+    def get_device_property_value(self, property_name: str | List[str]) -> Dict[str, List]:
+        """Get the value of a device property.
+
+        :param property_name: The name of the property to retrieve (str or list of str).
+        :return: A dict with property name as key and a list as value.
+
+        :raises AssertionError: if property_name is not a string or list of strings.
+        :raises RuntimeError: if the property cannot be retrieved from the device.
+        """
+        assert isinstance(property_name, (str, list)), "property_name must be str or list[str]"
+        self.logger.debug(
+            "Getting device property value for %s on device %s.",
+            property_name,
+            self.tango_device_name,
+        )
+        database = tango.Database()
+        try:
+            device_property = database.get_device_property(self.tango_device_name, property_name)
+            return device_property
+        except tango.DevFailed:
+            raise RuntimeError(
+                f"Failed to get property '{property_name}' from device '{self.tango_device_name}'."
+            )
+
+    def _fetch_wind_limits(self, cache_max_age: Optional[int] = 10) -> Dict[str, float]:
+        """Fetch the configured wind limits from the device properties or cache.
+
+        :param cache_max_age: Maximum age (in seconds) for cached wind limits.
+                If the cache is older than this value, the device properties are queried again.
+                Defaults to 10 seconds.
+        :return: A dict with fresh or cached wind limits
+        """
+        self.logger.debug("Fetching configured wind limits from device properties.")
+
+        wind_thresholds = list(self._wind_limits_cache["limits"].keys())
+
+        now = time.time()
+        if now - self._wind_limits_cache["timestamp"] > cache_max_age:
+            try:
+                configured_limits = self.get_device_property_value(wind_thresholds)
+                for threshold in wind_thresholds:
+                    threshold_value = float(configured_limits[threshold][0])
+                    self._wind_limits_cache["limits"][threshold] = threshold_value
+            except (AssertionError, RuntimeError, ValueError):
+                self.logger.debug("Failed to fetch or convert wind limits from device properties.")
+            else:
+                self._wind_limits_cache["timestamp"] = now
+
+        return self._wind_limits_cache["limits"]
+
     # ---------
     # Callbacks
     # ---------
@@ -395,16 +475,27 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         state_name = f"{device.lower()}connectionstate"
         self._update_component_state(**{state_name: connection_state})
 
-    def _evaluate_wind_speed_rules(self, **wind_data_params):
-        """Callback responding to mean wind speed or wind gust updates."""
-        if "meanwindspeed" in wind_data_params:
-            # TODO: If it is decided that Dish LMC will make the auto stow decision
-            # add the logic here
-            self._update_component_state(meanwindspeed=wind_data_params["meanwindspeed"])
-        if "windgust" in wind_data_params:
-            # TODO: If it is decided that Dish LMC will make the auto stow decision
-            # add the logic here
-            self._update_component_state(windgust=wind_data_params["windgust"])
+    def _evaluate_wind_speed_averages(self, **computed_averages):
+        """Evaluate wind speed averages and trigger auto stow if necessary."""
+        configured_thresholds = self._fetch_wind_limits()
+
+        threshold_exceeded = any(
+            computed_averages.get(prop_name.lower()) is not None
+            and computed_averages.get(prop_name.lower()) > limit
+            for prop_name, limit in configured_thresholds.items()
+        )
+
+        if threshold_exceeded:
+            wind_stow_id = self._command_tracker.new_command("windstow", completed_callback=None)
+            wind_stow_task_cb = partial(self._command_tracker.update_command_info, wind_stow_id)
+            self.set_stow_mode(wind_stow_task_cb)
+            self.wind_stow_active = True
+            self.reset_alarm = False
+        else:
+            self.reset_alarm = True
+
+        self._update_component_state(**computed_averages)
+        self._wind_stow_callback(**computed_averages)
 
     def _sub_device_communication_state_changed(
         self, device: DishDevice, communication_state: CommunicationStatus

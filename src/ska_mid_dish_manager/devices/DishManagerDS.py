@@ -260,6 +260,11 @@ class DishManager(SKAController):
                     attribute_object.set_quality(new_attribute_quality, True)
 
     def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
+        wind_stow_active = self.component_manager.wind_stow_active
+        if wind_stow_active:
+            return
+
+        # gets its turn when wind condition is normal
         alarm_status_msg = (
             "Event channel on a sub-device is not responding anymore "
             "or change event subscription is not complete"
@@ -300,6 +305,19 @@ class DishManager(SKAController):
             setattr(self, attribute_variable, comp_state_value)
             self.push_change_event(attribute_name, comp_state_value)
             self.push_archive_event(attribute_name, comp_state_value)
+
+    def wind_stow_inform(self, **alarm_threshold):
+        wind_stow_active = self.component_manager.wind_stow_active
+        reset_alarm = self.component_manager.reset_alarm
+
+        if wind_stow_active and not reset_alarm:
+            alarm_status_msg = f"Dish stowed due to extreme wind condition: {alarm_threshold}."
+            dev_state, dev_status = DevState.ALARM, alarm_status_msg
+            self._update_state(dev_state, dev_status)
+        elif wind_stow_active and reset_alarm:
+            self._update_state(DevState.ON, None)
+            # ensure this runs only once after the conditions return to normal
+            self.component_manager.wind_stow_active = False
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """A class for the Dish Manager's init_device() method."""
