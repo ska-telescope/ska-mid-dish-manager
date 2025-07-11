@@ -307,12 +307,12 @@ class DishManager(SKAController):
             self.push_change_event(attribute_name, comp_state_value)
             self.push_archive_event(attribute_name, comp_state_value)
 
-    def _wind_stow_inform(self, **alarm_threshold):
+    def _wind_stow_inform(self, **computed_averages):
         wind_stow_active = self.component_manager.wind_stow_active
         reset_alarm = self.component_manager.reset_alarm
 
         if wind_stow_active and not reset_alarm:
-            alarm_status_msg = f"Dish stowed due to extreme wind condition: {alarm_threshold}."
+            alarm_status_msg = f"Dish stowed due to extreme wind condition: {computed_averages}."
             dev_state, dev_status = DevState.ALARM, alarm_status_msg
             self._update_state(dev_state, dev_status)
         elif wind_stow_active and reset_alarm:

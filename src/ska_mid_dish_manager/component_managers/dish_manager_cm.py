@@ -477,7 +477,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _evaluate_wind_speed_averages(self, **computed_averages):
         """Evaluate wind speed averages and trigger auto stow if necessary."""
-        configured_thresholds = self._fetch_wind_limits()
+        wind_limits = self._fetch_wind_limits()
+        # resolve mismatch with keys in computed averages
+        configured_thresholds = {}
+        for key, value in wind_limits.items():
+            new_key = key.replace("Threshold", "").lower()
+            configured_thresholds[new_key] = value
 
         threshold_exceeded = any(
             computed_averages.get(prop_name.lower()) is not None
