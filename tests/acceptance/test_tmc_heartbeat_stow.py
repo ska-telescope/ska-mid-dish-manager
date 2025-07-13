@@ -1,12 +1,13 @@
 """Test the TMC heartbeat stow."""
 
-from datetime import datetime
 import time
+from datetime import datetime
+
 import pytest
 import tango
+from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
-from ska_control_model import ResultCode
 
 
 @pytest.mark.acceptance
@@ -34,7 +35,8 @@ def test_tmc_stow_heartbeat(event_store_class, dish_manager_proxy):
 
     assert (
         command_resp
-        == f"TMC heartbeat received at: {datetime.fromtimestamp(dish_manager_proxy.read_attribute('tmcLastHearteat').value)}"
+        == f"TMC heartbeat received at: {datetime.fromtimestamp(
+            dish_manager_proxy.read_attribute('tmcLastHearteat').value)}"
     )
     assert result_code == ResultCode.OK
     assert dish_manager_proxy.read_attribute("tmcheartbeatinterval").value == 4.0
@@ -43,7 +45,8 @@ def test_tmc_stow_heartbeat(event_store_class, dish_manager_proxy):
     # Wait for the Dish to STOW
     main_event_store.wait_for_value(DishMode.STOW, 25)
 
-    # Confirm that once the interval has lapsed the tmcLastHeartbeat and tmcHeartbeatInterval attributes are reset.
+    # Confirm that once the interval has lapsed the tmcLastHeartbeat
+    # and tmcHeartbeatInterval attributes are reset.
     assert dish_manager_proxy.read_attribute("tmcHeartbeatInterval").value == 0.0
     assert dish_manager_proxy.read_attribute("tmcLastHeartbeat").value == 0.0
 
@@ -92,7 +95,8 @@ def test_pings_in_stow(event_store_class, dish_manager_proxy):
     # Check that the dish is still in STOW mode.
     dish_manager_proxy.read_attribute("dishMode").value = DishMode.STOW
 
-    # Test that when the dishMode is STOW mode and pings exceed the interval the dish remains in STOW mode.
+    # Test that when the dishMode is STOW mode and pings exceed the interval the dish
+    # remains in STOW mode.
     dish_manager_proxy.write_attribute("tmcHeartbeatInterval", 1.0)
     time.sleep(2)  # Sleep for 2s
     dish_manager_proxy.read_attribute("dishMode").value = DishMode.STOW

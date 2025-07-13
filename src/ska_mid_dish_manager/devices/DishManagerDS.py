@@ -4,9 +4,9 @@ It exposes the attributes and commands which control the dish
 and the subservient devices
 """
 
-from datetime import datetime
 import json
 import weakref
+from datetime import datetime
 from functools import reduce
 from typing import List, Optional, Tuple
 
@@ -577,7 +577,7 @@ class DishManager(SKAController):
         doc="Returns tmcLastHeartbeat",
     )
     def tmcLastHeartbeat(self):
-        "Returns tmcLastHeartbeat"
+        """Returns tmcLastHeartbeat."""
         return self.component_manager.component_state["tmclastheartbeat"]
 
     @attribute(
@@ -586,12 +586,12 @@ class DishManager(SKAController):
         doc="Writes and returns tmcHeartbeatInterval",
     )
     def tmcHeartbeatInterval(self):
-        """Returns tmcHeartbeatInterval"""
+        """Returns tmcHeartbeatInterval."""
         return self.component_manager.component_state["tmcheartbeatinterval"]
 
     @tmcHeartbeatInterval.write
     def tmcHeartbeatInterval(self, value):
-        """Writes tmcHeartbeatInterval"""
+        """Writes tmcHeartbeatInterval."""
         if hasattr(self, "component_manager"):
             self.component_manager._update_component_state(tmcheartbeatinterval=value)
             if value == 0:

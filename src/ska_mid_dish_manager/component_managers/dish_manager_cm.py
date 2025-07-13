@@ -1,9 +1,9 @@
 """Component manager for a DishManager tango device."""
 
-from datetime import datetime
 import json
 import logging
 import os
+from datetime import datetime
 from functools import partial
 from threading import Event, Lock, Thread
 from typing import Callable, Dict, List, Optional, Tuple
@@ -15,6 +15,7 @@ from ska_tango_base.executor import TaskExecutorComponentManager
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
+from ska_mid_dish_manager.component_managers.tmc_heartbeat_monitor import HeartbeatChecker
 from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
@@ -46,7 +47,6 @@ from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
-from ska_mid_dish_manager.component_managers.tmc_heartbeat_monitor import HeartbeatChecker
 
 
 class DishManagerComponentManager(TaskExecutorComponentManager):
@@ -729,65 +729,64 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         elif current_time - last_heartbeat <= self.component_state["tmcheartbeatinterval"]:
             # Heartbeat detected within prescribed time
             return
+        # check if the dish is if stow first
+        elif self.component_state["dishmode"] != DishMode.STOW:
+            self.logger.debug(
+                (
+                    "The TMC heartbeat was not recieved in the prescribed interval of: %s."
+                    " The last heartbeat was sent at: %s."
+                ),
+                self.component_state["tmclastheartbeat"],
+                self.component_state["tmcheartbeatinterval"],
+            )
+            self.logger.debug(
+                "The TMC heartbeat interval is now void and has been reset to 0.0s. Dish LMC "
+                "is no longer tracking the last prescribed heartbeat. To set a new interval "
+                "set the tmcHeartbeatInterval attribute to a value greater than 0 and invoke "
+                "the tmcHeartbeat command to allow Dish.LMC to track the TMC pings."
+            )
+            self.logger.debug(
+                (
+                    "TMC last heartbeat of: %s will be cleared and set to 0.0s due to a lapse "
+                    "in the set heartbeat interval."
+                ),
+                self.component_state["tmclastheartbeat"],
+            )
+            self.logger.debug(
+                "Dish structure has been commanded to STOW due to a lapse in the TMC "
+                "heartbeat. Subscribe to dishMode for updates"
+            )
+            self._update_component_state(tmcheartbeatinterval=0.0)
+            self._update_component_state(tmclastheartbeat=0.0)
+            self.set_stow_mode()
         else:
-            # check if the dish is if stow first
-            if self.component_state["dishmode"] != DishMode.STOW:
-                self.logger.debug(
-                    (
-                        "The TMC heartbeat was not recieved in the prescribed interval of: %s."
-                        " The last heartbeat was sent at: %s."
-                    ),
-                    self.component_state["tmclastheartbeat"],
-                    self.component_state["tmcheartbeatinterval"],
-                )
-                self.logger.debug(
-                    "The TMC heartbeat interval is now void and has been reset to 0.0s. Dish LMC "
-                    "is no longer tracking the last prescribed heartbeat. To set a new interval "
-                    "set the tmcHeartbeatInterval attribute to a value greater than 0 and invoke "
-                    "the tmcHeartbeat command to allow Dish.LMC to track the TMC pings."
-                )
-                self.logger.debug(
-                    (
-                        "TMC last heartbeat of: %s will be cleared and set to 0.0s due to a lapse "
-                        "in the set heartbeat interval."
-                    ),
-                    self.component_state["tmclastheartbeat"],
-                )
-                self.logger.debug(
-                    "Dish structure has been commanded to STOW due to a lapse in the TMC "
-                    "heartbeat. Subscribe to dishMode for updates"
-                )
-                self._update_component_state(tmcheartbeatinterval=0.0)
-                self._update_component_state(tmclastheartbeat=0.0)
-                self.set_stow_mode()
-            else:
-                # Report that the dish is already in STOW
-                # Reset tmcheartbeatinterval and tmclastheartbeat
-                self.logger.debug(
-                    (
-                        "Dish Mode was already STOW before the TMC heartbeat laspsed the "
-                        "prescribed interval of: %s. The last heartbeat was sent at: %s. "
-                        "Dish Structure will therefore remain in STOW."
-                    ),
-                    self.component_state["tmclastheartbeat"],
-                    self.component_state["tmcheartbeatinterval"],
-                )
-                self.logger.debug(
-                    "The TMC heartbeat interval is now void and has been reset to 0.0s. "
-                    "Dish LMC is no longer tracking the last prescribed heartbeat. To set "
-                    "a new interval set the tmcHeartbeatInterval attribute to a value greater "
-                    "than 0 and invoke the tmcHeartbeat command to allow Dish.LMC to track the "
-                    "TMC pings."
-                )
-                self.logger.debug(
-                    (
-                        "TMC last heartbeat of: %s will be cleared and set to 0.0s due to a lapse"
-                        " in the set heartbeat interval."
-                    ),
-                    self.component_state["tmclastheartbeat"],
-                )
-                self._update_component_state(tmcheartbeatinterval=0.0)
-                self._update_component_state(tmclastheartbeat=0.0)
+            # Report that the dish is already in STOW
+            # Reset tmcheartbeatinterval and tmclastheartbeat
+            self.logger.debug(
+                (
+                    "Dish Mode was already STOW before the TMC heartbeat laspsed the "
+                    "prescribed interval of: %s. The last heartbeat was sent at: %s. "
+                    "Dish Structure will therefore remain in STOW."
+                ),
+                self.component_state["tmclastheartbeat"],
+                self.component_state["tmcheartbeatinterval"],
+            )
+            self.logger.debug(
+                "The TMC heartbeat interval is now void and has been reset to 0.0s. "
+                "Dish LMC is no longer tracking the last prescribed heartbeat. To set "
+                "a new interval set the tmcHeartbeatInterval attribute to a value greater "
+                "than 0 and invoke the tmcHeartbeat command to allow Dish.LMC to track the "
+                "TMC pings."
+            )
+            self.logger.debug(
+                (
+                    "TMC last heartbeat of: %s will be cleared and set to 0.0s due to a lapse"
+                    " in the set heartbeat interval."
+                ),
+                self.component_state["tmclastheartbeat"],
+            )
+            self._update_component_state(tmcheartbeatinterval=0.0)
+            self._update_component_state(tmclastheartbeat=0.0)
 
     def tmc_reset_last_heartbeat(self):
         """Resets the last recored TMC heartbeat."""
@@ -800,7 +799,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.component_state["tmclastheartbeat"],
         )
         self._update_component_state(tmclastheartbeat=0.0)
-        return
 
     def set_spf_device_ignored(self, ignored: bool):
         """Set the SPF device ignored boolean and update device communication."""
@@ -1533,7 +1531,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         value,
     ) -> Tuple[ResultCode, str]:
-        """Sets the TMC heartbeat"""
+        """Sets the TMC heartbeat."""
         try:
             self._update_component_state(tmclastheartbeat=value)
             self.logger.debug("Successfully updated tmclastheartbeat.")
