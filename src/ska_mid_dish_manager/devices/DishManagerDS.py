@@ -4,6 +4,7 @@ It exposes the attributes and commands which control the dish
 and the subservient devices
 """
 
+from datetime import datetime
 import json
 import weakref
 from functools import reduce
@@ -22,6 +23,7 @@ from ska_mid_dish_manager.models.command_class import (
     ApplyPointingModelCommand,
     SetKValueCommand,
     StowCommand,
+    TMCHeartbeatCommand,
 )
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
@@ -223,6 +225,11 @@ class DishManager(SKAController):
             ApplyPointingModelCommand(self.component_manager, self.logger),
         )
 
+        self.register_command_object(
+            "TMCHeartbeat",
+            TMCHeartbeatCommand(self.component_manager, self.logger),
+        )
+
     # ---------
     # Callbacks
     # ---------
@@ -372,6 +379,8 @@ class DishManager(SKAController):
                 "dscpowerlimitkw": "dscPowerLimitKw",
                 "tracktablecurrentindex": "trackTableCurrentIndex",
                 "tracktableendindex": "trackTableEndIndex",
+                "tmclastheartbeat": "tmcLastHeartbeat",
+                "tmcheartbeatinterval": "tmcheartbeatinterval",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -561,6 +570,33 @@ class DishManager(SKAController):
     def kValue(self):
         """Returns the kValue for SPFRX."""
         return self.component_manager.component_state["kvalue"]
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
+        doc="Returns tmcLastHeartbeat",
+    )
+    def tmcLastHeartbeat(self):
+        "Returns tmcLastHeartbeat"
+        return self.component_manager.component_state["tmclastheartbeat"]
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ_WRITE,
+        doc="Writes and returns tmcHeartbeatInterval",
+    )
+    def tmcHeartbeatInterval(self):
+        """Returns tmcHeartbeatInterval"""
+        return self.component_manager.component_state["tmcheartbeatinterval"]
+
+    @tmcHeartbeatInterval.write
+    def tmcHeartbeatInterval(self, value):
+        """Writes tmcHeartbeatInterval"""
+        if hasattr(self, "component_manager"):
+            self.component_manager._update_component_state(tmcheartbeatinterval=value)
+            if value == 0:
+                # Resets the tmclastheartbeatinterval to 0
+                self.component_manager.tmc_reset_last_heartbeat()
 
     @attribute(
         dtype=bool,
@@ -1818,6 +1854,20 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     @command(
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def TMCHeartbeat(self) -> DevVarLongStringArrayType:
+        """..."""
+        value = datetime.now().timestamp()
+        self.push_change_event("tmcLastHeartbeat", value)
+        self.push_archive_event("tmcLastHeartbeat", value)
+        handler = self.get_command_object("TMCHeartbeat")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
+    @command(
         dtype_in="DevString",
         doc_in="""The command accepts a JSON input (value) containing data to update a particular
         band's (b1-b5b). The following 18 coefficients need to be within the JSON object:
@@ -1873,6 +1923,12 @@ class DishManager(SKAController):
     def StartCommunication(self):
         """Start communicating with monitored devices."""
         self.component_manager.start_communicating()
+
+    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def CheckConnection(self):
+        """Check connection between TMC and DishManager."""
+        self.component_manager.check_connection()
 
     @command(
         dtype_in=None,

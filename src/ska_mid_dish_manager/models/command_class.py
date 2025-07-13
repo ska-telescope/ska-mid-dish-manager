@@ -177,3 +177,27 @@ class StowCommand(SubmittedSlowCommand):
             ResultCode.FAILED,
             f"{status.name} was returned by command method with message: {message}",
         )
+
+
+class TMCHeartbeatCommand(FastCommand):
+    """A custom class for TMC Stow command."""
+
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
+        """...
+
+        :param component_manager: the device to which this command belongs.
+        :param logger: a logger for this command to use.
+        """
+        self._component_manager = component_manager
+        super().__init__(logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Stateless hook for command functionality.
+
+        :param args: positional args to the component manager method
+        :param kwargs: keyword args to the component manager method
+
+        :return: A tuple containing the result code (e.g. STARTED)
+            and a string message if the command has been accepted or failed
+        """
+        return self._component_manager.set_tmc_heartbeat(*args)
