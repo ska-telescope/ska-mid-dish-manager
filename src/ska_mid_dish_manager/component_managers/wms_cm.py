@@ -68,7 +68,8 @@ class WMSComponentManager(BaseComponentManager):
 
         if not self._wms_device_names:
             self.logger.warning(
-                "WMS component manager instantiated without any WMS device names provided."
+                "WMS component manager instantiated without any WMS device names provided. "
+                "Weather station monitoring cannot be started."
             )
             return
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -119,6 +120,9 @@ class WMSComponentManager(BaseComponentManager):
         while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
                 wind_speed_data_list = self.read_wms_group_attribute_value("wind_speed")
+                # The returned data is a list of lists, where the index 0 is the
+                # timestamp and index 1 is the polled windspeed
+                # eg: [[timestamp, windspeed_wms_1], [timestamp, windspeed_wms_2],...]
 
                 _current_time = wind_speed_data_list[0][0]
                 _elapsed_polling_time = _current_time - self._polling_start_timestamp
@@ -148,7 +152,9 @@ class WMSComponentManager(BaseComponentManager):
                     "Windspeed list may be empty indicating a read failure."
                 )
 
-    def _compute_mean_wind_speed(self, wind_speed_data, current_time, elapsed_time) -> Any:
+    def _compute_mean_wind_speed(
+        self, wind_speed_data: list[list[float, float]], current_time: float, elapsed_time: float
+    ) -> Any:
         """Calculate the mean wind speed and update the component state."""
         _mean_wind_speed = None
         self._wind_speed_buffer.extend(wind_speed_data)
@@ -165,7 +171,12 @@ class WMSComponentManager(BaseComponentManager):
 
         return _mean_wind_speed
 
-    def _process_wind_gust(self, wind_speed_data_list, current_time, elapsed_time) -> None:
+    def _process_wind_gust(
+        self,
+        wind_speed_data_list: list[list[float, float]],
+        current_time: float,
+        elapsed_time: float,
+    ) -> None:
         """Determine wind gust from maximum instantaneous wind speed in the buffer."""
         # Traverse windspeed list, getting the index of the maximum
         # instantaneous windspeed value to pass for wind gust processing
@@ -191,7 +202,10 @@ class WMSComponentManager(BaseComponentManager):
         return _wind_gust
 
     def _prune_stale_windspeed_data(
-        self, current_time, computation_window_period, wind_speed_buffer
+        self,
+        current_time: float,
+        computation_window_period: float,
+        wind_speed_buffer: deque,
     ) -> None:
         """Remove stale windspeed data points from the wind speed data buffer."""
         _data_point_expiry_time = current_time - computation_window_period

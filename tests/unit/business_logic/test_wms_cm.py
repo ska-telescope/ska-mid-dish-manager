@@ -26,6 +26,7 @@ def comm_state_callback(signal: threading.Event, communication_state: Communicat
 
 @pytest.mark.unit
 def test_wms_group_activation_and_polling_starts():
+    """Test WMS polling begins following call to start_communicating."""
     test_wms_device_names = ["mid/wms/1", "mid/wms/2", "mid/wms/3"]
 
     wms = WMSComponentManager(
@@ -55,6 +56,7 @@ def test_wms_group_activation_and_polling_starts():
 
 @pytest.mark.unit
 def test_wms_cm_wind_gust_and_mean_wind_speed_updates():
+    """Test mean wind speed and wind gust calculation report expected values."""
     component_state = {}
 
     def component_state_callback(**incoming_comp_state_change):
@@ -102,6 +104,7 @@ def test_wms_cm_wind_gust_and_mean_wind_speed_updates():
 
 @pytest.mark.unit
 def test_wms_cm_wind_gust_reports_expected_max_windspeed():
+    """Validate windgust calculation reports the correct maximum windspeed."""
     comp_state_mock = MagicMock()
     wms = WMSComponentManager(
         ["mid/wms/1"],
@@ -150,6 +153,7 @@ def test_wms_cm_wind_gust_reports_expected_max_windspeed():
 
 @pytest.mark.unit
 def test_wms_cm_flushes_expired_wind_speed_readings():
+    """Validate that windspeeds older than evaluation window are discarded."""
     comp_state_mock = MagicMock()
     wms = WMSComponentManager(
         ["mid/wms/1"],
