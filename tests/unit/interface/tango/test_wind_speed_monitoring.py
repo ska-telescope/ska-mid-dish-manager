@@ -1,4 +1,4 @@
-"""Acceptance tests to verify the wind stow requirement (L2-3470) for wind speed monitoring."""
+"""Verify the wind stow requirement (L2-3470) for wind speed monitoring."""
 
 import threading
 import time
@@ -53,6 +53,7 @@ def configure_mocks_for_dish_manager():
         # update instance variables on the wms component manager
         wms_cm = dish_manager_cm.sub_component_managers["WMS"]
         wms_cm._wms_devices_count = 3
+        wms_cm._wind_gust_period = 3
         wms_cm._wind_speed_moving_average_period = 5
 
         devices_count = wms_cm._wms_devices_count
@@ -75,7 +76,7 @@ def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
 ):
     """Verify that the dish stows when the mean wind speed exceeds the threshold."""
     device_proxy, wms_cm = configure_mocks_for_dish_manager
-    mean_wind_speed_average_period = round(wms_cm._wind_speed_moving_average_period)
+    mean_wind_speed_average_period = wms_cm._wind_speed_moving_average_period
     polling_period = wms_cm._wms_polling_period
     wait_event = threading.Event()
 
@@ -141,7 +142,7 @@ def test_wind_stow_triggered_on_wind_gust_exceeding_threshold(
 ):
     """Verify that the dish stows when the wind gust exceeds the threshold."""
     device_proxy, wms_cm = configure_mocks_for_dish_manager
-    wind_gust_average_period = round(wms_cm._wind_gust_period)
+    wind_gust_average_period = wms_cm._wind_gust_period
     polling_period = wms_cm._wms_polling_period
     wait_event = threading.Event()
 
