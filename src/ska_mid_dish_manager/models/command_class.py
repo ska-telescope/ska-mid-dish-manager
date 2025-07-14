@@ -183,7 +183,7 @@ class TMCHeartbeatCommand(FastCommand):
     """A custom class for TMC Stow command."""
 
     def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
-        """...
+        """Initialise a new TMCHeartbeatCommand instance.
 
         :param component_manager: the device to which this command belongs.
         :param logger: a logger for this command to use.
