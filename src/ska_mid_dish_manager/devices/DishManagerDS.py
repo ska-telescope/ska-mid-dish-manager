@@ -1859,7 +1859,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def TMCHeartbeat(self) -> DevVarLongStringArrayType:
-        """This command registers a TMC heartbeat"""
+        """This command registers a TMC heartbeat."""
         value = datetime.now().timestamp()
         self.push_change_event("tmcLastHeartbeat", value)
         self.push_archive_event("tmcLastHeartbeat", value)
