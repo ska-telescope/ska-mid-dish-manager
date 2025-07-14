@@ -430,8 +430,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             property_name,
             self.tango_device_name,
         )
-        database = tango.Database()
         try:
+            database = tango.Database()
             device_property = database.get_device_property(self.tango_device_name, property_name)
             return device_property
         except tango.DevFailed:

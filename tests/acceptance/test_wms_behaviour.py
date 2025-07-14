@@ -4,8 +4,7 @@ import pytest
 import tango
 from tango import AttrWriteType, DeviceProxy
 
-MIN_WIND_GUST_UPDATE_TIME_S = 3
-MIN_MEAN_WIND_SPEED_WAIT_TIME_S = 600
+WIND_GUST_DEFAULT_VAL = -1
 
 
 @pytest.mark.acceptance
@@ -32,14 +31,10 @@ def test_wms_wind_gust_changes_over_time(
     )
     main_event_store.clear_queue()
 
-    # TODO: Get default value from config
-    wind_gust_default_val = -1
-
     windgust_event_value = main_event_store.get_queue_values()[-1]
-
     last_windgust_reading = windgust_event_value[1]
 
-    assert last_windgust_reading != wind_gust_default_val
+    assert last_windgust_reading != WIND_GUST_DEFAULT_VAL
 
 
 @pytest.mark.acceptance
@@ -56,11 +51,7 @@ def test_wms_mean_wind_speed_is_readable(
     )
     main_event_store.clear_queue()
 
-    # TODO: Get default value from config
-    mean_wind_speed_default_val = -1
-
     mean_wind_speed_event_value = main_event_store.get_queue_values(timeout=10)[-1]
-
     last_mean_wind_speed_reading = mean_wind_speed_event_value[1]
 
-    assert last_mean_wind_speed_reading != mean_wind_speed_default_val
+    assert last_mean_wind_speed_reading != WIND_GUST_DEFAULT_VAL
