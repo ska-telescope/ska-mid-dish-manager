@@ -36,6 +36,12 @@
       doc_out: Uninitialised
       dtype_in: DevString
       dtype_out: DevVarLongStringArray
+    - name: CheckConnection
+      disp_level: OPERATOR
+      doc_in: Uninitialised
+      doc_out: Uninitialised
+      dtype_in: DevVoid
+      dtype_out: DevVoid
     - name: CheckLongRunningCommandStatus
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -258,6 +264,12 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVoid
+    - name: TMCHeartbeat
+      disp_level: OPERATOR
+      doc_in: Uninitialised
+      doc_out: Uninitialised
+      dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: Track
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -1184,7 +1196,7 @@
     - name: frequencyResponse
       data_format: IMAGE
       data_type: DevDouble
-      description: Returns the frequencyResponse
+      description: Returns the frequencyResponse.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1491,7 +1503,7 @@
     - name: noiseDiodeConfig
       data_format: SPECTRUM
       data_type: DevDouble
-      description: Returns the noiseDiodeConfig
+      description: Returns the noiseDiodeConfig.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1569,7 +1581,7 @@
     - name: pointingState
       data_format: SCALAR
       data_type: DevEnum
-      description: Returns the pointingState
+      description: Returns the pointingState.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1623,7 +1635,7 @@
     - name: powerState
       data_format: SCALAR
       data_type: DevEnum
-      description: Returns the powerState
+      description: Returns the powerState.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1780,6 +1792,38 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: testMode
+    - name: tmcHeartbeatInterval
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Writes and returns tmcHeartbeatInterval
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: tmcHeartbeatInterval
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: tmcHeartbeatInterval
+    - name: tmcLastHeartbeat
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Returns tmcLastHeartbeat
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: tmcLastHeartbeat
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: trackInterpolationMode
       data_format: SCALAR
       data_type: DevEnum
@@ -1908,4 +1952,4 @@
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
     - name: polled_cmd
-
+    
