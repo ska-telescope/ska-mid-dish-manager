@@ -1451,6 +1451,8 @@ class DishManager(SKAController):
     )
     def autoWindStowEnabled(self):
         """Returns the value for the auto wind stow toggle."""
+        # Ideally, the default should be True (pretty much like auto record on zoom).
+        # This will remain False pending decision on which subsystem will monitor WMS
         return self.component_manager.component_state.get("autowindstowenabled", False)
 
     @autoWindStowEnabled.write
@@ -1458,6 +1460,11 @@ class DishManager(SKAController):
         """Toggle the auto wind stow on or off."""
         self.logger.debug("autoWindStowEnabled updated to, %s", toggle)
         self.component_manager._update_component_state(autowindstowenabled=toggle)
+        # if toggle is disabled mid operation, the device might stay
+        # in ALARM forever, the wind_stow_active flag should be unset
+        # to allow other functions depending on its value unblocked
+        if not toggle:
+            self.component_manager.wind_stow_active = toggle
 
     # --------
     # Commands

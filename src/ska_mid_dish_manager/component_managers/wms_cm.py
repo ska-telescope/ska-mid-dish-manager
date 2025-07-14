@@ -119,7 +119,7 @@ class WMSComponentManager(BaseComponentManager):
         self._polling_start_timestamp = time.time()
         while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
-                wind_speed_data_list = self.read_wms_group_attribute_value("wind_speed")
+                wind_speed_data_list = self.read_wms_group_attribute_value("windSpeed")
                 # The returned data is a list of lists, where the index 0 is the
                 # timestamp and index 1 is the polled windspeed
                 # eg: [[timestamp, windspeed_wms_1], [timestamp, windspeed_wms_2],...]

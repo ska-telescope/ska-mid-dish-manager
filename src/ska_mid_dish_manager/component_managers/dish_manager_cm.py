@@ -477,23 +477,33 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _evaluate_wind_speed_averages(self, **computed_averages):
         """Evaluate wind speed averages and trigger auto stow if necessary."""
-        wind_limits = self._fetch_wind_limits()
-        # resolve mismatch with keys in computed averages
-        configured_thresholds = {}
-        for key, value in wind_limits.items():
-            new_key = key.replace("Threshold", "").lower()
-            configured_thresholds[new_key] = value
+        if not self.component_state.get("autowindstowenabled"):
+            self._update_component_state(**computed_averages)
+            return
 
+        wind_limits = self._fetch_wind_limits()
+        # resolve key mismatch between limits and computed averages
+        configured_thresholds = {
+            key.replace("Threshold", "").lower(): value for key, value in wind_limits.items()
+        }
+
+        # determine if any computed average exceeds its configured threshold
         threshold_exceeded = any(
-            computed_averages.get(prop_name.lower()) is not None
-            and computed_averages.get(prop_name.lower()) > limit
+            computed_averages.get(prop_name) is not None
+            and computed_averages.get(prop_name) > limit
             for prop_name, limit in configured_thresholds.items()
         )
 
         if threshold_exceeded:
-            wind_stow_id = self._command_tracker.new_command("windstow", completed_callback=None)
-            wind_stow_task_cb = partial(self._command_tracker.update_command_info, wind_stow_id)
-            self.set_stow_mode(wind_stow_task_cb)
+            if not self.wind_stow_active:
+                # trigger stow only once over the duration of an extreme condition
+                wind_stow_id = self._command_tracker.new_command(
+                    "windstow", completed_callback=None
+                )
+                wind_stow_task_cb = partial(
+                    self._command_tracker.update_command_info, wind_stow_id
+                )
+                self.set_stow_mode(wind_stow_task_cb)
             self.wind_stow_active = True
             self.reset_alarm = False
         else:
