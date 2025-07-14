@@ -117,7 +117,7 @@ class SubscriptionTracker:
                         device_proxy.dev_name(),
                     )
                 except (tango.EventSystemFailed, KeyError):
-                    self._logger.exception(
+                    self._logger.error(
                         "Could not unsubscribe from %s attr on %s",
                         attribute_name,
                         device_proxy.dev_name(),
@@ -259,7 +259,7 @@ class TangoDeviceMonitor:
                 while not exit_thread_event.wait(timeout=SLEEP_BETWEEN_EVENTS):
                     pass
             except tango.DevFailed:
-                self._logger.exception(
+                self._logger.error(
                     (
                         f"Encountered tango error on {self._tango_fqdn} for {attribute_name} "
                         f"attribute subscription, try number {retry_counts[attribute_name]}"
