@@ -11,8 +11,8 @@ from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.constants import (
-    MEAN_WIND_SPEED_THRESHOLD_MS,
-    WIND_GUST_THRESHOLD_MS,
+    MEAN_WIND_SPEED_THRESHOLD_MPS,
+    WIND_GUST_THRESHOLD_MPS,
 )
 
 
@@ -41,8 +41,8 @@ def configure_mocks_for_dish_manager():
         # mock _fetch_wind_limits on dish manager component manager
         dish_manager_cm._fetch_wind_limits = mock.Mock(
             return_value={
-                "WindGustThreshold": WIND_GUST_THRESHOLD_MS,
-                "MeanWindSpeedThreshold": MEAN_WIND_SPEED_THRESHOLD_MS,
+                "WindGustThreshold": WIND_GUST_THRESHOLD_MPS,
+                "MeanWindSpeedThreshold": MEAN_WIND_SPEED_THRESHOLD_MPS,
             }
         )
 
