@@ -169,11 +169,12 @@ def test_wms_cm_flushes_expired_wind_speed_readings():
     test_start_time = time.time()
     sample_windspeed_buffer = deque()
 
-    # Create a buffer of valid and invalid windspeed values.
+    # Create a buffer of 10 valid and 10 invalid windspeed values.
     # Store the valid windspeeds in a separate list to validate
     # later that invalid windspeeds were removed from the buffer
+    total_windspeed_sample_count = 20
     expected_valid_windspeeds = []
-    for time_decrement in range(20):
+    for time_decrement in range(total_windspeed_sample_count):
         ws_timestamp = test_start_time - time_decrement
         sample_windspeed = random.uniform(10, 40)
         # Append left (opposite to wms_cm normal operation)
