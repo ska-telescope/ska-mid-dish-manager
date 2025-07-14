@@ -35,8 +35,9 @@ def test_tmc_stow_heartbeat(event_store_class, dish_manager_proxy):
 
     assert (
         command_resp
-        == f"TMC heartbeat received at: {datetime.fromtimestamp(
-            dish_manager_proxy.read_attribute('tmcLastHearteat').value)}"
+        == f"TMC heartbeat received at: {
+            datetime.fromtimestamp(dish_manager_proxy.read_attribute('tmcLastHearteat').value)
+        }"
     )
     assert result_code == ResultCode.OK
     assert dish_manager_proxy.read_attribute("tmcheartbeatinterval").value == 4.0
