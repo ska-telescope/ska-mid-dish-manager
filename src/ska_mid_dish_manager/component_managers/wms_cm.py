@@ -45,8 +45,6 @@ class WMSComponentManager(BaseComponentManager):
             * (self._wind_speed_moving_average_period / self._wms_polling_period)
         )
         self._wind_gust_buffer_length = int(self._wind_gust_period / self._wms_polling_period)
-        # TODO: Evaluate whether some form of protection is needed if the mean
-        # and gust periods exceed the polling period
 
         self._wind_speed_buffer = deque(maxlen=self._wind_speed_buffer_length)
         self._wind_gust_buffer = deque(maxlen=self._wind_gust_buffer_length)
@@ -196,10 +194,6 @@ class WMSComponentManager(BaseComponentManager):
         self, current_time, computation_window_period, wind_speed_buffer
     ) -> None:
         """Remove stale windspeed data points from the wind speed data buffer."""
-        # TODO: Consider offloading this work to a separate thread or event loop
-        # due to the high processing time added by this operation. In doing so
-        # be sure to ensure that the cleaning up of the buffers is in sync with the
-        # wind speed/gust computation so that old data isnt used
         _data_point_expiry_time = current_time - computation_window_period
         # wind_speed_buffer[0][0] represents the timestamp of the oldest buffer datapoint
         while wind_speed_buffer and (wind_speed_buffer[0][0] < _data_point_expiry_time):

@@ -24,7 +24,6 @@ def comm_state_callback(signal: threading.Event, communication_state: Communicat
     pass
 
 
-@pytest.mark.forked
 @pytest.mark.unit
 def test_wms_group_activation_and_polling_starts():
     test_wms_device_names = ["mid/wms/1", "mid/wms/2", "mid/wms/3"]
