@@ -1,8 +1,10 @@
 """Unit tests checking WMS component manager behaviour."""
 
 import logging
+import random
 import threading
 import time
+from collections import deque
 from functools import partial
 from unittest.mock import MagicMock, Mock
 
@@ -41,7 +43,6 @@ def test_wms_group_activation_and_polling_starts():
 
     wms.start_communicating()
 
-    # Assert all expected device successfully added to device group
     tango_group_device_list = wms._wms_device_group.get_device_list()
     for device_name in test_wms_device_names:
         assert device_name in tango_group_device_list
@@ -54,7 +55,7 @@ def test_wms_group_activation_and_polling_starts():
 
 
 @pytest.mark.unit
-def test_wms_wind_gust_and_mean_wind_speed_updates():
+def test_wms_cm_wind_gust_and_mean_wind_speed_updates():
     component_state = {}
 
     def component_state_callback(**incoming_comp_state_change):
@@ -86,13 +87,13 @@ def test_wms_wind_gust_and_mean_wind_speed_updates():
     ]
 
     wms.start_communicating()
-    wait_event.wait(wms._wms_polling_period + COMM_STATE_UPDATE_WAIT)
+    wait_event.wait(timeout=(wms._wms_polling_period + COMM_STATE_UPDATE_WAIT))
     assert wms.communication_state == CommunicationStatus.ESTABLISHED
 
-    wait_event.wait(10)
+    wait_event.wait(timeout=MEAN_WIND_SPEED_PERIOD)
 
     wms.stop_communicating()
-    wait_event.wait(COMM_STATE_UPDATE_WAIT)
+    wait_event.wait(timeout=COMM_STATE_UPDATE_WAIT)
     assert wms.communication_state == CommunicationStatus.DISABLED
     wms.write_wms_group_attribute_value.assert_called_with("adminMode", AdminMode.OFFLINE)
     assert wms.read_wms_group_attribute_value.call_count == 10
@@ -101,9 +102,8 @@ def test_wms_wind_gust_and_mean_wind_speed_updates():
 
 
 @pytest.mark.unit
-def test_wms_wind_gust_circular_buffer():
+def test_wms_cm_wind_gust_reports_expected_max_windspeed():
     comp_state_mock = MagicMock()
-
     wms = WMSComponentManager(
         ["mid/wms/1"],
         logger=LOGGER,
@@ -136,7 +136,7 @@ def test_wms_wind_gust_circular_buffer():
     for polling_time, (current_max_wind_speed, exp_wind_gust) in enumerate(
         max_inst_wind_speed_and_expected_gust
     ):
-        # polling_time, which is the current list index, is used to simulate the
+        # polling_time, the current list index, is used to simulate the
         # 1 second that passed each time the WMS Devices are polled
         elapsed_time = polling_time + initial_wait_time_before_polling
 
@@ -147,3 +147,46 @@ def test_wms_wind_gust_circular_buffer():
             elapsed_time,
         )
         assert computed_wind_gust == exp_wind_gust
+
+
+@pytest.mark.unit
+def test_wms_cm_flushes_expired_wind_speed_readings():
+    comp_state_mock = MagicMock()
+    wms = WMSComponentManager(
+        ["mid/wms/1"],
+        logger=LOGGER,
+        component_state_callback=comp_state_mock,
+        wms_polling_period=WMS_POLLING_PERIOD,
+        wind_speed_moving_average_period=MEAN_WIND_SPEED_PERIOD,
+        wind_gust_average_period=WIND_GUST_PERIOD,
+        meanwindspeed=-1,
+        windgust=-1,
+    )
+
+    test_start_time = time.time()
+    sample_windspeed_buffer = deque()
+
+    # Create a buffer of valid and invalid windspeed values.
+    # Store the valid windspeeds in a separate list to validate
+    # later that invalid windspeeds were removed from the buffer
+    expected_valid_windspeeds = []
+    for time_decrement in range(20):
+        ws_timestamp = test_start_time - time_decrement
+        sample_windspeed = random.uniform(10, 40)
+        # Append left (opposite to wms_cm normal operation)
+        # as we are populating the buffer with the oldest values first
+        sample_windspeed_buffer.appendleft([ws_timestamp, sample_windspeed])
+        if time_decrement <= MEAN_WIND_SPEED_PERIOD:
+            expected_valid_windspeeds.append(sample_windspeed)
+
+    wms._prune_stale_windspeed_data(
+        test_start_time,
+        MEAN_WIND_SPEED_PERIOD,
+        sample_windspeed_buffer,
+    )
+
+    # Validate that only valid windspeed values remain in the buffer
+    assert len(sample_windspeed_buffer) == len(expected_valid_windspeeds)
+    expected_valid_windspeeds.reverse()
+    for index, ws in enumerate(expected_valid_windspeeds):
+        assert sample_windspeed_buffer[index][1] == ws

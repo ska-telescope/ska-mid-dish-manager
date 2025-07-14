@@ -157,7 +157,9 @@ class WMSComponentManager(BaseComponentManager):
 
         if elapsed_time >= self._wind_speed_moving_average_period:
             self._prune_stale_windspeed_data(
-                current_time, self._wind_speed_buffer, self._wind_speed_moving_average_period
+                current_time,
+                self._wind_speed_moving_average_period,
+                self._wind_speed_buffer,
             )
             _mean_wind_speed = sum(ws[1] for ws in self._wind_speed_buffer) / len(
                 self._wind_speed_buffer
@@ -183,15 +185,15 @@ class WMSComponentManager(BaseComponentManager):
         if elapsed_time >= self._wind_gust_period:
             self._prune_stale_windspeed_data(
                 current_time,
-                self._wind_gust_buffer,
                 self._wind_gust_period,
+                self._wind_gust_buffer,
             )
             _wind_gust = max(ws[1] for ws in self._wind_gust_buffer)
 
         return _wind_gust
 
     def _prune_stale_windspeed_data(
-        self, current_time, wind_speed_buffer, computation_window_period
+        self, current_time, computation_window_period, wind_speed_buffer
     ) -> None:
         """Remove stale windspeed data points from the wind speed data buffer."""
         # TODO: Consider offloading this work to a separate thread or event loop
