@@ -31,8 +31,8 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_SPFRX_TRL,
     DSC_MAX_POWER_LIMIT_KW,
     DSC_MIN_POWER_LIMIT_KW,
-    MEAN_WIND_SPEED_THRESHOLD_MS,
-    WIND_GUST_THRESHOLD_MS,
+    MEAN_WIND_SPEED_THRESHOLD_MPS,
+    WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -86,12 +86,12 @@ class DishManager(SKAController):
     MeanWindSpeedThreshold = device_property(
         dtype=float,
         doc="Threshold value for mean wind speed (in m/s) used to trigger stow.",
-        default_value=MEAN_WIND_SPEED_THRESHOLD_MS,
+        default_value=MEAN_WIND_SPEED_THRESHOLD_MPS,
     )
     WindGustThreshold = device_property(
         dtype=float,
         doc="Threshold value for wind gust speed (in m/s) used to trigger stow.",
-        default_value=WIND_GUST_THRESHOLD_MS,
+        default_value=WIND_GUST_THRESHOLD_MPS,
     )
 
     def _create_lrc_attributes(self) -> None:
