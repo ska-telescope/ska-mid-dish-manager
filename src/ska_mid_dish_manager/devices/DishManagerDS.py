@@ -81,7 +81,7 @@ class DishManager(SKAController):
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
-    # wms device names (e.g. mid/wms/1) to connect to
+    # wms device names (e.g. ska-mid/weather-monitoring/1) to connect to
     WMSDeviceNames = device_property(dtype=DevVarStringArray, default_value=[])
     MeanWindSpeedThreshold = device_property(
         dtype=float,

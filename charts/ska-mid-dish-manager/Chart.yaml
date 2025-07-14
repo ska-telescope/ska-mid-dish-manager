@@ -38,6 +38,6 @@ dependencies:
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-ds-manager.enabled
 - name: ska-mid-wms
-  version: 0.4.0-dev.cf07e6f49
+  version: 0.4.0-dev.cde58785c
   repository: https://gitlab.com/api/v4/projects/61431705/packages/helm/dev
   condition: ska-mid-wms.enabled

@@ -88,5 +88,5 @@ K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) \
 -include .make/helm.mk
 
 
-# include your own private variables for custom deployment configuration
+# include your own private variables to add custom deployment configuration
 -include PrivateRules.mak

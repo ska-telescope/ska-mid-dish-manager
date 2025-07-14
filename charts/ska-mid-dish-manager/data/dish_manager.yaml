@@ -64,7 +64,7 @@ server:
                   values:
                     {{- $station_ids := (get $.Values "ska-mid-wms").deviceServers.wms.station_ids -}}
                     {{- range $station_id := $station_ids }}
-                    - "mid/wms/{{ $station_id }}"
+                    - "ska-mid/weather-monitoring/{{ $station_id }}"
                     {{- end }}
               attribute_properties:
                 - attribute: "ignoreSpf"
