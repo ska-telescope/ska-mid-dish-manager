@@ -21,8 +21,8 @@ from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DSC_MIN_POWER_LIMIT_KW,
-    MEAN_WIND_SPEED_THRESHOLD_MS,
-    WIND_GUST_THRESHOLD_MS,
+    MEAN_WIND_SPEED_THRESHOLD_MPS,
+    WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -139,8 +139,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._wind_limits_cache = {
             "timestamp": time.time(),
             "limits": {
-                "WindGustThreshold": WIND_GUST_THRESHOLD_MS,
-                "MeanWindSpeedThreshold": MEAN_WIND_SPEED_THRESHOLD_MS,
+                "WindGustThreshold": WIND_GUST_THRESHOLD_MPS,
+                "MeanWindSpeedThreshold": MEAN_WIND_SPEED_THRESHOLD_MPS,
             },
         }
 
