@@ -33,12 +33,10 @@ def test_tmc_stow_heartbeat(event_store_class, dish_manager_proxy):
     # Start tracking the pings by sending the first heartbeat
     [[result_code], [command_resp]] = dish_manager_proxy.TMCHeartbeat()
 
-    assert (
-        command_resp
-        == f"TMC heartbeat received at: {
-            datetime.fromtimestamp(dish_manager_proxy.read_attribute('tmcLastHearteat').value)
-        }"
+    assert command_resp == "TMC heartbeat received at: %s" % (
+        datetime.fromtimestamp(dish_manager_proxy.read_attribute("tmcLastHearteat").value)
     )
+
     assert result_code == ResultCode.OK
     assert dish_manager_proxy.read_attribute("tmcheartbeatinterval").value == 4.0
 
