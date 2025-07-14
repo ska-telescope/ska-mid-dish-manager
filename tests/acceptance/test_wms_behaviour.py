@@ -4,7 +4,7 @@ import pytest
 import tango
 from tango import AttrWriteType, DeviceProxy
 
-WIND_GUST_DEFAULT_VAL = -1
+DEFAULT_STARTING_VALUE = -1
 
 
 @pytest.mark.acceptance
@@ -34,7 +34,7 @@ def test_wms_wind_gust_changes_over_time(
     windgust_event_value = main_event_store.get_queue_values()[-1]
     last_windgust_reading = windgust_event_value[1]
 
-    assert last_windgust_reading != WIND_GUST_DEFAULT_VAL
+    assert last_windgust_reading != DEFAULT_STARTING_VALUE
 
 
 @pytest.mark.acceptance
@@ -54,4 +54,4 @@ def test_wms_mean_wind_speed_is_readable(
     mean_wind_speed_event_value = main_event_store.get_queue_values(timeout=10)[-1]
     last_mean_wind_speed_reading = mean_wind_speed_event_value[1]
 
-    assert last_mean_wind_speed_reading != WIND_GUST_DEFAULT_VAL
+    assert last_mean_wind_speed_reading != DEFAULT_STARTING_VALUE
