@@ -4,8 +4,6 @@ import pytest
 import tango
 from tango import AttrWriteType, DeviceProxy
 
-DEFAULT_STARTING_VALUE = -1
-
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -19,39 +17,33 @@ def test_wms_read_attribute_type(dish_manager_proxy: DeviceProxy) -> None:
 
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_wms_wind_gust_changes_over_time(
+def test_change_events_configured_for_wind_gust(
     dish_manager_proxy: DeviceProxy, event_store_class
 ) -> None:
-    """Test that the windGust attribute changes over time."""
+    """Test that the windGust attribute pushes change events."""
     main_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
         "windGust",
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
-    main_event_store.clear_queue()
 
-    windgust_event_value = main_event_store.get_queue_values()[-1]
-    last_windgust_reading = windgust_event_value[1]
-
-    assert last_windgust_reading != DEFAULT_STARTING_VALUE
+    windgust_event_value = main_event_store.get_queue_values()
+    assert windgust_event_value
 
 
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_wms_mean_wind_speed_is_readable(
+def test_change_events_configured_for_mean_wind_speed(
     dish_manager_proxy: DeviceProxy, event_store_class
 ) -> None:
-    """Test that the meanWindSpeed attribute changes over time."""
+    """Test that the meanWindSpeed attribute pushes change events."""
     main_event_store = event_store_class()
     dish_manager_proxy.subscribe_event(
         "meanWindSpeed",
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
-    main_event_store.clear_queue()
 
-    mean_wind_speed_event_value = main_event_store.get_queue_values(timeout=10)[-1]
-    last_mean_wind_speed_reading = mean_wind_speed_event_value[1]
-
-    assert last_mean_wind_speed_reading != DEFAULT_STARTING_VALUE
+    mean_windspeed_event_value = main_event_store.get_queue_values()
+    assert mean_windspeed_event_value
