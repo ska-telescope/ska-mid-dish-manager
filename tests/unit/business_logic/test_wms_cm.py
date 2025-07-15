@@ -27,7 +27,11 @@ def comm_state_callback(signal: threading.Event, communication_state: Communicat
 @pytest.mark.unit
 def test_wms_group_activation_and_polling_starts():
     """Test WMS polling begins following call to start_communicating."""
-    test_wms_device_names = ["mid/wms/1", "mid/wms/2", "mid/wms/3"]
+    test_wms_device_names = [
+        "ska-mid/weather-monitoring/1",
+        "ska-mid/weather-monitoring/2",
+        "ska-mid/weather-monitoring/3",
+    ]
 
     wms = WMSComponentManager(
         test_wms_device_names,
@@ -63,7 +67,11 @@ def test_wms_cm_wind_gust_and_mean_wind_speed_updates():
         component_state.update(incoming_comp_state_change)
 
     wms = WMSComponentManager(
-        ["mid/wms/1", "mid/wms/2", "mid/wms/3"],
+        [
+            "ska-mid/weather-monitoring/1",
+            "ska-mid/weather-monitoring/2",
+            "ska-mid/weather-monitoring/3",
+        ],
         logger=LOGGER,
         component_state_callback=component_state_callback,
         wms_polling_period=WMS_POLLING_PERIOD,
@@ -107,7 +115,7 @@ def test_wms_cm_wind_gust_reports_expected_max_windspeed():
     """Validate windgust calculation reports the correct maximum windspeed."""
     comp_state_mock = MagicMock()
     wms = WMSComponentManager(
-        ["mid/wms/1"],
+        ["ska-mid/weather-monitoring/1"],
         logger=LOGGER,
         component_state_callback=comp_state_mock,
         wms_polling_period=WMS_POLLING_PERIOD,
@@ -156,7 +164,7 @@ def test_wms_cm_flushes_expired_wind_speed_readings():
     """Validate that windspeeds older than evaluation window are discarded."""
     comp_state_mock = MagicMock()
     wms = WMSComponentManager(
-        ["mid/wms/1"],
+        ["ska-mid/weather-monitoring/1"],
         logger=LOGGER,
         component_state_callback=comp_state_mock,
         wms_polling_period=WMS_POLLING_PERIOD,
