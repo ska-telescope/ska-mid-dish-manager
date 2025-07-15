@@ -12,7 +12,7 @@ from typing import List, Optional, Tuple
 from ska_control_model import CommunicationStatus, ResultCode
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
-from tango import AttrWriteType, DevState, DevULong, DevVarStringArray, DispLevel
+from tango import AttrWriteType, DevLong64, DevState, DevVarStringArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -1311,7 +1311,7 @@ class DishManager(SKAController):
         self.component_manager.set_noise_diode_mode(mode)
 
     @attribute(
-        dtype=(DevULong,),
+        dtype=(DevLong64,),
         max_dim_x=3,
         doc="""
             Periodic noise diode pars (units are in time quanta).
@@ -1334,7 +1334,7 @@ class DishManager(SKAController):
         self.component_manager.set_periodic_noise_diode_pars(values)
 
     @attribute(
-        dtype=(DevULong,),
+        dtype=(DevLong64,),
         max_dim_x=3,
         doc="""
             Pseudo random noise diode pars (units are in time quanta).

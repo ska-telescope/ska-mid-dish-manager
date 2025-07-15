@@ -23,18 +23,18 @@ maintainers:
     email: usilere@sarao.ac.za
 dependencies:
 - name: ska-tango-util
-  version: 0.4.21
+  version: 0.4.22
   repository: https://artefact.skao.int/repository/helm-internal
 - name: ska-tango-base
-  version: 0.4.21
+  version: 0.4.22
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-tango-base.enabled
 - name: ska-mid-dish-simulators
-  version: 4.4.3
+  version: 4.5.1
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-simulators.enabled
 - name: ska-mid-dish-ds-manager
-  version: 5.0.0
+  version: 6.0.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-ds-manager.enabled
 - name: ska-mid-wms

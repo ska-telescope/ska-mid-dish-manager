@@ -1,7 +1,8 @@
-"""Test noise diode attributes from SPFRx."""
+"""Test SPFRx noise diode attributes."""
 
 from typing import Any
 
+import numpy as np
 import pytest
 import tango
 
@@ -14,8 +15,8 @@ from ska_mid_dish_manager.models.dish_enums import NoiseDiodeMode
     ("attribute, valid_write_value"),
     [
         ("noiseDiodeMode", NoiseDiodeMode.PERIODIC),
-        ("periodicnoisediodepars", [1, 2, 3]),
-        ("pseudorandomnoisediodepars", [1, 2, 3]),
+        ("periodicnoisediodepars", np.array([1, 2, 3], dtype=np.int64)),
+        ("pseudorandomnoisediodepars", np.array([1, 2, 3], dtype=np.int64)),
     ],
 )
 def test_set_noise_diode_attribute(
