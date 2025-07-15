@@ -88,6 +88,7 @@ deviceServers:
     enabled: true
 
 ska-mid-wms:
+  enabled: false
   ska-tango-base:
     enabled: false
   deviceServers:
