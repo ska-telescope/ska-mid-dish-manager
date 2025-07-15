@@ -98,7 +98,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ignorespfrx=False,
             noisediodemode=NoiseDiodeMode.OFF,
             periodicnoisediodepars=[],
-            pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
+            pseudorandomnoisediodepars=[0, 0, 0],
             actstaticoffsetvaluexel=0.0,
             actstaticoffsetvalueel=0.0,
             tracktablecurrentindex=0,
@@ -202,8 +202,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 noisediodemode=NoiseDiodeMode.OFF,
-                periodicnoisediodepars=[0.0, 0.0, 0.0],
-                pseudorandomnoisediodepars=[0.0, 0.0, 0.0],
+                periodicnoisediodepars=[0, 0, 0],
+                pseudorandomnoisediodepars=[0, 0, 0],
                 adminmode=AdminMode.OFFLINE,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPFRX
