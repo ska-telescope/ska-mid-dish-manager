@@ -681,13 +681,13 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
             Band.B4,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5a),
             dict(bandinfocus=SPFBandInFocus.B5a),
             dict(configuredband=Band.B5a),
             Band.B5a,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5b),
             dict(bandinfocus=SPFBandInFocus.B5b),
             dict(configuredband=Band.B5b),
             Band.B5b,
@@ -754,13 +754,13 @@ def test_compute_configured_band(
             Band.B4,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5a),
             None,
             dict(configuredband=Band.B5a),
             Band.B5a,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5b),
             None,
             dict(configuredband=Band.B5b),
             Band.B5b,
@@ -821,13 +821,13 @@ def test_compute_configured_band_ignoring_spf(
             Band.B4,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5a),
             dict(bandinfocus=SPFBandInFocus.B5a),
             None,
             Band.B5a,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5b),
             dict(bandinfocus=SPFBandInFocus.B5b),
             None,
             Band.B5b,
@@ -887,19 +887,18 @@ def test_compute_configured_band_ignoring_spfrx(
             None,
             Band.B4,
         ),
-        # TODO: Clarify SPF B5a or B5b given only DS.IndexerPosition.B5
-        # (
-        #     dict(indexerposition=IndexerPosition.B5),
-        #     None,
-        #     None,
-        #     Band.B5a,
-        # ),
-        # (
-        #     dict(indexerposition=IndexerPosition.B5),
-        #     None,
-        #     None,
-        #     Band.B5b,
-        # ),
+        (
+            dict(indexerposition=IndexerPosition.B5a),
+            None,
+            None,
+            Band.B5a,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B5b),
+            None,
+            None,
+            Band.B5b,
+        ),
         (
             dict(indexerposition=IndexerPosition.UNKNOWN),
             None,
@@ -946,12 +945,12 @@ def test_compute_configured_band_ignoring_spf_and_spfrx(
             SPFBandInFocus.B4,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5a),
             dict(configuredband=Band.B5a),
             SPFBandInFocus.B5a,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5b),
             dict(configuredband=Band.B5b),
             SPFBandInFocus.B5b,
         ),
@@ -1004,17 +1003,16 @@ def test_compute_spf_band_in_focus(
             None,
             SPFBandInFocus.B4,
         ),
-        # TODO: Clarify SPF B5a or B5b given only DS.IndexerPosition.B5
-        # (
-        #     dict(indexerposition=IndexerPosition.B5),
-        #     None,
-        #     SPFBandInFocus.B5a,
-        # ),
-        # (
-        #     dict(indexerposition=IndexerPosition.B5),
-        #     None,
-        #     SPFBandInFocus.B5b,
-        # ),
+        (
+            dict(indexerposition=IndexerPosition.B5a),
+            None,
+            SPFBandInFocus.B5a,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B5b),
+            None,
+            SPFBandInFocus.B5b,
+        ),
     ],
 )
 def test_compute_spf_band_in_focus_ignoring_spfrx(
