@@ -1,7 +1,6 @@
 """This module provides functionality related to scheduling and managing of tasks."""
 
 import threading
-
 from typing import Callable
 
 
@@ -58,7 +57,7 @@ class WatchdogTimer:
         """
         with self._lock:
             if not self._enabled:
-                raise RuntimeError("Watchdog timer is not enabled. Call enable() first.")
+                raise RuntimeError("Watchdog timer is not enabled. Call enable first.")
             if self._timer is not None:
                 self._timer.cancel()
             self._timer = threading.Timer(self._timeout, self.callback_on_timeout)

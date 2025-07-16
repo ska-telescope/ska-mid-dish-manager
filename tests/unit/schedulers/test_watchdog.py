@@ -1,6 +1,7 @@
 """Unit tests for watchdog timer class."""
 
 import time
+
 import pytest
 
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
@@ -119,6 +120,6 @@ class TestWatchdogTimer:
     def test_reset_without_enable(self):
         """Test that resetting without enabling raises an error."""
         with pytest.raises(
-            RuntimeError, match="Watchdog timer is not enabled. Call enable\(\) first."
+            RuntimeError, match=r"Watchdog timer is not enabled. Call enable first."
         ):
             self.watchdog_timer.reset()
