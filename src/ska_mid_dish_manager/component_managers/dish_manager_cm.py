@@ -44,6 +44,7 @@ from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
+from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
 
@@ -114,6 +115,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
+            lastwatchdogreset=0.0,
+            watchdogtimeout=0.0,
             **kwargs,
         )
         self.logger = logger
@@ -124,6 +127,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._abort_thread: Optional[Thread] = None
+        self.watchdog_timer = WatchdogTimer(
+            callback_on_timeout=self._stow_on_watchdog_expiry,
+        )
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -981,6 +987,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.abort_commands()
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
+
+    def _stow_on_watchdog_expiry(self) -> None:
+        """Stow the dish on watchdog expiry."""
+        self.logger.info("Watchdog timer has expired.")
+        if self.component_state["dishmode"] == DishMode.STOW:
+            self.logger.info("Dish is already in STOW mode, no action taken.")
+        else:
+            self.logger.info("Transitioning dish to STOW.")
+            self.set_stow_mode()
+            # Watchdog timer functions as one-shot, so we reset the watchdog timeout to 0.
+            # As part of recovery, client should enable watchdog again if desired.
+            self._update_component_state(watchdogtimeout=0.0)
 
     @check_communicating
     def slew(

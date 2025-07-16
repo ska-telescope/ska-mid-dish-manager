@@ -4,13 +4,14 @@ import time
 
 import pytest
 
-from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
+from ska_mid_dish_manager.utils.schedulers import (
+    DEFAULT_WATCHDOG_TIMEOUT,
+    WatchdogTimer,
+    WatchdogTimerInactiveError,
+)
 
 
-@pytest.mark.unit
-class TestWatchdogTimer:
-    """Tests for WatchdogTimer class."""
-
+class TestWatchdogTimerBase:
     def setup_method(self):
         """Set up context."""
         self.timeout = 2.0
@@ -20,12 +21,17 @@ class TestWatchdogTimer:
         def callback():
             self.callback_called = True
 
-        self.watchdog_timer = WatchdogTimer(self.timeout, callback)
+        self.watchdog_timer = WatchdogTimer(callback_on_timeout=callback, timeout=self.timeout)
 
     def teardown_method(self):
         """Clean up context."""
         self.watchdog_timer.disable()
         assert self.watchdog_timer._timer is None
+
+
+@pytest.mark.unit
+class TestWatchdogTimer(TestWatchdogTimerBase):
+    """Tests for WatchdogTimer class."""
 
     def test_watchdog_inactive_on_init(self):
         """Test that the watchdog timer is inactive on initialization."""
@@ -84,12 +90,12 @@ class TestWatchdogTimer:
     def test_init_fails_with_negative_timeout(self):
         """Test that instantiation fails with a negative timeout."""
         with pytest.raises(ValueError, match="Timeout must be greater than 0."):
-            WatchdogTimer(-1.0, lambda: None)
+            WatchdogTimer(timeout=-1.0)
 
     def test_init_fails_with_zero_timeout(self):
         """Test that instantiation fails with a zero timeout."""
         with pytest.raises(ValueError, match="Timeout must be greater than 0."):
-            WatchdogTimer(0.0, lambda: None)
+            WatchdogTimer(timeout=0.0)
 
     def test_enable_timeout_neg_override(self):
         """Test overriding the watchdog timer with negative timeout."""
@@ -120,6 +126,28 @@ class TestWatchdogTimer:
     def test_reset_without_enable(self):
         """Test that resetting without enabling raises an error."""
         with pytest.raises(
-            RuntimeError, match=r"Watchdog timer is not enabled. Call enable first."
+            WatchdogTimerInactiveError, match=r"Watchdog timer is disabled. Call enable first."
         ):
             self.watchdog_timer.reset()
+
+
+@pytest.mark.unit
+class TestWatchdogTimerDefault(TestWatchdogTimerBase):
+    """Tests for WatchdogTimer default case."""
+
+    def setup_method(self):
+        """Set up context."""
+        self.timeout_expire_buffer = 0.2
+        self.callback_called = False
+
+        def callback():
+            self.callback_called = True
+
+        self.watchdog_timer = WatchdogTimer(callback_on_timeout=callback)
+
+    def test_default_timeout(self):
+        """Test that the default timeout is used if not overridden."""
+        self.watchdog_timer.enable()
+        assert not self.callback_called
+        time.sleep(DEFAULT_WATCHDOG_TIMEOUT + self.timeout_expire_buffer)
+        assert self.callback_called
