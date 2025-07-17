@@ -39,12 +39,17 @@ class WMSComponentManager(BaseComponentManager):
         self._wms_device_group = tango.Group("wms_devices")
 
         # Determine the max buffer length. Once the buffer is full we will have enough data
-        # points to determine the mean wind speed and wind gust values
-        self._wind_speed_buffer_length = int(
-            self._wms_devices_count
-            * (self._wind_speed_moving_average_period / self._wms_polling_period)
+        # points to determine the mean wind speed and wind gust values. The additions of
+        # device count and 1 to the buffer lengths ensure the reading of the first polling
+        # cycle is accounted for
+        self._wind_speed_buffer_length = (
+            int(
+                self._wms_devices_count
+                * (self._wind_speed_moving_average_period / self._wms_polling_period)
+            )
+            + self._wms_devices_count
         )
-        self._wind_gust_buffer_length = int(self._wind_gust_period / self._wms_polling_period)
+        self._wind_gust_buffer_length = int(self._wind_gust_period / self._wms_polling_period) + 1
 
         self._wind_speed_buffer = deque(maxlen=self._wind_speed_buffer_length)
         self._wind_gust_buffer = deque(maxlen=self._wind_gust_buffer_length)
@@ -83,16 +88,16 @@ class WMSComponentManager(BaseComponentManager):
 
     def _start_monitoring(self) -> None:
         """Start WMS monitoring of weather station servers."""
-        while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
+        while not self._stop_monitoring_flag.is_set():
             try:
                 self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)
-                self._update_communication_state(CommunicationStatus.ESTABLISHED)
                 break
             except (tango.DevFailed, RuntimeError):
                 self.logger.error(
                     "Failed to set WMS device(s) adminMode to ONLINE. One or more"
                     " WMS device(s) may be unavailable. Retrying"
                 )
+            self._stop_monitoring_flag.wait(timeout=self._wms_polling_period)
 
     def stop_communicating(self) -> None:
         """Stop WMS attr polling and clean up windspeed data buffer."""
@@ -116,8 +121,7 @@ class WMSComponentManager(BaseComponentManager):
 
     def _run_wms_group_polling(self, *args):
         """Fetch WMS windspeed data and publish it to the rolling avg calc."""
-        self._polling_start_timestamp = time.time()
-        while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
+        while not self._stop_monitoring_flag.is_set():
             try:
                 wind_speed_data_list = self.read_wms_group_attribute_value("windSpeed")
                 # The returned data is a list of lists, where the index 0 is the
@@ -125,18 +129,15 @@ class WMSComponentManager(BaseComponentManager):
                 # eg: [[timestamp, windspeed_wms_1], [timestamp, windspeed_wms_2],...]
 
                 _current_time = wind_speed_data_list[0][0]
-                _elapsed_polling_time = _current_time - self._polling_start_timestamp
 
                 mws = self._compute_mean_wind_speed(
                     wind_speed_data_list,
                     _current_time,
-                    _elapsed_polling_time,
                 )
 
                 wg = self._process_wind_gust(
                     wind_speed_data_list,
                     _current_time,
-                    _elapsed_polling_time,
                 )
 
                 self._update_component_state(
@@ -151,23 +152,26 @@ class WMSComponentManager(BaseComponentManager):
                     f"Exception raised on processing windspeed data: {err}. "
                     "Windspeed list may be empty indicating a read failure."
                 )
+            except Exception as err:
+                self.logger.error(f"Unexpected exception during WMS group polling: {err}")
+            self._stop_monitoring_flag.wait(timeout=self._wms_polling_period)
 
     def _compute_mean_wind_speed(
-        self, wind_speed_data: list[list[float, float]], current_time: float, elapsed_time: float
+        self,
+        wind_speed_data: list[list[float, float]],
+        current_time: float,
     ) -> Any:
         """Calculate the mean wind speed and update the component state."""
-        _mean_wind_speed = None
         self._wind_speed_buffer.extend(wind_speed_data)
 
-        if elapsed_time >= self._wind_speed_moving_average_period:
-            self._prune_stale_windspeed_data(
-                current_time,
-                self._wind_speed_moving_average_period,
-                self._wind_speed_buffer,
-            )
-            _mean_wind_speed = sum(ws[1] for ws in self._wind_speed_buffer) / len(
-                self._wind_speed_buffer
-            )
+        self._prune_stale_windspeed_data(
+            current_time,
+            self._wind_speed_moving_average_period,
+            self._wind_speed_buffer,
+        )
+        _mean_wind_speed = sum(ws[1] for ws in self._wind_speed_buffer) / len(
+            self._wind_speed_buffer
+        )
 
         return _mean_wind_speed
 
@@ -175,7 +179,6 @@ class WMSComponentManager(BaseComponentManager):
         self,
         wind_speed_data_list: list[list[float, float]],
         current_time: float,
-        elapsed_time: float,
     ) -> None:
         """Determine wind gust from maximum instantaneous wind speed in the buffer."""
         # Traverse windspeed list, getting the index of the maximum
@@ -189,15 +192,12 @@ class WMSComponentManager(BaseComponentManager):
         else:
             self._wind_gust_buffer.append(wind_speed_data_list[0])
 
-        _wind_gust = None
-
-        if elapsed_time >= self._wind_gust_period:
-            self._prune_stale_windspeed_data(
-                current_time,
-                self._wind_gust_period,
-                self._wind_gust_buffer,
-            )
-            _wind_gust = max(ws[1] for ws in self._wind_gust_buffer)
+        self._prune_stale_windspeed_data(
+            current_time,
+            self._wind_gust_period,
+            self._wind_gust_buffer,
+        )
+        _wind_gust = max(ws[1] for ws in self._wind_gust_buffer)
 
         return _wind_gust
 
@@ -221,6 +221,7 @@ class WMSComponentManager(BaseComponentManager):
             reply_timestamp = time.time()
             for reply in grp_reply:
                 if reply.has_failed():
+                    self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                     err_msg = (
                         f"Failed to read attribute [{attribute_name}] "
                         f"on device [{reply.dev_name()}] of "
@@ -229,7 +230,9 @@ class WMSComponentManager(BaseComponentManager):
                     self.logger.error(err_msg)
                     raise RuntimeError(err_msg)
                 reply_values.append([reply_timestamp, reply.get_data().value])
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
         except tango.DevFailed as err:
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
             self.logger.error(
                 "Exception raised on attempt to "
                 f"read attribute [{attribute_name}] "
@@ -244,6 +247,7 @@ class WMSComponentManager(BaseComponentManager):
             grp_reply = self._wms_device_group.write_attribute(attribute_name, attribute_value)
             for reply in grp_reply:
                 if reply.has_failed():
+                    self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
                     err_msg = (
                         f"Failed to write attribute [{attribute_name}] "
                         f"on device [{reply.dev_name()}] of "
@@ -251,7 +255,9 @@ class WMSComponentManager(BaseComponentManager):
                     )
                     self.logger.error(err_msg)
                     raise RuntimeError(err_msg)
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
         except tango.DevFailed as err:
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
             self.logger.error(
                 "Exception raised on attempt to "
                 f"write attribute [{attribute_name}] "
