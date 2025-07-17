@@ -153,12 +153,12 @@ class DishManager(SKAController):
             self._command_tracker,
             self._update_version_of_subdevice_on_success,
             self._attr_quality_state_changed,
-            self._wind_stow_inform,
             self.get_name(),
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
             wms_device_names=self.WMSDeviceNames,
+            wind_stow_callback=self._wind_stow_inform,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )

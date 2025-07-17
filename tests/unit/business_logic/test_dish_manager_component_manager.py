@@ -41,7 +41,6 @@ def test_component_manager_gracefully_cleans_up_resources(patch_dp, caplog):
             mock.MagicMock(name="mock_command_tracker"),
             mock.MagicMock(name="mock_build_state_callback"),
             mock.MagicMock(name="mock_attr_quality_callback"),
-            mock.MagicMock(name="mock_wind_stow_callback"),
             "device-1",
             "sub-device-1",
             "sub-device-2",

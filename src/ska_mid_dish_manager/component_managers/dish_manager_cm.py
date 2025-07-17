@@ -56,7 +56,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     """A component manager for DishManager.
 
     It watches the component managers of the subservient devices
-    (DS, SPF, SPFRX) to reflect the state of the Dish LMC.
+    (DS, SPF, SPFRX, WMS) to aggregate the state of Dish LMC.
     """
 
     def __init__(
@@ -65,13 +65,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         command_tracker,
         build_state_callback,
         quality_state_callback,
-        wind_stow_callback,
         tango_device_name: str,
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
         *args,
         wms_device_names: Optional[List[str]] = [],
+        wind_stow_callback: Optional[Callable] = None,
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
@@ -519,7 +519,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 self.reset_alarm = True
 
-            self._wind_stow_callback(**computed_averages)
+            if self._wind_stow_callback is not None:
+                self._wind_stow_callback(**computed_averages)
 
         # update the attributes with the computed averages
         self._update_component_state(**computed_averages)
