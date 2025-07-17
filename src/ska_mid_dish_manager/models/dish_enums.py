@@ -71,14 +71,17 @@ class Band(enum.IntEnum):
 
 
 class IndexerPosition(enum.IntEnum):
-    UNKNOWN = 0
+    OPTICAL = 0
     B1 = 1
     B2 = 2
     B3 = 3
     B4 = 4
-    B5 = 5
-    MOVING = 6
-    ERROR = 7
+    B5a = 5
+    B5b = 6
+    B6 = 7
+    MOVING = 8
+    UNKNOWN = 9
+    ERROR = 10
 
 
 class BandInFocus(enum.IntEnum):

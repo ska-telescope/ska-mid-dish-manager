@@ -83,9 +83,7 @@
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
-        (Should be default to False). Note when ignoring SPFRx, the configuredband
-        on Dish.LMC will always report band B5a when the DS indexerposition is in
-        B5.
+        (Should be default to False).
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVoid
@@ -94,9 +92,7 @@
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
-        (Should be default to False). Note when ignoring SPFRx, the configuredband
-        on Dish.LMC will always report band B5a when the DS indexerposition is in
-        B5.
+        (Should be default to False).
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVoid
@@ -1564,7 +1560,7 @@
       writable_attr_name: noiseDiodeMode
     - name: periodicNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevULong
+      data_type: DevLong64
       description: "\n            Periodic noise diode pars (units are in time quanta).\n\
         \n            [0]: period, [1]: duty cycle, [2]: phase shift\n\n         \
         \   Note: This attribute does not persist after a power cycle. A default value\
@@ -1697,7 +1693,7 @@
       writable_attr_name: programTrackTable
     - name: pseudoRandomNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevULong
+      data_type: DevLong64
       description: "\n            Pseudo random noise diode pars (units are in time\
         \ quanta).\n\n            [0]: binary polynomial, [1]: seed, [2]: dwell\n\n\
         \            Note: This attribute does not persist after a power cycle. A\
