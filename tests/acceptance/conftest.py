@@ -59,7 +59,7 @@ def setup_and_teardown(
     event_store.clear_queue()
 
     # disable the watchdog timer
-    dish_manager_proxy.watchdogtimeout == 0.0
+    dish_manager_proxy.watchdogtimeout = 0.0
 
     try:
         spf_device_proxy.ResetToDefault()
