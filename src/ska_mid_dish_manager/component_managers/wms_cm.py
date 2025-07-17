@@ -40,8 +40,8 @@ class WMSComponentManager(BaseComponentManager):
 
         # Determine the max buffer length. Once the buffer is full we will have enough data
         # points to determine the mean wind speed and wind gust values. The additions of
-        # device count and 1 to the buffer lengths ensure the reading of the first polling
-        # cycle is accounted for
+        # device count and 1 to the buffer lengths ensure the wind speed readings
+        # of the first polling cycle are accounted for
         self._wind_speed_buffer_length = (
             int(
                 self._wms_devices_count
@@ -88,7 +88,7 @@ class WMSComponentManager(BaseComponentManager):
 
     def _start_monitoring(self) -> None:
         """Start WMS monitoring of weather station servers."""
-        while not self._stop_monitoring_flag.is_set():
+        while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
                 self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)
                 break
@@ -97,7 +97,7 @@ class WMSComponentManager(BaseComponentManager):
                     "Failed to set WMS device(s) adminMode to ONLINE. One or more"
                     " WMS device(s) may be unavailable. Retrying"
                 )
-            self._stop_monitoring_flag.wait(timeout=self._wms_polling_period)
+            # self._stop_monitoring_flag.wait(timeout=self._wms_polling_period)
 
     def stop_communicating(self) -> None:
         """Stop WMS attr polling and clean up windspeed data buffer."""

@@ -21,10 +21,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 def comm_state_callback(signal: threading.Event, communication_state: CommunicationStatus):
+    print(f"COMM STATE CALLBACK RECEIVED THE: {communication_state}")
     pass
 
 
 @pytest.mark.unit
+@pytest.mark.forked
 def test_wms_group_activation_and_polling_starts():
     """Test WMS polling begins following call to start_communicating."""
     test_wms_device_names = [
@@ -59,6 +61,7 @@ def test_wms_group_activation_and_polling_starts():
 
 
 @pytest.mark.unit
+@pytest.mark.forked
 def test_wms_cm_wind_gust_and_mean_wind_speed_updates():
     """Test mean wind speed and wind gust calculation report expected values."""
     component_state = {}
@@ -95,6 +98,11 @@ def test_wms_cm_wind_gust_and_mean_wind_speed_updates():
         [current_time(), 15],
     ]
 
+    # Simulate a successful write to weather station device group
+    wms.write_wms_group_attribute_value.side_effect = (
+        lambda *args, **kwargs: wms._update_communication_state(CommunicationStatus.ESTABLISHED)
+    )
+
     wms.start_communicating()
     wait_event.wait(timeout=(wms._wms_polling_period + COMM_STATE_UPDATE_WAIT))
     assert wms.communication_state == CommunicationStatus.ESTABLISHED
@@ -105,7 +113,7 @@ def test_wms_cm_wind_gust_and_mean_wind_speed_updates():
     wait_event.wait(timeout=COMM_STATE_UPDATE_WAIT)
     assert wms.communication_state == CommunicationStatus.DISABLED
     wms.write_wms_group_attribute_value.assert_called_with("adminMode", AdminMode.OFFLINE)
-    assert wms.read_wms_group_attribute_value.call_count == 10
+    assert wms.read_wms_group_attribute_value.call_count == 11
     assert component_state["windgust"] == 20
     assert component_state["meanwindspeed"] == 15
 
@@ -127,18 +135,15 @@ def test_wms_cm_wind_gust_reports_expected_max_windspeed():
 
     test_start_time = time.time()
 
-    # The wms component manager initially waits for the "polling period" amount
-    # of time before the WMS devices are actually polled. This wait will later
-    # be added to the elapsed time with each polling period/increment
-    initial_wait_time_before_polling = wms._wms_polling_period
-
     max_inst_wind_speed_and_expected_gust = [
-        (10, None),
-        (10, None),
+        (10, 10),
+        (10, 10),
+        (10, 10),
         (10, 10),
         (15, 15),
         (20, 20),
         (30, 30),
+        (15, 30),
         (15, 30),
         (15, 30),
         (15, 15),
@@ -148,14 +153,11 @@ def test_wms_cm_wind_gust_reports_expected_max_windspeed():
     ):
         # polling_time, the current list index, is used to simulate the
         # 1 second that passed each time the WMS Devices are polled
-        elapsed_time = polling_time + initial_wait_time_before_polling
-
-        current_wind_speed_data_time = test_start_time + elapsed_time
+        current_wind_speed_data_time = test_start_time + polling_time
         computed_wind_gust = wms._process_wind_gust(
-            [[current_wind_speed_data_time, current_max_wind_speed]],
-            test_start_time,
-            elapsed_time,
+            [[current_wind_speed_data_time, current_max_wind_speed]], current_wind_speed_data_time
         )
+
         assert computed_wind_gust == exp_wind_gust
 
 

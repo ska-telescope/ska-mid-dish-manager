@@ -96,10 +96,7 @@ def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
     # enable wind stow action for mean wind speed
     device_proxy.autoWindStowEnabled = True
 
-    # Simulate enough time passing for the wms_cm to begin calculating mean
-    # wind speed
     test_start_time = time.time()
-    simulated_elapsed_time = test_start_time - mean_wind_speed_average_period
 
     # simulate wind speed readings
     # the mean wind speed will be calculated after 5 seconds of polling
@@ -111,7 +108,7 @@ def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
     ]
     for _ in range(mean_wind_speed_average_period):
         computed_mean = wms_cm._compute_mean_wind_speed(
-            time_stamped_wind_speed_readings, test_start_time, simulated_elapsed_time
+            time_stamped_wind_speed_readings, test_start_time
         )
         wms_cm._update_component_state(meanwindspeed=computed_mean)
         wait_event.wait(polling_period)
@@ -166,7 +163,6 @@ def test_wind_stow_triggered_on_wind_gust_exceeding_threshold(
     # the wind gust will be calculated after 3 seconds of polling
     # and should be 17.0 m/s based on the sample readings
     test_start_time = time.time()
-    simulated_elapsed_time = test_start_time - wind_gust_average_period
     time_stamped_wind_speed_readings = [
         [test_start_time, 17],
         [test_start_time, 12],
@@ -174,7 +170,7 @@ def test_wind_stow_triggered_on_wind_gust_exceeding_threshold(
     ]
     for _ in range(wind_gust_average_period):
         computed_wind_gust = wms_cm._process_wind_gust(
-            time_stamped_wind_speed_readings, test_start_time, simulated_elapsed_time
+            time_stamped_wind_speed_readings, test_start_time
         )
         wms_cm._update_component_state(windgust=computed_wind_gust)
         wait_event.wait(polling_period)
