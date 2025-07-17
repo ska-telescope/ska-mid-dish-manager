@@ -84,7 +84,7 @@ def requires_component_manager(func: Any) -> Any:
     """Decorator that checks if component_manager is available."""
 
     @functools.wraps(func)
-    def _wrapper(self, *args, **kwargs):
+    def _wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
         cm = getattr(self, "component_manager", None)
         if cm:
             return func(self, *args, **kwargs)
