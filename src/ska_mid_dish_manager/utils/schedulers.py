@@ -28,7 +28,7 @@ class WatchdogTimer:
             raise ValueError("Timeout must be greater than 0.")
 
         self._timeout = timeout
-        self._callback_on_timeout = callback_on_timeout
+        self._external_callback = callback_on_timeout
         self._timer = None
         self._lock = threading.RLock()
         self._enabled = False
@@ -57,7 +57,7 @@ class WatchdogTimer:
             if self._timer is not None:
                 self._timer.cancel()
                 self._timer = None
-                self._enabled = False
+            self._enabled = False
 
     def reset(self):
         """Reset the watchdog timer.
@@ -69,5 +69,11 @@ class WatchdogTimer:
                 raise WatchdogTimerInactiveError("Watchdog timer is disabled. Call enable first.")
             if self._timer is not None:
                 self._timer.cancel()
-            self._timer = threading.Timer(self._timeout, self._callback_on_timeout)
+            self._timer = threading.Timer(self._timeout, self._callback_on_timeout_and_disable)
             self._timer.start()
+
+    def _callback_on_timeout_and_disable(self):
+        """Wrapper for the callback to disable the timer after timeout."""
+        if self._external_callback:
+            self._external_callback()
+        self._enabled = False

@@ -130,6 +130,16 @@ class TestWatchdogTimer(TestWatchdogTimerBase):
         ):
             self.watchdog_timer.reset()
 
+    def test_reset_fails_after_timeout(self):
+        """Test that resetting after the timeout raises an error."""
+        self.watchdog_timer.enable()
+        time.sleep(self.timeout + self.timeout_expire_buffer)
+        assert self.callback_called
+        with pytest.raises(
+            WatchdogTimerInactiveError, match=r"Watchdog timer is disabled. Call enable first."
+        ):
+            self.watchdog_timer.reset()
+
 
 @pytest.mark.unit
 class TestWatchdogTimerDefault(TestWatchdogTimerBase):

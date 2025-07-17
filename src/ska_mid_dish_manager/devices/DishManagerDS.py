@@ -1390,7 +1390,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Returns the timestamp of the last watchdog reset in unix epoch seconds.",
+        doc="Returns the timestamp of the last watchdog reset in unix seconds.",
     )
     def lastWatchdogReset(self):
         """Returns lastWatchdogReset."""
@@ -1399,11 +1399,11 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ_WRITE,
-        doc="Dish manager watchdog timeout interval in seconds. "
+        doc="Sets dish manager watchdog timeout interval in seconds. "
         "By writing a value greater than 0, the watchdog will be enabled. If the watchdog "
         "is not reset within this interval, the dish will Stow on expiry of the timer. "
-        "The watchdog timer can be reset by calling the ResetWatchdog command. The watchdog "
-        "is disabled by writing a value less than or equal to 0.",
+        "The watchdog timer can be reset by calling the `ResetWatchdog()` command. "
+        "The watchdog can be disabled by writing a value less than or equal to 0.",
     )
     @requires_component_manager
     def watchdogTimeout(self):
@@ -1948,9 +1948,9 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
         doc_in="This command resets the watchdog timer. "
-        "lastWatchdogReset attribute will be updated with the unix timestamp."
-        "By default the watchdog timer is disabled and can be enabled by setting the "
-        "watchdogTimeout attribute to a value greater than 0.",
+        "`lastWatchdogReset` attribute will be updated with the unix timestamp. "
+        "By default, the watchdog timer is disabled and can be enabled by setting the "
+        "`watchdogTimeout` attribute to a value greater than 0.",
         doc_out="Returns a DevVarLongStringArray with the return code and message.",
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)

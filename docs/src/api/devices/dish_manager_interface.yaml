@@ -162,6 +162,15 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
+    - name: ResetWatchdogTimer
+      disp_level: OPERATOR
+      doc_in: This command resets the watchdog timer. `lastWatchdogReset` attribute
+        will be updated with the unix timestamp. By default, the watchdog timer is
+        disabled and can be enabled by setting the `watchdogTimeout` attribute to
+        a value greater than 0.
+      doc_out: Returns a DevVarLongStringArray with the return code and message.
+      dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: Scan
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -1180,7 +1189,7 @@
     - name: frequencyResponse
       data_format: IMAGE
       data_type: DevDouble
-      description: Returns the frequencyResponse
+      description: Returns the frequencyResponse.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1296,6 +1305,22 @@
       display_unit: No display unit
       format: '%s'
       label: lastCommandedPointingParams
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lastWatchdogReset
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Returns the timestamp of the last watchdog reset in unix seconds.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: lastWatchdogReset
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
@@ -1487,7 +1512,7 @@
     - name: noiseDiodeConfig
       data_format: SPECTRUM
       data_type: DevDouble
-      description: Returns the noiseDiodeConfig
+      description: Returns the noiseDiodeConfig.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1565,7 +1590,7 @@
     - name: pointingState
       data_format: SCALAR
       data_type: DevEnum
-      description: Returns the pointingState
+      description: Returns the pointingState.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1619,7 +1644,7 @@
     - name: powerState
       data_format: SCALAR
       data_type: DevEnum
-      description: Returns the powerState
+      description: Returns the powerState.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1892,6 +1917,26 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: watchdogTimeout
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Sets dish manager watchdog timeout interval in seconds. By writing
+        a value greater than 0, the watchdog will be enabled. If the watchdog is not
+        reset within this interval, the dish will Stow on expiry of the timer. The
+        watchdog timer can be reset by calling the `ResetWatchdog()` command. The
+        watchdog can be disabled by writing a value less than or equal to 0.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: watchdogTimeout
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: watchdogTimeout
     properties:
     - name: DSDeviceFqdn
     - name: DishId

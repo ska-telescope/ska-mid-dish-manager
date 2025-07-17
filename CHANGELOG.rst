@@ -8,7 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Added functionality to stow dish when watchdog timer is enabled and the timer expires.
-  - Added new command `ResetWatchdogTimer` to reset the watchdog timer.
+  - Added new command `ResetWatchdogTimer()` to reset the watchdog timer.
   - Added new attribute `watchdogtimeout` to enable or disable the watchdog timer.
   - Added new attribute `lastwatchdogreset` to report the last time the watchdog timer was reset.
 

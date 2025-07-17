@@ -720,6 +720,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
 
+        # Disable watchdog timer
+        self.logger.debug("Disabling the watchdog timer.")
+        self.watchdog_timer.disable()
+        self._update_component_state(watchdogtimeout=0.0)
+
     def set_spf_device_ignored(self, ignored: bool):
         """Set the SPF device ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespf"]:
@@ -978,11 +983,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         try:
             ds_cm.execute_command("Stow", None)
         except tango.DevFailed as err:
-            task_callback(status=TaskStatus.FAILED, exception=err)
+            if task_callback:
+                task_callback(status=TaskStatus.FAILED, exception=err)
             return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
-        task_callback(
-            status=TaskStatus.COMPLETED, progress="Stow called, monitor dishmode for LRC completed"
-        )
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                progress="Stow called, monitor dishmode for LRC completed",
+            )
         # abort queued tasks on the task executor
         self.abort_commands()
 
