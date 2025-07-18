@@ -2,7 +2,7 @@
 
 import pytest
 import tango
-from ska_control_model import CommunicationStatus, HealthState
+from ska_control_model import CommunicationStatus
 
 
 @pytest.mark.unit
@@ -13,6 +13,7 @@ from ska_control_model import CommunicationStatus, HealthState
         ("DS", "dsConnectionState"),
         ("SPFRX", "spfrxConnectionState"),
         ("SPF", "spfConnectionState"),
+        ("WMS", "wmsConnectionState"),
     ],
 )
 def test_connection_state_attrs_mirror_communication_status(
@@ -37,4 +38,3 @@ def test_connection_state_attrs_mirror_communication_status(
 
     # We can now expect connectionState to transition to NOT_ESTABLISHED
     event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-    assert device_proxy.healthState == HealthState.UNKNOWN

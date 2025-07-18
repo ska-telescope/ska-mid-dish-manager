@@ -239,6 +239,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 wms_device_names,
                 logger=logger,
                 component_state_callback=self._evaluate_wind_speed_averages,
+                communication_state_callback=partial(
+                    self._update_connection_state_attribute, DishDevice.WMS
+                ),
                 state_update_lock=self._state_update_lock,
                 meanwindspeed=-1,
                 windgust=-1,
