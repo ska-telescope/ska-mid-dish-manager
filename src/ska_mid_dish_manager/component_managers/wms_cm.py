@@ -51,6 +51,7 @@ class WMSComponentManager(BaseComponentManager):
         *args: Any,
         logger: Optional[logging.Logger] = logging.getLogger(__name__),
         component_state_callback: Optional[Callable] = None,
+        communication_state_callback: Optional[Callable] = None,
         state_update_lock: Optional[threading.Lock] = None,
         wms_polling_period: Optional[float] = 1.0,
         wind_speed_moving_average_period: Optional[float] = 600.0,
@@ -90,6 +91,7 @@ class WMSComponentManager(BaseComponentManager):
             logger,
             *args,
             component_state_callback=component_state_callback,
+            communication_state_callback=communication_state_callback,
             **kwargs,
         )
         if state_update_lock is not None:

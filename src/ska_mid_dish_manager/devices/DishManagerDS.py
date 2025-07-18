@@ -398,6 +398,7 @@ class DishManager(SKAController):
                 "spfconnectionstate": "spfConnectionState",
                 "spfrxconnectionstate": "spfrxConnectionState",
                 "dsconnectionstate": "dsConnectionState",
+                "wmsconnectionstate":"wmsConnectionState",
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
@@ -517,7 +518,18 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get(
             "dsconnectionstate", CommunicationStatus.NOT_ESTABLISHED
         )
-
+    
+    @attribute(
+        dtype=CommunicationStatus,
+        access=AttrWriteType.READ,
+        doc="Displays connection status to wms device",
+    )
+    def wmsConnectionState(self):
+        """Returns the wms connection state."""
+        return self.component_manager.component_state.get(
+            "wmsconnectionstate", CommunicationStatus.NOT_ESTABLISHED
+        )
+    
     @attribute(
         max_dim_x=3,
         dtype=(float,),
