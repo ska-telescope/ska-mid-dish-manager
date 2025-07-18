@@ -125,7 +125,6 @@ class WMSComponentManager(BaseComponentManager):
                     "Failed to set WMS device(s) adminMode to ONLINE. One or more"
                     " WMS device(s) may be unavailable. Retrying"
                 )
-            # self._stop_monitoring_flag.wait(timeout=self._wms_polling_period)
 
     def stop_communicating(self) -> None:
         """Stop WMS attr polling and clean up windspeed data buffers."""
