@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import threading
 import time
 from functools import partial
 from threading import Event, Lock, Thread
@@ -55,7 +56,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     """A component manager for DishManager.
 
     It watches the component managers of the subservient devices
-    (DS, SPF, SPFRX) to reflect the state of the Dish LMC.
+    (DS, SPF, SPFRX, WMS) to aggregate the state of Dish LMC.
     """
 
     def __init__(
@@ -64,13 +65,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         command_tracker,
         build_state_callback,
         quality_state_callback,
-        wind_stow_callback,
         tango_device_name: str,
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
         *args,
         wms_device_names: Optional[List[str]] = [],
+        wind_stow_callback: Optional[Callable] = None,
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
@@ -134,6 +135,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._abort_thread: Optional[Thread] = None
+        self._stop_event = threading.Event()
         self._wind_stow_active = False
         self._reset_alarm = False
         self._wind_limits_cache = {
@@ -477,40 +479,51 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _evaluate_wind_speed_averages(self, **computed_averages):
         """Evaluate wind speed averages and trigger auto stow if necessary."""
-        if not self.component_state.get("autowindstowenabled"):
-            self._update_component_state(**computed_averages)
-            return
+        auto_wind_stow_enabled = self.component_state.get("autowindstowenabled")
 
-        wind_limits = self._fetch_wind_limits()
-        # resolve key mismatch between limits and computed averages
-        configured_thresholds = {
-            key.replace("Threshold", "").lower(): value for key, value in wind_limits.items()
-        }
+        def _execute_stow_command():
+            """Handle wind stow command execution."""
+            retry_interval = 0.1
 
-        # determine if any computed average exceeds its configured threshold
-        threshold_exceeded = any(
-            computed_averages.get(prop_name) is not None
-            and computed_averages.get(prop_name) > limit
-            for prop_name, limit in configured_thresholds.items()
-        )
-
-        if threshold_exceeded:
-            if not self.wind_stow_active:
-                # trigger stow only once over the duration of an extreme condition
+            while not self._stop_event.is_set():
                 wind_stow_id = self._command_tracker.new_command(
                     "windstow", completed_callback=None
                 )
                 wind_stow_task_cb = partial(
                     self._command_tracker.update_command_info, wind_stow_id
                 )
-                self.set_stow_mode(wind_stow_task_cb)
-            self.wind_stow_active = True
-            self.reset_alarm = False
-        else:
-            self.reset_alarm = True
+                task_status, _ = self.set_stow_mode(wind_stow_task_cb)
 
+                if task_status == TaskStatus.COMPLETED:
+                    return
+                # attempt stow as fast as possible in the retry
+                self._stop_event.wait(retry_interval)
+
+        if auto_wind_stow_enabled:
+            wind_limits = self._fetch_wind_limits()
+            # determine if any computed average exceeds its configured threshold
+            mean_wind_speed = computed_averages.get("meanwindspeed", -1)
+            mean_threshold = wind_limits.get("MeanWindSpeedThreshold")
+            mean_wind_speed_exceeded = mean_wind_speed > mean_threshold
+
+            wind_gust = computed_averages.get("windgust", -1)
+            gust_threshold = wind_limits.get("WindGustThreshold")
+            wind_gust_exceeded = wind_gust > gust_threshold
+
+            if mean_wind_speed_exceeded or wind_gust_exceeded:
+                # trigger stow only once over the duration of an extreme condition
+                if not self.wind_stow_active:
+                    _execute_stow_command()
+                self.wind_stow_active = True
+                self.reset_alarm = False
+            else:
+                self.reset_alarm = True
+
+            if self._wind_stow_callback is not None:
+                self._wind_stow_callback(**computed_averages)
+
+        # update the attributes with the computed averages
         self._update_component_state(**computed_averages)
-        self._wind_stow_callback(**computed_averages)
 
     def _sub_device_communication_state_changed(
         self, device: DishDevice, communication_state: CommunicationStatus
@@ -831,6 +844,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def start_communicating(self):
         """Connect from monitored devices."""
+        self._stop_event.clear()
         if self.sub_component_managers:
             for device_name, component_manager in self.sub_component_managers.items():
                 if not self.is_device_ignored(device_name):
@@ -840,6 +854,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Disconnect from monitored devices."""
         # TODO: update attribute read callbacks to indicate attribute
         # reads cannot be trusted after communication is stopped
+        self._stop_event.set()
         if self.sub_component_managers:
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()

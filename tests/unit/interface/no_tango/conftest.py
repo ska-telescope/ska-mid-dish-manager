@@ -23,7 +23,6 @@ def callbacks() -> dict:
     return {
         "build_state_cb": MagicMock(),
         "quality_state_cb": MagicMock(),
-        "wind_stow_cb": MagicMock(),
         "comm_state_cb": MagicMock(),
         "comp_state_cb": ComponentStateStore(),
         "task_cb": MagicMock(),
@@ -62,7 +61,6 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             mock_command_tracker,
             callbacks["build_state_cb"],
             callbacks["quality_state_cb"],
-            callbacks["wind_stow_cb"],
             "device-1",
             "sub-device-1",
             "sub-device-2",

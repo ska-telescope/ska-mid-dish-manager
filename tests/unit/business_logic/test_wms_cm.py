@@ -21,12 +21,10 @@ LOGGER = logging.getLogger(__name__)
 
 
 def comm_state_callback(signal: threading.Event, communication_state: CommunicationStatus):
-    print(f"COMM STATE CALLBACK RECEIVED THE: {communication_state}")
     pass
 
 
 @pytest.mark.unit
-@pytest.mark.forked
 def test_wms_group_activation_and_polling_starts():
     """Test WMS polling begins following call to start_communicating."""
     test_wms_device_names = [
@@ -38,7 +36,6 @@ def test_wms_group_activation_and_polling_starts():
     wms = WMSComponentManager(
         test_wms_device_names,
         logger=LOGGER,
-        component_state_callback=MagicMock(),
         wms_polling_period=WMS_POLLING_PERIOD,
         wind_speed_moving_average_period=MEAN_WIND_SPEED_PERIOD,
         wind_gust_average_period=WIND_GUST_PERIOD,
@@ -61,7 +58,6 @@ def test_wms_group_activation_and_polling_starts():
 
 
 @pytest.mark.unit
-@pytest.mark.forked
 def test_wms_cm_wind_gust_and_mean_wind_speed_updates():
     """Test mean wind speed and wind gust calculation report expected values."""
     component_state = {}
