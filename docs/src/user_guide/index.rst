@@ -10,3 +10,4 @@ User Guide
    Abort on DishManager<abort>
    Apply Pointing Model<apply_pointing_model> 
    Tracking<tracking>
+   Dish safety<dish_safety>
