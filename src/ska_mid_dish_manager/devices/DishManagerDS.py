@@ -30,6 +30,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
+    DEFAULT_WATCHDOG_TIMEOUT,
     DSC_MAX_POWER_LIMIT_KW,
     DSC_MIN_POWER_LIMIT_KW,
 )
@@ -84,6 +85,7 @@ class DishManager(SKAController):
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
+    DefaultWatchdogTimeout = device_property(dtype=float, default_value=DEFAULT_WATCHDOG_TIMEOUT)
 
     def _create_lrc_attributes(self) -> None:
         """Create attributes for the long running commands.
@@ -148,6 +150,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
+            self.DefaultWatchdogTimeout,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )

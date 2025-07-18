@@ -24,10 +24,6 @@ def test_stow_on_timeout(event_store_class, dish_manager_proxy):
         main_event_store,
     )
 
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, 10)
-
-    lastwatchdogreset = dish_manager_proxy.lastwatchdogreset
     assert dish_manager_proxy.watchdogtimeout == 0.0
 
     # Check reset response when watchdog timer is not enabled
@@ -41,17 +37,8 @@ def test_stow_on_timeout(event_store_class, dish_manager_proxy):
 
     # Wait for the watchdog timer to expire
     time.sleep(WDT_TIMEOUT + 1.0)
-    # Check that watchdogtimeout has reset / disabled
-    assert dish_manager_proxy.watchdogtimeout == 0.0
     # Wait for the dish to stow
     main_event_store.wait_for_value(DishMode.STOW, 120)
-
-    # Confirm watchdog is disabled
-    [[result_code], [command_resp]] = dish_manager_proxy.ResetWatchdogTimer()
-    assert result_code == ResultCode.FAILED
-    assert command_resp == "Watchdog timer is not active."
-
-    assert dish_manager_proxy.lastwatchdogreset == lastwatchdogreset
 
     dish_manager_proxy.unsubscribe_event(dish_mode_id)
 
@@ -67,9 +54,6 @@ def test_watchdog_reset(event_store_class, dish_manager_proxy):
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
-
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, 10)
 
     prev_lastwatchdogreset = dish_manager_proxy.lastwatchdogreset
     assert dish_manager_proxy.watchdogtimeout == 0.0
@@ -91,8 +75,7 @@ def test_watchdog_reset(event_store_class, dish_manager_proxy):
 
     # Check that watchdog expires after not being reset
     time.sleep(WDT_TIMEOUT + 1.0)
-    # Check that watchdogtimeout has reset / disabled
-    assert dish_manager_proxy.watchdogtimeout == 0.0
+
     # Wait for the dish to stow
     main_event_store.wait_for_value(DishMode.STOW, 120)
 
@@ -111,9 +94,6 @@ def test_disable_watchdog(event_store_class, dish_manager_proxy, disable_timeout
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
-
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, 10)
 
     prev_lastwatchdogreset = dish_manager_proxy.lastwatchdogreset
     assert dish_manager_proxy.watchdogtimeout == 0.0
@@ -142,6 +122,40 @@ def test_disable_watchdog(event_store_class, dish_manager_proxy, disable_timeout
 
 @pytest.mark.acceptance
 @pytest.mark.forked
+def test_watchdog_repeat_stow_without_reset(event_store_class, dish_manager_proxy):
+    """Test that the watchdog timer can repeatedly stow the dish without reset."""
+    main_event_store = event_store_class()
+
+    dish_mode_id = dish_manager_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+
+    # Enable the watchdog timer
+    dish_manager_proxy.watchdogtimeout = WDT_TIMEOUT
+    assert dish_manager_proxy.watchdogtimeout == WDT_TIMEOUT
+
+    # Wait for the watchdog timer to expire and stow the dish
+    time.sleep(WDT_TIMEOUT + 1.0)
+    main_event_store.wait_for_value(DishMode.UNKNOWN, 10)
+
+    # Wait for the dish to stow
+    main_event_store.wait_for_value(DishMode.STOW, 120)
+
+    for _ in range(5):
+        dish_manager_proxy.SetStandbyLPMode()
+        main_event_store.wait_for_value(DishMode.STANDBY_LP, 5)
+
+        # Check that the watchdog timer is still enabled and will stow again
+        time.sleep(WDT_TIMEOUT + 1.0)
+        main_event_store.wait_for_value(DishMode.STOW, 20)
+
+    dish_manager_proxy.unsubscribe_event(dish_mode_id)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
 def test_attributes_pushed(event_store_class, dish_manager_proxy):
     """Test watchdog attributes are pushed."""
     main_event_store = event_store_class()
@@ -153,9 +167,6 @@ def test_attributes_pushed(event_store_class, dish_manager_proxy):
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
-
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, 10)
 
     assert dish_manager_proxy.watchdogtimeout == 0.0
 
@@ -173,13 +184,6 @@ def test_attributes_pushed(event_store_class, dish_manager_proxy):
     timestamp = float(command_resp.split("at ")[1].strip().removesuffix("s"))
     subs["lastwatchdogreset"]["change_event_store"].wait_for_value(timestamp)
     subs["lastwatchdogreset"]["archive_event_store"].wait_for_value(timestamp)
-
-    # wait for the watchdog timer to expire
-    time.sleep(WDT_TIMEOUT + 1.0)
-
-    # Check after reset that the watchdogtimeout attribute is pushed
-    subs["watchdogtimeout"]["change_event_store"].wait_for_value(0.0)
-    subs["watchdogtimeout"]["archive_event_store"].wait_for_value(0.0)
 
     dish_manager_proxy.unsubscribe_event(dish_mode_id)
     for attr in attr_test:

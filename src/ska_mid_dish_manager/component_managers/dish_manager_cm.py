@@ -65,6 +65,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
+        default_watchdog_timeout: float,
         *args,
         **kwargs,
     ):
@@ -116,7 +117,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
             lastwatchdogreset=0.0,
-            watchdogtimeout=0.0,
+            watchdogtimeout=default_watchdog_timeout,
             **kwargs,
         )
         self.logger = logger
@@ -130,6 +131,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.watchdog_timer = WatchdogTimer(
             callback_on_timeout=self._stow_on_watchdog_expiry,
         )
+        # Enable the watchdog timer on startup if configured
+        if default_watchdog_timeout > 0:
+            self.watchdog_timer.enable(timeout=default_watchdog_timeout)
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -480,6 +484,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "buildstate" in kwargs:
             self._build_state_callback(device, kwargs["buildstate"])
 
+        previous_dish_mode = self.component_state["dishmode"]
         # Update dishMode if there are operatingmode, indexerposition or adminmode changes
         if "operatingmode" in kwargs or "indexerposition" in kwargs or "adminmode" in kwargs:
             new_dish_mode = self._state_transition.compute_dish_mode(
@@ -487,6 +492,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
                 spf_component_state if not self.is_device_ignored("SPF") else None,
             )
+
+            # If the dish is transitioning out of STOW mode, reenable the watchdog timer if
+            # the watchdog timeout is set
+            if previous_dish_mode == DishMode.STOW and new_dish_mode != DishMode.STOW:
+                if (
+                    not self.watchdog_timer.is_enabled()
+                    and self.component_state["watchdogtimeout"] > 0
+                ):
+                    self.logger.debug(
+                        "Re-enabling watchdog timer with timeout %s seconds.",
+                        self.component_state["watchdogtimeout"],
+                    )
+                    self.watchdog_timer.enable(timeout=self.component_state["watchdogtimeout"])
+
             self.logger.debug(
                 (
                     "Updating dish manager dishMode with: [%s]. "
@@ -997,16 +1016,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
 
     def _stow_on_watchdog_expiry(self) -> None:
-        """Stow the dish on watchdog expiry."""
+        """Stow the dish on watchdog expiry and restart timer if still enabled."""
         self.logger.info("Watchdog timer has expired.")
         if self.component_state["dishmode"] == DishMode.STOW:
             self.logger.info("Dish is already in STOW mode, no action taken.")
         else:
             self.logger.info("Transitioning dish to STOW.")
+            # TODO: replace with reliable stow execution from wind stow MR
             self.set_stow_mode()
-            # Watchdog timer functions as one-shot, so we reset the watchdog timeout to 0.
-            # As part of recovery, client should enable watchdog again if desired.
-            self._update_component_state(watchdogtimeout=0.0)
+
+        # # Restart the watchdog timer
+        # watchdogtimer = self.component_state["watchdogtimeout"]
+        # if watchdogtimer > 0:
+        #     self.watchdog_timer.reschedule(watchdogtimer)
 
     @check_communicating
     def slew(

@@ -1939,6 +1939,7 @@
       writable_attr_name: watchdogTimeout
     properties:
     - name: DSDeviceFqdn
+    - name: DefaultWatchdogTimeout
     - name: DishId
     - name: GroupDefinitions
     - name: LoggingLevelDefault

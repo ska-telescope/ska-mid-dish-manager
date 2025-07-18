@@ -18,10 +18,8 @@ class WatchdogTimer:
         when the timer expires.
 
         :param callback_on_timeout: The callback function to be invoked when the timer expires.
-        :type callback_on_timeout: Callable
         :param timeout: The default time in seconds after which the callback will be
-        invoked if not reset, defaults to DEFAULT_WATCHDOG_TIMEOUT
-        :type timeout: float, optional
+            invoked if not reset, defaults to DEFAULT_WATCHDOG_TIMEOUT
         :raises ValueError: If timeout specified is less than zero.
         """
         if timeout <= 0:
@@ -37,7 +35,6 @@ class WatchdogTimer:
         """Enable the watchdog timer.
 
         :param timeout: Time in seconds, defaults to None
-        :type timeout: float, optional
         :raises ValueError: If the timeout is less than or equal to zero.
         """
         with self._lock:
@@ -46,34 +43,84 @@ class WatchdogTimer:
                 if timeout <= 0:
                     raise ValueError("Watchdog timer is disabled. Timeout must be greater than 0.")
                 self._timeout = timeout
-            # handle idempotency
-            if not self._enabled:
-                self._enabled = True
-                self.reset()
+
+            self._enabled = True
+            self._start_timer()
+
+    def is_enabled(self) -> bool:
+        """Check if the watchdog timer is enabled."""
+        with self._lock:
+            return self._enabled
 
     def disable(self):
         """Disable the watchdog timer."""
         with self._lock:
+            self._enabled = False
             if self._timer is not None:
                 self._timer.cancel()
                 self._timer = None
-            self._enabled = False
 
     def reset(self):
         """Reset the watchdog timer.
 
-        :raises WatchdogTimerInactive: If called when the timer is disabled.
+        This method will cancel the current timer and start a new one with the
+        same timeout. If the timer is not active, it raises an exception.
+        :raises WatchdogTimerInactiveError: If called when the timer is disabled / not active.
         """
         with self._lock:
             if not self._enabled:
                 raise WatchdogTimerInactiveError("Watchdog timer is disabled. Call enable first.")
+
             if self._timer is not None:
                 self._timer.cancel()
+                self._timer = None
+
+            self._start_timer()
+
+    def reschedule(self, timeout: float = None):
+        """Reschedule the watchdog timer.
+
+        This method can be safely called from within the timeout callback.
+        It will start a new timer without raising an exception if the timer is inactive.
+
+        :param timeout: New timeout value, defaults to None (use existing timeout)
+        :raises ValueError: If timeout is less than or equal to zero.
+        """
+        with self._lock:
+            # Update timeout if provided
+            if timeout is not None:
+                if timeout <= 0:
+                    raise ValueError("Timeout must be greater than 0.")
+                self._timeout = timeout
+
+            # Cancel existing timer if it exists
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
+
+            # Enable and start new timer
+            self._enabled = True
+            self._start_timer()
+
+    def _start_timer(self):
+        """Start the timer.
+
+        If the timer is already running, there is no effect.
+        This method should be called with the lock held.
+        """
+        if self._timer is None and self._enabled:
             self._timer = threading.Timer(self._timeout, self._callback_on_timeout_and_disable)
             self._timer.start()
 
     def _callback_on_timeout_and_disable(self):
         """Wrapper for the callback to disable the timer after timeout."""
+        # Clear the timer reference and disable the watchdog
+        with self._lock:
+            self._timer = None
+            self._enabled = False
+
+        # Call the external callback in a separate thread to avoid blocking
+        # and allow safe rescheduling
         if self._external_callback:
-            self._external_callback()
-        self._enabled = False
+            callback_thread = threading.Thread(target=self._external_callback, daemon=True)
+            callback_thread.start()
