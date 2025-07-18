@@ -15,7 +15,35 @@ GROUP_REQUEST_TIMEOUT_MS = 3000
 
 
 class WMSComponentManager(BaseComponentManager):
-    """Specialization for WMS functionality."""
+    """Specialization for Weather Monitoring System (WMS) functionality.
+
+    This component manager handles communication and data processing
+    for a single or a group of WMS Tango device(s), providing periodic polling of
+    wind speed data, calculation of mean wind speed and wind gust values,
+    and management of device states.
+
+    :param wms_device_names: List of TRLs of the WMS devices to be monitored.
+    :type wms_device_names: List[str]
+    :param args: Additional positional arguments passed to the base component manager.
+    :type args: Any
+    :param logger: Optional logger instance for logging messages.
+    :type logger: Optional[logging.Logger]
+    :param component_state_callback: Optional callback for component state updates.
+    :type component_state_callback: Optional[Callable]
+    :param state_update_lock: Optional threading lock for component state updates.
+    :type state_update_lock: Optional[threading.Lock]
+    :param wms_polling_period: Polling period (in seconds) for fetching wind speed
+        data.
+    :type wms_polling_period: Optional[float]
+    :param wind_speed_moving_average_period: Time window (in seconds) over which the
+        mean wind speed is calculated.
+    :type wind_speed_moving_average_period: Optional[float]
+    :param wind_gust_period: Time window (in seconds) over which the wind gust
+        is calculated.
+    :type wind_gust_period: Optional[float]
+    :param kwargs: Additional keyword arguments passed to the base component manager.
+    :type kwargs: Any
+    """
 
     def __init__(
         self,
@@ -68,7 +96,7 @@ class WMSComponentManager(BaseComponentManager):
             self._component_state_lock = state_update_lock
 
     def start_communicating(self) -> None:
-        """Add WMS device to group and initiate WMS attr polling."""
+        """Add WMS device(s) to group and initiate WMS attr polling."""
         self.stop_communicating()
 
         if not self._wms_device_names:
@@ -87,7 +115,7 @@ class WMSComponentManager(BaseComponentManager):
         _wms_monitoring_started_future.add_done_callback(self._run_wms_group_polling)
 
     def _start_monitoring(self) -> None:
-        """Start WMS monitoring of weather station servers."""
+        """Start WMS Tango device monitoring of the weather station servers."""
         while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
                 self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)
@@ -100,7 +128,7 @@ class WMSComponentManager(BaseComponentManager):
             # self._stop_monitoring_flag.wait(timeout=self._wms_polling_period)
 
     def stop_communicating(self) -> None:
-        """Stop WMS attr polling and clean up windspeed data buffer."""
+        """Stop WMS attr polling and clean up windspeed data buffers."""
         self._stop_monitoring_flag.set()
 
         self.executor.shutdown(wait=True, cancel_futures=True)
@@ -120,7 +148,7 @@ class WMSComponentManager(BaseComponentManager):
         self._update_communication_state(CommunicationStatus.DISABLED)
 
     def _run_wms_group_polling(self, *args):
-        """Fetch WMS windspeed data and publish it to the rolling avg calc."""
+        """Periodically fetch WMS windspeeds and publish avg wind speed and gust."""
         while not self._stop_monitoring_flag.is_set():
             try:
                 wind_speed_data_list = self.read_wms_group_attribute_value("windSpeed")
@@ -160,8 +188,23 @@ class WMSComponentManager(BaseComponentManager):
         self,
         wind_speed_data: list[list[float, float]],
         current_time: float,
-    ) -> Any:
-        """Calculate the mean wind speed and update the component state."""
+    ) -> float:
+        """Calculate the mean wind speed from buffered wind speed data.
+
+        This method extends the internal wind speed buffer with new wind speed data
+        from the provided list of wind speeds fetched in the current polling cycle,
+        prunes stale entries based on the current time and moving average period,
+        and computes the mean wind speed from the remaining buffer data.
+
+        :param wind_speed_data_list: A list of lists, where each inner list contains
+            [timestamp, instantaneous wind speed] values.
+        :type wind_speed_data_list: list[list[float, float]]
+        :param current_time: The current timestamp used for pruning stale wind speed data.
+        :type current_time: float
+
+        :returns: The computed mean wind speed from the buffered data.
+        :rtype: float
+        """
         self._wind_speed_buffer.extend(wind_speed_data)
 
         self._prune_stale_windspeed_data(
@@ -179,8 +222,24 @@ class WMSComponentManager(BaseComponentManager):
         self,
         wind_speed_data_list: list[list[float, float]],
         current_time: float,
-    ) -> None:
-        """Determine wind gust from maximum instantaneous wind speed in the buffer."""
+    ) -> float:
+        """Determines the wind gust value from a buffer of maximum wind speed data points
+        in the last 3 seconds or less.
+
+        This method identifies the maximum instantaneous wind speed from the provided
+        list of wind speeds fetched in the current polling cycle, appends it to the wind
+        gust buffer, prunes stale data, and returns the max wind speed in the buffer as
+        the current wind gust value.
+
+        :param wind_speed_data_list: A list of lists, where each inner list contains
+            [timestamp, instantaneous wind speed] values.
+        :type wind_speed_data_list: list[list[float, float]]
+        :param current_time: The current timestamp used for pruning stale wind speed data.
+        :type current_time: float
+
+        :returns: The maximum instantaneous wind speed (wind gust) in the buffer.
+        :rtype: float
+        """
         # Traverse windspeed list, getting the index of the maximum
         # instantaneous windspeed value to pass for wind gust processing
         if len(wind_speed_data_list) > 1:
@@ -207,14 +266,43 @@ class WMSComponentManager(BaseComponentManager):
         computation_window_period: float,
         wind_speed_buffer: deque,
     ) -> None:
-        """Remove stale windspeed data points from the wind speed data buffer."""
+        """Removes stale windspeed data points from the provided wind speed data buffer.
+
+        This method prunes the `wind_speed_buffer` by removing data points whose timestamps
+        are older than the expiry time, which is calculated as
+        `current_time - computation_window_period`.
+
+        :param current_time: The current timestamp
+        :type current_time: float
+        :param computation_window_period: The time window period over which the mean wind speed
+            or the wind gust is being calculated
+        :type computation_window_period: float
+        :param wind_speed_buffer: The circular buffer containing windspeed data points
+        :type wind_speed_buffer: collections.deque
+        :return: None
+        """
         _data_point_expiry_time = current_time - computation_window_period
         # wind_speed_buffer[0][0] represents the timestamp of the oldest buffer datapoint
         while wind_speed_buffer and (wind_speed_buffer[0][0] < _data_point_expiry_time):
             wind_speed_buffer.popleft()
 
     def read_wms_group_attribute_value(self, attribute_name: str) -> Any:
-        """Return list of lists containing group attr read values with timestamp."""
+        """Reads the specified attribute from all devices in the WMS device group.
+
+        Attempts to read the given attribute from each device in the group, collecting
+        the value and timestamping it for each successful read. Communication state
+        is updated based on the success or failure of the operation.
+
+        :param attribute_name: The name of the attribute to read from each device
+            in the group.
+        :type attribute_name : str
+        :raises RuntimeError : If reading the attribute fails for any device in the
+            group.
+        :raises tango.DevFailed : If reading the attribute fails for any device in
+            the group.
+        :return list of list: A list of lists, where each inner list contains the
+            timestamp (float) and the attribute value read from a device.
+        """
         reply_values = []
         try:
             grp_reply = self._wms_device_group.read_attribute(attribute_name)
@@ -242,7 +330,19 @@ class WMSComponentManager(BaseComponentManager):
         return reply_values
 
     def write_wms_group_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
-        """Write data to WMS tango group devices."""
+        """Writes the specified attribute value to all devices in the WMS Tango device group.
+
+        Attempts to write the given attribute value to the specified attribute across all devices
+        in the WMS device group. Updates the communication state based on the success or failure
+        of the write operation.
+
+        :param attribute_name: The name of the attribute to write to each device in the group.
+        :type attribute_name : str
+        :param attribute_value: The value to write to the attribute.
+        :type attribute_value : str
+        :raises RuntimeError : If writing the attribute fails for any device in the group.
+        :raises tango.DevFailed : If writing the attribute fails for any device in the group.
+        """
         try:
             grp_reply = self._wms_device_group.write_attribute(attribute_name, attribute_value)
             for reply in grp_reply:
