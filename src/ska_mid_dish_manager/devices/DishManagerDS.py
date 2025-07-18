@@ -150,7 +150,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
-            self.DefaultWatchdogTimeout,
+            default_watchdog_timeout=self.DefaultWatchdogTimeout,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
         )

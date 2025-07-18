@@ -65,13 +65,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
-        default_watchdog_timeout: float,
         *args,
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
         self.tango_device_name = tango_device_name
         self.sub_component_managers = None
+        default_watchdog_timeout = kwargs.get("default_watchdog_timeout", 0.0)
         super().__init__(
             logger,
             *args,
