@@ -36,9 +36,10 @@ def dish_manager_resources():
         ds_cm = dish_manager_cm.sub_component_managers["DS"]
         spf_cm = dish_manager_cm.sub_component_managers["SPF"]
         spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
+        wms_cm = dish_manager_cm.sub_component_managers["WMS"]
 
         # trigger communication established on all sub components
-        for com_man in [ds_cm, spf_cm, spfrx_cm]:
+        for com_man in [ds_cm, spf_cm, spfrx_cm, wms_cm]:
             com_man._update_communication_state(
                 communication_state=CommunicationStatus.ESTABLISHED
             )
