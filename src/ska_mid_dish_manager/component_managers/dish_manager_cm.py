@@ -496,15 +496,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # If the dish is transitioning out of STOW mode, reenable the watchdog timer if
             # the watchdog timeout is set
             if previous_dish_mode == DishMode.STOW and new_dish_mode != DishMode.STOW:
-                if (
-                    not self.watchdog_timer.is_enabled()
-                    and self.component_state["watchdogtimeout"] > 0
-                ):
-                    self.logger.debug(
-                        "Re-enabling watchdog timer with timeout %s seconds.",
-                        self.component_state["watchdogtimeout"],
-                    )
-                    self.watchdog_timer.enable(timeout=self.component_state["watchdogtimeout"])
+                self._reenable_watchdog_timer()
 
             self.logger.debug(
                 (
@@ -1029,6 +1021,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # watchdogtimer = self.component_state["watchdogtimeout"]
         # if watchdogtimer > 0:
         #     self.watchdog_timer.reschedule(watchdogtimer)
+
+    def _reenable_watchdog_timer(self) -> None:
+        """Re-enable the watchdog timer if it was disabled."""
+        if not self.watchdog_timer.is_enabled() and self.component_state["watchdogtimeout"] > 0:
+            self.logger.debug(
+                "Re-enabling watchdog timer with timeout %s seconds.",
+                self.component_state["watchdogtimeout"],
+            )
+            self.watchdog_timer.enable(timeout=self.component_state["watchdogtimeout"])
 
     @check_communicating
     def slew(
