@@ -107,9 +107,3 @@ ska-mid-wms:
       modbus_server_ports: ["1502"]
   simulator:
     enabled: True
-  weatherstation:
-    image:
-      registry: registry.gitlab.com/ska-telescope/ska-mid-wms
-      image: ska-mid-wms
-      tag: 0.4.0-dev.cde58785c
-      pullPolicy: IfNotPresent
