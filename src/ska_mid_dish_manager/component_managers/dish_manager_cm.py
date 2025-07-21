@@ -131,9 +131,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.watchdog_timer = WatchdogTimer(
             callback_on_timeout=self._stow_on_watchdog_expiry,
         )
-        # Enable the watchdog timer on startup if configured
-        if default_watchdog_timeout > 0:
-            self.watchdog_timer.enable(timeout=default_watchdog_timeout)
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -717,24 +714,28 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # ----------------------------------------
 
     def start_communicating(self):
-        """Connect from monitored devices."""
+        """Connect to monitored devices and start watchdog timer."""
+        # Enable the watchdog timer if configured
+        if self.component_state["watchdogtimeout"] > 0:
+            self.watchdog_timer.enable(timeout=self.component_state["watchdogtimeout"])
+
         if self.sub_component_managers:
             for device_name, component_manager in self.sub_component_managers.items():
                 if not self.is_device_ignored(device_name):
                     component_manager.start_communicating()
 
     def stop_communicating(self):
-        """Disconnect from monitored devices."""
+        """Disconnect from monitored devices and stop watchdog timer."""
+        # Disable watchdog timer
+        self.logger.debug("Disabling the watchdog timer.")
+        self.watchdog_timer.disable()
+        self._update_component_state(watchdogtimeout=0.0)
+
         # TODO: update attribute read callbacks to indicate attribute
         # reads cannot be trusted after communication is stopped
         if self.sub_component_managers:
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
-
-        # Disable watchdog timer
-        self.logger.debug("Disabling the watchdog timer.")
-        self.watchdog_timer.disable()
-        self._update_component_state(watchdogtimeout=0.0)
 
     def set_spf_device_ignored(self, ignored: bool):
         """Set the SPF device ignored boolean and update device communication."""

@@ -229,7 +229,8 @@
       dtype_out: DevVarLongStringArray
     - name: StartCommunication
       disp_level: OPERATOR
-      doc_in: Uninitialised
+      doc_in: Starts communication with subdevices and starts the watchdog timer,
+        if it is configured via `watchdogTimeout` attribute.
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVoid
@@ -247,7 +248,8 @@
       dtype_out: DevString
     - name: StopCommunication
       disp_level: OPERATOR
-      doc_in: Uninitialised
+      doc_in: Stops communication with subdevices and stops the watchdog timer, if
+        it is active.
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVoid

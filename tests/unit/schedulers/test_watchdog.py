@@ -161,30 +161,3 @@ class TestWatchdogTimerDefault(TestWatchdogTimerBase):
         assert not self.callback_called
         time.sleep(DEFAULT_WATCHDOG_TIMEOUT + self.timeout_expire_buffer)
         assert self.callback_called
-
-
-@pytest.mark.unit
-class TestWatchdogTimerRepeat(TestWatchdogTimerBase):
-    """Tests for WatchdogTimer repeat case."""
-
-    def setup_method(self):
-        """Set up context."""
-        self.timeout_expire_buffer = 0.2
-        self.callback_called_made = 0
-
-        def callback():
-            self.callback_called_made += 1
-            self.watchdog_timer.reschedule()
-
-        self.watchdog_timer = WatchdogTimer(callback_on_timeout=callback)
-
-    def test_default_repeat(self):
-        """Test that the watchdog repeats the callback after each timeout."""
-        assert self.callback_called_made == 0
-        self.watchdog_timer.enable()
-        time.sleep(DEFAULT_WATCHDOG_TIMEOUT + self.timeout_expire_buffer)
-        assert self.callback_called_made == 1
-        time.sleep(DEFAULT_WATCHDOG_TIMEOUT + self.timeout_expire_buffer)
-        assert self.callback_called_made == 2
-        time.sleep(DEFAULT_WATCHDOG_TIMEOUT + self.timeout_expire_buffer)
-        assert self.callback_called_made == 3

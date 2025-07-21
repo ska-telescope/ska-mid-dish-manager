@@ -1901,13 +1901,25 @@ class DishManager(SKAController):
         return_code, message = handler(value)
         return ([return_code], [message])
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        doc_in="Stops communication with subdevices and stops the watchdog timer, "
+        "if it is active.",
+        dtype_out=None,
+        display_level=DispLevel.OPERATOR,
+    )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def StopCommunication(self):
         """Stop communicating with monitored devices."""
         self.component_manager.stop_communicating()
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        doc_in="Starts communication with subdevices and starts the watchdog timer, "
+        "if it is configured via `watchdogTimeout` attribute.",
+        dtype_out=None,
+        display_level=DispLevel.OPERATOR,
+    )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def StartCommunication(self):
         """Start communicating with monitored devices."""
@@ -1964,7 +1976,16 @@ class DishManager(SKAController):
         try:
             self.component_manager.watchdog_timer.reset()
         except WatchdogTimerInactiveError:
-            return ([ResultCode.FAILED], ["Watchdog timer is not active."])
+            if (
+                self.component_manager["dishMode"] == DishMode.STOW
+                and self.component_manager["watchdogtimeout"] > 0
+            ):
+                return (
+                    [ResultCode.FAILED],
+                    ["Watchdog timer is not active when dish is in STOW mode."],
+                )
+            else:
+                return ([ResultCode.FAILED], ["Watchdog timer is not active."])
         self.component_manager._update_component_state(lastwatchdogreset=value)
         return (
             [ResultCode.OK],
