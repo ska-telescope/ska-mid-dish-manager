@@ -122,7 +122,7 @@ class WMSComponentManager(BaseComponentManager):
             try:
                 self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)
                 break
-            except (tango.DevFailed, RuntimeError):
+            except tango.DevFailed:
                 self.logger.error(
                     "Failed to set WMS device(s) adminMode to ONLINE. One or more"
                     " WMS device(s) may be unavailable. Retrying"
@@ -141,7 +141,7 @@ class WMSComponentManager(BaseComponentManager):
         try:
             self.write_wms_group_attribute_value("adminMode", AdminMode.OFFLINE)
             self._wms_device_group.remove_all()
-        except (tango.DevFailed, RuntimeError):
+        except tango.DevFailed:
             self.logger.error(
                 "Failed to set WMS device(s) adminMode to OFFLINE. "
                 "One or more WMS device(s) may be unavailable"
@@ -173,16 +173,8 @@ class WMSComponentManager(BaseComponentManager):
                     meanwindspeed=mws,
                     windgust=wg,
                 )
-            except (RuntimeError, tango.DevFailed):
-                pass
-            except IndexError as err:
-                # Raised by processing on an empty list, in the event of a read failure
-                self.logger.error(
-                    f"Exception raised on processing windspeed data: {err}. "
-                    "Windspeed list may be empty indicating a read failure."
-                )
             except Exception as err:
-                self.logger.error(f"Unexpected exception during WMS group polling: {err}")
+                self.logger.exception(f"Unexpected exception during WMS group polling: {err}")
             self._stop_monitoring_flag.wait(timeout=self._wms_polling_period)
 
     def _compute_mean_wind_speed(
@@ -297,10 +289,6 @@ class WMSComponentManager(BaseComponentManager):
         :param attribute_name: The name of the attribute to read from each device
             in the group.
         :type attribute_name : str
-        :raises RuntimeError : If reading the attribute fails for any device in the
-            group.
-        :raises tango.DevFailed : If reading the attribute fails for any device in
-            the group.
         :return list of list: A list of lists, where each inner list contains the
             timestamp (float) and the attribute value read from a device.
         """
@@ -317,8 +305,8 @@ class WMSComponentManager(BaseComponentManager):
                         f"group [{self._wms_device_group.get_name()}]",
                     )
                     self.logger.error(err_msg)
-                    raise RuntimeError(err_msg)
-                reply_values.append([reply_timestamp, reply.get_data().value])
+                else:
+                    reply_values.append([reply_timestamp, reply.get_data().value])
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
         except tango.DevFailed as err:
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -327,7 +315,6 @@ class WMSComponentManager(BaseComponentManager):
                 f"read attribute [{attribute_name}] "
                 f"of group [{self._wms_device_group.get_name()}]: {err}",
             )
-            raise
         return reply_values
 
     def write_wms_group_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
@@ -341,21 +328,13 @@ class WMSComponentManager(BaseComponentManager):
         :type attribute_name : str
         :param attribute_value: The value to write to the attribute.
         :type attribute_value : str
-        :raises RuntimeError : If writing the attribute fails for any device in the group.
         :raises tango.DevFailed : If writing the attribute fails for any device in the group.
         """
         try:
             grp_reply = self._wms_device_group.write_attribute(attribute_name, attribute_value)
             for reply in grp_reply:
                 if reply.has_failed():
-                    self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                    err_msg = (
-                        f"Failed to write attribute [{attribute_name}] "
-                        f"on device [{reply.dev_name()}] of "
-                        f"group [{self._wms_device_group.get_name()}]",
-                    )
-                    self.logger.error(err_msg)
-                    raise RuntimeError(err_msg)
+                    raise tango.DevFailed
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
         except tango.DevFailed as err:
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
