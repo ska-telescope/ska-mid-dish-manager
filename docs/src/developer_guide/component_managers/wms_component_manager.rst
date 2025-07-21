@@ -1,5 +1,5 @@
 WMS Component Manager
-=======================
+=====================
 
 In order to protect the dish under inclement weather conditions, dish manager monitors the
 weather data published by 1 or more weather station devices and stows the dish under the
@@ -11,7 +11,7 @@ following conditions;
 To enable control and monitoring of the WMS device(s) the dish manager instantiates
 the WMS component manager as shown in the diagram below;
 
-.. image:: images/dish_manager_wms.png
+.. image:: ../../images/dish_manager_wms.png
   :width: 100%
 
 On instantiation of the WMS component manager, the component manager will;
@@ -61,10 +61,14 @@ tree diagrams;
 
 - On receipt of mean wind speed update;
 
-.. image:: images/meanwindspeed_decision_tree.png
-  :width: 100%
+.. image:: ../../images/meanwindspeed_decision_tree.png
+  :width: 60%
+  :height: 700
+  :alt: Mean WindSpeed Decision Tree
 
 - On receipt of wind gust update;
 
-.. image:: images/windgust_decision_tree.png
-  :width: 100%
+.. image:: ../../images/windgust_decision_tree.png
+  :width: 60%
+  :height: 700
+  :alt: WindGust Decision Tree
