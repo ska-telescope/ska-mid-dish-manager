@@ -54,6 +54,9 @@ server:
                 - name: "DishId"
                   values:
                     - "SKA{{ printf "%01s" . }}"
+                - name: "DefaultWatchdogTimeout"
+                  values:
+                    - "{{ $.Values.dishmanager.watchdog.timeout_seconds }}"
                 - name: "MeanWindSpeedThreshold"
                   values:
                     - "{{ $.Values.dishmanager.windLimits.MeanWindSpeedThreshold }}"

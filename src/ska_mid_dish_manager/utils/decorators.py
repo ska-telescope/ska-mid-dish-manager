@@ -78,3 +78,21 @@ def check_communicating(func: Any) -> Any:
         return func(component_manager, *args, **kwargs)
 
     return _wrapper
+
+
+def requires_component_manager(func: Any) -> Any:
+    """Decorator that checks if component_manager is available."""
+
+    @functools.wraps(func)
+    def _wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+        cm = getattr(self, "component_manager", None)
+        if cm:
+            return func(self, *args, **kwargs)
+
+        msg = "Component manager not initialized."
+        logger = getattr(self, "logger", None)
+        if logger:
+            logger.error(msg)
+        raise RuntimeError(msg)
+
+    return _wrapper
