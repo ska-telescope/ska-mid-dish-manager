@@ -77,31 +77,6 @@ class WatchdogTimer:
 
             self._start_timer()
 
-    def reschedule(self, timeout: float = None):
-        """Reschedule the watchdog timer.
-
-        This method can be safely called from within the timeout callback.
-        It will start a new timer without raising an exception if the timer is inactive.
-
-        :param timeout: New timeout value, defaults to None (use existing timeout)
-        :raises ValueError: If timeout is less than or equal to zero.
-        """
-        with self._lock:
-            # Update timeout if provided
-            if timeout is not None:
-                if timeout <= 0:
-                    raise ValueError("Timeout must be greater than 0.")
-                self._timeout = timeout
-
-            # Cancel existing timer if it exists
-            if self._timer is not None:
-                self._timer.cancel()
-                self._timer = None
-
-            # Enable and start new timer
-            self._enabled = True
-            self._start_timer()
-
     def _start_timer(self):
         """Start the timer.
 
@@ -118,9 +93,5 @@ class WatchdogTimer:
         with self._lock:
             self._timer = None
             self._enabled = False
-
-        # Call the external callback in a separate thread to avoid blocking
-        # and allow safe rescheduling
         if self._external_callback:
-            callback_thread = threading.Thread(target=self._external_callback, daemon=True)
-            callback_thread.start()
+            self._external_callback()

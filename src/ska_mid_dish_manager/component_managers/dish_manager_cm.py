@@ -1017,11 +1017,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             # TODO: replace with reliable stow execution from wind stow MR
             self.set_stow_mode()
 
-        # # Restart the watchdog timer
-        # watchdogtimer = self.component_state["watchdogtimeout"]
-        # if watchdogtimer > 0:
-        #     self.watchdog_timer.reschedule(watchdogtimer)
-
     def _reenable_watchdog_timer(self) -> None:
         """Re-enable the watchdog timer if it was disabled."""
         if not self.watchdog_timer.is_enabled() and self.component_state["watchdogtimeout"] > 0:
