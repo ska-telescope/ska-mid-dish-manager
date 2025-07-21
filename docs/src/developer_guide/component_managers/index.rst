@@ -33,9 +33,3 @@ on the respective attributes
   requested command if a failure occurs during the execution of the sub commands.
   It continues to watch and report on the progress of fanned out commands. The
   client will need to watch the LRC progress attribute to take appropriate action.
-
-
-.. toctree::
-  :maxdepth: 1
-
-   WMS Component Manager<wms_component_manager>
