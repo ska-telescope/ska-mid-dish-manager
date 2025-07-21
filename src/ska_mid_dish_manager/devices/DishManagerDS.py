@@ -1977,7 +1977,7 @@ class DishManager(SKAController):
             self.component_manager.watchdog_timer.reset()
         except WatchdogTimerInactiveError:
             if (
-                self.component_manager.component_state["dishMode"] == DishMode.STOW
+                self.component_manager.component_state["dishmode"] == DishMode.STOW
                 and self.component_manager.component_state["watchdogtimeout"] > 0
             ):
                 return (
