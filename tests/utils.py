@@ -843,3 +843,31 @@ def compare_trajectories(
             )
 
     return mismatches, err_tai_list, err_angular_list
+
+
+def setup_subscriptions(attrs, dish_manager_proxy, event_store_class) -> dict:
+    """Set up subscriptions for the given attributes."""
+    subscriptions = {}
+
+    for attr in attrs:
+        ce_event_store = event_store_class()
+        id_ch_ev = dish_manager_proxy.subscribe_event(
+            attr,
+            tango.EventType.CHANGE_EVENT,
+            ce_event_store,
+        )
+        ae_event_store = event_store_class()
+        id_a_ev = dish_manager_proxy.subscribe_event(
+            attr,
+            tango.EventType.ARCHIVE_EVENT,
+            ae_event_store,
+        )
+        ce_event_store.clear_queue()
+        ae_event_store.clear_queue()
+        subscriptions[attr] = {
+            "change_event_store": ce_event_store,
+            "archive_event_store": ae_event_store,
+            "ids": [id_ch_ev, id_a_ev],
+        }
+
+    return subscriptions

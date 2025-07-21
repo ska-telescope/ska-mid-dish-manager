@@ -55,6 +55,10 @@ server:
                   values:
                     - "SKA{{ printf "%01s" . }}"
 
+                - name: "DefaultWatchdogTimeout"
+                  values:
+                    - "{{ $.Values.dishmanager.watchdog.timeout_seconds }}"
+
               attribute_properties:
               - attribute: "ignoreSpf"
                 properties:
