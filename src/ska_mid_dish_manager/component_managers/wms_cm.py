@@ -173,8 +173,8 @@ class WMSComponentManager(BaseComponentManager):
                     meanwindspeed=mws,
                     windgust=wg,
                 )
-            except Exception as err:
-                self.logger.exception(f"Unexpected exception during WMS group polling: {err}")
+            except Exception:
+                self.logger.exception("Unexpected exception during WMS group polling")
             self._stop_monitoring_flag.wait(timeout=self._wms_polling_period)
 
     def _compute_mean_wind_speed(
