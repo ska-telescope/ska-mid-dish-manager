@@ -78,7 +78,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # pylint: disable=useless-super-delegation
         self.tango_device_name = tango_device_name
         self.sub_component_managers = None
-        default_watchdog_timeout = kwargs.get("default_watchdog_timeout", 0.0)
+        default_watchdog_timeout = kwargs.pop("default_watchdog_timeout", 0.0)
         super().__init__(
             logger,
             *args,
@@ -478,6 +478,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return self._wind_limits_cache["limits"]
 
+    def _execute_stow_command(self, trigger_source: str) -> None:
+        """Handle automatic stow command execution.
+
+        :param: trigger_source: The event requesting the dish to stow.
+                 It can be due to either a wind condition or communication loss from client.
+        """
+        retry_interval = 0.1
+
+        while not self._stop_event.is_set():
+            wind_stow_id = self._command_tracker.new_command(
+                f"{trigger_source}", completed_callback=None
+            )
+            wind_stow_task_cb = partial(self._command_tracker.update_command_info, wind_stow_id)
+            task_status, _ = self.set_stow_mode(wind_stow_task_cb)
+
+            if task_status == TaskStatus.COMPLETED:
+                return
+            # attempt stow as fast as possible in the retry
+            self._stop_event.wait(retry_interval)
+
     # ---------
     # Callbacks
     # ---------
@@ -491,24 +511,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _evaluate_wind_speed_averages(self, **computed_averages):
         """Evaluate wind speed averages and trigger auto stow if necessary."""
         auto_wind_stow_enabled = self.component_state.get("autowindstowenabled")
-
-        def _execute_stow_command():
-            """Handle wind stow command execution."""
-            retry_interval = 0.1
-
-            while not self._stop_event.is_set():
-                wind_stow_id = self._command_tracker.new_command(
-                    "windstow", completed_callback=None
-                )
-                wind_stow_task_cb = partial(
-                    self._command_tracker.update_command_info, wind_stow_id
-                )
-                task_status, _ = self.set_stow_mode(wind_stow_task_cb)
-
-                if task_status == TaskStatus.COMPLETED:
-                    return
-                # attempt stow as fast as possible in the retry
-                self._stop_event.wait(retry_interval)
 
         if auto_wind_stow_enabled:
             wind_limits = self._fetch_wind_limits()
@@ -524,7 +526,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if mean_wind_speed_exceeded or wind_gust_exceeded:
                 # trigger stow only once over the duration of an extreme condition
                 if not self.wind_stow_active:
-                    _execute_stow_command()
+                    self._execute_stow_command("windstow")
                 self.wind_stow_active = True
                 self.reset_alarm = False
             else:
@@ -1164,8 +1166,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.info("Dish is already in STOW mode, no action taken.")
         else:
             self.logger.info("Transitioning dish to STOW.")
-            # TODO: replace with reliable stow execution from wind stow MR
-            self.set_stow_mode()
+            self._execute_stow_command("watchdog-stow")
 
     def _reenable_watchdog_timer(self) -> None:
         """Re-enable the watchdog timer if it was disabled."""
