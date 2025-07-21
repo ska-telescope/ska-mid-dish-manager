@@ -526,7 +526,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if mean_wind_speed_exceeded or wind_gust_exceeded:
                 # trigger stow only once over the duration of an extreme condition
                 if not self.wind_stow_active:
-                    self._execute_stow_command("windstow")
+                    self._execute_stow_command("WindStow")
                 self.wind_stow_active = True
                 self.reset_alarm = False
             else:
@@ -1166,7 +1166,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.info("Dish is already in STOW mode, no action taken.")
         else:
             self.logger.info("Transitioning dish to STOW.")
-            self._execute_stow_command("watchdog-stow")
+            self._execute_stow_command("TMCHeartbeatStow")
 
     def _reenable_watchdog_timer(self) -> None:
         """Re-enable the watchdog timer if it was disabled."""
