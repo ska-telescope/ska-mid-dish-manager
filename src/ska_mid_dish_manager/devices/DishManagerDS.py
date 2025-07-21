@@ -316,6 +316,16 @@ class DishManager(SKAController):
             self.push_archive_event(attribute_name, comp_state_value)
 
     def _wind_stow_inform(self, **computed_averages):
+        """Updates the device state and status based on wind condition.
+
+        If the dish is stowed due to high wind and the alarm has not been cleared,
+        the device enters ALARM state with a message showing the wind data.
+
+        If the dish is stowed but conditions have normalized (alarm reset allowed),
+        the device returns to ON state and the stow flag is cleared.
+
+        :param computed_averages: dictionary of average wind measurements
+        """
         wind_stow_active = self.component_manager.wind_stow_active
         reset_alarm = self.component_manager.reset_alarm
 

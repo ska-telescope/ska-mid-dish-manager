@@ -288,18 +288,30 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     @property
     def wind_stow_active(self) -> bool:
+        """Indicates whether the dish has been automatically stowed due to strong winds."""
         return self._wind_stow_active
 
     @wind_stow_active.setter
     def wind_stow_active(self, value):
+        """Sets the wind stow active state.
+
+        When True, it means the dish is stowed due to strong wind and prevents repeated stow
+        commands while wind remains high. The device sets it back to False after the wind
+        alarm is cleared.
+        """
         self._wind_stow_active = value
 
     @property
     def reset_alarm(self) -> bool:
+        """Indicates whether the wind stow alarm can be cleared."""
         return self._reset_alarm
 
     @reset_alarm.setter
     def reset_alarm(self, value):
+        """Sets the flag to indicate whether the wind stow alarm can be cleared.
+
+        This should be set to True only after wind speeds have dropped back to safe levels.
+        """
         self._reset_alarm = value
 
     # --------------
