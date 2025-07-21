@@ -49,6 +49,7 @@ from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
+from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
 
@@ -77,6 +78,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # pylint: disable=useless-super-delegation
         self.tango_device_name = tango_device_name
         self.sub_component_managers = None
+        default_watchdog_timeout = kwargs.get("default_watchdog_timeout", 0.0)
         super().__init__(
             logger,
             *args,
@@ -122,6 +124,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
+            lastwatchdogreset=0.0,
+            watchdogtimeout=default_watchdog_timeout,
             autowindstowenabled=False,
             meanwindspeed=-1,
             windgust=-1,
@@ -137,6 +141,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._state_update_lock = Lock()
         self._abort_thread: Optional[Thread] = None
         self._stop_event = threading.Event()
+        self.watchdog_timer = WatchdogTimer(
+            callback_on_timeout=self._stow_on_watchdog_expiry,
+        )
         self._wind_stow_active = False
         self._reset_alarm = False
         self._wind_limits_cache = {
@@ -621,6 +628,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "buildstate" in kwargs:
             self._build_state_callback(device, kwargs["buildstate"])
 
+        previous_dish_mode = self.component_state["dishmode"]
         # Update dishMode if there are operatingmode, indexerposition or adminmode changes
         if "operatingmode" in kwargs or "indexerposition" in kwargs or "adminmode" in kwargs:
             new_dish_mode = self._state_transition.compute_dish_mode(
@@ -628,6 +636,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
                 spf_component_state if not self.is_device_ignored("SPF") else None,
             )
+
+            # If the dish is transitioning out of STOW mode, reenable the watchdog timer if
+            # the watchdog timeout is set
+            if previous_dish_mode == DishMode.STOW and new_dish_mode != DishMode.STOW:
+                self._reenable_watchdog_timer()
+
             self.logger.debug(
                 (
                     "Updating dish manager dishMode with: [%s]. "
@@ -847,15 +861,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # ----------------------------------------
 
     def start_communicating(self):
-        """Connect from monitored devices."""
+        """Connect to monitored devices and start watchdog timer."""
         self._stop_event.clear()
+        # Enable the watchdog timer if configured
+        if self.component_state["watchdogtimeout"] > 0:
+            self.watchdog_timer.enable(timeout=self.component_state["watchdogtimeout"])
+
         if self.sub_component_managers:
             for device_name, component_manager in self.sub_component_managers.items():
                 if not self.is_device_ignored(device_name):
                     component_manager.start_communicating()
 
     def stop_communicating(self):
-        """Disconnect from monitored devices."""
+        """Disconnect from monitored devices and stop watchdog timer."""
+        # Disable watchdog timer
+        self.logger.debug("Disabling the watchdog timer.")
+        self.watchdog_timer.disable()
+        self._update_component_state(watchdogtimeout=0.0)
+
         # TODO: update attribute read callbacks to indicate attribute
         # reads cannot be trusted after communication is stopped
         self._stop_event.set()
@@ -1133,6 +1156,25 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.abort_commands()
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
+
+    def _stow_on_watchdog_expiry(self) -> None:
+        """Stow the dish on watchdog expiry and restart timer if still enabled."""
+        self.logger.info("Watchdog timer has expired.")
+        if self.component_state["dishmode"] == DishMode.STOW:
+            self.logger.info("Dish is already in STOW mode, no action taken.")
+        else:
+            self.logger.info("Transitioning dish to STOW.")
+            # TODO: replace with reliable stow execution from wind stow MR
+            self.set_stow_mode()
+
+    def _reenable_watchdog_timer(self) -> None:
+        """Re-enable the watchdog timer if it was disabled."""
+        if not self.watchdog_timer.is_enabled() and self.component_state["watchdogtimeout"] > 0:
+            self.logger.debug(
+                "Re-enabling watchdog timer with timeout %s seconds.",
+                self.component_state["watchdogtimeout"],
+            )
+            self.watchdog_timer.enable(timeout=self.component_state["watchdogtimeout"])
 
     @check_communicating
     def slew(

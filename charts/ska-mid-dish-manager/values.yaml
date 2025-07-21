@@ -71,6 +71,9 @@ dishmanager:
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"
 
+  watchdog:
+    timeout_seconds: "0.0"  # Default is 0.0 (<= 0 means watchdog timer is disabled)
+
   windLimits:
     # Wind speed in m/s
     MeanWindSpeedThreshold: "11.1"

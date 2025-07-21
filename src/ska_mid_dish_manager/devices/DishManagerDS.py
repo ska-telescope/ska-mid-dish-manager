@@ -6,6 +6,7 @@ and the subservient devices
 
 import json
 import weakref
+from datetime import datetime
 from functools import reduce
 from typing import List, Optional, Tuple
 
@@ -29,6 +30,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
+    DEFAULT_WATCHDOG_TIMEOUT,
     DSC_MAX_POWER_LIMIT_KW,
     DSC_MIN_POWER_LIMIT_KW,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
@@ -48,7 +50,11 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
-from ska_mid_dish_manager.utils.decorators import record_mode_change_request
+from ska_mid_dish_manager.utils.decorators import (
+    record_mode_change_request,
+    requires_component_manager,
+)
+from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
 from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
@@ -81,6 +87,7 @@ class DishManager(SKAController):
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
+    DefaultWatchdogTimeout = device_property(dtype=float, default_value=DEFAULT_WATCHDOG_TIMEOUT)
     # wms device names (e.g. ska-mid/weather-monitoring/1) to connect to
     WMSDeviceNames = device_property(dtype=DevVarStringArray, default_value=[])
     MeanWindSpeedThreshold = device_property(
@@ -157,6 +164,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
+            default_watchdog_timeout=self.DefaultWatchdogTimeout,
             wms_device_names=self.WMSDeviceNames,
             wind_stow_callback=self._wind_stow_inform,
             communication_state_callback=self._communication_state_changed,
@@ -407,6 +415,8 @@ class DishManager(SKAController):
                 "dscpowerlimitkw": "dscPowerLimitKw",
                 "tracktablecurrentindex": "trackTableCurrentIndex",
                 "tracktableendindex": "trackTableEndIndex",
+                "lastwatchdogreset": "lastWatchdogReset",
+                "watchdogtimeout": "watchdogTimeout",
                 "meanwindspeed": "meanWindSpeed",
                 "windgust": "windGust",
                 "autowindstowenabled": "autoWindStowEnabled",
@@ -1432,6 +1442,39 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
+        doc="Returns the timestamp of the last watchdog reset in unix seconds.",
+    )
+    def lastWatchdogReset(self):
+        """Returns lastWatchdogReset."""
+        return self.component_manager.component_state["lastwatchdogreset"]
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ_WRITE,
+        doc="Sets dish manager watchdog timeout interval in seconds. "
+        "By writing a value greater than 0, the watchdog will be enabled. If the watchdog "
+        "is not reset within this interval, the dish will Stow on expiry of the timer. "
+        "The watchdog timer can be reset by calling the `ResetWatchdog()` command. "
+        "The watchdog can be disabled by writing a value less than or equal to 0.",
+    )
+    @requires_component_manager
+    def watchdogTimeout(self):
+        """Returns watchdogTimeout."""
+        return self.component_manager.component_state["watchdogtimeout"]
+
+    @watchdogTimeout.write
+    @requires_component_manager
+    def watchdogTimeout(self, value):
+        """Writes watchdogTimeout."""
+        self.component_manager._update_component_state(watchdogtimeout=value)
+        if value <= 0:
+            self.component_manager.watchdog_timer.disable()
+        else:
+            self.component_manager.watchdog_timer.enable(value)
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
         doc="""
             The average wind speed in m/s of the last 10 minutes
             calculated from the connected weather stations.
@@ -1956,13 +1999,25 @@ class DishManager(SKAController):
         return_code, message = handler(value)
         return ([return_code], [message])
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        doc_in="Stops communication with subdevices and stops the watchdog timer, "
+        "if it is active.",
+        dtype_out=None,
+        display_level=DispLevel.OPERATOR,
+    )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def StopCommunication(self):
         """Stop communicating with monitored devices."""
         self.component_manager.stop_communicating()
 
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        doc_in="Starts communication with subdevices and starts the watchdog timer, "
+        "if it is configured via `watchdogTimeout` attribute.",
+        dtype_out=None,
+        display_level=DispLevel.OPERATOR,
+    )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def StartCommunication(self):
         """Start communicating with monitored devices."""
@@ -2001,6 +2056,39 @@ class DishManager(SKAController):
         """
         if hasattr(self, "component_manager"):
             self.component_manager.sync_component_states()
+
+    @command(
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="This command resets the watchdog timer. "
+        "`lastWatchdogReset` attribute will be updated with the unix timestamp. "
+        "By default, the watchdog timer is disabled and can be enabled by setting the "
+        "`watchdogTimeout` attribute to a value greater than 0.",
+        doc_out="Returns a DevVarLongStringArray with the return code and message.",
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @requires_component_manager
+    def ResetWatchdogTimer(self) -> DevVarLongStringArrayType:
+        """This command resets the watchdog timer."""
+        value = datetime.now().timestamp()
+        try:
+            self.component_manager.watchdog_timer.reset()
+        except WatchdogTimerInactiveError:
+            if (
+                self.component_manager.component_state["dishmode"] == DishMode.STOW
+                and self.component_manager.component_state["watchdogtimeout"] > 0
+            ):
+                return (
+                    [ResultCode.FAILED],
+                    ["Watchdog timer is not active when dish is in STOW mode."],
+                )
+            else:
+                return ([ResultCode.FAILED], ["Watchdog timer is not active."])
+        self.component_manager._update_component_state(lastwatchdogreset=value)
+        return (
+            [ResultCode.OK],
+            [f"Watchdog timer reset at {value}s"],
+        )
 
     @command(dtype_out="DevVarLongStringArray")
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
