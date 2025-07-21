@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 7.5.0
+*************
 - Added connection workaround for SPFRx attributes that have invalid quality on startup
 - Partial SetMaintenanceMode implementation. It may not work as expected until SPFRx implements the changes to adminMode
 - Extended interface to expose monitoring points for mean wind speed and wind gust.
@@ -14,7 +17,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
   - Add manual job (k8s-test-runner-track-patterns) to gitlab pipeline to run test_track_pattern acceptance test
 - Updated periodicNoiseDiodePars and pseudoRandomNoiseDiodePars to be DevVarLong64Array - (DevLong64,)
-- Upgraded ska-mid-dish-simulators chart to v4.5.0
+- Upgraded ska-mid-dish-simulators chart to v4.5.1
+- Upgraded ska-mid-dish-ds-manager chart to v6.0.0
 
 Version 7.4.0
 *************
