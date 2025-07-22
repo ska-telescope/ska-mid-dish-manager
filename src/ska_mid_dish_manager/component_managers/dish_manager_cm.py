@@ -134,6 +134,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             autowindstowenabled=False,
             meanwindspeed=-1,
             windgust=-1,
+            lastcommandedmode=("0.0", ""),
             **kwargs,
         )
         self.logger = logger

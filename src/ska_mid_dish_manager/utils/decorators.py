@@ -14,11 +14,10 @@ def record_mode_change_request(func: Any) -> Any:
     @functools.wraps(func)
     def wrapper_record_mode_change_request(*args: Any, **kwargs: Any) -> Any:
         device_instance = args[0]
+        component_manager = device_instance.component_manager
         last_commanded_mode = (str(time.time()), func.__name__)
         # pylint: disable=protected-access
-        device_instance._last_commanded_mode = last_commanded_mode
-        device_instance.push_change_event("lastCommandedMode", last_commanded_mode)
-        device_instance.push_archive_event("lastCommandedMode", last_commanded_mode)
+        component_manager._update_component_state(lastcommandedmode=last_commanded_mode)
         return func(*args, **kwargs)
 
     return wrapper_record_mode_change_request
