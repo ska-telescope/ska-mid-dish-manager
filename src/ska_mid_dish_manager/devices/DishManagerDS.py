@@ -341,7 +341,6 @@ class DishManager(SKAController):
             device._track_interpolation_mode = TrackInterpolationMode.SPLINE
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
-            device._last_commanded_mode = ("0.0", "")
             device._last_commanded_pointing_params = ""
             device._release_info = ReleaseInfo(
                 ds_manager_address=device.DSDeviceFqdn,
@@ -400,6 +399,7 @@ class DishManager(SKAController):
                 "meanwindspeed": "meanWindSpeed",
                 "windgust": "windGust",
                 "autowindstowenabled": "autoWindStowEnabled",
+                "lastcommandedmode": "lastCommandedMode",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -442,7 +442,6 @@ class DishManager(SKAController):
                 "polyTrack",
                 "trackProgramMode",
                 "trackTableLoadMode",
-                "lastCommandedMode",
                 "lastCommandedPointingParams",
             ):
                 device.set_change_event(attr, True, False)
@@ -471,9 +470,10 @@ class DishManager(SKAController):
             "Time is a UNIX UTC timestamp."
         ),
     )
+    @requires_component_manager
     def lastCommandedMode(self) -> tuple[str, str]:
         """Return the last commanded mode."""
-        return self._last_commanded_mode
+        return self.component_manager.component_state["lastcommandedmode"]
 
     # pylint: disable=invalid-name
     @attribute(
