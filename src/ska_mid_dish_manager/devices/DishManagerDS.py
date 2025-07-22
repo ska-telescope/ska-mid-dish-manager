@@ -164,11 +164,13 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
-            default_watchdog_timeout=self.DefaultWatchdogTimeout,
-            wms_device_names=self.WMSDeviceNames,
-            wind_stow_callback=self._wind_stow_inform,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
+            wms_device_names=self.WMSDeviceNames,
+            wind_stow_callback=self._wind_stow_inform,
+            default_watchdog_timeout=self.DefaultWatchdogTimeout,
+            default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
+            default_wind_gust_threshold=self.WindGustThreshold,
         )
 
     def init_command_objects(self) -> None:
@@ -323,8 +325,6 @@ class DishManager(SKAController):
 
         If the dish is stowed but conditions have normalized (alarm reset allowed),
         the device returns to ON state and the stow flag is cleared.
-
-        :param computed_averages: dictionary of average wind measurements
         """
         wind_stow_active = self.component_manager.wind_stow_active
         reset_alarm = self.component_manager.reset_alarm
