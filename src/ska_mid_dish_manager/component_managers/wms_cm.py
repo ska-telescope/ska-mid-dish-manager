@@ -293,6 +293,7 @@ class WMSComponentManager(BaseComponentManager):
             timestamp (float) and the attribute value read from a device.
         """
         reply_values = []
+        read_error_raised = False
         try:
             grp_reply = self._wms_device_group.read_attribute(attribute_name)
             reply_timestamp = time.time()
@@ -305,9 +306,12 @@ class WMSComponentManager(BaseComponentManager):
                         f"group [{self._wms_device_group.get_name()}]",
                     )
                     self.logger.error(err_msg)
+                    read_error_raised = True
                 else:
                     reply_values.append([reply_timestamp, reply.get_data().value])
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
+                    # Only report comm state established if there were no read errors
+                    if not read_error_raised:
+                        self._update_communication_state(CommunicationStatus.ESTABLISHED)
         except tango.DevFailed as err:
             self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
             self.logger.error(
