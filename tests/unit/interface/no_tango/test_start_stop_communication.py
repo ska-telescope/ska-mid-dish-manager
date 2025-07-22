@@ -32,8 +32,11 @@ def test_start_stop_communication(
     component_state_cb.wait_for_value("dishmode", DishMode.STANDBY_FP)
 
     # Now we call stop communicating
+    assert component_manager.watchdog_timer.disable.call_count == 0
     component_manager.stop_communicating()
     assert component_manager.communication_state == CommunicationStatus.DISABLED
+    # Check that the watchdog timer is disabled on communication stop
+    assert component_manager.watchdog_timer.disable.call_count == 1
 
     # Now we attempt to call a command to see if it will not work
     with pytest.raises(ConnectionError, match="Commmunication with sub-components is disabled"):

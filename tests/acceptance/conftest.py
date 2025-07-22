@@ -38,7 +38,7 @@ def setup_and_teardown(
 
     # another approach will be to ensure that all tests check the
     # command status for every issued command as part of its assert
-    event_store.get_queue_events(timeout=5)
+    event_store.get_queue_events(timeout=10)
 
     spf_device_proxy.subscribe_event(
         "operatingMode",
@@ -57,6 +57,9 @@ def setup_and_teardown(
     )
     # clear the queue before the resets start
     event_store.clear_queue()
+
+    # disable the watchdog timer
+    dish_manager_proxy.watchdogtimeout = 0.0
 
     try:
         spf_device_proxy.ResetToDefault()
@@ -93,3 +96,6 @@ def setup_and_teardown(
         raise RuntimeError(f"DishManager not in STANDBY_LP:\n {component_states}\n") from err
 
     yield
+
+    # disable the watchdog timer
+    dish_manager_proxy.watchdogtimeout = 0.0

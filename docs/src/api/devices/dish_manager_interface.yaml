@@ -83,9 +83,7 @@
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
-        (Should be default to False). Note when ignoring SPFRx, the configuredband
-        on Dish.LMC will always report band B5a when the DS indexerposition is in
-        B5.
+        (Should be default to False).
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVoid
@@ -94,9 +92,7 @@
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
         synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is
         applicable to the band being configured, and the band counters are reset.
-        (Should be default to False). Note when ignoring SPFRx, the configuredband
-        on Dish.LMC will always report band B5a when the DS indexerposition is in
-        B5.
+        (Should be default to False).
       doc_out: Uninitialised
       dtype_in: DevBoolean
       dtype_out: DevVoid
@@ -166,6 +162,15 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
+    - name: ResetWatchdogTimer
+      disp_level: OPERATOR
+      doc_in: This command resets the watchdog timer. `lastWatchdogReset` attribute
+        will be updated with the unix timestamp. By default, the watchdog timer is
+        disabled and can be enabled by setting the `watchdogTimeout` attribute to
+        a value greater than 0.
+      doc_out: Returns a DevVarLongStringArray with the return code and message.
+      dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: Scan
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -224,7 +229,8 @@
       dtype_out: DevVarLongStringArray
     - name: StartCommunication
       disp_level: OPERATOR
-      doc_in: Uninitialised
+      doc_in: Starts communication with subdevices and starts the watchdog timer,
+        if it is configured via `watchdogTimeout` attribute.
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVoid
@@ -242,7 +248,8 @@
       dtype_out: DevString
     - name: StopCommunication
       disp_level: OPERATOR
-      doc_in: Uninitialised
+      doc_in: Stops communication with subdevices and stops the watchdog timer, if
+        it is active.
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVoid
@@ -1184,7 +1191,7 @@
     - name: frequencyResponse
       data_format: IMAGE
       data_type: DevDouble
-      description: Returns the frequencyResponse
+      description: Returns the frequencyResponse.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1300,6 +1307,22 @@
       display_unit: No display unit
       format: '%s'
       label: lastCommandedPointingParams
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lastWatchdogReset
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Returns the timestamp of the last watchdog reset in unix seconds.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: lastWatchdogReset
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
@@ -1491,7 +1514,7 @@
     - name: noiseDiodeConfig
       data_format: SPECTRUM
       data_type: DevDouble
-      description: Returns the noiseDiodeConfig
+      description: Returns the noiseDiodeConfig.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1529,7 +1552,7 @@
       writable_attr_name: noiseDiodeMode
     - name: periodicNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevULong
+      data_type: DevLong64
       description: "\n            Periodic noise diode pars (units are in time quanta).\n\
         \n            [0]: period, [1]: duty cycle, [2]: phase shift\n\n         \
         \   Note: This attribute does not persist after a power cycle. A default value\
@@ -1569,7 +1592,7 @@
     - name: pointingState
       data_format: SCALAR
       data_type: DevEnum
-      description: Returns the pointingState
+      description: Returns the pointingState.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1623,7 +1646,7 @@
     - name: powerState
       data_format: SCALAR
       data_type: DevEnum
-      description: Returns the powerState
+      description: Returns the powerState.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1662,7 +1685,7 @@
       writable_attr_name: programTrackTable
     - name: pseudoRandomNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevULong
+      data_type: DevLong64
       description: "\n            Pseudo random noise diode pars (units are in time\
         \ quanta).\n\n            [0]: binary polynomial, [1]: seed, [2]: dwell\n\n\
         \            Note: This attribute does not persist after a power cycle. A\
@@ -1896,8 +1919,29 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: watchdogTimeout
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Sets dish manager watchdog timeout interval in seconds. By writing
+        a value greater than 0, the watchdog will be enabled. If the watchdog is not
+        reset within this interval, the dish will Stow on expiry of the timer. The
+        watchdog timer can be reset by calling the `ResetWatchdog()` command. The
+        watchdog can be disabled by writing a value less than or equal to 0.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: watchdogTimeout
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: watchdogTimeout
     properties:
     - name: DSDeviceFqdn
+    - name: DefaultWatchdogTimeout
     - name: DishId
     - name: GroupDefinitions
     - name: LoggingLevelDefault

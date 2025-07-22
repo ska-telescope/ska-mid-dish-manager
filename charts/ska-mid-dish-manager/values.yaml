@@ -48,7 +48,7 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 7.4.0
+    tag: 7.5.0
     pullPolicy: IfNotPresent
 
   # Setting fqdn assumes you are only deploying one Dish Manager
@@ -71,6 +71,9 @@ dishmanager:
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"
 
+  watchdog:
+    timeout_seconds: "0.0"  # Default is 0.0 (<= 0 means watchdog timer is disabled)
+
 dev_pod:
   enabled: false
 
@@ -88,6 +91,7 @@ deviceServers:
     enabled: true
 
 ska-mid-wms:
+  enabled: false
   ska-tango-base:
     enabled: false
   deviceServers:
