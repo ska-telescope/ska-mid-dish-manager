@@ -450,7 +450,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         :param: trigger_source: The event requesting the dish to stow.
                  It can be due to either a wind condition or communication loss from client.
         """
+        if self.component_state["dishmode"] == DishMode.STOW:
+            # remove any queued tasks on the task executor
+            self.abort_commands()
+            self.logger.info(f"{trigger_source}: Dish is already in STOW mode, no action taken.")
+            return
+
         retry_interval = 0.1
+        self.logger.info(f"{trigger_source} transitioning dish to STOW.")
 
         while not self._stop_event.is_set():
             wind_stow_id = self._command_tracker.new_command(
@@ -458,13 +465,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             wind_stow_task_cb = partial(self._command_tracker.update_command_info, wind_stow_id)
             task_status, _ = self.set_stow_mode(wind_stow_task_cb)
-            last_commanded_mode = (str(time.time()), trigger_source)
-            self._update_component_state(lastcommandedmode=last_commanded_mode)
 
             if task_status == TaskStatus.COMPLETED:
-                return
-            # attempt stow as fast as possible in the retry
+                break
             self._stop_event.wait(retry_interval)
+
+        last_commanded_mode = (str(time.time()), trigger_source)
+        self._update_component_state(lastcommandedmode=last_commanded_mode)
 
     # ---------
     # Callbacks
@@ -1129,11 +1136,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _stow_on_watchdog_expiry(self) -> None:
         """Stow the dish on watchdog expiry and restart timer if still enabled."""
         self.logger.info("Watchdog timer has expired.")
-        if self.component_state["dishmode"] == DishMode.STOW:
-            self.logger.info("Dish is already in STOW mode, no action taken.")
-        else:
-            self.logger.info("Transitioning dish to STOW.")
-            self._execute_stow_command("HeartbeatStow")
+        self._execute_stow_command("HeartbeatStow")
 
     def _reenable_watchdog_timer(self) -> None:
         """Re-enable the watchdog timer if it was disabled."""
