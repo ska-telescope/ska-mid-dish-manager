@@ -153,8 +153,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._wind_stow_active = False
         self._reset_alarm = False
         self._wind_limits = {
-            "WindGustThreshold": default_mean_wind_speed_threshold,
-            "MeanWindSpeedThreshold": default_wind_gust_threshold,
+            "WindGustThreshold": default_wind_gust_threshold,
+            "MeanWindSpeedThreshold": default_mean_wind_speed_threshold,
         }
 
         # SPF has to go first
