@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import threading
-import time
 from functools import partial
 from threading import Event, Lock, Thread
 from typing import Callable, Dict, List, Optional, Tuple
@@ -79,6 +78,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.tango_device_name = tango_device_name
         self.sub_component_managers = None
         default_watchdog_timeout = kwargs.pop("default_watchdog_timeout", 0.0)
+        default_mean_wind_speed_threshold = kwargs.pop(
+            "default_mean_wind_speed_threshold", MEAN_WIND_SPEED_THRESHOLD_MPS
+        )
+        default_wind_gust_threshold = kwargs.pop(
+            "default_wind_gust_threshold", WIND_GUST_THRESHOLD_MPS
+        )
         super().__init__(
             logger,
             *args,
@@ -146,12 +151,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._wind_stow_active = False
         self._reset_alarm = False
-        self._wind_limits_cache = {
-            "timestamp": time.time(),
-            "limits": {
-                "WindGustThreshold": WIND_GUST_THRESHOLD_MPS,
-                "MeanWindSpeedThreshold": MEAN_WIND_SPEED_THRESHOLD_MPS,
-            },
+        self._wind_limits = {
+            "WindGustThreshold": default_mean_wind_speed_threshold,
+            "MeanWindSpeedThreshold": default_wind_gust_threshold,
         }
 
         # SPF has to go first
@@ -440,56 +442,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Could not update memorized attributes. Failed to connect to database."
             )
 
-    def get_device_property_value(self, property_name: str | List[str]) -> Dict[str, List]:
-        """Get the value of a device property.
-
-        :param property_name: The name of the property to retrieve (str or list of str).
-        :return: A dict with property name as key and a list as value.
-
-        :raises AssertionError: if property_name is not a string or list of strings.
-        :raises RuntimeError: if the property cannot be retrieved from the device.
-        """
-        assert isinstance(property_name, (str, list)), "property_name must be str or list[str]"
-        self.logger.debug(
-            "Getting device property value for %s on device %s.",
-            property_name,
-            self.tango_device_name,
-        )
-        try:
-            database = tango.Database()
-            device_property = database.get_device_property(self.tango_device_name, property_name)
-            return device_property
-        except tango.DevFailed:
-            raise RuntimeError(
-                f"Failed to get property '{property_name}' from device '{self.tango_device_name}'."
-            )
-
-    def _fetch_wind_limits(self, cache_max_age: Optional[int] = 10) -> Dict[str, float]:
-        """Fetch the configured wind limits from the device properties or cache.
-
-        :param cache_max_age: Maximum age (in seconds) for cached wind limits.
-                If the cache is older than this value, the device properties are queried again.
-                Defaults to 10 seconds.
-        :return: A dict with fresh or cached wind limits
-        """
-        self.logger.debug("Fetching configured wind limits from device properties.")
-
-        wind_thresholds = list(self._wind_limits_cache["limits"].keys())
-
-        now = time.time()
-        if now - self._wind_limits_cache["timestamp"] > cache_max_age:
-            try:
-                configured_limits = self.get_device_property_value(wind_thresholds)
-                for threshold in wind_thresholds:
-                    threshold_value = float(configured_limits[threshold][0])
-                    self._wind_limits_cache["limits"][threshold] = threshold_value
-            except (AssertionError, RuntimeError, ValueError):
-                self.logger.debug("Failed to fetch or convert wind limits from device properties.")
-            else:
-                self._wind_limits_cache["timestamp"] = now
-
-        return self._wind_limits_cache["limits"]
-
     def _execute_stow_command(self, trigger_source: str) -> None:
         """Handle automatic stow command execution.
 
@@ -525,14 +477,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         auto_wind_stow_enabled = self.component_state.get("autowindstowenabled")
 
         if auto_wind_stow_enabled:
-            wind_limits = self._fetch_wind_limits()
             # determine if any computed average exceeds its configured threshold
             mean_wind_speed = computed_averages.get("meanwindspeed", -1)
-            mean_threshold = wind_limits.get("MeanWindSpeedThreshold")
+            mean_threshold = self._wind_limits.get("MeanWindSpeedThreshold")
             mean_wind_speed_exceeded = mean_wind_speed > mean_threshold
 
             wind_gust = computed_averages.get("windgust", -1)
-            gust_threshold = wind_limits.get("WindGustThreshold")
+            gust_threshold = self._wind_limits.get("WindGustThreshold")
             wind_gust_exceeded = wind_gust > gust_threshold
 
             if mean_wind_speed_exceeded or wind_gust_exceeded:
