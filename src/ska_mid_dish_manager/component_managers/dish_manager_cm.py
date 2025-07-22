@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import threading
+import time
 from functools import partial
 from threading import Event, Lock, Thread
 from typing import Callable, Dict, List, Optional, Tuple
@@ -457,6 +458,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             wind_stow_task_cb = partial(self._command_tracker.update_command_info, wind_stow_id)
             task_status, _ = self.set_stow_mode(wind_stow_task_cb)
+            last_commanded_mode = (str(time.time()), trigger_source)
+            self._update_component_state(lastcommandedmode=last_commanded_mode)
 
             if task_status == TaskStatus.COMPLETED:
                 return
@@ -1130,7 +1133,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.info("Dish is already in STOW mode, no action taken.")
         else:
             self.logger.info("Transitioning dish to STOW.")
-            self._execute_stow_command("TMCHeartbeatStow")
+            self._execute_stow_command("HeartbeatStow")
 
     def _reenable_watchdog_timer(self) -> None:
         """Re-enable the watchdog timer if it was disabled."""

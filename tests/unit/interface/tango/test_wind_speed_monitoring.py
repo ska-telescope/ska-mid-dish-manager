@@ -124,6 +124,8 @@ def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
     lrc_progress_event_values = progress_event_store.get_queue_values()
     lrc_progress_event_values = "".join([str(event[1]) for event in lrc_progress_event_values])
     assert expected_progress_update in lrc_progress_event_values
+    _, requested_action = device_proxy.lastCommandedMode
+    assert requested_action == "WindStow"
 
     # the status attribute will report wind stow action
     computed_averages = {"meanwindspeed": expected_mean_wind_speed}
@@ -186,6 +188,8 @@ def test_wind_stow_triggered_on_wind_gust_exceeding_threshold(
     lrc_progress_event_values = progress_event_store.get_queue_values()
     lrc_progress_event_values = "".join([str(event[1]) for event in lrc_progress_event_values])
     assert expected_progress_update in lrc_progress_event_values
+    _, requested_action = device_proxy.lastCommandedMode
+    assert requested_action == "WindStow"
 
     # the status attribute will report wind stow action
     computed_averages = {"windgust": expected_wind_gust}
