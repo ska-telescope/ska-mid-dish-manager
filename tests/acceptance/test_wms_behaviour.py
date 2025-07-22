@@ -28,8 +28,7 @@ def test_change_events_configured_for_wind_gust(
         main_event_store,
     )
 
-    windgust_event_value = main_event_store.get_queue_values()
-    assert windgust_event_value
+    assert main_event_store.wait_for_n_events(event_count=1)
 
 
 @pytest.mark.acceptance
@@ -45,5 +44,4 @@ def test_change_events_configured_for_mean_wind_speed(
         main_event_store,
     )
 
-    mean_windspeed_event_value = main_event_store.get_queue_values()
-    assert mean_windspeed_event_value
+    assert main_event_store.wait_for_n_events(event_count=1)

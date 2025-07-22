@@ -27,7 +27,7 @@ dishmanager:
     WindGustThreshold: "16.9"
 
 ska-mid-wms:
-  enabled: false
+  enabled: true
   ska-tango-base:
     enabled: false
     itango:
