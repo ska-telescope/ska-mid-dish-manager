@@ -40,7 +40,7 @@ def test_stow_on_timeout(event_store_class, dish_manager_proxy):
     # Wait for the dish to stow
     main_event_store.wait_for_value(DishMode.STOW, 120)
     _, requested_action = dish_manager_proxy.lastCommandedMode
-    assert requested_action == "HeartbeatStow"
+    assert requested_action == "TMCHeartbeatStow"
 
     dish_manager_proxy.unsubscribe_event(dish_mode_id)
 
@@ -81,7 +81,7 @@ def test_watchdog_reset(event_store_class, dish_manager_proxy):
     # Wait for the dish to stow
     main_event_store.wait_for_value(DishMode.STOW, 120)
     _, requested_action = dish_manager_proxy.lastCommandedMode
-    assert requested_action == "HeartbeatStow"
+    assert requested_action == "TMCHeartbeatStow"
 
     dish_manager_proxy.unsubscribe_event(dish_mode_id)
 
@@ -147,7 +147,7 @@ def test_watchdog_repeat_stow_without_reset(event_store_class, dish_manager_prox
     # Wait for the dish to stow
     main_event_store.wait_for_value(DishMode.STOW, 120)
     _, requested_action = dish_manager_proxy.lastCommandedMode
-    assert requested_action == "HeartbeatStow"
+    assert requested_action == "TMCHeartbeatStow"
 
     for _ in range(5):
         dish_manager_proxy.SetStandbyLPMode()
@@ -157,7 +157,7 @@ def test_watchdog_repeat_stow_without_reset(event_store_class, dish_manager_prox
         time.sleep(WDT_TIMEOUT + 1.0)
         main_event_store.wait_for_value(DishMode.STOW, 20)
         _, requested_action = dish_manager_proxy.lastCommandedMode
-        assert requested_action == "HeartbeatStow"
+        assert requested_action == "TMCHeartbeatStow"
 
     dish_manager_proxy.unsubscribe_event(dish_mode_id)
 
