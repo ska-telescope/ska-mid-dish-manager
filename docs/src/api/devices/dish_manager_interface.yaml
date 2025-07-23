@@ -456,7 +456,7 @@
     - name: autoWindStowEnabled
       data_format: SCALAR
       data_type: DevBoolean
-      description: "\n            Toggle to enable or disable auto wind stow on wind\
+      description: "\n            Flag to enable or disable auto wind stow on wind\
         \ speed\n            or wind gust for values exeeding the configured threshold.\n\
         \            "
       disp_level: OPERATOR
@@ -1954,15 +1954,6 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
-    - name: windGust
-      data_format: SCALAR
-      data_type: DevDouble
-      description: "\n            The average wind speed in m/s of the last 3 seconds\n\
-        \            calculated from the connected weather stations.\n            "
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: windGust
     - name: watchdogTimeout
       data_format: SCALAR
       data_type: DevDouble
@@ -1981,10 +1972,45 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
       writable: READ_WRITE
       writable_attr_name: watchdogTimeout
+    - name: windGust
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "\n            The maximum wind speed in m/s of the last 3 seconds\n\
+        \            calculated from the connected weather stations.\n            "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: windGust
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: wmsConnectionState
+      data_format: SCALAR
+      data_type: DevEnum
+      description: Displays connection status to wms device
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - DISABLED
+      - NOT_ESTABLISHED
+      - ESTABLISHED
+      format: '%s'
+      label: wmsConnectionState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     properties:
     - name: DSDeviceFqdn
     - name: DefaultWatchdogTimeout

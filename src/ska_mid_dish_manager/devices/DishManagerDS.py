@@ -1498,7 +1498,7 @@ class DishManager(SKAController):
         dtype=float,
         access=AttrWriteType.READ,
         doc="""
-            The average wind speed in m/s of the last 3 seconds
+            The maximum wind speed in m/s of the last 3 seconds
             calculated from the connected weather stations.
             """,
     )

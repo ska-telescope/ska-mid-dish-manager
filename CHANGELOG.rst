@@ -8,18 +8,25 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Added functionality to stow dish when watchdog timer is enabled and the timer expires.
+
   - Added new command `ResetWatchdogTimer()` to reset the watchdog timer.
   - Added new attribute `watchdogtimeout` to enable or disable the watchdog timer.
   - Added new attribute `lastwatchdogreset` to report the last time the watchdog timer was reset.
+
+- Extended interface to expose monitoring points for mean wind speed and wind gust.
+
+  - Added new attribute `autoWindStowEnabled` to enable or disable reaction to strong winds.
+  - Added new attribute `meanWindSpeed` to report the average wind speed of the last 10 minutes.
+  - Added new attribute `windGust` to report the max wind speed of the last 3 seconds.
 
 Version 7.5.0
 *************
 - Added connection workaround for SPFRx attributes that have invalid quality on startup
 - Partial SetMaintenanceMode implementation. It may not work as expected until SPFRx implements the changes to adminMode
-- Extended interface to expose monitoring points for mean wind speed and wind gust.
 - Add test_track_pattern acceptance test to run tracking test with track table input from csv files
 
   - Add manual job (k8s-test-runner-track-patterns) to gitlab pipeline to run test_track_pattern acceptance test
+
 - Updated periodicNoiseDiodePars and pseudoRandomNoiseDiodePars to be DevVarLong64Array - (DevLong64,)
 - Upgraded ska-mid-dish-simulators chart to v4.5.1
 - Upgraded ska-mid-dish-ds-manager chart to v6.0.0
@@ -106,7 +113,7 @@ Version 6.0.1
 
 Version 6.0.0
 *************
-- Added unit and range verification checks to `ApplyPointingModel`command
+- Added unit and range verification checks to `ApplyPointingModel` command
 - Added in Read/Write dscPowerLimitKw attribute to be used when SetStandbyFPMode, SetStandbyLPMode and Slew are invoked.
 - Upgraded ska-mid-dish-ds-manager chart to v3.0.0
 - Upgraded ska-mid-dish-simulators to v4.2.1
