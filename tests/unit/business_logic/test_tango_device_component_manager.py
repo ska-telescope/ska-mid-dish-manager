@@ -16,8 +16,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def comm_state_callback(signal: threading.Event, communication_state: CommunicationStatus):
-    if communication_state == CommunicationStatus.ESTABLISHED:
-        signal.set()
+    pass
 
 
 def construct_mock_valid_event_data(attr_name: str) -> tango.EventData:
@@ -212,7 +211,6 @@ def test_device_goes_away(patch_dp, caplog):
     tc_manager._events_queue.put(mock_some_other_attr_event_data)
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
-    communication_state_changed.clear()
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # Set up an error mock event (API_MissedEvent), no action taken
@@ -223,7 +221,6 @@ def test_device_goes_away(patch_dp, caplog):
     tc_manager._events_queue.put(mock_some_attr_error_event_data)
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
-    communication_state_changed.clear()
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # Set up an error mock event (API_EventTimeout)
@@ -234,7 +231,6 @@ def test_device_goes_away(patch_dp, caplog):
     tc_manager._events_queue.put(mock_some_attr_error_event_data)
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
-    communication_state_changed.clear()
     assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
 
     # trigger a valid event

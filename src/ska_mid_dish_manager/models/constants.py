@@ -5,6 +5,7 @@ DEFAULT_DISH_MANAGER_TRL = "mid-dish/dish-manager/SKA001"
 DEFAULT_DS_MANAGER_TRL = "mid-dish/ds-manager/SKA001"
 DEFAULT_SPFC_TRL = "mid-dish/simulator-spfc/SKA001"
 DEFAULT_SPFRX_TRL = "mid-dish/simulator-spfrx/SKA001"
+DEFAULT_WMS_TRL = "ska-mid/weather-monitoring/1"
 DEFAULT_WATCHDOG_TIMEOUT = 0.0
 BAND_POINTING_MODEL_PARAMS_LENGTH = 18
 DSC_MAX_POWER_LIMIT_KW = 20.0

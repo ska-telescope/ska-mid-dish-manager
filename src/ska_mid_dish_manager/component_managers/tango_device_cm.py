@@ -31,8 +31,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         quality_monitored_attributes: Tuple[str, ...] = (),
         **kwargs: Any,
     ):
-        self._communication_state_callback = communication_state_callback
-        self._component_state_callback = component_state_callback
         self._quality_state_callback = quality_state_callback
         self._events_queue: Queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn

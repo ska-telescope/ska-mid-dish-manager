@@ -164,10 +164,13 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
-            default_watchdog_timeout=self.DefaultWatchdogTimeout,
-            wms_device_names=self.WMSDeviceNames,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
+            wms_device_names=self.WMSDeviceNames,
+            wind_stow_callback=self._wind_stow_inform,
+            default_watchdog_timeout=self.DefaultWatchdogTimeout,
+            default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
+            default_wind_gust_threshold=self.WindGustThreshold,
         )
 
     def init_command_objects(self) -> None:
@@ -268,6 +271,11 @@ class DishManager(SKAController):
                     attribute_object.set_quality(new_attribute_quality, True)
 
     def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
+        wind_stow_active = self.component_manager.wind_stow_active
+        if wind_stow_active:
+            return
+
+        # gets its turn when wind condition is normal
         alarm_status_msg = (
             "Event channel on a sub-device is not responding anymore "
             "or change event subscription is not complete"
@@ -308,6 +316,27 @@ class DishManager(SKAController):
             setattr(self, attribute_variable, comp_state_value)
             self.push_change_event(attribute_name, comp_state_value)
             self.push_archive_event(attribute_name, comp_state_value)
+
+    def _wind_stow_inform(self, **computed_averages):
+        """Updates the device state and status based on wind condition.
+
+        If the dish is stowed due to high wind and the alarm has not been cleared,
+        the device enters ALARM state with a message showing the wind data.
+
+        If the dish is stowed but conditions have normalized (alarm reset allowed),
+        the device returns to ON state and the stow flag is cleared.
+        """
+        wind_stow_active = self.component_manager.wind_stow_active
+        reset_alarm = self.component_manager.reset_alarm
+
+        if wind_stow_active and not reset_alarm:
+            alarm_status_msg = f"Dish stowed due to extreme wind condition: {computed_averages}."
+            dev_state, dev_status = DevState.ALARM, alarm_status_msg
+            self._update_state(dev_state, dev_status)
+        elif wind_stow_active and reset_alarm:
+            self._update_state(DevState.ON, None)
+            # ensure this runs only once after the conditions return to normal
+            self.component_manager.wind_stow_active = False
 
     class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
         """A class for the Dish Manager's init_device() method."""
@@ -386,6 +415,7 @@ class DishManager(SKAController):
                 "spfconnectionstate": "spfConnectionState",
                 "spfrxconnectionstate": "spfrxConnectionState",
                 "dsconnectionstate": "dsConnectionState",
+                "wmsconnectionstate": "wmsConnectionState",
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
@@ -507,6 +537,17 @@ class DishManager(SKAController):
         """Returns the ds connection state."""
         return self.component_manager.component_state.get(
             "dsconnectionstate", CommunicationStatus.NOT_ESTABLISHED
+        )
+
+    @attribute(
+        dtype=CommunicationStatus,
+        access=AttrWriteType.READ,
+        doc="Displays connection status to wms device",
+    )
+    def wmsConnectionState(self):
+        """Returns the wms connection state."""
+        return self.component_manager.component_state.get(
+            "wmsconnectionstate", CommunicationStatus.NOT_ESTABLISHED
         )
 
     @attribute(
@@ -1469,19 +1510,26 @@ class DishManager(SKAController):
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
         doc="""
-            Toggle to enable or disable auto wind stow on wind speed
+            Flag to enable or disable auto wind stow on wind speed
             or wind gust for values exeeding the configured threshold.
             """,
     )
     def autoWindStowEnabled(self):
-        """Returns the value for the auto wind stow toggle."""
+        """Returns the value for the auto wind stow flag."""
+        # Ideally, the default should be True (pretty much like auto record on zoom).
+        # This will remain False pending decision on which subsystem will monitor WMS
         return self.component_manager.component_state.get("autowindstowenabled", False)
 
     @autoWindStowEnabled.write
-    def autoWindStowEnabled(self, toggle: bool):
-        """Toggle the auto wind stow on or off."""
-        self.logger.debug("autoWindStowEnabled updated to, %s", toggle)
-        self.component_manager._update_component_state(autowindstowenabled=toggle)
+    def autoWindStowEnabled(self, enabled: bool):
+        """Flag to toggle the auto wind stow on or off."""
+        self.logger.debug("autoWindStowEnabled updated to, %s", enabled)
+        self.component_manager._update_component_state(autowindstowenabled=enabled)
+        # if flag is disabled mid operation, the device might stay
+        # in ALARM forever, the wind_stow_active flag should be unset
+        # to allow other functions depending on its value unblocked
+        if not enabled:
+            self.component_manager.wind_stow_active = enabled
 
     # --------
     # Commands
@@ -1995,7 +2043,7 @@ class DishManager(SKAController):
     def GetComponentStates(self):
         """Get the current component states of subservient devices.
 
-        Subservient devices constiture SPF, SPFRx and DS. Used for debugging.
+        Subservient devices constiture SPF, SPFRx, DS and WMS. Used for debugging.
         """
         component_states = {}
         for (
