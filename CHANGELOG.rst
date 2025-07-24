@@ -19,6 +19,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
   - Added new attribute `meanWindSpeed` to report the average wind speed of the last 10 minutes.
   - Added new attribute `windGust` to report the max wind speed of the last 3 seconds.
 
+- Upgraded ska-mid-wms sub chart to v1.0.0
+
 Version 7.5.0
 *************
 - Added connection workaround for SPFRx attributes that have invalid quality on startup
