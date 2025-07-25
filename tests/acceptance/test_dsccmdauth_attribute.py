@@ -36,4 +36,4 @@ def test_dsccmdauth_attr(
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=8)
 
     # Check the DSC Command Authority has updated to LMC
-    ds_device_proxy.dscCmdAuth == dish_manager_proxy.dsc.Cmd.Auth == DscCmdAuthType.LMC
+    ds_device_proxy.dscCmdAuth == dish_manager_proxy.dscCmdAuth == DscCmdAuthType.LMC
