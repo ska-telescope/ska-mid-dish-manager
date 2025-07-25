@@ -16,6 +16,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
+    DEFAULT_WMS_TRL,
 )
 from tests.utils import ComponentStateStore, EventStore
 
@@ -101,6 +102,11 @@ def spfrx_device_fqdn():
 
 
 @pytest.fixture
+def wms_device_fqdn():
+    return DEFAULT_WMS_TRL
+
+
+@pytest.fixture
 def dish_manager_proxy(dish_manager_device_fqdn):
     return tango.DeviceProxy(dish_manager_device_fqdn)
 
@@ -118,6 +124,11 @@ def spf_device_proxy(spf_device_fqdn):
 @pytest.fixture
 def spfrx_device_proxy(spfrx_device_fqdn):
     return tango.DeviceProxy(spfrx_device_fqdn)
+
+
+@pytest.fixture
+def wms_device_proxy(wms_device_fqdn):
+    return tango.DeviceProxy(wms_device_fqdn)
 
 
 @dataclass

@@ -74,6 +74,12 @@ dishmanager:
   watchdog:
     timeout_seconds: "0.0"  # Default is 0.0 (<= 0 means watchdog timer is disabled)
 
+  windLimits:
+    # Wind speed in m/s
+    MeanWindSpeedThreshold: "11.1"
+    # Wind gust in m/s
+    WindGustThreshold: "16.9"
+
 dev_pod:
   enabled: false
 
@@ -94,38 +100,13 @@ ska-mid-wms:
   enabled: false
   ska-tango-base:
     enabled: false
+    itango:
+      enabled: false
   deviceServers:
-    # Default TRL: mid/wms/<instance number> eg: mid/wms/0
-    # Uncomment the below to set a custom TRL, host or port
-    wms0:
-      enabled: false
-      # server:
-      #   name: "WMSDevice"
-      #   instances:
-      #   - name: "wms0"
-      #     classes:
-      #     - name: WMSDevice
-      #       devices:
-      #         - dev01:
-      #           name: "custom/wmsTrl/0"
-      #           properties:
-      #           - name: "Host"
-      #             values:
-      #             - "wms-sim-0"
-      #           - name: "Port"
-      #             values:
-      #             - "1502" 
-    wms1:
-      enabled: false
-    wms2:
-      enabled: false
-    wms3:
-      enabled: false
-    wms4:
-      enabled: false
-  # Specify set of simulated WMS servers to connect to
-  # each WMSDevice instance where hardware is unavailable 
-  # eg: if "wm0" and "wm1" enabled, then simulator config is
-  # weatherStations: ["0", "1"].
+    wms:
+      enabled: true
+      station_ids: ["1"]
+      modbus_server_hostnames: ["wms-sim-1"]
+      modbus_server_ports: ["1502"]
   simulator:
-    weatherStations: []
+    enabled: True

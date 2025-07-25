@@ -3,6 +3,8 @@
 import json
 import logging
 import os
+import threading
+import time
 from functools import partial
 from threading import Event, Lock, Thread
 from typing import Callable, Dict, List, Optional, Tuple
@@ -14,11 +16,14 @@ from ska_tango_base.executor import TaskExecutorComponentManager
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
+from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DSC_MIN_POWER_LIMIT_KW,
+    MEAN_WIND_SPEED_THRESHOLD_MPS,
+    WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -52,7 +57,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     """A component manager for DishManager.
 
     It watches the component managers of the subservient devices
-    (DS, SPF, SPFRX) to reflect the state of the Dish LMC.
+    (DS, SPF, SPFRX, WMS) to aggregate the state of Dish LMC.
     """
 
     def __init__(
@@ -66,12 +71,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
         *args,
+        wms_device_names: Optional[List[str]] = [],
+        wind_stow_callback: Optional[Callable] = None,
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
         self.tango_device_name = tango_device_name
         self.sub_component_managers = None
-        default_watchdog_timeout = kwargs.get("default_watchdog_timeout", 0.0)
+        default_watchdog_timeout = kwargs.pop("default_watchdog_timeout", 0.0)
+        default_mean_wind_speed_threshold = kwargs.pop(
+            "default_mean_wind_speed_threshold", MEAN_WIND_SPEED_THRESHOLD_MPS
+        )
+        default_wind_gust_threshold = kwargs.pop(
+            "default_wind_gust_threshold", WIND_GUST_THRESHOLD_MPS
+        )
         super().__init__(
             logger,
             *args,
@@ -89,6 +102,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            wmsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             band0pointingmodelparams=[],
             band1pointingmodelparams=[],
             band2pointingmodelparams=[],
@@ -118,19 +132,31 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
             lastwatchdogreset=0.0,
             watchdogtimeout=default_watchdog_timeout,
+            autowindstowenabled=False,
+            meanwindspeed=-1,
+            windgust=-1,
+            lastcommandedmode=("0.0", ""),
             **kwargs,
         )
         self.logger = logger
         self._build_state_callback = build_state_callback
         self._quality_state_callback = quality_state_callback
+        self._wind_stow_callback = wind_stow_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
         self._abort_thread: Optional[Thread] = None
+        self._stop_event = threading.Event()
         self.watchdog_timer = WatchdogTimer(
             callback_on_timeout=self._stow_on_watchdog_expiry,
         )
+        self._wind_stow_active = False
+        self._reset_alarm = False
+        self._wind_limits = {
+            "WindGustThreshold": default_wind_gust_threshold,
+            "MeanWindSpeedThreshold": default_mean_wind_speed_threshold,
+        }
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -220,6 +246,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
+            "WMS": WMSComponentManager(
+                wms_device_names,
+                logger=logger,
+                component_state_callback=self._evaluate_wind_speed_averages,
+                communication_state_callback=partial(
+                    self._update_connection_state_attribute, DishDevice.WMS
+                ),
+                state_update_lock=self._state_update_lock,
+                meanwindspeed=-1,
+                windgust=-1,
+            ),
         }
 
         self._command_map = CommandMap(
@@ -252,6 +289,34 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Command Handlers
         # ----------------
         self._abort_handler = Abort(self, self._command_map, self._command_tracker, logger=logger)
+
+    @property
+    def wind_stow_active(self) -> bool:
+        """Indicates whether the dish has been automatically stowed due to strong winds."""
+        return self._wind_stow_active
+
+    @wind_stow_active.setter
+    def wind_stow_active(self, value):
+        """Sets the wind stow active state.
+
+        When True, it means the dish is stowed due to strong wind and prevents repeated stow
+        commands while wind remains high. The device sets it back to False after the wind
+        alarm is cleared.
+        """
+        self._wind_stow_active = value
+
+    @property
+    def reset_alarm(self) -> bool:
+        """Indicates whether the wind stow alarm can be cleared."""
+        return self._reset_alarm
+
+    @reset_alarm.setter
+    def reset_alarm(self, value):
+        """Sets the flag to indicate whether the wind stow alarm can be cleared.
+
+        This should be set to True only after wind speeds have dropped back to safe levels.
+        """
+        self._reset_alarm = value
 
     # --------------
     # Helper methods
@@ -379,6 +444,35 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Could not update memorized attributes. Failed to connect to database."
             )
 
+    def _execute_stow_command(self, trigger_source: str) -> None:
+        """Handle automatic stow command execution.
+
+        :param: trigger_source: The event requesting the dish to stow.
+                 It can be due to either a wind condition or communication loss from client.
+        """
+        if self.component_state["dishmode"] == DishMode.STOW:
+            # remove any queued tasks on the task executor
+            self.abort_commands()
+            self.logger.info(f"{trigger_source}: Dish is already in STOW mode, no action taken.")
+            return
+
+        retry_interval = 0.1
+        self.logger.info(f"{trigger_source} transitioning dish to STOW.")
+
+        while not self._stop_event.is_set():
+            wind_stow_id = self._command_tracker.new_command(
+                f"{trigger_source}", completed_callback=None
+            )
+            wind_stow_task_cb = partial(self._command_tracker.update_command_info, wind_stow_id)
+            task_status, _ = self.set_stow_mode(wind_stow_task_cb)
+
+            if task_status == TaskStatus.COMPLETED:
+                break
+            self._stop_event.wait(retry_interval)
+
+        last_commanded_mode = (str(time.time()), trigger_source)
+        self._update_component_state(lastcommandedmode=last_commanded_mode)
+
     # ---------
     # Callbacks
     # ---------
@@ -388,6 +482,35 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ):
         state_name = f"{device.lower()}connectionstate"
         self._update_component_state(**{state_name: connection_state})
+
+    def _evaluate_wind_speed_averages(self, **computed_averages):
+        """Evaluate wind speed averages and trigger auto stow if necessary."""
+        auto_wind_stow_enabled = self.component_state.get("autowindstowenabled")
+
+        if auto_wind_stow_enabled:
+            # determine if any computed average exceeds its configured threshold
+            mean_wind_speed = computed_averages.get("meanwindspeed", -1)
+            mean_threshold = self._wind_limits.get("MeanWindSpeedThreshold")
+            mean_wind_speed_exceeded = mean_wind_speed > mean_threshold
+
+            wind_gust = computed_averages.get("windgust", -1)
+            gust_threshold = self._wind_limits.get("WindGustThreshold")
+            wind_gust_exceeded = wind_gust > gust_threshold
+
+            if mean_wind_speed_exceeded or wind_gust_exceeded:
+                # trigger stow only once over the duration of an extreme condition
+                if not self.wind_stow_active:
+                    self._execute_stow_command("WindStow")
+                self.wind_stow_active = True
+                self.reset_alarm = False
+            else:
+                self.reset_alarm = True
+
+            if self._wind_stow_callback is not None:
+                self._wind_stow_callback(**computed_averages)
+
+        # update the attributes with the computed averages
+        self._update_component_state(**computed_averages)
 
     def _sub_device_communication_state_changed(
         self, device: DishDevice, communication_state: CommunicationStatus
@@ -715,6 +838,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def start_communicating(self):
         """Connect to monitored devices and start watchdog timer."""
+        self._stop_event.clear()
         # Enable the watchdog timer if configured
         if self.component_state["watchdogtimeout"] > 0:
             self.watchdog_timer.enable(timeout=self.component_state["watchdogtimeout"])
@@ -733,6 +857,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # TODO: update attribute read callbacks to indicate attribute
         # reads cannot be trusted after communication is stopped
+        self._stop_event.set()
         if self.sub_component_managers:
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
@@ -773,7 +898,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Syncing component states")
         if self.sub_component_managers:
             for device, component_manager in self.sub_component_managers.items():
-                if not self.is_device_ignored(device):
+                if not self.is_device_ignored(device) and device != "WMS":
                     component_manager.clear_monitored_attributes()
                     component_manager.update_state_from_monitored_attributes()
 
@@ -1011,12 +1136,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _stow_on_watchdog_expiry(self) -> None:
         """Stow the dish on watchdog expiry and restart timer if still enabled."""
         self.logger.info("Watchdog timer has expired.")
-        if self.component_state["dishmode"] == DishMode.STOW:
-            self.logger.info("Dish is already in STOW mode, no action taken.")
-        else:
-            self.logger.info("Transitioning dish to STOW.")
-            # TODO: replace with reliable stow execution from wind stow MR
-            self.set_stow_mode()
+        self._execute_stow_command("TMCHeartbeatStow")
 
     def _reenable_watchdog_timer(self) -> None:
         """Re-enable the watchdog timer if it was disabled."""

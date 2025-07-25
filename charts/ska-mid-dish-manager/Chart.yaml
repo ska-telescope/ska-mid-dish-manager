@@ -37,9 +37,7 @@ dependencies:
   version: 6.0.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-ds-manager.enabled
-
-# Explicitly disabling for now until weatherstation implementation is ready.
-# - name: ska-mid-wms
-#   version: 0.4.0
-#   repository: https://artefact.skao.int/repository/helm-internal
-#   condition: ska-mid-wms.enabled
+- name: ska-mid-wms
+  version: 1.0.0
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-mid-wms.enabled

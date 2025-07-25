@@ -71,7 +71,7 @@ class MonitorPing(threading.Thread):
                     if self._device_proxy is None:
                         self._logger.error(error_msg["type_error"])
                     else:
-                        self._logger.exception(error_msg["other_errors"])
+                        self._logger.error(error_msg["other_errors"])
                     self._log_counter += 1
 
 
