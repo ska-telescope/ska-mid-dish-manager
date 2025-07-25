@@ -49,6 +49,7 @@ class DishModeModel:
         # From Startup to other modes
         dishmode_graph.add_edge("STARTUP", "STANDBY_LP")
         dishmode_graph.add_edge("STARTUP", "STANDBY_FP")
+        dishmode_graph.add_edge("STARTUP", "STOW")
 
         # From Standby_LP to other modes
         dishmode_graph.add_edge("STANDBY_LP", "STANDBY_FP", commands=["SetStandbyFPMode"])
@@ -64,8 +65,8 @@ class DishModeModel:
         dishmode_graph.add_edge("OPERATE", "CONFIG", commands=CONFIG_COMMANDS)
 
         # From Config to other modes
-        dishmode_graph.add_edge("CONFIG", "STANDBY_FP")  # Only if the configuration failed
-        dishmode_graph.add_edge("CONFIG", "STANDBY_LP")  # Only if the configuration failed
+        dishmode_graph.add_edge("CONFIG", "STANDBY_FP")
+        dishmode_graph.add_edge("CONFIG", "STANDBY_LP")
         dishmode_graph.add_edge("CONFIG", "OPERATE")
         # config to stow is covered in "any mode to stow" but that
         # transition must be triggered by the SetStowMode cmd
@@ -75,15 +76,11 @@ class DishModeModel:
         # From Stow to other modes
         dishmode_graph.add_edge("STOW", "STANDBY_FP", commands=["SetStandbyFPMode"])
         dishmode_graph.add_edge("STOW", "STANDBY_LP", commands=["SetStandbyLPMode"])
-        # TODO: Review whether you are supposed to be allowed to go from STOW to config.
-        # The ICD doesnt mention it explicitly but its said to be possible in the document
-        # comments
-        dishmode_graph.add_edge("STOW", "CONFIG", commands=CONFIG_COMMANDS)
+        dishmode_graph.add_edge("STOW", "MAINTENANCE")  # Auto transitional STOW to MAINTENANCE
 
         # From any mode to Stow
-        # TODO: Review new TM-DISH ICD. The call to SetStowMode only
-        # seems to be allowed in LP, FP and MAINTENANCES dish modes, where the
-        # states and modes ICD allows STOW to be requested from any dish mode
+        # TODO: Review new states and modes ICD. The call to SetStowMode only
+        # seems to be allowed in LP, FP and MAINTENANCES dish modes
         for node in DISH_MODE_NODES:
             if node == "STOW":
                 continue
@@ -91,10 +88,7 @@ class DishModeModel:
 
         # From any mode to MAINTENANCE (via STOW as a transitional state)
         for node in DISH_MODE_NODES:
-            if node in ["MAINTENANCE", "SHUTDOWN"]:
-                # TODO: Seek clarity on whether MAINTENANCE can be
-                # requested from SHUTDOWN as the ICD mentions the
-                # that MAINTENANCE can be requested from any dish Mode
+            if node in ["MAINTENANCE", "SHUTDOWN", "STARTUP"]:
                 continue
             dishmode_graph.add_edge(node, "MAINTENANCE", commands=["SetMaintenanceMode"])
 

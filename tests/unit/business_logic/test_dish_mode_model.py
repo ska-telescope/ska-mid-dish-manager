@@ -21,6 +21,8 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
         assert dish_mode_enum.name in dish_mode_model.dishmode_graph.nodes
 
 
+# TODO: There are contradictory points around whether SetOperateMode is still a valid command
+# or not. Review, and if it is still valid, add the below list of permutations to test
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "current_mode,requested_command,expected_response",
@@ -28,7 +30,7 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
         ("SHUTDOWN", "SetStandbyFPMode", False),
         ("SHUTDOWN", "SetStowMode", True),
         ("SHUTDOWN", "SetStandbyLPMode", False),
-        ("SHUTDOWN", "SetMaintenanceMode", False),  # TODO: REVIEW
+        ("SHUTDOWN", "SetMaintenanceMode", False),
         ("SHUTDOWN", "ConfigureBand1", False),
         ("SHUTDOWN", "ConfigureBand2", False),
         ("SHUTDOWN", "ConfigureBand3", False),
@@ -38,7 +40,7 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
         ("STARTUP", "SetStandbyFPMode", False),
         ("STARTUP", "SetStowMode", True),
         ("STARTUP", "SetStandbyLPMode", False),
-        ("STARTUP", "SetMaintenanceMode", True),
+        ("STARTUP", "SetMaintenanceMode", False),
         ("STARTUP", "ConfigureBand1", False),
         ("STARTUP", "ConfigureBand2", False),
         ("STARTUP", "ConfigureBand3", False),
@@ -79,12 +81,12 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
         ("STOW", "SetStowMode", False),
         ("STOW", "SetStandbyLPMode", True),
         ("STOW", "SetMaintenanceMode", True),
-        ("STOW", "ConfigureBand1", True),  # TODO: REVIEW
-        ("STOW", "ConfigureBand2", True),  # TODO: REVIEW
-        ("STOW", "ConfigureBand3", True),  # TODO: REVIEW
-        ("STOW", "ConfigureBand4", True),  # TODO: REVIEW
-        ("STOW", "ConfigureBand5a", True),  # TODO: REVIEW
-        ("STOW", "ConfigureBand5b", True),  # TODO: REVIEW
+        ("STOW", "ConfigureBand1", False),
+        ("STOW", "ConfigureBand2", False),
+        ("STOW", "ConfigureBand3", False),
+        ("STOW", "ConfigureBand4", False),
+        ("STOW", "ConfigureBand5a", False),
+        ("STOW", "ConfigureBand5b", False),
         ("CONFIG", "SetStowMode", True),
         ("CONFIG", "SetStandbyLPMode", False),  # Only auto transition allowed
         ("CONFIG", "SetMaintenanceMode", True),
