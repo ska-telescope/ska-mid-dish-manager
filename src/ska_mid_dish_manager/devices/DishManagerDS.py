@@ -41,6 +41,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     DishDevice,
     DishMode,
+    DscCmdAuthType,
     NoiseDiodeMode,
     PointingState,
     PowerState,
@@ -387,6 +388,7 @@ class DishManager(SKAController):
                 "pointingstate": "pointingState",
                 "configuredband": "configuredBand",
                 "achievedtargetlock": "achievedTargetLock",
+                "dsccmdauth": "dsccmdauth",
                 "configuretargetlock": "configureTargetLock",
                 "healthstate": "healthState",
                 "b1capabilitystate": "b1CapabilityState",
@@ -570,6 +572,15 @@ class DishManager(SKAController):
     def achievedTargetLock(self):
         """Returns the achievedTargetLock."""
         return self.component_manager.component_state.get("achievedtargetlock", False)
+
+    @attribute(
+        dtype=DscCmdAuthType,
+        doc="Indicates who has command authority ",
+        access=AttrWriteType.READ,
+    )
+    def dscCmdAuth(self) -> DscCmdAuthType:
+        """Returns the DSC command authority."""
+        return self.component_manager.component_state.get("dsccmdauth", None)
 
     @attribute(
         dtype=int,

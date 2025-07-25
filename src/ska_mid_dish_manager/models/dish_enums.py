@@ -173,3 +173,12 @@ class NoiseDiodeMode(enum.IntEnum):
     OFF = 0
     PERIODIC = 1
     PSEUDO_RANDOM = 2
+
+
+class DscCmdAuthType(enum.IntEnum):
+    """Dish structure command authority enums."""
+
+    NO_AUTHORITY = 0
+    LMC = 1
+    HHP = 2
+    EGUI = 3

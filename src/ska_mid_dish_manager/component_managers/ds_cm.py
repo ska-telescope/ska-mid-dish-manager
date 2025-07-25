@@ -46,6 +46,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "band5bPointingModelParams",
             "trackInterpolationMode",
             "achievedTargetLock",
+            "dscCmdAuth",
             "configureTargetLock",
             "actStaticOffsetValueXel",
             "actStaticOffsetValueEl",
