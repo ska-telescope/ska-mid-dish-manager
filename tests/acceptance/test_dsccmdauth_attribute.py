@@ -27,7 +27,7 @@ def test_dsccmdauth_attr(
     )
 
     # Check what the current authority on DS Manager and Dish Manager
-    ds_device_proxy.dscCmdAuth == dish_manager_proxy.dsc.Cmd.Auth == DscCmdAuthType.NO_AUTHORITY
+    ds_device_proxy.dscCmdAuth == dish_manager_proxy.dscCmdAuth == DscCmdAuthType.NO_AUTHORITY
 
     # Assumes that the initial state is FP -> Transition the dish ti LP through Dish Manager
     dish_manager_proxy.SetStandbyLPMode()
