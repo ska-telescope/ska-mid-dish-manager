@@ -10,14 +10,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, PowerState
 @pytest.mark.forked
 def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test transition to Standby_LP."""
-    dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
 
     dish_manager_proxy.subscribe_event(
         "longRunningCommandProgress",
