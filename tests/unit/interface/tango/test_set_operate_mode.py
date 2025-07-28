@@ -14,6 +14,8 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
+# TODO: This test will pass but it isnt supposed to following the dish mode model changes
+# Following dish manager states and modes change update the OPERATE dish mode checks
 @pytest.mark.unit
 @pytest.mark.forked
 def test_set_operate_mode_fails_when_already_in_operate_dish_mode(
@@ -50,7 +52,10 @@ def test_set_operate_mode_fails_when_already_in_operate_dish_mode(
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
 
-@pytest.mark.xfail(reason="A direct transition from StandbyFP to OPERATE is no longer allowed")
+@pytest.mark.xfail(
+    reason="A direct transition from StandbyFP to OPERATE is no longer allowed. "
+    "Modify test following dish manager states and modes updates."
+)
 @pytest.mark.unit
 @pytest.mark.forked
 def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
@@ -97,6 +102,8 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     main_event_store.wait_for_value(DishMode.STANDBY_FP)
 
     # Transition DishManager to OPERATE mode with configuredBand not set
+    # TODO: Remove call to SetOperateMode following DM updates to align with new states and modes
+    # ICD
     [[_], [unique_id]] = device_proxy.SetOperateMode()
     result_event_store.wait_for_command_result(
         unique_id, '[6, "SetOperateMode requires a configured band"]'
@@ -110,6 +117,8 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
     main_event_store.wait_for_value(Band.B1)
 
+    # TODO: Remove call to SetOperateMode following DM updates to align with new states and modes
+    # ICD
     device_proxy.SetOperateMode()
     # wait a bit before forcing the updates on the subcomponents
     main_event_store.get_queue_values()

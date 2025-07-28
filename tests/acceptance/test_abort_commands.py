@@ -196,6 +196,10 @@ def track_a_sample(
     yield
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x. "
+    "Modify test fixture following dish manager states and modes updates."
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_track(
@@ -229,6 +233,9 @@ def test_abort_commands_during_track(
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_slew(
@@ -267,6 +274,8 @@ def test_abort_commands_during_slew(
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(Band.B1, timeout=30)
 
+    # TODO: Remove call to SetOperateMode following DM updates to align with new states and modes
+    # ICD
     dish_manager_proxy.SetOperateMode()
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 

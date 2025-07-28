@@ -62,9 +62,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
-    # TODO: Remove call to SetOperateMode following DM updates to align with new
-    # states and modes ICD
-    dish_manager_proxy.SetOperateMode()
+    # Await auto transition to OPERATE following band config
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=8)
 
     dish_manager_proxy.SetStandbyFPMode()

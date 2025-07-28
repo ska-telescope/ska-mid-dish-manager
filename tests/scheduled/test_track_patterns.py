@@ -33,6 +33,9 @@ def load_csv_data(file_path: str) -> list[tuple[float, float, float]]:
     return data
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
+)
 @pytest.mark.forked
 @pytest.mark.track_patterns
 @pytest.mark.parametrize(

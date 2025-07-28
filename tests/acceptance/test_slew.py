@@ -52,6 +52,9 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_slew_transition(event_store_class, dish_manager_proxy):
@@ -68,7 +71,8 @@ def test_slew_transition(event_store_class, dish_manager_proxy):
     # Set mode to Operate to accept Slew command
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(DishMode.CONFIG, timeout=10)
-    dish_manager_proxy.SetOperateMode()
+    # Await auto transition to OPERATE following band config
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10)
 
     achieved_pointing = dish_manager_proxy.achievedPointing
     # Increase by 5 degrees in Azimuth and Elevation unless limits will be hit

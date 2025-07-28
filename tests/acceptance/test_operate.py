@@ -50,7 +50,7 @@ def test_set_operate(
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
-    dish_manager_proxy.SetOperateMode()
+    # Await auto transition to OPERATE following band config
     main_event_store.wait_for_value(DishMode.OPERATE)
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 

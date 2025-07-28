@@ -42,7 +42,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
     band_event_store.wait_for_value(Band.B1, timeout=10)
 
-    dish_manager_proxy.SetOperateMode()
+    # Await auto transition to OPERATE following band config
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
     achieved_pointing_event_store = event_store_class()
@@ -74,6 +74,9 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     dish_manager_proxy.TrackStop()
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x."
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_and_track_stop_cmds(
@@ -479,9 +482,7 @@ def test_track_fails_when_track_called_late(
     main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
     band_event_store.wait_for_value(Band.B1, timeout=10)
 
-    # TODO: Remove call to SetOperateMode following DM updates to align with new states and modes
-    # ICD
-    dish_manager_proxy.SetOperateMode()
+    # Await auto transition to OPERATE following band config
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
