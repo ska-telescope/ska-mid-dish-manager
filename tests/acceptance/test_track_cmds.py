@@ -211,6 +211,10 @@ def test_track_and_track_stop_cmds(
         assert message in events_string
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x. "
+    "Modify fixture once the dish states and modes updates have been made on dish manager."
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_append_dvs_case(
@@ -305,6 +309,10 @@ def test_append_dvs_case(
     achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=10)
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x. "
+    "Modify fixture once the dish states and modes updates have been made on dish manager."
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_maximum_capacity(
