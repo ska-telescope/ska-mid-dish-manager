@@ -11,6 +11,9 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_dish_handles_unhappy_path_in_command_execution(
@@ -59,6 +62,8 @@ def test_dish_handles_unhappy_path_in_command_execution(
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
+    # TODO: Remove call to SetOperateMode following DM updates to align with new
+    # states and modes ICD
     dish_manager_proxy.SetOperateMode()
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=8)
 

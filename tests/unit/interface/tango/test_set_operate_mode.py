@@ -50,6 +50,7 @@ def test_set_operate_mode_fails_when_already_in_operate_dish_mode(
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
 
+@pytest.mark.xfail(reason="A direct transition from StandbyFP to OPERATE is no longer allowed")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(

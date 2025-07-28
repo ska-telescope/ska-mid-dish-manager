@@ -6,6 +6,9 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_set_operate(
