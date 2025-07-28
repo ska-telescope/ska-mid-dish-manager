@@ -33,6 +33,13 @@ def test_abort_commands(
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
+    band_event_store = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        band_event_store,
+    )
 
     dish_manager_proxy.subscribe_event(
         "longRunningCommandResult",
@@ -58,13 +65,13 @@ def test_abort_commands(
         dish_mode_event_store,
     )
 
-    # Transition to FP mode
-    [[_], [fp_unique_id]] = dish_manager_proxy.SetStandbyFPMode()
+    # Transition to LP mode
+    [[_], [lp_unique_id]] = dish_manager_proxy.SetStandbyLPMode()
 
-    # Check that Dish Manager is waiting to transition to FP
-    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
+    # Check that Dish Manager is waiting to transition to LP
+    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_LP")
     dish_mode_event_store.wait_for_value(DishMode.UNKNOWN)
-    # Check that the Dish Manager did not transition to FP
+    # Check that the Dish Manager did not transition to LP
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
 
     # enable spf to send attribute updates
@@ -73,10 +80,10 @@ def test_abort_commands(
     # Abort the LRC
     [[_], [abort_unique_id]] = dish_manager_proxy.AbortCommands()
     # Confirm Dish Manager aborted the request on LRC
-    result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
+    result_event_store.wait_for_command_id(lp_unique_id, timeout=30)
     # Abort will execute standbyfp dishmode as part of its abort sequence
     expected_progress_updates = [
-        "SetStandbyFPMode Aborted",
+        "SetStandbyLPMode Aborted",
         "SetOperateMode called on SPF",
         "SetStandbyFPMode called on DS",
         "Awaiting dishmode change to STANDBY_FP",
@@ -140,9 +147,6 @@ def track_a_sample(
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
-
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10, proxy=dish_manager_proxy)
 
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=30)

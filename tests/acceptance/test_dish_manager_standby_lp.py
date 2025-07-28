@@ -25,16 +25,7 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
         progress_event_store,
     )
 
-    dish_mode_event_store.clear_queue()
     progress_event_store.clear_queue()
-
-    dish_manager_proxy.SetStandbyFPMode()
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
-
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
-
-    progress_event_store.clear_queue()
-
     dish_manager_proxy.SetStandbyLPMode()
 
     expected_progress_updates = [

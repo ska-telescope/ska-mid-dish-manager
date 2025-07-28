@@ -25,6 +25,9 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
         progress_event_store,
     )
 
+    [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
+
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
