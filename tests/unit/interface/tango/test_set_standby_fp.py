@@ -2,7 +2,6 @@
 
 import pytest
 import tango
-from ska_control_model import AdminMode
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
