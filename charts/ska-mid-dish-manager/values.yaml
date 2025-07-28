@@ -5,6 +5,12 @@ ska-mid-dish-simulators:
 
 ska-mid-dish-ds-manager:
   enabled: false
+  dishstructuremanager:
+    image:
+      registry: registry.gitlab.com/ska-telescope/ska-mid-dish-ds-manager
+      image: ska-mid-dish-ds-manager
+      tag: 6.0.0-dev.c15aa3198
+      pullPolicy: IfNotPresent
 
 system: SW-infrastructure
 subsystem: ska-dish-lmc
@@ -79,15 +85,6 @@ dishmanager:
     MeanWindSpeedThreshold: "11.1"
     # Wind gust in m/s
     WindGustThreshold: "16.9"
-
-ska-mid-dish-ds-manager:
-  dishstructuremanager:
-    image:
-      registry: registry.gitlab.com/ska-telescope/ska-mid-dish-ds-manager
-      image: ska-mid-dish-ds-manager
-      tag: 6.0.0-dev.c15aa3198
-      pullPolicy: IfNotPresent
-
 
 dev_pod:
   enabled: false
