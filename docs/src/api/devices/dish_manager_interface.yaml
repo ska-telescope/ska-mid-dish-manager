@@ -1084,6 +1084,27 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: dscCmdAuth
+      data_format: SCALAR
+      data_type: DevEnum
+      description: 'Indicates who has command authority '
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - NO_AUTHORITY
+      - LMC
+      - HHP
+      - EGUI
+      format: '%s'
+      label: dscCmdAuth
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: dscPowerLimitKw
       data_format: SCALAR
       data_type: DevDouble
@@ -2024,6 +2045,5 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: WMSDeviceNames
     - name: WindGustThreshold
     - name: polled_cmd

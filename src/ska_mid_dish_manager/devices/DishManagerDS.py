@@ -388,7 +388,7 @@ class DishManager(SKAController):
                 "pointingstate": "pointingState",
                 "configuredband": "configuredBand",
                 "achievedtargetlock": "achievedTargetLock",
-                "dsccmdauth": "dsccmdauth",
+                "dsccmdauth": "dscCmdAuth",
                 "configuretargetlock": "configureTargetLock",
                 "healthstate": "healthState",
                 "b1capabilitystate": "b1CapabilityState",
