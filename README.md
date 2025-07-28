@@ -66,23 +66,18 @@ kubectl create namespace dish-manager
 ```
 
 ```bash
-$ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
---set global.minikube=true \
---set global.operator=true \
---set global.dishes="{001,002}" \ # number of instances to deploy; if not specified defaults to 001
---set ska-mid-dish-simulators.enabled=true \
---set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
---set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
---set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
---set ska-mid-dish-ds-manager.enabled=true
---set ska-mid-wms.enabled=true \
---set ska-mid-wms.deviceServers.wms0.enabled=true \
---set ska-mid-wms.simulator.weatherStations="{"0"}"
+$ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager -f charts/ska-mid-dish-manager/custom_helm_flags.yaml
 ```
 
-`ska-tango-base` is not deployed by default, to deploy it add the `--set` below:
+`ska-tango-base` is disabled in the default ``values.yaml``. It can be enabled by either:
+```bash
+# editing your custom yaml (already set to true in custom_helm_flags.yaml)
+ska-tango-base:
+  enabled: true
+```
 
 ```bash
+# or passing it as an extra argument to helm
 --set ska-tango-base.enabled=true
 ```
 
@@ -92,19 +87,9 @@ $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
 
 ```bash
 $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
---set global.minikube=true \
---set global.operator=true \
---set global.dishes={001,002} \ # number of instances to deploy; if not specified defaults to 001
+-f charts/ska-mid-dish-manager/custom_helm_flags.yaml \
 --set dev_pod.enabled=true \ # enable devpod for development
 --set deviceServers.dishmanager.enabled=false \ # disable dishmanager to use devpod
---set ska-mid-dish-simulators.enabled=true \
---set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
---set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
---set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
---set ska-mid-dish-ds-manager.enabled=true
---set ska-mid-wms.enabled=true \
---set ska-mid-wms.deviceServers.wms0.enabled=true \
---set ska-mid-wms.simulator.weatherStations="{"0"}"
 ```
 
 - Then start DishManager in the commandline

@@ -14,6 +14,7 @@ MINIKUBE ?= true ## Minikube or not
 SKA_TANGO_OPERATOR = true
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
+VALUES_FILE ?= charts/ska-mid-dish-manager/custom_helm_flags.yaml
 
 -include .make/base.mk
 
@@ -45,6 +46,7 @@ k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_D
 
 python-do-format:
 	$(PYTHON_RUNNER) ruff format $(PYTHON_LINT_TARGET)
+	$(PYTHON_RUNNER) ruff check --fix $(PYTHON_LINT_TARGET)
 
 python-do-lint:
 	@mkdir -p build/reports
@@ -71,31 +73,20 @@ CI_REGISTRY ?= registry.gitlab.com
 ifneq ($(CI_JOB_ID),)
 CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
-	--set dishmanager.image.tag=$(OCI_TAG) \
-	--set ska-mid-dish-simulators.enabled=true \
-	--set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
-	--set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
-	--set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
-	--set ska-mid-dish-ds-manager.enabled=true \
-	--set ska-tango-base.enabled=true \
-	--set global.dishes="{001,111}" \
-	--set ska-mid-wms.enabled=true \
-	--set ska-mid-wms.deviceServers.wms0.enabled=true \
-	--set ska-mid-wms.simulator.weatherStations="{"0"}"
+	--set dishmanager.image.tag=$(OCI_TAG)
 K8S_TEST_IMAGE_TO_TEST=$(CI_REGISTRY)/ska-telescope/$(NAME)/$(NAME):$(OCI_TAG)
 K8S_TIMEOUT=600s
 endif
 
-K8S_CHART_PARAMS = --set global.minikube=$(MINIKUBE) \
-	--set global.tango_host=$(TANGO_HOST) \
-	--set global.operator=$(SKA_TANGO_OPERATOR) \
+K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) \
 	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
-	$(CUSTOM_VALUES)
+	$(CUSTOM_VALUES) \
+	--values $(VALUES_FILE)
 
 -include .make/oci.mk
 -include .make/k8s.mk
 -include .make/helm.mk
 
 
-# include your own private variables for custom deployment configuration
+# include your own private variables to add custom deployment configuration
 -include PrivateRules.mak

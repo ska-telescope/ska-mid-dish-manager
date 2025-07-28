@@ -17,13 +17,15 @@ from ska_mid_dish_manager.models.dish_enums import (
 @pytest.fixture
 def dish_manager_resources():
     with (
-        patch(
-            (
-                "ska_mid_dish_manager.component_managers.tango_device_cm."
-                "TangoDeviceComponentManager.start_communicating"
-            )
-        ),
         patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"),
+        patch(
+            "ska_mid_dish_manager.component_managers.tango_device_cm."
+            "TangoDeviceComponentManager.start_communicating"
+        ),
+        patch(
+            "ska_mid_dish_manager.component_managers.wms_cm."
+            "WMSComponentManager.start_communicating"
+        ),
     ):
         tango_context = DeviceTestContext(DishManager)
         tango_context.start()
@@ -34,9 +36,10 @@ def dish_manager_resources():
         ds_cm = dish_manager_cm.sub_component_managers["DS"]
         spf_cm = dish_manager_cm.sub_component_managers["SPF"]
         spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
+        wms_cm = dish_manager_cm.sub_component_managers["WMS"]
 
         # trigger communication established on all sub components
-        for com_man in [ds_cm, spf_cm, spfrx_cm]:
+        for com_man in [ds_cm, spf_cm, spfrx_cm, wms_cm]:
             com_man._update_communication_state(
                 communication_state=CommunicationStatus.ESTABLISHED
             )

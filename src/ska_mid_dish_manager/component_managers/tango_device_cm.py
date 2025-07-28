@@ -31,8 +31,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         quality_monitored_attributes: Tuple[str, ...] = (),
         **kwargs: Any,
     ):
-        self._communication_state_callback = communication_state_callback
-        self._component_state_callback = component_state_callback
         self._quality_state_callback = quality_state_callback
         self._events_queue: Queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn
@@ -306,7 +304,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         try:
             result = self.execute_command(command_name, command_arg)
         except tango.DevFailed as err:
-            self.logger.exception(err)
+            self.logger.error(err)
             if task_callback:
                 task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
             return

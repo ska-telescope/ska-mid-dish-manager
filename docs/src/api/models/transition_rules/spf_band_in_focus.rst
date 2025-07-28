@@ -6,14 +6,14 @@ Rules when no devices are being ignored
 ---------------------------------------
 .. literalinclude:: ../../../../../src/ska_mid_dish_manager/models/transition_rules/band_configuration.py
    :language: python
-   :lines: 93-112
+   :lines: 92-110
    :linenos:
-   :emphasize-lines: 2,5,8,11,14,17
+   :emphasize-lines: 1,4,7,10,13,16
 
 Rules when ignoring SPFRx device
 --------------------------------
 .. literalinclude:: ../../../../../src/ska_mid_dish_manager/models/transition_rules/band_configuration.py
    :language: python
-   :lines: 114-121
+   :lines: 113-118
    :linenos:
-   :emphasize-lines: 2,3,4,5,6,7
+   :emphasize-lines: 1,2,3,4,5,6
