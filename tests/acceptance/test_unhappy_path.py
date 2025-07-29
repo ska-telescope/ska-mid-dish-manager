@@ -53,9 +53,6 @@ def test_dish_handles_unhappy_path_in_command_execution(
     # transition through FP > OPERATE > LP
     # SetStandbyLPMode is the only command which fans out
     # to SPF and SPFRx devices: this allows us test the exception
-    dish_manager_proxy.SetStandbyFPMode()
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=8)
-
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 

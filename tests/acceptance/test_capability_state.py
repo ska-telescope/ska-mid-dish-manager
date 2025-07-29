@@ -23,13 +23,11 @@ def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_mana
         tango.EventType.CHANGE_EVENT,
         cap_state_event_store,
     )
-    # on subscription the first event is CapabilityStates.STANDBY
-    # clear out the queue before command executes
     cap_state_event_store.clear_queue()
-    dish_manager_proxy.SetStandbyFPMode()
+    dish_manager_proxy.ConfigureBand1(True)
 
+    cap_state_event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=10)
     cap_state_event_store.wait_for_value(CapabilityStates.STANDBY, timeout=10)
-    main_event_store.wait_for_value(DishMode.STANDBY_FP)
 
     assert dish_manager_proxy.b1CapabilityState == CapabilityStates.STANDBY
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
