@@ -76,7 +76,7 @@ class DishModeModel:
         # From Stow to other modes
         dishmode_graph.add_edge("STOW", "STANDBY_FP", commands=["SetStandbyFPMode"])
         dishmode_graph.add_edge("STOW", "STANDBY_LP", commands=["SetStandbyLPMode"])
-        dishmode_graph.add_edge("STOW", "MAINTENANCE")  # Auto transitional STOW to MAINTENANCE
+        dishmode_graph.add_edge("STOW", "MAINTENANCE", commands=["SetMaintenanceMode"])
 
         # From any mode to Stow
         # TODO: Review new states and modes ICD. The call to SetStowMode only
@@ -85,12 +85,6 @@ class DishModeModel:
             if node == "STOW":
                 continue
             dishmode_graph.add_edge(node, "STOW", commands=["SetStowMode"])
-
-        # From any mode to MAINTENANCE (via STOW as a transitional state)
-        for node in DISH_MODE_NODES:
-            if node in ["MAINTENANCE", "SHUTDOWN", "STARTUP"]:
-                continue
-            dishmode_graph.add_edge(node, "MAINTENANCE", commands=["SetMaintenanceMode"])
 
         # From any mode to Shutdown
         for node in DISH_MODE_NODES:
@@ -137,6 +131,11 @@ class DishModeModel:
                 "is_command_allowed() requires either the dish_mode or"
                 " the component_manager to be specified"
             ) from exc
+
+        # For a call to SetMaintenanceMode, the command is allowed regardless of the current
+        # dish mode. SetMaintenanceMode should not be allowed in Maintenance dish mode
+        if cmd_name == "SetMaintenanceMode" and not current_dish_mode == "MAINTENANCE":
+            return True
 
         allowed_commands = []
         for from_node, to_node in self.dishmode_graph.edges(current_dish_mode):
