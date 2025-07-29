@@ -80,11 +80,6 @@ def setup_and_teardown(
             # go to FP ...
             ds_device_proxy.SetStandbyFPMode()
             assert event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=30)
-
-        if ds_device_proxy.indexerPosition != IndexerPosition.B1:
-            # go to indexer position 1 ...
-            ds_device_proxy.SetIndexPosition(1)
-            assert event_store.wait_for_value(IndexerPosition.B1, timeout=30)
     except (RuntimeError, AssertionError):
         # if expected events are not received after reset, allow
         # SyncComponentStates to be called before giving up

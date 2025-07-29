@@ -3,7 +3,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import set_ignored_devices
 
 
@@ -39,7 +39,7 @@ def test_ignoring_spf(
     """Test ignoring SPF device."""
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
-    dish_mode_event_store = event_store_class()
+    main_event_store = event_store_class()
 
     dish_manager_proxy.subscribe_event(
         "longrunningCommandResult",
@@ -56,14 +56,20 @@ def test_ignoring_spf(
     dish_manager_proxy.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
+        main_event_store,
     )
 
-    current_el = dish_manager_proxy.achievedPointing[2]
-    stow_position = 90.2
-    estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
-    [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
+    dish_manager_proxy.subscribe_event(
+        "configuredband",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+
+    dish_manager_proxy.ConfigureBand1(True)
+    main_event_store.wait_for_value(Band.B1, timeout=8)
+
+    dish_manager_proxy.SetOperateMode()
+    main_event_store.wait_for_value(DishMode.OPERATE)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -164,12 +170,6 @@ def test_ignoring_all(
         tango.EventType.CHANGE_EVENT,
         dish_mode_event_store,
     )
-
-    current_el = dish_manager_proxy.achievedPointing[2]
-    stow_position = 90.2
-    estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
-    [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
