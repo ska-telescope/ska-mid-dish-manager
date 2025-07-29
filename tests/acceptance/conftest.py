@@ -55,11 +55,6 @@ def setup_and_teardown(
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    ds_device_proxy.subscribe_event(
-        "indexerposition",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
     # clear the queue before the resets start
     event_store.clear_queue()
 
