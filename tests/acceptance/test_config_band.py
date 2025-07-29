@@ -3,7 +3,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from ska_mid_dish_manager.models.dish_enums import Band
 
 
 @pytest.mark.acceptance
@@ -30,17 +30,12 @@ def test_configure_band_2(
         progress_event_store,
     )
 
-    attributes = ["dishMode", "configuredBand"]
-    for attribute_name in attributes:
-        dish_manager_proxy.subscribe_event(
-            attribute_name,
-            tango.EventType.CHANGE_EVENT,
-            main_event_store,
-        )
+    dish_manager_proxy.subscribe_event(
+        "configuredBand",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
 
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP)
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     # make sure configuredBand is not B2
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(Band.B1, timeout=8)

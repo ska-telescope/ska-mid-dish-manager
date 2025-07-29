@@ -64,6 +64,8 @@ def setup_and_teardown(
     try:
         spf_device_proxy.ResetToDefault()
         assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=10)
+        spf_device_proxy.SetOperateMode()
+        assert event_store.wait_for_value(SPFOperatingMode.OPERATE, timeout=10)
 
         spfrx_device_proxy.ResetToDefault()
         assert event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=10)
@@ -72,9 +74,6 @@ def setup_and_teardown(
             # go to FP ...
             ds_device_proxy.SetStandbyFPMode()
             assert event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=30)
-        # ... and then to LP
-        ds_device_proxy.SetStandbyLPMode()
-        assert event_store.wait_for_value(DSOperatingMode.STANDBY_LP, timeout=30)
     except (RuntimeError, AssertionError):
         # if expected events are not received after reset, allow
         # SyncComponentStates to be called before giving up
@@ -90,10 +89,10 @@ def setup_and_teardown(
     )
 
     try:
-        event_store.wait_for_value(DishMode.STANDBY_LP, timeout=30)
+        event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     except RuntimeError as err:
         component_states = dish_manager_proxy.GetComponentStates()
-        raise RuntimeError(f"DishManager not in STANDBY_LP:\n {component_states}\n") from err
+        raise RuntimeError(f"DishManager not in STANDBY_FP:\n {component_states}\n") from err
 
     yield
 
