@@ -58,9 +58,6 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     )
 
     # Mode and configuration setup
-    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
-
     dish_manager_proxy.ConfigureBand2(True)
     dish_mode_event_store.wait_for_value(DishMode.CONFIG)
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
