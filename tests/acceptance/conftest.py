@@ -6,7 +6,6 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
-    IndexerPosition,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
