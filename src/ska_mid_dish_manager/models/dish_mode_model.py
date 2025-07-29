@@ -32,7 +32,7 @@ DISH_MODE_NODES = (
 
 
 class DishModeModel:
-    """A representation of the mode transition diagram."""
+    """Representation of the mode transition diagram, depicting commanded transitions."""
 
     def __init__(self) -> None:
         self.dishmode_graph = self._build_model()
@@ -42,14 +42,6 @@ class DishModeModel:
         dishmode_graph = nx.DiGraph()
         for node in DISH_MODE_NODES:
             dishmode_graph.add_node(node)
-
-        # From Shutdown mode
-        dishmode_graph.add_edge("SHUTDOWN", "STARTUP")
-
-        # From Startup to other modes
-        dishmode_graph.add_edge("STARTUP", "STANDBY_LP")
-        dishmode_graph.add_edge("STARTUP", "STANDBY_FP")
-        dishmode_graph.add_edge("STARTUP", "STOW")
 
         # From Standby_LP to other modes
         dishmode_graph.add_edge("STANDBY_LP", "STANDBY_FP", commands=["SetStandbyFPMode"])
@@ -63,15 +55,6 @@ class DishModeModel:
         dishmode_graph.add_edge("OPERATE", "STANDBY_FP", commands=["SetStandbyFPMode"])
         dishmode_graph.add_edge("OPERATE", "STANDBY_LP", commands=["SetStandbyLPMode"])
         dishmode_graph.add_edge("OPERATE", "CONFIG", commands=CONFIG_COMMANDS)
-
-        # From Config to other modes
-        dishmode_graph.add_edge("CONFIG", "STANDBY_FP")
-        dishmode_graph.add_edge("CONFIG", "STANDBY_LP")
-        dishmode_graph.add_edge("CONFIG", "OPERATE")
-        # config to stow is covered in "any mode to stow" but that
-        # transition must be triggered by the SetStowMode cmd
-        # However, CONFIG to STOW can also be an automatic transition
-        dishmode_graph.add_edge("CONFIG", "STOW")
 
         # From Stow to other modes
         dishmode_graph.add_edge("STOW", "STANDBY_FP", commands=["SetStandbyFPMode"])
@@ -87,18 +70,12 @@ class DishModeModel:
             dishmode_graph.add_edge(node, "STOW", commands=["SetStowMode"])
 
         # From any mode to Shutdown
+        # TODO: The shutdown command is not currently defined. Add it here
+        # once implemented
         for node in DISH_MODE_NODES:
             if node == "SHUTDOWN":
                 continue
             dishmode_graph.add_edge(node, "SHUTDOWN")
-
-        # Automatic transition to/from UNKNOWN from/to any dish mode
-        # (excl. MAINTENANCE)
-        for node in DISH_MODE_NODES:
-            if node in ["UNKNOWN", "MAINTENANCE"]:
-                continue
-            dishmode_graph.add_edge(node, "UNKNOWN")
-            dishmode_graph.add_edge("UNKNOWN", node)
 
         return dishmode_graph
 
