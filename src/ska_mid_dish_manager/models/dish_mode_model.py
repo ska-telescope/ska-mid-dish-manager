@@ -92,6 +92,14 @@ class DishModeModel:
                 continue
             dishmode_graph.add_edge(node, "SHUTDOWN")
 
+        # Automatic transition to/from UNKNOWN from/to any dish mode
+        # (excl. MAINTENANCE)
+        for node in DISH_MODE_NODES:
+            if node in ["UNKNOWN", "MAINTENANCE"]:
+                continue
+            dishmode_graph.add_edge(node, "UNKNOWN")
+            dishmode_graph.add_edge("UNKNOWN", node)
+
         return dishmode_graph
 
     @typing.no_type_check
