@@ -2045,5 +2045,7 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
+    - name: WMSDeviceNames
     - name: WindGustThreshold
     - name: polled_cmd
+
