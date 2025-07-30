@@ -31,6 +31,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     DishDevice,
     DishMode,
+    DscCmdAuthType,
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
@@ -78,6 +79,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # pylint: disable=useless-super-delegation
         self.tango_device_name = tango_device_name
         self.sub_component_managers = None
+        wms_device_names = list(wms_device_names)
+        if "" in wms_device_names:
+            wms_device_names.remove("")
         default_watchdog_timeout = kwargs.pop("default_watchdog_timeout", 0.0)
         default_mean_wind_speed_threshold = kwargs.pop(
             "default_mean_wind_speed_threshold", MEAN_WIND_SPEED_THRESHOLD_MPS
@@ -120,6 +124,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             tracktablecurrentindex=0,
             tracktableendindex=0,
             achievedtargetlock=False,
+            dsccmdauth=DscCmdAuthType.NO_AUTHORITY,
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
             achievedpointing=[0.0, 0.0, 0.0],
@@ -190,6 +195,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=PointingState.UNKNOWN,
                 achievedtargetlock=None,
+                dscmdauth=DscCmdAuthType.NO_AUTHORITY,
                 configuretargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
@@ -272,6 +278,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "desiredPointingAz",
                 "desiredPointingEl",
                 "achievedTargetLock",
+                "dscCmdAuth",
                 "trackInterpolationMode",
                 "actStaticOffsetValueXel",
                 "actStaticOffsetValueEl",
