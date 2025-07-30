@@ -33,13 +33,6 @@ def test_abort_commands(
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
-    band_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
 
     dish_manager_proxy.subscribe_event(
         "longRunningCommandResult",
@@ -264,9 +257,6 @@ def test_abort_commands_during_slew(
         tango.EventType.CHANGE_EVENT,
         main_event_store,
     )
-
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10, proxy=dish_manager_proxy)
 
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(Band.B1, timeout=30)

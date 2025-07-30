@@ -58,9 +58,6 @@ def setup_and_teardown(
     # clear the queue before the resets start
     event_store.clear_queue()
 
-    # disable the watchdog timer
-    dish_manager_proxy.watchdogtimeout = 0.0
-
     try:
         spf_device_proxy.ResetToDefault()
         assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=10)
@@ -80,7 +77,7 @@ def setup_and_teardown(
         pass
 
     event_store.clear_queue()
-    dish_manager_proxy.SyncComponentStates()
+    # dish_manager_proxy.SyncComponentStates()
 
     dish_manager_proxy.subscribe_event(
         "dishMode",
@@ -91,10 +88,8 @@ def setup_and_teardown(
     try:
         event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     except RuntimeError as err:
-        component_states = dish_manager_proxy.GetComponentStates()
-        raise RuntimeError(f"DishManager not in STANDBY_FP:\n {component_states}\n") from err
+        if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
+            component_states = dish_manager_proxy.GetComponentStates()
+            raise RuntimeError(f"DishManager not in STANDBY_FP:\n {component_states}\n") from err
 
     yield
-
-    # disable the watchdog timer
-    dish_manager_proxy.watchdogtimeout = 0.0

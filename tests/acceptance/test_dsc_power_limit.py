@@ -131,22 +131,12 @@ def test_power_limit_change_set_power_mode(
 
 
 @pytest.mark.acceptance
-@pytest.mark.parametrize(
-    ("full_power", "expected_progress", "limit_value"),
-    [
-        (True, "Full Power Mode called using DSC Power Limit: 15.0kW", 15.0),
-        (False, "Low Power Mode called using DSC Power Limit: 19.9kW", 19.9),
-    ],
-)
 def test_fp_lp_power_limit_used(
     ds_device_proxy: tango.DeviceProxy,
     dish_manager_proxy: tango.DeviceProxy,
-    full_power: bool,
-    expected_progress: str,
-    limit_value,
     event_store_class: Any,
 ):
-    """Test the dscPowerLimitkW value used when invoking commands (FP and LP)."""
+    """Test the dscPowerLimitkW value used when invoking commands (LP and FP)."""
     progress_event_store = event_store_class()
     ds_attribute_event_store = event_store_class()
     ds_device_proxy.subscribe_event(
@@ -157,17 +147,28 @@ def test_fp_lp_power_limit_used(
     ds_device_proxy.subscribe_event(
         "dscPowerLimitkW", tango.EventType.CHANGE_EVENT, ds_attribute_event_store
     )
+
+    # LP transition
     # Set the value to something other than the default value
+    limit_value = 19.9
     dish_manager_proxy.write_attribute("dscPowerLImitKw", limit_value)
     ds_attribute_event_store.wait_for_value(limit_value, timeout=6)
-
     # Call command that also makes use of the SetPowerMode command
-    if full_power:
-        ds_device_proxy.SetStandbyFPMode()
-    else:
-        ds_device_proxy.SetStandbyLPMode()
+    ds_device_proxy.SetStandbyLPMode()
+    progress_event_store.wait_for_progress_update(
+        f"Low Power Mode called using DSC Power Limit: {limit_value}kW", timeout=6
+    )
 
-    progress_event_store.wait_for_progress_update(expected_progress, timeout=6)
+    # FP transition
+    # Set the value to something other than the default value
+    limit_value = 15.0
+    dish_manager_proxy.write_attribute("dscPowerLImitKw", limit_value)
+    ds_attribute_event_store.wait_for_value(limit_value, timeout=6)
+    # Call command that also makes use of the SetPowerMode command
+    ds_device_proxy.SetStandbyFPMode()
+    progress_event_store.wait_for_progress_update(
+        f"Full Power Mode called using DSC Power Limit: {limit_value}kW", timeout=6
+    )
 
 
 @pytest.mark.acceptance

@@ -387,7 +387,7 @@ def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
     """Sets ignored devices on DishManager."""
     if device_proxy.ignoreSpf != ignore_spf:
         spf_connection_event_store = EventStore()
-        device_proxy.subscribe_event(
+        spf_sub_id = device_proxy.subscribe_event(
             "spfConnectionState",
             tango.EventType.CHANGE_EVENT,
             spf_connection_event_store,
@@ -399,11 +399,12 @@ def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
             spf_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
         else:
             spf_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+        device_proxy.unsubscribe_event(spf_sub_id)
 
     if device_proxy.ignoreSpfrx != ignore_spfrx:
         spfrx_connection_event_store = EventStore()
 
-        device_proxy.subscribe_event(
+        spfrx_sub_id = device_proxy.subscribe_event(
             "spfrxConnectionState",
             tango.EventType.CHANGE_EVENT,
             spfrx_connection_event_store,
@@ -415,6 +416,7 @@ def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
         else:
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+        device_proxy.unsubscribe_event(spfrx_sub_id)
 
 
 def generate_random_text(length=10):

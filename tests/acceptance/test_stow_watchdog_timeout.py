@@ -12,6 +12,12 @@ from tests.utils import setup_subscriptions
 WDT_TIMEOUT = 5.0
 
 
+@pytest.fixture(autouse=True)
+def disable_watchdog(dish_manager_proxy):
+    yield
+    dish_manager_proxy.watchdogtimeout = 0.0
+
+
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_stow_on_timeout(event_store_class, dish_manager_proxy):
