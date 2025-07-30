@@ -90,7 +90,7 @@ class DishManager(SKAController):
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
     DefaultWatchdogTimeout = device_property(dtype=float, default_value=DEFAULT_WATCHDOG_TIMEOUT)
     # wms device names (e.g. ska-mid/weather-monitoring/1) to connect to
-    WMSDeviceNames = device_property(dtype=DevVarStringArray, default_value=[])
+    WMSDeviceNames = device_property(dtype=DevVarStringArray, default_value=[""])
     MeanWindSpeedThreshold = device_property(
         dtype=float,
         doc="Threshold value for mean wind speed (in m/s) used to trigger stow.",

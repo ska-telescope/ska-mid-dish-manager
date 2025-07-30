@@ -70,6 +70,8 @@ server:
                       {{- range $station_id := $station_ids }}
                       - "ska-mid/weather-monitoring/{{ $station_id }}"
                       {{- end }}
+                    {{- else }}
+                      - ""
                     {{- end }}
               attribute_properties:
                 - attribute: "ignoreSpf"
