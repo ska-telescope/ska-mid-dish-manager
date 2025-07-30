@@ -1087,7 +1087,7 @@
     - name: dscCmdAuth
       data_format: SCALAR
       data_type: DevEnum
-      description: 'Indicates who has command authority '
+      description: 'Indicates who has command authority'
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:

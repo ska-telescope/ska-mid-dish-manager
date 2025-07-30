@@ -101,8 +101,7 @@ class WMSComponentManager(BaseComponentManager):
         """Add WMS device(s) to group and initiate WMS attr polling."""
         self.stop_communicating()
 
-        monitoring_disabled = not self._wms_device_names or self._wms_device_names == [""]
-        if monitoring_disabled:
+        if not self._wms_device_names:
             self.logger.warning(
                 "WMS component manager instantiated without any WMS device names provided. "
                 "Weather station monitoring cannot be started."
