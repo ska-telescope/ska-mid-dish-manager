@@ -26,9 +26,6 @@ def test_dsccmdauth_attr(
         dish_mode_event_store,
     )
 
-    # Check the current authority on DS Manager and Dish Manager
-    ds_device_proxy.dscCmdAuth == dish_manager_proxy.dscCmdAuth == DscCmdAuthType.NO_AUTHORITY
-
     # Assumes that the initial state is FP -> Transition the dish to LP through Dish Manager
     dish_manager_proxy.SetStandbyLPMode()
 
@@ -36,4 +33,4 @@ def test_dsccmdauth_attr(
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=8)
 
     # Check that DSC Command Authority has updated to LMC
-    ds_device_proxy.dscCmdAuth == dish_manager_proxy.dscCmdAuth == DscCmdAuthType.LMC
+    assert ds_device_proxy.dscCmdAuth == dish_manager_proxy.dscCmdAuth == DscCmdAuthType.LMC
