@@ -47,7 +47,7 @@ def get_open_port():
     return port
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def mock_tango_device_proxy_instance(mocker, open_port):
     HOST = get_host_ip()
     PORT = open_port
@@ -63,70 +63,70 @@ def mock_tango_device_proxy_instance(mocker, open_port):
     return HOST, PORT
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def event_store():
     """Fixture for storing events."""
     return EventStore()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def event_store_class():
     """Fixture for storing events."""
     return EventStore
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def component_state_store():
     """Fixture for storing component state changes over time."""
     return ComponentStateStore()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def dish_manager_device_fqdn():
     return DEFAULT_DISH_MANAGER_TRL
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def ds_device_fqdn():
     return DEFAULT_DS_MANAGER_TRL
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def spf_device_fqdn():
     return DEFAULT_SPFC_TRL
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def spfrx_device_fqdn():
     return DEFAULT_SPFRX_TRL
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def wms_device_fqdn():
     return DEFAULT_WMS_TRL
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def dish_manager_proxy(dish_manager_device_fqdn):
     return tango.DeviceProxy(dish_manager_device_fqdn)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def ds_device_proxy(ds_device_fqdn):
     return tango.DeviceProxy(ds_device_fqdn)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def spf_device_proxy(spf_device_fqdn):
     return tango.DeviceProxy(spf_device_fqdn)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def spfrx_device_proxy(spfrx_device_fqdn):
     return tango.DeviceProxy(spfrx_device_fqdn)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def wms_device_proxy(wms_device_fqdn):
     return tango.DeviceProxy(wms_device_fqdn)
 
@@ -179,7 +179,7 @@ class EventPrinter:
                 )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds_device_proxy):
     event_files_dir = request.config.getoption("--event-storage-files-path")
     if event_files_dir is None:
@@ -196,7 +196,7 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
         dish_manager_proxy,
         (
             "dishmode",
-            # "capturing", TODO push event is disabled
+            "capturing",
             "healthstate",
             "pointingstate",
             "b1capabilitystate",
@@ -240,7 +240,7 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
         yield
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def plot_dish_manager_pointing(
     request: pytest.FixtureRequest, dish_manager_proxy: tango.DeviceProxy
 ) -> Generator:
