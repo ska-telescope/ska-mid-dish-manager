@@ -7,7 +7,7 @@ import tango
 from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
-from tests.utils import setup_subscriptions
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 WDT_TIMEOUT = 5.0
 
@@ -173,13 +173,23 @@ def test_watchdog_repeat_stow_without_reset(event_store_class, dish_manager_prox
 def test_attributes_pushed(event_store_class, dish_manager_proxy):
     """Test watchdog attributes are pushed."""
     main_event_store = event_store_class()
-    attr_test = ["lastwatchdogreset", "watchdogtimeout"]
-    subs = setup_subscriptions(attr_test, dish_manager_proxy, event_store_class)
+    reset_event_store = event_store_class()
+    timeout_event_store = event_store_class()
+    archive_event_store = event_store_class()
 
-    dish_mode_id = dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
+    change_evt_cb_mapping = {
+        "dishMode": main_event_store,
+        "lastwatchdogreset": reset_event_store,
+        "watchdogtimeout": timeout_event_store,
+    }
+    change_event_subs = setup_subscriptions(dish_manager_proxy, change_evt_cb_mapping)
+
+    archive_evt_cb_mapping = {
+        "lastwatchdogreset": archive_event_store,
+        "watchdogtimeout": archive_event_store,
+    }
+    archive_event_subs = setup_subscriptions(
+        dish_manager_proxy, archive_evt_cb_mapping, tango.EventType.ARCHIVE_EVENT
     )
 
     assert dish_manager_proxy.watchdogtimeout == 0.0
@@ -188,18 +198,16 @@ def test_attributes_pushed(event_store_class, dish_manager_proxy):
     dish_manager_proxy.watchdogtimeout = WDT_TIMEOUT
 
     # Check that the watchdogtimeout attribute is pushed
-    subs["watchdogtimeout"]["change_event_store"].wait_for_value(WDT_TIMEOUT)
-    subs["watchdogtimeout"]["archive_event_store"].wait_for_value(WDT_TIMEOUT)
+    timeout_event_store.wait_for_value(WDT_TIMEOUT)
+    archive_event_subs.wait_for_value(WDT_TIMEOUT)
 
     time.sleep(WDT_TIMEOUT / 2)
     [[result_code], [command_resp]] = dish_manager_proxy.ResetWatchdogTimer()
     assert result_code == ResultCode.OK
     # expected string "Watchdog timer reset at {reset timestamp}s"
     timestamp = float(command_resp.split("at ")[1].strip().removesuffix("s"))
-    subs["lastwatchdogreset"]["change_event_store"].wait_for_value(timestamp)
-    subs["lastwatchdogreset"]["archive_event_store"].wait_for_value(timestamp)
+    reset_event_store.wait_for_value(timestamp)
+    archive_event_store.wait_for_value(timestamp)
 
-    dish_manager_proxy.unsubscribe_event(dish_mode_id)
-    for attr in attr_test:
-        for sub_id in subs[attr]["ids"]:
-            dish_manager_proxy.unsubscribe_event(sub_id)
+    remove_subscriptions(change_event_subs)
+    remove_subscriptions(archive_event_subs)

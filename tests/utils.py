@@ -5,7 +5,7 @@ import queue
 import random
 import string
 import time
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import tango
@@ -847,29 +847,37 @@ def compare_trajectories(
     return mismatches, err_tai_list, err_angular_list
 
 
-def setup_subscriptions(attrs, dish_manager_proxy, event_store_class) -> dict:
-    """Set up subscriptions for the given attributes."""
-    subscriptions = {}
+def setup_subscriptions(
+    device_proxy: tango.DeviceProxy,
+    attr_callback_map: Dict[str, EventStore],
+    event_type: tango.EventType = tango.EventType.CHANGE_EVENT,
+) -> Dict[tango.DeviceProxy, List[int]]:
+    """Subscribe to events for the given attributes and callbacks.
 
-    for attr in attrs:
-        ce_event_store = event_store_class()
-        id_ch_ev = dish_manager_proxy.subscribe_event(
+    :param device_proxy: The Tango device proxy.
+    :param attr_callback_map: Dict mapping attribute names to EventStore callbacks.
+    :param event_type: The Tango event type to subscribe to.
+    :return: Dict mapping device_proxy to list of subscription IDs.
+    """
+    sub_ids = []
+    for attr, callback in attr_callback_map.items():
+        sub_id = device_proxy.subscribe_event(
             attr,
-            tango.EventType.CHANGE_EVENT,
-            ce_event_store,
+            event_type,
+            callback,
         )
-        ae_event_store = event_store_class()
-        id_a_ev = dish_manager_proxy.subscribe_event(
-            attr,
-            tango.EventType.ARCHIVE_EVENT,
-            ae_event_store,
-        )
-        ce_event_store.clear_queue()
-        ae_event_store.clear_queue()
-        subscriptions[attr] = {
-            "change_event_store": ce_event_store,
-            "archive_event_store": ae_event_store,
-            "ids": [id_ch_ev, id_a_ev],
-        }
+        sub_ids.append(sub_id)
+        # clear the queue if the callback has a clear_queue method
+        if hasattr(callback, "clear_queue"):
+            callback.clear_queue()
+    return {device_proxy: sub_ids}
 
-    return subscriptions
+
+def remove_subscriptions(subscriptions: Dict[tango.DeviceProxy, List[int]]) -> None:
+    """Unsubscribe from events for the given device proxy."""
+    for device_proxy, subscription_ids in subscriptions.items():
+        for sub_id in subscription_ids:
+            try:
+                device_proxy.unsubscribe_event(sub_id)
+            except Exception:
+                continue
