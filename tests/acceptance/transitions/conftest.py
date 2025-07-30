@@ -1,7 +1,6 @@
 """Fixtures for running ska-mid-dish-manager acceptance tests."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -9,6 +8,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.fixture
@@ -40,21 +40,12 @@ def setup_and_teardown(
     # command status for every issued command as part of its assert
     event_store.get_queue_events(timeout=10)
 
-    spf_device_proxy.subscribe_event(
-        "operatingMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    spfrx_device_proxy.subscribe_event(
-        "operatingMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    ds_device_proxy.subscribe_event(
-        "operatingMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
+    subscriptions = {}
+
+    subscriptions.update(setup_subscriptions(spf_device_proxy, {"operatingMode": event_store}))
+    subscriptions.update(setup_subscriptions(spfrx_device_proxy, {"operatingMode": event_store}))
+    subscriptions.update(setup_subscriptions(ds_device_proxy, {"operatingMode": event_store}))
+
     # clear the queue before the resets start
     event_store.clear_queue()
 
@@ -76,13 +67,7 @@ def setup_and_teardown(
         pass
 
     event_store.clear_queue()
-    # dish_manager_proxy.SyncComponentStates()
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
+    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": event_store}))
 
     try:
         event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
@@ -90,5 +75,7 @@ def setup_and_teardown(
         if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
             component_states = dish_manager_proxy.GetComponentStates()
             raise RuntimeError(f"DishManager not in STANDBY_FP:\n {component_states}\n") from err
+    finally:
+        remove_subscriptions(subscriptions)
 
     yield
