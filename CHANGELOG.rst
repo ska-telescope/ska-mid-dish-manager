@@ -7,6 +7,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added new attribute `dscCmdAuth` that holds who has authority.
+- Upgraded ska-mid-dish-ds-manager chart to v6.1.0.
 
 Version 8.0.0
 *************

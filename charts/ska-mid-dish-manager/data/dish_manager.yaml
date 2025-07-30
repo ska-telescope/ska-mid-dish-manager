@@ -65,9 +65,13 @@ server:
                     - "{{ $.Values.dishmanager.windLimits.WindGustThreshold }}"
                 - name: "WMSDeviceNames"
                   values:
-                    {{- $station_ids := (get $.Values "ska-mid-wms").deviceServers.wms.station_ids -}}
-                    {{- range $station_id := $station_ids }}
-                    - "ska-mid/weather-monitoring/{{ $station_id }}"
+                    {{- if (get $.Values "ska-mid-wms").enabled }}
+                      {{- $station_ids := (get $.Values "ska-mid-wms").deviceServers.wms.station_ids -}}
+                      {{- range $station_id := $station_ids }}
+                      - "ska-mid/weather-monitoring/{{ $station_id }}"
+                      {{- end }}
+                    {{- else }}
+                      - ""
                     {{- end }}
               attribute_properties:
                 - attribute: "ignoreSpf"
