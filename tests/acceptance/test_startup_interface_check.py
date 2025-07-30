@@ -1,6 +1,7 @@
-"""Tests that check that the Dish Manager conforms to the ICD."""
+"""Test that the Dish Manager devices conforms to the ICD and are available on startup."""
 
 import pytest
+from tango import DeviceProxy, DevState
 from tango_simlib.utilities.validate_device import validate_device_from_url
 
 SPEC_URLS = {
@@ -21,6 +22,15 @@ SPEC_URLS = {
         "master/tmdata/software/tango/ska_wide/Guidelines.yaml"
     ),
 }
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize("dish_number", ["001", "111"])
+def test_dishes_are_available(monitor_tango_servers, dish_number):
+    """Test that the 2 dishes we expect are available."""
+    dish_manager_proxy = DeviceProxy(f"mid-dish/dish-manager/SKA{dish_number}")
+    assert isinstance(dish_manager_proxy.ping(), int)
+    assert dish_manager_proxy.State() == DevState.ON
 
 
 @pytest.mark.acceptance

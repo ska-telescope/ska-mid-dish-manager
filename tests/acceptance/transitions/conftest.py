@@ -72,8 +72,7 @@ def setup_and_teardown(
             ds_device_proxy.SetStandbyFPMode()
             assert event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=30)
     except (RuntimeError, AssertionError):
-        # if expected events are not received after reset, allow
-        # SyncComponentStates to be called before giving up
+        # check dish manager before giving up
         pass
 
     event_store.clear_queue()

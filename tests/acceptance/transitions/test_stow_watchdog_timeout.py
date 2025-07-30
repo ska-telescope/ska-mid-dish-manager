@@ -199,7 +199,7 @@ def test_attributes_pushed(event_store_class, dish_manager_proxy):
 
     # Check that the watchdogtimeout attribute is pushed
     timeout_event_store.wait_for_value(WDT_TIMEOUT)
-    archive_event_subs.wait_for_value(WDT_TIMEOUT)
+    archive_event_store.wait_for_value(WDT_TIMEOUT)
 
     time.sleep(WDT_TIMEOUT / 2)
     [[result_code], [command_resp]] = dish_manager_proxy.ResetWatchdogTimer()
