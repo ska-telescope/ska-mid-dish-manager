@@ -67,6 +67,7 @@ def setup_and_teardown(
         pass
 
     event_store.clear_queue()
+    dish_manager_proxy.SetStandbyFPMode()
     subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": event_store}))
 
     try:
