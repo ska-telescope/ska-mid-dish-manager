@@ -11,7 +11,6 @@ from ska_tango_base.commands import SubmittedSlowCommand
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
-    DscCmdAuthType,
     DSOperatingMode,
     IndexerPosition,
     PointingState,
@@ -226,7 +225,7 @@ class CommandMap:
                 "command": "SetStandbyMode",
                 "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
-            }
+            },
         }
         self._run_long_running_command(
             task_callback,

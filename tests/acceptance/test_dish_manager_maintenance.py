@@ -42,9 +42,9 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
     expected_progress_updates = [
         "SetMaintenanceMode called on SPF",
         "Stow called on DS",
+        "SetStandbyMode called on SPFRX",
         "Awaiting dishmode change to MAINTENANCE",
-        "SetStandbyMode called on SPFRX"
-        "Released authority on DSManager."
+        "Released authority on DSManager.",
         "SetMaintenanceMode completed",
     ]
 
