@@ -1,7 +1,5 @@
 """File for defining constants."""
 
-"""File for defining constants."""
-
 DEFAULT_DISH_ID = "SKA001"
 DEFAULT_DISH_MANAGER_TRL = "mid-dish/dish-manager/SKA001"
 DEFAULT_DS_MANAGER_TRL = "mid-dish/ds-manager/SKA001"
