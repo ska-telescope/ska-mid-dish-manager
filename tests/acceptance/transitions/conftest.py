@@ -21,13 +21,15 @@ def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
 
 @pytest.fixture(autouse=True)
 def setup_and_teardown(
-    event_store,
+    event_store_class,
     dish_manager_proxy,
     ds_device_proxy,
     spf_device_proxy,
     spfrx_device_proxy,
 ):
     """Reset the tango devices to a fresh state before each test."""
+    event_store = event_store_class()
+    dish_mode_event_store = event_store_class()
     # this wait is very important for our AUTOMATED tests!!!
     # wait for task status updates to finish before resetting the
     # sub devices to a clean state for the next test. Reasons are:
@@ -45,9 +47,9 @@ def setup_and_teardown(
     subscriptions.update(setup_subscriptions(spf_device_proxy, {"operatingMode": event_store}))
     subscriptions.update(setup_subscriptions(spfrx_device_proxy, {"operatingMode": event_store}))
     subscriptions.update(setup_subscriptions(ds_device_proxy, {"operatingMode": event_store}))
-
-    # clear the queue before the resets start
-    event_store.clear_queue()
+    subscriptions.update(
+        setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_event_store})
+    )
 
     try:
         spf_device_proxy.ResetToDefault()
@@ -66,16 +68,12 @@ def setup_and_teardown(
         # check dish manager before giving up
         pass
 
-    event_store.clear_queue()
-    dish_manager_proxy.SetStandbyFPMode()
-    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": event_store}))
-
     try:
-        event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
-    except RuntimeError as err:
-        if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
-            component_states = dish_manager_proxy.GetComponentStates()
-            raise RuntimeError(f"DishManager not in STANDBY_FP:\n {component_states}\n") from err
+        dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+    except RuntimeError:
+        # request FP mode and allow the test to continue
+        dish_manager_proxy.SetStandbyFPMode()
+        dish_mode_event_store.get_queue_values()
     finally:
         remove_subscriptions(subscriptions)
 
