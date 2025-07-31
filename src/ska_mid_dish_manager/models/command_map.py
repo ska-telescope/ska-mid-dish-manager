@@ -11,6 +11,7 @@ from ska_tango_base.commands import SubmittedSlowCommand
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
+    DscCmdAuthType,
     DSOperatingMode,
     IndexerPosition,
     PointingState,
@@ -221,8 +222,12 @@ class CommandMap:
                 "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [DSOperatingMode.STOW],
             },
+            "SPFRX": {
+                "command": "SetStandbyMode",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
+            }
         }
-
         self._run_long_running_command(
             task_callback,
             task_abort_event,
@@ -231,6 +236,14 @@ class CommandMap:
             ["dishmode"],
             [DishMode.MAINTENANCE],
         )
+        ds_manager_cm = self._dish_manager_cm.sub_component_managers["DS"]
+        try:
+            ds_manager_cm.execute_command("ReleaseAuth")
+            task_callback(progress="Released authority on DSManager.")
+            self.logger.info("Released Authority and Set DishMode to Maintenance")
+        except tango.DevFailed as err:
+            self.logger.exception("Failed to call ReleaseAuthority on DSManager.")
+            task_callback(status=TaskStatus.FAILED, exception=err)
 
     # pylint: disable = no-value-for-parameter
     def track_cmd(
