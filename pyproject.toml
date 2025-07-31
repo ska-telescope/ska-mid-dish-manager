@@ -1,6 +1,6 @@
 [project]
 name = "ska-mid-dish-manager"
-version = "8.0.0"
+version = "8.1.0"
 description = "SKA Dish Manager TANGO device server"
 authors = [{name = "Team Karoo"}]
 maintainers = [{name = "Team Karoo"}]
