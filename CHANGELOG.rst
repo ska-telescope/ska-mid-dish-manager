@@ -31,7 +31,7 @@ Version 8.0.0
 
 Version 7.5.0
 *************
-- Added connection workaround for SPFRx attributes that have invalid quality on startup
+- Added connection workaround for SPFRx attributes that have invalid quality on startup.
 - Partial SetMaintenanceMode implementation. It may not work as expected until SPFRx implements the changes to adminMode
 - Add test_track_pattern acceptance test to run tracking test with track table input from csv files
 
