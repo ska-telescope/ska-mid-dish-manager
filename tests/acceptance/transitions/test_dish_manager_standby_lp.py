@@ -12,7 +12,7 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
     """Test transition to Standby_LP."""
     progress_event_store = event_store_class()
 
-    dish_manager_proxy.subscribe_event(
+    sub_id = dish_manager_proxy.subscribe_event(
         "longRunningCommandProgress",
         tango.EventType.CHANGE_EVENT,
         progress_event_store,
@@ -42,3 +42,5 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
 
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_LP
     assert dish_manager_proxy.powerState == PowerState.LOW
+
+    dish_manager_proxy.unsubscribe_event(sub_id)

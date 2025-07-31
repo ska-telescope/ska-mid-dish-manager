@@ -1,9 +1,9 @@
 """Test ConfigureBand2."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import Band
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
@@ -18,23 +18,12 @@ def test_configure_band_2(
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
 
-    dish_manager_proxy.subscribe_event(
-        "longrunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
+    attr_cb_mapping = {
+        "configuredBand": main_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # make sure configuredBand is not B2
     dish_manager_proxy.ConfigureBand1(True)
@@ -76,3 +65,5 @@ def test_configure_band_2(
         unique_id, '[0, "ConfigureBand2 completed"]', timeout=10
     )
     assert dish_manager_proxy.configuredBand == Band.B2
+
+    remove_subscriptions(subscriptions)

@@ -1,10 +1,9 @@
 """Test ignoring subservient devices."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
-from tests.utils import set_ignored_devices
+from tests.utils import remove_subscriptions, set_ignored_devices, setup_subscriptions
 
 
 @pytest.fixture
@@ -40,30 +39,13 @@ def test_ignoring_spf(
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
     main_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longrunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "configuredband",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "configuredband": main_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(Band.B1, timeout=8)
@@ -92,6 +74,8 @@ def test_ignoring_spf(
     for message in expected_progress_updates:
         assert message in events_string
 
+    remove_subscriptions(subscriptions)
+
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -102,24 +86,12 @@ def test_ignoring_spfrx(
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longrunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": dish_mode_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -142,6 +114,8 @@ def test_ignoring_spfrx(
     for message in expected_progress_updates:
         assert message in events_string
 
+    remove_subscriptions(subscriptions)
+
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -152,24 +126,12 @@ def test_ignoring_all(
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longrunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": dish_mode_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -192,3 +154,5 @@ def test_ignoring_all(
     # in the event store
     for message in expected_progress_updates:
         assert message in events_string
+
+    remove_subscriptions(subscriptions)

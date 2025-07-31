@@ -13,7 +13,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
-from tests.utils import generate_track_table
+from tests.utils import generate_track_table, remove_subscriptions, setup_subscriptions
 
 LOGGER = logging.getLogger(__name__)
 NUMBER_OF_TABLE_SAMPLES = 10  # amounts to 10 calls to track table
@@ -32,30 +32,13 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     dish_mode_event_store = event_store_class()
     band_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "pointingState",
-        tango.EventType.CHANGE_EVENT,
-        pointing_state_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": dish_mode_event_store,
+        "configuredBand": band_event_store,
+        "pointingState": pointing_state_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Mode and configuration setup
     dish_manager_proxy.ConfigureBand2(True)
@@ -120,3 +103,5 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
 
     assert ds_device_proxy.achievedPointing[1] == approx(last_requested_az, rel=TOLERANCE)
     assert ds_device_proxy.achievedPointing[2] == approx(last_requested_el, rel=TOLERANCE)
+
+    remove_subscriptions(subscriptions)
