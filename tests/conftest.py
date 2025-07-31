@@ -108,12 +108,18 @@ def wms_device_fqdn():
 
 @pytest.fixture(scope="module")
 def dish_manager_proxy(dish_manager_device_fqdn):
-    return tango.DeviceProxy(dish_manager_device_fqdn)
+    dev_proxy = tango.DeviceProxy(dish_manager_device_fqdn)
+    # increase client request timeout to 5 seconds
+    dev_proxy.set_timeout_millis(5000)
+    return dev_proxy
 
 
 @pytest.fixture(scope="module")
 def ds_device_proxy(ds_device_fqdn):
-    return tango.DeviceProxy(ds_device_fqdn)
+    dev_proxy = tango.DeviceProxy(ds_device_fqdn)
+    # increase client request timeout to 5 seconds
+    dev_proxy.set_timeout_millis(5000)
+    return dev_proxy
 
 
 @pytest.fixture(scope="module")
