@@ -40,10 +40,11 @@ def test_set_maintenance_mode_handler(
         {"progress": f"SetMaintenanceMode called on SPF, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},
         {"progress": f"Stow called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": f"SetStandbyMode called on SPFRX, ID{mock_command_tracker.new_command()}"},
+        {"progress": f"SetStandbyMode called on SPFRX,  ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting DS operatingmode change to STOW"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {"progress": "Awaiting dishmode change to MAINTENANCE"},
+        {"progress": "Released authority on DSManager."},
     )
 
     # check that the initial lrc updates come through
