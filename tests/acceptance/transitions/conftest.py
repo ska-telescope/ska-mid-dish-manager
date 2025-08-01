@@ -4,66 +4,26 @@ import pytest
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
-    DSOperatingMode,
-    SPFOperatingMode,
-    SPFRxOperatingMode,
 )
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-@pytest.fixture
-def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
-    """Undo any updates to raiseCmdException in SPF and SPFRx."""
-    yield
-    spf_device_proxy.raiseCmdException = False
-    spfrx_device_proxy.raiseCmdException = False
-
-
 @pytest.fixture(autouse=True)
-def setup_and_teardown(
-    event_store_class,
-    dish_manager_proxy,
-    ds_device_proxy,
-    spf_device_proxy,
-    spfrx_device_proxy,
-):
+def setup_and_teardown(event_store_class, dish_manager_proxy):
     """Reset the tango devices to a fresh state before each test."""
+    dish_manager_proxy.Abort()
     event_store = event_store_class()
     dish_mode_events = event_store_class()
-    # this wait is very important for our AUTOMATED tests!!!
-    # wait for task status updates to finish before resetting the
-    # sub devices to a clean state for the next test. Reasons are:
-    # [*] your command map may never evaluate true for the
-    # awaited value to report the final task status of the LRC.
-    # [*] the base classes needs this final task status to allow the
-    # subsequently issued commands to be moved from queued to in progress
-    subs = setup_subscriptions(
-        dish_manager_proxy, {"longRunningCommandsInQueue": event_store}, reset_queue=False
-    )
-    event_store.wait_for_value((), timeout=10)
-    remove_subscriptions(subs)
 
     subscriptions = {}
-    subscriptions.update(setup_subscriptions(spf_device_proxy, {"operatingMode": event_store}))
-    subscriptions.update(setup_subscriptions(spfrx_device_proxy, {"operatingMode": event_store}))
-    subscriptions.update(setup_subscriptions(ds_device_proxy, {"operatingMode": event_store}))
+    subscriptions.update(
+        setup_subscriptions(dish_manager_proxy, {"longRunningCommandsInQueue": event_store})
+    )
     subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_events}))
 
     try:
-        spf_device_proxy.ResetToDefault()
-        assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=10)
-        spf_device_proxy.SetOperateMode()
-        assert event_store.wait_for_value(SPFOperatingMode.OPERATE, timeout=10)
-
-        spfrx_device_proxy.ResetToDefault()
-        assert event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=10)
-
-        if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY_FP:
-            # go to FP ...
-            ds_device_proxy.SetStandbyFPMode()
-            assert event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=10)
+        event_store.wait_for_value((), timeout=30)
     except (RuntimeError, AssertionError):
-        # check dish manager before giving up
         pass
 
     try:
