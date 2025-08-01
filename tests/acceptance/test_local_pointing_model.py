@@ -70,7 +70,8 @@ def test_write_bands_static_pointing_model_parameters(
     dish_manager_proxy.write_attribute(tango_attribute, write_values)
 
     model_event_store = event_store_class()
-    dish_manager_proxy.subscribe_event(
+    sub_id = dish_manager_proxy.subscribe_event(
         tango_attribute, tango.EventType.CHANGE_EVENT, model_event_store
     )
     model_event_store.wait_for_value(write_values, timeout=7)
+    dish_manager_proxy.unsubscribe_event(sub_id)

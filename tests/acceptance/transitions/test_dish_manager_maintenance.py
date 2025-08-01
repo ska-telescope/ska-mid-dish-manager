@@ -1,9 +1,9 @@
 """Test Maintenance Mode."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 WAIT_FOR_RESULT_BUFFER_SEC = 10
 
@@ -14,18 +14,11 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
     """Test transition to MAINTENANCE."""
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longrunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
+    attr_cb_mapping = {
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # SetMaintenanceMode triggers a stow request. Taking
     # elevation speed at 1 degree per second, a suitable
@@ -56,3 +49,5 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
         assert message in events_string
 
     assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
+
+    remove_subscriptions(subscriptions)

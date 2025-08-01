@@ -1,9 +1,9 @@
 """Test CapabilityState."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import CapabilityStates, DishMode
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
@@ -12,17 +12,12 @@ def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_mana
     """Test transition on CapabilityState b1."""
     main_event_store = event_store_class()
     cap_state_event_store = event_store_class()
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "b1CapabilityState": cap_state_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "b1CapabilityState",
-        tango.EventType.CHANGE_EVENT,
-        cap_state_event_store,
-    )
     cap_state_event_store.clear_queue()
     dish_manager_proxy.ConfigureBand1(True)
 
@@ -31,3 +26,5 @@ def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_mana
 
     assert dish_manager_proxy.b1CapabilityState == CapabilityStates.STANDBY
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+
+    remove_subscriptions(subscriptions)

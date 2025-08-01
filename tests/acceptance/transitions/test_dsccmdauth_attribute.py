@@ -20,7 +20,7 @@ def test_dsccmdauth_attr(
     """Test DSC Command Authority can be read on Dish Manager."""
     dish_mode_event_store = event_store_class()
 
-    dish_manager_proxy.subscribe_event(
+    sub_id = dish_manager_proxy.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
         dish_mode_event_store,
@@ -34,3 +34,4 @@ def test_dsccmdauth_attr(
 
     # Check that DSC Command Authority has updated to LMC
     assert ds_device_proxy.dscCmdAuth == dish_manager_proxy.dscCmdAuth == DscCmdAuthType.LMC
+    dish_manager_proxy.unsubscribe_event(sub_id)

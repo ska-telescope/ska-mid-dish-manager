@@ -1,7 +1,8 @@
 """Test the Scan and EndScan command."""
 
 import pytest
-import tango
+
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
@@ -11,21 +12,12 @@ def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
     attribute_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "scanID", tango.EventType.CHANGE_EVENT, attribute_event_store
-    )
+    attr_cb_mapping = {
+        "scanID": attribute_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # exercising scanID using the Scan and EndScan commands
     scan_id = "4"
@@ -48,3 +40,5 @@ def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     result_event_store.wait_for_command_id(unique_id)
     progress_event_store.wait_for_progress_update("EndScan completed")
     assert dish_manager_proxy.read_attribute("scanID").value == ""
+
+    remove_subscriptions(subscriptions)

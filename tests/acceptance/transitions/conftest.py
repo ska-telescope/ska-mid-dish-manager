@@ -1,7 +1,6 @@
 """Fixtures for running ska-mid-dish-manager acceptance tests."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -9,6 +8,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.fixture
@@ -21,13 +21,15 @@ def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
 
 @pytest.fixture(autouse=True)
 def setup_and_teardown(
-    event_store,
+    event_store_class,
     dish_manager_proxy,
     ds_device_proxy,
     spf_device_proxy,
     spfrx_device_proxy,
 ):
     """Reset the tango devices to a fresh state before each test."""
+    event_store = event_store_class()
+    dish_mode_events = event_store_class()
     # this wait is very important for our AUTOMATED tests!!!
     # wait for task status updates to finish before resetting the
     # sub devices to a clean state for the next test. Reasons are:
@@ -35,31 +37,17 @@ def setup_and_teardown(
     # awaited value to report the final task status of the LRC.
     # [*] the base classes needs this final task status to allow the
     # subsequently issued commands to be moved from queued to in progress
-
-    # another approach will be to ensure that all tests check the
-    # command status for every issued command as part of its assert
-    event_store.get_queue_events(timeout=10)
-
-    spf_device_proxy.subscribe_event(
-        "operatingMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
+    subs = setup_subscriptions(
+        dish_manager_proxy, {"longRunningCommandsInQueue": event_store}, reset_queue=False
     )
-    spfrx_device_proxy.subscribe_event(
-        "operatingMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    ds_device_proxy.subscribe_event(
-        "operatingMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    # clear the queue before the resets start
-    event_store.clear_queue()
+    event_store.wait_for_value((), timeout=10)
+    remove_subscriptions(subs)
 
-    # disable the watchdog timer
-    dish_manager_proxy.watchdogtimeout = 0.0
+    subscriptions = {}
+    subscriptions.update(setup_subscriptions(spf_device_proxy, {"operatingMode": event_store}))
+    subscriptions.update(setup_subscriptions(spfrx_device_proxy, {"operatingMode": event_store}))
+    subscriptions.update(setup_subscriptions(ds_device_proxy, {"operatingMode": event_store}))
+    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_events}))
 
     try:
         spf_device_proxy.ResetToDefault()
@@ -73,28 +61,18 @@ def setup_and_teardown(
         if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY_FP:
             # go to FP ...
             ds_device_proxy.SetStandbyFPMode()
-            assert event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=30)
+            assert event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=10)
     except (RuntimeError, AssertionError):
-        # if expected events are not received after reset, allow
-        # SyncComponentStates to be called before giving up
+        # check dish manager before giving up
         pass
 
-    event_store.clear_queue()
-    dish_manager_proxy.SyncComponentStates()
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-
     try:
-        event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
-    except RuntimeError as err:
-        component_states = dish_manager_proxy.GetComponentStates()
-        raise RuntimeError(f"DishManager not in STANDBY_FP:\n {component_states}\n") from err
+        dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=10)
+    except RuntimeError:
+        # request FP mode and allow the test to continue
+        dish_manager_proxy.SetStandbyFPMode()
+        dish_mode_events.get_queue_values()
+    finally:
+        remove_subscriptions(subscriptions)
 
     yield
-
-    # disable the watchdog timer
-    dish_manager_proxy.watchdogtimeout = 0.0

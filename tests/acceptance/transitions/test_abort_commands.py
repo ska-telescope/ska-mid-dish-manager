@@ -1,7 +1,6 @@
 """Test AbortCommands."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -9,12 +8,17 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
-from tests.utils import calculate_slew_target
+from tests.utils import calculate_slew_target, remove_subscriptions, setup_subscriptions
 
 
 @pytest.fixture
-def toggle_skip_attributes(spf_device_proxy):
+def toggle_skip_attributes(event_store_class, spf_device_proxy, dish_manager_proxy):
     """Ensure that attribute updates on spf is restored."""
+    dish_manager_proxy.SetStandbyLPMode()
+    dish_mode_event_store = event_store_class()
+    sub = setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_event_store})
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
+    remove_subscriptions(sub)
     # Set a flag on SPF to skip attribute updates.
     # This is useful to ensure that the long running command
     # does not finish executing before AbortCommands is triggered
@@ -26,52 +30,33 @@ def toggle_skip_attributes(spf_device_proxy):
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands(
-    event_store_class, dish_manager_proxy, spf_device_proxy, toggle_skip_attributes
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+    spf_device_proxy,
+    toggle_skip_attributes,
 ):
     """Test AbortCommands aborts the executing long running command."""
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
-    band_event_store = event_store_class()
 
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": dish_mode_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+        "longRunningCommandsInQueue": cmds_in_queue_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
+    # Transition to FP mode
+    [[_], [lp_unique_id]] = dish_manager_proxy.SetStandbyFPMode()
 
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandsInQueue",
-        tango.EventType.CHANGE_EVENT,
-        cmds_in_queue_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
-
-    # Transition to LP mode
-    [[_], [lp_unique_id]] = dish_manager_proxy.SetStandbyLPMode()
-
-    # Check that Dish Manager is waiting to transition to LP
-    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_LP")
+    # Check that Dish Manager is waiting to transition to FP
+    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
+    # Check that the Dish Manager did not transition to FP
     dish_mode_event_store.wait_for_value(DishMode.UNKNOWN)
-    # Check that the Dish Manager did not transition to LP
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
 
     # enable spf to send attribute updates
@@ -83,7 +68,7 @@ def test_abort_commands(
     result_event_store.wait_for_command_id(lp_unique_id, timeout=30)
     # Abort will execute standbyfp dishmode as part of its abort sequence
     expected_progress_updates = [
-        "SetStandbyLPMode Aborted",
+        "SetStandbyFPMode Aborted",
         "SetOperateMode called on SPF",
         "SetStandbyFPMode called on DS",
         "Awaiting dishmode change to STANDBY_FP",
@@ -105,6 +90,8 @@ def test_abort_commands(
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
 
+    remove_subscriptions(subscriptions)
+
 
 @pytest.fixture
 def track_a_sample(
@@ -118,35 +105,14 @@ def track_a_sample(
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
 
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "pointingState",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "pointingState": main_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+        "configuredBand": band_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=30)
@@ -196,7 +162,7 @@ def track_a_sample(
 
     # Wait for the track command to return
     progress_event_store.wait_for_progress_update(expected_progress_update, timeout=6)
-
+    remove_subscriptions(subscriptions)
     yield
 
 
@@ -212,16 +178,11 @@ def test_abort_commands_during_track(
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Call AbortCommands on DishManager
     [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
@@ -231,6 +192,8 @@ def test_abort_commands_during_track(
 
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+
+    remove_subscriptions(subscriptions)
 
 
 @pytest.mark.acceptance
@@ -244,29 +207,13 @@ def test_abort_commands_during_slew(
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "pointingState",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10, proxy=dish_manager_proxy)
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "pointingState": main_event_store,
+        "longRunningCommandResult": result_event_store,
+        "configuredBand": main_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(Band.B1, timeout=30)
@@ -294,6 +241,8 @@ def test_abort_commands_during_slew(
     assert achieved_az != pytest.approx(requested_az)
     assert achieved_el != pytest.approx(requested_el)
 
+    remove_subscriptions(subscriptions)
+
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -306,21 +255,12 @@ def test_abort_commands_during_stow(
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "pointingState",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "pointingState": main_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Stow the dish
     dish_manager_proxy.SetStowMode()
@@ -339,3 +279,5 @@ def test_abort_commands_during_stow(
     stow_position = 90.2
     achieved_el = dish_manager_proxy.achievedPointing[2]
     assert achieved_el != pytest.approx(stow_position)
+
+    remove_subscriptions(subscriptions)
