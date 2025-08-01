@@ -12,6 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     PointingState,
     TrackTableLoadMode,
 )
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 TRACKING_POSITION_THRESHOLD_ERROR_DEG = 0.05
 INIT_AZ = -250
@@ -23,20 +24,13 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     """Fixture that slews the dish to a init position."""
     main_event_store = event_store_class()
     band_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5, proxy=dish_manager_proxy)
+    achieved_pointing_event_store = event_store_class()
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "configuredBand": band_event_store,
+        "achievedPointing": achieved_pointing_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
@@ -44,13 +38,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
 
     dish_manager_proxy.SetOperateMode()
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
-
-    achieved_pointing_event_store = event_store_class()
-    dish_manager_proxy.subscribe_event(
-        "achievedPointing",
-        tango.EventType.CHANGE_EVENT,
-        achieved_pointing_event_store,
-    )
 
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
     estimate_slew_duration = max(abs(INIT_EL - current_el), (abs(INIT_AZ - current_az) / 3))
@@ -68,6 +55,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     achieved_az, achieved_el = last_az_el[1], last_az_el[2]
     assert achieved_az == pytest.approx(INIT_AZ)
     assert achieved_el == pytest.approx(INIT_EL)
+    remove_subscriptions(subscriptions)
 
     yield
 
@@ -89,29 +77,13 @@ def test_track_and_track_stop_cmds(
     progress_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
 
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "pointingState",
-        tango.EventType.CHANGE_EVENT,
-        pointing_state_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "achievedPointing",
-        tango.EventType.CHANGE_EVENT,
-        achieved_pointing_event_store,
-    )
+    attr_cb_mapping = {
+        "pointingState": pointing_state_event_store,
+        "achievedPointing": achieved_pointing_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
@@ -207,6 +179,8 @@ def test_track_and_track_stop_cmds(
     for message in expected_progress_updates:
         assert message in events_string
 
+    remove_subscriptions(subscriptions)
+
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -221,24 +195,12 @@ def test_append_dvs_case(
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "pointingState",
-        tango.EventType.CHANGE_EVENT,
-        pointing_state_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "achievedPointing",
-        tango.EventType.CHANGE_EVENT,
-        achieved_pointing_event_store,
-    )
+    attr_cb_mapping = {
+        "pointingState": pointing_state_event_store,
+        "achievedPointing": achieved_pointing_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
@@ -301,6 +263,8 @@ def test_append_dvs_case(
     achieved_pointing_event_store.clear_queue()
     achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=10)
 
+    remove_subscriptions(subscriptions)
+
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -317,36 +281,14 @@ def test_maximum_capacity(
     achieved_pointing_event_store = event_store_class()
     current_index_event_store = event_store_class()
     end_index_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "pointingState",
-        tango.EventType.CHANGE_EVENT,
-        pointing_state_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "achievedPointing",
-        tango.EventType.CHANGE_EVENT,
-        achieved_pointing_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "trackTableCurrentIndex",
-        tango.EventType.CHANGE_EVENT,
-        current_index_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "trackTableEndIndex",
-        tango.EventType.CHANGE_EVENT,
-        end_index_event_store,
-    )
+    attr_cb_mapping = {
+        "pointingState": pointing_state_event_store,
+        "achievedPointing": achieved_pointing_event_store,
+        "trackTableCurrentIndex": current_index_event_store,
+        "trackTableEndIndex": end_index_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
@@ -440,6 +382,8 @@ def test_maximum_capacity(
     expected_end_index = samples_per_block
     end_index_event_store.wait_for_value(expected_end_index)
 
+    remove_subscriptions(subscriptions)
+
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -453,24 +397,12 @@ def test_track_fails_when_track_called_late(
     main_event_store = event_store_class()
     band_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "pointingState",
-        tango.EventType.CHANGE_EVENT,
-        pointing_state_event_store,
-    )
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5, proxy=dish_manager_proxy)
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "configuredBand": band_event_store,
+        "pointingState": pointing_state_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
@@ -501,3 +433,5 @@ def test_track_fails_when_track_called_late(
     dish_manager_proxy.Track()
     with pytest.raises(RuntimeError):
         pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=10)
+
+    remove_subscriptions(subscriptions)

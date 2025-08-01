@@ -5,6 +5,8 @@ from typing import Any
 import pytest
 import tango
 
+from tests.utils import remove_subscriptions, setup_subscriptions
+
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -16,16 +18,12 @@ def test_track_load_static_off(
 
     model_event_store = event_store_class()
     progress_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "actStaticOffsetValueXel", tango.EventType.CHANGE_EVENT, model_event_store
-    )
-    dish_manager_proxy.subscribe_event(
-        "actStaticOffsetValueEl", tango.EventType.CHANGE_EVENT, model_event_store
-    )
-    dish_manager_proxy.subscribe_event(
-        "longrunningCommandProgress", tango.EventType.CHANGE_EVENT, progress_event_store
-    )
+    attr_cb_mapping = {
+        "actStaticOffsetValueXel": model_event_store,
+        "actStaticOffsetValueEl": model_event_store,
+        "longrunningCommandProgress": progress_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.TrackLoadStaticOff(write_values)
 
@@ -53,3 +51,5 @@ def test_track_load_static_off(
 
     model_event_store.wait_for_value(write_values[0], timeout=7)
     model_event_store.wait_for_value(write_values[1], timeout=7)
+
+    remove_subscriptions(subscriptions)

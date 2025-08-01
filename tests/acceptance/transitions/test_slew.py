@@ -1,9 +1,9 @@
 """Test that Dish Slews to target Azimuth and Elevation."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 ELEV_MECHANICAL_LIMIT_MAX = 85.0
 AZIM_MECHANICAL_LIMIT_MAX = 360.0
@@ -13,30 +13,13 @@ AZIM_MECHANICAL_LIMIT_MAX = 360.0
 @pytest.mark.forked
 def test_slew_rejected(event_store_class, dish_manager_proxy):
     """Test slew command rejected when not in OPERATE."""
-    main_event_store = event_store_class()
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
+    attr_cb_mapping = {
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Position must be in range but absolute not important
     [[_], [unique_id]] = dish_manager_proxy.Slew([0.0, 50.0])
@@ -50,6 +33,7 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
 
     # Wait for the slew command progress update
     progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
+    remove_subscriptions(subscriptions)
 
 
 @pytest.mark.acceptance
@@ -57,13 +41,12 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
 def test_slew_transition(event_store_class, dish_manager_proxy):
     """Test transition to SLEW."""
     main_event_store = event_store_class()
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
+    achieved_pointing_event_store = event_store_class()
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "achievedPointing": achieved_pointing_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Set mode to Operate to accept Slew command
     dish_manager_proxy.ConfigureBand1(True)
@@ -80,14 +63,6 @@ def test_slew_transition(event_store_class, dish_manager_proxy):
     if slew_elevation >= ELEV_MECHANICAL_LIMIT_MAX:
         slew_elevation = achieved_pointing[2] - rotation_angle_deg
 
-    achieved_pointing_event_store = event_store_class()
-    dish_manager_proxy.subscribe_event(
-        "achievedPointing",
-        tango.EventType.CHANGE_EVENT,
-        achieved_pointing_event_store,
-    )
-    achieved_pointing_event_store.clear_queue()
-
     dish_manager_proxy.Slew([slew_azimuth, slew_elevation])
 
     # wait until no updates
@@ -100,3 +75,5 @@ def test_slew_transition(event_store_class, dish_manager_proxy):
     achieved_az, achieved_el = last_az_el[1], last_az_el[2]
     assert achieved_az == pytest.approx(slew_azimuth)
     assert achieved_el == pytest.approx(slew_elevation)
+
+    remove_subscriptions(subscriptions)

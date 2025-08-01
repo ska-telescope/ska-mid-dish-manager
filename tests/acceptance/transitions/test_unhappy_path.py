@@ -1,7 +1,6 @@
 """Test dish unhappy path."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -9,6 +8,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
@@ -25,37 +25,17 @@ def test_dish_handles_unhappy_path_in_command_execution(
     result_event_store = event_store_class()
     band_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": dish_mode_event_store,
+        "configuredBand": band_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # transition through FP > OPERATE > LP
     # SetStandbyLPMode is the only command which fans out
     # to SPF and SPFRx devices: this allows us test the exception
-    dish_manager_proxy.SetStandbyFPMode()
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=8)
-
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
@@ -95,3 +75,5 @@ def test_dish_handles_unhappy_path_in_command_execution(
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
     assert spf_device_proxy.operatingMode == SPFOperatingMode.OPERATE
     assert spfrx_device_proxy.operatingMode == SPFRxOperatingMode.OPERATE
+
+    remove_subscriptions(subscriptions)

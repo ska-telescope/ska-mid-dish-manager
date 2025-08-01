@@ -27,7 +27,10 @@ def test_set_noise_diode_attribute(
 ) -> None:
     """Test set noise diode attribute."""
     event_store = event_store_class()
-    dish_manager_proxy.subscribe_event(attribute, tango.EventType.CHANGE_EVENT, event_store)
+    sub_id = dish_manager_proxy.subscribe_event(
+        attribute, tango.EventType.CHANGE_EVENT, event_store
+    )
 
     dish_manager_proxy.write_attribute(attribute, valid_write_value)
     event_store.wait_for_value(valid_write_value, timeout=7)
+    dish_manager_proxy.unsubscribe_event(sub_id)

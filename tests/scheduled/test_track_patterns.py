@@ -13,7 +13,13 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
 )
 from tests.data import RADIAL_CSV_PATH, SPIRAL_CSV_PATH
-from tests.utils import compare_trajectories, handle_tracking_table, save_tracking_test_plots
+from tests.utils import (
+    compare_trajectories,
+    handle_tracking_table,
+    remove_subscriptions,
+    save_tracking_test_plots,
+    setup_subscriptions,
+)
 
 TRACKING_TABLE_CHUNK_SIZE = 50
 TRACKING_TABLE_LOAD_LEAD_TIME_S = 5
@@ -53,26 +59,14 @@ def test_track_pattern(
     """Test tracking the points from the given csv file."""
     main_event_store = event_store_class()
     pointing_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "dishmode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "configuredband",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
-        "achievedPointing",
-        tango.EventType.CHANGE_EVENT,
-        pointing_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "configuredband": main_event_store,
+        "achievedPointing": pointing_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Get the dish ready for tracking
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=5)
     if dish_manager_proxy.configuredBand != Band.B1:
         dish_manager_proxy.ConfigureBand1(True)
         main_event_store.wait_for_value(Band.B1, timeout=60)
@@ -103,6 +97,7 @@ def test_track_pattern(
         )
     finally:
         achieved_pointing = pointing_event_store.get_queue_values()
+        remove_subscriptions(subscriptions)
 
     # Compare the desired and achieved trajectories
     # Extract achieved values from events from after the start time

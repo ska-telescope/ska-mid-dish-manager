@@ -1,10 +1,9 @@
 """Test ignoring subservient devices."""
 
 import pytest
-import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
-from tests.utils import set_ignored_devices
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from tests.utils import remove_subscriptions, set_ignored_devices, setup_subscriptions
 
 
 @pytest.fixture
@@ -39,18 +38,20 @@ def test_ignoring_spf(
     """Test ignoring SPF device."""
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
+    main_event_store = event_store_class()
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "configuredband": main_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.subscribe_event(
-        "longrunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
+    dish_manager_proxy.ConfigureBand1(True)
+    main_event_store.wait_for_value(Band.B1, timeout=8)
 
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
+    dish_manager_proxy.SetOperateMode()
+    main_event_store.wait_for_value(DishMode.OPERATE)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -73,6 +74,8 @@ def test_ignoring_spf(
     for message in expected_progress_updates:
         assert message in events_string
 
+    remove_subscriptions(subscriptions)
+
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -83,40 +86,21 @@ def test_ignoring_spfrx(
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
+    attr_cb_mapping = {
+        "dishMode": dish_mode_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.subscribe_event(
-        "longrunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
-
-    current_el = dish_manager_proxy.achievedPointing[2]
-    stow_position = 90.2
-    estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
-    [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
-
-    [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyLPMode called on DS",
-        "SetStandbyLPMode called on SPF",
-        "SPFRX device is disabled. SetStandbyMode call ignored",
-        "Awaiting dishmode change to STANDBY_LP",
-        "SetStandbyLPMode completed",
+        "SetIndexPosition called on DS",
+        "SPFRX device is disabled. ConfigureBand2 call ignored",
+        "Awaiting configuredband change to B2",
+        "ConfigureBand2 completed",
     ]
 
     events = progress_event_store.wait_for_progress_update(
@@ -130,6 +114,8 @@ def test_ignoring_spfrx(
     for message in expected_progress_updates:
         assert message in events_string
 
+    remove_subscriptions(subscriptions)
+
 
 @pytest.mark.acceptance
 @pytest.mark.forked
@@ -140,30 +126,12 @@ def test_ignoring_all(
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "longrunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
-
-    current_el = dish_manager_proxy.achievedPointing[2]
-    stow_position = 90.2
-    estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
-    [[_], [unique_id]] = dish_manager_proxy.SetStowMode()
-    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
+    attr_cb_mapping = {
+        "dishMode": dish_mode_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -186,3 +154,5 @@ def test_ignoring_all(
     # in the event store
     for message in expected_progress_updates:
         assert message in events_string
+
+    remove_subscriptions(subscriptions)

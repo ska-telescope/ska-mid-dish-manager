@@ -1,9 +1,9 @@
 """Test StandbyFP."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import DishMode, PowerState
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
@@ -12,18 +12,14 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
     """Test transition to Standby_FP."""
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
+    attr_cb_mapping = {
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.subscribe_event(
-        "longrunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
+    [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -48,3 +44,5 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
 
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     assert dish_manager_proxy.powerState == PowerState.FULL
+
+    remove_subscriptions(subscriptions)

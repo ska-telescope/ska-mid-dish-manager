@@ -71,7 +71,7 @@ def test_best_case_json(
     """Test that global pointing parameters are applied correctly from incoming JSON definition."""
     pointing_model_param_events = event_store_class()
     attribute, band_number, file_name = band_selection
-    dish_manager_proxy.subscribe_event(
+    sub_id = dish_manager_proxy.subscribe_event(
         attribute,
         tango.EventType.CHANGE_EVENT,
         pointing_model_param_events,
@@ -90,6 +90,8 @@ def test_best_case_json(
         expected_pointing_model_param_values.append(pointing_model_value)
 
     pointing_model_param_events.wait_for_value(expected_pointing_model_param_values, timeout=7)
+
+    dish_manager_proxy.unsubscribe_event(sub_id)
 
 
 @pytest.mark.acceptance
