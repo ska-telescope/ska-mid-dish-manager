@@ -2,8 +2,7 @@
 
 import pytest
 
-from ska_mid_dish_manager.models.command_handlers import ConfigureBand
-from ska_mid_dish_manager.models.dish_enums import CapabilityStates, DishMode
+from ska_mid_dish_manager.models.dish_enums import Band, CapabilityStates, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
@@ -21,7 +20,7 @@ def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_mana
 
     # ensure current band is not B1
     dish_manager_proxy.ConfigureBand2(True)
-    main_event_store.wait_for_value(ConfigureBand.BAND2, timeout=10)
+    main_event_store.wait_for_value(Band.B2, timeout=10)
     cap_state_event_store.clear_queue()
 
     dish_manager_proxy.ConfigureBand1(True)
