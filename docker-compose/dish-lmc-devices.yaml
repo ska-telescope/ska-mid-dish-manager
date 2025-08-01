@@ -1,0 +1,128 @@
+#
+# Contains services for dish lmc device servers.
+#
+# Defines:
+#   - ds-opcua-server
+#   - dish-logger
+#   - spf-simulator
+#   - spfrx simulator
+#   - ds-manager
+#   - dish-manager
+#
+
+services:
+  ds-opcua-server:
+    platform: linux/amd64
+    image: artefact.skao.int/ska-mid-dish-simulators:4.5.1
+    container_name: ds-opcua-server
+    network_mode: ${NETWORK_MODE}
+    restart: unless-stopped
+    command: >
+      python /app/src/ska_mid_dish_simulators/devices/ds_opcua_server.py
+
+  dish-logger:
+    platform: linux/amd64
+    image: artefact.skao.int/ska-dish-lmc:8.1.0
+    container_name: dish-logger
+    network_mode: ${NETWORK_MODE}
+    restart: unless-stopped
+    depends_on:
+      - databaseds
+      - dsconfig
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+            DishLogger SKA001"
+
+  spfrx-simulator:
+    platform: linux/amd64
+    image: artefact.skao.int/ska-mid-dish-simulators:4.5.1
+    container_name: spfrx-simulator
+    network_mode: ${NETWORK_MODE}
+    restart: unless-stopped
+    depends_on:
+      - databaseds
+      - dsconfig
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+          SPFRxDevice SKA001"
+
+  spf-simulator:
+    platform: linux/amd64
+    image: artefact.skao.int/ska-mid-dish-simulators:4.5.1
+    container_name: spf-simulator
+    network_mode: ${NETWORK_MODE}
+    restart: unless-stopped
+    depends_on:
+      - databaseds
+      - dsconfig
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+          SPFDevice SKA001"
+
+  ds-manager:
+    platform: linux/amd64
+    image: artefact.skao.int/ska-mid-dish-ds-manager:6.1.0
+    container_name: ds-manager
+    network_mode: ${NETWORK_MODE}
+    restart: unless-stopped
+    depends_on:
+      - databaseds
+      - dsconfig
+      - ds-opcua-server
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+          sleep 5s &&\
+          DSManager SKA001"
+
+  dish-manager:
+    platform: linux/amd64
+    image: artefact.skao.int/ska-mid-dish-manager:8.1.0
+    container_name: dish-manager
+    network_mode: ${NETWORK_MODE}
+    restart: unless-stopped
+    depends_on:
+      - databaseds
+      - dsconfig
+      - dish-logger
+      - ds-manager
+      - spf-simulator
+      - spfrx-simulator
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    # To run DishManager, "DishManagerDS SKA001"
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+          sleep infinity"
+    volumes:
+      - ../src:/app/src
+
+  dev-pod:
+    platform: linux/amd64
+    image: artefact.skao.int/ska-mid-dish-manager:8.1.0
+    container_name: dev-pod
+    network_mode: ${NETWORK_MODE}
+    restart: unless-stopped
+    depends_on:
+      - databaseds
+      - dsconfig
+      - dish-logger
+      - ds-manager
+      - spf-simulator
+      - spfrx-simulator
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    # To run tests,  "cd /tmp && pytest tests "
+    command: >
+      sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
+          sleep infinity"
+    volumes:
+      - ../src:/app/src
+      - ../tests:/app/tests
