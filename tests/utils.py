@@ -851,12 +851,14 @@ def setup_subscriptions(
     device_proxy: tango.DeviceProxy,
     attr_callback_map: Dict[str, EventStore],
     event_type: tango.EventType = tango.EventType.CHANGE_EVENT,
+    reset_queue: bool = True,
 ) -> Dict[tango.DeviceProxy, List[int]]:
     """Subscribe to events for the given attributes and callbacks.
 
     :param device_proxy: The Tango device proxy.
     :param attr_callback_map: Dict mapping attribute names to EventStore callbacks.
     :param event_type: The Tango event type to subscribe to.
+    :param reset_queue: Whether to clear the queue of each callback after subscribing.
     :return: Dict mapping device_proxy to list of subscription IDs.
     """
     sub_ids = []
@@ -868,7 +870,7 @@ def setup_subscriptions(
         )
         sub_ids.append(sub_id)
         # clear the queue if the callback has a clear_queue method
-        if hasattr(callback, "clear_queue"):
+        if hasattr(callback, "clear_queue") and reset_queue:
             callback.clear_queue()
     return {device_proxy: sub_ids}
 
