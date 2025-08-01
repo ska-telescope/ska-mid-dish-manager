@@ -40,7 +40,9 @@ def setup_and_teardown(
     subs = setup_subscriptions(
         dish_manager_proxy, {"longRunningCommandsInQueue": event_store}, reset_queue=False
     )
-    event_store.wait_for_value((), timeout=10)
+    # it takes 10 seconds for the LRC marked as completed, aborted,
+    # failed or rejected to be removed so wait long enough
+    event_store.wait_for_value((), timeout=30)
     remove_subscriptions(subs)
 
     subscriptions = {}
