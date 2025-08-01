@@ -615,6 +615,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Update dishMode if there are operatingmode, indexerposition or adminmode changes
         if "operatingmode" in kwargs or "indexerposition" in kwargs or "adminmode" in kwargs:
             new_dish_mode = self._state_transition.compute_dish_mode(
+                previous_dish_mode,
                 ds_component_state,
                 spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
                 spf_component_state if not self.is_device_ignored("SPF") else None,

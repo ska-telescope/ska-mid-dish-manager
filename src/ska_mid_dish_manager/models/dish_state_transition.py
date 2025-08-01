@@ -40,12 +40,18 @@ class StateTransition:
 
     def compute_dish_mode(
         self,
+        current_dish_mode: DishMode,
         ds_component_state: dict,  # type: ignore
         spfrx_component_state: Optional[dict] = None,  # type: ignore
         spf_component_state: Optional[dict] = None,  # type: ignore
     ) -> DishMode:
         """Compute the dishMode based off component_states.
 
+        If `Maintenance` mode is active then we stay there until we
+        explicitly leave the mode.
+
+        :param current_dish_mode: Current dish mode
+        :type current_dish_mode: DishMode
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
         :param spfrx_component_state: SPFRX device component state
@@ -55,6 +61,8 @@ class StateTransition:
         :return: the calculated dishMode
         :rtype: DishMode
         """
+        if current_dish_mode == DishMode.MAINTENANCE:
+            return DishMode.MAINTENANCE
         dish_manager_states = self._collapse(
             ds_component_state, spfrx_component_state, spf_component_state
         )
