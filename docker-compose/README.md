@@ -45,7 +45,7 @@ Connect to the `dev-pod` container to run itango or tests
 #### itango
 
 ```bash
-> podman exec -it dev-pod /bin/bash
+> docker exec -it dev-pod /bin/bash
 root@bd44d478b7ce:/app#
 root@bd44d478b7ce:/app# pip3 install itango
 Collecting itango
@@ -76,7 +76,7 @@ Out[3]: 384
 #### Running tests
 
 ```bash
-> podman exec -it dev-pod  /bin/bash
+> docker exec -it dev-pod  /bin/bash
 root@c6ed616e914e:/app# cd tests/
 root@c6ed616e914e:/app/tests#
 root@c6ed616e914e:/app/tests#
