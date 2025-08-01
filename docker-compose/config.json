@@ -1,0 +1,112 @@
+{
+    "servers": {
+        "DataBaseds": {
+            "2": {
+                "DataBase": {
+                    "sys/database/2": {}
+                }
+            }
+        },
+        "DishLogger": {
+            "SKA001": {
+                "DishLogger": {
+                    "mid-dish/dish-logger/SKA001": {}
+                }
+            }
+        },
+        "SPFDevice": {
+            "SKA001": {
+                "SPFDevice": {
+                    "mid-dish/simulator-spfc/SKA001": {
+                        "properties": {
+                            "logging_level": [
+                                "DEBUG"
+                            ],
+                            "logging_target": [
+                                "console"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "SPFRxDevice": {
+            "SKA001": {
+                "SPFRxDevice": {
+                    "mid-dish/simulator-spfrx/SKA001": {
+                        "properties": {
+                            "logging_level": [
+                                "DEBUG"
+                            ],
+                            "logging_target": [
+                                "console"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "DSManager": {
+            "SKA001": {
+                "DSManager": {
+                    "mid-dish/ds-manager/SKA001": {
+                        "properties": {
+                            "DSCFqdn": [
+                                "opc.tcp://ds-opcua-server:4840/dish-structure/server/"
+                            ],
+                            "DSOPCUANamespace": [
+                                "http://skao.int/DS_ICD/"
+                            ],
+                            "LoggingLevelDefault": [
+                                "5"
+                            ],
+                            "LoggingTargetsDefault": [
+                                "tango::logger"
+                            ],
+                            "SkaLevel": [
+                                "1"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "DishManagerDS": {
+            "SKA001": {
+                "DishManager": {
+                    "mid-dish/dish-manager/SKA001": {
+                        "properties": {
+                            "DSDeviceFqdn": [
+                                "mid-dish/ds-manager/SKA001"
+                            ],
+                            "DishId": [
+                                "SKA001"
+                            ],
+                            "LoggingLevelDefault": [
+                                "5"
+                            ],
+                            "LoggingTargetsDefault": [
+                                "tango::logger"
+                            ],
+                            "MaxCapabilities": [
+                                "BANDS:6"
+                            ],
+                            "ReceptorNumber": [
+                                "001"
+                            ],
+                            "SPFDeviceFqdn": [
+                                "mid-dish/simulator-spfc/SKA001"
+                            ],
+                            "SPFRxDeviceFqdn": [
+                                "mid-dish/simulator-spfrx/SKA001"
+                            ],
+                            "SkaLevel": [
+                                "1"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
