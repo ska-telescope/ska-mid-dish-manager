@@ -40,10 +40,17 @@ def setup_and_teardown(
     subs = setup_subscriptions(
         dish_manager_proxy, {"longRunningCommandsInQueue": event_store}, reset_queue=False
     )
-    # it takes 10 seconds for the LRC marked as completed, aborted,
-    # failed or rejected to be removed so wait long enough
-    event_store.wait_for_value((), timeout=30)
-    remove_subscriptions(subs)
+    try:
+        # it takes 10 seconds for the LRC marked as completed,
+        # aborted, failed or rejected to be removed
+        event_store.wait_for_value((), timeout=10)
+    except RuntimeError:
+        # carry on with the test even if the LRC is not cleared.
+        # the executor will pick up the next queued command since
+        # those commands from the previous test are not in progress.
+        pass
+    finally:
+        remove_subscriptions(subs)
 
     subscriptions = {}
     subscriptions.update(setup_subscriptions(spf_device_proxy, {"operatingMode": event_store}))
