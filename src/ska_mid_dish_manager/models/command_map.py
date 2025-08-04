@@ -11,6 +11,7 @@ from ska_tango_base.commands import SubmittedSlowCommand
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
+    DscCmdAuthType,
     DSOperatingMode,
     IndexerPosition,
     PointingState,
@@ -194,55 +195,62 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Transition the dish to MAINTENANCE mode."""
-        if not self._dish_manager_cm.is_device_ignored("SPFRX"):
-            spfrx_cm = self._dish_manager_cm.sub_component_managers["SPFRX"]  # noqa: F841
-            try:
-                # TODO: Wait for the SPFRx to implement maintenance mode
-                task_callback(
-                    progress="Nothing done on SPFRx, awaiting implementation on it.",
-                )
-                # spfrx_cm.write_attribute_value("adminmode", AdminMode.ENGINEERING)
-            except tango.DevFailed as err:
-                self.logger.exception(
-                    "Failed to configure SPFRx adminMode ENGINEERING"
-                    " on call to SetMaintenanceMode."
-                )
-                task_callback(status=TaskStatus.FAILED, exception=err)
-                return
+        # Always call Stow on DS Manager, to make sure we are there.
+        awaited_event_attributes = ["operatingmode"]
+        awaited_event_values = [DSOperatingMode.STOW]
+        commands_for_sub_devices = {}
+        commands_for_sub_devices["DS"] = {
+            "command": "Stow",
+            "awaitedAttributes": ["operatingmode"],
+            "awaitedValuesList": [DSOperatingMode.STOW],
+        }
 
-        commands_for_sub_devices = {
-            "SPF": {
-                "command": "SetMaintenanceMode",
-                "awaitedAttributes": ["operatingmode"],
-                "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
-            },
-            "DS": {
-                "command": "Stow",
-                "awaitedAttributes": ["operatingmode"],
-                "awaitedValuesList": [DSOperatingMode.STOW],
-            },
-            "SPFRX": {
+        # SPFRx
+        commands_for_sub_devices["SPFRX"] = (
+            {
                 "command": "SetStandbyMode",
                 "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
             },
-        }
+        )
+        awaited_event_attributes.append("operatingmode")
+        awaited_event_values.append(SPFRxOperatingMode.STANDBY)
+
+        # SPFC
+        commands_for_sub_devices["SPF"] = (
+            {
+                "command": "SetMaintenanceMode",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
+            },
+        )
+        awaited_event_attributes.append("operatingmode")
+        awaited_event_values.append(SPFOperatingMode.MAINTENANCE)
+
         self._run_long_running_command(
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
             "SetMaintenanceMode",
-            ["dishmode"],
+            ["operatingmode", "operatingmode", "operatingmode"],
             [DishMode.MAINTENANCE],
         )
-        ds_manager_cm = self._dish_manager_cm.sub_component_managers["DS"]
-        try:
-            ds_manager_cm.execute_command("ReleaseAuth")
-            task_callback(progress="Released authority on DSManager.")
-            self.logger.info("Released Authority and Set DishMode to Maintenance")
-        except tango.DevFailed as err:
-            self.logger.exception("Failed to call ReleaseAuthority on DSManager.")
-            task_callback(status=TaskStatus.FAILED, exception=err)
+
+        commands_for_sub_devices = {}
+        commands_for_sub_devices["DS"] = {
+            "command": "ReleaseAuth",
+            "awaitedAttributes": ["dscCmdAuth"],
+            "awaitedValuesList": [DscCmdAuthType.NO_AUTHORITY],
+        }
+
+        self._run_long_running_command(
+            task_callback,
+            task_abort_event,
+            commands_for_sub_devices,
+            "SetMaintenanceMode",
+            [],
+            [],
+        )
 
     # pylint: disable = no-value-for-parameter
     def track_cmd(
@@ -522,6 +530,9 @@ class CommandMap:
         device_command_ids = {}
 
         for device, fan_out_args in commands_for_sub_devices.items():
+            print("--------------------------------------------------")
+            print(fan_out_args)
+            print("--------------------------------------------------")
             cmd_name = fan_out_args["command"]
             if self.is_device_ignored(device):
                 task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
