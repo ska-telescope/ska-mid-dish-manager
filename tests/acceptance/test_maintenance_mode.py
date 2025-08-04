@@ -7,7 +7,7 @@ import tango
 from tango import DeviceProxy
 
 from ska_mid_dish_manager.models.dish_enums import (
-    Dishmode,
+    DishMode,
     DscCmdAuthType,
     SPFOperatingMode,
     SPFRxOperatingMode,
@@ -55,5 +55,5 @@ def test_maintanince_mode_cmds(
     dish_manager_proxy.SetMaintenance()
     spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
     spfrx_event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=30)
-    mode_event_store.wait_for_value(Dishmode.Maintenance, timeout=30)
+    mode_event_store.wait_for_value(DishMode.Maintenance, timeout=30)
     dsc_auth_event_store.wait_for_value(DscCmdAuthType.NO_AUTHORITHY, timeout=30)

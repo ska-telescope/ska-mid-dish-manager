@@ -2,7 +2,7 @@
 
 import enum
 import json
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus
@@ -222,29 +222,40 @@ class CommandMap:
         }
         awaited_event_attributes.append("operatingmode")
         awaited_event_values.append(SPFOperatingMode.MAINTENANCE)
-
+        awaited_values_per_device = {
+            "SPF": {"operatingmode": SPFOperatingMode.MAINTENANCE},
+            "SPFRX": {"operatingmode": SPFRxOperatingMode.STANDBY},
+            "DS": {"operatingmode": DSOperatingMode.STOW},
+        }
+        awaited_values_per_device = {
+            "DS": {"operatingmode": DSOperatingMode.STOW},
+            "SPFRX": {"operatingmode": SPFRxOperatingMode.STANDBY},
+            "SPF": {"operatingmode": SPFOperatingMode.MAINTENANCE},
+        }
         self._run_long_running_command(
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
             "SetMaintenanceMode",
-            ["operatingmode", "operatingmode", "operatingmode"],
+            awaited_values_per_device,
             [DishMode.MAINTENANCE],
         )
 
-        commands_for_sub_devices = {}
+        # commands_for_sub_devices = {}
         commands_for_sub_devices["DS"] = {
             "command": "ReleaseAuth",
             "awaitedAttributes": ["dscCmdAuth"],
             "awaitedValuesList": [DscCmdAuthType.NO_AUTHORITY],
         }
-
+        awaited_values_per_device = {
+            "DS": {"dscCmdAuth": DscCmdAuthType.NO_AUTHORITY},
+        }
         self._run_long_running_command(
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
             "SetMaintenanceMode",
-            [],
+            awaited_values_per_device,
             [],
         )
 
@@ -491,6 +502,7 @@ class CommandMap:
         running_command: str,
         awaited_event_attributes: Optional[List[str]] = None,
         awaited_event_values: Optional[List[Any]] = None,
+        awaited_values_per_device: Optional[Dict[str, Dict[str, Any]]] = None,
         completed_response_msg: Optional[str] = None,
     ):
         """Run the long running command and track progress
@@ -509,6 +521,9 @@ class CommandMap:
         :type awaited_event_attributes: Optional[List[str]], optional
         :param awaited_event_values:  Expected values for the awaited attributes, defaults to None
         :type awaited_event_values: Optional[List[Any]], optional
+        :param awaited_values_per_device:  Expected values for the
+        awaited attributes per sub device, defaults to None
+        :type awaited_values_per_device:  Optional[Dict[str, Dict[str, Any]]]
         :param completed_response_msg: Custom message for task_callback, defaults to None
         :type completed_response_msg: Optional[str], optional
         """
@@ -553,7 +568,7 @@ class CommandMap:
         )
 
         # If we're not waiting for anything, finish up
-        if awaited_event_values is None or awaited_event_values == []:
+        if not awaited_values_per_device:
             task_callback(
                 progress=final_message,
                 status=TaskStatus.COMPLETED,
@@ -562,15 +577,18 @@ class CommandMap:
             self.logger.info(final_message)
             return
 
+        for device, attr_map in awaited_values_per_device.items():
+            for attr_name, val in attr_map.items():
+                task_callback(progress=f"Awaiting {device}.{attr_name} to change to {val.name}")
         # Report which attribute and value the dish manager is waiting for
         # e.g. Awaiting dishmode change to STANDBY_LP
-        awaited_event_values_print = self.convert_enums_to_names(awaited_event_values)
+        # awaited_event_values_print = self.convert_enums_to_names(awaited_event_values)
 
-        attributes_print_string = ", ".join(map(str, awaited_event_attributes))
-        values_print_string = ", ".join(map(str, awaited_event_values_print))
-        task_callback(
-            progress=(f"Awaiting {attributes_print_string} change to {values_print_string}")
-        )
+        # attributes_print_string = ", ".join(map(str, awaited_event_attributes))
+        # values_print_string = ", ".join(map(str, awaited_event_values_print))
+        # task_callback(
+        #     progress=(f"Awaiting {attributes_print_string} change to {values_print_string}")
+        # )
 
         for fan_out_args in commands_for_sub_devices.values():
             fan_out_args["progress_updated"] = False
@@ -593,16 +611,15 @@ class CommandMap:
                             task_callback, device, fan_out_args
                         )
 
-                    command_in_progress = fan_out_args["command"]
                     if not fan_out_args["command_has_failed"]:
                         if self._fanout_command_has_failed(device_command_ids[device]):
                             task_callback(
                                 progress=(
-                                    f"{device} device failed executing {command_in_progress} "
-                                    f"command with ID {device_command_ids[device]}"
+                                    f"{device} failed executing {fan_out_args['command']} "
+                                    f"with ID {device_command_ids[device]}"
                                 )
                             )
-                            fan_out_args["command_has_failed"] = True
+                        fan_out_args["command_has_failed"] = True
 
             # TODO: If all three commands have failed, then bail
             # if all(
@@ -617,28 +634,33 @@ class CommandMap:
             #     return
 
             # Check on dishmanager to see whether the LRC has completed
-            dm_cm_component_state = self._dish_manager_cm.component_state
-
+            # dm_cm_component_state = self._dish_manager_cm.component_state
             got_all_awaited_values = True
-            for awaited_attribute, expected_val in zip(
-                awaited_event_attributes, awaited_event_values
-            ):
-                component_state_attr_value = dm_cm_component_state[awaited_attribute]
 
-                if component_state_attr_value != expected_val:
-                    got_all_awaited_values = False
-                    break
+            for device, attr_map in awaited_values_per_device.items():
+                sub_cm_state = self._dish_manager_cm.sub_component_managers[device].component_state
+                for attr, expected_val in attr_map.items():
+                    if attr not in sub_cm_state:
+                        task_callback(
+                            progress=f"{device}.{attr} not found in component state!",
+                            status=TaskStatus.FAILED,
+                            result=(ResultCode.FAILED, f"{device}.{attr} missing"),
+                        )
+                        return
 
-            if not got_all_awaited_values:
-                task_abort_event.wait(timeout=1)
-                for device in commands_for_sub_devices.keys():
-                    if not self.is_device_ignored(device):
-                        component_manager = self._dish_manager_cm.sub_component_managers[device]
-                        component_manager.update_state_from_monitored_attributes()
-            else:
+                    if sub_cm_state[attr] != expected_val:
+                        got_all_awaited_values = False
+                        break
+            if got_all_awaited_values:
                 task_callback(
-                    progress=f"{running_command} completed",
+                    progress=final_message,
                     status=TaskStatus.COMPLETED,
-                    result=(ResultCode.OK, f"{running_command} completed"),
+                    result=(ResultCode.OK, final_message),
                 )
                 return
+            task_abort_event.wait(timeout=1)
+            for device in commands_for_sub_devices:
+                if not self.is_device_ignored(device):
+                    self._dish_manager_cm.sub_component_managers[
+                        device
+                    ].update_state_from_monitored_attributes()
