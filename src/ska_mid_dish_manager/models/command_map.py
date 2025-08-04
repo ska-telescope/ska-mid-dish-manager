@@ -206,24 +206,20 @@ class CommandMap:
         }
 
         # SPFRx
-        commands_for_sub_devices["SPFRX"] = (
-            {
-                "command": "SetStandbyMode",
-                "awaitedAttributes": ["operatingmode"],
-                "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
-            },
-        )
+        commands_for_sub_devices["SPFRX"] = {
+            "command": "SetStandbyMode",
+            "awaitedAttributes": ["operatingmode"],
+            "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
+        }
         awaited_event_attributes.append("operatingmode")
         awaited_event_values.append(SPFRxOperatingMode.STANDBY)
 
         # SPFC
-        commands_for_sub_devices["SPF"] = (
-            {
-                "command": "SetMaintenanceMode",
-                "awaitedAttributes": ["operatingmode"],
-                "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
-            },
-        )
+        commands_for_sub_devices["SPF"] = {
+            "command": "SetMaintenanceMode",
+            "awaitedAttributes": ["operatingmode"],
+            "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
+        }
         awaited_event_attributes.append("operatingmode")
         awaited_event_values.append(SPFOperatingMode.MAINTENANCE)
 
