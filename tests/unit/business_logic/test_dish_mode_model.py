@@ -21,8 +21,6 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
         assert dish_mode_enum.name in dish_mode_model.dishmode_graph.nodes
 
 
-# TODO: There are contradictory points around whether SetOperateMode is still a valid command
-# or not. Review, and if it is still valid, add the below list of permutations to test
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "current_mode,requested_command,expected_response",
