@@ -62,8 +62,6 @@ class DishModeModel:
         dishmode_graph.add_edge("STOW", "MAINTENANCE", commands=["SetMaintenanceMode"])
 
         # From any mode to Stow
-        # TODO: Review new states and modes ICD. The call to SetStowMode only
-        # seems to be allowed in LP, FP and MAINTENANCES dish modes
         for node in DISH_MODE_NODES:
             if node == "STOW":
                 continue
