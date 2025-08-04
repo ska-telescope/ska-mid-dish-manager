@@ -1,9 +1,9 @@
 """Test that DS goes into STOW and dishManager reports it."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
@@ -16,18 +16,11 @@ def test_stow_transition(
     """Test transition to STOW."""
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
-
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        main_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "longRunningCommandProgress": progress_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     current_el = dish_manager_proxy.achievedPointing[2]
     stow_position = 90.2
@@ -41,3 +34,5 @@ def test_stow_transition(
     events_string = "".join([str(event) for event in events])
     for message in expected_progress_update:
         assert message in events_string
+
+    remove_subscriptions(subscriptions)

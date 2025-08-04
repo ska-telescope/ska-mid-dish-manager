@@ -5,7 +5,7 @@ import queue
 import random
 import string
 import time
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import tango
@@ -387,7 +387,7 @@ def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
     """Sets ignored devices on DishManager."""
     if device_proxy.ignoreSpf != ignore_spf:
         spf_connection_event_store = EventStore()
-        device_proxy.subscribe_event(
+        spf_sub_id = device_proxy.subscribe_event(
             "spfConnectionState",
             tango.EventType.CHANGE_EVENT,
             spf_connection_event_store,
@@ -399,11 +399,12 @@ def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
             spf_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
         else:
             spf_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+        device_proxy.unsubscribe_event(spf_sub_id)
 
     if device_proxy.ignoreSpfrx != ignore_spfrx:
         spfrx_connection_event_store = EventStore()
 
-        device_proxy.subscribe_event(
+        spfrx_sub_id = device_proxy.subscribe_event(
             "spfrxConnectionState",
             tango.EventType.CHANGE_EVENT,
             spfrx_connection_event_store,
@@ -415,6 +416,7 @@ def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
         else:
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+        device_proxy.unsubscribe_event(spfrx_sub_id)
 
 
 def generate_random_text(length=10):
@@ -845,29 +847,39 @@ def compare_trajectories(
     return mismatches, err_tai_list, err_angular_list
 
 
-def setup_subscriptions(attrs, dish_manager_proxy, event_store_class) -> dict:
-    """Set up subscriptions for the given attributes."""
-    subscriptions = {}
+def setup_subscriptions(
+    device_proxy: tango.DeviceProxy,
+    attr_callback_map: Dict[str, EventStore],
+    event_type: tango.EventType = tango.EventType.CHANGE_EVENT,
+    reset_queue: bool = True,
+) -> Dict[tango.DeviceProxy, List[int]]:
+    """Subscribe to events for the given attributes and callbacks.
 
-    for attr in attrs:
-        ce_event_store = event_store_class()
-        id_ch_ev = dish_manager_proxy.subscribe_event(
+    :param device_proxy: The Tango device proxy.
+    :param attr_callback_map: Dict mapping attribute names to EventStore callbacks.
+    :param event_type: The Tango event type to subscribe to.
+    :param reset_queue: Whether to clear the queue of each callback after subscribing.
+    :return: Dict mapping device_proxy to list of subscription IDs.
+    """
+    sub_ids = []
+    for attr, callback in attr_callback_map.items():
+        sub_id = device_proxy.subscribe_event(
             attr,
-            tango.EventType.CHANGE_EVENT,
-            ce_event_store,
+            event_type,
+            callback,
         )
-        ae_event_store = event_store_class()
-        id_a_ev = dish_manager_proxy.subscribe_event(
-            attr,
-            tango.EventType.ARCHIVE_EVENT,
-            ae_event_store,
-        )
-        ce_event_store.clear_queue()
-        ae_event_store.clear_queue()
-        subscriptions[attr] = {
-            "change_event_store": ce_event_store,
-            "archive_event_store": ae_event_store,
-            "ids": [id_ch_ev, id_a_ev],
-        }
+        sub_ids.append(sub_id)
+        # clear the queue if the callback has a clear_queue method
+        if hasattr(callback, "clear_queue") and reset_queue:
+            callback.clear_queue()
+    return {device_proxy: sub_ids}
 
-    return subscriptions
+
+def remove_subscriptions(subscriptions: Dict[tango.DeviceProxy, List[int]]) -> None:
+    """Unsubscribe from events for the given device proxy."""
+    for device_proxy, subscription_ids in subscriptions.items():
+        for sub_id in subscription_ids:
+            try:
+                device_proxy.unsubscribe_event(sub_id)
+            except Exception:
+                continue

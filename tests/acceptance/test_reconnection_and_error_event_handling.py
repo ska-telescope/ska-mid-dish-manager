@@ -5,6 +5,7 @@ import tango
 from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.xfail(reason="This test is flaky: needs investigation into events and timeouts")
@@ -24,28 +25,12 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     state_event_store = event_store_class()
     status_event_store = event_store_class()
 
-    dish_manager_proxy.subscribe_event(
-        "State",
-        tango.EventType.CHANGE_EVENT,
-        state_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        family_attr_mapping[family],
-        tango.EventType.CHANGE_EVENT,
-        conn_state_event_store,
-    )
-
-    # clear the event store queues to remove initial values on subscription
-    conn_state_event_store.clear_queue()
-    state_event_store.clear_queue()
-    status_event_store.clear_queue()
+    attr_cb_mapping = {
+        "State": state_event_store,
+        "Status": status_event_store,
+        family_attr_mapping[family]: conn_state_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # restart the sub-component device
     device_proxy = dp_manager(f"mid-dish/{family}/SKA001")
@@ -74,3 +59,5 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     conn_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
     state_event_store.wait_for_value(tango.DevState.ON, timeout=30)
     status_event_store.wait_for_value(normal_status_msg, timeout=30)
+
+    remove_subscriptions(subscriptions)

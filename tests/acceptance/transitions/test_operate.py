@@ -1,9 +1,9 @@
 """Test Operate."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.xfail(
@@ -20,32 +20,13 @@ def test_set_operate(
     main_event_store = event_store_class()
     band_event_store = event_store_class()
     progress_event_store = event_store_class()
-
-    for attr in [
-        "dishMode",
-        "longRunningCommandResult",
-    ]:
-        dish_manager_proxy.subscribe_event(
-            attr,
-            tango.EventType.CHANGE_EVENT,
-            main_event_store,
-        )
-
-    dish_manager_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        progress_event_store,
-    )
-
-    dish_manager_proxy.subscribe_event(
-        "configuredBand",
-        tango.EventType.CHANGE_EVENT,
-        band_event_store,
-    )
-
-    [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_command_id(unique_id, timeout=8)
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": main_event_store,
+        "configuredBand": band_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=8)
@@ -69,3 +50,5 @@ def test_set_operate(
 
     for message in expected_progress_updates:
         assert message in events_string
+
+    remove_subscriptions(subscriptions)
