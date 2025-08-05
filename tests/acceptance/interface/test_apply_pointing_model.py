@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def read_file_contents(
-    path: str,
+    file_name: str,
     band: Optional[str] = None,
     unit: Optional[bool] = False,
     value_range: Optional[bool] = False,
@@ -24,8 +24,8 @@ def read_file_contents(
     # Ingest the file as JSON string and configure band selection
     # Get the directory where the test file is located
     test_dir = Path(__file__).parent
-    # Construct the path to the 'data' directory
-    json_file_path = test_dir.parent / "data" / path
+    # Construct the path to the test data directory
+    json_file_path = test_dir.parent.parent / "data" / file_name
 
     if not json_file_path.exists():
         logger.debug("File not found in %s. Stopping test.", json_file_path)
