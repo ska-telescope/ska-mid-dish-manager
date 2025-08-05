@@ -532,19 +532,22 @@ class CommandMap:
             print(fan_out_args)
             print("--------------------------------------------------")
             cmd_name = fan_out_args["command"]
-        if self.is_device_ignored(device):
-            task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
-        else:
-            try:
-                device_command_ids[device] = self._fan_out_cmd(task_callback, device, fan_out_args)
-            except RuntimeError as ex:
-                device_command_ids[device] = ex.args[0]
-                task_callback(
-                    progress=(
-                        f"{device} device failed to execute {cmd_name} command with"
-                        f" ID {device_command_ids[device]}"
+            if self.is_device_ignored(device):
+                task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
+            else:
+                try:
+                    device_command_ids[device] = self._fan_out_cmd(
+                        task_callback, device, fan_out_args
                     )
-                )
+                except RuntimeError as ex:
+                    device_command_ids[device] = ex.args[0]
+                    task_callback(
+                        progress=(
+                            f"{device} device failed to execute {cmd_name} command with"
+                            f" ID {device_command_ids[device]}"
+                        )
+                    )
+
         task_callback(progress=f"Commands: {json.dumps(device_command_ids)}")
 
         final_message = (
@@ -643,4 +646,4 @@ class CommandMap:
                     status=TaskStatus.COMPLETED,
                     result=(ResultCode.OK, f"{running_command} completed"),
                 )
-            return
+                return
