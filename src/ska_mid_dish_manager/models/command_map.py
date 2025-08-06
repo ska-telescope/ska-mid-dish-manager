@@ -227,18 +227,13 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             "SetMaintenanceMode",
-            [
-                "operatingmode",
-                "operatingmode",
-                "operatingmode",
-            ],
+            ["dishmode"],
             [DishMode.MAINTENANCE],
         )
-
-        # commands_for_sub_devices = {}
+        commands_for_sub_devices = {}
         commands_for_sub_devices["DS"] = {
             "command": "ReleaseAuth",
-            "awaitedAttributes": ["dscCmdAuth"],
+            "awaitedAttributes": ["dsccmdauth"],
             "awaitedValuesList": [DscCmdAuthType.NO_AUTHORITY],
         }
         self._run_long_running_command(
@@ -528,9 +523,6 @@ class CommandMap:
         device_command_ids = {}
 
         for device, fan_out_args in commands_for_sub_devices.items():
-            print("--------------------------------------------------")
-            print(fan_out_args)
-            print("--------------------------------------------------")
             cmd_name = fan_out_args["command"]
             if self.is_device_ignored(device):
                 task_callback(progress=f"{device} device is disabled. {cmd_name} call ignored")
@@ -622,15 +614,13 @@ class CommandMap:
             dm_cm_component_state = self._dish_manager_cm.component_state
 
             got_all_awaited_values = True
-            print("**************************************************")
-            print(zip(awaited_event_attributes, awaited_event_values))
-            print("**************************************************")
             for awaited_attribute, expected_val in zip(
                 awaited_event_attributes, awaited_event_values
             ):
                 component_state_attr_value = dm_cm_component_state[awaited_attribute]
 
                 if component_state_attr_value != expected_val:
+                    print(f"{component_state_attr_value} != {expected_val}")
                     got_all_awaited_values = False
                     break
 
