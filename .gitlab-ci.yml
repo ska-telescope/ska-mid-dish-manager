@@ -46,6 +46,15 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
+# override k8s-test-runner to print helm flags
+k8s-test-runner:
+  before_script:
+    - cat charts/ska-mid-dish-manager/custom_helm_flags.yaml
+    - '[ -f .make/k8s.mk ] || (echo "File k8s.mk not included in Makefile; exit 1")'
+    - 'make help | grep k8s-test'
+    - make k8s-install-chart
+    - make k8s-wait
+
 #mypy job
 mypy:
   stage: lint
