@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 8.2.0
+*************
+- Added docker compose deployment for local development.
+
 Version 8.1.0
 *************
 - Added new attribute `dscCmdAuth` that holds who has authority.
