@@ -25,12 +25,18 @@ SPEC_URLS = {
 
 
 @pytest.mark.acceptance
-@pytest.mark.parametrize("dish_number", ["001", "111"])
-def test_dishes_are_available(monitor_tango_servers, dish_number):
-    """Test that the 2 dishes we expect are available."""
-    dish_manager_proxy = DeviceProxy(f"mid-dish/dish-manager/SKA{dish_number}")
+def test_ska001_is_available(monitor_tango_servers, reset_dish_to_standby, dish_manager_proxy):
+    """Test that dish 001 is available."""
     assert isinstance(dish_manager_proxy.ping(), int)
     assert dish_manager_proxy.State() == DevState.ON
+
+
+@pytest.mark.acceptance
+def test_ska111_is_available():
+    """Test that dish 111 is available."""
+    dev_proxy = DeviceProxy("mid-dish/dish-manager/SKA111")
+    assert isinstance(dev_proxy.ping(), int)
+    assert dev_proxy.State() == DevState.ON
 
 
 @pytest.mark.acceptance
