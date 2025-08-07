@@ -52,7 +52,7 @@ class StateTransition:
         :param spf_component_state: SPF device component state
         :type spf_component_state: dict
         :return: the calculated dishMode
-        :rtype: DishMode
+        :rtype: DishMode.
         """
         dish_manager_states = self._collapse(
             ds_component_state, spfrx_component_state, spf_component_state

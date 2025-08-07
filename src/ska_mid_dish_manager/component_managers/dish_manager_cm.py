@@ -613,7 +613,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         dish_mode = self.component_state["dishmode"]
         if dish_mode != DishMode.MAINTENANCE:
-
             # Update dishMode if there are operatingmode, indexerposition or adminmode changes
             if "operatingmode" in kwargs or "indexerposition" in kwargs or "adminmode" in kwargs:
                 new_dish_mode = self._state_transition.compute_dish_mode(
