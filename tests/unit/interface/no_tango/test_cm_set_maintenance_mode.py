@@ -42,6 +42,7 @@ def test_set_maintenance_mode_handler(
         {"progress": f"SetMaintenanceMode called on SPF, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},
         {"progress": "Commands: mocked sub-device-command-ids"},
+        {"progress": "Awaiting dishmode change to MAINTENANCE"},
         {
             "progress": "SetMaintenanceMode completed",
             "status": TaskStatus.COMPLETED,
@@ -50,10 +51,6 @@ def test_set_maintenance_mode_handler(
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"ReleaseAuth called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting DS dscCmdAuth change to NO_AUTHORITY"},
-        {"progress": f"SetStandbyMode called on SPFRX, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting SPFRX operatingmode change to STANDBY"},
-        {"progress": f"SetMaintenanceMode called on SPF, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {
             "progress": "SetMaintenanceMode completed",
@@ -61,7 +58,6 @@ def test_set_maintenance_mode_handler(
             "result": (ResultCode.OK, "SetMaintenanceMode completed"),
         },
     )
-
     # check that the initial lrc updates come through
     actual_call_kwargs = callbacks["task_cb"].call_args_list
     for count, mock_call in enumerate(actual_call_kwargs):

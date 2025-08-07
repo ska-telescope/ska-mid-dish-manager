@@ -620,7 +620,6 @@ class CommandMap:
                 component_state_attr_value = dm_cm_component_state[awaited_attribute]
 
                 if component_state_attr_value != expected_val:
-                    print(f"{component_state_attr_value} != {expected_val}")
                     got_all_awaited_values = False
                     break
 
