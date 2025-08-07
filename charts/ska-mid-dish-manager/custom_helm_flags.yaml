@@ -19,24 +19,6 @@ ska-mid-dish-simulators:
   dsOpcuaSimulator:
     enabled: true
 
-dishmanager:
-  windLimits:
-    # Wind speed in m/s
-    MeanWindSpeedThreshold: "11.1"
-    # Wind gust in m/s
-    WindGustThreshold: "16.9"
-
 ska-mid-wms:
   enabled: true
-  ska-tango-base:
-    enabled: false
-    itango:
-      enabled: false
-  deviceServers:
-    wms:
-      enabled: true
-      station_ids: ["1"]
-      modbus_server_hostnames: ["wms-sim-1"]
-      modbus_server_ports: ["1502"]
-  simulator:
-    enabled: True
+

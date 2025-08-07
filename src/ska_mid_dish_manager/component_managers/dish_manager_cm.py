@@ -1144,7 +1144,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _stow_on_watchdog_expiry(self) -> None:
         """Stow the dish on watchdog expiry and restart timer if still enabled."""
         self.logger.info("Watchdog timer has expired.")
-        self._execute_stow_command("TMCHeartbeatStow")
+        self._execute_stow_command("HeartbeatStow")
 
     def _reenable_watchdog_timer(self) -> None:
         """Re-enable the watchdog timer if it was disabled."""

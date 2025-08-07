@@ -8,6 +8,13 @@ import tango
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
+@pytest.fixture(autouse=True)
+def reset_global_pointing(dish_manager_proxy: tango.DeviceProxy):
+    yield
+    # restore defaults
+    dish_manager_proxy.TrackLoadStaticOff([0.0, 0.0])
+
+
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_load_static_off(
