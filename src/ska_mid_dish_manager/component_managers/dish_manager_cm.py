@@ -611,34 +611,36 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "buildstate" in kwargs:
             self._build_state_callback(device, kwargs["buildstate"])
 
-        previous_dish_mode = self.component_state["dishmode"]
-        # Update dishMode if there are operatingmode, indexerposition or adminmode changes
-        if "operatingmode" in kwargs or "indexerposition" in kwargs or "adminmode" in kwargs:
-            new_dish_mode = self._state_transition.compute_dish_mode(
-                previous_dish_mode,
-                ds_component_state,
-                spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                spf_component_state if not self.is_device_ignored("SPF") else None,
-            )
+        dish_mode = self.component_state["dishmode"]
+        if dish_mode != DishMode.MAINTENANCE:
 
-            # If the dish is transitioning out of STOW mode, reenable the watchdog timer if
-            # the watchdog timeout is set
-            if previous_dish_mode == DishMode.STOW and new_dish_mode != DishMode.STOW:
-                self._reenable_watchdog_timer()
+            # Update dishMode if there are operatingmode, indexerposition or adminmode changes
+            if "operatingmode" in kwargs or "indexerposition" in kwargs or "adminmode" in kwargs:
+                new_dish_mode = self._state_transition.compute_dish_mode(
+                    ds_component_state,
+                    spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                    spf_component_state if not self.is_device_ignored("SPF") else None,
+                )
 
-            self.logger.debug(
-                (
-                    "Updating dish manager dishMode with: [%s]. "
-                    "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s], "
-                    "SPFRX adminMode [%s]."
-                ),
-                new_dish_mode,
-                ds_component_state["operatingmode"],
-                spf_component_state["operatingmode"],
-                spfrx_component_state["operatingmode"],
-                spfrx_component_state["adminmode"],
-            )
-            self._update_component_state(dishmode=new_dish_mode)
+                # If the dish is transitioning out of STOW mode, reenable the watchdog timer if
+                # the watchdog timeout is set
+                if dish_mode == DishMode.STOW and new_dish_mode != DishMode.STOW:
+                    self._reenable_watchdog_timer()
+
+                self.logger.debug(
+                    (
+                        "Updating dish manager dishMode with: [%s]. "
+                        "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s], "
+                        "SPFRX adminMode [%s]."
+                    ),
+                    new_dish_mode,
+                    ds_component_state["operatingmode"],
+                    spf_component_state["operatingmode"],
+                    spfrx_component_state["operatingmode"],
+                    spfrx_component_state["adminmode"],
+                )
+                self._update_component_state(dishmode=new_dish_mode)
+        self._update_component_state(dishmode=dish_mode)
 
         if "healthstate" in kwargs:
             new_health_state = self._state_transition.compute_dish_health_state(

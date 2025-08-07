@@ -111,7 +111,7 @@ def test_compute_dish_mode(
     state_transition,
 ):
     actual_dish_mode = state_transition.compute_dish_mode(
-        DishMode.OPERATE, ds_comp_state, spfrx_comp_state, spf_comp_state
+        ds_comp_state, spfrx_comp_state, spf_comp_state
     )
     assert expected_dish_mode == actual_dish_mode
 
@@ -191,7 +191,7 @@ def test_compute_dish_mode_ignoring_spf(
     state_transition,
 ):
     actual_dish_mode = state_transition.compute_dish_mode(
-        DishMode.OPERATE, ds_comp_state, spfrx_comp_state, spf_comp_state
+        ds_comp_state, spfrx_comp_state, spf_comp_state
     )
     assert expected_dish_mode == actual_dish_mode
 
@@ -259,7 +259,7 @@ def test_compute_dish_mode_ignoring_spfrx(
     state_transition,
 ):
     actual_dish_mode = state_transition.compute_dish_mode(
-        DishMode.OPERATE, ds_comp_state, spfrx_comp_state, spf_comp_state
+        ds_comp_state, spfrx_comp_state, spf_comp_state
     )
     assert expected_dish_mode == actual_dish_mode
 
@@ -319,14 +319,9 @@ def test_compute_dish_mode_ignoring_spf_and_spfrx(
     state_transition,
 ):
     actual_dish_mode = state_transition.compute_dish_mode(
-        DishMode.OPERATE, ds_comp_state, spfrx_comp_state, spf_comp_state
+        ds_comp_state, spfrx_comp_state, spf_comp_state
     )
     assert expected_dish_mode == actual_dish_mode
-
-    actual_dish_mode = state_transition.compute_dish_mode(
-        DishMode.MAINTENANCE, ds_comp_state, spfrx_comp_state, spf_comp_state
-    )
-    assert expected_dish_mode == DishMode.MAINTENANCE
 
 
 @pytest.mark.unit
