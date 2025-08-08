@@ -53,6 +53,7 @@ from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
+from ska_mid_dish_manager.utils.tango_helpers import TangoPropertyAccessor
 
 
 class DishManagerComponentManager(TaskExecutorComponentManager):
@@ -79,6 +80,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ):
         # pylint: disable=useless-super-delegation
         self.tango_device_name = tango_device_name
+        self.tango_property_accessor = TangoPropertyAccessor(logger, tango_device_name)
         self.sub_component_managers = None
         wms_device_names = list(wms_device_names)
         if "" in wms_device_names:
@@ -422,49 +424,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return attr_property_value["__value"][0]
         return None
 
-    def _get_device_property_value(self, property_name: str) -> Optional[str]:
-        """Read device property value from TangoDB.
-
-        :param property_name: Tango device property name
-        :type property_name: str
-        :return: value for the given property
-        :rtype: Optional[str]
-        """
-        self.logger.debug("Getting device property value for %s.", property_name)
-        try:
-            database = tango.Database()
-            device_properties = database.get_device_property(
-                self.tango_device_name, [property_name]
-            )
-            property_values = device_properties.get(property_name, [])
-            if property_values:
-                return property_values[0]
-        except tango.DevFailed as e:
-            self.logger.error("Failed to read property %s: %s", property_name, e)
-        return None
-
-    def _set_device_property_value(self, property_name: str, value: str) -> None:
-        """Set a device property value in TangoDB.
-
-        :param property_name: Tango device property name
-        :type property_name: str
-        :param value: Value to set for the property
-        :type value: str
-        """
-        self.logger.debug("Setting device property %s to value %s.", property_name, value)
-        try:
-            database = tango.Database()
-            database.put_device_property(self.tango_device_name, {property_name: [value]})
-        except tango.DevFailed as e:
-            self.logger.error("Failed to set property %s: %s", property_name, e)
-
     def _is_maintenance_mode_active(self) -> bool:
         """Check if MaintenanceModeActive property is set to True.
 
         :return: True if maintenance mode is active, False otherwise
         :rtype: bool
         """
-        maintenance_mode_value = self._get_device_property_value(MAINTENANCE_MODE_ACTIVE_PROPERTY)
+        maintenance_mode_value = self.tango_property_accessor.get_device_property_value(
+            MAINTENANCE_MODE_ACTIVE_PROPERTY
+        )
         if maintenance_mode_value is not None:
             maintenance_active = maintenance_mode_value.lower() in ("true", "1", "yes")
             self.logger.debug(
@@ -476,12 +444,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _set_maintenance_mode_active(self) -> None:
         """Set the MaintenanceModeActive property in TangoDB."""
         self.logger.debug("Setting MaintenanceModeActive to active.")
-        self._set_device_property_value(MAINTENANCE_MODE_ACTIVE_PROPERTY, "true")
+        self.tango_property_accessor.set_device_property_value(
+            MAINTENANCE_MODE_ACTIVE_PROPERTY, "true"
+        )
 
     def _set_maintenance_mode_inactive(self) -> None:
         """Set the MaintenanceModeActive property in TangoDB."""
         self.logger.debug("Setting MaintenanceModeActive to inactive.")
-        self._set_device_property_value(MAINTENANCE_MODE_ACTIVE_PROPERTY, "false")
+        self.tango_property_accessor.set_device_property_value(
+            MAINTENANCE_MODE_ACTIVE_PROPERTY, "false"
+        )
 
     def try_update_memorized_attributes_from_db(self):
         """Read memorized attributes values from TangoDB and update device attributes."""
