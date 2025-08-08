@@ -195,33 +195,23 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Transition the dish to MAINTENANCE mode."""
-        # Always call Stow on DS Manager, to make sure we are there.
-        awaited_event_attributes = ["operatingmode"]
-        awaited_event_values = [DSOperatingMode.STOW]
-        commands_for_sub_devices = {}
-        commands_for_sub_devices["DS"] = {
-            "command": "Stow",
-            "awaitedAttributes": ["operatingmode"],
-            "awaitedValuesList": [DSOperatingMode.STOW],
+        commands_for_sub_devices = {
+            "DS": {
+                "command": "Stow",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [DSOperatingMode.STOW],
+            },
+            "SPFRX": {
+                "command": "SetStandbyMode",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
+            },
+            "SPF": {
+                "command": "SetMaintenanceMode",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
+            },
         }
-
-        # SPFRx
-        commands_for_sub_devices["SPFRX"] = {
-            "command": "SetStandbyMode",
-            "awaitedAttributes": ["operatingmode"],
-            "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
-        }
-        awaited_event_attributes.append("operatingmode")
-        awaited_event_values.append(SPFRxOperatingMode.STANDBY)
-
-        # SPFC
-        commands_for_sub_devices["SPF"] = {
-            "command": "SetMaintenanceMode",
-            "awaitedAttributes": ["operatingmode"],
-            "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
-        }
-        awaited_event_attributes.append("operatingmode")
-        awaited_event_values.append(SPFOperatingMode.MAINTENANCE)
         self._run_long_running_command(
             task_callback,
             task_abort_event,
@@ -230,11 +220,14 @@ class CommandMap:
             ["dishmode"],
             [DishMode.MAINTENANCE],
         )
-        commands_for_sub_devices = {}
-        commands_for_sub_devices["DS"] = {
-            "command": "ReleaseAuth",
-            "awaitedAttributes": ["dsccmdauth"],
-            "awaitedValuesList": [DscCmdAuthType.NO_AUTHORITY],
+
+        # Schedule the ReleaseAuth command to be run after fan-out of initial actions
+        commands_for_sub_devices = {
+            "DS": {
+                "command": "ReleaseAuth",
+                "awaitedAttributes": ["dsccmdauth"],
+                "awaitedValuesList": [DscCmdAuthType.NO_AUTHORITY],
+            },
         }
         self._run_long_running_command(
             task_callback,
