@@ -8,13 +8,6 @@ DISH_MODE_RULES_ALL_DEVICES = {
         "or "
         "DS.indexerposition  == 'IndexerPosition.MOVING' "
     ),
-    "MAINTENANCE": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STOW' and "
-        "SPFRX.operatingmode == 'SPFRxOperatingMode.STANDBY' and "
-        "SPF.operatingmode == 'SPFOperatingMode.MAINTENANCE'"
-        # TODO: Not taking SPFRx into consideration until adminMode is implemented
-        # "SPFRX.adminmode  == 'AdminMode.ENGINEERING'"
-    ),
     "OPERATE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.POINT' and "
         "SPF.operatingmode  == 'SPFOperatingMode.OPERATE' and "

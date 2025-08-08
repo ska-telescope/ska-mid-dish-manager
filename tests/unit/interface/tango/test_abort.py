@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 import tango
-from ska_control_model import AdminMode, ResultCode
+from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -59,9 +59,6 @@ def test_abort_is_rejected_in_maintenance_dishmode(
 ):
     """Verify Abort/AbortCommands is rejected when DishMode is MAINTENANCE."""
     device_proxy, dish_manager_cm = dish_manager_resources
-    ds_cm = dish_manager_cm.sub_component_managers["DS"]
-    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
-    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     dish_mode_event_store = event_store_class()
 
@@ -70,12 +67,8 @@ def test_abort_is_rejected_in_maintenance_dishmode(
         tango.EventType.CHANGE_EVENT,
         dish_mode_event_store,
     )
-
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
-    spf_cm._update_component_state(operatingmode=SPFOperatingMode.MAINTENANCE)
-    spfrx_cm._update_component_state(adminmode=AdminMode.ENGINEERING)
-
-    dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
+    dish_manager_cm._update_component_state(dishmode=DishMode.MAINTENANCE)
+    dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=60)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
     [[result_code], [_]] = device_proxy.command_inout(abort_cmd, None)
