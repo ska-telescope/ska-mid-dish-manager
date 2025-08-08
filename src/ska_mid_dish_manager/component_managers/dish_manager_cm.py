@@ -22,6 +22,7 @@ from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DSC_MIN_POWER_LIMIT_KW,
+    MAINTENANCE_MODE_ACTIVE_PROPERTY,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
     WIND_GUST_THRESHOLD_MPS,
 )
@@ -162,6 +163,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "WindGustThreshold": default_wind_gust_threshold,
             "MeanWindSpeedThreshold": default_mean_wind_speed_threshold,
         }
+        # Check tangodb whether maintenance mode is active
+        if self._is_maintenance_mode_active():
+            self.logger.debug("Initialising dish manager dishMode with %s.", DishMode.MAINTENANCE)
+            self.component_state["dishmode"] = DishMode.MAINTENANCE
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -417,6 +422,67 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return attr_property_value["__value"][0]
         return None
 
+    def _get_device_property_value(self, property_name: str) -> Optional[str]:
+        """Read device property value from TangoDB.
+
+        :param property_name: Tango device property name
+        :type property_name: str
+        :return: value for the given property
+        :rtype: Optional[str]
+        """
+        self.logger.debug("Getting device property value for %s.", property_name)
+        try:
+            database = tango.Database()
+            device_properties = database.get_device_property(
+                self.tango_device_name, [property_name]
+            )
+            property_values = device_properties.get(property_name, [])
+            if property_values:
+                return property_values[0]
+        except tango.DevFailed as e:
+            self.logger.error("Failed to read property %s: %s", property_name, e)
+        return None
+
+    def _set_device_property_value(self, property_name: str, value: str) -> None:
+        """Set a device property value in TangoDB.
+
+        :param property_name: Tango device property name
+        :type property_name: str
+        :param value: Value to set for the property
+        :type value: str
+        """
+        self.logger.debug("Setting device property %s to value %s.", property_name, value)
+        try:
+            database = tango.Database()
+            database.put_device_property(self.tango_device_name, {property_name: [value]})
+        except tango.DevFailed as e:
+            self.logger.error("Failed to set property %s: %s", property_name, e)
+
+    def _is_maintenance_mode_active(self) -> bool:
+        """Check if MaintenanceModeActive property is set to True.
+
+        :return: True if maintenance mode is active, False otherwise
+        :rtype: bool
+        """
+        maintenance_mode_value = self._get_device_property_value(MAINTENANCE_MODE_ACTIVE_PROPERTY)
+        if maintenance_mode_value is not None:
+            maintenance_active = maintenance_mode_value.lower() in ("true", "1", "yes")
+            self.logger.debug(
+                "%s property value: %s", MAINTENANCE_MODE_ACTIVE_PROPERTY, maintenance_mode_value
+            )
+            return maintenance_active
+        return False
+
+    def _set_maintenance_mode_active(self) -> None:
+        """Set the MaintenanceModeActive property in TangoDB."""
+        self.logger.debug("Setting MaintenanceModeActive to active.")
+        self._set_device_property_value(MAINTENANCE_MODE_ACTIVE_PROPERTY, "true")
+
+    def _set_maintenance_mode_inactive(self) -> None:
+        """Set the MaintenanceModeActive property in TangoDB."""
+        self.logger.debug("Setting MaintenanceModeActive to inactive.")
+        self._set_device_property_value(MAINTENANCE_MODE_ACTIVE_PROPERTY, "false")
+
     def try_update_memorized_attributes_from_db(self):
         """Read memorized attributes values from TangoDB and update device attributes."""
         if "TANGO_HOST" not in os.environ:
@@ -640,6 +706,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     spfrx_component_state["adminmode"],
                 )
                 self._update_component_state(dishmode=new_dish_mode)
+                # If the dish is has been STOWED and maintenance property was set
+                # set the dish mode to MAINTENANCE
+                if new_dish_mode == DishMode.STOW and self._is_maintenance_mode_active():
+                    # to exit maintenance mode, the SetStowMode() must be invoked
+                    self.logger.debug(
+                        "Updating dish manager dishMode with: [%s].", DishMode.MAINTENANCE
+                    )
+                    self._update_component_state(dishmode=DishMode.MAINTENANCE)
 
         if "healthstate" in kwargs:
             new_health_state = self._state_transition.compute_dish_health_state(
@@ -1032,6 +1106,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback=task_callback,
         )
 
+        # Set a flag to indicate that the dish is in maintenance mode, after the dish
+        # has been stowed, the dish mode will be set to MAINTENANCE.
+        self._set_maintenance_mode_active()
+
         status, response = self.submit_task(
             self._command_map.set_maintenance_mode,
             args=[],
@@ -1120,6 +1198,39 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    def _handle_exit_maintenance_mode_transition(self) -> None:
+        """Handles state transition from maintenance mode.
+
+        This will set the MaintenanceModeActive property to false and
+        set the dish mode to STOW if the DS is already in STOW operating mode.
+        If the DS is not in STOW operating mode, it will set the dish mode to UNKNOWN.
+        This will allow the dish to transition to STOW mode when the stow command
+        is invoked on DS.
+        """
+        if self.component_state["dishmode"] != DishMode.MAINTENANCE:
+            return
+
+        self.logger.debug("Exiting maintenance mode.")
+        ds_cm = self.sub_component_managers["DS"]
+        # Set the MaintenanceModeActive property to false
+        self._set_maintenance_mode_inactive()
+        # If ds operating mode is not STOW, set dish mode to UNKNOWN and allow
+        # transition to STOW to set the dish mode to STOW.
+        new_mode = DishMode.UNKNOWN
+        if ds_cm.component_state["operatingmode"] == DSOperatingMode.STOW:
+            new_mode = DishMode.STOW
+            self.logger.debug(
+                "DS already in STOW operatingMode. Setting dish manager dishmode to %s.",
+                new_mode,
+            )
+        else:
+            self.logger.debug(
+                "DS not in STOW operatingMode. Setting dish manager dishmode to %s.", new_mode
+            )
+
+        self._update_component_state(dishmode=new_mode)
+        ds_cm.execute_command("Stow", None)
+
     def set_stow_mode(
         self,
         task_callback: Optional[Callable] = None,
@@ -1127,7 +1238,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to STOW mode."""
         ds_cm = self.sub_component_managers["DS"]
         try:
-            ds_cm.execute_command("Stow", None)
+            # Handle exit criteria for maintenance mode.
+            if self.component_state["dishmode"] == DishMode.MAINTENANCE:
+                self._handle_exit_maintenance_mode_transition()
+            else:
+                ds_cm.execute_command("Stow", None)
         except tango.DevFailed as err:
             if task_callback:
                 task_callback(status=TaskStatus.FAILED, exception=err)
