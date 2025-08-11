@@ -59,6 +59,7 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             "ska_mid_dish_manager.utils.schedulers.WatchdogTimer",
             disable=MagicMock(),
         ),
+        patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoPropertyAccessor"),
     ):
         dish_manager_cm = DishManagerComponentManager(
             LOGGER,

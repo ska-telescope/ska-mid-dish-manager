@@ -26,6 +26,7 @@ def dish_manager_resources():
             "ska_mid_dish_manager.component_managers.wms_cm."
             "WMSComponentManager.start_communicating"
         ),
+        patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoPropertyAccessor"),
     ):
         tango_context = DeviceTestContext(DishManager)
         tango_context.start()

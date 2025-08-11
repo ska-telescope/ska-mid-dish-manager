@@ -29,6 +29,9 @@ def configure_mocks_for_dish_manager():
             "ska_mid_dish_manager.component_managers.wms_cm."
             "WMSComponentManager.start_communicating"
         ),
+        mock.patch(
+            "ska_mid_dish_manager.component_managers.dish_manager_cm.TangoPropertyAccessor"
+        ),
     ):
         tango_context = DeviceTestContext(DishManager)
         tango_context.start()
