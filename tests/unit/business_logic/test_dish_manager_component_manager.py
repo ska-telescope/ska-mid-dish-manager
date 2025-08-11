@@ -24,6 +24,7 @@ def force_gc_on_weak_ref(weak_ref: weakref.ref) -> None:
 
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
+@mock.patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoPropertyAccessor")
 @mock.patch.multiple(
     "ska_mid_dish_manager.component_managers.wms_cm.WMSComponentManager",
     write_wms_group_attribute_value=mock.MagicMock(),
