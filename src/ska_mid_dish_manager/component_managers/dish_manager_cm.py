@@ -23,6 +23,8 @@ from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DSC_MIN_POWER_LIMIT_KW,
     MAINTENANCE_MODE_ACTIVE_PROPERTY,
+    MAINTENANCE_MODE_FALSE_VALUE,
+    MAINTENANCE_MODE_TRUE_VALUE,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
     WIND_GUST_THRESHOLD_MPS,
 )
@@ -433,10 +435,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         maintenance_mode_value = self.tango_property_accessor.get_device_property_value(
             MAINTENANCE_MODE_ACTIVE_PROPERTY
         )
-        if maintenance_mode_value is not None:
-            maintenance_active = maintenance_mode_value.lower() in ("true", "1", "yes")
+        if maintenance_mode_value:
+            maintenance_active = MAINTENANCE_MODE_TRUE_VALUE == maintenance_mode_value[0]
             self.logger.debug(
-                "%s property value: %s", MAINTENANCE_MODE_ACTIVE_PROPERTY, maintenance_mode_value
+                "%s property value: %s",
+                MAINTENANCE_MODE_ACTIVE_PROPERTY,
+                maintenance_mode_value[0],
             )
             return maintenance_active
         return False
@@ -445,14 +449,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Set the MaintenanceModeActive property in TangoDB."""
         self.logger.debug("Setting MaintenanceModeActive to active.")
         self.tango_property_accessor.set_device_property_value(
-            MAINTENANCE_MODE_ACTIVE_PROPERTY, "true"
+            MAINTENANCE_MODE_ACTIVE_PROPERTY, MAINTENANCE_MODE_TRUE_VALUE
         )
 
     def _set_maintenance_mode_inactive(self) -> None:
         """Set the MaintenanceModeActive property in TangoDB."""
         self.logger.debug("Setting MaintenanceModeActive to inactive.")
         self.tango_property_accessor.set_device_property_value(
-            MAINTENANCE_MODE_ACTIVE_PROPERTY, "false"
+            MAINTENANCE_MODE_ACTIVE_PROPERTY, MAINTENANCE_MODE_FALSE_VALUE
         )
 
     def try_update_memorized_attributes_from_db(self):
