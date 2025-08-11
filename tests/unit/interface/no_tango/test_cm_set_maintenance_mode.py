@@ -44,18 +44,18 @@ def test_set_maintenance_mode_handler(
         {"progress": "Commands: mocked sub-device-command-ids"},
         {"progress": "Awaiting dishmode change to MAINTENANCE"},
         {
-            "progress": "SetMaintenanceMode completed",
+            "progress": "SetMaintenanceMode [1/2] completed",
             "status": TaskStatus.COMPLETED,
-            "result": (ResultCode.OK, "SetMaintenanceMode completed"),
+            "result": (ResultCode.OK, "SetMaintenanceMode [1/2] completed"),
         },
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"ReleaseAuth called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting DS dscCmdAuth change to NO_AUTHORITY"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {
-            "progress": "SetMaintenanceMode completed",
+            "progress": "SetMaintenanceMode [2/2] completed",
             "status": TaskStatus.COMPLETED,
-            "result": (ResultCode.OK, "SetMaintenanceMode completed"),
+            "result": (ResultCode.OK, "SetMaintenanceMode [2/2] completed"),
         },
     )
     # check that the initial lrc updates come through
@@ -73,7 +73,7 @@ def test_set_maintenance_mode_handler(
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="SetMaintenanceMode completed",
+        progress="SetMaintenanceMode [2/2] completed",
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetMaintenanceMode completed"),
+        result=(ResultCode.OK, "SetMaintenanceMode [2/2] completed"),
     )
