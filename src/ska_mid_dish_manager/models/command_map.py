@@ -216,7 +216,7 @@ class CommandMap:
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
-            "SetMaintenanceMode",
+            "SetMaintenanceMode [1/2]",
             ["dishmode"],
             [DishMode.MAINTENANCE],
         )
@@ -233,7 +233,7 @@ class CommandMap:
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
-            "SetMaintenanceMode",
+            "SetMaintenanceMode [2/2]",
             ["dsccmdauth"],
             [],
         )
