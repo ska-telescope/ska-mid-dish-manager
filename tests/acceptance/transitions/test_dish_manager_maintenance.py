@@ -13,7 +13,7 @@ WAIT_FOR_RESULT_BUFFER_SEC = 10
 
 
 @pytest.mark.acceptance
-# @pytest.mark.forked
+@pytest.mark.forked
 def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test transition to MAINTENANCE."""
     result_event_store = event_store_class()
