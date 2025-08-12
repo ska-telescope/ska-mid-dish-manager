@@ -18,9 +18,11 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
     """Test transition to MAINTENANCE."""
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
+    mode_event_store = event_store_class()
     attr_cb_mapping = {
         "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
+        "dishMode": mode_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -41,11 +43,8 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
         "Awaiting SPFRX operatingmode change to STANDBY",
         "SetMaintenanceMode called on SPF",
         "Awaiting SPF operatingmode change to MAINTENANCE",
-        "Awaiting dishmode change to MAINTENANCE",
-        "SetMaintenanceMode [1/2] completed",
-        "ReleaseAuth called on DS",
-        "Awaiting DS dsccmdauth change to NO_AUTHORITY",
-        "SetMaintenanceMode [2/2] completed",
+        "Awaiting dishmode change to STOW",
+        "SetMaintenanceMode completed",
     ]
 
     events = progress_event_store.wait_for_progress_update(expected_progress_updates[-1])
@@ -57,6 +56,6 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
     for message in expected_progress_updates:
         assert message in events_string
 
-    assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
+    mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
 
     remove_subscriptions(subscriptions)

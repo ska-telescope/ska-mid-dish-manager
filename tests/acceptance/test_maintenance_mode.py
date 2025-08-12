@@ -7,7 +7,6 @@ from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceP
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DscCmdAuthType,
-    DSOperatingMode,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -45,7 +44,7 @@ def test_maintenance_mode_cmds(
 
     dish_manager_proxy.SetMaintenanceMode()
 
-    dsc_event_store.wait_for_value(DSOperatingMode.STOW, timeout=120)
+    mode_event_store.wait_for_value(DishMode.STOW, timeout=120)
     spfrx_event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=30)
     spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
@@ -81,7 +80,7 @@ def test_power_cycle_in_maintenance_mode(
 
     # Use the build state update to indicate when the dish manager is back
     buildstate_event_store.clear_queue()
-    buildstate_event_store.wait_for_n_events(1, timeout=30)
+    buildstate_event_store.wait_for_n_events(1, timeout=60)
 
     assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
 

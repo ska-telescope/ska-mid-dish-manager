@@ -682,14 +682,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     spfrx_component_state["adminmode"],
                 )
                 self._update_component_state(dishmode=new_dish_mode)
-                # If the dish is has been STOWED and maintenance property was set
-                # set the dish mode to MAINTENANCE
-                if new_dish_mode == DishMode.STOW and self._is_maintenance_mode_active():
-                    # to exit maintenance mode, the SetStowMode() must be invoked
-                    self.logger.debug(
-                        "Updating dish manager dishMode with: [%s].", DishMode.MAINTENANCE
-                    )
-                    self._update_component_state(dishmode=DishMode.MAINTENANCE)
 
         if "healthstate" in kwargs:
             new_health_state = self._state_transition.compute_dish_health_state(
@@ -1082,10 +1074,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback=task_callback,
         )
 
-        # Set a flag to indicate that the dish is in maintenance mode, after the dish
-        # has been stowed, the dish mode will be set to MAINTENANCE.
-        self._set_maintenance_mode_active()
-
         status, response = self.submit_task(
             self._command_map.set_maintenance_mode,
             args=[],
@@ -1093,6 +1081,31 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback=task_callback,
         )
         return status, response
+
+    def stow_to_maintenance_transition_callback(self, start: bool) -> None:
+        """Handle the transition from STOW to MAINTENANCE mode.
+
+        This will set the MaintenanceModeActive property to true and
+        set the dish mode to MAINTENANCE if the dish is in STOW mode.
+        If the dish is not in STOW mode, it will log a warning.
+
+        :param start: If false then callback runs when long running command is completed.
+                      If true then callback runs when long running command is started.
+        :type start: bool
+        """
+        if not start:
+            if self.component_state["dishmode"] == DishMode.STOW:
+                self.logger.debug("Transitioning from STOW to MAINTENANCE mode.")
+                self._set_maintenance_mode_active()
+                self._update_component_state(dishmode=DishMode.MAINTENANCE)
+                self.logger.debug("Releasing authority from DS.")
+                ds_cm = self.sub_component_managers["DS"]
+                ds_cm.execute_command("ReleaseAuth", None)
+            else:
+                self.logger.error(
+                    "Cannot transition to MAINTENANCE mode from %s mode.",
+                    self.component_state["dishmode"],
+                )
 
     @check_communicating
     def track_cmd(

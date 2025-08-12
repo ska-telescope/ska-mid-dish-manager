@@ -181,7 +181,6 @@ class DishManager(SKAController):
         for command_name, method_name in [
             ("SetStandbyLPMode", "set_standby_lp_mode"),
             ("SetOperateMode", "set_operate_mode"),
-            ("SetMaintenanceMode", "set_maintenance_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("TrackStop", "track_stop_cmd"),
@@ -203,6 +202,21 @@ class DishManager(SKAController):
                     logger=self.logger,
                 ),
             )
+
+        # SetMaintenanceMode is a special command that is split into two parts, after the
+        # initial fan-out of commands to sub-devices, the command waits for the dish to stow
+        # then proceeds to set the dish into maintenance mode.
+        self.register_command_object(
+            "SetMaintenanceMode",
+            SubmittedSlowCommand(
+                "SetMaintenanceMode",
+                self._command_tracker,
+                self.component_manager,
+                "set_maintenance_mode",
+                callback=self.component_manager.stow_to_maintenance_transition_callback,
+                logger=self.logger,
+            ),
+        )
 
         self.register_command_object(
             "SetStowMode",

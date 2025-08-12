@@ -11,7 +11,6 @@ from ska_tango_base.commands import SubmittedSlowCommand
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
-    DscCmdAuthType,
     DSOperatingMode,
     IndexerPosition,
     PointingState,
@@ -216,26 +215,9 @@ class CommandMap:
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
-            "SetMaintenanceMode [1/2]",
+            "SetMaintenanceMode",
             ["dishmode"],
             [DishMode.STOW],
-        )
-
-        # Schedule the ReleaseAuth command to be run after fan-out of initial actions
-        commands_for_sub_devices = {
-            "DS": {
-                "command": "ReleaseAuth",
-                "awaitedAttributes": ["dsccmdauth"],
-                "awaitedValuesList": [DscCmdAuthType.NO_AUTHORITY],
-            },
-        }
-        self._run_long_running_command(
-            task_callback,
-            task_abort_event,
-            commands_for_sub_devices,
-            "SetMaintenanceMode [2/2]",
-            ["dsccmdauth"],
-            [],
         )
 
     # pylint: disable = no-value-for-parameter
