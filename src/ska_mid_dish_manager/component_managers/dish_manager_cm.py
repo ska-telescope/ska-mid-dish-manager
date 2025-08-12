@@ -55,7 +55,7 @@ from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
-from ska_mid_dish_manager.utils.tango_helpers import TangoPropertyAccessor
+from ska_mid_dish_manager.utils.tango_helpers import TangoDbAccessor
 
 
 class DishManagerComponentManager(TaskExecutorComponentManager):
@@ -82,7 +82,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ):
         # pylint: disable=useless-super-delegation
         self.tango_device_name = tango_device_name
-        self.tango_property_accessor = TangoPropertyAccessor(logger, tango_device_name)
+        self._tango_db_accessor = TangoDbAccessor(logger, tango_device_name)
         self.sub_component_managers = None
         wms_device_names = list(wms_device_names)
         if "" in wms_device_names:
@@ -432,7 +432,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         :return: True if maintenance mode is active, False otherwise
         :rtype: bool
         """
-        maintenance_mode_value = self.tango_property_accessor.get_device_property_value(
+        maintenance_mode_value = self._tango_db_accessor.get_device_property_value(
             MAINTENANCE_MODE_ACTIVE_PROPERTY
         )
         if maintenance_mode_value:
@@ -448,14 +448,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def _set_maintenance_mode_active(self) -> None:
         """Set the MaintenanceModeActive property in TangoDB."""
         self.logger.debug("Setting MaintenanceModeActive to active.")
-        self.tango_property_accessor.set_device_property_value(
+        self._tango_db_accessor.set_device_property_value(
             MAINTENANCE_MODE_ACTIVE_PROPERTY, MAINTENANCE_MODE_TRUE_VALUE
         )
 
     def _set_maintenance_mode_inactive(self) -> None:
         """Set the MaintenanceModeActive property in TangoDB."""
         self.logger.debug("Setting MaintenanceModeActive to inactive.")
-        self.tango_property_accessor.set_device_property_value(
+        self._tango_db_accessor.set_device_property_value(
             MAINTENANCE_MODE_ACTIVE_PROPERTY, MAINTENANCE_MODE_FALSE_VALUE
         )
 

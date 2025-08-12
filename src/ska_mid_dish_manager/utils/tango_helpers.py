@@ -6,7 +6,7 @@ from typing import List, Optional
 import tango
 
 
-class TangoPropertyAccessor:
+class TangoDbAccessor:
     """A class to access Tango device properties."""
 
     def __init__(self, logger: logging.Logger, tango_device_name: str):
@@ -30,7 +30,7 @@ class TangoPropertyAccessor:
             property_values = device_properties.get(property_name)
             return property_values
         except tango.DevFailed as e:
-            self.logger.error("Failed to read property %s: %s", property_name, e)
+            self._logger.error("Failed to read property %s: %s", property_name, e)
         return None
 
     def set_device_property_value(self, property_name: str, value: str) -> None:
