@@ -81,6 +81,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
+        self.logger = logger
         self.tango_device_name = tango_device_name
         self._tango_db_accessor = TangoDbAccessor(logger, tango_device_name)
         self.sub_component_managers = None
@@ -94,10 +95,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         default_wind_gust_threshold = kwargs.pop(
             "default_wind_gust_threshold", WIND_GUST_THRESHOLD_MPS
         )
+
+        default_dish_mode = DishMode.UNKNOWN
+        # Check tangodb whether maintenance mode is active
+        if self._is_maintenance_mode_active():
+            self.logger.debug("Initialising dish manager dishMode with %s.", DishMode.MAINTENANCE)
+            default_dish_mode = DishMode.MAINTENANCE
+
         super().__init__(
             logger,
             *args,
-            dishmode=DishMode.UNKNOWN,
+            dishmode=default_dish_mode,
             healthstate=HealthState.UNKNOWN,
             configuredband=Band.NONE,
             capturing=False,
@@ -148,7 +156,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             lastcommandedmode=("0.0", ""),
             **kwargs,
         )
-        self.logger = logger
         self._build_state_callback = build_state_callback
         self._quality_state_callback = quality_state_callback
         self._wind_stow_callback = wind_stow_callback
@@ -167,10 +174,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "WindGustThreshold": default_wind_gust_threshold,
             "MeanWindSpeedThreshold": default_mean_wind_speed_threshold,
         }
-        # Check tangodb whether maintenance mode is active
-        if self._is_maintenance_mode_active():
-            self.logger.debug("Initialising dish manager dishMode with %s.", DishMode.MAINTENANCE)
-            self.component_state["dishmode"] = DishMode.MAINTENANCE
 
         # SPF has to go first
         self.sub_component_managers = {
