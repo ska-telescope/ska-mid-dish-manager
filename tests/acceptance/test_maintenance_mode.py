@@ -94,6 +94,7 @@ def test_power_cycle_in_maintenance_mode(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_exiting_maintenance_mode_when_ds_on_stow(
+    reset_dish_to_standby: any,
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
     ds_device_proxy: DeviceProxy,
@@ -119,6 +120,7 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_exiting_maintenance_mode_when_ds_not_on_stow(
+    reset_dish_to_standby: any,
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
     ds_device_proxy: DeviceProxy,
