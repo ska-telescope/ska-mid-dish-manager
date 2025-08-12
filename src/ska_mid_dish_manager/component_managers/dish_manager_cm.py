@@ -1200,12 +1200,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 new_mode,
             )
         else:
+            ds_cm.execute_command("Stow", None)
             self.logger.debug(
                 "DS not in STOW operatingMode. Setting dish manager dishmode to %s.", new_mode
             )
 
         self._update_component_state(dishmode=new_mode)
-        ds_cm.execute_command("Stow", None)
 
     def set_stow_mode(
         self,
