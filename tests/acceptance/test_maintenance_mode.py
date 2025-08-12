@@ -7,6 +7,7 @@ from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceP
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DscCmdAuthType,
+    DSOperatingMode,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
