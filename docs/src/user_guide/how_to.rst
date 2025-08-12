@@ -65,21 +65,21 @@ Deploy DishManager with Simulators
          
          # in your custom values.yaml
          ...
-         ska-mid-dish-manager:
-         enabled: true
-
+         dishmanager:
+            wms:
+               station_ids: ["1"]
          ska-mid-dish-simulators:
-         enabled: true
-         deviceServers:
-            spfdevice:
-               enabled: true
-            spfrxdevice:
-               enabled: true
-         dsOpcuaSimulator:
             enabled: true
+            deviceServers:
+               spfdevice:
+                  enabled: true
+               spfrxdevice:
+                  enabled: true
+            dsOpcuaSimulator:
+               enabled: true
 
          ska-mid-dish-ds-manager:
-         enabled: true
+            enabled: true
 
          ska-mid-wms:
             enabled: true

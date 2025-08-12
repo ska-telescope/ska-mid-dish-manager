@@ -22,3 +22,6 @@ ska-mid-dish-simulators:
 ska-mid-wms:
   enabled: true
 
+dishmanager:
+  wms:
+    station_ids: ["1"]

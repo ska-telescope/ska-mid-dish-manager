@@ -58,13 +58,11 @@ endif
 OCI_TAG = $(VERSION)-dev.c$(CI_COMMIT_SHORT_SHA)
 CI_REGISTRY ?= registry.gitlab.com
 
-ifneq ($(CI_JOB_ID),)
 # Use the previously built image when running in the pipeline
 CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
 	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
 	--set dishmanager.image.tag=$(OCI_TAG)
 K8S_TIMEOUT=600s
-endif
 
 K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) \
 	--set global.cluster_domain=$(CLUSTER_DOMAIN) \

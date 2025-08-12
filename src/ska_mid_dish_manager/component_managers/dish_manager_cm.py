@@ -80,8 +80,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.tango_device_name = tango_device_name
         self.sub_component_managers = None
         wms_device_names = list(wms_device_names)
-        if "" in wms_device_names:
-            wms_device_names.remove("")
         default_watchdog_timeout = kwargs.pop("default_watchdog_timeout", 0.0)
         default_mean_wind_speed_threshold = kwargs.pop(
             "default_mean_wind_speed_threshold", MEAN_WIND_SPEED_THRESHOLD_MPS
