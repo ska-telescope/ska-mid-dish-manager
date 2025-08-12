@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Implemented SetMaintenanceMode command to align with states and modes ICD version 5C
 
 Version 8.2.0
 *************
