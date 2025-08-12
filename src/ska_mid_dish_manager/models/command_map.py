@@ -218,7 +218,7 @@ class CommandMap:
             commands_for_sub_devices,
             "SetMaintenanceMode [1/2]",
             ["dishmode"],
-            [DishMode.MAINTENANCE],
+            [DishMode.STOW],
         )
 
         # Schedule the ReleaseAuth command to be run after fan-out of initial actions

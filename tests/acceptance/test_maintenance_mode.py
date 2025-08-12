@@ -3,6 +3,7 @@
 import pytest
 from tango import DeviceProxy
 
+from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DscCmdAuthType,
@@ -49,5 +50,39 @@ def test_maintenance_mode_cmds(
     spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
     dsc_auth_event_store.wait_for_value(DscCmdAuthType.NO_AUTHORITY, timeout=30)
+
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_power_cycle_in_maintenance_mode(
+    reset_dish_to_standby: any,
+    event_store_class: EventStore,
+    dish_manager_proxy: DeviceProxy,
+) -> None:
+    # Put dish into maintenance mode
+    mode_event_store = event_store_class()
+    buildstate_event_store = event_store_class()
+    attr_cb_mapping = {
+        "dishMode": mode_event_store,
+        "buildState": buildstate_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    dish_manager_proxy.SetMaintenanceMode()
+    mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
+
+    # Restart the dish manager to simulate a power cycle
+    dp_manager = DeviceProxyManager()
+    # restart the sub-component device
+    admin_device_proxy = dp_manager(dish_manager_proxy.adm_name())
+    mode_event_store.clear_queue()
+    admin_device_proxy.RestartServer()
+
+    # Use the build state update to indicate when the dish manager is back
+    buildstate_event_store.clear_queue()
+    buildstate_event_store.wait_for_n_events(1, timeout=30)
+
+    assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
 
     remove_subscriptions(subscriptions)
