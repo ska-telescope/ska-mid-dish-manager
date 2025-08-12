@@ -42,7 +42,7 @@ def test_set_maintenance_mode_handler(
         {"progress": f"SetMaintenanceMode called on SPF, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},
         {"progress": "Commands: mocked sub-device-command-ids"},
-        {"progress": "Awaiting dishmode change to MAINTENANCE"},
+        {"progress": "Awaiting dishmode change to STOW"},
         {
             "progress": "SetMaintenanceMode [1/2] completed",
             "status": TaskStatus.COMPLETED,
@@ -65,8 +65,8 @@ def test_set_maintenance_mode_handler(
         assert kwargs == expected_call_kwargs[count]
 
     # check that the component state reports the requested command
-    component_manager._update_component_state(dishmode=DishMode.MAINTENANCE)
-    component_state_cb.wait_for_value("dishmode", DishMode.MAINTENANCE)
+    component_manager._update_component_state(dishmode=DishMode.STOW)
+    component_state_cb.wait_for_value("dishmode", DishMode.STOW)
 
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
