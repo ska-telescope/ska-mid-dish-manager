@@ -102,11 +102,15 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
     # Put dish into maintenance mode
     mode_event_store = event_store_class()
     dsc_event_store = event_store_class()
-    attr_cb_mapping = {
-        "dishMode": mode_event_store,
+    dsc_auth_event_store = 
+    ds_attr_cb_mapping = {
+
+        "dscCmdAuth": dsc_auth_event_store,
         "operatingMode": dsc_event_store,
     }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    subscriptions = {}
+    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": mode_event_store}))
+    subscriptions.update(setup_subscriptions(ds_device_proxy, ds_attr_cb_mapping))
     dish_manager_proxy.SetMaintenanceMode()
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
     dish_manager_proxy.SetStowMode()
@@ -128,11 +132,9 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
     # Put dish into maintenance mode
     mode_event_store = event_store_class()
     dsc_event_store = event_store_class()
-    attr_cb_mapping = {
-        "dishMode": mode_event_store,
-        "operatingMode": dsc_event_store,
-    }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    subscriptions = {}
+    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": mode_event_store}))
+    subscriptions.update(setup_subscriptions(ds_device_proxy, {"operatingMode": dsc_event_store}))
     dish_manager_proxy.SetMaintenanceMode()
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
 
