@@ -11,7 +11,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 Version 8.3.0
 *************
 - Added `dishmanager.wms.station_id` helm value to build up `wmsDeviceNames` property for WMS component manager.
-- Upgraded ska-mid-dish-simulators chart to v5.0.0
+- Upgraded ska-mid-dish-ds-manager chart to v6.2.0
 
 Version 8.2.0
 *************
