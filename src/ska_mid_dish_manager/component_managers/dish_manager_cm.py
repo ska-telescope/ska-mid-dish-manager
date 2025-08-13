@@ -1098,12 +1098,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         if not start:
             if self.component_state["dishmode"] == DishMode.STOW:
-                self.logger.debug("Transitioning from STOW to MAINTENANCE mode.")
-                self._set_maintenance_mode_active()
-                self._update_component_state(dishmode=DishMode.MAINTENANCE)
                 self.logger.debug("Releasing authority from DS.")
                 ds_cm = self.sub_component_managers["DS"]
                 ds_cm.execute_command("ReleaseAuth", None)
+                self.logger.debug("Transitioning from STOW to MAINTENANCE mode.")
+                self._set_maintenance_mode_active()
+                self._update_component_state(dishmode=DishMode.MAINTENANCE)
             else:
                 self.logger.error(
                     "Cannot transition to MAINTENANCE mode from %s mode.",
