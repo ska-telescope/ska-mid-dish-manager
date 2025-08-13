@@ -145,6 +145,6 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
     dsc_event_store.wait_for_value(DSOperatingMode.STOW, timeout=120)
     mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
 
-    assert dish_manager_proxy.dishMode == DishMode.STOW
+    assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
 
     remove_subscriptions(subscriptions)
