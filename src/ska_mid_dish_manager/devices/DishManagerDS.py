@@ -1848,6 +1848,7 @@ class DishManager(SKAController):
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @record_mode_change_request
+    @requires_component_manager
     def SetStowMode(self) -> DevVarLongStringArrayType:
         """Implemented as a Long Running Command.
 
@@ -1860,6 +1861,10 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
+        # Handle the exit from maintenance mode if the dish is in maintenance mode.
+        if self.component_manager.component_state["dishmode"] == DishMode.MAINTENANCE:
+            self.component_manager.handle_exit_maintenance_mode_transition()
+
         handler = self.get_command_object("SetStowMode")
         result_code, unique_id = handler()
 

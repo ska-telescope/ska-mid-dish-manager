@@ -1190,7 +1190,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    def _handle_exit_maintenance_mode_transition(self) -> None:
+    def handle_exit_maintenance_mode_transition(self) -> None:
         """Handles state transition from maintenance mode.
 
         This will set the MaintenanceModeActive property to false and
@@ -1216,11 +1216,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 new_mode,
             )
         else:
-            ds_cm.execute_command("Stow", None)
             self.logger.debug(
                 "DS not in STOW operatingMode. Setting dish manager dishmode to %s.", new_mode
             )
-
+        # If dish is not stowed, set dish mode to UNKNOWN to allow transition to STOW mode.
+        # If ds is in STOW operating mode already, set dish mode to STOW, there will not be any
+        # change event that triggers the dish mode computation
         self._update_component_state(dishmode=new_mode)
 
     def set_stow_mode(
@@ -1230,11 +1231,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Transition the dish to STOW mode."""
         ds_cm = self.sub_component_managers["DS"]
         try:
-            # Handle exit criteria for maintenance mode.
-            if self.component_state["dishmode"] == DishMode.MAINTENANCE:
-                self._handle_exit_maintenance_mode_transition()
-            else:
-                ds_cm.execute_command("Stow", None)
+            ds_cm.execute_command("Stow", None)
         except tango.DevFailed as err:
             if task_callback:
                 task_callback(status=TaskStatus.FAILED, exception=err)
