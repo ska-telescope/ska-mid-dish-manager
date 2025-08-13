@@ -102,9 +102,8 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
     # Put dish into maintenance mode
     mode_event_store = event_store_class()
     dsc_event_store = event_store_class()
-    dsc_auth_event_store = 
+    dsc_auth_event_store = event_store_class()
     ds_attr_cb_mapping = {
-
         "dscCmdAuth": dsc_auth_event_store,
         "operatingMode": dsc_event_store,
     }
