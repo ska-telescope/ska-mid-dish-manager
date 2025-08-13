@@ -1,7 +1,9 @@
 """Test Maintenance mode."""
 
+import time
+
 import pytest
-from tango import DeviceProxy
+from tango import DevFailed, DeviceProxy
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -78,10 +80,19 @@ def test_power_cycle_in_maintenance_mode(
     # restart the sub-component device
     admin_device_proxy = dp_manager(dish_manager_proxy.adm_name())
     mode_event_store.clear_queue()
+    buildstate_event_store.clear_queue()
     admin_device_proxy.RestartServer()
 
-    # Use the build state update to indicate when the dish manager is back
-    buildstate_event_store.clear_queue()
+    # Restarting the device server is not instantaneous, so we wait for a bit
+    time.sleep(2)
+
+    try:
+        dp_manager.wait_for_device(dish_manager_proxy)
+    except DevFailed:
+        pass
+
+    # Use build state update as an indication that device is back online and connected
+    # to subdevices.
     buildstate_event_store.wait_for_n_events(1, timeout=90)
 
     assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
