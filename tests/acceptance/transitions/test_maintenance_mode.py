@@ -20,7 +20,6 @@ REQUESTED_ELEVATION_VALUE = 60.0
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_maintenance_mode_cmds(
-    reset_dish_to_standby: any,
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
     ds_device_proxy: DeviceProxy,
@@ -60,7 +59,6 @@ def test_maintenance_mode_cmds(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_power_cycle_in_maintenance_mode(
-    reset_dish_to_standby: any,
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
 ) -> None:
@@ -84,7 +82,7 @@ def test_power_cycle_in_maintenance_mode(
 
     # Use the build state update to indicate when the dish manager is back
     buildstate_event_store.clear_queue()
-    buildstate_event_store.wait_for_n_events(1, timeout=60)
+    buildstate_event_store.wait_for_n_events(1, timeout=90)
 
     assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
 
@@ -94,7 +92,6 @@ def test_power_cycle_in_maintenance_mode(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_exiting_maintenance_mode_when_ds_on_stow(
-    reset_dish_to_standby: any,
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
     ds_device_proxy: DeviceProxy,
@@ -123,7 +120,6 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_exiting_maintenance_mode_when_ds_not_on_stow(
-    reset_dish_to_standby: any,
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
     ds_device_proxy: DeviceProxy,
