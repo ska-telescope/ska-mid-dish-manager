@@ -52,4 +52,3 @@ def test_dsccmdauth_attr(
         == dish_manager_proxy.dscCtrlState
         == DscCtrlState.NO_AUTHORITY
     )
-
