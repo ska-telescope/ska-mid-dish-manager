@@ -19,11 +19,16 @@ def test_dsccmdauth_attr(
 ):
     """Test DSC Control State can be read on Dish Manager."""
     dish_mode_event_store = event_store_class()
-
-    sub_id = dish_manager_proxy.subscribe_event(
+    dsc_cmd_auth_event_store = event_store_class()
+    dish_manager_proxy.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
         dish_mode_event_store,
+    )
+    ds_device_proxy.subscribe_event(
+        "dscCmdAuth",
+        tango.EventType.CHANGE_EVENT,
+        dsc_cmd_auth_event_store,
     )
     # Check the DSC Control State on DSManager and Dish Manager
     # equate (DscCtrlState.REMOTE_CONTROL)This check also shows
@@ -39,12 +44,13 @@ def test_dsccmdauth_attr(
 
     # Make DSManager release authority to test if the value is propagated.
     ds_device_proxy.ReleaseAuth()
+    
 
     # Check that DSC Control State has been updated to NO_AUTHORITY.
+    dsc_cmd_auth_event_store.wait_for_value(DscCmdAuthType.NO_AUTHORITY, timeout=10)
     assert (
         ds_device_proxy.dscCtrlState
         == dish_manager_proxy.dscCtrlState
         == DscCtrlState.NO_AUTHORITY
     )
 
-    dish_manager_proxy.unsubscribe_event(sub_id)
