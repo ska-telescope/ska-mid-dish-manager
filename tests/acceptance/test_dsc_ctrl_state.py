@@ -44,7 +44,6 @@ def test_dsccmdauth_attr(
 
     # Make DSManager release authority to test if the value is propagated.
     ds_device_proxy.ReleaseAuth()
-    
 
     # Check that DSC Control State has been updated to NO_AUTHORITY.
     dsc_cmd_auth_event_store.wait_for_value(DscCmdAuthType.NO_AUTHORITY, timeout=10)
