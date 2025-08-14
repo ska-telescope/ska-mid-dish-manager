@@ -25,7 +25,6 @@ def test_dsccmdauth_attr(
         tango.EventType.CHANGE_EVENT,
         dish_mode_event_store,
     )
-
     # Check the DSC Control State on DSManager and Dish Manager 
     # equate (DscCtrlState.REMOTE_CONTROL)This check also shows
     # dscCtrlState is not the default value (NO_AUTHORITY).
