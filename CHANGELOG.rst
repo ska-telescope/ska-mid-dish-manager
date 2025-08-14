@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Added `dishmanager.wms.station_id` helm value to build up `wmsDeviceNames` property for WMS component manager.
+- Added in a new attribute, dscCtrlState (DSC Control State), propagated from DSManager.
 
 Version 8.2.0
 *************
