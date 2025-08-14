@@ -4,7 +4,6 @@ import pytest
 import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
-    DishMode,
     DscCmdAuthType,
     DscCtrlState,
 )
@@ -27,17 +26,26 @@ def test_dsccmdauth_attr(
         dish_mode_event_store,
     )
 
-    # Check the DSC Control State on DSManager and Dish Manager equate (DscCtrlState.REMOTE_CONTROL)
-    # This check also shows dscCtrlState is not the default value (NO_AUTHORITY).
-    assert dish_manager_proxy.dscCtrlState == ds_device_proxy.dscCtrlState == DscCtrlState.REMOTE_CONTROL
+    # Check the DSC Control State on DSManager and Dish Manager 
+    # equate (DscCtrlState.REMOTE_CONTROL)This check also shows
+    # dscCtrlState is not the default value (NO_AUTHORITY).
+    assert (
+        dish_manager_proxy.dscCtrlState
+        == ds_device_proxy.dscCtrlState
+        == DscCtrlState.REMOTE_CONTROL
+    )
 
-    # Check the DSC Command Authority on DSManager and Dish Manager equate. 
+    # Check the DSC Command Authority on DSManager and Dish Manager equate.
     assert dish_manager_proxy.dscCmdAuth == ds_device_proxy.dscCmdAuth == DscCmdAuthType.LMC
 
     # Make DSManager release authority to test if the value is propagated.
     ds_device_proxy.ReleaseAuth()
 
     # Check that DSC Control State has been updated to NO_AUTHORITY.
-    assert ds_device_proxy.dscCtrlState == dish_manager_proxy.dscCtrlState == DscCtrlState.NO_AUTHORITY
+    assert (
+        ds_device_proxy.dscCtrlState
+        == dish_manager_proxy.dscCtrlState
+        == DscCtrlState.NO_AUTHORITY
+    )
 
     dish_manager_proxy.unsubscribe_event(sub_id)
