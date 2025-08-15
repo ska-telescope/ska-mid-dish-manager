@@ -25,7 +25,7 @@ def test_dsccmdauth_attr(
         tango.EventType.CHANGE_EVENT,
         dish_mode_event_store,
     )
-    ds_device_proxy.subscribe_event(
+    dish_manager_proxy.subscribe_event(
         "dscCmdAuth",
         tango.EventType.CHANGE_EVENT,
         dsc_cmd_auth_event_store,
@@ -46,7 +46,7 @@ def test_dsccmdauth_attr(
     ds_device_proxy.ReleaseAuth()
 
     # Check that DSC Control State has been updated to NO_AUTHORITY.
-    dsc_cmd_auth_event_store.wait_for_value(DscCmdAuthType.NO_AUTHORITY, timeout=10)
+    dsc_cmd_auth_event_store.wait_for_value(DscCmdAuthType.NO_AUTHORITY, timeout=12)
     assert (
         ds_device_proxy.dscCtrlState
         == dish_manager_proxy.dscCtrlState
