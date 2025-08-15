@@ -1192,35 +1192,25 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Handles state transition from maintenance mode.
 
         This will set the MaintenanceModeActive property to false and
-        set the dish mode to STOW if the DS is already in STOW operating mode.
-        If the DS is not in STOW operating mode, it will set the dish mode to UNKNOWN.
-        This will allow the dish to transition to STOW mode when the stow command
-        is invoked on DS.
+        recompute the dish mode.
         """
         if self.component_state["dishmode"] != DishMode.MAINTENANCE:
             return
 
         self.logger.debug("Exiting maintenance mode.")
-        ds_cm = self.sub_component_managers["DS"]
         # Set the MaintenanceModeActive property to false
         self._set_maintenance_mode_inactive()
-        # If ds operating mode is not STOW, set dish mode to UNKNOWN and allow
-        # transition to STOW to set the dish mode to STOW.
-        new_mode = DishMode.UNKNOWN
-        if ds_cm.component_state["operatingmode"] == DSOperatingMode.STOW:
-            new_mode = DishMode.STOW
-            self.logger.debug(
-                "DS already in STOW operatingMode. Setting dish manager dishmode to %s.",
-                new_mode,
-            )
-        else:
-            self.logger.debug(
-                "DS not in STOW operatingMode. Setting dish manager dishmode to %s.", new_mode
-            )
-        # If dish is not stowed, set dish mode to UNKNOWN to allow transition to STOW mode.
-        # If ds is in STOW operating mode already, set dish mode to STOW, there will not be any
-        # change event that triggers the dish mode computation
-        self._update_component_state(dishmode=new_mode)
+        # Recompute the dish mode
+        ds_component_state = self.sub_component_managers["DS"].component_state
+        spf_component_state = self.sub_component_managers["SPF"].component_state
+        spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
+        new_dish_mode = self._state_transition.compute_dish_mode(
+            ds_component_state,
+            spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+            spf_component_state if not self.is_device_ignored("SPF") else None,
+        )
+        self.logger.debug("Updating dish manager dishmode to %s.", new_dish_mode)
+        self._update_component_state(dishmode=new_dish_mode)
 
     def set_stow_mode(
         self,
