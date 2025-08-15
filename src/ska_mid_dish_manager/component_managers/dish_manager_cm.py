@@ -81,6 +81,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
+        self.logger = logger
         self.tango_device_name = tango_device_name
         self._tango_db_accessor = TangoDbAccessor(logger, tango_device_name)
         self.sub_component_managers = None
