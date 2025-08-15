@@ -1108,7 +1108,7 @@
     - name: dscCtrlState
       data_format: SCALAR
       data_type: DevEnum
-      description: DSC Control State - calculated using Command Authorityand DSC State.
+      description: DSC Control State - an aggregation of DSC Command Authority and DSC State
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:

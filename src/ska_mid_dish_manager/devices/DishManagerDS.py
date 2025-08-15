@@ -1547,7 +1547,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=DscCtrlState,
         access=AttrWriteType.READ,
-        doc=("DSC Control State - calculated using Command Authorityand DSC State."),
+        doc=("DSC Control State - an aggregation of DSC Command Authority and DSC State"),
     )
     def dscCtrlState(self) -> str:
         """Returns DSC Control State."""
