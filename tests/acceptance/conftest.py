@@ -59,6 +59,10 @@ def reset_dish_to_standby(
     subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_events}))
 
     try:
+        if dish_manager_proxy.dishMode == DishMode.MAINTENANCE:
+            dish_manager_proxy.SetStowMode()
+            dish_mode_events.wait_for_value(DishMode.STOW, timeout=10)
+
         spf_device_proxy.ResetToDefault()
         assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=10)
         spf_device_proxy.SetOperateMode()

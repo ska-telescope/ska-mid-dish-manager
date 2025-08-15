@@ -30,6 +30,11 @@ def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
     set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False)
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling "
+    "ConfigureBand_x, SetOperateMode call no longer valid. Remove call following dish "
+    "manager states and modes changes"
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_ignoring_spf(

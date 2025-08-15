@@ -3,16 +3,12 @@
 import rule_engine
 
 DISH_MODE_RULES_ALL_DEVICES = {
+    # MAINTENANCE mode is not aggregated from operating modes of subdevices. It
+    # is a separate mode that can be commanded directly on the dish manager.
     "CONFIG": rule_engine.Rule(
         "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE' "
         "or "
         "DS.indexerposition  == 'IndexerPosition.MOVING' "
-    ),
-    "MAINTENANCE": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STOW' and "
-        "SPF.operatingmode  == 'SPFOperatingMode.MAINTENANCE' "
-        # TODO: Not taking SPFRx into consideration until adminMode is implemented
-        # "SPFRX.adminmode  == 'AdminMode.ENGINEERING'"
     ),
     "OPERATE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.POINT' and "

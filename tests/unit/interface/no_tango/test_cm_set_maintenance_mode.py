@@ -34,17 +34,21 @@ def test_set_maintenance_mode_handler(
 
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
-        # TODO: Remove below. Waiting for SPFRx to implement maintenance mode
-        {"progress": "Nothing done on SPFRx, awaiting implementation on it."},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": f"SetMaintenanceMode called on SPF, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},
         {"progress": f"Stow called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting DS operatingmode change to STOW"},
+        {"progress": f"SetStandbyMode called on SPFRX, ID {mock_command_tracker.new_command()}"},
+        {"progress": "Awaiting SPFRX operatingmode change to STANDBY"},
+        {"progress": f"SetMaintenanceMode called on SPF, ID {mock_command_tracker.new_command()}"},
+        {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},
         {"progress": "Commands: mocked sub-device-command-ids"},
-        {"progress": "Awaiting dishmode change to MAINTENANCE"},
+        {"progress": "Awaiting dishmode change to STOW"},
+        {
+            "progress": "SetMaintenanceMode completed",
+            "status": TaskStatus.COMPLETED,
+            "result": (ResultCode.OK, "SetMaintenanceMode completed"),
+        },
     )
-
     # check that the initial lrc updates come through
     actual_call_kwargs = callbacks["task_cb"].call_args_list
     for count, mock_call in enumerate(actual_call_kwargs):
@@ -52,8 +56,8 @@ def test_set_maintenance_mode_handler(
         assert kwargs == expected_call_kwargs[count]
 
     # check that the component state reports the requested command
-    component_manager._update_component_state(dishmode=DishMode.MAINTENANCE)
-    component_state_cb.wait_for_value("dishmode", DishMode.MAINTENANCE)
+    component_manager._update_component_state(dishmode=DishMode.STOW)
+    component_state_cb.wait_for_value("dishmode", DishMode.STOW)
 
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()

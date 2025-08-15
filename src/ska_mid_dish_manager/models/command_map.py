@@ -194,42 +194,30 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Transition the dish to MAINTENANCE mode."""
-        if not self._dish_manager_cm.is_device_ignored("SPFRX"):
-            spfrx_cm = self._dish_manager_cm.sub_component_managers["SPFRX"]  # noqa: F841
-            try:
-                # TODO: Wait for the SPFRx to implement maintenance mode
-                task_callback(
-                    progress="Nothing done on SPFRx, awaiting implementation on it.",
-                )
-                # spfrx_cm.write_attribute_value("adminmode", AdminMode.ENGINEERING)
-            except tango.DevFailed as err:
-                self.logger.exception(
-                    "Failed to configure SPFRx adminMode ENGINEERING"
-                    " on call to SetMaintenanceMode."
-                )
-                task_callback(status=TaskStatus.FAILED, exception=err)
-                return
-
         commands_for_sub_devices = {
-            "SPF": {
-                "command": "SetMaintenanceMode",
-                "awaitedAttributes": ["operatingmode"],
-                "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
-            },
             "DS": {
                 "command": "Stow",
                 "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [DSOperatingMode.STOW],
             },
+            "SPFRX": {
+                "command": "SetStandbyMode",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
+            },
+            "SPF": {
+                "command": "SetMaintenanceMode",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
+            },
         }
-
         self._run_long_running_command(
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
             "SetMaintenanceMode",
             ["dishmode"],
-            [DishMode.MAINTENANCE],
+            [DishMode.STOW],
         )
 
     # pylint: disable = no-value-for-parameter
