@@ -9,6 +9,12 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - Implemented SetMaintenanceMode command to align with states and modes ICD version 5C
 
+Version 8.3.0
+*************
+- Added `dishmanager.wms.station_id` helm value to build up `wmsDeviceNames` property for WMS component manager.
+- Updated `ska-mid-dish-ds-manger` chart to v6.2.0.
+
+
 Version 8.2.0
 *************
 - Added docker compose deployment for local development.
