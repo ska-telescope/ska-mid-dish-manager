@@ -9,7 +9,7 @@ ska-mid-dish-ds-manager:
     image:
       registry: registry.gitlab.com/ska-telescope/ska-mid-dish-ds-manager
       image: ska-mid-dish-ds-manager
-      tag: 6.2.0-dev.c68ea2754
+      tag: 6.2.0-dev.c5809d08b
       pullPolicy: IfNotPresent
 
 system: SW-infrastructure
