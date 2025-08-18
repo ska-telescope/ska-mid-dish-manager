@@ -7,6 +7,7 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 ELEV_MECHANICAL_LIMIT_MAX = 85.0
 AZIM_MECHANICAL_LIMIT_MAX = 360.0
+POINTING_TOLERANCE_DEG = 0.1
 
 
 @pytest.mark.acceptance
@@ -38,7 +39,7 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
 
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_slew_transition(event_store_class, dish_manager_proxy):
+def test_slew(event_store_class, dish_manager_proxy):
     """Test transition to SLEW."""
     main_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
@@ -65,15 +66,12 @@ def test_slew_transition(event_store_class, dish_manager_proxy):
 
     dish_manager_proxy.Slew([slew_azimuth, slew_elevation])
 
-    # wait until no updates
-    data_points = achieved_pointing_event_store.get_queue_values(timeout=5)
-    # timeout return empty list
-    assert data_points
-    # returned data is an array of tuple consisting of attribute name and value
-    last_az_el = data_points[-1][1]
-    # check last az and el received and compare with reference
-    achieved_az, achieved_el = last_az_el[1], last_az_el[2]
-    assert achieved_az == pytest.approx(slew_azimuth)
-    assert achieved_el == pytest.approx(slew_elevation)
+    def target_reached_test(pointing_event_val: list[float]) -> bool:
+        """Return whether we got to the target."""
+        return pointing_event_val[1] == pytest.approx(
+            slew_azimuth, abs=POINTING_TOLERANCE_DEG
+        ) and pointing_event_val[2] == pytest.approx(slew_elevation, abs=POINTING_TOLERANCE_DEG)
+
+    achieved_pointing_event_store.wait_for_condition(target_reached_test, timeout=60)
 
     remove_subscriptions(subscriptions)

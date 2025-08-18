@@ -47,6 +47,18 @@ class ComponentStateStore:
         except queue.Empty:
             return items
 
+    def get_queue_values_timeout(self, timeout: int = 3) -> List[Tuple[Any, Any]]:
+        """Get the values from the queue with an overall timeout."""
+        items = []
+        try:
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                event = self._queue.get(timeout=timeout)
+                items.append((event.attr_value.name, event.attr_value.value))
+        except queue.Empty:
+            pass
+        return items
+
     def wait_for_value(  # pylint:disable=inconsistent-return-statements
         self, key: str, value: Any, timeout: int = 3
     ):
