@@ -26,10 +26,12 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     main_event_store = event_store_class()
     band_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
+    pointing_state_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "configuredBand": band_event_store,
         "achievedPointing": achieved_pointing_event_store,
+        "pointingstate": pointing_state_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -40,7 +42,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     dish_manager_proxy.SetOperateMode()
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
-    current_az, current_el = dish_manager_proxy.achievedPointing[1:]
     dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
 
     def target_reached_test(pointing_event_val: list[float]) -> bool:
@@ -49,7 +50,8 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
             INIT_AZ, abs=POINTING_TOLERANCE_DEG
         ) and pointing_event_val[2] == pytest.approx(INIT_EL, abs=POINTING_TOLERANCE_DEG)
 
-    achieved_pointing_event_store.wait_for_condition(target_reached_test, timeout=60)
+    achieved_pointing_event_store.wait_for_condition(target_reached_test, timeout=120)
+    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=120)
 
     remove_subscriptions(subscriptions)
 
