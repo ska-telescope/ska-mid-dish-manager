@@ -42,6 +42,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishDevice,
     DishMode,
     DscCmdAuthType,
+    DscCtrlState,
     NoiseDiodeMode,
     PointingState,
     PowerState,
@@ -432,6 +433,7 @@ class DishManager(SKAController):
                 "windgust": "windGust",
                 "autowindstowenabled": "autoWindStowEnabled",
                 "lastcommandedmode": "lastCommandedMode",
+                "dscctrlstate": "dscCtrlState",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1541,6 +1543,17 @@ class DishManager(SKAController):
         # to allow other functions depending on its value unblocked
         if not enabled:
             self.component_manager.wind_stow_active = enabled
+
+    @attribute(
+        dtype=DscCtrlState,
+        access=AttrWriteType.READ,
+        doc=("DSC Control State - an aggregation of DSC Command Authority and DSC State"),
+    )
+    def dscCtrlState(self) -> str:
+        """Returns DSC Control State."""
+        return self.component_manager.component_state.get(
+            "dscctrlstate", DscCtrlState.NO_AUTHORITY
+        )
 
     # --------
     # Commands

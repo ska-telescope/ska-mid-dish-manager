@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added in a new attribute, dscCtrlState (DSC Control State), propagated from DSManager.
 
 Version 8.4.0
 *************

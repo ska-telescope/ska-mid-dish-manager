@@ -53,6 +53,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "dscpowerlimitkw",
             "trackTableCurrentIndex",
             "trackTableEndIndex",
+            "dscCtrlState",
         )
         super().__init__(
             tango_device_fqdn,

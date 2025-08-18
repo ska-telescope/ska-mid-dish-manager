@@ -32,6 +32,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishDevice,
     DishMode,
     DscCmdAuthType,
+    DscCtrlState,
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
@@ -139,6 +140,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             meanwindspeed=-1,
             windgust=-1,
             lastcommandedmode=("0.0", ""),
+            dscctrlstate=DscCtrlState.NO_AUTHORITY,
             **kwargs,
         )
         self.logger = logger
@@ -193,7 +195,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=PointingState.UNKNOWN,
                 achievedtargetlock=None,
-                dscmdauth=DscCmdAuthType.NO_AUTHORITY,
+                dsccmdauth=DscCmdAuthType.NO_AUTHORITY,
                 configuretargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
@@ -213,6 +215,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 actstaticoffsetvalueel=None,
                 tracktablecurrentindex=0,
                 tracktableendindex=0,
+                dscctrlstate=DscCtrlState.NO_AUTHORITY,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.DS
                 ),
@@ -282,6 +285,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "actStaticOffsetValueEl",
                 "trackTableCurrentIndex",
                 "trackTableEndIndex",
+                "dscCtrlState",
             ],
             "SPFRX": [
                 "noiseDiodeMode",
@@ -678,6 +682,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 dsc_power_limit,
             )
             self._update_component_state(dscpowerlimitkw=ds_component_state["dscpowerlimitkw"])
+
+        if "dscctrlstate" in kwargs:
+            dsc_ctrl_state = ds_component_state["dscctrlstate"]
+            self.logger.debug(
+                (
+                    "Updating dish manager dscCtrlState with: [%s]. "
+                    "Sub-component dscCtrlState DS [%s]"
+                ),
+                dsc_ctrl_state,
+                dsc_ctrl_state,
+            )
+            self._update_component_state(dscctrlstate=ds_component_state["dscctrlstate"])
 
         # spf bandInFocus
         if not self.is_device_ignored("SPF") and (
