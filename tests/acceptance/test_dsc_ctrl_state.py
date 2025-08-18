@@ -18,14 +18,8 @@ def test_dsccmdauth_attr(
     ds_device_proxy,
 ):
     """Test DSC Control State can be read on Dish Manager."""
-    dish_mode_event_store = event_store_class()
     dsc_cmd_auth_event_store = event_store_class()
-    dish_manager_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
-    dish_manager_proxy.subscribe_event(
+    dish_mode_id = dish_manager_proxy.subscribe_event(
         "dscCmdAuth",
         tango.EventType.CHANGE_EVENT,
         dsc_cmd_auth_event_store,
@@ -52,3 +46,4 @@ def test_dsccmdauth_attr(
         == dish_manager_proxy.dscCtrlState
         == DscCtrlState.NO_AUTHORITY
     )
+    dish_manager_proxy.unsubscribe_event(dish_mode_id)
