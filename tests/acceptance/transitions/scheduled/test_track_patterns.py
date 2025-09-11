@@ -66,7 +66,7 @@ def test_track_pattern(
     event_store_class: Any,
     request: pytest.FixtureRequest,
     dish_manager_proxy: tango.DeviceProxy,
-    ds_manager_proxy: tango.DeviceProxy,
+    ds_device_proxy: tango.DeviceProxy,
     plot_dish_manager_pointing: Generator,
 ) -> None:
     """Test tracking the points from the given csv file."""
@@ -92,15 +92,15 @@ def test_track_pattern(
     # Slew to the start point
     _, start_point_az, start_point_el = track_table[0]
     handle_slew_to_point(
-        ds_manager_proxy, dish_manager_proxy, start_point_az, start_point_el, event_store_class
+        ds_device_proxy, dish_manager_proxy, start_point_az, start_point_el, event_store_class
     )
 
-    start_time_tai: float = ds_manager_proxy.GetCurrentTAIOffset() + 10
+    start_time_tai: float = ds_device_proxy.GetCurrentTAIOffset() + 10
     pointing_event_store.clear_queue()
 
     try:
         handle_tracking_table(
-            ds_manager_proxy=ds_manager_proxy,
+            ds_manager_proxy=ds_device_proxy,
             dish_manager_proxy=dish_manager_proxy,
             table=track_table,
             start_time_tai=start_time_tai,
