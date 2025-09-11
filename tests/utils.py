@@ -14,6 +14,7 @@ from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.dish_enums import PointingState, TrackTableLoadMode
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
+from tests.constants import POINTING_TOLERANCE_ARCSEC
 
 MAX_ELEVATION = 85.0
 MIN_ELEVATION = 14.8
@@ -895,3 +896,45 @@ def remove_subscriptions(subscriptions: Dict[tango.DeviceProxy, List[int]]) -> N
                 device_proxy.unsubscribe_event(sub_id)
             except Exception:
                 continue
+
+
+def handle_slew_to_point(
+    ds_manager_proxy: tango.DeviceProxy,
+    dish_manager_proxy: tango.DeviceProxy,
+    az: float,
+    el: float,
+    event_store_class: Any,
+) -> None:
+    """Handle slewing to a point."""
+    main_event_store = event_store_class()
+
+    sub_id = dish_manager_proxy.subscribe_event(
+        "pointingstate",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+
+    _, current_az, current_el = dish_manager_proxy.achievedPointing
+    angular_err = get_angular_error_between_points(az, el, current_az, current_el)
+    if angular_err > POINTING_TOLERANCE_ARCSEC:
+        main_event_store.clear_queue()
+        dish_manager_proxy.Slew([az, el])
+        main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
+
+        # Calculate time to wait for READY based on azimuth and elevation speeds
+        az_speed = float(ds_manager_proxy.azimuthSpeed)
+        el_speed = float(ds_manager_proxy.elevationSpeed)
+        _, current_az, current_el = dish_manager_proxy.achievedPointing
+
+        delta_az = abs(az - current_az)
+        delta_el = abs(el - current_el)
+
+        # Time needed to reach the target in each direction
+        time_az = delta_az / az_speed
+        time_el = delta_el / el_speed
+
+        # Take the longer of the two + a small buffer
+        estimated_slew_time = max(time_az, time_el) + 10
+        main_event_store.wait_for_value(PointingState.READY, timeout=estimated_slew_time * 2)
+
+    dish_manager_proxy.unsubscribe_event(sub_id)

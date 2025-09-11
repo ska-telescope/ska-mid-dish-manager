@@ -2,6 +2,7 @@
 
 import csv
 import os
+import pickle
 from collections.abc import Generator
 from typing import Any
 
@@ -12,9 +13,17 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
 )
-from tests.data import RADIAL_CSV_PATH, SPIRAL_CSV_PATH
+from tests.data import (
+    CORDIODSCAN__CSV_PATH,
+    RADIAL_SCAN_CSV_PATH,
+    RASTER_SCAN_CSV_PATH,
+    SIDEREAL_SCAN_CSV_PATH,
+    SPIRAL_SCAN_CSV_PATH,
+    UP_DOWN_SCAN_CSV_PATH,
+)
 from tests.utils import (
     compare_trajectories,
+    handle_slew_to_point,
     handle_tracking_table,
     remove_subscriptions,
     save_tracking_test_plots,
@@ -44,8 +53,12 @@ def load_csv_data(file_path: str) -> list[tuple[float, float, float]]:
 @pytest.mark.parametrize(
     "track_csv_file",
     [
-        (RADIAL_CSV_PATH),
-        (SPIRAL_CSV_PATH),
+        (RADIAL_SCAN_CSV_PATH),
+        (SPIRAL_SCAN_CSV_PATH),
+        (SIDEREAL_SCAN_CSV_PATH),
+        (UP_DOWN_SCAN_CSV_PATH),
+        (CORDIODSCAN__CSV_PATH),
+        (RASTER_SCAN_CSV_PATH),
     ],
 )
 def test_track_pattern(
@@ -53,7 +66,7 @@ def test_track_pattern(
     event_store_class: Any,
     request: pytest.FixtureRequest,
     dish_manager_proxy: tango.DeviceProxy,
-    ds_device_proxy: tango.DeviceProxy,
+    ds_manager_proxy: tango.DeviceProxy,
     plot_dish_manager_pointing: Generator,
 ) -> None:
     """Test tracking the points from the given csv file."""
@@ -70,23 +83,24 @@ def test_track_pattern(
     if dish_manager_proxy.configuredBand != Band.B1:
         dish_manager_proxy.ConfigureBand1(True)
         main_event_store.wait_for_value(Band.B1, timeout=60)
-    dish_manager_proxy.SetOperateMode()
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
+    if dish_manager_proxy.dishMode != DishMode.OPERATE:
+        dish_manager_proxy.SetOperateMode()
+        main_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
 
     track_table = load_csv_data(track_csv_file)
 
     # Slew to the start point
     _, start_point_az, start_point_el = track_table[0]
-    dish_manager_proxy.Slew([start_point_az, start_point_el])
+    handle_slew_to_point(
+        ds_manager_proxy, dish_manager_proxy, start_point_az, start_point_el, event_store_class
+    )
 
-    # wait until no updates
-    pointing_event_store.get_queue_values(timeout=5)
-
-    start_time_tai = ds_device_proxy.GetCurrentTAIOffset() + 10
+    start_time_tai: float = ds_manager_proxy.GetCurrentTAIOffset() + 10
+    pointing_event_store.clear_queue()
 
     try:
         handle_tracking_table(
-            ds_manager_proxy=ds_device_proxy,
+            ds_manager_proxy=ds_manager_proxy,
             dish_manager_proxy=dish_manager_proxy,
             table=track_table,
             start_time_tai=start_time_tai,
@@ -96,47 +110,48 @@ def test_track_pattern(
             event_store_class=event_store_class,
         )
     finally:
-        achieved_pointing = pointing_event_store.get_queue_values()
+        achieved_pointing = pointing_event_store.get_queue_values_timeout(timeout=10)
         remove_subscriptions(subscriptions)
 
-    # Compare the desired and achieved trajectories
-    # Extract achieved values from events from after the start time
-    # Add the start point as a change event wont be recorded for it since the test slews there
-    achieved_trajectory = [(start_time_tai, start_point_az, start_point_el)]
-    achieved_trajectory += [
-        (tai, az, el) for _, (tai, az, el) in achieved_pointing if tai >= start_time_tai
-    ]
+        # Compare the desired and achieved trajectories
+        # Extract achieved values from events from after the start time
+        # Add the start point as a change event wont be recorded for it since the test slews there
+        achieved_trajectory = [(start_time_tai, start_point_az, start_point_el)]
+        achieved_trajectory += [
+            (tai, az, el) for _, (tai, az, el) in achieved_pointing if tai >= start_time_tai
+        ]
 
-    desired_trajectory = [
-        (start_time_tai + offset_tai, az, el) for offset_tai, az, el in track_table
-    ]
+        desired_trajectory = [
+            (start_time_tai + offset_tai, az, el) for offset_tai, az, el in track_table
+        ]
 
-    mismatches, err_tai_list, err_angular_list = compare_trajectories(
-        desired_trajectory=desired_trajectory,
-        achieved_trajectory=achieved_trajectory,
-        pointing_tolerance_arcsec=POINTING_TOLERANCE_ARCSEC,
-    )
-
-    # Plots
-    file_storage_dir = request.config.getoption("--pointing-files-path")
-
-    if file_storage_dir is not None:
-        if not os.path.exists(file_storage_dir):
-            os.makedirs(file_storage_dir)
-
-        file_name = ".".join((f"pointing_trajectories_{request.node.name}", "png"))
-        save_file_path = os.path.join(file_storage_dir, file_name)
-        save_tracking_test_plots(
-            desired_trajectory,
-            achieved_trajectory,
-            err_tai_list,
-            err_angular_list,
-            save_file_path,
+        mismatches, err_tai_list, err_angular_list = compare_trajectories(
+            desired_trajectory=desired_trajectory,
+            achieved_trajectory=achieved_trajectory,
+            pointing_tolerance_arcsec=POINTING_TOLERANCE_ARCSEC,
         )
 
-    # Print mismatches and assert
-    if mismatches:
-        for msg in mismatches:
-            print(msg)
+        # Plots
+        file_storage_dir = request.config.getoption("--pointing-files-path")
+
+        if file_storage_dir is not None:
+            if not os.path.exists(file_storage_dir):
+                os.makedirs(file_storage_dir)
+
+            file_name = ".".join((f"pointing_trajectories_{request.node.name}", "png"))
+            save_file_path = os.path.join(file_storage_dir, file_name)
+            save_tracking_test_plots(
+                desired_trajectory,
+                achieved_trajectory,
+                err_tai_list,
+                err_angular_list,
+                save_file_path,
+            )
+
+            # Save achieved trajectory
+            file_name = ".".join((f"pointing_trajectory_{request.node.name}", "pickle"))
+            save_file_path = os.path.join(file_storage_dir, file_name)
+            with open(save_file_path, "wb") as fp:
+                pickle.dump(achieved_trajectory, fp)
 
     assert not mismatches, f"{len(mismatches)} / {len(track_table)} trajectory mismatches."
