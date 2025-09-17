@@ -2,6 +2,7 @@
 
 import os
 import socket
+import time
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from typing import List, Tuple
@@ -19,7 +20,6 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_WMS_TRL,
 )
 from tests.utils import ComponentStateStore, EventStore
-
 
 
 def pytest_addoption(parser):
@@ -267,7 +267,6 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             event_printer.__exit__(None, None, None)
     else:
         yield  # continue without event tracking if subscriptions failed
-
 
 
 @pytest.fixture
