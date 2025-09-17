@@ -127,8 +127,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
             achievedpointing=[0.0, 0.0, 0.0],
-            attenuationpolh=0.0,
-            attenuationpolv=0.0,
+            attenuation1polhx=0.0,
+            attenuation1polvy=0.0,
+            attenuation2polhx=0.0,
+            attenuation2polvy=0.0,
             dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
             powerstate=PowerState.LOW,
             kvalue=0,
@@ -232,8 +234,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 configuredband=Band.NONE,
                 capturingdata=False,
                 healthstate=HealthState.UNKNOWN,
-                attenuationpolh=0.0,
-                attenuationpolv=0.0,
+                # Evaluate configuration of the band agnostic attn values given
+                # the new naming convension
+                attenuation1polh_x=0.0,
+                attenuation1polv_y=0.0,
+                attenuation2polh_x=0.0,
+                attenuation2polv_y=0.0,
                 kvalue=0,
                 b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -717,15 +723,23 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_component_state["bandinfocus"] = band_in_focus
 
         # spfrx attenuation
-        if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
+        if (
+            "attenuation1PolH/X" in kwargs
+            or "attenuation1PolV/Y" in kwargs
+            or "attenuation2PolH/X" in kwargs
+            or "attenuation2PolV/Y" in kwargs
+        ):
             attenuation = {
-                "attenuationpolv": spfrx_component_state["attenuationpolv"],
-                "attenuationpolh": spfrx_component_state["attenuationpolh"],
+                "attenuation1PolH/X": spfrx_component_state["attenuation1PolH/X"],
+                "attenuation1PolV/Y": spfrx_component_state["attenuation1PolV/Y"],
+                "attenuation2PolH/X": spfrx_component_state["attenuation2PolH/X"],
+                "attenuation2PolV/Y": spfrx_component_state["attenuation2PolV/Y"],
             }
             self.logger.debug(
                 (
-                    "Updating dish manager attenuationpolv and attenuationpolh "
-                    "with: SPFRX attenuation [%s]"
+                    "Updating dish manager attenuation1PolH/X, attenuation1PolV/Y,"
+                    " attenuation2PolH/X and attenuation2PolV/Y"
+                    " with: SPFRX attenuation [%s]"
                 ),
                 attenuation,
             )
