@@ -40,7 +40,6 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     assert len(threads) == 1, "Unexpected threads remaining after tests"
 
 
-
 def pytest_addoption(parser):
     """Add additional options."""
     parser.addoption(
@@ -286,7 +285,6 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             event_printer.__exit__(None, None, None)
     else:
         yield  # continue without event tracking if subscriptions failed
-
 
 
 @pytest.fixture
