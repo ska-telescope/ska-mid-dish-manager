@@ -7,7 +7,6 @@ import threading
 import time
 from collections.abc import Generator
 from dataclasses import dataclass, field
-import time
 from typing import List, Tuple
 
 import pytest
@@ -39,6 +38,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
             continue
 
     assert len(threads) == 1, "Unexpected threads remaining after tests"
+
 
 
 def pytest_addoption(parser):
