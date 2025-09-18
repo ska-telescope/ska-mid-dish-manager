@@ -63,6 +63,16 @@ def reset_dish_to_standby(
     # awaited value to report the final task status of the LRC.
     # [*] the base classes needs this final task status to allow the
     # subsequently issued commands to be moved from queued to in progress
+
+    # Check that dish_manager_proxy is not None before proceeding
+    max_retries = 5
+    for attempt in range(max_retries):
+        if dish_manager_proxy is not None:
+            break
+        time.sleep(2)  # wait before retry
+    else:
+        raise RuntimeError("dish_manager_proxy is None after 5 retries")
+
     subs = setup_subscriptions(
         dish_manager_proxy, {"longRunningCommandsInQueue": event_store}, reset_queue=False
     )
