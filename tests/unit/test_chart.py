@@ -1,8 +1,6 @@
 """General chart tests."""
 
-# mypy: disable-error-code="union-attr,arg-type"
-import importlib.util
-import sys
+import ast
 from pathlib import Path
 
 import pytest
@@ -10,26 +8,34 @@ import yaml
 
 
 @pytest.mark.unit
-def test_chart_versions() -> None:
+def test_chart_versions():
     """General chart tests."""
     test_path = Path(__file__)
     charts_path = test_path.parent.parent.parent / "charts" / "ska-mid-dish-manager"
-    chart_definition_path = charts_path / "Chart.yaml"
+    chart_definitiion_path = charts_path / "Chart.yaml"
     values_path = charts_path / "values.yaml"
     docs_conf_path = test_path.parent.parent.parent / "docs" / "src" / "conf.py"
     release_file = test_path.parent.parent.parent / ".release"
     pyproject_file = test_path.parent.parent.parent / "pyproject.toml"
 
     # Python files
-    spec = importlib.util.spec_from_file_location("docs", docs_conf_path.as_posix())
-    docsmod = importlib.util.module_from_spec(spec)
-    sys.modules["docs"] = docsmod
-    spec.loader.exec_module(docsmod)
+    docs_version = ""
+    with open(docs_conf_path.as_posix(), "r") as f:
+        source_code = f.read()
+    docs_conf_tree = ast.parse(source_code)
+    for node in docs_conf_tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if not isinstance(node.targets[0], ast.Name):
+            continue
+        if node.targets[0].id != "release":
+            continue
+        docs_version = node.value.value
 
     # YAML files
     chart_def_yaml = ""
     values_yaml = ""
-    with open(chart_definition_path, "r") as f:
+    with open(chart_definitiion_path, "r") as f:
         chart_def_yaml = yaml.safe_load(f)
     with open(values_path, "r") as f:
         values_yaml = yaml.safe_load(f)
@@ -43,8 +49,8 @@ def test_chart_versions() -> None:
         f" tag {image_tag_version}, must be the same."
     )
 
-    assert docsmod.release == chart_version, (
-        f"Docs version {docsmod.release} must match chart version {chart_version}."
+    assert docs_version == chart_version, (
+        f"Docs version {docs_version} must match chart version {chart_version}."
     )
 
     # Very rough checks in toml and .release files
