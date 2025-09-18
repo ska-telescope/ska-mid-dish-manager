@@ -1015,6 +1015,15 @@ class DishManager(SKAController):
         """Returns the dishMode."""
         return self.component_manager.component_state.get("dishmode", DishMode.UNKNOWN)
 
+
+    @attribute(
+        dtype="DevString",
+        doc="Returns the LRC command queue contents (if any).",
+    )
+    def lrcQueue(self):
+        # Return the value for lrcQueue
+        return None  # or whatever your internal variable is
+
     @attribute(
         dtype=float,
         access=AttrWriteType.WRITE,
