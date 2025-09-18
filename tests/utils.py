@@ -954,9 +954,11 @@ def compare_trajectories(
 
 def setup_subscriptions(
     device_proxy: tango.DeviceProxy,
-    attr_callback_map: Dict[str, EventStore],
+    attr_callback_map: Dict[str, "EventStore"],
     event_type: tango.EventType = tango.EventType.CHANGE_EVENT,
     reset_queue: bool = True,
+    retries: int = 5,
+    delay: float = 2.0,
 ) -> Dict[tango.DeviceProxy, List[int]]:
     """Subscribe to events for the given attributes and callbacks.
 
@@ -964,19 +966,36 @@ def setup_subscriptions(
     :param attr_callback_map: Dict mapping attribute names to EventStore callbacks.
     :param event_type: The Tango event type to subscribe to.
     :param reset_queue: Whether to clear the queue of each callback after subscribing.
+    :param retries: How many times to retry if subscription fails.
+    :param delay: Seconds to wait between retries.
     :return: Dict mapping device_proxy to list of subscription IDs.
     """
-    sub_ids = []
+    sub_ids: List[int] = []
+
     for attr, callback in attr_callback_map.items():
-        sub_id = device_proxy.subscribe_event(
-            attr,
-            event_type,
-            callback,
-        )
-        sub_ids.append(sub_id)
-        # clear the queue if the callback has a clear_queue method
-        if hasattr(callback, "clear_queue") and reset_queue:
-            callback.clear_queue()
+        for attempt in range(1, retries + 1):
+            try:
+                sub_id = device_proxy.subscribe_event(
+                    attr,
+                    event_type,
+                    callback,
+                )
+                sub_ids.append(sub_id)
+
+                # clear the queue if requested
+                if hasattr(callback, "clear_queue") and reset_queue:
+                    callback.clear_queue()
+
+                break  # success, stop retrying this attribute
+            except tango.DevFailed as e:
+                if attempt < retries:
+                    time.sleep(delay)
+                else:
+                    raise RuntimeError(
+                        f"Failed to subscribe to attribute '{attr}' "
+                        f"after {retries} attempts on {device_proxy.dev_name()}"
+                    ) from e
+
     return {device_proxy: sub_ids}
 
 
