@@ -261,7 +261,7 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
     )
 
     max_retries = 5
-    retry_delay = 1  # seconds
+    retry_delay = 1
 
     for attempt in range(max_retries):
         try:
