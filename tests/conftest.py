@@ -129,7 +129,7 @@ def wms_device_fqdn():
 def dish_manager_proxy(dish_manager_device_fqdn):
     dev_proxy = tango.DeviceProxy(dish_manager_device_fqdn)
     # increase client request timeout to 5 seconds
-    dev_proxy.set_timeout_millis(10000)
+    dev_proxy.set_timeout_millis(5000)
     return dev_proxy
 
 
@@ -137,7 +137,7 @@ def dish_manager_proxy(dish_manager_device_fqdn):
 def ds_device_proxy(ds_device_fqdn):
     dev_proxy = tango.DeviceProxy(ds_device_fqdn)
     # increase client request timeout to 5 seconds
-    dev_proxy.set_timeout_millis(10000)
+    dev_proxy.set_timeout_millis(5000)
     return dev_proxy
 
 
