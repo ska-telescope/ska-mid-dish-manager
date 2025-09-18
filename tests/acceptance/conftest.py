@@ -1,6 +1,7 @@
 """Fixtures for running ska-mid-dish-manager acceptance tests."""
 
 from datetime import time
+
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import (
