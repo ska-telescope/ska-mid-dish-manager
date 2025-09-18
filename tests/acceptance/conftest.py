@@ -56,7 +56,6 @@ def reset_dish_to_standby(
     subscriptions.update(setup_subscriptions(spf_device_proxy, {"operatingMode": event_store}))
     subscriptions.update(setup_subscriptions(spfrx_device_proxy, {"operatingMode": event_store}))
     subscriptions.update(setup_subscriptions(ds_device_proxy, {"operatingMode": event_store}))
-    dish_mode_events.wait_for_value((), timeout=20)
     subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_events}))
 
     try:
