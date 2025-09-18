@@ -1015,7 +1015,6 @@ class DishManager(SKAController):
         """Returns the dishMode."""
         return self.component_manager.component_state.get("dishmode", DishMode.UNKNOWN)
 
-
     @attribute(
         dtype="DevString",
         doc="Returns the LRC command queue contents (if any).",
