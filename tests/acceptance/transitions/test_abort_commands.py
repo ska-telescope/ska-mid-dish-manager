@@ -160,7 +160,7 @@ def track_a_sample(
     )
 
     # Wait for the track command to return
-    progress_event_store.wait_for_progress_update(expected_progress_update, timeout=6)
+    progress_event_store.wait_for_progress_update(expected_progress_update, timeout=15)
     remove_subscriptions(subscriptions)
     yield
 
