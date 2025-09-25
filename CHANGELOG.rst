@@ -11,7 +11,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 Version 8.4.2
 *************
 - Upgraded ska-mid-wms chart to v1.0.1
-- Upgraded ska-mid-dish-simulators chart to v5.2.0
+- Upgraded ska-mid-dish-simulators chart to v5.0.1
 - Upgraded ska-mid-dish-ds-manger chart to v6.4.0
 - Added in a new attribute, dscCtrlState (DSC Control State), propagated from DSManager.
 
