@@ -88,6 +88,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         default_wind_gust_threshold = kwargs.pop(
             "default_wind_gust_threshold", WIND_GUST_THRESHOLD_MPS
         )
+
+        for key in [
+            "attenuation1polh/x",
+            "attenuation1polv/y",
+            "attenuation2polh/x",
+            "attenuation2polv/y",
+        ]:
+            kwargs[key] = 0.0
         super().__init__(
             logger,
             *args,
@@ -127,10 +135,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
             achievedpointing=[0.0, 0.0, 0.0],
-            attenuation1polhx=0.0,
-            attenuation1polvy=0.0,
-            attenuation2polhx=0.0,
-            attenuation2polvy=0.0,
             dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
             powerstate=PowerState.LOW,
             kvalue=0,
@@ -236,10 +240,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 healthstate=HealthState.UNKNOWN,
                 # Evaluate configuration of the band agnostic attn values given
                 # the new naming convension
-                attenuation1polh_x=0.0,
-                attenuation1polv_y=0.0,
-                attenuation2polh_x=0.0,
-                attenuation2polv_y=0.0,
+                attenuation1polhx=0.0,
+                attenuation1polvy=0.0,
+                attenuation2polhx=0.0,
+                attenuation2polvy=0.0,
                 kvalue=0,
                 b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -724,16 +728,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # spfrx attenuation
         if (
-            "attenuation1PolH/X" in kwargs
-            or "attenuation1PolV/Y" in kwargs
-            or "attenuation2PolH/X" in kwargs
-            or "attenuation2PolV/Y" in kwargs
+            "attenuation1polh/x" in kwargs
+            or "attenuation1polv/y" in kwargs
+            or "attenuation2polh/x" in kwargs
+            or "attenuation2polv/y" in kwargs
         ):
             attenuation = {
-                "attenuation1PolH/X": spfrx_component_state["attenuation1PolH/X"],
-                "attenuation1PolV/Y": spfrx_component_state["attenuation1PolV/Y"],
-                "attenuation2PolH/X": spfrx_component_state["attenuation2PolH/X"],
-                "attenuation2PolV/Y": spfrx_component_state["attenuation2PolV/Y"],
+                "attenuation1polh/x": spfrx_component_state["attenuation1polh/x"],
+                "attenuation1polv/y": spfrx_component_state["attenuation1polv/y"],
+                "attenuation2polh/x": spfrx_component_state["attenuation2polh/x"],
+                "attenuation2polv/y": spfrx_component_state["attenuation2polv/y"],
             }
             self.logger.debug(
                 (

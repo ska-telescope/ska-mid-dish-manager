@@ -101,18 +101,19 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "b4CapabilityState",
             "b5aCapabilityState",
             "b5bCapabilityState",
-            "attenuation1PolH/X",
-            "attenuation1PolV/Y",
-            "attenuation2PolH/X",
-            "attenuation2PolV/Y",
             "kValue",
             "noisediodemode",
             "periodicnoisediodepars",
             "pseudorandomnoisediodepars",
-            "spectralInversion",  # Get confirmation on whether this
+            "spectralinversion",  # Get confirmation on whether this
             # attribute needs to be exposed at DM level
             # "adminMode", TODO: Wait for SPFRx to implement adminMode
+            "attenuation1polh/x",
+            "attenuation1polv/y",
+            "attenuation2polh/x",
+            "attenuation2polv/y",
         )
+
         super().__init__(
             tango_device_fqdn,
             logger,
@@ -121,10 +122,10 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
             quality_monitored_attributes=(
-                "attenuation1PolH/X",
-                "attenuation1PolV/Y",
-                "attenuation2PolH/X",
-                "attenuation2PolV/Y",
+                "attenuation1polh/x",
+                "attenuation1polv/y",
+                "attenuation2polh/x",
+                "attenuation2polv/y",
                 "noisediodemode",
             ),
             **kwargs,
@@ -176,7 +177,6 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
                     kwargs[attr] = enum_(kwargs[attr])
                 except ValueError:
                     self.logger.warning(f"Invalid value for {attr} during enum conversion.")
-
         super()._update_component_state(**kwargs)
 
     def start_communicating(self) -> None:

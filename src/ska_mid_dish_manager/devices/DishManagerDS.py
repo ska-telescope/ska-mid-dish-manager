@@ -647,19 +647,19 @@ class DishManager(SKAController):
     # Band agnostic attenuation attributes getter methods
     def get_attenuation_1_pol_h_x(self):
         """Get the attenuation Pol H/X for attenuator 1."""
-        return self.component_manager.component_state.get("attenuation1PolH/X", 0.0)
+        return self.component_manager.component_state.get("attenuation1polh/x", 0.0)
 
     def get_attenuation_1_pol_v_y(self):
         """Get the attenuation Pol V/Y for attenuator 1."""
-        return self.component_manager.component_state.get("attenuation1PolV/Y", 0.0)
+        return self.component_manager.component_state.get("attenuation1polv/y", 0.0)
 
     def get_attenuation_2_pol_h_x(self):
         """Get the attenuation Pol H/X for attenuator 2."""
-        return self.component_manager.component_state.get("attenuation2PolH/X", 0.0)
+        return self.component_manager.component_state.get("attenuation2polh/x", 0.0)
 
     def get_attenuation_2_pol_v_y(self):
         """Get the attenuation Pol V/Y for attenuator 2."""
-        return self.component_manager.component_state.get("attenuation2PolV/Y", 0.0)
+        return self.component_manager.component_state.get("attenuation2polv/y", 0.0)
 
     # Band agnostic attenuation attributes setter methods
     def set_attenuation_1_pol_h_x(self, attenuation_1_pol_h_x_val: float):

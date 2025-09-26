@@ -20,9 +20,6 @@ LOGGER = logging.getLogger(__name__)
             [
                 AttrQuality.ATTR_VALID,
                 AttrQuality.ATTR_INVALID,
-                AttrQuality.ATTR_CHANGING,
-                AttrQuality.ATTR_WARNING,
-                AttrQuality.ATTR_ALARM,
             ],
             2,
         )

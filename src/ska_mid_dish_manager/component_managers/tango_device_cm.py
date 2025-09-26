@@ -77,9 +77,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: Tango event
         :type event_data: tango.EventData
         """
-        # I get lowercase and uppercase "State" from events
-        # for some reason, stick to lowercase to avoid duplicates
-        attr_name = event_data.attr_value.name.lower()
+        trl_split = event_data.attr_name.lower().split("/")
+
+        # If trl contains 7 /'s then we can assume that the final 2 portions
+        # of the split contain the name of the attribute. This accounts for
+        # attribute names like: 'tango://databaseds-tango-base-test.
+        # dish-manager.svc.cluster.local:10000/mid-dish/simulator-spfrx/
+        # ska001/attenuation1polh/x', else get the name directly
+        if len(trl_split) == 8:
+            attr_name = trl_split[-2] + "/" + trl_split[-1]
+        else:
+            attr_name = event_data.attr_value.name.lower()
+
         quality = event_data.attr_value.quality
         try:
             if attr_name in self._quality_monitored_attributes:
@@ -108,9 +117,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         :param event_data: data representing tango event
         :type event_data: tango.EventData
         """
-        # Error events come through with attr_name being the full TRL so extract just the attribute
-        # name to match what is added in _update_state_from_event
-        attr_name = event_data.attr_name.split("/")[-1].lower()
+        trl_split = event_data.attr_name.lower().split("/")
+
+        # If trl contains 7 /'s then we can assume that the final 2 portions
+        # of the split contain the name of the attribute. This accounts for
+        # attribute names like: 'tango://databaseds-tango-base-test.
+        # dish-manager.svc.cluster.local:10000/mid-dish/simulator-spfrx/
+        # ska001/attenuation1polh/x', else get the name directly
+        if len(trl_split) == 8:
+            attr_name = trl_split[-2] + "/" + trl_split[-1]
+        else:
+            attr_name = event_data.attr_value.name.lower()
+
         errors = event_data.errors
 
         self.logger.debug(
