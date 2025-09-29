@@ -17,13 +17,11 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 @patch("json.dumps", Mock(return_value="mocked sub-device-command-ids"))
 def test_set_stow_mode_handler(
     component_manager: DishManagerComponentManager,
-    mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
     """Verify behaviour of SetStowMode command handler.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """

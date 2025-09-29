@@ -79,8 +79,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     assert device_proxy.configuredBand == Band[band_number]
 
     expected_progress_updates = [
-        "SetIndexPosition called on DS",
-        f"{command} called on SPFRX, ID",
+        f"Fanned out commands: DS.SetIndexPosition, SPFRX.{command}",
         f"Awaiting configuredband change to {band_number}",
         f"{command} completed",
     ]
@@ -89,7 +88,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store

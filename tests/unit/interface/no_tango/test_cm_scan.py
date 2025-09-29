@@ -17,7 +17,6 @@ def test_scan_handler(
     """Verify behaviour of Scan command handler.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
