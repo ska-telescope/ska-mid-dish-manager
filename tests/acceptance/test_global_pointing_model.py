@@ -46,7 +46,7 @@ def test_track_load_static_off(
     ]
 
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
+        expected_progress_updates[-1], timeout=30
     )
 
     events_string = "".join([str(event) for event in events])

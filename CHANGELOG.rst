@@ -7,7 +7,19 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 8.4.2
+*************
+- Upgraded ska-mid-wms chart to v1.0.1
+- Upgraded ska-mid-dish-simulators chart to v5.0.1
+- Upgraded ska-mid-dish-ds-manger chart to v6.4.0
 - Added in a new attribute, dscCtrlState (DSC Control State), propagated from DSManager.
+
+Version 8.4.1
+*************
+- Upgraded ska-mid-dish-ds-manager chart to v6.3.1
+
+  - Fixed ska-mid-dish-ds-manager memory leak with an upgrade of PyTango to v10.0.3
 
 Version 8.4.0
 *************
