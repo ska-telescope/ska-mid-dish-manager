@@ -92,8 +92,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         quality = event_data.attr_value.quality
         try:
             if attr_name in self._quality_monitored_attributes:
-                self.logger.info(f"+++++ Expected quality state callback call for: {attr_name}")
-                self._quality_state_callback(attr_name, quality)
+                self._quality_state_callback(attr_name, quality, event_data.attr_value.value)
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error occurred on attribute quality state update")
 

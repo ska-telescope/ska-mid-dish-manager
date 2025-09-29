@@ -13,8 +13,8 @@ from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
     list(
         itertools.permutations(
             [
-                AttrQuality.ATTR_VALID,
                 AttrQuality.ATTR_INVALID,
+                AttrQuality.ATTR_VALID,
             ],
             2,
         )
@@ -24,6 +24,8 @@ def test_transitions(dish_manager_proxy, spfrx_device_proxy, qual_before, qual_a
     """Test quality of dishmanager exposed attribute mirrors the quality of the underlying
     subservient device attribute.
     """
+    # TODO: Fix this test. Subscribing to the attr makes the attribute valid even if
+    # it started invalid
     dm_event_store = EventStore()
     spfrx_event_store = EventStore()
     spfrx_subsciptions = setup_subscriptions(
