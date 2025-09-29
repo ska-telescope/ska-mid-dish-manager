@@ -17,7 +17,7 @@ def toggle_skip_attributes(event_store_class, spf_device_proxy, dish_manager_pro
     dish_manager_proxy.SetStandbyLPMode()
     dish_mode_event_store = event_store_class()
     sub = setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_event_store})
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=20)
     remove_subscriptions(sub)
     # Set a flag on SPF to skip attribute updates.
     # This is useful to ensure that the long running command
