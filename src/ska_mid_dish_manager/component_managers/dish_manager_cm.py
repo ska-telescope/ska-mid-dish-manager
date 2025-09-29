@@ -169,6 +169,37 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "MeanWindSpeedThreshold": default_mean_wind_speed_threshold,
         }
 
+        # The declaration of the kwargs for SPFRx are defined separately to
+        # allow for the attenuation attrs to be added to the kwargs list given
+        # their names contain a "/"
+        spfrx_kwargs = {
+            "operatingmode": SPFRxOperatingMode.UNKNOWN,
+            "configuredband": Band.NONE,
+            "capturingdata": False,
+            "attenuation1polh/x": 0.0,
+            "attenuation1polv/y": 0.0,
+            "attenuation2polh/x": 0.0,
+            "attenuation2polv/y": 0.0,
+            "kvalue": 0,
+            "b1capabilitystate": SPFRxCapabilityStates.UNKNOWN,
+            "b2capabilitystate": SPFRxCapabilityStates.UNKNOWN,
+            "b3capabilitystate": SPFRxCapabilityStates.UNKNOWN,
+            "b4capabilitystate": SPFRxCapabilityStates.UNKNOWN,
+            "b5acapabilitystate": SPFRxCapabilityStates.UNKNOWN,
+            "b5bcapabilitystate": SPFRxCapabilityStates.UNKNOWN,
+            "noisediodemode": NoiseDiodeMode.OFF,
+            "periodicnoisediodepars": [0, 0, 0],
+            "pseudorandomnoisediodepars": [0, 0, 0],
+            "adminmode": AdminMode.OFFLINE,
+            "communication_state_callback": partial(
+                self._sub_device_communication_state_changed, DishDevice.SPFRX
+            ),
+            "component_state_callback": partial(
+                self._sub_device_component_state_changed, DishDevice.SPFRX
+            ),
+            "quality_state_callback": self._quality_state_callback,
+        }
+
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
@@ -234,34 +265,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_device_fqdn,
                 logger,
                 self._state_update_lock,
-                operatingmode=SPFRxOperatingMode.UNKNOWN,
-                configuredband=Band.NONE,
-                capturingdata=False,
-                healthstate=HealthState.UNKNOWN,
-                # Evaluate configuration of the band agnostic attn values given
-                # the new naming convension
-                attenuation1polhx=0.0,
-                attenuation1polvy=0.0,
-                attenuation2polhx=0.0,
-                attenuation2polvy=0.0,
-                kvalue=0,
-                b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-                b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-                b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-                b4capabilitystate=SPFRxCapabilityStates.UNKNOWN,
-                b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
-                b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
-                noisediodemode=NoiseDiodeMode.OFF,
-                periodicnoisediodepars=[0, 0, 0],
-                pseudorandomnoisediodepars=[0, 0, 0],
-                adminmode=AdminMode.OFFLINE,
-                communication_state_callback=partial(
-                    self._sub_device_communication_state_changed, DishDevice.SPFRX
-                ),
-                component_state_callback=partial(
-                    self._sub_device_component_state_changed, DishDevice.SPFRX
-                ),
-                quality_state_callback=self._quality_state_callback,
+                **spfrx_kwargs,
             ),
             "WMS": WMSComponentManager(
                 wms_device_names,

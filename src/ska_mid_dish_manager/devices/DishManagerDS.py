@@ -308,6 +308,25 @@ class DishManager(SKAController):
         device_attribute_name = self._component_state_attr_map.get(attribute_name, None)
         if device_attribute_name:
             attribute_object = getattr(self, device_attribute_name, None)
+
+            # Account for attributes whose attribute class object names are
+            # different from the name of the attribute
+            if device_attribute_name in [
+                "attenuation1PolH/X",
+                "attenuation1PolV/Y",
+                "attenuation2PolH/X",
+                "attenuation2PolV/Y",
+            ]:
+                match device_attribute_name:
+                    case "attenuation1PolH/X":
+                        attribute_object = self.attenuation_1_pol_v_y
+                    case "attenuation1PolV/Y":
+                        attribute_object = self.attenuation_1_pol_v_y
+                    case "attenuation2PolH/X":
+                        attribute_object = self.attenuation_2_pol_h_x
+                    case "attenuation2PolV/Y":
+                        attribute_object = self.attenuation_2_pol_v_y
+
             if attribute_object:
                 if attribute_object.get_quality() is not new_attribute_quality:
                     attribute_object.set_quality(new_attribute_quality, True)
@@ -448,10 +467,10 @@ class DishManager(SKAController):
                 "band4pointingmodelparams": "band4PointingModelParams",
                 "band5apointingmodelparams": "band5aPointingModelParams",
                 "band5bpointingmodelparams": "band5bPointingModelParams",
-                "attenuation1polhx": "attenuation1PolH/X",
-                "attenuation1polvy": "attenuation1PolV/Y",
-                "attenuation2polhx": "attenuation2PolH/X",
-                "attenuation2polvy": "attenuation2PolV/Y",
+                "attenuation1polh/x": "attenuation1PolH/X",
+                "attenuation1polv/y": "attenuation1PolV/Y",
+                "attenuation2polh/x": "attenuation2PolH/X",
+                "attenuation2polv/y": "attenuation2PolV/Y",
                 "kvalue": "kValue",
                 "trackinterpolationmode": "trackInterpolationMode",
                 "scanid": "scanID",
