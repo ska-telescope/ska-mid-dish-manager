@@ -1,7 +1,6 @@
 """Generic component manager for a subservient tango device."""
 
 import logging
-import typing
 from queue import Empty, Queue
 from threading import Event, Thread
 from typing import Any, Callable, Optional, Tuple
@@ -9,14 +8,14 @@ from typing import Any, Callable, Optional, Tuple
 import numpy as np
 import tango
 from ska_control_model import CommunicationStatus, TaskStatus
-from ska_tango_base.executor import TaskExecutorComponentManager
+from ska_tango_base.base import BaseComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 from ska_mid_dish_manager.utils.decorators import check_communicating
 
 
-class TangoDeviceComponentManager(TaskExecutorComponentManager):
+class TangoDeviceComponentManager(BaseComponentManager):
     """A component manager for a Tango device."""
 
     def __init__(
@@ -355,7 +354,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             )
             return result
 
-    @typing.no_type_check
     def start_communicating(self) -> None:
         """Establish communication with the device."""
         self.logger.info(f"Establish communication with {self._tango_device_fqdn}")
