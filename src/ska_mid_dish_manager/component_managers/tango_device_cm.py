@@ -127,7 +127,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         if len(trl_split) == 8:
             attr_name = trl_split[-2] + "/" + trl_split[-1]
         else:
-            attr_name = event_data.attr_value.name.lower()
+            attr_name = event_data.attr_name.split("/")[-1].lower()
 
         errors = event_data.errors
 
