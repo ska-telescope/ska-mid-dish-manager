@@ -1161,21 +1161,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Configure frequency band."""
-        # req_cmd = f"ConfigureBand{band_number}"
+        _is_configure_band_cmd_allowed = partial(
+            self._dish_mode_model.is_command_allowed,
+            "ConfigureBand",
+            component_manager=self,
+            task_callback=task_callback,
+        )
 
-        # _is_configure_band_cmd_allowed = partial(
-        #     self._dish_mode_model.is_command_allowed,
-        #     req_cmd,
-        #     component_manager=self,
-        #     task_callback=task_callback,
-        # )
-
-        # status, response = self.submit_task(
-        #     self._command_map.configure_band_cmd,
-        #     args=[band_number, synchronise],
-        #     is_cmd_allowed=_is_configure_band_cmd_allowed,
-        #     task_callback=task_callback,
-        # )
+        status, response = self.submit_task(
+            self._command_map.configure_band,
+            args=[data],
+            is_cmd_allowed=_is_configure_band_cmd_allowed,
+            task_callback=task_callback,
+        )
         return status, response
 
     def set_stow_mode(

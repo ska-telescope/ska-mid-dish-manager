@@ -1659,6 +1659,8 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
 
+        NB. This command will be soon deprecated in favour of the generic ConfigureBand command.
+
         :return: A tuple containing a return code and a string
             message indicating status.
         """
@@ -1684,6 +1686,8 @@ class DishManager(SKAController):
         operate in frequency band 2. On completion of the band
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
+
+        NB. This command will be soon deprecated in favour of the generic ConfigureBand command.
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -1767,7 +1771,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in="DevString",
-        doc_in="""The command accepts a JSON input containing data to configure the SPFRx. 
+        doc_in="""The command accepts a JSON input containing data to configure the SPFRx.
         The JSON structure is as follows:
         {
             "receiver_band": <string>,

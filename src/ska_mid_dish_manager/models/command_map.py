@@ -283,6 +283,76 @@ class CommandMap:
             [PointingState.READY],
         )
 
+    def configure_band(
+        self,
+        data,
+        task_abort_event=None,
+        task_callback: Optional[Callable] = None,
+    ):
+        """Configure band on DS and SPFRx."""
+        # Minimal input validation
+        receiver_band = data.get("receiver_band")
+        if receiver_band not in ["1", "2", "3", "4", "5", "5a", "5b"]:
+            return (
+                TaskStatus.REJECTED,
+                "'receiver_band' not in valid range ['1', '2', '3', '4', '5', '5a', '5b']",
+            )
+
+        # configure_b5dc = False
+        if receiver_band == "5b":
+            # configure_b5dc = True
+            sub_band = data.get("sub_band")
+            if sub_band not in ["1", "2", "3"]:
+                return TaskStatus.REJECTED, "'sub_band' not in valid range ['1', '2', '3']"
+
+        requested_cmd = "ConfigureBand"
+        band_enum = Band[f"B{receiver_band}"]
+        indexer_enum = IndexerPosition[f"B{receiver_band}"]
+
+        if self._dish_manager_cm.component_state["configuredband"] == band_enum:
+            task_callback(
+                progress=f"Already in band {band_enum}",
+                status=TaskStatus.COMPLETED,
+                result=(ResultCode.OK, f"{requested_cmd} completed"),
+            )
+            return
+
+        commands_for_sub_devices = {
+            "DS": {
+                "command": "SetIndexPosition",
+                "commandArgument": indexer_enum.value,
+                "awaitedAttributes": ["indexerposition"],
+                "awaitedValuesList": [indexer_enum],
+            },
+            "SPFRX": {
+                "command": requested_cmd,
+                "commandArgument": data,
+                "awaitedAttributes": ["configuredband"],
+                "awaitedValuesList": [band_enum],
+            },
+        }
+
+        # TODO: Once we integrate B5DC
+        # if configure_b5dc:
+        #     import ska-mid-dish-dcp-lib
+        #     b5dc_f = B5dcFrequency(int(sub_band))
+        #     commands_for_sub_devices["B5DC"] = {
+        #         "command": "SetFrequency",
+        #         "commandArgument": data,
+        #         "awaitedAttributes": ["rfcmFrequency"],
+        #         "awaitedValuesList": [b5dc_f.value],
+        #     }
+
+        self._run_long_running_command(
+            task_callback,
+            task_abort_event,
+            commands_for_sub_devices,
+            requested_cmd,
+            ["configuredband"],
+            [band_enum],
+        )
+
+    # DEPRECATED: To be removed in future. Use configure_band instead.
     def configure_band_cmd(
         self,
         band_number,
