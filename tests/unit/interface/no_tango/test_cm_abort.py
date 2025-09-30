@@ -37,7 +37,6 @@ def test_abort_handler_runs_only_one_sequence_at_a_time(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     MagicMock(return_value=True),
 )
-@patch("json.dumps", MagicMock(return_value="mocked sub-device-command-ids"))
 def test_abort_handler(
     component_manager: DishManagerComponentManager,
     mock_command_tracker: MagicMock,

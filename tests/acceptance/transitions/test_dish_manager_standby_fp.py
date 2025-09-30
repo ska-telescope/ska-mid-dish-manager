@@ -25,8 +25,7 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyFPMode called on DS",
-        "SetOperateMode called on SPF",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
@@ -35,7 +34,7 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store

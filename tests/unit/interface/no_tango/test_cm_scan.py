@@ -1,6 +1,5 @@
 """Tests dish manager component manager scan command handler."""
 
-from unittest.mock import Mock, patch
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
@@ -9,7 +8,6 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
 
 
 @pytest.mark.unit
-@patch("json.dumps", Mock(return_value="mocked sub-device-command-ids"))
 def test_scan_handler(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
@@ -17,7 +15,6 @@ def test_scan_handler(
     """Verify behaviour of Scan command handler.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """

@@ -14,16 +14,13 @@ from ska_mid_dish_manager.models.dish_enums import Band
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
-@patch("json.dumps", Mock(return_value="mocked sub-device-command-ids"))
 def test_configureband_handler(
     component_manager: DishManagerComponentManager,
-    mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
     """Verify behaviour of ConfigureBand[x] command handler.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -35,11 +32,9 @@ def test_configureband_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": f"SetIndexPosition called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting DS indexerposition change to B2"},
-        {"progress": f"ConfigureBand2 called on SPFRX, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting SPFRX configuredband change to B2"},
-        {"progress": "Commands: mocked sub-device-command-ids"},
+        {"progress": "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2"},
         {"progress": "Awaiting configuredband change to B2"},
     )
 
