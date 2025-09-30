@@ -9,6 +9,7 @@ import tango
 from tango import AttrQuality
 
 LOGGER = logging.getLogger(__name__)
+TEST_ATTENUATION_VALUE = 23
 
 
 @pytest.mark.unit
@@ -35,9 +36,13 @@ def test_change(qual_before, qual_after, event_store_class, dish_manager_resourc
         event_store,
     )
 
-    dish_manager_cm._quality_state_callback("attenuation1polv/y", qual_before)
+    dish_manager_cm._quality_state_callback(
+        "attenuation1polv/y", qual_before, TEST_ATTENUATION_VALUE
+    )
     event_store.wait_for_quality(qual_before)
-    dish_manager_cm._quality_state_callback("attenuation1polv/y", qual_after)
+    dish_manager_cm._quality_state_callback(
+        "attenuation1polv/y", qual_after, TEST_ATTENUATION_VALUE
+    )
     event_store.wait_for_quality(qual_after)
 
 
