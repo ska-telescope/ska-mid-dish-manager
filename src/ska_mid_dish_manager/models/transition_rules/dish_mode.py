@@ -56,7 +56,9 @@ DISH_MODE_RULES_SPF_IGNORED = {
     "STANDBY_FP": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.STANDBY' and "
         "DS.powerstate  == 'DSPowerState.FULL_POWER' and "
-        "SPFRX.operatingmode  == 'SPFRxOperatingMode.STANDBY'"
+        "SPFRX.operatingmode  in "
+        " ['SPFRxOperatingMode.STANDBY', "
+        "  'SPFRxOperatingMode.OPERATE']"
     ),
     "STANDBY_LP": rule_engine.Rule(
         "DS.operatingmode == 'DSOperatingMode.STANDBY' and "

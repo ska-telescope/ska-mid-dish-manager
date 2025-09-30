@@ -12,22 +12,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import calculate_slew_target, remove_subscriptions, setup_subscriptions
 
 
-@pytest.fixture
-def toggle_skip_attributes(event_store_class, spf_device_proxy, dish_manager_proxy):
-    """Ensure that attribute updates on spf is restored."""
-    dish_manager_proxy.SetStandbyLPMode()
-    dish_mode_event_store = event_store_class()
-    sub = setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_event_store})
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
-    remove_subscriptions(sub)
-    # Set a flag on SPF to skip attribute updates.
-    # This is useful to ensure that the long running command
-    # does not finish executing before AbortCommands is triggered
-    spf_device_proxy.skipAttributeUpdates = True
-    yield
-    spf_device_proxy.skipAttributeUpdates = False
-
-
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands(
@@ -35,7 +19,6 @@ def test_abort_commands(
     event_store_class,
     dish_manager_proxy,
     spf_device_proxy,
-    toggle_skip_attributes,
 ):
     """Test AbortCommands aborts the executing long running command."""
     dish_mode_event_store = event_store_class()
@@ -51,13 +34,15 @@ def test_abort_commands(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    # Transition to FP mode
-    [[_], [lp_unique_id]] = dish_manager_proxy.SetStandbyFPMode()
+    # Attempt to configure which will take SPF to Operate mode, this won't happen as
+    # skipAttributeUpdates was set to True
+    spf_device_proxy.skipAttributeUpdates = True
+    [[_], [lp_unique_id]] = dish_manager_proxy.ConfigureBand1(True)
 
-    # Check that Dish Manager is waiting to transition to FP
-    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
-    # Check that the Dish Manager did not transition to FP
-    dish_mode_event_store.wait_for_value(DishMode.UNKNOWN)
+    # Check that Dish Manager is waiting to transition
+    progress_event_store.wait_for_progress_update("Awaiting configuredband change to B1")
+    # Check that the Dish Manager did not transition
+    dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=10)
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
 
     # enable spf to send attribute updates
@@ -69,8 +54,7 @@ def test_abort_commands(
     result_event_store.wait_for_command_id(lp_unique_id, timeout=30)
     # Abort will execute standbyfp dishmode as part of its abort sequence
     expected_progress_updates = [
-        "SetStandbyFPMode Aborted",
-        "SetOperateMode called on SPF",
+        "SetOperateMode Aborted",
         "SetStandbyMode called on DS",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
@@ -117,8 +101,6 @@ def track_a_sample(
 
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=30)
-
-    dish_manager_proxy.SetOperateMode()
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
     # Load a track table
@@ -167,10 +149,6 @@ def track_a_sample(
     yield
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x. "
-    "Modify test fixture following dish manager states and modes updates."
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_track(
@@ -201,9 +179,6 @@ def test_abort_commands_during_track(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_slew(
@@ -225,11 +200,6 @@ def test_abort_commands_during_slew(
 
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(Band.B1, timeout=30)
-
-    # TODO: Remove call to SetOperateMode following DM updates to align with new states and modes
-    # ICD
-    dish_manager_proxy.SetOperateMode()
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
     # Slew the dish
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]

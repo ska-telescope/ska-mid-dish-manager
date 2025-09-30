@@ -73,8 +73,7 @@ def test_track_pattern(
     if dish_manager_proxy.configuredBand != Band.B1:
         dish_manager_proxy.ConfigureBand1(True)
         main_event_store.wait_for_value(Band.B1, timeout=60)
-    dish_manager_proxy.SetOperateMode()
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
+        main_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
 
     track_table = load_csv_data(track_csv_file)
 

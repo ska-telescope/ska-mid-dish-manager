@@ -36,9 +36,6 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_slew_transition(event_store_class, dish_manager_proxy):

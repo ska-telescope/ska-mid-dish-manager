@@ -11,9 +11,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_dish_handles_unhappy_path_in_command_execution(

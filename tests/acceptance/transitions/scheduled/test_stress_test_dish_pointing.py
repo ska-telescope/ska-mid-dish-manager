@@ -25,9 +25,6 @@ CADENCE_SEC = 0.2  # decided cadence is 1Hz but choosing quicker rate to stress 
 TOLERANCE = 1e-2
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
-)
 @pytest.mark.stress
 def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_store_class):
     """Dish pointing stress test implementation."""
@@ -46,11 +43,8 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
     # Mode and configuration setup
     dish_manager_proxy.ConfigureBand2(True)
     dish_mode_event_store.wait_for_value(DishMode.CONFIG)
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE)
     band_event_store.wait_for_value(Band.B2)
-
-    [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     # start from a known arbitrary point
     pointing_state_event_store.clear_queue()

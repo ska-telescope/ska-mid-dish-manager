@@ -62,9 +62,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     dish_manager_proxy.TrackStop()
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x."
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_and_track_stop_cmds(
@@ -185,10 +182,6 @@ def test_track_and_track_stop_cmds(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x. "
-    "Modify fixture once the dish states and modes updates have been made on dish manager."
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_append_dvs_case(
@@ -273,10 +266,6 @@ def test_append_dvs_case(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x. "
-    "Modify fixture once the dish states and modes updates have been made on dish manager."
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_maximum_capacity(

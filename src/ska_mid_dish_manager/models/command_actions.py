@@ -395,7 +395,7 @@ class SetDSFullPowerModeAction(Action):
             logger=self.logger,
             device="DS",
             command_name="SetPowerMode",
-            command_argument=[True, dsc_power_limit],
+            command_argument=[False, dsc_power_limit],
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"powerstate": DSPowerState.FULL_POWER},
             timeout_s=10,  # TODO: Confirm timeout values
@@ -460,22 +460,13 @@ class SetStandbyFPModeAction(Action):
             logger=self.logger,
             device="DS",
             command_name="SetPowerMode",
-            command_argument=[True, dsc_power_limit],
+            command_argument=[False, dsc_power_limit],
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"powerstate": DSPowerState.FULL_POWER},
             timeout_s=10,  # TODO: Confirm timeout values
             command_tracker=self.command_tracker,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
-
-        # set_ds_full_power_action = SetDSFullPowerModeAction(
-        #     logger,
-        #     command_tracker,
-        #     dish_manager_cm,
-        #     action_on_success=action_on_success,
-        #     action_on_failure=action_on_failure,
-        #     waiting_callback=waiting_callback
-        # )
 
         self.handler = ActionHandler(
             self.logger,
@@ -486,8 +477,7 @@ class SetStandbyFPModeAction(Action):
             # deep copy
             component_state=self.dish_manager_cm._component_state,
             awaited_component_state={"dishmode": DishMode.STANDBY_FP},
-            action_on_success=self.action_on_success,  # chain power mode action
-            # action_on_success=set_ds_full_power_action,  # chain power mode action
+            action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
         )
@@ -796,7 +786,7 @@ class ConfigureBandAction(Action):
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
             timeout_s=10,  # TODO: Confirm timeout values
             command_tracker=self.command_tracker,
-            command_argument=self.band_enum,
+            command_argument=synchronise,
             awaited_component_state={"configuredband": self.band_enum},
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
         )

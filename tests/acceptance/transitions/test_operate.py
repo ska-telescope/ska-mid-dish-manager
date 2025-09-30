@@ -6,9 +6,6 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_set_operate(
@@ -33,7 +30,6 @@ def test_set_operate(
 
     # Await auto transition to OPERATE following band config
     main_event_store.wait_for_value(DishMode.OPERATE)
-    assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     expected_progress_updates = [
         "SetPointMode called on DS",

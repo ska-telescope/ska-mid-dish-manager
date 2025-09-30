@@ -27,11 +27,12 @@ def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
 
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
 
-    device_proxy.SetStandbyLPMode()
+    device_proxy.SetStandbyMode()
     component_state_store.wait_for_value("operatingmode", DSOperatingMode.STANDBY)
     component_state_store.wait_for_value("powerstate", DSPowerState.LOW_POWER)
 
-    device_proxy.SetStandbyFPMode()
+    device_proxy.SetPointMode()
     component_state_store.wait_for_value("powerstate", DSPowerState.FULL_POWER)
+    component_state_store.wait_for_value("operatingmode", DSOperatingMode.POINT)
 
     com_man.stop_communicating()
