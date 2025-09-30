@@ -183,7 +183,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             if _monitored_attribute in self._component_state:
                 self._component_state[_monitored_attribute] = 0
 
-    def update_state_from_monitored_attributes(self) -> None:
+    def update_state_from_monitored_attributes(self, abort_event: Event) -> None:
         """Update the component state by reading the monitored attributes.
 
         When an attribute on the device does not match the component_state
@@ -211,6 +211,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
                 if isinstance(value, np.ndarray):
                     value = list(value)
                 monitored_attribute_values[_monitored_attribute] = value
+                abort_event.wait(timeout=0.1)
             self._update_component_state(**monitored_attribute_values)
 
     @classmethod

@@ -921,7 +921,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for device, component_manager in self.sub_component_managers.items():
                 if not self.is_device_ignored(device) and device != "WMS":
                     component_manager.clear_monitored_attributes()
-                    component_manager.update_state_from_monitored_attributes()
+                    component_manager.update_state_from_monitored_attributes(Event)
 
     def update_pointing_model_params(self, attr: str, values: list[float]) -> None:
         """Update band pointing model parameters for the given attribute."""

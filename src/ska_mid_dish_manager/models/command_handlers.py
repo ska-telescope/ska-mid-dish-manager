@@ -115,7 +115,7 @@ class Abort:
 
         sub_component_mgrs = self._component_manager.get_active_sub_component_managers()
         for component_manager in sub_component_mgrs.values():
-            component_manager.update_state_from_monitored_attributes()
+            component_manager.update_state_from_monitored_attributes(task_abort_event)
 
         # only force the transition if the dish is not in FP already
         current_dish_mode = self._component_manager.component_state.get("dishmode")
