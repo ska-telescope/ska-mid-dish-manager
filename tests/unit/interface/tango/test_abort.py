@@ -138,11 +138,10 @@ def test_abort_during_dish_movement(
 
     [[_], [fp_unique_id]] = device_proxy.SetStandbyFPMode()
     ds_cm._update_component_state(
-        operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
+        operatingmode=DSOperatingMode.UNKNOWN, powerstate=DSPowerState.FULL_POWER
     )
-    spf_cm._update_component_state(operatingmode=SPFOperatingMode.UNKNOWN)
     # we can now expect dishMode to transition to UNKNOWN
-    dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
+    dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=5)
     assert device_proxy.dishMode == DishMode.UNKNOWN
     # remove the progress events emitted from SetStandbyFPMode execution
     progress_event_store.clear_queue()
@@ -152,7 +151,7 @@ def test_abort_during_dish_movement(
 
     # Abort the LRC
     [[_], [abort_unique_id]] = device_proxy.command_inout(abort_cmd, None)
-    result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
+    result_event_store.wait_for_command_id(fp_unique_id, timeout=5)
     progress_event_store.wait_for_progress_update("SetStandbyFPMode Aborted")
 
     expected_progress_updates = [
@@ -175,15 +174,15 @@ def test_abort_during_dish_movement(
     dish_mode_event_store.get_queue_values(timeout=1)
     ds_cm._update_component_state(pointingstate=PointingState.READY)
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=30
+        expected_progress_updates[-1], timeout=5
     )
     events_string = "".join([str(event.attr_value.value) for event in events])
     for message in expected_progress_updates:
         assert message in events_string
 
-    # trigger update on spf to make sure FP transition happens
-    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    progress_event_store.wait_for_progress_update("SetStandbyFPMode completed", timeout=30)
+    # trigger update on ds to make sure FP transition happens
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY)
+    progress_event_store.wait_for_progress_update("SetStandbyFPMode completed", timeout=5)
 
     # Confirm that abort finished and the queue is cleared
     result_event_store.wait_for_command_id(abort_unique_id)
