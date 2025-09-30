@@ -11,7 +11,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
     PointingState,
-    SPFOperatingMode,
 )
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
@@ -91,7 +90,6 @@ def test_abort_during_dish_movement(
     """Verify Abort/AbortCommands executes the abort sequence."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
-    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
 
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
