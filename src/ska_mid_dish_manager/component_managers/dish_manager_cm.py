@@ -51,6 +51,7 @@ from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
+from ska_mid_dish_manager.utils.helper_module import update_task_status
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
@@ -336,10 +337,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         try:
             ds_cm = self.sub_component_managers["DS"]
-            return ds_cm.execute_command("GetCurrentTAIOffset", None)
-        except (tango.DevFailed, ConnectionError, KeyError):
+            task_status, msg = ds_cm.execute_command("GetCurrentTAIOffset", None)
+        except (ConnectionError, KeyError):
             self.logger.debug("Calculating TAI offset manually.")
             return get_current_tai_timestamp_from_unix_time()
+
+        if task_status != TaskStatus.FAILED:
+            self.logger.debug("Calculating TAI offset manually.")
+            return get_current_tai_timestamp_from_unix_time()
+        return float(msg)
 
     def is_dish_moving(self) -> bool:
         """Report whether or not the dish is moving.
@@ -917,11 +923,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         to force dishManager to recalculate its attributes.
         """
         self.logger.debug("Syncing component states")
+        wait_event = Event()
         if self.sub_component_managers:
             for device, component_manager in self.sub_component_managers.items():
                 if not self.is_device_ignored(device) and device != "WMS":
                     component_manager.clear_monitored_attributes()
-                    component_manager.update_state_from_monitored_attributes(Event)
+                    component_manager.update_state_from_monitored_attributes(wait_event)
 
     def update_pointing_model_params(self, attr: str, values: list[float]) -> None:
         """Update band pointing model parameters for the given attribute."""
@@ -954,20 +961,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
-    ) -> Tuple[ResultCode, str]:
+    ) -> Tuple[TaskStatus, str]:
         """Load the track table."""
         float_list = [load_mode, sequence_length]
         float_list.extend(table)
         ds_cm = self.sub_component_managers["DS"]
-        result_code = ResultCode.UNKNOWN
-        result_message = ""
-        try:
-            [[result_code], [result_message]] = ds_cm.execute_command("TrackLoadTable", float_list)
-        except tango.DevFailed as err:
-            self.logger.exception("TrackLoadTable on DSManager failed")
-            result_code = ResultCode.FAILED
-            result_message = str(err)
-        return (result_code, result_message)
+        task_status, msg = ds_cm.execute_command("TrackLoadTable", float_list)
+        return task_status, msg
 
     @check_communicating
     def set_standby_lp_mode(
@@ -1061,15 +1061,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         def _is_track_cmd_allowed():
             if self.component_state["dishmode"] != DishMode.OPERATE:
-                task_callback(
+                update_task_status(
+                    task_callback,
                     progress="Track command rejected for current dishMode. "
-                    "Track command is allowed for dishMode OPERATE"
+                    "Track command is allowed for dishMode OPERATE",
                 )
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
-                task_callback(
+                update_task_status(
+                    task_callback,
                     progress="Track command rejected for current pointingState. "
-                    "Track command is allowed for pointingState READY"
+                    "Track command is allowed for pointingState READY",
                 )
                 return False
             return True
@@ -1138,18 +1140,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode."""
         ds_cm = self.sub_component_managers["DS"]
-        try:
-            ds_cm.execute_command("Stow", None)
-        except tango.DevFailed as err:
-            if task_callback:
-                task_callback(status=TaskStatus.FAILED, exception=err)
-            return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                progress="Stow called, monitor dishmode for LRC completed",
-            )
-        # abort queued tasks on the task executor
+        task_status, msg = ds_cm.execute_command("Stow", None)
+        if task_status == TaskStatus.FAILED:
+            update_task_status(task_callback, status=TaskStatus.FAILED, exception=msg)
+            return TaskStatus.FAILED, msg
+
+        update_task_status(
+            task_callback,
+            status=TaskStatus.COMPLETED,
+            progress="Stow called, monitor dishmode for LRC completed",
+        )
+        # abort queued and running tasks on the task executor
         self.abort_commands()
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
@@ -1183,15 +1184,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         def _is_slew_cmd_allowed():
             if self.component_state["dishmode"] != DishMode.OPERATE:
-                task_callback(
+                update_task_status(
+                    task_callback,
                     progress="Slew command rejected for current dishMode. "
-                    "Slew command is allowed for dishMode OPERATE"
+                    "Slew command is allowed for dishMode OPERATE",
                 )
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
-                task_callback(
+                update_task_status(
+                    task_callback,
                     progress="Slew command rejected for current pointingState. "
-                    "Slew command is allowed for pointingState READY"
+                    "Slew command is allowed for pointingState READY",
                 )
                 return False
             return True
@@ -1220,9 +1223,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Scan a target."""
-        task_callback(progress="Setting scanID", status=TaskStatus.IN_PROGRESS)
+        update_task_status(task_callback, progress="Setting scanID", status=TaskStatus.IN_PROGRESS)
         self._update_component_state(scanid=scanid)
-        task_callback(
+        update_task_status(
+            task_callback,
             progress="Scan completed",
             status=TaskStatus.COMPLETED,
             result=(ResultCode.OK, "Scan completed"),
@@ -1242,9 +1246,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Clear the scanid."""
-        task_callback(progress="Clearing scanID", status=TaskStatus.IN_PROGRESS)
+        update_task_status(
+            task_callback, progress="Clearing scanID", status=TaskStatus.IN_PROGRESS
+        )
         self._update_component_state(scanid="")
-        task_callback(
+        update_task_status(
+            task_callback,
             progress="EndScan completed",
             status=TaskStatus.COMPLETED,
             result=(ResultCode.OK, "EndScan completed"),
@@ -1279,11 +1286,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         SPFRx has been restarted.
         """
         spfrx_cm = self.sub_component_managers["SPFRX"]
-        try:
-            spfrx_cm.execute_command("SetKValue", k_value)
-        except tango.DevFailed as err:
-            return (ResultCode.FAILED, err)
-        return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
+        task_status, msg = spfrx_cm.execute_command("SetKValue", k_value)
+        if task_status == TaskStatus.FAILED:
+            return (ResultCode.FAILED, msg)
+        return (ResultCode.OK, msg)
 
     def apply_pointing_model(self, json_object) -> Tuple[ResultCode, str]:
         # pylint: disable=R0911
