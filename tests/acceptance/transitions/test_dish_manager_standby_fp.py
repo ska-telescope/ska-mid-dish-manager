@@ -25,7 +25,7 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyFPMode called on DS",
+        "SetStandbyMode called on DS",
         "SetOperateMode called on SPF",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",

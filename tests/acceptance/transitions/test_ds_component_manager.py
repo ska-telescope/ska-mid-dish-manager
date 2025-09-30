@@ -7,7 +7,7 @@ import pytest
 import tango
 
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
-from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
+from ska_mid_dish_manager.models.dish_enums import DSOperatingMode, DSPowerState
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,9 +28,10 @@ def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
 
     device_proxy.SetStandbyLPMode()
-    component_state_store.wait_for_value("operatingmode", DSOperatingMode.STANDBY_LP)
+    component_state_store.wait_for_value("operatingmode", DSOperatingMode.STANDBY)
+    component_state_store.wait_for_value("powerstate", DSPowerState.LOW_POWER)
 
     device_proxy.SetStandbyFPMode()
-    component_state_store.wait_for_value("operatingmode", DSOperatingMode.STANDBY_FP)
+    component_state_store.wait_for_value("powerstate", DSPowerState.FULL_POWER)
 
     com_man.stop_communicating()

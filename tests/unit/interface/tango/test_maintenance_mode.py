@@ -5,7 +5,11 @@ from unittest.mock import call
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
+)
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
@@ -14,9 +18,17 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 def test_happy_case(dish_manager_resources, event_store_class):
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
 
+    dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "dishmode",
+        tango.EventType.CHANGE_EVENT,
+        dish_mode_event_store,
+    )
 
     attr_cb_mapping = {
         "longRunningCommandProgress": progress_event_store,
@@ -27,6 +39,7 @@ def test_happy_case(dish_manager_resources, event_store_class):
     device_proxy.SetMaintenanceMode()
     result_event_store.get_queue_values()
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.MAINTENANCE)
 
     expected_progress_update = "SetMaintenanceMode completed"
 
@@ -35,7 +48,7 @@ def test_happy_case(dish_manager_resources, event_store_class):
     for message in expected_progress_update:
         assert message in events_string
 
-    assert device_proxy.dishMode == DishMode.MAINTENANCE
+    dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
 
     # Check that the ReleaseAuth command was executed
     execute_command_args = ds_cm.execute_command.call_args_list[0]
@@ -70,6 +83,7 @@ def test_exception_on_callback(dish_manager_resources, event_store_class):
     """Test that SetMaintenanceMode handles exceptions properly when subdevice command fails."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
 
     result_event_store = event_store_class()
     lrc_status_event_store = event_store_class()
@@ -87,6 +101,7 @@ def test_exception_on_callback(dish_manager_resources, event_store_class):
     results = result_event_store.get_queue_values()
     fanout_ids = [result[1][0] for result in results]
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.MAINTENANCE)
 
     expected_status = [unique_id, "FAILED"]
     for ids in fanout_ids:

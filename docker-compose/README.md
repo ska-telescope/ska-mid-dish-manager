@@ -85,9 +85,9 @@ root@c6ed616e914e:/app/tests# pytest  -s ./unit/
 platform linux -- Python 3.10.12, pytest-7.4.4, pluggy-1.6.0
 rootdir: /app/tests
 plugins: cov-2.12.1, forked-1.6.0, json-report-1.5.0, metadata-3.1.1, mock-3.14.1, repeat-0.9.4, timeout-2.4.0
-collected 364 items
+collected 404 items
 
 unit/business_logic/test_attr_command_logging.py ..
-unit/business_logic/test_command_map_ignoring_devices.py ...
+tests/unit/business_logic/test_command_action_handler.py ...
 ...
 ```

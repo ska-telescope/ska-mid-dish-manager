@@ -71,10 +71,10 @@ def reset_dish_to_standby(
         spfrx_device_proxy.ResetToDefault()
         assert event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=10)
 
-        if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY_FP:
+        if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY:
             # go to FP ...
-            ds_device_proxy.SetStandbyFPMode()
-            assert event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=10)
+            ds_device_proxy.SetStandbyMode()
+            assert event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=10)
     except (RuntimeError, AssertionError):
         # check dish manager before giving up
         pass

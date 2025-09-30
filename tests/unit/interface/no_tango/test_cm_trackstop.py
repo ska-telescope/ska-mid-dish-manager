@@ -51,6 +51,9 @@ def test_track_stop_handler(
         assert kwargs == expected_call_kwargs[count]
 
     # check that the component state reports the requested command
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        pointingstate=PointingState.READY
+    )
     component_manager._update_component_state(pointingstate=PointingState.READY)
     component_state_cb.wait_for_value("pointingstate", PointingState.READY)
 

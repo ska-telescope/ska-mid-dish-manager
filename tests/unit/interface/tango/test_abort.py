@@ -9,6 +9,7 @@ from ska_control_model import ResultCode
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     PointingState,
     SPFOperatingMode,
 )
@@ -136,8 +137,10 @@ def test_abort_during_dish_movement(
         dish_manager_cm.track_load_table = mock_response
 
     [[_], [fp_unique_id]] = device_proxy.SetStandbyFPMode()
-    # dont update spf operatingMode to mimic skipAttributeUpdate=True
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+    ds_cm._update_component_state(
+        operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
+    )
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.UNKNOWN)
     # we can now expect dishMode to transition to UNKNOWN
     dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
     assert device_proxy.dishMode == DishMode.UNKNOWN
@@ -155,8 +158,7 @@ def test_abort_during_dish_movement(
     expected_progress_updates = [
         "Clearing scanID",
         "EndScan completed",
-        "SetOperateMode called on SPF",
-        "SetStandbyFPMode called on DS",
+        "SetStandbyMode called on DS",
         "Awaiting dishmode change to STANDBY_FP",
     ]
 
@@ -164,11 +166,13 @@ def test_abort_during_dish_movement(
         slew_progress_updates = [
             "TrackStop called on DS",
             "Awaiting pointingstate change to READY",
-            "DS pointingstate changed to 0",
+            "DS pointingstate changed to READY",
             "TrackStop completed",
         ]
         expected_progress_updates = slew_progress_updates + expected_progress_updates
 
+    # Wait some time for the abort command to try stop the dish before setting PointingState.READY
+    dish_mode_event_store.get_queue_values(timeout=1)
     ds_cm._update_component_state(pointingstate=PointingState.READY)
     events = progress_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=30

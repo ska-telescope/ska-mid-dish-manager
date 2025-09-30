@@ -6,7 +6,12 @@ import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
+)
 
 
 @pytest.mark.unit
@@ -54,6 +59,12 @@ def test_set_operate_handler(
         assert kwargs == expected_call_kwargs[count]
 
     # check that the component state reports the requested command
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        operatingmode=SPFOperatingMode.OPERATE
+    )
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        operatingmode=DSOperatingMode.POINT
+    )
     component_manager._update_component_state(dishmode=DishMode.OPERATE)
     component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
 

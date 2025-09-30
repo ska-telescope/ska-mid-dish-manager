@@ -71,7 +71,7 @@ def test_abort_commands(
     expected_progress_updates = [
         "SetStandbyFPMode Aborted",
         "SetOperateMode called on SPF",
-        "SetStandbyFPMode called on DS",
+        "SetStandbyMode called on DS",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]

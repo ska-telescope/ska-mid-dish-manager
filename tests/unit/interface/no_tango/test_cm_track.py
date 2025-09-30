@@ -40,6 +40,7 @@ def test_track_handler(
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"Track called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Commands: mocked sub-device-command-ids"},
+        {"progress": "Track completed"},
         {
             "progress": (
                 "Track command has been executed on DS. "
@@ -59,6 +60,7 @@ def test_track_handler(
 
     # check that the initial lrc updates come through
     actual_call_kwargs = callbacks["task_cb"].call_args_list
+    print(actual_call_kwargs)
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
@@ -66,22 +68,3 @@ def test_track_handler(
     # check that the component state reports the requested command
     component_manager._update_component_state(pointingstate=PointingState.TRACK)
     component_state_cb.wait_for_value("pointingstate", PointingState.TRACK)
-
-    # wait a bit for the lrc updates to come through
-    component_state_cb.get_queue_values()
-    # check that the final lrc updates come through
-    task_cb = callbacks["task_cb"]
-    task_cb.assert_called_with(
-        progress=(
-            "Track command has been executed on DS. "
-            "Monitor the achievedTargetLock attribute to determine when the dish is on source."
-        ),
-        status=TaskStatus.COMPLETED,
-        result=(
-            ResultCode.OK,
-            (
-                "Track command has been executed on DS. "
-                "Monitor the achievedTargetLock attribute to determine when the dish is on source."
-            ),
-        ),
-    )

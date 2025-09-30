@@ -6,7 +6,12 @@ import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 
 
 @pytest.mark.unit
@@ -39,8 +44,8 @@ def test_set_standbylp_handler(
         {"progress": "Awaiting SPF operatingmode change to STANDBY_LP"},
         {"progress": f"SetStandbyMode called on SPFRX, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting SPFRX operatingmode change to STANDBY"},
-        {"progress": f"SetStandbyLPMode called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS operatingmode change to STANDBY_LP"},
+        {"progress": f"SetStandbyMode called on DS, ID {mock_command_tracker.new_command()}"},
+        {"progress": "Awaiting DS operatingmode change to STANDBY"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {"progress": "Awaiting dishmode change to STANDBY_LP"},
     )
@@ -52,6 +57,15 @@ def test_set_standbylp_handler(
         assert kwargs == expected_call_kwargs[count]
 
     # check that the component state reports the requested command
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        operatingmode=SPFOperatingMode.STANDBY_LP
+    )
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        operatingmode=SPFRxOperatingMode.STANDBY
+    )
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        operatingmode=DSOperatingMode.STANDBY
+    )
     component_manager._update_component_state(dishmode=DishMode.STANDBY_LP)
     component_state_cb.wait_for_value("dishmode", DishMode.STANDBY_LP)
 

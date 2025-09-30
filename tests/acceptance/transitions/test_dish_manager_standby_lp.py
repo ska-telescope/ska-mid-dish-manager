@@ -22,7 +22,7 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
     dish_manager_proxy.SetStandbyLPMode()
 
     expected_progress_updates = [
-        "SetStandbyLPMode called on DS",
+        "SetStandbyMode called on DS",
         "SetStandbyLPMode called on SPF",
         "SetStandbyMode called on SPFRX",
         "Awaiting dishmode change to STANDBY_LP",

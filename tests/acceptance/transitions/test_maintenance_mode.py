@@ -145,7 +145,7 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
 
     ds_device_proxy.unstow()
-    dsc_event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=120)
+    dsc_event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=120)
     ds_device_proxy.slew([REQUESTED_AZIMUTH_VALUE, REQUESTED_ELEVATION_VALUE])
     dsc_event_store.wait_for_value(DSOperatingMode.POINT, timeout=30)
     dish_manager_proxy.SetStowMode()

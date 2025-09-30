@@ -42,12 +42,10 @@ class DSOperatingMode(enum.IntEnum):
     # enums are from dish lmc
     UNKNOWN = 0
     STARTUP = 1
-    STANDBY_LP = 2
-    STANDBY_FP = 3
-    MAINTENANCE = 4
-    STOW = 5
-    ESTOP = 6
-    POINT = 7
+    STANDBY = 2
+    STOW = 3
+    LOCKED = 4
+    POINT = 5
 
 
 class PointingState(enum.IntEnum):
@@ -182,3 +180,13 @@ class DscCmdAuthType(enum.IntEnum):
     LMC = 1
     HHP = 2
     EGUI = 3
+
+
+class FannedOutCommandStatus(enum.IntEnum):
+    """Fanned out command status enums."""
+
+    PENDING = 0
+    RUNNING = 1
+    COMPLETED = 2
+    TIMED_OUT = 3
+    FAILED = 4

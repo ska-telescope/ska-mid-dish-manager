@@ -62,7 +62,7 @@ def test_ignoring_spf(
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyFPMode called on DS",
+        "SetStandbyMode called on DS",
         "SPF device is disabled. SetOperateMode call ignored",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
@@ -142,7 +142,7 @@ def test_ignoring_all(
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyLPMode called on DS",
+        "SetStandbyMode called on DS",
         "SPF device is disabled. SetStandbyLPMode call ignored",
         "SPFRX device is disabled. SetStandbyMode call ignored",
         "Awaiting dishmode change to STANDBY_LP",

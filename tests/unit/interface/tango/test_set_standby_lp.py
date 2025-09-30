@@ -77,7 +77,7 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
 
     assert device_proxy.dishMode == DishMode.STANDBY_LP
     # Force dishManager dishMode to go to STANDBY-FP
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY)
     ds_cm._update_component_state(powerstate=DSPowerState.FULL_POWER)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spf_cm._update_component_state(powerstate=SPFPowerState.FULL_POWER)
@@ -99,7 +99,7 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     # and observe that DishManager transitions dishMode to LP mode. No
     # need to change the component state of SPFRX since it's in the
     # expected operating mode
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY)
     ds_cm._update_component_state(powerstate=DSPowerState.LOW_POWER)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
     spf_cm._update_component_state(powerstate=SPFPowerState.LOW_POWER)
@@ -111,7 +111,7 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     assert device_proxy.powerState == PowerState.LOW
 
     expected_progress_updates = [
-        "SetStandbyLPMode called on DS",
+        "SetStandbyMode called on DS",
         "SetStandbyLPMode called on SPF",
         "SetStandbyMode called on SPFRX",
         "Awaiting dishmode change to STANDBY_LP",

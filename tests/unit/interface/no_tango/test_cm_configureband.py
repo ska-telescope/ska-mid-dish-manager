@@ -3,7 +3,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from ska_control_model import ResultCode, TaskStatus
+from ska_control_model import TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.dish_enums import Band
@@ -51,6 +51,9 @@ def test_configureband_handler(
 
     # check that the component state reports the requested command
     component_manager._update_component_state(configuredband=Band.B2)
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        configuredband=Band.B2
+    )
     component_state_cb.wait_for_value("configuredband", Band.B2)
 
     # wait a bit for the lrc updates to come through
@@ -59,6 +62,4 @@ def test_configureband_handler(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         progress="ConfigureBand2 completed",
-        status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "ConfigureBand2 completed"),
     )

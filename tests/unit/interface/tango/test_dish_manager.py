@@ -6,7 +6,12 @@ from datetime import datetime
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SPFOperatingMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    DSPowerState,
+    SPFOperatingMode,
+)
 
 
 @pytest.mark.unit
@@ -37,7 +42,9 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     device_proxy.SetStandbyFPMode()
     progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
 
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+    ds_cm._update_component_state(
+        operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
+    )
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
 
     # Sample events:
@@ -61,9 +68,9 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     # Sort via command creation timestamp
     event_ids.sort(key=lambda x: datetime.fromtimestamp((float(x.split("_")[0]))))
     assert sorted([event_id.split("_")[-1] for event_id in event_ids]) == [
-        "SetOperateMode",
+        "SetPowerMode",
         "SetStandbyFPMode",
-        "SetStandbyFPMode",
+        "SetStandbyMode",
     ]
 
 

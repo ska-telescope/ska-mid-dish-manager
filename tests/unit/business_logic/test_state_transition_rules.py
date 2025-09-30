@@ -34,33 +34,41 @@ def state_transition():
     [
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.STARTUP),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STARTUP,
         ),
         (
-            dict(indexerposition=IndexerPosition.MOVING),
+            dict(indexerposition=IndexerPosition.MOVING, powerstate=DSPowerState.LOW_POWER),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.CONFIG,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW),
+            dict(operatingmode=DSOperatingMode.STOW, powerstate=DSPowerState.LOW_POWER),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             dict(operatingmode=SPFRxOperatingMode.CONFIGURE),
             DishMode.CONFIG,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.MOVING,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.CONFIG,
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
@@ -68,7 +76,9 @@ def state_transition():
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
@@ -76,27 +86,41 @@ def state_transition():
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
-            dict(operatingmode=SPFRxOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STANDBY_FP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.POINT,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.OPERATE,
         ),
         # Any other random combo goes to UNKNOWN
         (
-            dict(operatingmode=DSOperatingMode.UNKNOWN, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.UNKNOWN,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.ERROR),
             dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
             DishMode.UNKNOWN,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STOW,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.ERROR),
             dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
             DishMode.STOW,
@@ -122,34 +146,40 @@ def test_compute_dish_mode(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
-            dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.MOVING,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             dict(operatingmode=SPFRxOperatingMode.CONFIGURE),
             DishMode.CONFIG,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STOW,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             dict(adminmode=AdminMode.ENGINEERING, operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.MAINTENANCE,
         ),
         (
-            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.POINT,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
+            ),
             None,
             dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.OPERATE,
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
-            ),
-            None,
-            dict(operatingmode=SPFRxOperatingMode.OPERATE),
-            DishMode.STANDBY_FP,
-        ),
-        (
-            dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             None,
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
@@ -157,26 +187,40 @@ def test_compute_dish_mode(
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             None,
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
-            DishMode.STANDBY_LP,
+            DishMode.STANDBY_FP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STOW,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             dict(operatingmode=SPFRxOperatingMode.UNKNOWN, adminmode=AdminMode.ONLINE),
             DishMode.STOW,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STARTUP,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STARTUP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.UNKNOWN, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.UNKNOWN,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
             DishMode.UNKNOWN,
@@ -202,26 +246,40 @@ def test_compute_dish_mode_ignoring_spf(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
-            dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.MOVING,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             None,
             DishMode.CONFIG,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STOW,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.MAINTENANCE),
             None,
             DishMode.MAINTENANCE,
         ),
         (
-            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.POINT,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             None,
             DishMode.OPERATE,
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             None,
@@ -229,21 +287,29 @@ def test_compute_dish_mode_ignoring_spf(
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             None,
             DishMode.STANDBY_LP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STOW,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.ERROR),
             None,
             DishMode.STOW,
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.STARTUP),
             None,
@@ -270,20 +336,26 @@ def test_compute_dish_mode_ignoring_spfrx(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
-            dict(indexerposition=IndexerPosition.MOVING),
+            dict(indexerposition=IndexerPosition.MOVING, powerstate=DSPowerState.LOW_POWER),
             None,
             None,
             DishMode.CONFIG,
         ),
         (
-            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.POINT,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             None,
             DishMode.OPERATE,
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             None,
             None,
@@ -291,20 +363,20 @@ def test_compute_dish_mode_ignoring_spfrx(
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STOW,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
             ),
-            None,
-            None,
-            DishMode.STANDBY_LP,
-        ),
-        (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
             None,
             None,
             DishMode.STOW,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STARTUP,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             None,
             DishMode.STARTUP,
