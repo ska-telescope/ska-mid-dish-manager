@@ -99,7 +99,7 @@ class TestCommandMapIgnoringDevices:
 
         assert (
             "SPF device is disabled. "
-            "SPF.SetStandbyLPMode call ignored for DishManager.SetStandbyLPMode" in caplog.text
+            "Ignoring SPF.SetStandbyLPMode call for DishManager.SetStandbyLPMode" in caplog.text
         )
 
     @pytest.mark.unit
@@ -134,7 +134,7 @@ class TestCommandMapIgnoringDevices:
 
         assert (
             "SPFRX device is disabled. "
-            "SPFRX.SetStandbyMode call ignored for DishManager.SetStandbyLPMode" in caplog.text
+            "Ignoring SPFRX.SetStandbyMode call for DishManager.SetStandbyLPMode" in caplog.text
         )
 
     @pytest.mark.unit
@@ -169,9 +169,9 @@ class TestCommandMapIgnoringDevices:
 
         assert (
             "SPF device is disabled. "
-            "SPF.SetStandbyLPMode call ignored for DishManager.SetStandbyLPMode" in caplog.text
+            "Ignoring SPF.SetStandbyLPMode call for DishManager.SetStandbyLPMode" in caplog.text
         )
         assert (
             "SPFRX device is disabled. "
-            "SPFRX.SetStandbyMode call ignored for DishManager.SetStandbyLPMode" in caplog.text
+            "Ignoring SPFRX.SetStandbyMode call for DishManager.SetStandbyLPMode" in caplog.text
         )

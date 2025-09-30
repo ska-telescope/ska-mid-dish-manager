@@ -162,14 +162,13 @@ def test_abort_during_dish_movement(
     expected_progress_updates = [
         "Clearing scanID",
         "EndScan completed",
-        "SetOperateMode called on SPF",
-        "SetStandbyFPMode called on DS",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode",
         "Awaiting dishmode change to STANDBY_FP",
     ]
 
     if pointing_state == PointingState.SLEW:
         slew_progress_updates = [
-            "TrackStop called on DS",
+            "Fanned out commands: DS.TrackStop",
             "Awaiting pointingstate change to READY",
             "DS pointingstate changed to 0",
             "TrackStop completed",

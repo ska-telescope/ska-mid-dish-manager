@@ -269,7 +269,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         self._command_map = CommandMap(
             self,
-            self._command_tracker,
             self.logger,
         )
         self._cmd_allowed_checks = CommandAllowedChecks(self)
@@ -946,18 +945,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except ValueError:
             self.logger.exception("Failed to update %s", attr)
             raise
-
-    def abort_commands(self, task_callback: Optional[Callable] = None) -> None:
-        """Abort commands on dish manager and its subservient devices.
-
-        :param task_callback: callback when the status changes
-        """
-        self.logger.debug("Aborting long running commands")
-        super().abort_commands(task_callback)
-        sub_component_mgrs = self.get_active_sub_component_managers()
-        for component_mgr in sub_component_mgrs.values():
-            # dont use the same taskcallback else we get completed 4x on the same command id
-            component_mgr.abort_commands()
 
     def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode

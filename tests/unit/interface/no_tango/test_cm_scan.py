@@ -1,6 +1,5 @@
 """Tests dish manager component manager scan command handler."""
 
-
 import pytest
 from ska_control_model import ResultCode, TaskStatus
 

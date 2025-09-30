@@ -69,8 +69,7 @@ def test_abort_commands(
     # Abort will execute standbyfp dishmode as part of its abort sequence
     expected_progress_updates = [
         "SetStandbyFPMode Aborted",
-        "SetOperateMode called on SPF",
-        "SetStandbyFPMode called on DS",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]

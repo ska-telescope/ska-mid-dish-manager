@@ -206,8 +206,8 @@ class CommandMap:
 
             if self._is_device_ignored(device):
                 self.logger.debug(
-                    f"{device} is disabled. Ignoring {device}.{cmd_name} "
-                    f"for DishManager.{running_command}"
+                    f"{device} device is disabled. Ignoring {device}.{cmd_name} "
+                    f"call for DishManager.{running_command}"
                 )
                 continue
 
