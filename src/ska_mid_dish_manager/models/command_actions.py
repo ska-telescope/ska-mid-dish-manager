@@ -211,10 +211,6 @@ class ActionHandler:
         action_start_time = time.time()
 
         while True:
-            # Update status of all running commands
-            for cmd in self.fanned_out_commands:
-                cmd.report_progress(task_callback)
-
             # Handle abort
             if task_abort_event.is_set():
                 self.logger.warning(f"Action '{self.name}' aborted.")
@@ -223,16 +219,6 @@ class ActionHandler:
                     status=TaskStatus.ABORTED,
                     result=(ResultCode.ABORTED, f"{self.name} Aborted"),
                 )
-                return
-
-            # Handle any failed fanned out command
-            if any([cmd.failed for cmd in self.fanned_out_commands]):
-                command_statuses = {
-                    f"{sc.name} ({sc.id}) ({sc.failed})": sc.status
-                    for sc in self.fanned_out_commands
-                }
-                message = f"Action '{self.name}' failed. Fanned out commands: {command_statuses}"
-                trigger_failure(message)
                 return
 
             # Handle timeout
@@ -244,6 +230,20 @@ class ActionHandler:
                 message = (
                     f"Action '{self.name}' timed out. Fanned out commands: {command_statuses}"
                 )
+                trigger_failure(message)
+                return
+
+            # Update status of all running commands
+            for cmd in self.fanned_out_commands:
+                cmd.report_progress(task_callback)
+
+            # Handle any failed fanned out command
+            if any([cmd.failed for cmd in self.fanned_out_commands]):
+                command_statuses = {
+                    f"{sc.name} ({sc.id}) ({sc.failed})": sc.status
+                    for sc in self.fanned_out_commands
+                }
+                message = f"Action '{self.name}' failed. Fanned out commands: {command_statuses}"
                 trigger_failure(message)
                 return
 
