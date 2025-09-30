@@ -1157,7 +1157,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     @check_communicating
     def configure_band_with_json(
         self,
-        data: dict,
+        data: str,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Configure frequency band."""

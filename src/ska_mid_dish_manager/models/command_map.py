@@ -285,11 +285,18 @@ class CommandMap:
 
     def configure_band(
         self,
-        data,
+        value: str,
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
-        """Configure band on DS and SPFRx."""
+        """Configure band on DS, SPFRx and B5DC."""
+        try:
+            data = json.loads(value)
+        except json.JSONDecodeError as err:
+            self.logger.exception("Invalid json supplied.")
+            task_callback(status=TaskStatus.FAILED, exception=err)
+            return
+
         # Minimal input validation
         receiver_band = data.get("receiver_band")
         if receiver_band not in ["1", "2", "3", "4", "5", "5a", "5b"]:

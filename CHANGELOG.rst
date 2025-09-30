@@ -13,6 +13,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
   - attenuation1PolV/Y
   - attenuation2PolH/X
   - attenuation2PolV/Y
+- Implemented ConfigureBand command that ingests a JSON string to configure bands on SPFRx.
 
 Version 8.4.2
 *************
