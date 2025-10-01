@@ -8,7 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Upgraded ska-mid-dish-simulators chart to v5.2.0
-- The following band agnostic attenuation attributes are reflected from the updated SPFRx interface;
+- The following band agnostic attenuation attributes were added to reflect the updated SPFRx interface;
   - attenuation1PolH/X
   - attenuation1PolV/Y
   - attenuation2PolH/X
