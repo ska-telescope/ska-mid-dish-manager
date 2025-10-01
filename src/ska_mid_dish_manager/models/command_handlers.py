@@ -28,28 +28,25 @@ class Abort:
 
     def __call__(
         self,
-        abort_command_id: str,
-        task_abort_event: Event,
         task_callback: Optional[Callable] = None,
     ) -> None:
-        self.abort(abort_command_id, task_abort_event, task_callback=task_callback)
+        self.abort(task_callback=task_callback)
 
-    def _stop_dish_slew(self, task_abort_event: Event, task_callback: Optional[Callable] = None):
+    def _stop_dish(self, task_abort_event: Event, task_callback: Optional[Callable] = None):
         if task_abort_event.is_set():
             self.logger.debug("abort-sequence: failed to stop dish slew")
             if task_callback:
                 task_callback(status=TaskStatus.FAILED)
             return
-
-        self.logger.debug("abort-sequence: stopping dish slew")
+        self.logger.debug("abort-sequence: stopping dish")
         try:
             self._command_map.track_stop_cmd(task_abort_event, task_callback)
-            self.logger.debug("abort-sequence: dish slew has been successfully stopped")
+            self.logger.debug("abort-sequence: dish has been successfully stopped")
         except Exception as exc:  # pylint:disable=broad-except
             if task_callback:
                 task_callback(status=TaskStatus.FAILED, exception=exc)
             task_abort_event.set()
-            self.logger.error("abort-sequence: failed to stop dish slew: %s", str(exc))
+            self.logger.error("abort-sequence: failed to stop dish: %s", str(exc))
 
     def _wait_for_dish_to_settle(self, task_abort_event: Event) -> None:
         self.logger.debug("abort-sequence: waiting for the dish to settle")
@@ -79,14 +76,16 @@ class Abort:
         timestamp = (
             self._component_manager.get_current_tai_offset_from_dsc_with_manual_fallback() + 5
         )  # add 5 seconds lead time
+        # reset_point = [timestamp, 0, 0] * 5
         reset_point = [timestamp, reset_point[1], reset_point[2]]
         sequence_length = 1
+        # load_mode = TrackTableLoadMode.RESET
         load_mode = TrackTableLoadMode.NEW
 
-        result_code, result_message = self._component_manager.track_load_table(
+        task_status, msg = self._component_manager.track_load_table(
             sequence_length, reset_point, load_mode
         )
-        if result_code == ResultCode.OK:
+        if task_status == TaskStatus.IN_PROGRESS:
             self._wait_for_dish_to_settle(task_abort_event)
             if task_abort_event.is_set():
                 self.logger.debug(
@@ -97,7 +96,7 @@ class Abort:
             task_abort_event.set()
             self.logger.debug(
                 "abort-sequence: failed to reset programTrackTable with message: %s",
-                result_message,
+                msg,
             )
 
     def _ensure_transition_to_fp_mode(
@@ -115,7 +114,7 @@ class Abort:
 
         sub_component_mgrs = self._component_manager.get_active_sub_component_managers()
         for component_manager in sub_component_mgrs.values():
-            component_manager.update_state_from_monitored_attributes(task_abort_event)
+            component_manager.update_state_from_monitored_attributes(wait_event=task_abort_event)
 
         # only force the transition if the dish is not in FP already
         current_dish_mode = self._component_manager.component_state.get("dishmode")
@@ -147,12 +146,12 @@ class Abort:
 
         if self._component_manager.is_dish_moving():
             pointing_state = self._component_manager.component_state.get("pointingstate")
-            if pointing_state == PointingState.SLEW:
+            if pointing_state in (PointingState.SLEW, PointingState.TRACK):
                 track_stop_command_id = self._command_tracker.new_command(
                     "abort-sequence:trackstop", completed_callback=None
                 )
                 track_stop_task_cb = partial(task_cb, track_stop_command_id)
-                self._stop_dish_slew(task_abort_event, track_stop_task_cb)
+                self._stop_dish(task_abort_event, track_stop_task_cb)
             else:
                 # send the last reported achieved pointing in load mode new
                 self._reset_track_table(task_abort_event)
@@ -190,17 +189,9 @@ class Abort:
 
     def abort(
         self,
-        abort_command_id: str,
-        task_abort_event: Event,
         task_callback: Optional[Callable] = None,
     ) -> None:
         """Executes the abort sequence."""
-        if abort_command_id is not None:
-            while (
-                self._command_tracker.get_command_status(abort_command_id) != TaskStatus.COMPLETED
-            ):
-                task_abort_event.wait(0.1)  # sleep a bit to not overwork the CPU
-
         self.logger.debug(
             "Handing over work from abort-thread to executor to complete the abort sequence"
         )

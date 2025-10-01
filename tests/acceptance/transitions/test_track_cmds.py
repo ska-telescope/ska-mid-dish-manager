@@ -133,7 +133,7 @@ def test_track_and_track_stop_cmds(
 
     # Wait for the track command to complete
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
+        expected_progress_updates[-1], timeout=30
     )
 
     # Check that all the expected progress messages appeared

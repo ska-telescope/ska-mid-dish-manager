@@ -91,12 +91,15 @@ class CommandMap:
         """Track the fanned out commands to subservient devices."""
         pass
 
-    def _refresh_sub_component_states(self, sub_devices: list, task_abort_event):
+    def _refresh_sub_component_states(self, sub_cmds, task_abort_event):
         """Poll the monitored attributes on each subcomponent manager to update its state."""
-        for device in sub_devices:
+        for device, fan_out_args in sub_cmds.items():
             if not self._is_device_ignored(device):
+                awaited_attrs = tuple(fan_out_args["awaitedAttributes"])
                 component_manager = self._dish_manager_cm.sub_component_managers[device]
-                component_manager.update_state_from_monitored_attributes(task_abort_event)
+                component_manager.update_state_from_monitored_attributes(
+                    awaited_attrs, task_abort_event
+                )
 
     def _report_sub_device_command_progress(self, sub_cmds, task_callback):
         """Report progress of awaited attributes from sub-devices."""
@@ -109,13 +112,20 @@ class CommandMap:
             component_state = component_manager.component_state
             awaited_attrs = fan_out_args["awaitedAttributes"]
             awaited_values = fan_out_args["awaitedValuesList"]
+            all_matched = []
             for attr, expected_val in zip(awaited_attrs, awaited_values):
                 if component_state[attr] == expected_val:
+                    all_matched.append(True)
+                else:
+                    all_matched.append(False)
+
+            if all(all_matched):
+                for attr, expected_val in zip(awaited_attrs, awaited_values):
                     update_task_status(
                         task_callback,
                         progress=f"{device} {attr} changed to {expected_val}",
                     )
-                    devices_to_remove.append(device)
+                devices_to_remove.append(device)
 
         for device in devices_to_remove:
             sub_cmds.pop(device, None)
@@ -165,14 +175,14 @@ class CommandMap:
         )
 
         while not task_abort_event.is_set():
-            self._refresh_sub_component_states(list(sub_cmds.keys()), task_abort_event)
+            self._refresh_sub_component_states(sub_cmds, task_abort_event)
             self._report_sub_device_command_progress(sub_cmds, task_callback)
 
             if self._is_dish_at_commanded_state(awaited_event_attributes, awaited_event_values):
                 self._complete_lrc(ok_msg, task_callback)
                 return
 
-            task_abort_event.wait(1)
+            task_abort_event.wait(0.5)
 
         self._abort_lrc(running_command, task_callback)
 
@@ -188,10 +198,13 @@ class CommandMap:
     ) -> None:
         """Executes a long-running command.
 
-        - Fans out commands to sub-devices
-        - Tracks their execution status
-        - Waits for dish state transition if applicable
-        - Reports progress and completion via callback
+        task_callback: Callback to report progress, status, and result.
+        task_abort_event: Event to signal abortion of the ongoing task.
+        commands_for_sub_devices: Mapping of device names to their respective command arguments.
+        running_command: Name of the command being executed.
+        awaited_event_attributes: List of attributes to monitor for completion.
+        awaited_event_values: Expected values for the awaited attributes.
+        completed_response_msg: Custom completion message for the callback.
         """
         if task_abort_event.is_set():
             self._abort_lrc(running_command, task_callback)
@@ -219,7 +232,8 @@ class CommandMap:
                 successful_cmds[device] = f"{device}.{cmd_name}"
 
         if failed_cmds:
-            msg = f"DishManager.{running_command} failed: {', '.join(failed_cmds.values())}"
+            sub_cmds = ", ".join(failed_cmds.values())
+            msg = f"DishManager.{running_command} failed: {sub_cmds} failed to execute"
             self.logger.error(f"{msg}. Errors: {'; '.join(error_messages)}")
             update_task_status(
                 task_callback,

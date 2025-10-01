@@ -6,7 +6,7 @@ import os
 import threading
 import time
 from functools import partial
-from threading import Event, Lock, Thread
+from threading import Event, Lock
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -152,7 +152,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
-        self._abort_thread: Optional[Thread] = None
         self._stop_event = threading.Event()
         self.watchdog_timer = WatchdogTimer(
             callback_on_timeout=self._stow_on_watchdog_expiry,
@@ -356,14 +355,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return True
         return False
 
-    def get_currently_executing_lrcs(
-        self,
-        statuses_to_check: Tuple[TaskStatus] = (
-            TaskStatus.STAGING,
-            TaskStatus.QUEUED,
-            TaskStatus.IN_PROGRESS,
-        ),
-    ) -> List[str]:
+    def get_currently_executing_lrcs(self) -> List[str]:
         """Report command ids that are running or waiting to be executed from the task executor.
 
         :param statuses_to_check: TaskStatuses which count as lrc is executing
@@ -372,6 +364,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         command_idx = 0
         status_idx = 1
         cmd_ids = []
+        statuses_to_check = (TaskStatus.QUEUED, TaskStatus.IN_PROGRESS)
 
         command_statuses = self._command_tracker.command_statuses
         filtered_command_statuses = [
@@ -381,6 +374,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ]
 
         if filtered_command_statuses:
+            self.logger.debug("Currently executing LRCs: %s", filtered_command_statuses)
             cmd_ids = [cmd_status[command_idx] for cmd_status in filtered_command_statuses]
             return cmd_ids
         # there are no commands in statuses_to_check
@@ -922,12 +916,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         to force dishManager to recalculate its attributes.
         """
         self.logger.debug("Syncing component states")
-        wait_event = Event()
         if self.sub_component_managers:
             for device, component_manager in self.sub_component_managers.items():
                 if not self.is_device_ignored(device) and device != "WMS":
                     component_manager.clear_monitored_attributes()
-                    component_manager.update_state_from_monitored_attributes(wait_event)
+                    component_manager.update_state_from_monitored_attributes()
 
     def update_pointing_model_params(self, attr: str, values: list[float]) -> None:
         """Update band pointing model parameters for the given attribute."""
@@ -1549,15 +1542,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # This will be a short lived thread. It hands over the work to the
         # executor to do the heavy lifting. But perform the check nonetheless
-        if self._abort_thread is not None and self._abort_thread.is_alive():
-            self.logger.info("Abort rejected: there is an ongoing abort sequence.")
-            if task_callback:
-                task_callback(
-                    status=TaskStatus.REJECTED,
-                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
-                )
-            return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
-
         if not self._cmd_allowed_checks.is_abort_allowed():
             self.logger.info("Abort rejected: command not allowed in MAINTENANCE mode")
             if task_callback:
@@ -1570,10 +1554,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
             return TaskStatus.REJECTED, "Command not allowed during MAINTENANCE mode"
 
-        cmds_in_progress = self.get_currently_executing_lrcs(
-            statuses_to_check=(TaskStatus.QUEUED, TaskStatus.IN_PROGRESS)
-        )
-        abort_command_id = None
+        cmds_in_progress = self.get_currently_executing_lrcs()
         if cmds_in_progress:
             if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
                 self.logger.info("Abort rejected: there is an ongoing abort sequence.")
@@ -1584,25 +1565,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     )
                 return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
 
-            self.logger.debug("Aborting LRCs from Abort sequence")
-            abort_command_id = self._command_tracker.new_command(
-                "abort-sequence:abort-lrc", completed_callback=None
-            )
-            abort_task_cb = partial(self._command_tracker.update_command_info, abort_command_id)
-            self.abort_commands(task_callback=abort_task_cb)
-
-        self._abort_thread = Thread(
-            target=self._abort_handler,
-            args=[
-                abort_command_id,
-                task_abort_event,
-            ],
-            kwargs={
-                "task_callback": task_callback,
-            },
+        abort_sequence = partial(self._abort_handler, task_callback)
+        self.logger.debug("Aborting LRCs from Abort sequence")
+        abort_command_id = self._command_tracker.new_command(
+            "abort-sequence:abort-lrc", completed_callback=abort_sequence
         )
-        self._abort_thread.name = "abort_thread"
-        self._abort_thread.start()
+        abort_task_cb = partial(self._command_tracker.update_command_info, abort_command_id)
+        self.abort_commands(task_callback=abort_task_cb)
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     def set_dsc_power_limit_kw(

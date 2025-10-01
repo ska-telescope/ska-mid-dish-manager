@@ -182,7 +182,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
             if _monitored_attribute in self._component_state:
                 self._component_state[_monitored_attribute] = 0
 
-    def update_state_from_monitored_attributes(self, abort_event: Event) -> None:
+    def update_state_from_monitored_attributes(
+        self, monitored_attributes: Tuple[str, ...] | None = None, wait_event: Event | None = None
+    ) -> None:
         """Update the component state by reading the monitored attributes.
 
         When an attribute on the device does not match the component_state
@@ -193,24 +195,32 @@ class TangoDeviceComponentManager(BaseComponentManager):
         monitored attributes on the device and the component state.
         """
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
+
+        # fallback to defaults if not provided
+        monitored_attributes = monitored_attributes or self._monitored_attributes
+        wait_event = wait_event or Event()
+
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
-            for monitored_attribute in self._monitored_attributes:
-                _monitored_attribute = monitored_attribute.lower()
 
+            for monitored_attribute in monitored_attributes:
+                attr = monitored_attribute.lower()
                 try:
-                    value = device_proxy.read_attribute(_monitored_attribute).value
+                    value = device_proxy.read_attribute(attr).value
                 except tango.DevFailed:
-                    self.logger.exception(
+                    self.logger.error(
                         "Encountered an error retrieving the current value of %s from %s",
-                        _monitored_attribute,
+                        attr,
                         self._tango_device_fqdn,
                     )
                     continue
+
                 if isinstance(value, np.ndarray):
                     value = list(value)
-                monitored_attribute_values[_monitored_attribute] = value
-                abort_event.wait(timeout=0.1)
+
+                monitored_attribute_values[attr] = value
+                wait_event.wait(timeout=0.1)
+
             self._update_component_state(**monitored_attribute_values)
 
     @classmethod
@@ -268,7 +278,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
             ],
         )
 
-        self._event_consumer_thread.name = f"{self._tango_device_fqdn}.event_consumer_thread"
+        self._event_consumer_thread.name = "event_consumer_thread"
         self._event_consumer_thread.start()
 
     @check_communicating

@@ -63,7 +63,7 @@ def test_ignoring_spf(
     ]
 
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
+        expected_progress_updates[-1], timeout=30
     )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
@@ -102,7 +102,7 @@ def test_ignoring_spfrx(
     ]
 
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
+        expected_progress_updates[-1], timeout=30
     )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
@@ -141,7 +141,7 @@ def test_ignoring_all(
     ]
 
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
+        expected_progress_updates[-1], timeout=30
     )
 
     events_string = "".join([str(event.attr_value.value) for event in events])

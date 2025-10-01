@@ -219,9 +219,7 @@ class TangoDeviceMonitor:
             ],
         )
 
-        self._attribute_subscription_thread.name = (
-            f"{self._tango_fqdn}_attribute_subscription_thread"
-        )
+        self._attribute_subscription_thread.name = "attribute_subscription_thread"
         # monitor all attributes in a thread
         self._attribute_subscription_thread.start()
 
