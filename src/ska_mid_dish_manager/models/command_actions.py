@@ -260,13 +260,17 @@ class ActionHandler:
                     trigger_success()
                     return
 
+            for cmd in self.fanned_out_commands:
+                if hasattr(cmd, "device_component_manager"):
+                    device_component_manager = getattr(cmd, "device_component_manager")
+                    device_component_manager.update_state_from_monitored_attributes(
+                        cmd.awaited_component_state.keys()
+                    )
+
             if self.waiting_callback:
                 self.waiting_callback()
-                for cmd in self.fanned_out_commands:
-                    if hasattr(cmd, "device_component_manager"):
-                        device_component_manager = getattr(cmd, "device_component_manager")
-                        device_component_manager.update_state_from_monitored_attributes()
-                task_abort_event.wait(timeout=1)
+
+            task_abort_event.wait(timeout=1)
 
 
 # -------------------------

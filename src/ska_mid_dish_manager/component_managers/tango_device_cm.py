@@ -183,7 +183,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             if _monitored_attribute in self._component_state:
                 self._component_state[_monitored_attribute] = 0
 
-    def update_state_from_monitored_attributes(self) -> None:
+    def update_state_from_monitored_attributes(self, specific_attributes: list[str] = []) -> None:
         """Update the component state by reading the monitored attributes.
 
         When an attribute on the device does not match the component_state
@@ -196,7 +196,11 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
-            for monitored_attribute in self._monitored_attributes:
+            attributes_to_update = self._monitored_attributes
+            if len(specific_attributes) > 0:
+                attributes_to_update = specific_attributes
+
+            for monitored_attribute in attributes_to_update:
                 _monitored_attribute = monitored_attribute.lower()
 
                 try:
