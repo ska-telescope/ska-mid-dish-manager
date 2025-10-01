@@ -4,17 +4,13 @@ import logging
 from threading import Lock
 from typing import Any, Callable, Optional
 
-import logging
-from typing import Any, Callable, Optional
+from ska_control_model import CommunicationStatus, HealthState
 
-from ska_control_model import CommunicationStatus, TaskStatus, HealthState
-
-from ska_mid_dish_b5dc_proxy.models.constants import B5DC_BUILD_STATE_DEVICE_NAME
-from 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
     B5DCOperatingMode,
 )
+
 
 class B5DCComponentManager(TangoDeviceComponentManager):
     """Specialization for B5DC functionality."""
@@ -57,16 +53,17 @@ class B5DCComponentManager(TangoDeviceComponentManager):
         )
         self._communication_state_lock = state_update_lock
         self._component_state_lock = state_update_lock
-    
+
     def _update_component_state(self, **kwargs) -> None:  # type: ignore
         enum_conversion = {
             "operatingmode": B5DCOperatingMode,
-            "healthstate": HealthState,  
+            "healthstate": HealthState,
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:
                 kwargs[attr] = enum_(kwargs[attr])
-            pass 
+            pass
+
     def _update_communication_state(self, communication_state: CommunicationStatus) -> None:
         if (self._communication_state is CommunicationStatus.ESTABLISHED) and (
             communication_state is CommunicationStatus.NOT_ESTABLISHED
