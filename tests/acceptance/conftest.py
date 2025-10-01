@@ -3,6 +3,7 @@
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import (
+    DSPowerState,
     DishMode,
     DSOperatingMode,
     SPFOperatingMode,
@@ -69,7 +70,10 @@ def reset_dish_to_standby(
         spfrx_device_proxy.ResetToDefault()
         assert event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=10)
 
-        if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY:
+        if (
+            ds_device_proxy.operatingMode != DSOperatingMode.STANDBY
+            or ds_device_proxy.powerstate != DSPowerState.LOW_POWER
+        ):
             # go to LP ...
             ds_device_proxy.SetStandbyMode()
             assert event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=10)
