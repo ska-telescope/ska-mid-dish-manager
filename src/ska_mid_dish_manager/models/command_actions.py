@@ -332,7 +332,9 @@ class SetStandbyLPModeAction(Action):
             timeout_s=10,  # TODO: Confirm timeout values
             command_tracker=self.command_tracker,
             command_argument=None,
-            awaited_component_state={"operatingmode": DSOperatingMode.STANDBY},
+            awaited_component_state={
+                "operatingmode": DSOperatingMode.STANDBY, "powerstate": DSPowerState.LOW_POWER
+            },
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 

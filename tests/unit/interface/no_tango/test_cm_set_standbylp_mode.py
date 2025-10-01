@@ -7,6 +7,7 @@ from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
+    DSPowerState,
     DishMode,
     DSOperatingMode,
     SPFOperatingMode,
@@ -45,7 +46,7 @@ def test_set_standbylp_handler(
         {"progress": f"SetStandbyMode called on SPFRX, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting SPFRX operatingmode change to STANDBY"},
         {"progress": f"SetStandbyMode called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS operatingmode change to STANDBY"},
+        {"progress": "Awaiting DS operatingmode, powerstate change to STANDBY, LOW_POWER"},
         {"progress": "Commands: mocked sub-device-command-ids"},
         {"progress": "Awaiting dishmode change to STANDBY_LP"},
     )
@@ -64,9 +65,8 @@ def test_set_standbylp_handler(
         operatingmode=SPFRxOperatingMode.STANDBY
     )
     component_manager.sub_component_managers["DS"]._update_component_state(
-        operatingmode=DSOperatingMode.STANDBY
+        operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.LOW_POWER
     )
-    component_manager._update_component_state(dishmode=DishMode.STANDBY_LP)
     component_state_cb.wait_for_value("dishmode", DishMode.STANDBY_LP)
 
     # wait a bit for the lrc updates to come through

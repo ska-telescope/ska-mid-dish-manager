@@ -36,7 +36,7 @@ def test_set_standbyfp_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"SetStandbyMode called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS operatingmode change to STANDBY"},
+        {"progress": "Awaiting DS operatingmode, powerstate change to STANDBY, LOW_POWER"},
         {"progress": f"SetPowerMode called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting DS powerstate change to FULL_POWER"},
         {"progress": "Commands: mocked sub-device-command-ids"},
@@ -45,13 +45,11 @@ def test_set_standbyfp_handler(
 
     # check that the initial lrc updates come through
     actual_call_kwargs = callbacks["task_cb"].call_args_list
-    print(actual_call_kwargs)
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
 
     # check that the component state reports the requested command
-    component_manager._update_component_state(dishmode=DishMode.STANDBY_FP)
     component_manager.sub_component_managers["DS"]._update_component_state(
         operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
     )

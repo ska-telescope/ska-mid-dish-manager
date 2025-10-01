@@ -50,10 +50,10 @@ def test_set_maintenance_mode_handler(
         {"progress": "Awaiting dishmode change to STOW"},
         {"progress": "SPFRX operatingmode changed to STANDBY"},
         {"progress": "SetStandbyMode completed"},
-        {"progress": "SPF operatingmode changed to MAINTENANCE"},
-        {"progress": "SetMaintenanceMode completed"},
         {"progress": "DS operatingmode changed to STOW"},
         {"progress": "Stow completed"},
+        {"progress": "SPF operatingmode changed to MAINTENANCE"},
+        {"progress": "SetMaintenanceMode completed"},
         {
             "progress": "SetMaintenanceMode completed",
             "status": TaskStatus.COMPLETED,

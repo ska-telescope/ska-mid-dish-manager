@@ -103,7 +103,7 @@ class TestCommandActions:
             "SetStandbyLPMode called on SPF",
             "SetStandbyMode called on SPFRX",
             # Expected sub device changes
-            "Awaiting DS operatingmode change to STANDBY",
+            "Awaiting DS operatingmode, powerstate change to STANDBY, LOW_POWER",
             "Awaiting SPF operatingmode change to STANDBY_LP",
             "Awaiting SPFRX operatingmode change to STANDBY",
             # Expected action change

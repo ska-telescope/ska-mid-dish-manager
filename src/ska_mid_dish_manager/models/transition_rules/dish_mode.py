@@ -16,20 +16,13 @@ DISH_MODE_RULES_ALL_DEVICES = {
         "SPFRX.operatingmode  == 'SPFRxOperatingMode.OPERATE'"
     ),
     "STANDBY_FP": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STANDBY' and "
-        "DS.powerstate  == 'DSPowerState.FULL_POWER' and "
-        "SPF.operatingmode  in "
-        " ['SPFOperatingMode.STANDBY_LP', "
-        "  'SPFOperatingMode.OPERATE'] and "
-        "SPFRX.operatingmode  in "
-        " ['SPFRxOperatingMode.STANDBY', "
-        "  'SPFRxOperatingMode.OPERATE']"
+        "DS.operatingmode != 'DSOperatingMode.POINT' and "
+        "DS.powerstate  == 'DSPowerState.FULL_POWER'"
     ),
     "STANDBY_LP": rule_engine.Rule(
-        "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
+        "DS.operatingmode != 'DSOperatingMode.POINT' and "
         "DS.powerstate  == 'DSPowerState.LOW_POWER' and "
-        "SPF.operatingmode  == 'SPFOperatingMode.STANDBY_LP' and "
-        "SPFRX.operatingmode  == 'SPFRxOperatingMode.STANDBY'"
+        "SPF.operatingmode  != 'SPFOperatingMode.OPERATE'"
     ),
     "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "STARTUP": rule_engine.Rule(
