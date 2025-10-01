@@ -5,6 +5,12 @@ import rule_engine
 DISH_MODE_RULES_ALL_DEVICES = {
     # MAINTENANCE mode is not aggregated from operating modes of subdevices. It
     # is a separate mode that can be commanded directly on the dish manager.
+    "STARTUP": rule_engine.Rule(
+        "DS.operatingmode  == 'DSOperatingMode.STARTUP' or "
+        "SPF.operatingmode  == 'SPFOperatingMode.STARTUP' or "
+        "SPFRX.operatingmode  == 'SPFRxOperatingMode.STARTUP'"
+    ),
+    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "CONFIG": rule_engine.Rule(
         "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE' "
         "or "
@@ -15,96 +21,75 @@ DISH_MODE_RULES_ALL_DEVICES = {
         "SPF.operatingmode  == 'SPFOperatingMode.OPERATE' and "
         "SPFRX.operatingmode  == 'SPFRxOperatingMode.OPERATE'"
     ),
-    "STANDBY_FP": rule_engine.Rule(
-        "DS.operatingmode != 'DSOperatingMode.POINT' and "
-        "DS.powerstate  == 'DSPowerState.FULL_POWER'"
-    ),
     "STANDBY_LP": rule_engine.Rule(
-        "DS.operatingmode != 'DSOperatingMode.POINT' and "
+        "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
         "DS.powerstate  == 'DSPowerState.LOW_POWER' and "
         "SPF.operatingmode  != 'SPFOperatingMode.OPERATE'"
     ),
-    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
-    "STARTUP": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STARTUP' or "
-        "SPF.operatingmode  == 'SPFOperatingMode.STARTUP' or "
-        "SPFRX.operatingmode  == 'SPFRxOperatingMode.STARTUP'"
+    "STANDBY_FP": rule_engine.Rule(
+        "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
+        "DS.powerstate  == 'DSPowerState.FULL_POWER'"
     ),
 }
 
 DISH_MODE_RULES_SPF_IGNORED = {
+    "STARTUP": rule_engine.Rule(
+        "DS.operatingmode  == 'DSOperatingMode.STARTUP' or "
+        "SPFRX.operatingmode  == 'SPFRxOperatingMode.STARTUP'"
+    ),
+    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "CONFIG": rule_engine.Rule(
         "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE' "
         "or "
         "DS.indexerposition  == 'IndexerPosition.MOVING' "
     ),
-    "MAINTENANCE": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STOW' and "
-        "SPFRX.adminmode  == 'AdminMode.ENGINEERING'"
-    ),
     "OPERATE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.POINT' and "
         "SPFRX.operatingmode  == 'SPFRxOperatingMode.OPERATE'"
     ),
-    "STANDBY_FP": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STANDBY' and "
-        "DS.powerstate  == 'DSPowerState.FULL_POWER' and "
-        "SPFRX.operatingmode  in "
-        " ['SPFRxOperatingMode.STANDBY', "
-        "  'SPFRxOperatingMode.OPERATE']"
-    ),
     "STANDBY_LP": rule_engine.Rule(
         "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
-        "DS.powerstate  == 'DSPowerState.LOW_POWER' and "
-        "SPFRX.operatingmode  == 'SPFRxOperatingMode.STANDBY'"
+        "DS.powerstate  == 'DSPowerState.LOW_POWER'"
     ),
-    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
-    "STARTUP": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STARTUP' or "
-        "SPFRX.operatingmode  == 'SPFRxOperatingMode.STARTUP'"
+    "STANDBY_FP": rule_engine.Rule(
+        "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
+        "DS.powerstate  == 'DSPowerState.FULL_POWER'"
     ),
 }
 
 DISH_MODE_RULES_SPFRX_IGNORED = {
-    "CONFIG": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.MOVING' "),
-    "MAINTENANCE": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STOW' and "
-        "SPF.operatingmode  == 'SPFOperatingMode.MAINTENANCE'"
-    ),
-    "OPERATE": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.POINT' and "
-        "SPF.operatingmode  == 'SPFOperatingMode.OPERATE'"
-    ),
-    "STANDBY_FP": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STANDBY' and "
-        "DS.powerstate  == 'DSPowerState.FULL_POWER' and "
-        "SPF.operatingmode  in "
-        " ['SPFOperatingMode.STANDBY_LP', "
-        "  'SPFOperatingMode.OPERATE']"
-    ),
-    "STANDBY_LP": rule_engine.Rule(
-        "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
-        "DS.powerstate  == 'DSPowerState.LOW_POWER' and "
-        "SPF.operatingmode  == 'SPFOperatingMode.STANDBY_LP'"
-    ),
-    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "STARTUP": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.STARTUP' or "
         "SPF.operatingmode  == 'SPFOperatingMode.STARTUP'"
     ),
+    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
+    "CONFIG": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.MOVING' "),
+    "OPERATE": rule_engine.Rule(
+        "DS.operatingmode  == 'DSOperatingMode.POINT' and "
+        "SPF.operatingmode  == 'SPFOperatingMode.OPERATE'"
+    ),
+    "STANDBY_LP": rule_engine.Rule(
+        "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
+        "DS.powerstate  == 'DSPowerState.LOW_POWER' and "
+        "SPF.operatingmode  != 'SPFOperatingMode.OPERATE'"
+    ),
+    "STANDBY_FP": rule_engine.Rule(
+        "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
+        "DS.powerstate  == 'DSPowerState.FULL_POWER'"
+    ),
 }
 
 DISH_MODE_RULES_DS_ONLY = {
+    "STARTUP": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STARTUP'"),
+    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "CONFIG": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.MOVING' "),
     "OPERATE": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.POINT'"),
-    "STANDBY_FP": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STANDBY' and "
-        "DS.powerstate  == 'DSPowerState.FULL_POWER'"
-    ),
     "STANDBY_LP": rule_engine.Rule(
-        "DS.operatingmode  == 'DSOperatingMode.STANDBY' and "
+        "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
         "DS.powerstate  == 'DSPowerState.LOW_POWER'"
     ),
-    "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
-    "STARTUP": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STARTUP'"),
+    "STANDBY_FP": rule_engine.Rule(
+        "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
+        "DS.powerstate  == 'DSPowerState.FULL_POWER'"
+    ),
 }
