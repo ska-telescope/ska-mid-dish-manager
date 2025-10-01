@@ -285,20 +285,20 @@ class CommandMap:
 
     def configure_band(
         self,
-        value: str,
+        data: str,
         task_abort_event=None,
         task_callback: Optional[Callable] = None,
     ):
         """Configure band on DS, SPFRx and B5DC."""
         try:
-            data = json.loads(value)
+            data_json = json.loads(data)
         except json.JSONDecodeError as err:
             self.logger.exception("Invalid json supplied.")
             task_callback(status=TaskStatus.FAILED, exception=err)
             return
 
         # Minimal input validation
-        receiver_band = data.get("receiver_band")
+        receiver_band = data_json.get("receiver_band")
         if receiver_band not in ["1", "2", "3", "4", "5", "5a", "5b"]:
             return (
                 TaskStatus.REJECTED,
@@ -308,7 +308,7 @@ class CommandMap:
         # configure_b5dc = False
         if receiver_band == "5b":
             # configure_b5dc = True
-            sub_band = data.get("sub_band")
+            sub_band = data_json.get("sub_band")
             if sub_band not in ["1", "2", "3"]:
                 return TaskStatus.REJECTED, "'sub_band' not in valid range ['1', '2', '3']"
 
