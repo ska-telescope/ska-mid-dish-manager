@@ -1771,7 +1771,7 @@ class DishManager(SKAController):
 
     @command(
         dtype_in="DevString",
-        doc_in="""The command accepts a JSON input containing data to configure the SPFRx.
+        doc_in="""The command accepts a JSON string containing data to configure the SPFRx.
         The JSON structure is as follows:
         {
             "receiver_band": <string>,
