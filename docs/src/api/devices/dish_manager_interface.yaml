@@ -419,40 +419,74 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: adminMode
-    - name: attenuationPolH
+    - name: attenuation1PolH/X
       data_format: SCALAR
       data_type: DevDouble
-      description: Indicates the SPFRx attenuation in the horizontal signal chain
-        for the configuredband.
+      description: "The current attenuation value for attenuator 1 on the\n      \
+        \      H/X polarization."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
-      label: attenuationPolH
+      label: attenuation1PolH/X
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ_WRITE
-      writable_attr_name: attenuationPolH
-    - name: attenuationPolV
+      writable: READ
+      writable_attr_name: None
+    - name: attenuation1PolV/Y
       data_format: SCALAR
       data_type: DevDouble
-      description: Indicates the SPFRx attenuation in the vertical signal chain for
-        the configuredband.
+      description: "The current attenuation value for attenuator 1 on the\n      \
+        \      V/Y polarization."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
-      label: attenuationPolV
+      label: attenuation1PolV/Y
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ_WRITE
-      writable_attr_name: attenuationPolV
+      writable: READ
+      writable_attr_name: None
+    - name: attenuation2PolH/X
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "The current attenuation value for the attenuator 2 on the\n  \
+        \          H/X polarization."
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: attenuation2PolH/X
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: attenuation2PolV/Y
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "The current attenuation value for the attenuator 2 on the\n  \
+        \          V/Y polarization."
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: attenuation2PolV/Y
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: autoWindStowEnabled
       data_format: SCALAR
       data_type: DevBoolean
@@ -1108,7 +1142,8 @@
     - name: dscCtrlState
       data_format: SCALAR
       data_type: DevEnum
-      description: DSC Control State - an aggregation of DSC Command Authority and DSC State
+      description: DSC Control State - an aggregation of DSC Command Authority and
+        DSC State
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -2067,7 +2102,6 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: WMSDeviceNames
     - name: WindGustThreshold
     - name: polled_cmd
 
