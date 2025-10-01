@@ -185,7 +185,7 @@ class ActionHandler:
             trigger_success()
             return
 
-        # In the error case that none of the fanned out commands fail but the action doesn't
+        # In the error case that none of the fanned out commands fail but the action doesn't finish
         # then we need to timeout. Create a timeout for the action which is longer than the longest
         # of the fanned out commands
         max_fanned_out_timeout = max([c.timeout_s for c in self.fanned_out_commands])
@@ -260,17 +260,17 @@ class ActionHandler:
                     trigger_success()
                     return
 
+            if self.waiting_callback:
+                self.waiting_callback()
+
+            task_abort_event.wait(timeout=1)
+
             for cmd in self.fanned_out_commands:
                 if hasattr(cmd, "device_component_manager"):
                     device_component_manager = getattr(cmd, "device_component_manager")
                     device_component_manager.update_state_from_monitored_attributes(
                         cmd.awaited_component_state.keys()
                     )
-
-            if self.waiting_callback:
-                self.waiting_callback()
-
-            task_abort_event.wait(timeout=1)
 
 
 # -------------------------
@@ -368,61 +368,6 @@ class SetStandbyLPModeAction(Action):
                     )
                     return
 
-        return self.handler.execute(task_callback, task_abort_event, completed_response_msg)
-
-
-class SetDSFullPowerModeAction(Action):
-    """Transition the dish to PowerState FULL_POWER."""
-
-    def __init__(
-        self,
-        logger: logging.Logger,
-        command_tracker: CommandTracker,
-        dish_manager_cm,
-        action_on_success: Optional["Action"] = None,
-        action_on_failure: Optional["Action"] = None,
-        waiting_callback: Callable = None,
-    ):
-        super().__init__(
-            logger,
-            command_tracker,
-            dish_manager_cm,
-            action_on_success,
-            action_on_failure,
-            waiting_callback,
-        )
-        # Action to set the power mode of DS to Full Power
-        dsc_power_limit = dish_manager_cm._component_state.get(
-            "dscpowerlimitkw", DSC_MIN_POWER_LIMIT_KW
-        )
-        ds_set_full_power_mode = FannedOutSlowCommand(
-            logger=self.logger,
-            device="DS",
-            command_name="SetPowerMode",
-            command_argument=[False, dsc_power_limit],
-            device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            awaited_component_state={"powerstate": DSPowerState.FULL_POWER},
-            timeout_s=10,  # TODO: Confirm timeout values
-            command_tracker=self.command_tracker,
-            is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
-        )
-        self.handler = ActionHandler(
-            self.logger,
-            "SetDSFullPowerMode",
-            [ds_set_full_power_mode],
-            # use _dish_manager_cm._component_state to pass the dict by reference
-            # _dish_manager_cm.component_state will use the tango base property which will do a
-            # deep copy
-            component_state=self.dish_manager_cm._component_state,
-            awaited_component_state={"dishmode": DishMode.STANDBY_FP},
-            action_on_success=self.action_on_success,
-            action_on_failure=self.action_on_failure,
-            waiting_callback=self.waiting_callback,
-        )
-
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
-    ):
         return self.handler.execute(task_callback, task_abort_event, completed_response_msg)
 
 

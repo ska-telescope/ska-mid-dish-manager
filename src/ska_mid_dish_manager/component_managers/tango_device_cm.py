@@ -198,7 +198,7 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             monitored_attribute_values = {}
             attributes_to_update = self._monitored_attributes
             if len(specific_attributes) > 0:
-                attributes_to_update = specific_attributes
+                attributes_to_update = tuple(specific_attributes)
 
             for monitored_attribute in attributes_to_update:
                 _monitored_attribute = monitored_attribute.lower()
