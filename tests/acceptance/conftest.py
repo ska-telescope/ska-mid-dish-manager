@@ -3,9 +3,9 @@
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import (
-    DSPowerState,
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
