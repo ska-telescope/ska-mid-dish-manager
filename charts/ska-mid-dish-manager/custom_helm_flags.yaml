@@ -1,7 +1,7 @@
 global:
   minikube: true
   operator: true
-  dishes: ["001", "111"]
+  dishes: ["001"]
 
 ska-mid-dish-ds-manager:
   enabled: true
@@ -30,6 +30,8 @@ ska-mid-dish-b5dc-proxy:
 
 ska-mid-dish-dcp-lib:
   enabled: true
+  b5dcSimulator:
+    enabled: true
 
 dishmanager:
   wms:

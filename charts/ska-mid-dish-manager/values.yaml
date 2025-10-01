@@ -130,3 +130,5 @@ ska-mid-dish-b5dc-proxy:
 
 ska-mid-dish-dcp-lib:
   enabled: true
+  b5dcSimulator:
+    enabled: true
