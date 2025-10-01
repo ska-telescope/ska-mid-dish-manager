@@ -16,7 +16,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
     DSPowerState,
-    FannedOutCommandStatus,
     IndexerPosition,
     PointingState,
     SPFOperatingMode,
@@ -224,7 +223,7 @@ class ActionHandler:
             # Handle timeout
             if time.time() - action_start_time > action_timeout_s:
                 command_statuses = {
-                    f"{sc.name} ({sc.id}) ({sc.failed})": sc.status
+                    f"{sc.device} {sc.name} ({sc.id})": sc.status
                     for sc in self.fanned_out_commands
                 }
                 message = (
@@ -240,7 +239,7 @@ class ActionHandler:
             # Handle any failed fanned out command
             if any([cmd.failed for cmd in self.fanned_out_commands]):
                 command_statuses = {
-                    f"{sc.name} ({sc.id}) ({sc.failed})": sc.status
+                    f"{sc.device} {sc.name} ({sc.id})": sc.status
                     for sc in self.fanned_out_commands
                 }
                 message = f"Action '{self.name}' failed. Fanned out commands: {command_statuses}"
@@ -248,12 +247,7 @@ class ActionHandler:
                 return
 
             # Check if all commands have succeeded
-            if all(
-                [
-                    cmd.status == FannedOutCommandStatus.COMPLETED
-                    for cmd in self.fanned_out_commands
-                ]
-            ):
+            if all([cmd.successful for cmd in self.fanned_out_commands]):
                 if check_component_state_matches_awaited(
                     self.component_state, self.awaited_component_state
                 ):
@@ -333,7 +327,8 @@ class SetStandbyLPModeAction(Action):
             command_tracker=self.command_tracker,
             command_argument=None,
             awaited_component_state={
-                "operatingmode": DSOperatingMode.STANDBY, "powerstate": DSPowerState.LOW_POWER
+                "operatingmode": DSOperatingMode.STANDBY,
+                "powerstate": DSPowerState.LOW_POWER,
             },
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )

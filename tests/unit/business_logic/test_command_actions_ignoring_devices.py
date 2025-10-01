@@ -11,6 +11,7 @@ from ska_mid_dish_manager.models.command_actions import SetStandbyLPModeAction
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -26,7 +27,12 @@ class TestCommandActionsIgnoringDevices:
     def setup_method(self):
         """Set up context."""
         sub_component_managers_mock = {
-            "DS": mock.MagicMock(_component_state={"operatingmode": DSOperatingMode.STANDBY}),
+            "DS": mock.MagicMock(
+                _component_state={
+                    "operatingmode": DSOperatingMode.STANDBY,
+                    "powerstate": DSPowerState.LOW_POWER,
+                }
+            ),
             "SPF": mock.MagicMock(_component_state={"operatingmode": SPFOperatingMode.STANDBY_LP}),
             "SPFRX": mock.MagicMock(
                 _component_state={

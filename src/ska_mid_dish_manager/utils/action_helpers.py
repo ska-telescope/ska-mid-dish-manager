@@ -6,6 +6,8 @@ import enum
 def check_component_state_matches_awaited(component_state: dict, awaited_state: dict) -> bool:
     """Check if the given component state matches the awaited state."""
     for awaited_attr, awaited_attr_value in awaited_state.items():
+        if awaited_attr not in component_state:
+            return False
         component_state_attr_value = component_state[awaited_attr]
         if component_state_attr_value != awaited_attr_value:
             return False

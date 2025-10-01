@@ -112,12 +112,17 @@ class FannedOutCommand:
     @property
     def failed(self) -> bool:
         """Check if the fanned out command has failed."""
-        return self.status in [FannedOutCommandStatus.TIMED_OUT, FannedOutCommandStatus.FAILED]
+        return self.status in (FannedOutCommandStatus.TIMED_OUT, FannedOutCommandStatus.FAILED)
+
+    @property
+    def successful(self) -> bool:
+        """Check if the fanned out command has failed."""
+        return self.status in (FannedOutCommandStatus.COMPLETED, FannedOutCommandStatus.IGNORED)
 
     @property
     def finished(self) -> bool:
         """Check if the fanned out command has finished."""
-        return self.failed or self.status == FannedOutCommandStatus.COMPLETED
+        return self.failed or self.successful
 
     def report_progress(self, task_callback: Callable) -> None:
         """Report the progress of fanned out command."""
@@ -203,6 +208,7 @@ class FannedOutSlowCommand(FannedOutCommand):
             task_callback(
                 progress=f"{self.device} device is disabled. {self.command_name} call ignored"
             )
+            self._status = FannedOutCommandStatus.IGNORED
             return (None, None)
 
         command = SubmittedSlowCommand(
@@ -239,13 +245,6 @@ class FannedOutSlowCommand(FannedOutCommand):
                     )
                 )
         return response, command_id
-
-    @property
-    def status(self) -> FannedOutCommandStatus:
-        """Returns the status of the fanned out command."""
-        if self.is_device_ignored:
-            self._status = FannedOutCommandStatus.COMPLETED
-        return super().status
 
     def _update_status(self, task_callback: Callable) -> None:
         if self._status == FannedOutCommandStatus.RUNNING:

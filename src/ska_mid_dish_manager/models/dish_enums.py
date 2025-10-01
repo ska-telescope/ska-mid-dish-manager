@@ -190,3 +190,4 @@ class FannedOutCommandStatus(enum.IntEnum):
     COMPLETED = 2
     TIMED_OUT = 3
     FAILED = 4
+    IGNORED = 5
