@@ -19,6 +19,15 @@ ska-mid-dish-simulators:
   dsOpcuaSimulator:
     enabled: true
 
+  # WARNING: only for development testing with a custom image
+  # Comment out to use the official released image from the helm chart
+  dishsimulators:
+    image:
+      registry: registry.gitlab.com/ska-telescope/ska-mid-dish-simulators
+      image: ska-mid-dish-simulators
+      tag: 5.3.0-dev.c10e00a89
+      pullPolicy: IfNotPresent
+
 ska-mid-wms:
   enabled: true
 
