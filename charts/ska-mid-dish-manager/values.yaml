@@ -78,7 +78,12 @@ dishmanager:
     MeanWindSpeedThreshold: "11.1"
     # Wind gust in m/s
     WindGustThreshold: "16.9"
-
+  
+  b5dcproxy: 
+    fqdn: ""
+    domain_name: "mid-dish"
+    family_name: "b5dc-manager"
+  
   watchdog:
     timeout_seconds: "0.0"  # Default is 0.0 (<= 0 means watchdog timer is disabled)
 
@@ -112,3 +117,16 @@ ska-mid-wms:
       modbus_server_ports: ["1502"]
   simulator:
     enabled: True
+
+ska-mid-dish-b5dc-proxy:
+  enabled: true
+  ska-tango-base:
+    enabled: false
+    itango:
+      enabled: false
+  deviceServers:
+     b5dc-proxy:
+      enabled: true
+
+ska-mid-dish-dcp-lib:
+  enabled: true

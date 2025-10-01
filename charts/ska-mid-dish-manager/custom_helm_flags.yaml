@@ -22,6 +22,15 @@ ska-mid-dish-simulators:
 ska-mid-wms:
   enabled: true
 
+ska-mid-dish-b5dc-proxy:
+  enabled: true
+  deviceServers:
+    b5dc-proxy:
+      enabled: true
+
+ska-mid-dish-dcp-lib:
+  enabled: true
+
 dishmanager:
   wms:
     station_ids: ["1"]

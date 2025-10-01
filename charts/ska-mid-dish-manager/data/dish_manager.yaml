@@ -51,6 +51,13 @@ server:
                     {{- else }}
                     - "{{ $.Values.dishmanager.spfrx.domain_name }}/{{ $.Values.dishmanager.spfrx.family_name }}/SKA{{ printf "%01s" . }}"
                     {{- end }}
+                - name: "B5DCDeviceFqdn"
+                  values:
+                    {{- if $.Values.dishmanager.b5dcproxy.fqdn }}
+                    - "{{ $.Values.dishmanager.b5dcproxy.fqdn }}"
+                    {{- else }}
+                    - "{{ $.Values.dishmanager.b5dcproxy.domain_name }}/{{ $.Values.dishmanager.b5dcproxy.family_name }}/SKA{{ printf "%01s" . }}"
+                    {{- end }}
                 - name: "DishId"
                   values:
                     - "SKA{{ printf "%01s" . }}"
