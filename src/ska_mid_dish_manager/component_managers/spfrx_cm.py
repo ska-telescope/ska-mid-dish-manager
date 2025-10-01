@@ -105,8 +105,6 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "noisediodemode",
             "periodicnoisediodepars",
             "pseudorandomnoisediodepars",
-            "spectralinversion",  # Get confirmation on whether this
-            # attribute needs to be exposed at DM level
             # "adminMode", TODO: Wait for SPFRx to implement adminMode
             "attenuation1polh/x",
             "attenuation1polv/y",
