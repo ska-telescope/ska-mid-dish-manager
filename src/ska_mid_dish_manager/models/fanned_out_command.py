@@ -92,7 +92,7 @@ class FannedOutCommand:
         """Get the status of the fanned out command."""
         return self._status
 
-    def _update_status(self) -> None:
+    def _update_status(self, task_callback: Callable) -> None:
         if self._status == FannedOutCommandStatus.RUNNING:
             # timeout
             if time.time() - self.start_time > self.timeout_s:
@@ -102,6 +102,12 @@ class FannedOutCommand:
                 self.component_state, self.awaited_component_state
             ):
                 self._status = FannedOutCommandStatus.COMPLETED
+        if self._status in [FannedOutCommandStatus.FAILED, FannedOutCommandStatus.TIMED_OUT]:
+            task_callback(
+                progress=(
+                    f"{self.device} device failed executing {self.name} command with ID {self.id}"
+                )
+            )
 
     @property
     def failed(self) -> bool:
@@ -115,7 +121,7 @@ class FannedOutCommand:
 
     def report_progress(self, task_callback: Callable) -> None:
         """Report the progress of fanned out command."""
-        self._update_status()
+        self._update_status(task_callback)
         current_comp_state = dict(self.component_state)
 
         # Awaited component state updates
@@ -212,7 +218,7 @@ class FannedOutSlowCommand(FannedOutCommand):
         task_callback(progress=f"{self.command_name} called on {self.device}, ID {command_id}")
 
         # fail the command immediately, if the subservient device fails
-        if response == TaskStatus.FAILED:
+        if response in [TaskStatus.FAILED, TaskStatus.REJECTED]:
             raise RuntimeError(command_id)
 
         if self.awaited_component_state is not None:
@@ -241,14 +247,9 @@ class FannedOutSlowCommand(FannedOutCommand):
             self._status = FannedOutCommandStatus.COMPLETED
         return super().status
 
-    @property
-    def failed(self) -> None:
-        """Check the status of the fanned out command on the subservient device."""
-        if super().failed:
-            return True
-
-        if self.id is not None:
-            current_status = self.command_tracker.get_command_status(self.id)
-            if current_status == TaskStatus.FAILED:
-                return True
-        return False
+    def _update_status(self, task_callback: Callable) -> None:
+        if self._status == FannedOutCommandStatus.RUNNING:
+            current_slow_command_status = self.command_tracker.get_command_status(self.id)
+            if current_slow_command_status in [TaskStatus.FAILED, TaskStatus.REJECTED]:
+                self._status = FannedOutCommandStatus.FAILED
+        super()._update_status(task_callback)
