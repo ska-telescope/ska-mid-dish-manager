@@ -36,7 +36,7 @@ def test_set_standbyfp_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"SetStandbyMode called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS operatingmode, powerstate change to STANDBY, LOW_POWER"},
+        {"progress": "Awaiting DS operatingmode change to STANDBY"},
         {"progress": f"SetPowerMode called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting DS powerstate change to FULL_POWER"},
         {"progress": "Commands: mocked sub-device-command-ids"},
