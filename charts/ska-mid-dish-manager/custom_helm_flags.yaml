@@ -20,12 +20,12 @@ ska-mid-dish-simulators:
     enabled: true
 
   # Test development simulator image
-  dishsimulators:
-    image:
-      registry: registry.gitlab.com/ska-telescope/ska-mid-dish-simulators
-      image: ska-mid-dish-simulators
-      tag: 5.2.0-dev.c2a1be0b6
-      pullPolicy: IfNotPresent
+  # dishsimulators:
+  #   image:
+  #     registry: registry.gitlab.com/ska-telescope/ska-mid-dish-simulators
+  #     image: ska-mid-dish-simulators
+  #     tag: 5.2.0-dev.c2a1be0b6
+  #     pullPolicy: IfNotPresent
 
 ska-mid-wms:
   enabled: true
