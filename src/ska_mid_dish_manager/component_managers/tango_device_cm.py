@@ -194,6 +194,10 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         monitored attributes on the device and the component state.
         """
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
+        # Handle case where _dp_factory_signal is set and the device proxy could be none
+        # (e.g. device is ignored)
+        if device_proxy is None:
+            return
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
             attributes_to_update = self._monitored_attributes

@@ -260,11 +260,12 @@ class ActionHandler:
             task_abort_event.wait(timeout=1)
 
             for cmd in self.fanned_out_commands:
-                if hasattr(cmd, "device_component_manager"):
-                    device_component_manager = getattr(cmd, "device_component_manager")
-                    device_component_manager.update_state_from_monitored_attributes(
-                        cmd.awaited_component_state.keys()
-                    )
+                if not cmd.finished:
+                    if hasattr(cmd, "device_component_manager"):
+                        device_component_manager = getattr(cmd, "device_component_manager")
+                        device_component_manager.update_state_from_monitored_attributes(
+                            cmd.awaited_component_state.keys()
+                        )
 
 
 # -------------------------
