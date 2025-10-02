@@ -126,8 +126,6 @@ class Abort:
             )
             track_stop_task_cb = partial(task_cb, track_stop_command_id)
             self._stop_dish(task_abort_event, track_stop_task_cb)
-            # send the last reported achieved pointing in load mode new
-            self._reset_track_table(task_abort_event)
 
             # clear the scan id
             end_scan_command_id = self._command_tracker.new_command(
@@ -138,6 +136,8 @@ class Abort:
             # pylint: disable=protected-access
             self._component_manager._end_scan(task_abort_event, end_scan_task_cb)
 
+        # reset the track table
+        self._reset_track_table(task_abort_event)
         # go to STANDBY-FP
         standby_fp_command_id = self._command_tracker.new_command(
             "abort-sequence:standbyfp", completed_callback=None

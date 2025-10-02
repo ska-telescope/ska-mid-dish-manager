@@ -1082,7 +1082,6 @@ class DishManager(SKAController):
             sequence_length, table, self._track_table_load_mode
         )
 
-        task_status = TaskStatus(task_status)
         if task_status == TaskStatus.FAILED:
             raise RuntimeError(f"Write to programTrackTable failed: {msg}")
         self._program_track_table = table

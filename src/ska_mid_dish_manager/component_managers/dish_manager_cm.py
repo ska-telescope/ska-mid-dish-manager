@@ -340,7 +340,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Calculating TAI offset manually.")
             return get_current_tai_timestamp_from_unix_time()
 
-        if task_status != TaskStatus.FAILED:
+        if task_status == TaskStatus.FAILED:
             self.logger.debug("Calculating TAI offset manually.")
             return get_current_tai_timestamp_from_unix_time()
         return float(msg)

@@ -280,6 +280,11 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._event_consumer_thread.name = f"{formatted_fqdn}.event_consumer_thread"
         self._event_consumer_thread.start()
 
+    def _interpret_command_reply(self, command_name: str, reply: Any) -> Tuple[TaskStatus, Any]:
+        """Default interpretation: return IN_PROGRESS and the reply."""
+        reply = reply or f"{command_name} successfully executed"
+        return TaskStatus.IN_PROGRESS, reply
+
     @check_communicating
     def execute_command(self, command_name: str, command_arg: Any) -> Tuple[TaskStatus, Any]:
         """Check the connection and execute the command on the Tango device."""
@@ -305,8 +310,11 @@ class TangoDeviceComponentManager(BaseComponentManager):
                     err_description,
                 )
                 return TaskStatus.FAILED, err_description
-        reply = reply or f"{command_name} successfully executed"
-        return TaskStatus.IN_PROGRESS, reply
+
+        if not isinstance(reply, (list, tuple)):
+            reply = reply or f"{command_name} successfully executed"
+            return TaskStatus.IN_PROGRESS, reply
+        return self._interpret_command_reply(command_name, reply)
 
     @check_communicating
     def read_attribute_value(self, attribute_name: str) -> Any:
