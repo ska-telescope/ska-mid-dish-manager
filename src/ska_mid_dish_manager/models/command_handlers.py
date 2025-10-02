@@ -1,14 +1,13 @@
 """Abstracts all the logic for executing commands on the device."""
 
 import logging
-import time
 from functools import partial
 from threading import Event
 from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState, TrackTableLoadMode
+from ska_mid_dish_manager.models.dish_enums import DishMode, TrackTableLoadMode
 
 
 class Abort:
@@ -34,7 +33,7 @@ class Abort:
 
     def _stop_dish(self, task_abort_event: Event, task_callback: Optional[Callable] = None):
         if task_abort_event.is_set():
-            self.logger.debug("abort-sequence: failed to stop dish slew")
+            self.logger.debug("abort-sequence: failed to stop dish")
             if task_callback:
                 task_callback(status=TaskStatus.FAILED)
             return
@@ -48,22 +47,6 @@ class Abort:
             task_abort_event.set()
             self.logger.error("abort-sequence: failed to stop dish: %s", str(exc))
 
-    def _wait_for_dish_to_settle(self, task_abort_event: Event) -> None:
-        self.logger.debug("abort-sequence: waiting for the dish to settle")
-        start_time = time.time()
-        timeout = 30  # seconds
-        while time.time() - start_time <= timeout:
-            current_pointing_state = self._component_manager.component_state.get("pointingstate")
-            if current_pointing_state == PointingState.READY:
-                self.logger.debug(
-                    "abort-sequence: dish has stopped moving "
-                    "and is pointing close to the reset point"
-                )
-                break
-            task_abort_event.wait(1.0)  # Avoid busy waiting
-        else:
-            task_abort_event.set()
-
     def _reset_track_table(self, task_abort_event: Event) -> None:
         """Writes the last achievedPointing back to the trackTable in loadmode NEW."""
         if task_abort_event.is_set():
@@ -76,8 +59,8 @@ class Abort:
         timestamp = (
             self._component_manager.get_current_tai_offset_from_dsc_with_manual_fallback() + 5
         )  # add 5 seconds lead time
-        # reset_point = [timestamp, 0, 0] * 5
-        reset_point = [timestamp, reset_point[1], reset_point[2]]
+        # TODO can this just be zeros i.e. reset_point = [timestamp, 0, 0] * 5
+        reset_point = [timestamp, reset_point[1], reset_point[2]] * 5
         sequence_length = 1
         # load_mode = TrackTableLoadMode.RESET
         load_mode = TrackTableLoadMode.NEW
@@ -85,14 +68,7 @@ class Abort:
         task_status, msg = self._component_manager.track_load_table(
             sequence_length, reset_point, load_mode
         )
-        if task_status == TaskStatus.IN_PROGRESS:
-            self._wait_for_dish_to_settle(task_abort_event)
-            if task_abort_event.is_set():
-                self.logger.debug(
-                    "abort-sequence: timeout reached waiting for dish to settle at reset point %s",
-                    reset_point,
-                )
-        else:
+        if task_status == TaskStatus.FAILED:
             task_abort_event.set()
             self.logger.debug(
                 "abort-sequence: failed to reset programTrackTable with message: %s",
@@ -114,7 +90,7 @@ class Abort:
 
         sub_component_mgrs = self._component_manager.get_active_sub_component_managers()
         for component_manager in sub_component_mgrs.values():
-            component_manager.update_state_from_monitored_attributes(wait_event=task_abort_event)
+            component_manager.update_state_from_monitored_attributes()
 
         # only force the transition if the dish is not in FP already
         current_dish_mode = self._component_manager.component_state.get("dishmode")
@@ -145,16 +121,13 @@ class Abort:
         task_cb = self._command_tracker.update_command_info
 
         if self._component_manager.is_dish_moving():
-            pointing_state = self._component_manager.component_state.get("pointingstate")
-            if pointing_state in (PointingState.SLEW, PointingState.TRACK):
-                track_stop_command_id = self._command_tracker.new_command(
-                    "abort-sequence:trackstop", completed_callback=None
-                )
-                track_stop_task_cb = partial(task_cb, track_stop_command_id)
-                self._stop_dish(task_abort_event, track_stop_task_cb)
-            else:
-                # send the last reported achieved pointing in load mode new
-                self._reset_track_table(task_abort_event)
+            track_stop_command_id = self._command_tracker.new_command(
+                "abort-sequence:trackstop", completed_callback=None
+            )
+            track_stop_task_cb = partial(task_cb, track_stop_command_id)
+            self._stop_dish(task_abort_event, track_stop_task_cb)
+            # send the last reported achieved pointing in load mode new
+            self._reset_track_table(task_abort_event)
 
             # clear the scan id
             end_scan_command_id = self._command_tracker.new_command(
