@@ -446,13 +446,13 @@ class DishManager(SKAController):
                 "rfcmplllock": "rfcmPllLock",
                 "rfcmhattenuation": "rfcmHAttenuation",
                 "rfcmvattenuation": "rfcmVAttenuation",
-                "rfcmphotodiodeain0": "clkPhotodiodeCurrent",
-                "rfcmrfinhain1": "hPolRfPowerIn",
-                "rfcmrfinvain2": "vPolRfPowerIn",
-                "rfcmifouthain3": "hPolRfPowerOut",
-                "rfcmifoutvain4": "vPolRfPowerOut",
-                "rfcmrftempain5": "rfTemperature",
-                "rfcmpsupcbtempain7": "rfcmPsuPcbTemperature",
+                "clkphotodiodecurrent": "clkPhotodiodeCurrent",
+                "hpolrfpowerin": "hPolRfPowerIn",
+                "vPolRfPowerIn": "vPolRfPowerIn",
+                "hPolRfPowerOut": "hPolRfPowerOut",
+                "vPolRfPowerOut": "vPolRfPowerOut",
+                "rfTemperature": "rfTemperature",
+                "rfcmPsuPcbTemperature": "rfcmPsuPcbTemperature",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1581,7 +1581,7 @@ class DishManager(SKAController):
     )
     def rfcmFrequency(self) -> float:
         """Reflect the PLL output frequency in GHz."""
-        return self.component_manager.component_state.get("rfcmfrequency")
+        return self.component_manager.component_state.get("rfcmfrequency",0.0)
 
     @rfcmFrequency.write
     def rfcmFrequency(self, value: float):
@@ -1635,7 +1635,7 @@ class DishManager(SKAController):
     )
     def clkPhotodiodeCurrent(self):
         """Return the photo diode current."""
-        return self.component_manager.component_state.get("rfcmphotodiodeain0", 0.0)
+        return self.component_manager.component_state.get("clkphotodiodecurrent", 0.0)
 
     @attribute(
         dtype=float,
@@ -1644,7 +1644,7 @@ class DishManager(SKAController):
     )
     def hPolRfPowerIn(self):
         """Return the hPolRfPowerIn."""
-        return self.component_manager.component_state.get("rfcmrfinhain1", 0.0)
+        return self.component_manager.component_state.get("hpolrfpowerin", 0.0)
 
     @attribute(
         dtype=float,
@@ -1653,7 +1653,7 @@ class DishManager(SKAController):
     )
     def vPolRfPowerIn(self):
         """Return the vPolRfPowerIn."""
-        return self.component_manager.component_state.get("rfcmrfinvain2", 0.0)
+        return self.component_manager.component_state.get("vpolrfpowerin", 0.0)
 
     @attribute(
         dtype=float,
@@ -1662,7 +1662,7 @@ class DishManager(SKAController):
     )
     def hPolRfPowerOut(self):
         """Return the hPolRfPowerOut."""
-        return self.component_manager.component_state.get("rfcmifouthain3", 0.0)
+        return self.component_manager.component_state.get("hpolrfpowerout", 0.0)
 
     @attribute(
         dtype=float,
@@ -1671,7 +1671,7 @@ class DishManager(SKAController):
     )
     def vPolRfPowerOut(self):
         """Return the vPolRfPowerOut sensor value."""
-        return self.component_manager.component_state.get("rfcmifoutvain4", 0.0)
+        return self.component_manager.component_state.get("vpolrfpowerout", 0.0)
 
     @attribute(
         dtype=float,
@@ -1680,7 +1680,7 @@ class DishManager(SKAController):
     )
     def rfTemperature(self):
         """Return the of the RFCM RF PCB in deg."""
-        return self.component_manager.component_state.get("rfcmrftempain5", 0.0)
+        return self.component_manager.component_state.get("rftemperature", 0.0)
 
     @attribute(
         dtype=float,
@@ -1689,7 +1689,7 @@ class DishManager(SKAController):
     )
     def rfcmPsuPcbTemperature(self):
         """Return the temperature of the RFCM PSU PCB in deg."""
-        return self.component_manager.component_state.get("rfcmpsupcbtempain7", 0.0)
+        return self.component_manager.component_state.get("rfcmpsupcbtemperature", 0.0)
 
     # --------
     # Commands

@@ -6,7 +6,6 @@ from typing import Any, Callable, Optional
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
-    B5dcFrequency,
     B5dcPllState,
 )
 
@@ -51,7 +50,6 @@ class B5DCComponentManager(TangoDeviceComponentManager):
     def _update_component_state(self, **kwargs) -> None:  # type: ignore
         enum_conversion = {
             "rfcmpllLock": B5dcPllState,
-            "rfcmfrequency": B5dcFrequency,
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:

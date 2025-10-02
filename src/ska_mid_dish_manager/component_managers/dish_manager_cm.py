@@ -145,15 +145,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             windgust=-1,
             lastcommandedmode=("0.0", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
-            rfcmpllLock=B5dcPllState.NOT_LOCKED,
-            rfcmHAttenuation=0.0,
-            rfcmVAttenuation=0.0,
-            rfTemperature=0.0,
-            rfcmPsuPcbTemperature=0.0,
-            hPolRfPowerIn=0.0,
-            hPolRfPowerOut=0.0,
-            vPolRfPowerIn=0.0,
-            vPolRfPowerOut=0.0,
+            rfcmplllock=B5dcPllState.NOT_LOCKED,
+            rfcmhattenuation=0.0,
+            rfcmvattenuation=0.0,
+            rftemperature=0.0,
+            rfcmpsupcbtemperature=0.0,
+            hpolrfpowerin=0.0,
+            hpolrfpowerout=0.0,
+            vpolrfpowerin=0.0,
+            vpolrfpowerout=0.0,
+            rfcmfrequency=0.0,
             **kwargs,
         )
         self.logger = logger
@@ -297,6 +298,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 hPolRfPowerOut=0.0,
                 vPolRfPowerIn=0.0,
                 vPolRfPowerOut=0.0,
+                rfcmFrequency=0.0,
             ),
         }
 
@@ -330,6 +332,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "rfcmPllLock",
                 "rfcmHAttenuation",
                 "rfcmVAttenuation",
+                "clkPhotodiodeCurrent",
                 "rfcmFrequency",
                 "rfTemperature",
                 "rfcmPsuPcbTemperature",
@@ -619,6 +622,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
+        b5dc_component_state = self.sub_component_managers["B5DC"].component_state
 
         # Only log non pointing changes
         pointing_related_attrs = set(
