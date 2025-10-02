@@ -275,7 +275,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
             ],
         )
 
-        self._event_consumer_thread.name = "event_consumer_thread"
+        # e.g. mid-dish/simulator-spfc/SKA001 -> mid_dish.simulator_spfc.SKA001
+        formatted_fqdn = self._tango_device_fqdn.replace("/", ".").replace("-", "_")
+        self._event_consumer_thread.name = f"{formatted_fqdn}.event_consumer_thread"
         self._event_consumer_thread.start()
 
     @check_communicating

@@ -219,7 +219,11 @@ class TangoDeviceMonitor:
             ],
         )
 
-        self._attribute_subscription_thread.name = "attribute_subscription_thread"
+        # e.g. mid-dish/simulator-spfc/SKA001 -> mid_dish.simulator_spfc.SKA001
+        formatted_fqdn = self._tango_fqdn.replace("/", ".").replace("-", "_")
+        self._attribute_subscription_thread.name = (
+            f"{formatted_fqdn}.attribute_subscription_thread"
+        )
         # monitor all attributes in a thread
         self._attribute_subscription_thread.start()
 
