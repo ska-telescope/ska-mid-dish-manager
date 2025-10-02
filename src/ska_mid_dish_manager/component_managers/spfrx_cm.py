@@ -108,20 +108,20 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         )
         self._use_spfrx_legacy_icd = kwargs.pop("use_spfrx_legacy_icd", False)
         if self._use_spfrx_legacy_icd:
-            monitored_attr_names += ("attenuationpolh", "attenuationpolv")
+            monitored_attr_names += ("attenuationpolh", "attenuationpolv")  # type: ignore[assignment]
             _quality_monitored_attributes = (
                 "attenuationpolh",
                 "attenuationpolv",
                 "noisediodemode",
             )
         else:
-            monitored_attr_names += (
+            monitored_attr_names += (  # type: ignore[assignment]
                 "attenuation1polh/x",
                 "attenuation1polv/y",
                 "attenuation2polh/x",
                 "attenuation2polv/y",
             )
-            _quality_monitored_attributes = (
+            _quality_monitored_attributes = (  # type: ignore[assignment]
                 "attenuation1polh/x",
                 "attenuation1polv/y",
                 "attenuation2polh/x",
