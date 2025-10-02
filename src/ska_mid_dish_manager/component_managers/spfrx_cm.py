@@ -105,12 +105,29 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "noisediodemode",
             "periodicnoisediodepars",
             "pseudorandomnoisediodepars",
-            # "adminMode", TODO: Wait for SPFRx to implement adminMode
-            "attenuation1polh/x",
-            "attenuation1polv/y",
-            "attenuation2polh/x",
-            "attenuation2polv/y",
         )
+        self._use_spfrx_legacy_icd = kwargs.pop("use_spfrx_legacy_icd", False)
+        if self._use_spfrx_legacy_icd:
+            monitored_attr_names += ("attenuationpolh", "attenuationpolv")
+            _quality_monitored_attributes = (
+                "attenuationpolh",
+                "attenuationpolv",
+                "noisediodemode",
+            )
+        else:
+            monitored_attr_names += (
+                "attenuation1polh/x",
+                "attenuation1polv/y",
+                "attenuation2polh/x",
+                "attenuation2polv/y",
+            )
+            _quality_monitored_attributes = (
+                "attenuation1polh/x",
+                "attenuation1polv/y",
+                "attenuation2polh/x",
+                "attenuation2polv/y",
+                "noisediodemode",
+            )
 
         super().__init__(
             tango_device_fqdn,
@@ -119,13 +136,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
-            quality_monitored_attributes=(
-                "attenuation1polh/x",
-                "attenuation1polv/y",
-                "attenuation2polh/x",
-                "attenuation2polv/y",
-                "noisediodemode",
-            ),
+            quality_monitored_attributes=_quality_monitored_attributes,
             **kwargs,
         )
         self._monitor_ping_thread: Optional[MonitorPing] = None

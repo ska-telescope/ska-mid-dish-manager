@@ -88,14 +88,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         default_wind_gust_threshold = kwargs.pop(
             "default_wind_gust_threshold", WIND_GUST_THRESHOLD_MPS
         )
+        self._use_spfrx_legacy_icd = kwargs.pop("use_spfrx_legacy_icd", False)
 
-        for key in [
-            "attenuation1polh/x",
-            "attenuation1polv/y",
-            "attenuation2polh/x",
-            "attenuation2polv/y",
-        ]:
-            kwargs[key] = 0.0
+        if self._use_spfrx_legacy_icd:
+            for key in ["attenuationpolh", "attenuationpolv"]:
+                kwargs[key] = 0.0
+        else:
+            for key in [
+                "attenuation1polh/x",
+                "attenuation1polv/y",
+                "attenuation2polh/x",
+                "attenuation2polv/y",
+            ]:
+                kwargs[key] = 0.0
+
         super().__init__(
             logger,
             *args,
@@ -176,10 +182,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "operatingmode": SPFRxOperatingMode.UNKNOWN,
             "configuredband": Band.NONE,
             "capturingdata": False,
-            "attenuation1polh/x": 0.0,
-            "attenuation1polv/y": 0.0,
-            "attenuation2polh/x": 0.0,
-            "attenuation2polv/y": 0.0,
             "kvalue": 0,
             "b1capabilitystate": SPFRxCapabilityStates.UNKNOWN,
             "b2capabilitystate": SPFRxCapabilityStates.UNKNOWN,
@@ -198,7 +200,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._sub_device_component_state_changed, DishDevice.SPFRX
             ),
             "quality_state_callback": self._quality_state_callback,
+            "use_spfrx_legacy_icd": self._use_spfrx_legacy_icd,
         }
+        if self._use_spfrx_legacy_icd:
+            spfrx_kwargs["attenuationpolh"] = 0.0
+            spfrx_kwargs["attenuationpolv"] = 0.0
+        else:
+            spfrx_kwargs["attenuation1polh/x"] = 0.0
+            spfrx_kwargs["attenuation1polv/y"] = 0.0
+            spfrx_kwargs["attenuation2polh/x"] = 0.0
+            spfrx_kwargs["attenuation2polv/y"] = 0.0
 
         # SPF has to go first
         self.sub_component_managers = {
@@ -731,7 +742,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_component_state["bandinfocus"] = band_in_focus
 
         # spfrx attenuation
-        if (
+        if self._use_spfrx_legacy_icd:
+            if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
+                attenuation = {
+                    "attenuationpolv": spfrx_component_state["attenuationpolv"],
+                    "attenuationpolh": spfrx_component_state["attenuationpolh"],
+                }
+                self.logger.debug(
+                    (
+                        "Updating dish manager attenuationpolv and attenuationpolh "
+                        "with: SPFRX attenuation [%s]"
+                    ),
+                    attenuation,
+                )
+                self._update_component_state(**attenuation)
+        elif (
             "attenuation1polh/x" in kwargs
             or "attenuation1polv/y" in kwargs
             or "attenuation2polh/x" in kwargs

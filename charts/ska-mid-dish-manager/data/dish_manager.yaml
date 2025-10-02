@@ -68,6 +68,9 @@ server:
                     {{- range $.Values.dishmanager.wms.station_ids }}
                     - "ska-mid/weather-monitoring/{{ . }}"
                     {{- end }}
+                - name: "UseSPFRxLegacyICD"
+                  values:
+                    - "{{ $.Values.dishmanager.spfrx.useLegacy | default false }}"
               attribute_properties:
                 - attribute: "ignoreSpf"
                   properties:
