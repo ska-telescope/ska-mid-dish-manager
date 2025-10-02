@@ -57,7 +57,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
         "DishManager.SetStandbyLPMode failed: "
         "SPF.SetStandbyLPMode, SPFRX.SetStandbyMode failed to execute"
     )
-    progress_event_store.wait_for_progress_update(progress_msg, timeout=20)
+    progress_event_store.wait_for_progress_update(progress_msg, timeout=5)
 
     result_event_store = result_event_store.get_queue_values(timeout=5)
     # e.g ['[0, "SetStandbyFPMode completed"]', '[3, "SetStandbyLPMode failed"]', ...]

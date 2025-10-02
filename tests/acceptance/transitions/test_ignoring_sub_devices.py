@@ -51,7 +51,7 @@ def test_ignoring_spf(
     main_event_store.wait_for_value(Band.B1, timeout=8)
 
     dish_manager_proxy.SetOperateMode()
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=8)
+    main_event_store.wait_for_value(DishMode.OPERATE)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -63,7 +63,7 @@ def test_ignoring_spf(
     ]
 
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=30
+        expected_progress_updates[-1], timeout=6
     )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
@@ -102,7 +102,7 @@ def test_ignoring_spfrx(
     ]
 
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=30
+        expected_progress_updates[-1], timeout=6
     )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
@@ -141,7 +141,7 @@ def test_ignoring_all(
     ]
 
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=30
+        expected_progress_updates[-1], timeout=6
     )
 
     events_string = "".join([str(event.attr_value.value) for event in events])

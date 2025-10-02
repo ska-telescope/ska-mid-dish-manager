@@ -17,7 +17,7 @@ def toggle_skip_attributes(event_store_class, spf_device_proxy, dish_manager_pro
     dish_manager_proxy.SetStandbyLPMode()
     dish_mode_event_store = event_store_class()
     sub = setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_event_store})
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=30)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=20)
     remove_subscriptions(sub)
     # Set a flag on SPF to skip attribute updates.
     # This is useful to ensure that the long running command
@@ -54,9 +54,7 @@ def test_abort_commands(
     [[_], [fp_unique_id]] = dish_manager_proxy.SetStandbyFPMode()
 
     # Check that Dish Manager is waiting to transition to FP
-    progress_event_store.wait_for_progress_update(
-        "Awaiting dishmode change to STANDBY_FP", timeout=30
-    )
+    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
     # Check that the Dish Manager did not transition to FP
     dish_mode_event_store.wait_for_value(DishMode.UNKNOWN)
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
@@ -76,7 +74,7 @@ def test_abort_commands(
         "SetStandbyFPMode completed",
     ]
     events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=30
+        expected_progress_updates[-1], timeout=6
     )
     events_string = "".join([str(event.attr_value.value) for event in events])
     # Check that all the expected progress messages appeared
@@ -119,7 +117,7 @@ def track_a_sample(
     band_event_store.wait_for_value(Band.B1, timeout=30)
 
     dish_manager_proxy.SetOperateMode()
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30, proxy=dish_manager_proxy)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
     # Load a track table
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
@@ -152,9 +150,9 @@ def track_a_sample(
     dish_manager_proxy.programTrackTable = track_table
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
-    result_event_store.wait_for_command_id(unique_id, timeout=30)
-    main_event_store.wait_for_value(PointingState.SLEW, timeout=30)
-    main_event_store.wait_for_value(PointingState.TRACK, timeout=30)
+    result_event_store.wait_for_command_id(unique_id, timeout=8)
+    main_event_store.wait_for_value(PointingState.SLEW, timeout=6)
+    main_event_store.wait_for_value(PointingState.TRACK, timeout=6)
 
     expected_progress_update = (
         "Track command has been executed on DS. "
@@ -162,7 +160,7 @@ def track_a_sample(
     )
 
     # Wait for the track command to return
-    progress_event_store.wait_for_progress_update(expected_progress_update, timeout=30)
+    progress_event_store.wait_for_progress_update(expected_progress_update, timeout=6)
     remove_subscriptions(subscriptions)
     yield
 
@@ -191,7 +189,7 @@ def test_abort_commands_during_track(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
 
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
 
     remove_subscriptions(subscriptions)
@@ -220,13 +218,13 @@ def test_abort_commands_during_slew(
     main_event_store.wait_for_value(Band.B1, timeout=30)
 
     dish_manager_proxy.SetOperateMode()
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30, proxy=dish_manager_proxy)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
     # Slew the dish
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
     requested_az, requested_el = calculate_slew_target(current_az, current_el, 30.0, 15.0)
     dish_manager_proxy.Slew([requested_az, requested_el])
-    main_event_store.wait_for_value(PointingState.SLEW, timeout=30)
+    main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 
     # Call AbortCommands on DishManager
     [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
@@ -265,7 +263,7 @@ def test_abort_commands_during_stow(
 
     # Stow the dish
     dish_manager_proxy.SetStowMode()
-    main_event_store.wait_for_value(PointingState.SLEW, timeout=30)
+    main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 
     # Call AbortCommands on DishManager
     [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
