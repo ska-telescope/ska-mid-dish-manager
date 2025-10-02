@@ -106,9 +106,8 @@ class DishManager(SKAController):
     attenuation_1_pol_h_x = attribute(
         name="attenuation1PolH/X",
         dtype=float,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         fget="get_attenuation_1_pol_h_x",
-        fset="set_attenuation_1_pol_h_x",
         doc="""The current attenuation value for attenuator 1 on the
             H/X polarization.""",
     )
@@ -116,9 +115,8 @@ class DishManager(SKAController):
     attenuation_1_pol_v_y = attribute(
         name="attenuation1PolV/Y",
         dtype=float,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         fget="get_attenuation_1_pol_v_y",
-        fset="set_attenuation_1_pol_v_y",
         doc="""The current attenuation value for attenuator 1 on the
             V/Y polarization.""",
     )
@@ -126,9 +124,8 @@ class DishManager(SKAController):
     attenuation_2_pol_h_x = attribute(
         name="attenuation2PolH/X",
         dtype=float,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         fget="get_attenuation_2_pol_h_x",
-        fset="set_attenuation_2_pol_h_x",
         doc="""The current attenuation value for the attenuator 2 on the
             H/X polarization.""",
     )
@@ -136,9 +133,8 @@ class DishManager(SKAController):
     attenuation_2_pol_v_y = attribute(
         name="attenuation2PolV/Y",
         dtype=float,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         fget="get_attenuation_2_pol_v_y",
-        fset="set_attenuation_2_pol_v_y",
         doc="""The current attenuation value for the attenuator 2 on the
             V/Y polarization.""",
     )
@@ -683,27 +679,6 @@ class DishManager(SKAController):
     def get_attenuation_2_pol_v_y(self):
         """Get the attenuation Pol V/Y for attenuator 2."""
         return self.component_manager.component_state.get("attenuation2polv/y", 0.0)
-
-    # Band agnostic attenuation attributes setter methods
-    def set_attenuation_1_pol_h_x(self, attenuation_1_pol_h_x_val: float):
-        """Set the attenuation Pol H/X for attenuator 1."""
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("attenuation1PolH/X", attenuation_1_pol_h_x_val)
-
-    def set_attenuation_1_pol_v_y(self, attenuation_1_pol_v_y_val: float):
-        """Set the attenuation Pol V/Y for attenuator 1."""
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("attenuation1PolV/Y", attenuation_1_pol_v_y_val)
-
-    def set_attenuation_2_pol_h_x(self, attenuation_2_pol_h_x_val: float):
-        """Set the attenuation Pol H/X for attenuator 2."""
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("attenuation2PolH/X", attenuation_2_pol_h_x_val)
-
-    def set_attenuation_2_pol_v_y(self, attenuation_2_pol_v_y_val: float):
-        """Set the attenuation Pol V/Y for attenuator 2."""
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("attenuation2PolV/Y", attenuation_2_pol_v_y_val)
 
     @attribute(
         dtype=int,
