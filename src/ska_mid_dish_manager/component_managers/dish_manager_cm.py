@@ -622,7 +622,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
-        b5dc_component_state = self.sub_component_managers["B5DC"].component_state
 
         # Only log non pointing changes
         pointing_related_attrs = set(

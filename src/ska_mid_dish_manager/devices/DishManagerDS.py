@@ -448,11 +448,11 @@ class DishManager(SKAController):
                 "rfcmvattenuation": "rfcmVAttenuation",
                 "clkphotodiodecurrent": "clkPhotodiodeCurrent",
                 "hpolrfpowerin": "hPolRfPowerIn",
-                "vPolRfPowerIn": "vPolRfPowerIn",
-                "hPolRfPowerOut": "hPolRfPowerOut",
-                "vPolRfPowerOut": "vPolRfPowerOut",
-                "rfTemperature": "rfTemperature",
-                "rfcmPsuPcbTemperature": "rfcmPsuPcbTemperature",
+                "vpolrfPowerin": "vPolRfPowerIn",
+                "hpolrfpowerout": "hPolRfPowerOut",
+                "vpolrfpowerout": "vPolRfPowerOut",
+                "rftemperature": "rfTemperature",
+                "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1581,7 +1581,7 @@ class DishManager(SKAController):
     )
     def rfcmFrequency(self) -> float:
         """Reflect the PLL output frequency in GHz."""
-        return self.component_manager.component_state.get("rfcmfrequency",0.0)
+        return self.component_manager.component_state.get("rfcmfrequency", 0.0)
 
     @rfcmFrequency.write
     def rfcmFrequency(self, value: float):
