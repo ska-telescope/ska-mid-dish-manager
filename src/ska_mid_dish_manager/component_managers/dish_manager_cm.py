@@ -351,9 +351,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         :returns: boolean dish movement activity
         """
         pointing_state = self.component_state.get("pointingstate")
-        if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
-            return True
-        return False
+        if pointing_state in [PointingState.READY, PointingState.UNKNOWN]:
+            return False
+        return True
 
     def get_currently_executing_lrcs(self) -> List[str]:
         """Report command ids that are running or waiting to be executed from the task executor.
@@ -1538,9 +1538,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # i.e. self._task_executor._abort_event to this function
         # since it might prevent the sequence from being continued
         # when event.is_set() is performed after abort_commands finishes
-
-        # This will be a short lived thread. It hands over the work to the
-        # executor to do the heavy lifting. But perform the check nonetheless
         if not self._cmd_allowed_checks.is_abort_allowed():
             self.logger.info("Abort rejected: command not allowed in MAINTENANCE mode")
             if task_callback:
