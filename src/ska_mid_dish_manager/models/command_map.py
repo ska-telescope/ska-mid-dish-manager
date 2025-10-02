@@ -97,9 +97,7 @@ class CommandMap:
             if not self._is_device_ignored(device):
                 awaited_attrs = tuple(fan_out_args["awaitedAttributes"])
                 component_manager = self._dish_manager_cm.sub_component_managers[device]
-                component_manager.update_state_from_monitored_attributes(
-                    awaited_attrs, task_abort_event
-                )
+                component_manager.update_state_from_monitored_attributes(awaited_attrs)
 
     def _report_sub_device_command_progress(self, sub_cmds, task_callback):
         """Report progress of awaited attributes from sub-devices."""
@@ -182,7 +180,7 @@ class CommandMap:
                 self._complete_lrc(ok_msg, task_callback)
                 return
 
-            task_abort_event.wait(0.5)
+            task_abort_event.wait(1)
 
         self._abort_lrc(running_command, task_callback)
 
@@ -523,8 +521,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             requested_cmd,
-            ["configuredband"],
-            [band_enum],
+            ["configuredband", "dishmode"],
+            [band_enum, DishMode.STANDBY_FP],
         )
 
     def slew(

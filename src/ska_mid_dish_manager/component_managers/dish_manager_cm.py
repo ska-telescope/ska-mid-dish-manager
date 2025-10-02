@@ -374,7 +374,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ]
 
         if filtered_command_statuses:
-            self.logger.debug("Currently executing LRCs: %s", filtered_command_statuses)
             cmd_ids = [cmd_status[command_idx] for cmd_status in filtered_command_statuses]
             return cmd_ids
         # there are no commands in statuses_to_check

@@ -183,7 +183,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 self._component_state[_monitored_attribute] = 0
 
     def update_state_from_monitored_attributes(
-        self, monitored_attributes: Tuple[str, ...] | None = None, wait_event: Event | None = None
+        self, monitored_attributes: Tuple[str, ...] | None = None
     ) -> None:
         """Update the component state by reading the monitored attributes.
 
@@ -198,11 +198,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
         # fallback to defaults if not provided
         monitored_attributes = monitored_attributes or self._monitored_attributes
-        wait_event = wait_event or Event()
 
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
-
             for monitored_attribute in monitored_attributes:
                 attr = monitored_attribute.lower()
                 try:
@@ -219,7 +217,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
                     value = list(value)
 
                 monitored_attribute_values[attr] = value
-                wait_event.wait(timeout=0.1)
 
             self._update_component_state(**monitored_attribute_values)
 

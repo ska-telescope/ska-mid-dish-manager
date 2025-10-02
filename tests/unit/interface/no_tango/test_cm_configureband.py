@@ -6,7 +6,7 @@ import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.models.dish_enums import Band
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 
 
 @pytest.mark.unit
@@ -35,7 +35,7 @@ def test_configureband_handler(
         {"progress": "Awaiting DS indexerposition change to B2"},
         {"progress": "Awaiting SPFRX configuredband change to B2"},
         {"progress": "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2"},
-        {"progress": "Awaiting configuredband change to B2"},
+        {"progress": "Awaiting configuredband, dishmode change to B2, STANDBY_FP"},
     )
 
     # check that the initial lrc updates come through
@@ -45,11 +45,10 @@ def test_configureband_handler(
         assert kwargs == expected_call_kwargs[count]
 
     # check that the component state reports the requested command
-    component_manager._update_component_state(configuredband=Band.B2)
-    component_state_cb.wait_for_value("configuredband", Band.B2)
-
+    component_manager._update_component_state(configuredband=Band.B2, dishmode=DishMode.STANDBY_FP)
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
+
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(

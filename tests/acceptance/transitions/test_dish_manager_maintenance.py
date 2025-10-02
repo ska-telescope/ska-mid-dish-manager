@@ -5,7 +5,7 @@ import pytest
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
-WAIT_FOR_RESULT_BUFFER_SEC = 30
+WAIT_FOR_RESULT_BUFFER_SEC = 10
 
 
 @pytest.mark.acceptance
