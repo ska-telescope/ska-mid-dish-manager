@@ -4,11 +4,10 @@ import logging
 from threading import Lock
 from typing import Any, Callable, Optional
 
-from ska_control_model import CommunicationStatus, HealthState
-
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
-    B5DCOperatingMode,
+    B5dcFrequency,
+    B5dcPllState,
 )
 
 
@@ -26,18 +25,14 @@ class B5DCComponentManager(TangoDeviceComponentManager):
         **kwargs: Any,
     ):
         monitored_attr_names = (
-            "adminMode",
-            "buildstate",
             "rfcmHAttenuation",
             "rfcmVAttenuation",
+            "rfcmFrequency",
             "rfcmPllLock",
             "rfTemperature",
             "rfcmPsuPcbTemperature",
-            "healthState",
             "hPolRfPowerIn",
             "hPolRfPowerOut",
-            "operatingMode",
-            "powerState",
             "vPolRfPowerIn",
             "vPolRfPowerOut",
         )
@@ -45,7 +40,6 @@ class B5DCComponentManager(TangoDeviceComponentManager):
             tango_device_fqdn,
             logger,
             monitored_attr_names,
-            state_update_lock,
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
@@ -56,22 +50,22 @@ class B5DCComponentManager(TangoDeviceComponentManager):
 
     def _update_component_state(self, **kwargs) -> None:  # type: ignore
         enum_conversion = {
-            "operatingmode": B5DCOperatingMode,
-            "healthstate": HealthState,
+            "rfcmpllLock": B5dcPllState,
+            "rfcmfrequency": B5dcFrequency,
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:
                 kwargs[attr] = enum_(kwargs[attr])
-            pass
+        super()._update_component_state(**kwargs)
 
-    def _update_communication_state(self, communication_state: CommunicationStatus) -> None:
-        if (self._communication_state is CommunicationStatus.ESTABLISHED) and (
-            communication_state is CommunicationStatus.NOT_ESTABLISHED
-        ):
-            # Reset flag to ensure buildState is fetched the next time a server
-            # connection is established
-            self.build_state_fetched = False
-        super()._update_communication_state(communication_state)
+    # def _update_communication_state(self, communication_state: CommunicationStatus) -> None:
+    #     if (self._communication_state is CommunicationStatus.ESTABLISHED) and (
+    #         communication_state is CommunicationStatus.NOT_ESTABLISHED
+    #     ):
+    #         # Reset flag to ensure buildState is fetched the next time a server
+    #         # connection is established
+    #         self.build_state_fetched = False
+    #     super()._update_communication_state(communication_state)
 
     # pylint: disable=missing-function-docstring, invalid-name
     def on(self, task_callback: Callable = None) -> Any:  # type: ignore

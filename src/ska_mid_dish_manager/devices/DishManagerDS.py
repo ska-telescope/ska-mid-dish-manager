@@ -26,6 +26,7 @@ from ska_mid_dish_manager.models.command_class import (
 )
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
+    DEFAULT_B5DC_TRL,
     DEFAULT_DISH_ID,
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
@@ -37,6 +38,7 @@ from ska_mid_dish_manager.models.constants import (
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
+    B5dcPllState,
     Band,
     CapabilityStates,
     DishDevice,
@@ -88,6 +90,7 @@ class DishManager(SKAController):
     DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
+    B5DCDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_B5DC_TRL)
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
     DefaultWatchdogTimeout = device_property(dtype=float, default_value=DEFAULT_WATCHDOG_TIMEOUT)
     # wms device names (e.g. ska-mid/weather-monitoring/1) to connect to
@@ -166,6 +169,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
+            self.B5DCDeviceFqdn,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
             wms_device_names=self.WMSDeviceNames,
@@ -192,6 +196,9 @@ class DishManager(SKAController):
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
             ("EndScan", "end_scan"),
+            ("SetHPolAttenuation", "set_h_attenuation"),
+            ("SetVPolAttenuation", "set_v_attenuation"),
+            ("SetFrequency", "set_frequency"),
         ]:
             self.register_command_object(
                 command_name,
@@ -377,6 +384,7 @@ class DishManager(SKAController):
                 ds_manager_address=device.DSDeviceFqdn,
                 spfc_address=device.SPFDeviceFqdn,
                 spfrx_address=device.SPFRxDeviceFqdn,
+                b5dc_address=device.B5DCDeviceFqdn,
             )
             device._build_state = device._release_info.get_build_state()
             device._version_id = device._release_info.get_dish_manager_release_version()
@@ -434,6 +442,17 @@ class DishManager(SKAController):
                 "autowindstowenabled": "autoWindStowEnabled",
                 "lastcommandedmode": "lastCommandedMode",
                 "dscctrlstate": "dscCtrlState",
+                "rfcmfrequency": "rfcmFrequency",
+                "rfcmplllock": "rfcmPllLock",
+                "rfcmhattenuation": "rfcmHAttenuation",
+                "rfcmvattenuation": "rfcmVAttenuation",
+                "rfcmphotodiodeain0": "clkPhotodiodeCurrent",
+                "rfcmrfinhain1": "hPolRfPowerIn",
+                "rfcmrfinvain2": "vPolRfPowerIn",
+                "rfcmifouthain3": "hPolRfPowerOut",
+                "rfcmifoutvain4": "vPolRfPowerOut",
+                "rfcmrftempain5": "rfTemperature",
+                "rfcmpsupcbtempain7": "rfcmPsuPcbTemperature",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1555,6 +1574,123 @@ class DishManager(SKAController):
             "dscctrlstate", DscCtrlState.NO_AUTHORITY
         )
 
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ_WRITE,
+        doc="Indicates the PLL Output Frequency. The default value is 11.1 GHz",
+    )
+    def rfcmFrequency(self) -> float:
+        """Reflect the PLL output frequency in GHz."""
+        return self.component_manager.component_state.get("rfcmfrequency")
+
+    @rfcmFrequency.write
+    def rfcmFrequency(self, value: float):
+        """Set the rfcmFrequency."""
+        self.logger.debug("spi_rfcm_frequency updated to, %s", value)
+        self.component_manager.set_frequency(value)
+
+    @attribute(
+        dtype=B5dcPllState,
+        access=AttrWriteType.READ,
+        doc="Status flags for RFCM PLL lock and lock loss detection.",
+    )
+    def rfcmPllLock(self):
+        """Return the Phase lock loop state."""
+        return self.component_manager.component_state.get("rfcmplllock", B5dcPllState.NOT_LOCKED)
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ_WRITE,
+        doc="Reflects the RFCM H-polarization attenuation value in dB.",
+    )
+    def rfcmHAttenuation(self):
+        """Return the rfcmHAttenuation."""
+        return self.component_manager.component_state.get("rfcmhattenuation", 0.0)
+
+    @rfcmHAttenuation.write
+    def rfcmHAttenuation(self, value):
+        """Set the rfcmHAttenuation."""
+        self.logger.debug("spi_rfcm_h_attenuation updated to %s", value)
+        self.component_manager.set_h_attenuation("rfcmHAttenuation", value)
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ_WRITE,
+        doc="Reflects the RFCM V-polarization attenuation value in dB.",
+    )
+    def rfcmVAttenuation(self):
+        """Return the rfcmVAttenuation."""
+        return self.component_manager.component_state.get("rfcmvattenuation", 0.0)
+
+    @rfcmVAttenuation.write
+    def rfcmVAttenuation(self, value):
+        """Set the rfcmVAttenuation."""
+        self.logger.debug("spi_rfcm_v_attenuation updated to %s", value)
+        self.component_manager.set_v_attenuation("rfcmVAttenuation", value)
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
+        doc="Reflects the photodiode current in mA.",
+    )
+    def clkPhotodiodeCurrent(self):
+        """Return the photo diode current."""
+        return self.component_manager.component_state.get("rfcmphotodiodeain0", 0.0)
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
+        doc="Reflects the RFCM RF power input for horizonal polarization in dBm.",
+    )
+    def hPolRfPowerIn(self):
+        """Return the hPolRfPowerIn."""
+        return self.component_manager.component_state.get("rfcmrfinhain1", 0.0)
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
+        doc="Reflects the RFCM RF power input for vertical polarization in dBm.",
+    )
+    def vPolRfPowerIn(self):
+        """Return the vPolRfPowerIn."""
+        return self.component_manager.component_state.get("rfcmrfinvain2", 0.0)
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
+        doc="Reflects the RFCM RF power output for horizonal polarization in dBm.",
+    )
+    def hPolRfPowerOut(self):
+        """Return the hPolRfPowerOut."""
+        return self.component_manager.component_state.get("rfcmifouthain3", 0.0)
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
+        doc="Reflects the RFCM RF power output for vertical polarization in dBm.",
+    )
+    def vPolRfPowerOut(self):
+        """Return the vPolRfPowerOut sensor value."""
+        return self.component_manager.component_state.get("rfcmifoutvain4", 0.0)
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
+        doc="Reflects the RFCM RF PCB temperature in deg C.",
+    )
+    def rfTemperature(self):
+        """Return the of the RFCM RF PCB in deg."""
+        return self.component_manager.component_state.get("rfcmrftempain5", 0.0)
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ,
+        doc="Reflects RFCM PSU PCB temperature in deg C.",
+    )
+    def rfcmPsuPcbTemperature(self):
+        """Return the temperature of the RFCM PSU PCB in deg."""
+        return self.component_manager.component_state.get("rfcmpsupcbtempain7", 0.0)
+
     # --------
     # Commands
     # --------
@@ -2123,6 +2259,52 @@ class DishManager(SKAController):
             [ResultCode.OK],
             [f"Watchdog timer reset at {value}s"],
         )
+
+    @command(
+        dtype_in=int,
+        dtype_out="DevVarLongStringArray",
+        doc_in="""Set the horizontal polarization attenuation on the band 5 down converter.
+
+        :param attenuation_db: value to set in dB [0-31dB]
+        """,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def SetHPolAttenuation(self, value) -> DevVarLongStringArrayType:
+        """Set the horizontal polarization attenuation on the band 5 down converter."""
+        handler = self.get_command_object("SetHPolAttenuation")
+        return_code, message = handler(value, "rfcmhattenuation")
+        return ([return_code], [message])
+
+    @command(
+        dtype_in=int,
+        dtype_out="DevVarLongStringArray",
+        doc_in="""Set the vertical polarization attenuation on the band 5 down converter.
+
+        :param attenuation_db: value to set in dB [0-31dB]
+        """,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def SetVPolAttenuation(self, value) -> DevVarLongStringArrayType:
+        """Set the vertical polarization attenuation on the band 5 down converter."""
+        handler = self.get_command_object("SetVPolAttenuation")
+        result_code, unique_id = handler(value, "rfcmvattenuation")
+        return [result_code], [unique_id]
+
+    @command(
+        dtype_in=int,
+        dtype_out="DevVarLongStringArray",
+        doc_in="""Set the frequency on the band 5 down converter.
+
+        :param frequency: frequency to set [B5dcFrequency.F_11_1_GHZ(1),
+        B5dcFrequency.F_13_2_GHZ(2) or B5dcFrequency.F_13_86_GHZ(3)]
+        """,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def SetFrequency(self, frequency) -> DevVarLongStringArrayType:
+        """Set the frequency on the band 5 down converter."""
+        handler = self.get_command_object("SetFrequency")
+        result_code, unique_id = handler(frequency, "rfcmfrequency")
+        return [result_code], [unique_id]
 
     @command(dtype_out="DevVarLongStringArray")
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)

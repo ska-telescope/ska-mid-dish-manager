@@ -27,11 +27,13 @@ class ReleaseInfo:
         ds_manager_address: str = "",
         spfc_address: str = "",
         spfrx_address: str = "",
+        b5dc_address: str = "",
     ) -> None:
         self._timestamp = get_time_in_human_readable_format(timestamp)
         self._ds_manager_device_info = DeviceInfoDataClass(ds_manager_address)
         self._spfrx_device_info = DeviceInfoDataClass(spfrx_address)
         self._spfc_device_info = DeviceInfoDataClass(spfc_address)
+        self.b5dc_device_info = DeviceInfoDataClass(b5dc_address)
         self._build_state = DmBuildStateDataClass(
             last_updated=self._timestamp,
             dish_manager_version=self.get_dish_manager_release_version(),
@@ -44,6 +46,7 @@ class ReleaseInfo:
             DishDevice.DS: self._update_ds_manager_version,
             DishDevice.SPF: self._update_spfc_version,
             DishDevice.SPFRX: self._update_spfrx_version,
+            DishDevice.B5DC: self._update_spfrx_version,
         }
 
     def get_build_state(self) -> str:
@@ -72,6 +75,10 @@ class ReleaseInfo:
     def _update_spfrx_version(self, spfrx_version: str) -> None:
         """Update SPFRx version information."""
         self._build_state.spfrx_device.version = spfrx_version
+
+    def _update_b5dc_version(self, b5dc_version: str) -> None:
+        """Update B5DC version information."""
+        self.b5dc_device_info.version = b5dc_version
 
     @staticmethod
     def get_dish_manager_release_version() -> str:

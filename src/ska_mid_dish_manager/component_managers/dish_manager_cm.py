@@ -13,6 +13,7 @@ import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_tango_base.executor import TaskExecutorComponentManager
 
+from ska_mid_dish_manager.component_managers.b5dc_cm import B5DCComponentManager
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
@@ -26,6 +27,7 @@ from ska_mid_dish_manager.models.constants import (
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
+    B5dcPllState,
     Band,
     BandInFocus,
     CapabilityStates,
@@ -72,6 +74,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
+        b5dc_device_fqdn: str,
         *args,
         wms_device_names: Optional[List[str]] = [],
         wind_stow_callback: Optional[Callable] = None,
@@ -106,6 +109,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             wmsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            b5dcconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             band0pointingmodelparams=[],
             band1pointingmodelparams=[],
             band2pointingmodelparams=[],
@@ -141,6 +145,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             windgust=-1,
             lastcommandedmode=("0.0", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
+            rfcmpllLock=B5dcPllState.NOT_LOCKED,
+            rfcmHAttenuation=0.0,
+            rfcmVAttenuation=0.0,
+            rfTemperature=0.0,
+            rfcmPsuPcbTemperature=0.0,
+            hPolRfPowerIn=0.0,
+            hPolRfPowerOut=0.0,
+            vPolRfPowerIn=0.0,
+            vPolRfPowerOut=0.0,
             **kwargs,
         )
         self.logger = logger
@@ -264,6 +277,27 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 meanwindspeed=-1,
                 windgust=-1,
             ),
+            "B5DC": B5DCComponentManager(
+                b5dc_device_fqdn,
+                logger=logger,
+                state_update_lock=self._state_update_lock,
+                # self._state_update_lock,
+                communication_state_callback=partial(
+                    self._sub_device_communication_state_changed, DishDevice.B5DC
+                ),
+                component_state_callback=partial(
+                    self._sub_device_component_state_changed, DishDevice.B5DC
+                ),
+                rfcmHAttenuation=0.0,
+                rfcmVAttenuation=0.0,
+                rfcmPllLock=B5dcPllState.NOT_LOCKED,
+                rfTemperature=0.0,
+                rfcmPsuPcbTemperature=0.0,
+                hPolRfPowerIn=0.0,
+                hPolRfPowerOut=0.0,
+                vPolRfPowerIn=0.0,
+                vPolRfPowerOut=0.0,
+            ),
         }
 
         self._command_map = CommandMap(
@@ -291,6 +325,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "noiseDiodeMode",
                 "periodicNoiseDiodePars",
                 "pseudoRandomNoiseDiodePars",
+            ],
+            "B5DC": [
+                "rfcmPllLock",
+                "rfcmHAttenuation",
+                "rfcmVAttenuation",
+                "rfcmFrequency",
+                "rfTemperature",
+                "rfcmPsuPcbTemperature",
+                "hPolRfPowerIn",
+                "hPolRfPowerOut",
+                "vPolRfPowerIn",
+                "vPolRfPowerOut",
             ],
         }
 
