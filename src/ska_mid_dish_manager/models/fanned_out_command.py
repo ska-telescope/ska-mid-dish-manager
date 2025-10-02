@@ -27,10 +27,10 @@ class FannedOutCommand:
         device: str,
         name: str,
         command: Callable,
-        timeout_s: float,
         component_state: dict,
         command_argument: Any = None,
         awaited_component_state: dict = {},
+        timeout_s: float = 0,
     ):
         """:param logger: Logger instance
         :type logger: Logger
@@ -40,8 +40,6 @@ class FannedOutCommand:
         :type name: str
         :param command: Command to run as part of `execute`
         :type command: str
-        :param timeout_s: Timeout (in seconds) for the command execution
-        :type timeout_s: float
         :param component_state: The component state containing the attributes to wait for updates
             on.
         :type component_state: Optional[dict]
@@ -50,6 +48,9 @@ class FannedOutCommand:
         :param awaited_component_state: The component state containing the attributes and values to
             wait for.
         :type awaited_component_state: dict
+        :param timeout_s: Timeout (in seconds) for the command execution. A value <= 0 will disable
+            the timeout.
+        :type timeout_s: float
         """
         self.logger = logger
         self.device = device
@@ -95,7 +96,7 @@ class FannedOutCommand:
     def _update_status(self, task_callback: Callable) -> None:
         if self._status == FannedOutCommandStatus.RUNNING:
             # timeout
-            if time.time() - self.start_time > self.timeout_s:
+            if self.timeout_s > 0 and time.time() - self.start_time > self.timeout_s:
                 self._status = FannedOutCommandStatus.TIMED_OUT
             # completed
             if check_component_state_matches_awaited(
@@ -105,7 +106,8 @@ class FannedOutCommand:
         if self._status in [FannedOutCommandStatus.FAILED, FannedOutCommandStatus.TIMED_OUT]:
             task_callback(
                 progress=(
-                    f"{self.device} device failed executing {self.name} command with ID {self.id}"
+                    f"{self.device} device {self._status.name.lower().replace('_', ' ')}"
+                    f" executing {self.name} command with ID {self.id}"
                 )
             )
 
@@ -143,7 +145,9 @@ class FannedOutCommand:
                         )
                         self.awaited_update_reports[attr_name] = True
         if self.finished and not self._task_finish_reported:
-            task_callback(progress=f"{self.name} {self.status.name.lower()}")
+            task_callback(
+                progress=f"{self.device}.{self.name} {self.status.name.lower().replace('_', ' ')}"
+            )
             self._task_finish_reported = True
 
 
@@ -154,10 +158,10 @@ class FannedOutSlowCommand(FannedOutCommand):
         device: str,
         command_name: str,
         device_component_manager: BaseComponentManager,
-        timeout_s: float,
         command_tracker: Any,
         command_argument: Any = None,
         awaited_component_state: dict = {},
+        timeout_s: float = 0,
         is_device_ignored: bool = False,
     ):
         """:param logger: Logger instance
@@ -190,16 +194,16 @@ class FannedOutSlowCommand(FannedOutCommand):
             device=device,
             name=f"{command_name}",
             command=self._execute_slow_command,
-            timeout_s=timeout_s,
             # use device_component_manager._component_state to pass the dict by reference
             # device_component_manager.component_state will use the tango base property which will
             # do a deep copy
             component_state=self.device_component_manager._component_state,
             command_argument=command_argument,
             awaited_component_state=awaited_component_state,
+            timeout_s=timeout_s,
         )
 
-    def _execute_slow_command(self, task_callback: Callable, *args, **kwargs) -> int | None:
+    def _execute_slow_command(self, task_callback: Callable, *args, **kwargs) -> tuple:
         """Fan out the respective command to the subservient devices."""
         if self.is_device_ignored:
             self.logger.debug(

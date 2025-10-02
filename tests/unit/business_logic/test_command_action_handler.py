@@ -68,5 +68,159 @@ class TestActionHandler:
 
         assert self.component_state["attr"] is True
         assert "Awaiting attr change to True" in self.progress_calls
-        assert "CommandX completed" in self.progress_calls
+        assert "DeviceX.CommandX completed" in self.progress_calls
         assert "HandlerX completed" in self.progress_calls
+
+    @pytest.mark.unit
+    def test_command_timeout_no_action_timeout(self):
+        self.reset_task_callbacks()
+        self.component_state["attr"] = False
+
+        def mock_command(task_callback):
+            # Don't do anything so that the command times out
+            return "OK", "command_id"
+
+        fanned_out = FannedOutCommand(
+            LOGGER,
+            device="DeviceX",
+            name="CommandX",
+            command=mock_command,
+            timeout_s=1,
+            component_state=self.component_state,
+            awaited_component_state={"attr": True},
+        )
+
+        handler = ActionHandler(
+            LOGGER,
+            "HandlerX",
+            [fanned_out],
+            component_state=self.component_state,
+            awaited_component_state={"attr": True},
+        )
+
+        task_abort_event = Event()
+        handler.execute(self.my_task_callback, task_abort_event)
+
+        assert self.component_state["attr"] is False
+        assert "Awaiting attr change to True" in self.progress_calls
+        assert (
+            "DeviceX device timed out executing CommandX command with ID command_id"
+            in self.progress_calls
+        )
+        assert (
+            "Action 'HandlerX' failed. Fanned out commands: {'DeviceX CommandX (command_id)': "
+            "<FannedOutCommandStatus.TIMED_OUT: 3>}"
+        ) in self.progress_calls
+
+    @pytest.mark.unit
+    def test_action_timeout_no_command_timeout(self):
+        self.reset_task_callbacks()
+        self.component_state["attr"] = False
+
+        def mock_command(task_callback):
+            # Don't do anything so that the command times out
+            return "OK", "command_id"
+
+        fanned_out = FannedOutCommand(
+            LOGGER,
+            device="DeviceX",
+            name="CommandX",
+            command=mock_command,
+            component_state=self.component_state,
+            awaited_component_state={"attr": True},
+        )
+
+        handler = ActionHandler(
+            LOGGER,
+            "HandlerX",
+            [fanned_out],
+            component_state=self.component_state,
+            awaited_component_state={"attr": True},
+            timeout_s=1,
+        )
+
+        task_abort_event = Event()
+        handler.execute(self.my_task_callback, task_abort_event)
+
+        assert self.component_state["attr"] is False
+        assert "Awaiting attr change to True" in self.progress_calls
+        assert (
+            "Action 'HandlerX' timed out. Fanned out commands: {'DeviceX CommandX (command_id)': "
+            "<FannedOutCommandStatus.RUNNING: 1>}"
+        ) in self.progress_calls
+
+    @pytest.mark.unit
+    def test_command_timeout_with_action_timeout(self):
+        self.reset_task_callbacks()
+        self.component_state["attr"] = False
+
+        def mock_command(task_callback):
+            # Don't do anything so that the command times out
+            return "OK", "command_id"
+
+        fanned_out = FannedOutCommand(
+            LOGGER,
+            device="DeviceX",
+            name="CommandX",
+            command=mock_command,
+            component_state=self.component_state,
+            awaited_component_state={"attr": True},
+            timeout_s=1,
+        )
+
+        handler = ActionHandler(
+            LOGGER,
+            "HandlerX",
+            [fanned_out],
+            component_state=self.component_state,
+            awaited_component_state={"attr": True},
+            timeout_s=2,
+        )
+
+        task_abort_event = Event()
+        handler.execute(self.my_task_callback, task_abort_event)
+
+        assert self.component_state["attr"] is False
+        assert "Awaiting attr change to True" in self.progress_calls
+        assert (
+            "Action 'HandlerX' failed. Fanned out commands: {'DeviceX CommandX (command_id)': "
+            "<FannedOutCommandStatus.TIMED_OUT: 3>}"
+        ) in self.progress_calls
+
+    @pytest.mark.unit
+    def test_action_timeout_with_command_timeout(self):
+        self.reset_task_callbacks()
+        self.component_state["attr"] = False
+
+        def mock_command(task_callback):
+            # Don't do anything so that the command times out
+            return "OK", "command_id"
+
+        fanned_out = FannedOutCommand(
+            LOGGER,
+            device="DeviceX",
+            name="CommandX",
+            command=mock_command,
+            component_state=self.component_state,
+            awaited_component_state={"attr": True},
+            timeout_s=2,
+        )
+
+        handler = ActionHandler(
+            LOGGER,
+            "HandlerX",
+            [fanned_out],
+            component_state=self.component_state,
+            awaited_component_state={"attr": True},
+            timeout_s=1,
+        )
+
+        task_abort_event = Event()
+        handler.execute(self.my_task_callback, task_abort_event)
+
+        assert self.component_state["attr"] is False
+        assert "Awaiting attr change to True" in self.progress_calls
+        assert (
+            "Action 'HandlerX' timed out. Fanned out commands: {'DeviceX CommandX (command_id)': "
+            "<FannedOutCommandStatus.RUNNING: 1>}"
+        ) in self.progress_calls

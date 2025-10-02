@@ -318,10 +318,10 @@ class TestCommandActions:
         expected_progress_updates = [
             # First SetStandbyFPMode
             "Awaiting dishmode change to STANDBY_FP",
-            "SetStandbyFPMode completed",
+            "SetStandbyFPMode complete. Triggering on success action.",
             # Then ConfigureBand2
             "Awaiting configuredband change to B2",
-            "ConfigureBand2 completed",
+            "ConfigureBand2 complete. Triggering on success action.",
             # Then SetOperateMode
             "Awaiting dishmode change to OPERATE",
             "SetOperateMode completed",

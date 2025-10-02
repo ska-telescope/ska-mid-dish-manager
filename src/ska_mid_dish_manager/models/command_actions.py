@@ -72,7 +72,8 @@ class ActionHandler:
         awaited_component_state: Optional[dict] = {},
         action_on_success: Optional[Action] = None,
         action_on_failure: Optional[Action] = None,
-        waiting_callback: Callable = None,
+        waiting_callback: Optional[Callable] = None,
+        timeout_s: float = 0,
     ):
         """:param logger: Logger instance
         :type logger: Logger
@@ -102,6 +103,15 @@ class ActionHandler:
         self.action_on_success: Optional[Action] = action_on_success
         self.action_on_failure: Optional[Action] = action_on_failure
         self.waiting_callback = waiting_callback
+        self.timeout_s = timeout_s
+
+        # Configure action timeout:
+        # If no timeout action, check fanned out commands and wait for the longest
+        if self.timeout_s <= 0:
+            max_fanned_out_timeout = max([c.timeout_s for c in self.fanned_out_commands])
+            if max_fanned_out_timeout > 0:
+                # timeout the action after a short buffer
+                self.timeout_s = max_fanned_out_timeout + 5
 
     def execute(
         self,
@@ -118,7 +128,6 @@ class ActionHandler:
 
         def trigger_failure(message):
             self.logger.error(message)
-            task_callback(progress=message)
             # Execute any chained action on failure
             if self.action_on_failure is not None:
                 message = f"Triggering {self.name} on failure action"
@@ -130,6 +139,7 @@ class ActionHandler:
             else:
                 # Only update status and result if there is no chained action
                 task_callback(
+                    progress=message,
                     status=TaskStatus.FAILED,
                     result=(ResultCode.FAILED, f"{self.name} Failed"),
                 )
@@ -144,7 +154,6 @@ class ActionHandler:
                 self.action_on_success.execute(
                     task_callback=task_callback,
                     task_abort_event=task_abort_event,
-                    completed_response_msg=final_message,
                 )
             else:
                 # Only update status and result if there is no chained action
@@ -180,15 +189,10 @@ class ActionHandler:
         task_callback(progress=f"Commands: {json.dumps(fanned_out_command_ids)}")
 
         # If we're not waiting for anything, finish up
-        if all([c.timeout_s <= 0 for c in self.fanned_out_commands]):
+        # if all([c.timeout_s <= 0 for c in self.fanned_out_commands]):
+        if self.timeout_s <= 0:
             trigger_success()
             return
-
-        # In the error case that none of the fanned out commands fail but the action doesn't finish
-        # then we need to timeout. Create a timeout for the action which is longer than the longest
-        # of the fanned out commands
-        max_fanned_out_timeout = max([c.timeout_s for c in self.fanned_out_commands])
-        action_timeout_s = max_fanned_out_timeout + 5  # timeout the action after a short buffer
 
         # Report what we are waiting for
         if self.awaited_component_state:
@@ -221,7 +225,7 @@ class ActionHandler:
                 return
 
             # Handle timeout
-            if time.time() - action_start_time > action_timeout_s:
+            if time.time() - action_start_time > self.timeout_s:
                 command_statuses = {
                     f"{sc.device} {sc.name} ({sc.id})": sc.status
                     for sc in self.fanned_out_commands
@@ -248,7 +252,7 @@ class ActionHandler:
 
             # Check if all commands have succeeded
             if all([cmd.successful for cmd in self.fanned_out_commands]):
-                if check_component_state_matches_awaited(
+                if self.awaited_component_state is None or check_component_state_matches_awaited(
                     self.component_state, self.awaited_component_state
                 ):
                     trigger_success()
@@ -281,7 +285,7 @@ class SetStandbyLPModeAction(Action):
         dish_manager_cm,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
-        waiting_callback: Callable = None,
+        waiting_callback: Optional[Callable] = None,
     ):
         super().__init__(
             logger,
@@ -292,9 +296,6 @@ class SetStandbyLPModeAction(Action):
             waiting_callback,
         )
 
-        # TODO: Follow up on:
-        # Set all SPF feed default startup attributes to STANDBY_LP. On exiting Dish STANDBY_LP
-        # mode, restore all SPF default startup attributes to OPERATE mode
         self.spf_command = FannedOutSlowCommand(
             logger=self.logger,
             device="SPF",
@@ -379,7 +380,7 @@ class SetStandbyFPModeAction(Action):
         dish_manager_cm,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
-        waiting_callback: Callable = None,
+        waiting_callback: Optional[Callable] = None,
     ):
         super().__init__(
             logger,
@@ -445,7 +446,7 @@ class SetOperateModeAction(Action):
         dish_manager_cm,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
-        waiting_callback: Callable = None,
+        waiting_callback: Optional[Callable] = None,
     ):
         super().__init__(
             logger,
@@ -514,7 +515,7 @@ class SetMaintenanceModeAction(Action):
         dish_manager_cm,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
-        waiting_callback: Callable = None,
+        waiting_callback: Optional[Callable] = None,
     ):
         super().__init__(
             logger,
@@ -601,7 +602,7 @@ class TrackAction(Action):
         dish_manager_cm,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
-        waiting_callback: Callable = None,
+        waiting_callback: Optional[Callable] = None,
     ):
         super().__init__(
             logger,
@@ -656,7 +657,7 @@ class TrackStopAction(Action):
         dish_manager_cm,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
-        waiting_callback: Callable = None,
+        waiting_callback: Optional[Callable] = None,
     ):
         super().__init__(
             logger,
@@ -709,7 +710,7 @@ class ConfigureBandAction(Action):
         synchronise,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
-        waiting_callback: Callable = None,
+        waiting_callback: Optional[Callable] = None,
     ):
         super().__init__(
             logger,
@@ -802,9 +803,6 @@ class ConfigureBandActionSequence(Action):
         """Execute the defined action."""
         current_dish_mode = self.dish_manager_cm._component_state["dishmode"]
 
-        # TODO: Configure pointing model?
-        # Configure the DS pointing model for the requested band.
-
         # Step 2: Operate mode action (final step)
         operate_action = SetOperateModeAction(
             logger=self.logger,
@@ -830,7 +828,7 @@ class ConfigureBandActionSequence(Action):
                 logger=self.logger,
                 command_tracker=self.command_tracker,
                 dish_manager_cm=self.dish_manager_cm,
-                action_on_success=configure_action,
+                action_on_success=configure_action,  # chain configure action
                 waiting_callback=self.waiting_callback,
             )
             return pre_action.execute(task_callback, task_abort_event, completed_response_msg)
@@ -850,7 +848,7 @@ class SlewAction(Action):
         target: list[float],
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
-        waiting_callback: Callable = None,
+        waiting_callback: Optional[Callable] = None,
     ):
         super().__init__(
             logger,
@@ -908,7 +906,7 @@ class TrackLoadStaticOffAction(Action):
         off_el,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
-        waiting_callback: Callable = None,
+        waiting_callback: Optional[Callable] = None,
     ):
         super().__init__(
             logger,
