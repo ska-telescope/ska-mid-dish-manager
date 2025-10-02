@@ -106,7 +106,7 @@ class DishManager(SKAController):
     attenuation_1_pol_h_x = attribute(
         name="attenuation1PolH/X",
         dtype=float,
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
         fget="get_attenuation_1_pol_h_x",
         fset="set_attenuation_1_pol_h_x",
         doc="""The current attenuation value for attenuator 1 on the
@@ -116,7 +116,7 @@ class DishManager(SKAController):
     attenuation_1_pol_v_y = attribute(
         name="attenuation1PolV/Y",
         dtype=float,
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
         fget="get_attenuation_1_pol_v_y",
         fset="set_attenuation_1_pol_v_y",
         doc="""The current attenuation value for attenuator 1 on the
@@ -126,7 +126,7 @@ class DishManager(SKAController):
     attenuation_2_pol_h_x = attribute(
         name="attenuation2PolH/X",
         dtype=float,
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
         fget="get_attenuation_2_pol_h_x",
         fset="set_attenuation_2_pol_h_x",
         doc="""The current attenuation value for the attenuator 2 on the
@@ -136,7 +136,7 @@ class DishManager(SKAController):
     attenuation_2_pol_v_y = attribute(
         name="attenuation2PolV/Y",
         dtype=float,
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
         fget="get_attenuation_2_pol_v_y",
         fset="set_attenuation_2_pol_v_y",
         doc="""The current attenuation value for the attenuator 2 on the
