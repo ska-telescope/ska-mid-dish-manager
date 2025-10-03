@@ -1,5 +1,6 @@
 """Module to manage the mapping of commands to subservient devices."""
 
+import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -158,6 +159,7 @@ class CommandMap:
         awaited_event_attributes: Optional[List[str]],
         awaited_event_values: Optional[List[Any]],
         ok_msg: str,
+        timeout: int,
     ) -> None:
         """Wait for the dish to reach the commanded state.
 
@@ -173,7 +175,11 @@ class CommandMap:
             task_callback, awaited_event_attributes, awaited_event_values
         )
 
-        while not task_abort_event.is_set():
+        start_time = time.time()
+        while time.time() - start_time <= timeout:
+            if task_abort_event.is_set():
+                self._abort_lrc(running_command, task_callback)
+                return
             self._refresh_sub_component_states(sub_cmds, task_abort_event)
             self._report_sub_device_command_progress(sub_cmds, task_callback)
 
@@ -183,7 +189,13 @@ class CommandMap:
 
             task_abort_event.wait(1)
 
-        self._abort_lrc(running_command, task_callback)
+        self.logger.debug(f"Timed out waiting for {running_command} to complete")
+        update_task_status(
+            task_callback,
+            progress=f"Timed out waiting for {running_command} to complete",
+            status=TaskStatus.FAILED,
+            result=(ResultCode.FAILED, f"Timed out waiting for {running_command} to complete"),
+        )
 
     def _run_long_running_command(
         self,
@@ -194,6 +206,7 @@ class CommandMap:
         awaited_event_attributes: Optional[List[str]] = None,
         awaited_event_values: Optional[List[Any]] = None,
         completed_response_msg: Optional[str] = None,
+        timeout: int = 45,
     ) -> None:
         """Executes a long-running command.
 
@@ -204,6 +217,7 @@ class CommandMap:
         awaited_event_attributes: List of attributes to monitor for completion.
         awaited_event_values: Expected values for the awaited attributes.
         completed_response_msg: Custom completion message for the callback.
+        timeout: Maximum time to wait for the command to complete (in seconds).
         """
         if task_abort_event.is_set():
             self._abort_lrc(running_command, task_callback)
@@ -257,6 +271,7 @@ class CommandMap:
             awaited_event_attributes,
             awaited_event_values,
             ok_msg,
+            timeout,
         )
 
     # --------------
