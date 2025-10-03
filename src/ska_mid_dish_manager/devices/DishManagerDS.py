@@ -198,7 +198,7 @@ class DishManager(SKAController):
             ("EndScan", "end_scan"),
             ("SetHPolAttenuation", "set_h_attenuation"),
             ("SetVPolAttenuation", "set_v_attenuation"),
-            ("SetB5DCFrequency", "set_b5dc_frequency"),
+            ("SetFrequency", "set_frequency"),
         ]:
             self.register_command_object(
                 command_name,
@@ -427,7 +427,7 @@ class DishManager(SKAController):
                 "spfrxconnectionstate": "spfrxConnectionState",
                 "dsconnectionstate": "dsConnectionState",
                 "wmsconnectionstate": "wmsConnectionState",
-                "b5dcconnctionstate": "b5dcConnectionState",
+                "b5dcconnectionstate": "b5dcConnectionState",
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
@@ -579,7 +579,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="Return the status of the connection to the B5dc server endpoint",
     )
-    def connectionState(self) -> CommunicationStatus:
+    def b5dcconnectionState(self) -> CommunicationStatus:
         """Return the status of the connection to the B5dc server endpoint."""
         return self.component_manager.component_state.get(
             "b5dcconnectionstate", CommunicationStatus.NOT_ESTABLISHED
@@ -2266,7 +2266,7 @@ class DishManager(SKAController):
     def SetHPolAttenuation(self, value) -> DevVarLongStringArrayType:
         """Set the horizontal polarization attenuation on the band 5 down converter."""
         handler = self.get_command_object("SetHPolAttenuation")
-        return_code, message = handler(value, "rfcmhattenuation")
+        return_code, message = handler(value)
         return ([return_code], [message])
 
     @command(
@@ -2281,7 +2281,7 @@ class DishManager(SKAController):
     def SetVPolAttenuation(self, value) -> DevVarLongStringArrayType:
         """Set the vertical polarization attenuation on the band 5 down converter."""
         handler = self.get_command_object("SetVPolAttenuation")
-        result_code, unique_id = handler(value, "rfcmvattenuation")
+        result_code, unique_id = handler(value)
         return [result_code], [unique_id]
 
     @command(
@@ -2294,10 +2294,10 @@ class DishManager(SKAController):
         """,
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    def SetB5DCFrequency(self, frequency) -> DevVarLongStringArrayType:
+    def SetFrequency(self, frequency) -> DevVarLongStringArrayType:
         """Set the frequency on the band 5 down converter."""
-        handler = self.get_command_object("SetB5DCFrequency")
-        result_code, unique_id = handler(frequency, "rfcmfrequency")
+        handler = self.get_command_object("SetFrequency")
+        result_code, unique_id = handler(frequency)
         return [result_code], [unique_id]
 
     @command(dtype_out="DevVarLongStringArray")
