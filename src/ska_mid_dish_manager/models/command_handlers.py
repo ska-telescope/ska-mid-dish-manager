@@ -7,7 +7,7 @@ from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, TrackTableLoadMode
+from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
 class Abort:
@@ -46,34 +46,6 @@ class Abort:
                 task_callback(status=TaskStatus.FAILED, exception=exc)
             task_abort_event.set()
             self.logger.error("abort-sequence: failed to stop dish: %s", str(exc))
-
-    def _reset_track_table(self, task_abort_event: Event) -> None:
-        """Writes the last achievedPointing back to the trackTable in loadmode NEW."""
-        if task_abort_event.is_set():
-            self.logger.debug("abort-sequence: failed to reset programTrackTable")
-            return
-
-        self.logger.debug("abort-sequence: resetting the programTrackTable")
-        reset_point = self._component_manager.component_state.get("achievedpointing")
-        # TODO: Verify how to properly reset the track table
-        timestamp = (
-            self._component_manager.get_current_tai_offset_from_dsc_with_manual_fallback() + 5
-        )  # add 5 seconds lead time
-        # TODO can this just be zeros i.e. reset_point = [timestamp, 0, 0] * 5
-        reset_point = [timestamp, reset_point[1], reset_point[2]] * 5
-        sequence_length = 1
-        # load_mode = TrackTableLoadMode.RESET
-        load_mode = TrackTableLoadMode.NEW
-
-        task_status, msg = self._component_manager.track_load_table(
-            sequence_length, reset_point, load_mode
-        )
-        if task_status == TaskStatus.FAILED:
-            task_abort_event.set()
-            self.logger.debug(
-                "abort-sequence: failed to reset programTrackTable with message: %s",
-                msg,
-            )
 
     def _ensure_transition_to_fp_mode(
         self,
@@ -137,7 +109,7 @@ class Abort:
             self._component_manager._end_scan(task_abort_event, end_scan_task_cb)
 
         # reset the track table
-        self._reset_track_table(task_abort_event)
+        self._component_manager.reset_track_table()
         # go to STANDBY-FP
         standby_fp_command_id = self._command_tracker.new_command(
             "abort-sequence:standbyfp", completed_callback=None

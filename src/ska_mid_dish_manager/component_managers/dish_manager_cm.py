@@ -1584,3 +1584,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.error("Failed to update dscPowerLimitKw on DS.")
             raise
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
+
+    @check_communicating
+    def reset_track_table(self) -> Tuple[ResultCode, str]:
+        """Reset the track table."""
+        self.logger.debug("Resetting the programTrackTable")
+        timestamp = (
+            self.get_current_tai_offset_from_dsc_with_manual_fallback() + 5
+        )  # add 5 seconds lead time
+        # TODO can this just be zeros i.e. reset_point = [timestamp, 0, 0] * 5
+        reset_point = self.component_state.get("achievedpointing", [0.0, 0.0, 0.0])
+        reset_point = [timestamp, reset_point[1], reset_point[2]] * 5
+        sequence_length = 1
+        # load_mode = TrackTableLoadMode.RESET?
+        load_mode = TrackTableLoadMode.NEW
+
+        task_status, msg = self.track_load_table(sequence_length, reset_point, load_mode)
+        if task_status == TaskStatus.FAILED:
+            self.logger.debug(
+                "Failed to reset programTrackTable with message: %s",
+                msg,
+            )
+            return ResultCode.FAILED, msg
+        return ResultCode.OK, "Successfully reset programTrackTable"

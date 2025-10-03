@@ -21,6 +21,7 @@ from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
     AbortCommandsDeprecatedCommand,
     ApplyPointingModelCommand,
+    ResetTrackTableCommand,
     SetKValueCommand,
     StowCommand,
 )
@@ -196,6 +197,11 @@ class DishManager(SKAController):
         self.register_command_object(
             "ApplyPointingModel",
             ApplyPointingModelCommand(self.component_manager, self.logger),
+        )
+
+        self.register_command_object(
+            "ResetTrackTable",
+            ResetTrackTableCommand(self.component_manager, self.logger),
         )
 
     # ---------
@@ -2066,6 +2072,22 @@ class DishManager(SKAController):
             [ResultCode.OK],
             [f"Watchdog timer reset at {value}s"],
         )
+
+    @command(
+        dtype_in=None,
+        doc_in="""This command resets the program track table on the controller""",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def ResetTrackTable(self) -> DevVarLongStringArrayType:
+        """Resets the program track table on the controller.
+
+        Track table is cleared on the controller with zeros in NEW load mode
+        """
+        handler = self.get_command_object("ResetTrackTable")
+        return_code, message = handler()
+        return ([return_code], [message])
 
     @command(dtype_out="DevVarLongStringArray")
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
