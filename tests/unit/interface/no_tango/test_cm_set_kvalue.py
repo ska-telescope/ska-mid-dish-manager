@@ -15,7 +15,7 @@ def test_set_kvalue_handler(
     :param component_manager: the component manager under test
     """
     # set_kvalue has no pre-condition.
-    status, message = component_manager.set_kvalue(5)
+    result_code, message = component_manager.set_kvalue(5)
 
     # this is a fast command and returns immediately
-    assert (status, message) == (ResultCode.OK, "SetKValue successfully executed")
+    assert (result_code, message) == (ResultCode.OK, "SetKValue successfully executed")

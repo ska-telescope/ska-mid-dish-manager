@@ -1,6 +1,5 @@
 """Unit tests for Abort/AbortCommands command."""
 
-import time
 from unittest.mock import Mock
 
 import pytest
@@ -40,7 +39,7 @@ def test_only_one_abort_runs_at_a_time(dish_manager_resources):
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     # update the execute_command mock to return IN_PROGRESS and a timestamp
-    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, time.time()))
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
 
     [[result_code], [_]] = device_proxy.Abort()
     assert result_code == ResultCode.STARTED
@@ -105,7 +104,7 @@ def test_abort_during_dish_movement(
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
 
     # update the execute_command mock to return IN_PROGRESS and a timestamp
-    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, time.time()))
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
 
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()

@@ -58,11 +58,9 @@ def test_abort_handler(
     callbacks["task_cb"].call_args_list.clear()
 
     mock_command_tracker.command_statuses = [("SetStandbyLPMode", TaskStatus.IN_PROGRESS)]
-    mock_abort_event = MagicMock()
-    mock_abort_event.is_set.return_value = False
 
     # issue an abort while the command is busy running
-    task_status, message = component_manager.abort(callbacks["task_cb"], mock_abort_event)
+    task_status, message = component_manager.abort(callbacks["task_cb"])
     assert task_status == TaskStatus.IN_PROGRESS
     assert message == "Abort sequence has started"
 

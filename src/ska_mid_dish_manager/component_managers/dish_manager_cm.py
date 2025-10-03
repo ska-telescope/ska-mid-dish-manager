@@ -6,7 +6,7 @@ import os
 import threading
 import time
 from functools import partial
-from threading import Event, Lock
+from threading import Lock
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -1526,18 +1526,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return (ResultCode.OK, "Successfully updated pseudoRandomNoiseDiodePars on SPFRx")
 
     @check_communicating
-    def abort(
-        self, task_callback: Optional[Callable] = None, task_abort_event: Optional[Event] = Event()
-    ) -> Tuple[TaskStatus, str]:
+    def abort(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Issue abort sequence.
 
-        :param task_callback: Callback for task (default: {None})
-        :param task_abort_event: Event holding abort info (default: {Event()})
+        :param task_callback: Callback for task status updates
         """
-        # NOTE we dont want to pass the existing abort event object
-        # i.e. self._task_executor._abort_event to this function
-        # since it might prevent the sequence from being continued
-        # when event.is_set() is performed after abort_commands finishes
         if not self._cmd_allowed_checks.is_abort_allowed():
             self.logger.info("Abort rejected: command not allowed in MAINTENANCE mode")
             if task_callback:
@@ -1586,18 +1579,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
 
     @check_communicating
-    def reset_track_table(self) -> Tuple[ResultCode, str]:
+    def reset_track_table(self) -> Tuple[ResultCode, List[float] | str]:
         """Reset the track table."""
         self.logger.debug("Resetting the programTrackTable")
         timestamp = (
             self.get_current_tai_offset_from_dsc_with_manual_fallback() + 5
         )  # add 5 seconds lead time
-        # TODO can this just be zeros i.e. reset_point = [timestamp, 0, 0] * 5
-        reset_point = self.component_state.get("achievedpointing", [0.0, 0.0, 0.0])
-        reset_point = [timestamp, reset_point[1], reset_point[2]] * 5
+        # use abitrary constant values for az, el but within the mechanical limits
+        reset_point = [timestamp, 0.0, 50.0] * 5
         sequence_length = 1
-        # load_mode = TrackTableLoadMode.RESET?
-        load_mode = TrackTableLoadMode.NEW
+        load_mode = TrackTableLoadMode.RESET
 
         task_status, msg = self.track_load_table(sequence_length, reset_point, load_mode)
         if task_status == TaskStatus.FAILED:
@@ -1606,4 +1597,4 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 msg,
             )
             return ResultCode.FAILED, msg
-        return ResultCode.OK, "Successfully reset programTrackTable"
+        return ResultCode.OK, reset_point

@@ -2086,8 +2086,15 @@ class DishManager(SKAController):
         Track table is cleared on the controller with zeros in NEW load mode
         """
         handler = self.get_command_object("ResetTrackTable")
-        return_code, message = handler()
-        return ([return_code], [message])
+        result_code, message = handler()
+        if result_code == ResultCode.FAILED:
+            raise RuntimeError(f"{message}")
+        assert isinstance(message, list), f"Expected a table from the handler but got: {message}"
+
+        self._program_track_table = message
+        self.push_change_event("programTrackTable", message)
+        self.push_archive_event("programTrackTable", message)
+        return ([result_code], ["programTrackTable successfully reset"])
 
     @command(dtype_out="DevVarLongStringArray")
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
