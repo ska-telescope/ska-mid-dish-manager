@@ -97,7 +97,7 @@ def test_ignoring_spfrx(
         "SetIndexPosition called on DS",
         "SPFRX device is disabled. ConfigureBand2 call ignored",
         "Awaiting configuredband change to B2",
-        "ConfigureBand2 completed",
+        "SPFRX.ConfigureBand2 completed",
     ]
 
     events = progress_event_store.wait_for_progress_update(

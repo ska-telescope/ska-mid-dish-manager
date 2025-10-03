@@ -40,7 +40,7 @@ def test_track_handler(
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": f"Track called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Commands: mocked sub-device-command-ids"},
-        {"progress": "Track completed"},
+        {"progress": "DS.Track completed"},
         {
             "progress": (
                 "Track command has been executed on DS. "
