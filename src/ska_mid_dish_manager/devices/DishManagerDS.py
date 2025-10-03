@@ -427,6 +427,7 @@ class DishManager(SKAController):
                 "spfrxconnectionstate": "spfrxConnectionState",
                 "dsconnectionstate": "dsConnectionState",
                 "wmsconnectionstate": "wmsConnectionState",
+                "b5dcconnctionstate": "b5dcConnectionState",
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
@@ -572,7 +573,16 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get(
             "wmsconnectionstate", CommunicationStatus.NOT_ESTABLISHED
         )
-
+    @attribute(
+        dtype=CommunicationStatus,
+        access=AttrWriteType.READ,
+        doc="Return the status of the connection to the B5dc server endpoint",
+    )
+    def connectionState(self) -> CommunicationStatus:
+        """Return the status of the connection to the B5dc server endpoint."""
+        return self.component_manager.component_state.get(
+            "b5dcconnectionstate", CommunicationStatus.NOT_ESTABLISHED
+    
     @attribute(
         max_dim_x=3,
         dtype=(float,),

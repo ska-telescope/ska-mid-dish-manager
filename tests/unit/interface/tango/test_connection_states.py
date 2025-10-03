@@ -14,6 +14,7 @@ from ska_control_model import CommunicationStatus
         ("SPFRX", "spfrxConnectionState"),
         ("SPF", "spfConnectionState"),
         ("WMS", "wmsConnectionState"),
+        ("B5DC", "b5dcConnectionState"),
     ],
 )
 def test_connection_state_attrs_mirror_communication_status(
