@@ -198,7 +198,7 @@ class DishManager(SKAController):
             ("EndScan", "end_scan"),
             ("SetHPolAttenuation", "set_h_attenuation"),
             ("SetVPolAttenuation", "set_v_attenuation"),
-            ("SetFrequency", "set_frequency"),
+            ("SetB5DCFrequency", "set_b5dc_frequency"),
         ]:
             self.register_command_object(
                 command_name,
@@ -1588,18 +1588,12 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=float,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Indicates the PLL Output Frequency. The default value is 11.1 GHz",
     )
     def rfcmFrequency(self) -> float:
         """Reflect the PLL output frequency in GHz."""
         return self.component_manager.component_state.get("rfcmfrequency", 0.0)
-
-    @rfcmFrequency.write
-    def rfcmFrequency(self, value: float):
-        """Set the rfcmFrequency."""
-        self.logger.debug("spi_rfcm_frequency updated to, %s", value)
-        self.component_manager.set_frequency(value)
 
     @attribute(
         dtype=B5dcPllState,
@@ -1612,33 +1606,21 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=float,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Reflects the RFCM H-polarization attenuation value in dB.",
     )
     def rfcmHAttenuation(self):
         """Return the rfcmHAttenuation."""
         return self.component_manager.component_state.get("rfcmhattenuation", 0.0)
 
-    @rfcmHAttenuation.write
-    def rfcmHAttenuation(self, value):
-        """Set the rfcmHAttenuation."""
-        self.logger.debug("spi_rfcm_h_attenuation updated to %s", value)
-        self.component_manager.set_h_attenuation("rfcmHAttenuation", value)
-
     @attribute(
         dtype=float,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Reflects the RFCM V-polarization attenuation value in dB.",
     )
     def rfcmVAttenuation(self):
         """Return the rfcmVAttenuation."""
         return self.component_manager.component_state.get("rfcmvattenuation", 0.0)
-
-    @rfcmVAttenuation.write
-    def rfcmVAttenuation(self, value):
-        """Set the rfcmVAttenuation."""
-        self.logger.debug("spi_rfcm_v_attenuation updated to %s", value)
-        self.component_manager.set_v_attenuation("rfcmVAttenuation", value)
 
     @attribute(
         dtype=float,
@@ -2312,9 +2294,9 @@ class DishManager(SKAController):
         """,
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    def SetFrequency(self, frequency) -> DevVarLongStringArrayType:
+    def SetB5DCFrequency(self, frequency) -> DevVarLongStringArrayType:
         """Set the frequency on the band 5 down converter."""
-        handler = self.get_command_object("SetFrequency")
+        handler = self.get_command_object("SetB5DCFrequency")
         result_code, unique_id = handler(frequency, "rfcmfrequency")
         return [result_code], [unique_id]
 
