@@ -141,7 +141,7 @@ class ActionHandler:
                 task_callback(
                     progress=message,
                     status=TaskStatus.FAILED,
-                    result=(ResultCode.FAILED, f"{self.name} Failed"),
+                    result=(ResultCode.FAILED, f"{self.name} failed"),
                 )
 
         def trigger_success():
@@ -166,9 +166,9 @@ class ActionHandler:
         if task_abort_event.is_set():
             self.logger.warning(f"Action '{self.name}' aborted.")
             task_callback(
-                progress=f"{self.name} Aborted",
+                progress=f"{self.name} aborted",
                 status=TaskStatus.ABORTED,
-                result=(ResultCode.ABORTED, f"{self.name} Aborted"),
+                result=(ResultCode.ABORTED, f"{self.name} aborted"),
             )
             return
 
