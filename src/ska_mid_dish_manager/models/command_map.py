@@ -118,6 +118,7 @@ class CommandMap:
                     all_matched.append(False)
 
             if all(all_matched):
+                awaited_values = convert_enums_to_names(awaited_values)
                 for attr, expected_val in zip(awaited_attrs, awaited_values):
                     update_task_status(
                         task_callback,

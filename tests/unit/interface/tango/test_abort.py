@@ -178,7 +178,7 @@ def test_abort_during_dish_movement(
         slew_progress_updates = [
             "Fanned out commands: DS.TrackStop",
             "Awaiting pointingstate change to READY",
-            "DS pointingstate changed to 0",
+            "DS pointingstate changed to READY",
             "TrackStop completed",
         ]
         expected_progress_updates = slew_progress_updates + expected_progress_updates
