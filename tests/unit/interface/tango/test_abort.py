@@ -51,17 +51,11 @@ def test_only_one_abort_runs_at_a_time(dish_manager_resources):
 
 @pytest.mark.unit
 @pytest.mark.forked
-@pytest.mark.parametrize(
-    "abort_cmd",
-    [
-        ("Abort"),
-        ("AbortCommands"),
-    ],
-)
-def test_abort_is_rejected_in_maintenance_dishmode(
-    abort_cmd, dish_manager_resources, event_store_class
+def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
+    caplog, dish_manager_resources, event_store_class
 ):
     """Verify Abort/AbortCommands is rejected when DishMode is MAINTENANCE."""
+    caplog.set_level("DEBUG")
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
@@ -82,8 +76,10 @@ def test_abort_is_rejected_in_maintenance_dishmode(
     dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
-    [[result_code], [_]] = device_proxy.command_inout(abort_cmd, None)
-    assert result_code == ResultCode.REJECTED
+    [[result_code], [_]] = device_proxy.Abort()
+    assert result_code == ResultCode.STARTED
+
+    assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
 
 
 @pytest.mark.unit

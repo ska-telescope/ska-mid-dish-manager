@@ -92,21 +92,19 @@ class Abort:
         # task_callback != task_cb, one is a partial with a command id and the other isnt
         task_cb = self._command_tracker.update_command_info
 
-        if self._component_manager.is_dish_moving():
-            track_stop_command_id = self._command_tracker.new_command(
-                "abort-sequence:trackstop", completed_callback=None
-            )
-            track_stop_task_cb = partial(task_cb, track_stop_command_id)
-            self._stop_dish(task_abort_event, track_stop_task_cb)
+        track_stop_command_id = self._command_tracker.new_command(
+            "abort-sequence:trackstop", completed_callback=None
+        )
+        track_stop_task_cb = partial(task_cb, track_stop_command_id)
+        self._stop_dish(task_abort_event, track_stop_task_cb)
 
-            # clear the scan id
-            end_scan_command_id = self._command_tracker.new_command(
-                "abort-sequence:endscan", completed_callback=None
-            )
-            end_scan_task_cb = partial(task_cb, end_scan_command_id)
-            self.logger.debug("abort-sequence: issuing EndScan")
-            # pylint: disable=protected-access
-            self._component_manager._end_scan(task_abort_event, end_scan_task_cb)
+        # clear the scan id
+        end_scan_command_id = self._command_tracker.new_command(
+            "abort-sequence:endscan", completed_callback=None
+        )
+        end_scan_task_cb = partial(task_cb, end_scan_command_id)
+        self.logger.debug("abort-sequence: issuing EndScan")
+        self._component_manager._end_scan(task_abort_event, end_scan_task_cb)
 
         # reset the track table
         self._component_manager.reset_track_table()

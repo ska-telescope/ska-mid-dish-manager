@@ -49,7 +49,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
-from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
 from ska_mid_dish_manager.utils.helper_module import update_task_status
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
@@ -270,7 +269,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self,
             self.logger,
         )
-        self._cmd_allowed_checks = CommandAllowedChecks(self)
 
         self.direct_mapped_attrs = {
             "DS": [
@@ -344,16 +342,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Calculating TAI offset manually.")
             return get_current_tai_timestamp_from_unix_time()
         return float(msg)
-
-    def is_dish_moving(self) -> bool:
-        """Report whether or not the dish is moving.
-
-        :returns: boolean dish movement activity
-        """
-        pointing_state = self.component_state.get("pointingstate")
-        if pointing_state in [PointingState.READY, PointingState.UNKNOWN]:
-            return False
-        return True
 
     def get_currently_executing_lrcs(self) -> List[str]:
         """Report command ids that are running or waiting to be executed from the task executor.
@@ -1531,17 +1519,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         :param task_callback: Callback for task status updates
         """
-        if not self._cmd_allowed_checks.is_abort_allowed():
-            self.logger.info("Abort rejected: command not allowed in MAINTENANCE mode")
-            if task_callback:
-                task_callback(
-                    status=TaskStatus.REJECTED,
-                    result=(
-                        ResultCode.REJECTED,
-                        "Command not allowed during in MAINTENANCE mode",
-                    ),
-                )
-            return TaskStatus.REJECTED, "Command not allowed during MAINTENANCE mode"
+        if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
+            self.abort_commands(task_callback=task_callback)
+            self.logger.info("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
+            return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
 
         cmds_in_progress = self.get_currently_executing_lrcs()
         if cmds_in_progress:

@@ -442,6 +442,7 @@ class CommandMap:
             "SetMaintenanceMode",
             ["dishmode"],
             [DishMode.MAINTENANCE],
+            timeout=300,  # stow can take longer time
         )
 
     def track_cmd(
