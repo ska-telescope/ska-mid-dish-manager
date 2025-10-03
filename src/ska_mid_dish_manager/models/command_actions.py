@@ -3,7 +3,7 @@
 import json
 import logging
 import time
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Any, Callable, List, Optional
 
 import tango
@@ -52,7 +52,7 @@ class Action(ABC):
     def handler(self) -> "ActionHandler":
         # Subclasses must assign a handler before executing
         if self._handler is None:
-            raise NotImplementedError(f"Action does not have a handler")
+            raise NotImplementedError("Action does not have a handler")
         return self._handler
 
     def execute(
