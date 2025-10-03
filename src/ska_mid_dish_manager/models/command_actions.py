@@ -46,8 +46,15 @@ class Action(ABC):
         self.action_on_success = action_on_success
         self.action_on_failure = action_on_failure
         self.waiting_callback = waiting_callback
+        self._handler: Optional["ActionHandler"] = None
 
-    @abstractmethod
+    @property
+    def handler(self) -> "ActionHandler":
+        # Subclasses must assign a handler before executing
+        if self._handler is None:
+            raise NotImplementedError(f"Action does not have a handler")
+        return self._handler
+
     def execute(
         self,
         task_callback: Callable,
@@ -55,7 +62,7 @@ class Action(ABC):
         completed_response_msg: Optional[str] = None,
     ):
         """Execute the defined action."""
-        pass
+        self.handler.execute(task_callback, task_abort_event, completed_response_msg)
 
 
 class ActionHandler:
@@ -335,7 +342,7 @@ class SetStandbyLPModeAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
-        self.handler = ActionHandler(
+        self._handler = ActionHandler(
             self.logger,
             "SetStandbyLPMode",
             [self.spf_command, self.spfrx_command, self.ds_command],
@@ -367,7 +374,7 @@ class SetStandbyLPModeAction(Action):
                     )
                     return
 
-        return self.handler.execute(task_callback, task_abort_event, completed_response_msg)
+        return super().execute(task_callback, task_abort_event, completed_response_msg)
 
 
 class SetStandbyFPModeAction(Action):
@@ -416,7 +423,7 @@ class SetStandbyFPModeAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
-        self.handler = ActionHandler(
+        self._handler = ActionHandler(
             self.logger,
             "SetStandbyFPMode",
             [ds_set_standby_mode, ds_set_full_power_mode],
@@ -429,11 +436,6 @@ class SetStandbyFPModeAction(Action):
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
         )
-
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
-    ):
-        return self.handler.execute(task_callback, task_abort_event, completed_response_msg)
 
 
 class SetOperateModeAction(Action):
@@ -478,7 +480,7 @@ class SetOperateModeAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
-        self.handler = ActionHandler(
+        self._handler = ActionHandler(
             self.logger,
             "SetOperateMode",
             [spf_command, ds_command],
@@ -502,7 +504,7 @@ class SetOperateModeAction(Action):
                 result=(ResultCode.NOT_ALLOWED, "SetOperateMode requires a configured band"),
             )
             return
-        return self.handler.execute(task_callback, task_abort_event, completed_response_msg)
+        return super().execute(task_callback, task_abort_event, completed_response_msg)
 
 
 class SetMaintenanceModeAction(Action):
@@ -556,7 +558,7 @@ class SetMaintenanceModeAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
         )
 
-        self.handler = ActionHandler(
+        self._handler = ActionHandler(
             self.logger,
             "SetMaintenanceMode",
             [ds_command, spfrx_command, spf_command],
@@ -589,7 +591,7 @@ class SetMaintenanceModeAction(Action):
                 task_callback(status=TaskStatus.FAILED, exception=err)
                 return
 
-        return self.handler.execute(task_callback, task_abort_event, completed_response_msg)
+        return super().execute(task_callback, task_abort_event, completed_response_msg)
 
 
 class TrackAction(Action):
@@ -622,7 +624,7 @@ class TrackAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
-        self.handler = ActionHandler(
+        self._handler = ActionHandler(
             self.logger,
             "Track",
             [ds_command],
@@ -642,7 +644,7 @@ class TrackAction(Action):
     def execute(
         self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
     ):
-        return self.handler.execute(
+        return super().execute(
             task_callback, task_abort_event, completed_response_msg=self.completed_message
         )
 
@@ -678,7 +680,7 @@ class TrackStopAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
-        self.handler = ActionHandler(
+        self._handler = ActionHandler(
             self.logger,
             "TrackStop",
             [ds_command],
@@ -691,11 +693,6 @@ class TrackStopAction(Action):
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
         )
-
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
-    ):
-        return self.handler.execute(task_callback, task_abort_event, completed_response_msg)
 
 
 class ConfigureBandAction(Action):
@@ -751,7 +748,7 @@ class ConfigureBandAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
-        self.handler = ActionHandler(
+        self._handler = ActionHandler(
             logger=self.logger,
             name=self.requested_cmd,
             fanned_out_commands=[ds_set_index_position_command, spfrx_configure_band_command],
@@ -774,7 +771,7 @@ class ConfigureBandAction(Action):
             return
 
         self.logger.info(f"{self.requested_cmd} called with synchronise = {self.synchronise}")
-        return self.handler.execute(task_callback, task_abort_event, completed_response_msg)
+        return super().execute(task_callback, task_abort_event, completed_response_msg)
 
 
 class ConfigureBandActionSequence(Action):
@@ -871,7 +868,7 @@ class SlewAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
-        self.handler = ActionHandler(
+        self._handler = ActionHandler(
             logger=self.logger,
             name="Slew",
             fanned_out_commands=[ds_command],
@@ -889,7 +886,7 @@ class SlewAction(Action):
     def execute(
         self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
     ):
-        return self.handler.execute(
+        return super().execute(
             task_callback, task_abort_event, completed_response_msg=self.completed_message
         )
 
@@ -932,7 +929,7 @@ class TrackLoadStaticOffAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
-        self.handler = ActionHandler(
+        self._handler = ActionHandler(
             logger=self.logger,
             name="TrackLoadStaticOff",
             fanned_out_commands=[ds_command],
@@ -945,8 +942,3 @@ class TrackLoadStaticOffAction(Action):
             action_on_failure=action_on_failure,
             waiting_callback=self.waiting_callback,
         )
-
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
-    ):
-        return self.handler.execute(task_callback, task_abort_event, completed_response_msg)
