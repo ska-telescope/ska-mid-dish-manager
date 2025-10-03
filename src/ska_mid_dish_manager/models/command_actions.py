@@ -218,9 +218,9 @@ class ActionHandler:
             if task_abort_event.is_set():
                 self.logger.warning(f"Action '{self.name}' aborted.")
                 task_callback(
-                    progress=f"{self.name} Aborted",
+                    progress=f"{self.name} aborted",
                     status=TaskStatus.ABORTED,
-                    result=(ResultCode.ABORTED, f"{self.name} Aborted"),
+                    result=(ResultCode.ABORTED, f"{self.name} aborted"),
                 )
                 return
 

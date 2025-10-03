@@ -54,7 +54,7 @@ def test_abort_commands(
     result_event_store.wait_for_command_id(lp_unique_id, timeout=30)
     # Abort will execute standbyfp dishmode as part of its abort sequence
     expected_progress_updates = [
-        "SetOperateMode Aborted",
+        "SetOperateMode aborted",
         "SetStandbyMode called on DS",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",

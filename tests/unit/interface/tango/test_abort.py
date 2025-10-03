@@ -150,7 +150,7 @@ def test_abort_during_dish_movement(
     # Abort the LRC
     [[_], [abort_unique_id]] = device_proxy.command_inout(abort_cmd, None)
     result_event_store.wait_for_command_id(fp_unique_id, timeout=5)
-    progress_event_store.wait_for_progress_update("SetStandbyFPMode Aborted")
+    progress_event_store.wait_for_progress_update("SetStandbyFPMode aborted")
 
     expected_progress_updates = [
         "Clearing scanID",
