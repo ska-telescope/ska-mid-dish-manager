@@ -1,53 +1,157 @@
-"""Test Maintenance Mode."""
+"""Test Maintenance mode."""
+
+import time
 
 import pytest
+from tango import DevFailed, DeviceProxy
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
-from tests.utils import remove_subscriptions, setup_subscriptions
+from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DscCmdAuthType,
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
+from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
 
-WAIT_FOR_RESULT_BUFFER_SEC = 10
+REQUESTED_AZIMUTH_VALUE = 100.0
+REQUESTED_ELEVATION_VALUE = 60.0
 
 
 @pytest.mark.acceptance
 @pytest.mark.forked
-def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_manager_proxy):
-    """Test transition to MAINTENANCE."""
-    result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+def test_maintenance_mode_cmds(
+    event_store_class: EventStore,
+    dish_manager_proxy: DeviceProxy,
+    ds_device_proxy: DeviceProxy,
+    spf_device_proxy: DeviceProxy,
+    spfrx_device_proxy: DeviceProxy,
+) -> None:
+    """Test the behaviour of Maintenance mode."""
+    mode_event_store = event_store_class()
+    dsc_event_store = event_store_class()
+    dsc_auth_event_store = event_store_class()
+    spf_event_store = event_store_class()
+    spfrx_event_store = event_store_class()
+
+    subscriptions = {}
+    subscriptions.update(setup_subscriptions(spf_device_proxy, {"operatingMode": spf_event_store}))
+    subscriptions.update(
+        setup_subscriptions(spfrx_device_proxy, {"operatingMode": spfrx_event_store})
+    )
+    ds_attr_cb_mapping = {
+        "dscCmdAuth": dsc_auth_event_store,
+        "operatingMode": dsc_event_store,
+    }
+    subscriptions.update(setup_subscriptions(ds_device_proxy, ds_attr_cb_mapping))
+    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": mode_event_store}))
+
+    dish_manager_proxy.SetMaintenanceMode()
+
+    mode_event_store.wait_for_value(DishMode.STOW, timeout=120)
+    spfrx_event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=30)
+    spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
+    mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
+    dsc_auth_event_store.wait_for_value(DscCmdAuthType.NO_AUTHORITY, timeout=30)
+
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_power_cycle_in_maintenance_mode(
+    event_store_class: EventStore,
+    dish_manager_proxy: DeviceProxy,
+) -> None:
+    # Put dish into maintenance mode
+    mode_event_store = event_store_class()
+    buildstate_event_store = event_store_class()
     attr_cb_mapping = {
-        "longRunningCommandProgress": progress_event_store,
-        "longRunningCommandResult": result_event_store,
+        "dishMode": mode_event_store,
+        "buildState": buildstate_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    dish_manager_proxy.SetMaintenanceMode()
+    mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
 
-    # SetMaintenanceMode triggers a stow request. Taking
-    # elevation speed at 1 degree per second, a suitable
-    # timeout for the SetMaintenance can be calculated later
-    current_el = dish_manager_proxy.achievedPointing[2]
-    stow_position = 90.2
-    estimate_stow_duration = stow_position - current_el
+    # Restart the dish manager to simulate a power cycle
+    dp_manager = DeviceProxyManager()
+    # restart the sub-component device
+    admin_device_proxy = dp_manager(dish_manager_proxy.adm_name())
+    mode_event_store.clear_queue()
+    buildstate_event_store.clear_queue()
+    admin_device_proxy.RestartServer()
 
-    [[_], [unique_id]] = dish_manager_proxy.SetMaintenanceMode()
-    result_event_store.wait_for_command_id(
-        unique_id, timeout=estimate_stow_duration + WAIT_FOR_RESULT_BUFFER_SEC
-    )
+    # Restarting the device server is not instantaneous, so we wait for a bit
+    time.sleep(2)
 
-    expected_progress_updates = [
-        "SetMaintenanceMode called on SPF",
-        "Stow called on DS",
-        "Awaiting dishmode change to MAINTENANCE",
-        "SetMaintenanceMode completed",
-    ]
+    try:
+        dp_manager.wait_for_device(dish_manager_proxy)
+    except DevFailed:
+        pass
 
-    events = progress_event_store.wait_for_progress_update(expected_progress_updates[-1])
-
-    events_string = "".join([str(event) for event in events])
-
-    # Check that all the expected progress messages appeared
-    # in the event store
-    for message in expected_progress_updates:
-        assert message in events_string
+    # Use build state update as an indication that device is back online and connected
+    # to subdevices.
+    buildstate_event_store.wait_for_n_events(1, timeout=90)
 
     assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
+
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_exiting_maintenance_mode_when_ds_on_stow(
+    event_store_class: EventStore,
+    dish_manager_proxy: DeviceProxy,
+    ds_device_proxy: DeviceProxy,
+) -> None:
+    # Put dish into maintenance mode
+    mode_event_store = event_store_class()
+    dsc_event_store = event_store_class()
+    dsc_auth_event_store = event_store_class()
+    ds_attr_cb_mapping = {
+        "dscCmdAuth": dsc_auth_event_store,
+        "operatingMode": dsc_event_store,
+    }
+    subscriptions = {}
+    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": mode_event_store}))
+    subscriptions.update(setup_subscriptions(ds_device_proxy, ds_attr_cb_mapping))
+    dish_manager_proxy.SetMaintenanceMode()
+    mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
+    dish_manager_proxy.SetStowMode()
+    dsc_event_store.wait_for_value(DSOperatingMode.STOW, timeout=120)
+
+    assert dish_manager_proxy.dishMode == DishMode.STOW
+
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_exiting_maintenance_mode_when_ds_not_on_stow(
+    event_store_class: EventStore,
+    dish_manager_proxy: DeviceProxy,
+    ds_device_proxy: DeviceProxy,
+) -> None:
+    # Put dish into maintenance mode
+    mode_event_store = event_store_class()
+    dsc_event_store = event_store_class()
+    subscriptions = {}
+    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": mode_event_store}))
+    subscriptions.update(setup_subscriptions(ds_device_proxy, {"operatingMode": dsc_event_store}))
+    dish_manager_proxy.SetMaintenanceMode()
+    mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
+
+    ds_device_proxy.unstow()
+    dsc_event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=120)
+    ds_device_proxy.slew([REQUESTED_AZIMUTH_VALUE, REQUESTED_ELEVATION_VALUE])
+    dsc_event_store.wait_for_value(DSOperatingMode.POINT, timeout=30)
+    dish_manager_proxy.SetStowMode()
+    dsc_event_store.wait_for_value(DSOperatingMode.STOW, timeout=120)
+    mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
+
+    assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
 
     remove_subscriptions(subscriptions)

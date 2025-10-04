@@ -155,9 +155,9 @@ def test_fp_lp_power_limit_used(
     dish_manager_proxy.write_attribute("dscPowerLImitKw", limit_value)
     ds_attribute_event_store.wait_for_value(limit_value, timeout=6)
     # Call command that also makes use of the SetPowerMode command
-    ds_device_proxy.SetStandbyLPMode()
+    ds_device_proxy.SetStandbyMode()
     progress_event_store.wait_for_progress_update(
-        f"Low Power Mode called using DSC Power Limit: {limit_value}kW", timeout=6
+        f"Path [Management.Commands.SetPowerMode] called with args [(True, {limit_value})]",
     )
 
     # FP transition
@@ -166,9 +166,10 @@ def test_fp_lp_power_limit_used(
     dish_manager_proxy.write_attribute("dscPowerLImitKw", limit_value)
     ds_attribute_event_store.wait_for_value(limit_value, timeout=6)
     # Call command that also makes use of the SetPowerMode command
-    ds_device_proxy.SetStandbyFPMode()
+    ds_device_proxy.SetPointMode()
     progress_event_store.wait_for_progress_update(
-        f"Full Power Mode called using DSC Power Limit: {limit_value}kW", timeout=6
+        f"Path [Management.Commands.SetPowerMode] called with args [(False, {limit_value})]",
+        timeout=6,
     )
     remove_subscriptions(subscriptions)
 
