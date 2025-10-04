@@ -5,7 +5,7 @@ import logging
 import mock
 import pytest
 import tango
-from ska_control_model import CommunicationStatus, TaskStatus
+from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 
@@ -20,7 +20,7 @@ def test_log_command_inout(patched_dev_factory, caplog: pytest.LogCaptureFixture
 
     # Set up mocks
     mock_device_proxy = mock.MagicMock(name="DP")
-    mock_device_proxy.command_inout.side_effect = tango.DevFailed(tango.DevError())
+    mock_device_proxy.command_inout.side_effect = tango.DevFailed("Failure Message")
 
     class DummyFactory:
         def __call__(self, *args, **kwargs):
@@ -35,10 +35,15 @@ def test_log_command_inout(patched_dev_factory, caplog: pytest.LogCaptureFixture
     )
 
     tc_manager._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
-    task_status, _ = tc_manager.execute_command("Stow", None)
+    with pytest.raises(tango.DevFailed):
+        tc_manager.execute_command("Stow", None)
 
-    assert task_status == TaskStatus.FAILED
-    assert "Encountered an error executing [Stow] with arg [None] on [a/b/c]" in caplog.text
+    assert "Traceback" in caplog.text
+    assert "Failure Message" in caplog.text
+    assert "Could not execute command [Stow] with arg [None] on [a/b/c]" in caplog.text
+
+    # Check that at least one exception is logged
+    assert any(i.exc_info for i in caplog.records)
 
 
 @pytest.mark.unit
