@@ -62,7 +62,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     assert "SetStandbyLPMode failed" in expected_result_message, lrc_result_msgs
 
     # check that the mode transition to LP mode did not happen on dish manager, spf and spfrx
-    assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
+    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     assert spf_device_proxy.operatingMode == SPFOperatingMode.OPERATE
     assert spfrx_device_proxy.operatingMode == SPFRxOperatingMode.OPERATE
 

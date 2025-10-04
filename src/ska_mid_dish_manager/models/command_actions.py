@@ -207,9 +207,8 @@ class ActionHandler:
             awaited_values = list(self.awaited_component_state.values())
             report_awaited_attributes(task_callback, awaited_attributes, awaited_values)
 
-        action_start_time = time.time()
-
-        while time.time() - action_start_time < self.timeout_s:
+        deadline = time.time() + self.timeout_s
+        while deadline > time.time():
             # Handle abort
             if task_abort_event.is_set():
                 self.logger.warning(f"Action '{self.action_name}' aborted.")
