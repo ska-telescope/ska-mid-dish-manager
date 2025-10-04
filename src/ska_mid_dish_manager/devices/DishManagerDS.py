@@ -2079,11 +2079,11 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @BaseInfoIt(show_args=False, show_kwargs=False, show_ret=True)
     def ResetTrackTable(self) -> DevVarLongStringArrayType:
         """Resets the program track table on the controller.
 
-        Track table is cleared on the controller with zeros in NEW load mode
+        Track table is cleared on the controller in RESET load mode
         """
         handler = self.get_command_object("ResetTrackTable")
         result_code, message = handler()

@@ -105,7 +105,6 @@ class DeviceProxyManager:
                 device_proxy = self._create_tango_device_proxy(trl)
             except (tango.DevFailed, RuntimeError):
                 self.logger.warning("Failed creating DeviceProxy to device at %s", trl)
-                self._device_proxies[trl] = device_proxy
                 return device_proxy
             self._device_proxies[trl] = device_proxy
 
@@ -115,6 +114,7 @@ class DeviceProxyManager:
             except (tango.DevFailed, RuntimeError):
                 self.logger.warning("Device at %s is unresponsive.", trl)
 
+        device_proxy.set_timeout_millis(5000)  # set a 5 second timeout
         return device_proxy
 
     def _is_tango_device_running(self, tango_device_proxy: tango.DeviceProxy) -> bool:
