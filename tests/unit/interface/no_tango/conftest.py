@@ -3,7 +3,7 @@ from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
-from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
+from ska_control_model import CommunicationStatus, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from tests.utils import ComponentStateStore
@@ -37,21 +37,18 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
 
     :return: the component manager under test
     """
-
-    def _simulate_lrc_callbacks(*args, **kwargs):
-        task_callback = args[-1]
-        task_callback(status=TaskStatus.IN_PROGRESS)
-        task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(None)))
-        return TaskStatus.QUEUED, "message"
-
     with (
         patch.multiple(
             "ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceComponentManager",
             read_attribute_value=MagicMock(),
             write_attribute_value=MagicMock(),
             update_state_from_monitored_attributes=MagicMock(),
-            execute_command=MagicMock(),
-            run_device_command=MagicMock(side_effect=_simulate_lrc_callbacks),
+            execute_command=MagicMock(
+                side_effect=lambda command_name, command_arg: (
+                    TaskStatus.IN_PROGRESS,
+                    f"{command_name} successfully executed",
+                )
+            ),
         ),
         patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager"),
         patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"),

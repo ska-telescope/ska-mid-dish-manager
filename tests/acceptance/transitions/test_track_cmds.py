@@ -127,7 +127,7 @@ def test_track_and_track_stop_cmds(
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=6)
 
     expected_progress_updates = [
-        "Track called on DS, ID",
+        "Fanned out commands: DS.Track",
         (
             "Track command has been executed on DS. "
             "Monitor the achievedTargetLock attribute to determine when the dish is on source."
@@ -141,7 +141,7 @@ def test_track_and_track_stop_cmds(
 
     # Check that all the expected progress messages appeared
     # in the event store
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     for message in expected_progress_updates:
         assert message in events_string
@@ -162,7 +162,7 @@ def test_track_and_track_stop_cmds(
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=4)
 
     expected_progress_updates = [
-        "TrackStop called on DS, ID",
+        "Fanned out commands: DS.TrackStop",
         "Awaiting DS pointingstate change to READY",
         "TrackStop completed",
     ]
@@ -174,7 +174,7 @@ def test_track_and_track_stop_cmds(
 
     # Check that all the expected progress messages appeared
     # in the event store
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     for message in expected_progress_updates:
         assert message in events_string
@@ -331,6 +331,7 @@ def test_maximum_capacity(
     end_index_event_store.wait_for_value(expected_end_index)
 
     # append to fill up track table
+    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
     max_track_table_buffer_size = 10000
     max_track_table_load = int(max_track_table_buffer_size / samples_per_block)
     for _ in range(max_track_table_load - 1):
@@ -339,7 +340,6 @@ def test_maximum_capacity(
         track_table = generate_constant_table(
             start_tai, sample_spacing, samples_per_block, current_az, current_el
         )
-        dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
         dish_manager_proxy.programTrackTable = track_table
 
         expected_end_index += samples_per_block
@@ -350,7 +350,6 @@ def test_maximum_capacity(
     track_table = generate_constant_table(
         start_tai, sample_spacing, samples_per_block, current_az, current_el
     )
-    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
     with pytest.raises(tango.DevFailed):
         dish_manager_proxy.programTrackTable = track_table
 
@@ -376,7 +375,6 @@ def test_maximum_capacity(
     track_table = generate_constant_table(
         start_tai, sample_spacing, samples_per_block, current_az, current_el
     )
-    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
     dish_manager_proxy.programTrackTable = track_table
     # expect a roll over of the circular buffer
     expected_end_index = samples_per_block

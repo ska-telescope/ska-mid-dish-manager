@@ -23,9 +23,7 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
     dish_manager_proxy.SetStandbyLPMode()
 
     expected_progress_updates = [
-        "SetStandbyMode called on DS",
-        "SetStandbyLPMode called on SPF",
-        "SetStandbyMode called on SPFRX",
+        "Fanned out commands: SPF.SetStandbyLPMode, SPFRX.SetStandbyMode, DS.SetStandbyMode",
         "Awaiting dishmode change to STANDBY_LP",
         "SetStandbyLPMode completed",
     ]
@@ -34,7 +32,7 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store

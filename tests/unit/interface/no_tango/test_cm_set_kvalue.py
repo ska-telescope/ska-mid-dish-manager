@@ -18,7 +18,7 @@ def test_set_kvalue_handler(
         the command tracker under test
     """
     # set_kvalue has no pre-condition.
-    status, message = component_manager.set_kvalue(5)
+    result_code, message = component_manager.set_kvalue(5)
 
     # this is a fast command and returns immediately
-    assert (status, message) == (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
+    assert (result_code, message) == (ResultCode.OK, "SetKValue successfully executed")

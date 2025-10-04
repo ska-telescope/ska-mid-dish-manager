@@ -12,6 +12,17 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import calculate_slew_target, remove_subscriptions, setup_subscriptions
 
 
+@pytest.fixture
+def toggle_skip_attributes(spf_device_proxy):
+    """Ensure that attribute updates on spf is restored."""
+    # Set a flag on SPF to skip attribute updates.
+    # This is useful to ensure that the long running command
+    # does not finish executing before AbortCommands is triggered
+    spf_device_proxy.skipAttributeUpdates = True
+    yield
+    spf_device_proxy.skipAttributeUpdates = False
+
+
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands(
@@ -19,6 +30,7 @@ def test_abort_commands(
     event_store_class,
     dish_manager_proxy,
     spf_device_proxy,
+    toggle_skip_attributes,
 ):
     """Test AbortCommands aborts the executing long running command."""
     dish_mode_event_store = event_store_class()
@@ -34,10 +46,9 @@ def test_abort_commands(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    # Attempt to configure which will take SPF to Operate mode, this won't happen as
-    # skipAttributeUpdates was set to True
-    spf_device_proxy.skipAttributeUpdates = True
-    [[_], [lp_unique_id]] = dish_manager_proxy.ConfigureBand1(True)
+    # Attempt to configure which will take SPF to Operate mode,
+    # this wont happen asskipAttributeUpdates was set to True
+    [[_], [op_unique_id]] = dish_manager_proxy.ConfigureBand1(True)
 
     # Check that Dish Manager is waiting to transition
     progress_event_store.wait_for_progress_update("Awaiting configuredband change to B1")
@@ -51,11 +62,11 @@ def test_abort_commands(
     # Abort the LRC
     [[_], [abort_unique_id]] = dish_manager_proxy.AbortCommands()
     # Confirm Dish Manager aborted the request on LRC
-    result_event_store.wait_for_command_id(lp_unique_id, timeout=30)
+    result_event_store.wait_for_command_id(op_unique_id, timeout=30)
     # Abort will execute standbyfp dishmode as part of its abort sequence
     expected_progress_updates = [
         "SetOperateMode aborted",
-        "SetStandbyMode called on DS",
+        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
@@ -243,8 +254,8 @@ def test_abort_commands_during_stow(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    # If already in stow position, move to different position so that effort of
-    # aborting stow can be observed
+    # If already in stow position, move to different position
+    # so that effort of aborting stow can be observed
     current_pointing = dish_manager_proxy.achievedPointing
     desired_el = 70.0
     if current_pointing[2] == pytest.approx(STOW_ELEVATION_DEGREES):

@@ -10,7 +10,7 @@ from datetime import datetime
 from functools import reduce
 from typing import List, Optional, Tuple
 
-from ska_control_model import CommunicationStatus, ResultCode
+from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango import AttrWriteType, DevLong64, DevState, DevVarStringArray, DispLevel
@@ -67,11 +67,6 @@ DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 # TRACK_LOAD_FUTURE_THRESHOLD_SEC in the future are logged
 TRACK_LOAD_FUTURE_THRESHOLD_SEC = 5
 
-# provision same variable from base classes
-_MAXIMUM_STATUS_QUEUE_SIZE = 32
-
-_DISH_SUB_COMPONENTS_CONTROLLED = 3
-
 
 class DishManager(SKAController):
     """The Dish Manager of the Dish LMC subsystem."""
@@ -101,54 +96,6 @@ class DishManager(SKAController):
         doc="Threshold value for wind gust speed (in m/s) used to trigger stow.",
         default_value=WIND_GUST_THRESHOLD_MPS,
     )
-
-    def _create_lrc_attributes(self) -> None:
-        """Create attributes for the long running commands.
-
-        This is an override to update the max_dim_x of longRunningCommandInProgress.
-        DishManager reports progress from its running command and from the sub devices
-        commands were fanned out to.
-
-        :raises AssertionError: if max_queued_tasks or max_executing_tasks is not
-            equal to or greater than 0 or 1 respectively.
-        """
-        assert self.component_manager.max_queued_tasks >= 0, (
-            "max_queued_tasks property must be equal to or greater than 0."
-        )
-        assert self.component_manager.max_executing_tasks >= 1, (
-            "max_executing_tasks property must be equal to or greater than 1."
-        )
-        self._status_queue_size = max(
-            self.component_manager.max_queued_tasks * 2
-            + self.component_manager.max_executing_tasks,
-            _MAXIMUM_STATUS_QUEUE_SIZE,
-        )
-        self._create_attribute(
-            "longRunningCommandStatus",
-            self._status_queue_size * 2,  # 2 per command
-            self.longRunningCommandStatus,
-        )
-        self._create_attribute(
-            "longRunningCommandsInQueue",
-            self._status_queue_size,
-            self.longRunningCommandsInQueue,
-        )
-        self._create_attribute(
-            "longRunningCommandIDsInQueue",
-            self._status_queue_size,
-            self.longRunningCommandIDsInQueue,
-        )
-        self._create_attribute(
-            "longRunningCommandInProgress",
-            self.component_manager.max_executing_tasks + _DISH_SUB_COMPONENTS_CONTROLLED,
-            self.longRunningCommandInProgress,
-        )
-        self._create_attribute(
-            "longRunningCommandProgress",
-            self.component_manager.max_executing_tasks
-            * 2,  # cmd name and progress for each command
-            self.longRunningCommandProgress,
-        )
 
     def create_component_manager(self) -> DishManagerComponentManager:
         """Create the component manager for DishManager.
@@ -181,6 +128,7 @@ class DishManager(SKAController):
         for command_name, method_name in [
             ("SetStandbyLPMode", "set_standby_lp_mode"),
             ("SetOperateMode", "set_operate_mode"),
+            ("SetMaintenanceMode", "set_maintenance_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("TrackStop", "track_stop_cmd"),
@@ -1143,16 +1091,12 @@ class DishManager(SKAController):
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
-        result_code, result_message = self.component_manager.track_load_table(
+        task_status, msg = self.component_manager.track_load_table(
             sequence_length, table, self._track_table_load_mode
         )
 
-        result_code = ResultCode(result_code)
-        if result_code != ResultCode.OK:
-            err_message = (
-                f"Write to programTrackTable failed, [{result_code.name}] [{result_message}]"
-            )
-            raise RuntimeError(err_message)
+        if task_status == TaskStatus.FAILED:
+            raise RuntimeError(f"Write to programTrackTable failed: {msg}")
         self._program_track_table = table
         self.push_change_event("programTrackTable", table)
         self.push_archive_event("programTrackTable", table)

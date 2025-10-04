@@ -31,14 +31,19 @@ class TestCommandActionsIgnoringDevices:
                 _component_state={
                     "operatingmode": DSOperatingMode.STANDBY,
                     "powerstate": DSPowerState.LOW_POWER,
-                }
+                },
+                execute_command=mock.MagicMock(return_value=(None, None)),
             ),
-            "SPF": mock.MagicMock(_component_state={"operatingmode": SPFOperatingMode.STANDBY_LP}),
+            "SPF": mock.MagicMock(
+                _component_state={"operatingmode": SPFOperatingMode.STANDBY_LP},
+                execute_command=mock.MagicMock(return_value=(None, None)),
+            ),
             "SPFRX": mock.MagicMock(
                 _component_state={
                     "operatingmode": SPFRxOperatingMode.STANDBY,
                     "adminmode": AdminMode.ONLINE,
-                }
+                },
+                execute_command=mock.MagicMock(return_value=(None, None)),
             ),
         }
 
@@ -59,7 +64,6 @@ class TestCommandActionsIgnoringDevices:
 
         self.dish_manager_cm_mock._component_state["ignorespf"] = False
         self.dish_manager_cm_mock._component_state["ignorespfrx"] = False
-        self.command_tracker_mock = mock.MagicMock()
 
     def teardown_method(self):
         """Tear down context."""
@@ -71,35 +75,25 @@ class TestCommandActionsIgnoringDevices:
         self.dish_manager_cm_mock._component_state["ignorespfrx"] = spfrx_ignored
 
     @pytest.mark.unit
-    @mock.patch("ska_mid_dish_manager.models.fanned_out_command.SubmittedSlowCommand")
-    def test_ignoring_spf(self, patched_slow_command):
+    def test_ignoring_spf(self, caplog):
         """Test ignoring SPF device in command map."""
-        mock_command_instance = mock.MagicMock()
-        mock_command_instance.return_value = (None, None)
-
-        patched_slow_command.return_value = mock_command_instance
-
-        # Set mocked dishmode to desired value so that the command map doesn't wait forever
+        caplog.set_level(logging.DEBUG)
         task_abort_event = Event()
-
         # Save any progress calls
         progress_calls = []
 
-        # pylint: disable=unused-argument
-        def my_task_callback(progress=None, status=None, result=None):
-            if progress is not None:
-                progress_calls.append(progress)
+        def my_task_callback(**kwargs):
+            if kwargs.get("progress") is not None:
+                progress_calls.append(kwargs["progress"])
 
         self.set_devices_ignored(spf_ignored=True, spfrx_ignored=False)
 
-        SetStandbyLPModeAction(
-            LOGGER, self.command_tracker_mock, self.dish_manager_cm_mock
-        ).execute(my_task_callback, task_abort_event)
+        SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
+            my_task_callback, task_abort_event
+        )
 
         expected_progress_updates = [
-            "SetStandbyMode called on DS",
-            "SPF device is disabled. SetStandbyLPMode call ignored",
-            "SetStandbyMode called on SPFRX",
+            "Fanned out commands: SPFRX.SetStandbyMode, DS.SetStandbyMode",
             "Awaiting dishmode change to STANDBY_LP",
             "SetStandbyLPMode completed",
         ]
@@ -109,36 +103,28 @@ class TestCommandActionsIgnoringDevices:
         for progress_update in expected_progress_updates:
             assert progress_update in progress_string
 
+        assert "SPF device is disabled. SetStandbyLPMode call ignored" in caplog.text
+
     @pytest.mark.unit
-    @mock.patch("ska_mid_dish_manager.models.fanned_out_command.SubmittedSlowCommand")
-    def test_ignoring_spfrx(self, patched_slow_command):
+    def test_ignoring_spfrx(self, caplog):
         """Test ignoring SPFRx device in command map."""
-        mock_command_instance = mock.MagicMock()
-        mock_command_instance.return_value = (None, None)
-
-        patched_slow_command.return_value = mock_command_instance
-
-        # Set mocked dishmode to desired value so that the command map doesn't wait forever
+        caplog.set_level(logging.DEBUG)
         task_abort_event = Event()
-
         # Save any progress calls
         progress_calls = []
 
-        # pylint: disable=unused-argument
-        def my_task_callback(progress=None, status=None, result=None):
-            if progress is not None:
-                progress_calls.append(progress)
+        def my_task_callback(**kwargs):
+            if kwargs.get("progress") is not None:
+                progress_calls.append(kwargs["progress"])
 
         self.set_devices_ignored(spf_ignored=False, spfrx_ignored=True)
 
-        SetStandbyLPModeAction(
-            LOGGER, self.command_tracker_mock, self.dish_manager_cm_mock
-        ).execute(my_task_callback, task_abort_event)
+        SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
+            my_task_callback, task_abort_event
+        )
 
         expected_progress_updates = [
-            "SetStandbyMode called on DS",
-            "SetStandbyLPMode called on SPF",
-            "SPFRX device is disabled. SetStandbyMode call ignored",
+            "Fanned out commands: SPF.SetStandbyLPMode, DS.SetStandbyMode",
             "Awaiting dishmode change to STANDBY_LP",
             "SetStandbyLPMode completed",
         ]
@@ -148,18 +134,13 @@ class TestCommandActionsIgnoringDevices:
         for progress_update in expected_progress_updates:
             assert progress_update in progress_string
 
+        assert "SPFRX device is disabled. SetStandbyMode call ignored" in caplog.text
+
     @pytest.mark.unit
-    @mock.patch("ska_mid_dish_manager.models.fanned_out_command.SubmittedSlowCommand")
-    def test_ignoring_both_sub(self, patched_slow_command):
+    def test_ignoring_both_sub(self, caplog):
         """Test ignoring both subservient devices in command map."""
-        mock_command_instance = mock.MagicMock()
-        mock_command_instance.return_value = (None, None)
-
-        patched_slow_command.return_value = mock_command_instance
-
-        # Set mocked dishmode to desired value so that the command map doesn't wait forever
+        caplog.set_level(logging.DEBUG)
         task_abort_event = Event()
-
         # Save any progress calls
         progress_calls = []
 
@@ -170,14 +151,12 @@ class TestCommandActionsIgnoringDevices:
 
         self.set_devices_ignored(spf_ignored=True, spfrx_ignored=True)
 
-        SetStandbyLPModeAction(
-            LOGGER, self.command_tracker_mock, self.dish_manager_cm_mock
-        ).execute(my_task_callback, task_abort_event)
+        SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
+            my_task_callback, task_abort_event
+        )
 
         expected_progress_updates = [
-            "SetStandbyMode called on DS",
-            "SPF device is disabled. SetStandbyLPMode call ignored",
-            "SPFRX device is disabled. SetStandbyMode call ignored",
+            "Fanned out commands: DS.SetStandbyMode",
             "Awaiting dishmode change to STANDBY_LP",
             "SetStandbyLPMode completed",
         ]
@@ -186,3 +165,6 @@ class TestCommandActionsIgnoringDevices:
 
         for progress_update in expected_progress_updates:
             assert progress_update in progress_string
+
+        assert "SPF device is disabled. SetStandbyLPMode call ignored" in caplog.text
+        assert "SPFRX device is disabled. SetStandbyMode call ignored" in caplog.text
