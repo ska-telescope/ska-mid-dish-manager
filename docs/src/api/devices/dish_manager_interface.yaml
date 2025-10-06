@@ -1,4 +1,4 @@
-- class: DishManager
+w- class: DishManager
   meta:
     commands:
     - name: Abort

@@ -260,31 +260,11 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
         ),
     )
 
-    max_retries = 5
-    retry_delay = 1
-
-    for attempt in range(max_retries):
-        try:
-            event_printer = EventPrinter(file_path, (dm_tracker, ds_tracker))
-            event_printer.__enter__()  # manually enter to handle retries
-            break  # success, exit retry loop
-        except tango.DevFailed as e:
-            if attempt < max_retries - 1:
-                print(f"Subscription attempt {attempt + 1} failed, retrying in {retry_delay}s...")
-                time.sleep(retry_delay)
-            else:
-                print(f"Failed to subscribe to events after {max_retries} attempts: {e}")
-                event_printer = None
-
-    if event_printer is not None:
+    event_printer = EventPrinter(file_path, (dm_tracker, ds_tracker))
+    with event_printer:
         with open(file_path, "a", encoding="utf-8") as open_file:
             open_file.write("\n\nEvents set up, test starting\n")
-        try:
-            yield
-        finally:
-            event_printer.__exit__(None, None, None)
-    else:
-        yield  # continue without event tracking if subscriptions failed
+        yield
 
 
 @pytest.fixture
