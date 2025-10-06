@@ -76,3 +76,4 @@ def test_dish_handles_unhappy_path_in_command_execution(
     assert spf_device_proxy.operatingMode == SPFOperatingMode.OPERATE
     assert spfrx_device_proxy.operatingMode == SPFRxOperatingMode.OPERATE
 
+    remove_subscriptions(subscriptions)
