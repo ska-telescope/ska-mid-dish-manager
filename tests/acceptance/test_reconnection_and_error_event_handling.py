@@ -11,7 +11,9 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 @pytest.mark.xfail(reason="This test is flaky: needs investigation into events and timeouts")
 @pytest.mark.acceptance
 @pytest.mark.forked
-@pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx", "b5dc-manager"])
+@pytest.mark.parametrize(
+    "family", ["ds-manager", "simulator-spfc", "simulator-spfrx", "b5dc-manager"]
+)
 def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     """Test dish manager reacts to devices restarting."""
     dp_manager = DeviceProxyManager()
