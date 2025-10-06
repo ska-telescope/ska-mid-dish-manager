@@ -152,7 +152,7 @@ def track_a_sample(
     [[_], [unique_id]] = dish_manager_proxy.Track()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
     main_event_store.wait_for_value(PointingState.SLEW, timeout=6)
-    main_event_store.wait_for_value(PointingState.TRACK, timeout=60)
+    main_event_store.wait_for_value(PointingState.TRACK, timeout=6)
 
     expected_progress_update = (
         "Track command has been executed on DS. "
