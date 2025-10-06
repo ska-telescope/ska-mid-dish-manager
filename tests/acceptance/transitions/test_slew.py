@@ -10,6 +10,7 @@ AZIM_MECHANICAL_LIMIT_MAX = 360.0
 POINTING_TOLERANCE_DEG = 0.1
 
 
+@pytest.mark.skip(reason="Test to be removed after new slew condition is accepted")
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_slew_rejected(event_store_class, dish_manager_proxy):

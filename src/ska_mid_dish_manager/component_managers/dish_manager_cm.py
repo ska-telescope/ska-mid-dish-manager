@@ -1150,11 +1150,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         def _is_slew_cmd_allowed():
-            if self.component_state["dishmode"] != DishMode.OPERATE:
+            if self.component_state["dishmode"] not in [DishMode.OPERATE, DishMode.STANDBY_FP]:
                 update_task_status(
                     task_callback,
                     progress="Slew command rejected for current dishMode. "
-                    "Slew command is allowed for dishMode OPERATE",
+                    "Slew command is allowed for dishMode STANDBY-FP, OPERATE",
                 )
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
