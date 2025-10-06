@@ -2076,5 +2076,4 @@
     - name: SkaLevel
     - name: WMSDeviceNames
     - name: WindGustThreshold
-    - name: __SubDevices
     - name: polled_cmd
