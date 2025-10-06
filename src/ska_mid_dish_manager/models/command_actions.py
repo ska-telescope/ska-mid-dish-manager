@@ -466,9 +466,7 @@ class SetOperateModeAction(Action):
             waiting_callback=self.waiting_callback,
         )
 
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: str = ""
-    ):
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         if self.dish_manager_cm._component_state["configuredband"] in [Band.NONE, Band.UNKNOWN]:
             task_callback(
                 progress="No configured band: SetOperateMode execution not allowed",
@@ -544,9 +542,7 @@ class SetMaintenanceModeAction(Action):
             waiting_callback=self.waiting_callback,
         )
 
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: str = ""
-    ):
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         if not self.dish_manager_cm.is_device_ignored("SPFRX"):
             spfrx_cm = self.dish_manager_cm.sub_component_managers["SPFRX"]  # noqa: F841
             try:
@@ -613,9 +609,7 @@ class TrackAction(Action):
             "Monitor the achievedTargetLock attribute to determine when the dish is on source."
         )
 
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: str = ""
-    ):
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         return super().execute(
             task_callback, task_abort_event, completed_response_msg=self.completed_message
         )
@@ -731,9 +725,7 @@ class ConfigureBandAction(Action):
             waiting_callback=self.waiting_callback,
         )
 
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: str = ""
-    ):
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         if self.dish_manager_cm._component_state["configuredband"] == self.band_enum:
             task_callback(
                 progress=f"Already in band {self.band_enum}",
@@ -766,9 +758,7 @@ class ConfigureBandActionSequence(Action):
         self.band_enum = Band[f"B{band_number}"]
         self.indexer_enum = IndexerPosition[f"B{band_number}"]
 
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: str = ""
-    ):
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         """Execute the defined action."""
         current_dish_mode = self.dish_manager_cm._component_state["dishmode"]
 
@@ -855,9 +845,7 @@ class SlewAction(Action):
             "Monitor the pointing attributes for the completion status of the task."
         )
 
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: str = ""
-    ):
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         return super().execute(
             task_callback, task_abort_event, completed_response_msg=self.completed_message
         )
