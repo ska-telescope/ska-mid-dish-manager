@@ -12,6 +12,17 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import calculate_slew_target, remove_subscriptions, setup_subscriptions
 
 
+@pytest.fixture
+def toggle_skip_attributes(spf_device_proxy):
+    """Ensure that attribute updates on spf is restored."""
+    # Set a flag on SPF to skip attribute updates.
+    # This is useful to ensure that the long running command
+    # does not finish executing before AbortCommands is triggered
+    spf_device_proxy.skipAttributeUpdates = True
+    yield
+    spf_device_proxy.skipAttributeUpdates = False
+
+
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands(
@@ -19,6 +30,7 @@ def test_abort_commands(
     event_store_class,
     dish_manager_proxy,
     spf_device_proxy,
+    toggle_skip_attributes,
 ):
     """Test AbortCommands aborts the executing long running command."""
     dish_mode_event_store = event_store_class()
@@ -36,7 +48,6 @@ def test_abort_commands(
 
     # Attempt to configure which will take SPF to Operate mode, this won't happen as
     # skipAttributeUpdates was set to True
-    spf_device_proxy.skipAttributeUpdates = True
     [[_], [lp_unique_id]] = dish_manager_proxy.ConfigureBand1(True)
 
     # Check that Dish Manager is waiting to transition

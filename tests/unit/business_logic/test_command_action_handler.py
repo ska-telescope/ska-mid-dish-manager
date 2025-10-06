@@ -110,8 +110,7 @@ class TestActionHandler:
             in self.progress_calls
         )
         assert (
-            "Action 'HandlerX' failed. Fanned out commands: {'DeviceX CommandX (command_id)': "
-            "<FannedOutCommandStatus.TIMED_OUT: 3>}"
+            "Action 'HandlerX' failed. Fanned out commands: {'DeviceX.CommandX': 'TIMED_OUT'}"
         ) in self.progress_calls
 
     @pytest.mark.unit
@@ -147,8 +146,7 @@ class TestActionHandler:
         assert self.component_state["attr"] is False
         assert "Awaiting attr change to True" in self.progress_calls
         assert (
-            "Action 'HandlerX' timed out. Fanned out commands: {'DeviceX CommandX (command_id)': "
-            "<FannedOutCommandStatus.RUNNING: 1>}"
+            "Action 'HandlerX' timed out. Fanned out commands: {'DeviceX.CommandX': 'RUNNING'}"
         ) in self.progress_calls
 
     @pytest.mark.unit
@@ -185,8 +183,7 @@ class TestActionHandler:
         assert self.component_state["attr"] is False
         assert "Awaiting attr change to True" in self.progress_calls
         assert (
-            "Action 'HandlerX' failed. Fanned out commands: {'DeviceX CommandX (command_id)': "
-            "<FannedOutCommandStatus.TIMED_OUT: 3>}"
+            "Action 'HandlerX' failed. Fanned out commands: {'DeviceX.CommandX': 'TIMED_OUT'}"
         ) in self.progress_calls
 
     @pytest.mark.unit
@@ -223,8 +220,7 @@ class TestActionHandler:
         assert self.component_state["attr"] is False
         assert "Awaiting attr change to True" in self.progress_calls
         assert (
-            "Action 'HandlerX' timed out. Fanned out commands: {'DeviceX CommandX (command_id)': "
-            "<FannedOutCommandStatus.RUNNING: 1>}"
+            "Action 'HandlerX' timed out. Fanned out commands: {'DeviceX.CommandX': 'RUNNING'}"
         ) in self.progress_calls
 
     @pytest.mark.unit

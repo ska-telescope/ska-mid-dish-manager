@@ -5,7 +5,7 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from ska_control_model import AdminMode, TaskStatus
+from ska_control_model import AdminMode, ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
@@ -202,7 +202,7 @@ class TestCommandActions:
     @pytest.mark.unit
     @mock.patch("ska_mid_dish_manager.models.fanned_out_command.SubmittedSlowCommand")
     def test_configure_band_sequence_from_fp(self, patched_slow_command):
-        """Test configure_band_cmd happy path LP -> FP -> Configure."""
+        """Test configure_band_cmd happy path from full power."""
         mock_command_instance = mock.MagicMock()
         # Simulate all slow commands completing immediately with no errors
         mock_command_instance.return_value = (None, None)
@@ -210,6 +210,7 @@ class TestCommandActions:
 
         task_abort_event = Event()
         progress_calls = []
+        result_calls = []
 
         # pylint: disable=unused-argument
         def my_task_callback(progress=None, status=None, result=None):
@@ -231,6 +232,8 @@ class TestCommandActions:
                         "operatingmode"
                     ] = DSOperatingMode.POINT
                     self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
+            if result is not None:
+                result_calls.append(result)
 
         # Set mock component states to FP
         self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -251,10 +254,26 @@ class TestCommandActions:
 
         expected_progress_updates = [
             # ConfigureBand2
+            "SetIndexPosition called on DS",
+            "Awaiting DS indexerposition change to B2",
+            "ConfigureBand2 called on SPFRX, ID",
+            "Awaiting SPFRX configuredband change to B2",
             "Awaiting configuredband change to B2",
-            "ConfigureBand2 completed",
+            "DS indexerposition changed to B2",
+            "DS.SetIndexPosition completed",
+            "SPFRX configuredband changed to B2",
+            "SPFRX.ConfigureBand2 completed",
+            "ConfigureBand2 complete. Triggering on success action.",
             # Then SetOperateMode
+            "SetOperateMode called on SPF",
+            "Awaiting SPF operatingmode change to OPERATE",
+            "SetPointMode called on DS",
+            "Awaiting DS operatingmode change to POINT",
             "Awaiting dishmode change to OPERATE",
+            "SPF operatingmode changed to OPERATE",
+            "SPF.SetOperateMode completed",
+            "DS operatingmode changed to POINT",
+            "DS.SetPointMode completed",
             "SetOperateMode completed",
         ]
 
@@ -263,10 +282,13 @@ class TestCommandActions:
         for progress_update in expected_progress_updates:
             assert progress_update in progress_string
 
+        assert len(result_calls) == 1
+        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
+
     @pytest.mark.unit
     @mock.patch("ska_mid_dish_manager.models.fanned_out_command.SubmittedSlowCommand")
     def test_configure_band_sequence_from_lp(self, patched_slow_command):
-        """Test configure_band_cmd happy path LP -> FP -> Configure."""
+        """Test configure_band_cmd happy path from low power."""
         mock_command_instance = mock.MagicMock()
         # Simulate all slow commands completing immediately with no errors
         mock_command_instance.return_value = (None, None)
@@ -274,6 +296,7 @@ class TestCommandActions:
 
         task_abort_event = Event()
         progress_calls = []
+        result_calls = []
 
         # pylint: disable=unused-argument
         def my_task_callback(progress=None, status=None, result=None):
@@ -306,6 +329,8 @@ class TestCommandActions:
                         "operatingmode"
                     ] = DSOperatingMode.POINT
                     self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
+            if result is not None:
+                result_calls.append(result)
 
         ConfigureBandActionSequence(
             LOGGER,
@@ -317,13 +342,35 @@ class TestCommandActions:
 
         expected_progress_updates = [
             # First SetStandbyFPMode
+            "SetStandbyMode called on DS",
+            "Awaiting DS operatingmode change to STANDBY",
+            "SetPowerMode called on DS",
+            "Awaiting DS powerstate change to FULL_POWER",
             "Awaiting dishmode change to STANDBY_FP",
-            "SetStandbyFPMode complete. Triggering on success action.",
+            "DS operatingmode changed to STANDBY",
+            "DS.SetStandbyMode completedDS powerstate changed to FULL_POWER",
+            "DS.SetPowerMode completedSetStandbyFPMode complete. Triggering on success action.",
             # Then ConfigureBand2
+            "SetIndexPosition called on DS",
+            "Awaiting DS indexerposition change to B2",
+            "ConfigureBand2 called on SPFRX, ID",
+            "Awaiting SPFRX configuredband change to B2",
             "Awaiting configuredband change to B2",
+            "DS indexerposition changed to B2",
+            "DS.SetIndexPosition completed",
+            "SPFRX configuredband changed to B2",
+            "SPFRX.ConfigureBand2 completed",
             "ConfigureBand2 complete. Triggering on success action.",
             # Then SetOperateMode
+            "SetOperateMode called on SPF",
+            "Awaiting SPF operatingmode change to OPERATE",
+            "SetPointMode called on DS",
+            "Awaiting DS operatingmode change to POINT",
             "Awaiting dishmode change to OPERATE",
+            "SPF operatingmode changed to OPERATE",
+            "SPF.SetOperateMode completed",
+            "DS operatingmode changed to POINT",
+            "DS.SetPointMode completed",
             "SetOperateMode completed",
         ]
 
@@ -331,3 +378,6 @@ class TestCommandActions:
 
         for progress_update in expected_progress_updates:
             assert progress_update in progress_string
+
+        assert len(result_calls) == 1
+        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")

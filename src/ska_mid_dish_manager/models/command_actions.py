@@ -56,10 +56,7 @@ class Action(ABC):
         return self._handler
 
     def execute(
-        self,
-        task_callback: Callable,
-        task_abort_event: Any,
-        completed_response_msg: Optional[str] = None,
+        self, task_callback: Callable, task_abort_event: Any, completed_response_msg: str = ""
     ):
         """Execute the defined action."""
         self.handler.execute(task_callback, task_abort_event, completed_response_msg)
@@ -110,66 +107,48 @@ class ActionHandler:
         self.action_on_success: Optional[Action] = action_on_success
         self.action_on_failure: Optional[Action] = action_on_failure
         self.waiting_callback = waiting_callback
-        self.timeout_s = timeout_s
+        self.timeout_s = timeout_s or self._compute_timeout()
 
-        # Configure action timeout:
-        # If no timeout action, check fanned out commands and wait for the longest
-        if self.timeout_s <= 0:
-            max_fanned_out_timeout = max([c.timeout_s for c in self.fanned_out_commands])
-            if max_fanned_out_timeout > 0:
-                # timeout the action after a short buffer
-                self.timeout_s = max_fanned_out_timeout + 5
+    def _compute_timeout(self) -> float:
+        """Compute the timeout for the action based on the fanned out command timeouts."""
+        max_timeout = max((c.timeout_s for c in self.fanned_out_commands), default=0)
+        return max_timeout + 5 if max_timeout > 0 else 0
+
+    def _trigger_failure(self, task_callback, task_abort_event, message: str):
+        self.logger.error(message)
+        task_callback(progress=message)
+
+        if self.action_on_failure:
+            next_action_msg = f"{self.name} failed. Triggering on failure action."
+            self.logger.debug(next_action_msg)
+            task_callback(progress=next_action_msg)
+            self.action_on_failure.execute(task_callback, task_abort_event)
+        else:
+            task_callback(
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, f"{self.name} failed"),
+            )
+
+    def _trigger_success(self, task_callback, task_abort_event, completed_response_msg: str):
+        final_message = completed_response_msg or f"{self.name} completed"
+        self.logger.debug(final_message)
+
+        if self.action_on_success:
+            msg = f"{self.name} complete. Triggering on success action."
+            self.logger.debug(msg)
+            task_callback(progress=msg)
+            self.action_on_success.execute(task_callback, task_abort_event)
+        else:
+            task_callback(
+                progress=final_message,
+                status=TaskStatus.COMPLETED,
+                result=(ResultCode.OK, final_message),
+            )
 
     def execute(
-        self,
-        task_callback: Callable,
-        task_abort_event: Any,
-        completed_response_msg: Optional[str] = None,
+        self, task_callback: Callable, task_abort_event: Any, completed_response_msg: str = ""
     ):
         """Execute all fan-out commands and track progress across subservient devices."""
-        final_message = ""
-        if completed_response_msg is not None:
-            final_message = completed_response_msg
-        else:
-            final_message = f"{self.name} completed"
-
-        def trigger_failure(message):
-            self.logger.error(message)
-            # Execute any chained action on failure
-            if self.action_on_failure is not None:
-                message = f"Triggering {self.name} on failure action"
-                self.logger.debug(message)
-                task_callback(progress=message)
-                self.action_on_failure.execute(
-                    task_callback=task_callback, task_abort_event=task_abort_event
-                )
-            else:
-                # Only update status and result if there is no chained action
-                task_callback(
-                    progress=message,
-                    status=TaskStatus.FAILED,
-                    result=(ResultCode.FAILED, f"{self.name} failed"),
-                )
-
-        def trigger_success():
-            self.logger.info(final_message)
-            # Execute any chained action on success
-            if self.action_on_success is not None:
-                message = f"{self.name} complete. Triggering on success action."
-                self.logger.debug(message)
-                task_callback(progress=message)
-                self.action_on_success.execute(
-                    task_callback=task_callback,
-                    task_abort_event=task_abort_event,
-                )
-            else:
-                # Only update status and result if there is no chained action
-                task_callback(
-                    progress=final_message,
-                    status=TaskStatus.COMPLETED,
-                    result=(ResultCode.OK, final_message),
-                )
-
         if task_abort_event.is_set():
             self.logger.warning(f"Action '{self.name}' aborted.")
             task_callback(
@@ -189,7 +168,9 @@ class ActionHandler:
         for cmd in self.fanned_out_commands:
             cmd.execute(task_callback)
             if cmd.failed:
-                trigger_failure(f"{self.name} {cmd.cmd_response}")
+                self._trigger_failure(
+                    task_callback, task_abort_event, f"{self.name} {cmd.cmd_response}"
+                )
                 return
 
         fanned_out_command_ids = [c.id for c in self.fanned_out_commands]
@@ -198,7 +179,7 @@ class ActionHandler:
         # If we're not waiting for anything, finish up
         # if all([c.timeout_s <= 0 for c in self.fanned_out_commands]):
         if self.timeout_s <= 0:
-            trigger_success()
+            self._trigger_success(task_callback, task_abort_event, completed_response_msg)
             return
 
         # Report what we are waiting for
@@ -218,9 +199,8 @@ class ActionHandler:
                     )
                 )
 
-        action_start_time = time.time()
-
-        while True:
+        deadline = time.time() + self.timeout_s
+        while time.time() < deadline:
             # Handle abort
             if task_abort_event.is_set():
                 self.logger.warning(f"Action '{self.name}' aborted.")
@@ -231,18 +211,6 @@ class ActionHandler:
                 )
                 return
 
-            # Handle timeout
-            if time.time() - action_start_time > self.timeout_s:
-                command_statuses = {
-                    f"{sc.device} {sc.name} ({sc.id})": sc.status
-                    for sc in self.fanned_out_commands
-                }
-                message = (
-                    f"Action '{self.name}' timed out. Fanned out commands: {command_statuses}"
-                )
-                trigger_failure(message)
-                return
-
             # Update status of all running commands
             for cmd in self.fanned_out_commands:
                 cmd.report_progress(task_callback)
@@ -250,11 +218,10 @@ class ActionHandler:
             # Handle any failed fanned out command
             if any([cmd.failed for cmd in self.fanned_out_commands]):
                 command_statuses = {
-                    f"{sc.device} {sc.name} ({sc.id})": sc.status
-                    for sc in self.fanned_out_commands
+                    f"{sc.device}.{sc.name}": sc.status.name for sc in self.fanned_out_commands
                 }
                 message = f"Action '{self.name}' failed. Fanned out commands: {command_statuses}"
-                trigger_failure(message)
+                self._trigger_failure(task_callback, task_abort_event, message)
                 return
 
             # Check if all commands have succeeded
@@ -262,7 +229,7 @@ class ActionHandler:
                 if self.awaited_component_state is None or check_component_state_matches_awaited(
                     self.component_state, self.awaited_component_state
                 ):
-                    trigger_success()
+                    self._trigger_success(task_callback, task_abort_event, completed_response_msg)
                     return
 
             if self.waiting_callback:
@@ -275,8 +242,15 @@ class ActionHandler:
                     if hasattr(cmd, "device_component_manager"):
                         device_component_manager = getattr(cmd, "device_component_manager")
                         device_component_manager.update_state_from_monitored_attributes(
-                            cmd.awaited_component_state.keys()
+                            tuple(cmd.awaited_component_state.keys())
                         )
+
+        # Handle timeout
+        command_statuses = {
+            f"{sc.device}.{sc.name}": sc.status.name for sc in self.fanned_out_commands
+        }
+        message = f"Action '{self.name}' timed out. Fanned out commands: {command_statuses}"
+        self._trigger_failure(task_callback, task_abort_event, message)
 
 
 # -------------------------
@@ -356,9 +330,7 @@ class SetStandbyLPModeAction(Action):
             waiting_callback=self.waiting_callback,
         )
 
-    def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
-    ):
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         if not self.dish_manager_cm.is_device_ignored("SPFRX"):
             spfrx_cm = self.dish_manager_cm.sub_component_managers["SPFRX"]
             if spfrx_cm._component_state["adminmode"] == AdminMode.ENGINEERING:
@@ -495,7 +467,7 @@ class SetOperateModeAction(Action):
         )
 
     def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
+        self, task_callback, task_abort_event, completed_response_msg: str = ""
     ):
         if self.dish_manager_cm._component_state["configuredband"] in [Band.NONE, Band.UNKNOWN]:
             task_callback(
@@ -573,7 +545,7 @@ class SetMaintenanceModeAction(Action):
         )
 
     def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
+        self, task_callback, task_abort_event, completed_response_msg: str = ""
     ):
         if not self.dish_manager_cm.is_device_ignored("SPFRX"):
             spfrx_cm = self.dish_manager_cm.sub_component_managers["SPFRX"]  # noqa: F841
@@ -642,7 +614,7 @@ class TrackAction(Action):
         )
 
     def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
+        self, task_callback, task_abort_event, completed_response_msg: str = ""
     ):
         return super().execute(
             task_callback, task_abort_event, completed_response_msg=self.completed_message
@@ -760,7 +732,7 @@ class ConfigureBandAction(Action):
         )
 
     def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
+        self, task_callback, task_abort_event, completed_response_msg: str = ""
     ):
         if self.dish_manager_cm._component_state["configuredband"] == self.band_enum:
             task_callback(
@@ -795,7 +767,7 @@ class ConfigureBandActionSequence(Action):
         self.indexer_enum = IndexerPosition[f"B{band_number}"]
 
     def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
+        self, task_callback, task_abort_event, completed_response_msg: str = ""
     ):
         """Execute the defined action."""
         current_dish_mode = self.dish_manager_cm._component_state["dishmode"]
@@ -884,7 +856,7 @@ class SlewAction(Action):
         )
 
     def execute(
-        self, task_callback, task_abort_event, completed_response_msg: Optional[str] = None
+        self, task_callback, task_abort_event, completed_response_msg: str = ""
     ):
         return super().execute(
             task_callback, task_abort_event, completed_response_msg=self.completed_message
