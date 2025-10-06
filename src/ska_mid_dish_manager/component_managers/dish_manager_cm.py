@@ -1567,8 +1567,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.get_current_tai_offset_from_dsc_with_manual_fallback() + 5
         )  # add 5 seconds lead time
         # use abitrary constant values for az, el but within the mechanical limits
-        reset_point = [timestamp, 0.0, 50.0] * 5
-        sequence_length = 1
+        sequence_length = 5
+        reset_point = [timestamp, 0.0, 50.0] * sequence_length
         load_mode = TrackTableLoadMode.RESET
 
         task_status, msg = self.track_load_table(sequence_length, reset_point, load_mode)

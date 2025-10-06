@@ -470,6 +470,7 @@ def generate_track_table(
     current_el: float = 45.0,
     time_offset_seconds: float = 5,
     total_track_duration_seconds: float = 5,
+    controller_current_time_tai: float | None = None,
 ) -> List[float]:
     """Generate a track table with smoothly varying azimuth and elevation values,
     starting from the current pointing.
@@ -517,7 +518,8 @@ def generate_track_table(
     el_values = np.linspace(start_el, end_el, num_samples)
 
     # --- Generate TAI timestamps ---
-    start_time_tai = get_current_tai_timestamp_from_unix_time() + time_offset_seconds
+    current_time = controller_current_time_tai or get_current_tai_timestamp_from_unix_time()
+    start_time_tai = current_time + time_offset_seconds
     time_step = total_track_duration_seconds / num_samples
     times_tai = start_time_tai + np.arange(num_samples) * time_step
 
