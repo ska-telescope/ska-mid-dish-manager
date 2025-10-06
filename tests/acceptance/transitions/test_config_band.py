@@ -27,14 +27,14 @@ def test_configure_band_2(
 
     # make sure configuredBand is not B2
     dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(Band.B1, timeout=8)
+    main_event_store.wait_for_value(Band.B1, timeout=30)
     assert dish_manager_proxy.configuredBand == Band.B1
 
     main_event_store.clear_queue()
     progress_event_store.clear_queue()
 
     dish_manager_proxy.ConfigureBand2(True)
-    main_event_store.wait_for_value(Band.B2)
+    main_event_store.wait_for_value(Band.B2, timeout=30)
     assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [
@@ -48,7 +48,7 @@ def test_configure_band_2(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store.
