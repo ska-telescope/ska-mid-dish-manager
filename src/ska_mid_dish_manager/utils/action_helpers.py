@@ -1,6 +1,7 @@
 """Shared methods handling ."""
 
 import enum
+from typing import Callable, Optional
 
 
 def check_component_state_matches_awaited(component_state: dict, awaited_state: dict) -> bool:
@@ -12,6 +13,12 @@ def check_component_state_matches_awaited(component_state: dict, awaited_state: 
         if component_state_attr_value != awaited_attr_value:
             return False
     return True
+
+
+def update_task_status(task_callback: Optional[Callable], **task_statuses) -> None:
+    """Wraps the task callback to report lrc statuses."""
+    if task_callback:
+        task_callback(**task_statuses)
 
 
 def convert_enums_to_names(values) -> list[str]:
