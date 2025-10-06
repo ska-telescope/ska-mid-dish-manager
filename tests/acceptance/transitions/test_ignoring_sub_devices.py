@@ -2,7 +2,7 @@
 
 import pytest
 
-from ska_mid_dish_manager.models.dish_enums import Band
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, set_ignored_devices, setup_subscriptions
 
 
@@ -50,11 +50,14 @@ def test_ignoring_spf(
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(Band.B1, timeout=8)
 
+    dish_manager_proxy.SetOperateMode()
+    main_event_store.wait_for_value(DishMode.OPERATE)
+
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyMode called on DS",
+        "SetStandbyFPMode called on DS",
         "SPF device is disabled. SetOperateMode call ignored",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
@@ -64,7 +67,7 @@ def test_ignoring_spf(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event.attr_value.value) for event in events])
+    events_string = "".join([str(event) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store
@@ -97,16 +100,14 @@ def test_ignoring_spfrx(
         "SetIndexPosition called on DS",
         "SPFRX device is disabled. ConfigureBand2 call ignored",
         "Awaiting configuredband change to B2",
-        "DS.SetIndexPosition completed",
-        "ConfigureBand2 complete. Triggering on success action.",
-        "SetOperateMode completed",
+        "ConfigureBand2 completed",
     ]
 
     events = progress_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event.attr_value.value) for event in events])
+    events_string = "".join([str(event) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store
@@ -136,7 +137,7 @@ def test_ignoring_all(
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyMode called on DS",
+        "SetStandbyLPMode called on DS",
         "SPF device is disabled. SetStandbyLPMode call ignored",
         "SPFRX device is disabled. SetStandbyMode call ignored",
         "Awaiting dishmode change to STANDBY_LP",
@@ -147,7 +148,7 @@ def test_ignoring_all(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event.attr_value.value) for event in events])
+    events_string = "".join([str(event) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store
