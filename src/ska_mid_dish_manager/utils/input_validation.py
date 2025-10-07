@@ -1,5 +1,6 @@
-"""Input validation and formatting needed for translation between DSC and DS manager."""
+"""Input validation and formatting."""
 
+import json
 from typing import List
 
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
@@ -7,6 +8,33 @@ from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestam
 
 class TrackTableTimestampError(ValueError):
     """Class that is used to represent timestamp errors in the track load table."""
+
+
+class ConfigureBandValidationError(Exception):
+    """Exception raised for errors in the configure band input validation."""
+
+
+def validate_configure_band_input(data: str) -> dict:
+    """Validate the input JSON for configure_band command.
+
+    :param data: JSON string containing the configure band parameters.
+    :raises ConfigureBandValidationError: If the input JSON is invalid.
+    :return: Parsed JSON as a dictionary if valid.
+    """
+    try:
+        data_json = json.loads(data)
+        dish_data = data_json.get("dish")
+        receiver_band = dish_data.get("receiver_band")
+        if receiver_band not in ["1", "2", "3", "4", "5a", "5b"]:
+            raise ConfigureBandValidationError("Invalid receiver band in JSON.")
+        if receiver_band == "5b":
+            sub_band = dish_data.get("sub_band")
+            if sub_band not in [1, 2, 3]:
+                raise ConfigureBandValidationError("Invalid sub-band in JSON.")
+    except (json.JSONDecodeError, AttributeError) as err:
+        raise ConfigureBandValidationError("Error parsing JSON.") from err
+
+    return data_json
 
 
 class TrackLoadTableFormatting:

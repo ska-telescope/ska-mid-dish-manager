@@ -8,6 +8,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Added ResetTrackTable command to clear entries in the controller track table buffer.
+- Upgraded ska-mid-dish-simulators chart to v5.4.0
+- Implemented ConfigureBand command that ingests a JSON string to configure bands on SPFRx.
 
 Version 8.4.2
 *************

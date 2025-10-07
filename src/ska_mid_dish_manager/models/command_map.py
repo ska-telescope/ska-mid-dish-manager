@@ -16,6 +16,10 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.utils.helper_module import convert_enums_to_names, update_task_status
+from ska_mid_dish_manager.utils.input_validation import (
+    ConfigureBandValidationError,
+    validate_configure_band_input,
+)
 
 
 class CommandMap:
@@ -495,6 +499,73 @@ class CommandMap:
             [PointingState.READY],
         )
 
+    def configure_band(
+        self,
+        data: str,
+        task_abort_event=None,
+        task_callback: Optional[Callable] = None,
+    ):
+        """Configure band on DS, SPFRx and B5DC."""
+        requested_cmd = "ConfigureBand"
+        self.logger.info(f"{requested_cmd} called with payload = {data}")
+
+        try:
+            data_json = validate_configure_band_input(data)
+        except ConfigureBandValidationError as err:
+            self.logger.error("Error parsing JSON for configure band command.")
+            task_callback(status=TaskStatus.FAILED, result=(ResultCode.FAILED, str(err)))
+            return
+
+        dish_data = data_json.get("dish")
+        receiver_band = dish_data.get("receiver_band")
+
+        band_enum = Band[f"B{receiver_band}"]
+        indexer_enum = IndexerPosition[f"B{receiver_band}"]
+
+        if self._dish_manager_cm.component_state["configuredband"] == band_enum:
+            task_callback(
+                progress=f"Already in band {band_enum.name}",
+                status=TaskStatus.COMPLETED,
+                result=(ResultCode.OK, f"{requested_cmd} completed."),
+            )
+            return
+
+        commands_for_sub_devices = {
+            "DS": {
+                "command": "SetIndexPosition",
+                "commandArgument": band_enum.value,
+                "awaitedAttributes": ["indexerposition"],
+                "awaitedValuesList": [indexer_enum],
+            },
+            "SPFRX": {
+                "command": requested_cmd,
+                "commandArgument": data,
+                "awaitedAttributes": ["configuredband"],
+                "awaitedValuesList": [band_enum],
+            },
+        }
+
+        # TODO: Once we integrate B5DC
+        # if configure_b5dc:
+        #     import ska-mid-dish-dcp-lib
+        #     b5dc_f = B5dcFrequency(dish_data.get("sub_band"))
+        #     commands_for_sub_devices["B5DC"] = {
+        #         "command": "SetFrequency",
+        #         "commandArgument": data,
+        #         "awaitedAttributes": ["rfcmFrequency"],
+        #         "awaitedValuesList": [b5dc_f.value],
+        #     }
+
+        self._run_long_running_command(
+            task_callback,
+            task_abort_event,
+            commands_for_sub_devices,
+            requested_cmd,
+            ["configuredband"],
+            [band_enum],
+        )
+
+    # DEPRECATED: To be removed in future. Use configure_band instead.
     def configure_band_cmd(
         self,
         band_number,
@@ -538,8 +609,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             requested_cmd,
-            ["configuredband", "dishmode"],
-            [band_enum, DishMode.STANDBY_FP],
+            ["configuredband"],
+            [band_enum],
         )
 
     def slew(
