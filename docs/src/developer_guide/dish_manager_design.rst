@@ -40,3 +40,13 @@ sub components using threads monitoring event subscriptions for a number of attr
   :alt: Device Monitor Design
 
 .. _here: https://confluence.skatelescope.org/pages/viewpage.action?pageId=188656205
+
+Command Actions Design
+----------------------
+
+The diagram below shows the design of the command Actions which are used to fan out and monitor
+sets of commands to subservient devices.
+
+.. image:: ../images/DishManagerActionsDesign.png
+  :width: 100%
+  :alt: Command Actions Design
