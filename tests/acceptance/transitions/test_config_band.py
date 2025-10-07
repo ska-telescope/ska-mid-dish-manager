@@ -200,7 +200,8 @@ def test_configure_band_5b_json(
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
         "Awaiting configuredband change to B5b",
         "SPFRX configuredband changed to B5b",
-        "DS indexerposition changed to B5bConfigureBand completed",
+        "DS indexerposition changed to B5b",
+        "ConfigureBand completed",
     ]
 
     events = progress_event_store.wait_for_progress_update(
