@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added ResetTrackTable command to clear entries in the controller track table buffer.
 
 Version 8.4.2
 *************

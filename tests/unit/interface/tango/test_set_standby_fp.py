@@ -64,8 +64,7 @@ def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
     assert device_proxy.powerState == PowerState.FULL
 
     expected_progress_updates = [
-        "SetStandbyFPMode called on DS",
-        "SetOperateMode called on SPF",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
@@ -138,9 +137,7 @@ def test_standby_fp_from_maintenance(dish_manager_resources, event_store_class):
     assert device_proxy.powerState == PowerState.FULL
 
     expected_progress_updates = [
-        "SetStandbyFPMode called on DS",
-        "SetOperateMode called on SPF",
-        "SetStandbyMode called on SPFRX",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode, SPFRX.SetStandbyMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]

@@ -49,27 +49,21 @@ def test_dish_handles_unhappy_path_in_command_execution(
     spf_device_proxy.raiseCmdException = True
     spfrx_device_proxy.raiseCmdException = True
     result_event_store.clear_queue()
+    progress_event_store.clear_queue()
 
     dish_manager_proxy.SetStandbyLPMode()
 
-    progress_msg = "SPFRX device failed executing SetStandbyMode command with ID"
+    progress_msg = (
+        "DishManager.SetStandbyLPMode failed: "
+        "SPF.SetStandbyLPMode, SPFRX.SetStandbyMode failed to execute"
+    )
     progress_event_store.wait_for_progress_update(progress_msg, timeout=5)
 
     result_event_store = result_event_store.get_queue_values(timeout=5)
-    # filter out only the event values
-    result_event_store = [evt_vals[1] for evt_vals in result_event_store]
-    # join all unique ids and exceptions as one string
-    unique_ids = "".join([evts[0] for evts in result_event_store])
-    raised_exceptions = "".join([evts[1] for evts in result_event_store])
-    result_event_store = [unique_ids, raised_exceptions]
-
-    expected_lrc_result = [
-        ("SPF_SetStandbyLPMode", "Exception: SetStandbyLPMode raised an exception"),
-        ("SPFRX_SetStandbyMode", "Exception: SetStandbyMode raised an exception"),
-    ]
-    for unique_id, exc_raised in expected_lrc_result:
-        assert unique_id in result_event_store[0]
-        assert exc_raised in result_event_store[1]
+    # e.g ['[0, "SetStandbyFPMode completed"]', '[3, "SetStandbyLPMode failed"]', ...]
+    lrc_result_msgs = [event[1][1] for event in result_event_store]
+    expected_result_message = lrc_result_msgs[-1]
+    assert "SetStandbyLPMode failed" in expected_result_message, lrc_result_msgs
 
     # check that the mode transition to LP mode did not happen on dish manager, spf and spfrx
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN

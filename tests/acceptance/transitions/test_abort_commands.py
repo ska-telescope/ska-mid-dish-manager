@@ -51,7 +51,7 @@ def test_abort_commands(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Transition to FP mode
-    [[_], [lp_unique_id]] = dish_manager_proxy.SetStandbyFPMode()
+    [[_], [fp_unique_id]] = dish_manager_proxy.SetStandbyFPMode()
 
     # Check that Dish Manager is waiting to transition to FP
     progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
@@ -65,12 +65,11 @@ def test_abort_commands(
     # Abort the LRC
     [[_], [abort_unique_id]] = dish_manager_proxy.AbortCommands()
     # Confirm Dish Manager aborted the request on LRC
-    result_event_store.wait_for_command_id(lp_unique_id, timeout=30)
-    # Abort will execute standbyfp dishmode as part of its abort sequence
+    result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
+    # Abort will execute standbyfp dishmode last as part of its abort sequence
     expected_progress_updates = [
         "SetStandbyFPMode Aborted",
-        "SetOperateMode called on SPF",
-        "SetStandbyFPMode called on DS",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]

@@ -162,6 +162,12 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
+    - name: ResetTrackTable
+      disp_level: OPERATOR
+      doc_in: This command resets the program track table on the controller
+      doc_out: Uninitialised
+      dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ResetWatchdogTimer
       disp_level: OPERATOR
       doc_in: This command resets the watchdog timer. `lastWatchdogReset` attribute
@@ -1108,7 +1114,8 @@
     - name: dscCtrlState
       data_format: SCALAR
       data_type: DevEnum
-      description: DSC Control State - an aggregation of DSC Command Authority and DSC State
+      description: DSC Control State - an aggregation of DSC Command Authority and
+        DSC State
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1469,7 +1476,7 @@
       format: '%s'
       label: longRunningCommandInProgress
       max_alarm: Not specified
-      max_dim_x: 4
+      max_dim_x: 1
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -2070,4 +2077,3 @@
     - name: WMSDeviceNames
     - name: WindGustThreshold
     - name: polled_cmd
-

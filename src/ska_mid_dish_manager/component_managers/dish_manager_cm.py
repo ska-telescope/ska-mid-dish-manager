@@ -6,7 +6,7 @@ import os
 import threading
 import time
 from functools import partial
-from threading import Event, Lock, Thread
+from threading import Lock
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -49,8 +49,8 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
-from ska_mid_dish_manager.models.is_allowed_rules import CommandAllowedChecks
 from ska_mid_dish_manager.utils.decorators import check_communicating
+from ska_mid_dish_manager.utils.helper_module import update_task_status
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
@@ -151,7 +151,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
         self._state_update_lock = Lock()
-        self._abort_thread: Optional[Thread] = None
         self._stop_event = threading.Event()
         self.watchdog_timer = WatchdogTimer(
             callback_on_timeout=self._stow_on_watchdog_expiry,
@@ -268,10 +267,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         self._command_map = CommandMap(
             self,
-            self._command_tracker,
             self.logger,
         )
-        self._cmd_allowed_checks = CommandAllowedChecks(self)
 
         self.direct_mapped_attrs = {
             "DS": [
@@ -336,29 +333,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         try:
             ds_cm = self.sub_component_managers["DS"]
-            return ds_cm.execute_command("GetCurrentTAIOffset", None)
-        except (tango.DevFailed, ConnectionError, KeyError):
+            task_status, msg = ds_cm.execute_command("GetCurrentTAIOffset", None)
+        except (ConnectionError, KeyError):
             self.logger.debug("Calculating TAI offset manually.")
             return get_current_tai_timestamp_from_unix_time()
 
-    def is_dish_moving(self) -> bool:
-        """Report whether or not the dish is moving.
+        if task_status == TaskStatus.FAILED:
+            self.logger.debug("Calculating TAI offset manually.")
+            return get_current_tai_timestamp_from_unix_time()
+        return float(msg)
 
-        :returns: boolean dish movement activity
-        """
-        pointing_state = self.component_state.get("pointingstate")
-        if pointing_state in [PointingState.SLEW, PointingState.TRACK]:
-            return True
-        return False
-
-    def get_currently_executing_lrcs(
-        self,
-        statuses_to_check: Tuple[TaskStatus] = (
-            TaskStatus.STAGING,
-            TaskStatus.QUEUED,
-            TaskStatus.IN_PROGRESS,
-        ),
-    ) -> List[str]:
+    def get_currently_executing_lrcs(self) -> List[str]:
         """Report command ids that are running or waiting to be executed from the task executor.
 
         :param statuses_to_check: TaskStatuses which count as lrc is executing
@@ -367,6 +352,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         command_idx = 0
         status_idx = 1
         cmd_ids = []
+        statuses_to_check = (TaskStatus.QUEUED, TaskStatus.IN_PROGRESS)
 
         command_statuses = self._command_tracker.command_statuses
         filtered_command_statuses = [
@@ -940,34 +926,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.exception("Failed to update %s", attr)
             raise
 
-    def abort_commands(self, task_callback: Optional[Callable] = None) -> None:
-        """Abort commands on dish manager and its subservient devices.
-
-        :param task_callback: callback when the status changes
-        """
-        self.logger.debug("Aborting long running commands")
-        super().abort_commands(task_callback)
-        sub_component_mgrs = self.get_active_sub_component_managers()
-        for component_mgr in sub_component_mgrs.values():
-            # dont use the same taskcallback else we get completed 4x on the same command id
-            component_mgr.abort_commands()
-
     def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
-    ) -> Tuple[ResultCode, str]:
+    ) -> Tuple[TaskStatus, str]:
         """Load the track table."""
         float_list = [load_mode, sequence_length]
         float_list.extend(table)
         ds_cm = self.sub_component_managers["DS"]
-        result_code = ResultCode.UNKNOWN
-        result_message = ""
-        try:
-            [[result_code], [result_message]] = ds_cm.execute_command("TrackLoadTable", float_list)
-        except tango.DevFailed as err:
-            self.logger.exception("TrackLoadTable on DSManager failed")
-            result_code = ResultCode.FAILED
-            result_message = str(err)
-        return (result_code, result_message)
+        task_status, msg = ds_cm.execute_command("TrackLoadTable", float_list)
+        return task_status, msg
 
     @check_communicating
     def set_standby_lp_mode(
@@ -1061,15 +1028,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         def _is_track_cmd_allowed():
             if self.component_state["dishmode"] != DishMode.OPERATE:
-                task_callback(
+                update_task_status(
+                    task_callback,
                     progress="Track command rejected for current dishMode. "
-                    "Track command is allowed for dishMode OPERATE"
+                    "Track command is allowed for dishMode OPERATE",
                 )
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
-                task_callback(
+                update_task_status(
+                    task_callback,
                     progress="Track command rejected for current pointingState. "
-                    "Track command is allowed for pointingState READY"
+                    "Track command is allowed for pointingState READY",
                 )
                 return False
             return True
@@ -1138,18 +1107,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode."""
         ds_cm = self.sub_component_managers["DS"]
-        try:
-            ds_cm.execute_command("Stow", None)
-        except tango.DevFailed as err:
-            if task_callback:
-                task_callback(status=TaskStatus.FAILED, exception=err)
-            return TaskStatus.FAILED, "DishManager has failed to execute Stow DSManager"
-        if task_callback:
-            task_callback(
-                status=TaskStatus.COMPLETED,
-                progress="Stow called, monitor dishmode for LRC completed",
-            )
-        # abort queued tasks on the task executor
+        task_status, msg = ds_cm.execute_command("Stow", None)
+        if task_status == TaskStatus.FAILED:
+            update_task_status(task_callback, status=TaskStatus.FAILED, exception=msg)
+            return TaskStatus.FAILED, msg
+
+        update_task_status(
+            task_callback,
+            status=TaskStatus.COMPLETED,
+            progress="Stow called, monitor dishmode for LRC completed",
+        )
+        # abort queued and running tasks on the task executor
         self.abort_commands()
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
@@ -1182,16 +1150,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         def _is_slew_cmd_allowed():
-            if self.component_state["dishmode"] != DishMode.OPERATE:
-                task_callback(
+            if self.component_state["dishmode"] not in [DishMode.OPERATE, DishMode.STANDBY_FP]:
+                update_task_status(
+                    task_callback,
                     progress="Slew command rejected for current dishMode. "
-                    "Slew command is allowed for dishMode OPERATE"
+                    "Slew command is allowed for dishMode STANDBY-FP, OPERATE",
                 )
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
-                task_callback(
+                update_task_status(
+                    task_callback,
                     progress="Slew command rejected for current pointingState. "
-                    "Slew command is allowed for pointingState READY"
+                    "Slew command is allowed for pointingState READY",
                 )
                 return False
             return True
@@ -1220,9 +1190,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Scan a target."""
-        task_callback(progress="Setting scanID", status=TaskStatus.IN_PROGRESS)
+        update_task_status(task_callback, progress="Setting scanID", status=TaskStatus.IN_PROGRESS)
         self._update_component_state(scanid=scanid)
-        task_callback(
+        update_task_status(
+            task_callback,
             progress="Scan completed",
             status=TaskStatus.COMPLETED,
             result=(ResultCode.OK, "Scan completed"),
@@ -1242,9 +1213,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
         """Clear the scanid."""
-        task_callback(progress="Clearing scanID", status=TaskStatus.IN_PROGRESS)
+        update_task_status(
+            task_callback, progress="Clearing scanID", status=TaskStatus.IN_PROGRESS
+        )
         self._update_component_state(scanid="")
-        task_callback(
+        update_task_status(
+            task_callback,
             progress="EndScan completed",
             status=TaskStatus.COMPLETED,
             result=(ResultCode.OK, "EndScan completed"),
@@ -1279,11 +1253,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         SPFRx has been restarted.
         """
         spfrx_cm = self.sub_component_managers["SPFRX"]
-        try:
-            spfrx_cm.execute_command("SetKValue", k_value)
-        except tango.DevFailed as err:
-            return (ResultCode.FAILED, err)
-        return (ResultCode.OK, "Successfully requested SetKValue on SPFRx")
+        task_status, msg = spfrx_cm.execute_command("SetKValue", k_value)
+        if task_status == TaskStatus.FAILED:
+            return (ResultCode.FAILED, msg)
+        return (ResultCode.OK, msg)
 
     def apply_pointing_model(self, json_object) -> Tuple[ResultCode, str]:
         # pylint: disable=R0911
@@ -1541,46 +1514,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return (ResultCode.OK, "Successfully updated pseudoRandomNoiseDiodePars on SPFRx")
 
     @check_communicating
-    def abort(
-        self, task_callback: Optional[Callable] = None, task_abort_event: Optional[Event] = Event()
-    ) -> Tuple[TaskStatus, str]:
+    def abort(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Issue abort sequence.
 
-        :param task_callback: Callback for task (default: {None})
-        :param task_abort_event: Event holding abort info (default: {Event()})
+        :param task_callback: Callback for task status updates
         """
-        # NOTE we dont want to pass the existing abort event object
-        # i.e. self._task_executor._abort_event to this function
-        # since it might prevent the sequence from being continued
-        # when event.is_set() is performed after abort_commands finishes
+        if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
+            self.abort_commands(task_callback=task_callback)
+            self.logger.info("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
+            return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
 
-        # This will be a short lived thread. It hands over the work to the
-        # executor to do the heavy lifting. But perform the check nonetheless
-        if self._abort_thread is not None and self._abort_thread.is_alive():
-            self.logger.info("Abort rejected: there is an ongoing abort sequence.")
-            if task_callback:
-                task_callback(
-                    status=TaskStatus.REJECTED,
-                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
-                )
-            return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
-
-        if not self._cmd_allowed_checks.is_abort_allowed():
-            self.logger.info("Abort rejected: command not allowed in MAINTENANCE mode")
-            if task_callback:
-                task_callback(
-                    status=TaskStatus.REJECTED,
-                    result=(
-                        ResultCode.REJECTED,
-                        "Command not allowed during in MAINTENANCE mode",
-                    ),
-                )
-            return TaskStatus.REJECTED, "Command not allowed during MAINTENANCE mode"
-
-        cmds_in_progress = self.get_currently_executing_lrcs(
-            statuses_to_check=(TaskStatus.QUEUED, TaskStatus.IN_PROGRESS)
-        )
-        abort_command_id = None
+        cmds_in_progress = self.get_currently_executing_lrcs()
         if cmds_in_progress:
             if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
                 self.logger.info("Abort rejected: there is an ongoing abort sequence.")
@@ -1591,25 +1535,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     )
                 return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
 
-            self.logger.debug("Aborting LRCs from Abort sequence")
-            abort_command_id = self._command_tracker.new_command(
-                "abort-sequence:abort-lrc", completed_callback=None
-            )
-            abort_task_cb = partial(self._command_tracker.update_command_info, abort_command_id)
-            self.abort_commands(task_callback=abort_task_cb)
-
-        self._abort_thread = Thread(
-            target=self._abort_handler,
-            args=[
-                abort_command_id,
-                task_abort_event,
-            ],
-            kwargs={
-                "task_callback": task_callback,
-            },
+        abort_sequence = partial(self._abort_handler, task_callback)
+        self.logger.debug("Aborting LRCs from Abort sequence")
+        abort_command_id = self._command_tracker.new_command(
+            "abort-sequence:abort-lrc", completed_callback=abort_sequence
         )
-        self._abort_thread.name = "abort_thread"
-        self._abort_thread.start()
+        abort_task_cb = partial(self._command_tracker.update_command_info, abort_command_id)
+        self.abort_commands(task_callback=abort_task_cb)
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     def set_dsc_power_limit_kw(
@@ -1626,3 +1558,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.error("Failed to update dscPowerLimitKw on DS.")
             raise
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
+
+    @check_communicating
+    def reset_track_table(self) -> Tuple[ResultCode, List[float] | str]:
+        """Reset the track table."""
+        self.logger.debug("Resetting the programTrackTable")
+        timestamp = (
+            self.get_current_tai_offset_from_dsc_with_manual_fallback() + 5
+        )  # add 5 seconds lead time
+        # use abitrary constant values for az, el but within the mechanical limits
+        sequence_length = 5
+        reset_point = [timestamp, 0.0, 50.0] * sequence_length
+        load_mode = TrackTableLoadMode.RESET
+
+        task_status, msg = self.track_load_table(sequence_length, reset_point, load_mode)
+        if task_status == TaskStatus.FAILED:
+            self.logger.debug(
+                "Failed to reset programTrackTable with message: %s",
+                msg,
+            )
+            return ResultCode.FAILED, msg
+        return ResultCode.OK, reset_point

@@ -35,7 +35,7 @@ def test_track_load_static_off(
     dish_manager_proxy.TrackLoadStaticOff(write_values)
 
     expected_progress_updates = [
-        "TrackLoadStaticOff called on DS",
+        "Fanned out commands: DS.TrackLoadStaticOff",
         "Awaiting DS actstaticoffsetvaluexel, actstaticoffsetvalueel change to "
         f"{write_values[0]}, {write_values[1]}",
         "Awaiting actstaticoffsetvaluexel, actstaticoffsetvalueel change to "
@@ -49,7 +49,7 @@ def test_track_load_static_off(
         expected_progress_updates[-1], timeout=30
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store.

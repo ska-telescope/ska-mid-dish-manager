@@ -198,7 +198,7 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
     main_event_store.wait_for_value(PointingState.TRACK)
 
     expected_progress_updates = [
-        "Track called on DS, ID",
+        "Fanned out commands: DS.Track",
         "Track command has been executed on DS. "
         "Monitor the achievedTargetLock attribute to determine when the dish is on source.",
     ]
@@ -207,7 +207,7 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store

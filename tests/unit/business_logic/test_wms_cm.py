@@ -6,6 +6,7 @@ import threading
 import time
 from collections import deque
 from functools import partial
+from unittest import mock
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -24,14 +25,18 @@ def comm_state_callback(signal: threading.Event, communication_state: Communicat
     pass
 
 
+@mock.patch("ska_mid_dish_manager.component_managers.wms_cm.tango.Group")
 @pytest.mark.unit
-def test_wms_group_activation_and_polling_starts():
+def test_wms_group_activation_and_polling_starts(mock_tango_group):
     """Test WMS polling begins following call to start_communicating."""
     test_wms_device_names = [
         "ska-mid/weather-monitoring/1",
         "ska-mid/weather-monitoring/2",
         "ska-mid/weather-monitoring/3",
     ]
+    mock_instance = mock_tango_group.return_value
+    mock_device_list = Mock(return_value=test_wms_device_names)
+    mock_instance.get_device_list = mock_device_list
 
     wms = WMSComponentManager(
         test_wms_device_names,
@@ -57,8 +62,9 @@ def test_wms_group_activation_and_polling_starts():
     wms._run_wms_group_polling.assert_called()
 
 
+@mock.patch("ska_mid_dish_manager.component_managers.wms_cm.tango.Group")
 @pytest.mark.unit
-def test_wms_cm_wind_gust_and_mean_wind_speed_updates():
+def test_wms_cm_wind_gust_and_mean_wind_speed_updates(mock_tango_group):
     """Test mean wind speed and wind gust calculation report expected values."""
     component_state = {}
 

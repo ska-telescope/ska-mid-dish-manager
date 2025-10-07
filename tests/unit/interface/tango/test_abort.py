@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 import tango
-from ska_control_model import AdminMode, ResultCode
+from ska_control_model import AdminMode, ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -36,7 +36,11 @@ def test_abort_commands_raises_deprecation_warning(dish_manager_resources):
 @pytest.mark.unit
 @pytest.mark.forked
 def test_only_one_abort_runs_at_a_time(dish_manager_resources):
-    device_proxy, _ = dish_manager_resources
+    device_proxy, dish_manager_cm = dish_manager_resources
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    # update the execute_command mock to return IN_PROGRESS and a timestamp
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
+
     [[result_code], [_]] = device_proxy.Abort()
     assert result_code == ResultCode.STARTED
 
@@ -47,17 +51,11 @@ def test_only_one_abort_runs_at_a_time(dish_manager_resources):
 
 @pytest.mark.unit
 @pytest.mark.forked
-@pytest.mark.parametrize(
-    "abort_cmd",
-    [
-        ("Abort"),
-        ("AbortCommands"),
-    ],
-)
-def test_abort_is_rejected_in_maintenance_dishmode(
-    abort_cmd, dish_manager_resources, event_store_class
+def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
+    caplog, dish_manager_resources, event_store_class
 ):
     """Verify Abort/AbortCommands is rejected when DishMode is MAINTENANCE."""
+    caplog.set_level("DEBUG")
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
@@ -78,8 +76,10 @@ def test_abort_is_rejected_in_maintenance_dishmode(
     dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
-    [[result_code], [_]] = device_proxy.command_inout(abort_cmd, None)
-    assert result_code == ResultCode.REJECTED
+    [[result_code], [_]] = device_proxy.Abort()
+    assert result_code == ResultCode.STARTED
+
+    assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
 
 
 @pytest.mark.unit
@@ -98,6 +98,9 @@ def test_abort_during_dish_movement(
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
+
+    # update the execute_command mock to return IN_PROGRESS and a timestamp
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
 
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -162,16 +165,15 @@ def test_abort_during_dish_movement(
     expected_progress_updates = [
         "Clearing scanID",
         "EndScan completed",
-        "SetOperateMode called on SPF",
-        "SetStandbyFPMode called on DS",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode",
         "Awaiting dishmode change to STANDBY_FP",
     ]
 
     if pointing_state == PointingState.SLEW:
         slew_progress_updates = [
-            "TrackStop called on DS",
+            "Fanned out commands: DS.TrackStop",
             "Awaiting pointingstate change to READY",
-            "DS pointingstate changed to 0",
+            "DS pointingstate changed to READY",
             "TrackStop completed",
         ]
         expected_progress_updates = slew_progress_updates + expected_progress_updates

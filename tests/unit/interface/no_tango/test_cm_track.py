@@ -1,7 +1,5 @@
 """Tests dish manager component manager track command handler."""
 
-from unittest.mock import Mock, patch
-
 import pytest
 from ska_control_model import ResultCode, TaskStatus
 
@@ -10,16 +8,13 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 
 
 @pytest.mark.unit
-@patch("json.dumps", Mock(return_value="mocked sub-device-command-ids"))
 def test_track_handler(
     component_manager: DishManagerComponentManager,
-    mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
     """Verify behaviour of Track command handler.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -38,8 +33,7 @@ def test_track_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": f"Track called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Commands: mocked sub-device-command-ids"},
+        {"progress": "Fanned out commands: DS.Track"},
         {
             "progress": (
                 "Track command has been executed on DS. "

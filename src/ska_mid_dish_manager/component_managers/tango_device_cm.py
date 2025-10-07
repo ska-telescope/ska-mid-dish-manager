@@ -1,22 +1,21 @@
 """Generic component manager for a subservient tango device."""
 
 import logging
-import typing
 from queue import Empty, Queue
 from threading import Event, Thread
 from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
 import tango
-from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
-from ska_tango_base.executor import TaskExecutorComponentManager
+from ska_control_model import CommunicationStatus, TaskStatus
+from ska_tango_base.base import BaseComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 from ska_mid_dish_manager.utils.decorators import check_communicating
 
 
-class TangoDeviceComponentManager(TaskExecutorComponentManager):
+class TangoDeviceComponentManager(BaseComponentManager):
     """A component manager for a Tango device."""
 
     def __init__(
@@ -183,7 +182,9 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             if _monitored_attribute in self._component_state:
                 self._component_state[_monitored_attribute] = 0
 
-    def update_state_from_monitored_attributes(self) -> None:
+    def update_state_from_monitored_attributes(
+        self, monitored_attributes: Tuple[str, ...] | None = None
+    ) -> None:
         """Update the component state by reading the monitored attributes.
 
         When an attribute on the device does not match the component_state
@@ -194,23 +195,29 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
         monitored attributes on the device and the component state.
         """
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
+
+        # fallback to defaults if not provided
+        monitored_attributes = monitored_attributes or self._monitored_attributes
+
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
-            for monitored_attribute in self._monitored_attributes:
-                _monitored_attribute = monitored_attribute.lower()
-
+            for monitored_attribute in monitored_attributes:
+                attr = monitored_attribute.lower()
                 try:
-                    value = device_proxy.read_attribute(_monitored_attribute).value
+                    value = device_proxy.read_attribute(attr).value
                 except tango.DevFailed:
-                    self.logger.exception(
+                    self.logger.error(
                         "Encountered an error retrieving the current value of %s from %s",
-                        _monitored_attribute,
+                        attr,
                         self._tango_device_fqdn,
                     )
                     continue
+
                 if isinstance(value, np.ndarray):
                     value = list(value)
-                monitored_attribute_values[_monitored_attribute] = value
+
+                monitored_attribute_values[attr] = value
+
             self._update_component_state(**monitored_attribute_values)
 
     @classmethod
@@ -268,56 +275,18 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             ],
         )
 
-        self._event_consumer_thread.name = f"{self._tango_device_fqdn}.event_consumer_thread"
+        # e.g. mid-dish/simulator-spfc/SKA001 -> mid_dish.simulator_spfc.SKA001
+        formatted_fqdn = self._tango_device_fqdn.replace("/", ".").replace("-", "_")
+        self._event_consumer_thread.name = f"{formatted_fqdn}.event_consumer_thread"
         self._event_consumer_thread.start()
 
-    def run_device_command(
-        self,
-        command_name: str,
-        command_arg: Any,
-        task_callback: Callable = None,  # type: ignore
-    ) -> Any:
-        """Execute the command in a thread."""
-        task_status, response = self.submit_task(
-            self._run_device_command,
-            args=[command_name, command_arg],
-            task_callback=task_callback,
-        )
-        return task_status, response
-
-    @typing.no_type_check
-    def _run_device_command(
-        self,
-        command_name: str,
-        command_arg: Any,
-        task_callback: Callable = None,
-        task_abort_event: Event = None,
-    ) -> None:
-        if task_abort_event.is_set():
-            task_callback(status=TaskStatus.ABORTED)
-            return
-
-        if task_callback:
-            task_callback(status=TaskStatus.IN_PROGRESS)
-
-        result = None
-        try:
-            result = self.execute_command(command_name, command_arg)
-        except tango.DevFailed as err:
-            self.logger.error(err)
-            if task_callback:
-                task_callback(status=TaskStatus.FAILED, exception=(ResultCode.FAILED, err))
-            return
-
-        # perform another abort event check in case it was missed earlier
-        if task_abort_event.is_set():
-            task_callback(progress=f"{command_name} was aborted")
-
-        if task_callback:
-            task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(result)))
+    def _interpret_command_reply(self, command_name: str, reply: Any) -> Tuple[TaskStatus, Any]:
+        """Default interpretation: return IN_PROGRESS and the reply."""
+        reply = reply or f"{command_name} successfully executed"
+        return TaskStatus.IN_PROGRESS, reply
 
     @check_communicating
-    def execute_command(self, command_name: str, command_arg: Any) -> Any:
+    def execute_command(self, command_name: str, command_arg: Any) -> Tuple[TaskStatus, Any]:
         """Check the connection and execute the command on the Tango device."""
         self.logger.debug(
             "About to execute command [%s] on device [%s] with param [%s]",
@@ -325,26 +294,27 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             self._tango_device_fqdn,
             command_arg,
         )
-        result = None
+        reply = None
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
+
         with tango.EnsureOmniThread():
             try:
-                result = device_proxy.command_inout(command_name, command_arg)
-            except tango.DevFailed:
-                self.logger.exception(
-                    "Could not execute command [%s] with arg [%s] on [%s]",
+                reply = device_proxy.command_inout(command_name, command_arg)
+            except tango.DevFailed as err:
+                err_description = "".join([str(arg.desc) for arg in err.args])
+                self.logger.error(
+                    "Encountered an error executing [%s] with arg [%s] on [%s]: %s",
                     command_name,
                     command_arg,
                     self._tango_device_fqdn,
+                    err_description,
                 )
-                raise
-            self.logger.debug(
-                "Result of [%s] on [%s] is [%s]",
-                command_name,
-                self._tango_device_fqdn,
-                result,
-            )
-        return result
+                return TaskStatus.FAILED, err_description
+
+        if not isinstance(reply, (list, tuple)):
+            reply = reply or f"{command_name} successfully executed"
+            return TaskStatus.IN_PROGRESS, reply
+        return self._interpret_command_reply(command_name, reply)
 
     @check_communicating
     def read_attribute_value(self, attribute_name: str) -> Any:
@@ -402,7 +372,6 @@ class TangoDeviceComponentManager(TaskExecutorComponentManager):
             )
             return result
 
-    @typing.no_type_check
     def start_communicating(self) -> None:
         """Establish communication with the device."""
         self.logger.info(f"Establish communication with {self._tango_device_fqdn}")
