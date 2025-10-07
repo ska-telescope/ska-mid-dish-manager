@@ -197,18 +197,10 @@ def test_configure_band_5b_json(
     assert dish_manager_proxy.configuredBand == Band.B5b
 
     expected_progress_updates = [
-        "SetIndexPosition called on DS",
-        "ConfigureBand called on SPFRX, ID",
-        "Awaiting configuredband change to B5b",
-        "SPFRX configuredband changed to 6",
-        "DS indexerposition changed to 6",
-        "ConfigureBand completed",
-    ]
-
-    expected_progress_updates = [
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
-        "Awaiting configuredband change to B2",
-        "ConfigureBand completed",
+        "Awaiting configuredband change to B5b",
+        "SPFRX configuredband changed to B5b",
+        "DS indexerposition changed to B5bConfigureBand completed",
     ]
 
     events = progress_event_store.wait_for_progress_update(

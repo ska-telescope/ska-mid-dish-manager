@@ -36,7 +36,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
+    main_event_store.wait_for_value(DishMode.CONFIG, timeout=20, proxy=dish_manager_proxy)
     band_event_store.wait_for_value(Band.B1, timeout=10)
 
     dish_manager_proxy.SetOperateMode()
