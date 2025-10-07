@@ -130,6 +130,8 @@ def test_configure_band_2_json(
     expected_progress_updates = [
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
         "Awaiting configuredband change to B2",
+        "SPFRX configuredband changed to B2",
+        "DS indexerposition changed to B2",
         "ConfigureBand completed",
     ]
 
