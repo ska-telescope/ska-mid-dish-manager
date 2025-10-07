@@ -35,9 +35,7 @@ def test_configureband_handler(
         {"progress": "Awaiting DS indexerposition change to B2"},
         {"progress": "Awaiting SPFRX configuredband change to B2"},
         {"progress": "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2"},
-        {
-            "progress": "Awaiting configuredband change to B2",
-        },
+        {"progress": "Awaiting configuredband change to B2"},
     )
 
     # check that the initial lrc updates come through
@@ -101,9 +99,7 @@ def test_configureband_json_handler_band_2(
         {"progress": "Awaiting DS indexerposition change to B2"},
         {"progress": "Awaiting SPFRX configuredband change to B2"},
         {"progress": "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand"},
-        {
-            "progress": "Awaiting configuredband change to B2",
-        },
+        {"progress": "Awaiting configuredband change to B2"},
     )
 
     # check that the initial lrc updates come through
