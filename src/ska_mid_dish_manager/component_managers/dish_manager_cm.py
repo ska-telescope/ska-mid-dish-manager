@@ -1150,7 +1150,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         def _is_slew_cmd_allowed():
-            if self.component_state["dishmode"] in [DishMode.OPERATE, DishMode.STANDBY_FP]:
+            if self.component_state["dishmode"] not in [DishMode.OPERATE, DishMode.STANDBY_FP]:
                 update_task_status(
                     task_callback,
                     progress="Slew command rejected for current dishMode. "
