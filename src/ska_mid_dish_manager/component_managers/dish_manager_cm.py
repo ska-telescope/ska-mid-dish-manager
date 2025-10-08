@@ -1677,3 +1677,57 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.error("Failed to update dscPowerLimitKw on DS.")
             raise
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
+
+    def set_h_attenuation(
+        self, value: int, task_callback: Optional[Callable] = None
+    ) -> Tuple[ResultCode, str]:
+        b5dc_cm = self.sub_component_managers["B5DC"]
+        try:
+            b5dc_cm.execute_command("SetHPolAttenuation", value)
+        except tango.DevFailed as err:
+            if task_callback:
+                self.logger.error("Failed to update HPolAttenuation on the B5DC proxy.")
+                task_callback(status=TaskStatus.FAILED, exception=err)
+            return TaskStatus.FAILED, "DishManager has failed to execute SetHPolAttenuation"
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                progress="SetHPolAttenuation called",
+            )
+        return (ResultCode.OK, "Successfully updated HPolAttenuation on the B5DC proxy.")
+
+    def set_v_attenuation(
+        self, value: int, task_callback: Optional[Callable] = None
+    ) -> Tuple[ResultCode, str]:
+        b5dc_cm = self.sub_component_managers["B5DC"]
+        try:
+            b5dc_cm.execute_command("SetVPolAttenuation", value)
+        except tango.DevFailed as err:
+            if task_callback:
+                self.logger.error("Failed to update VPolAttenuation on the B5DC proxy.")
+                task_callback(status=TaskStatus.FAILED, exception=err)
+            return TaskStatus.FAILED, "DishManager has failed to execute SetVPolAttenuation"
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                progress="SetVPolAttenuation called",
+            )
+        return (ResultCode.OK, "Successfully updated VPolAttenuation on the B5DC proxy.")
+
+    def set_frequency(
+        self, frequency: int, task_callback: Optional[Callable] = None
+    ) -> Tuple[ResultCode, str]:
+        b5dc_cm = self.sub_component_managers["B5DC"]
+        try:
+            b5dc_cm.execute_command("SetFrequency", frequency)
+        except tango.DevFailed as err:
+            if task_callback:
+                self.logger.error("Failed to update Frequency on the B5DC proxy.")
+                task_callback(status=TaskStatus.FAILED, exception=err)
+            return TaskStatus.FAILED, "DishManager has failed to execute SetFrequency"
+        if task_callback:
+            task_callback(
+                status=TaskStatus.COMPLETED,
+                progress="SetVPolAttenuation called",
+            )
+        return (ResultCode.OK, "Successfully updated Frequency on the B5DC proxy.")
