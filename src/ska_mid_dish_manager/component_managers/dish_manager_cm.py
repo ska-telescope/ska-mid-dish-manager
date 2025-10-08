@@ -560,26 +560,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
-        # Only log non pointing changes
-        pointing_related_attrs = set(
-            [
-                "desiredpointingaz",
-                "desiredpointingel",
-                "achievedpointing",
-                "tracktablecurrentindex",
-                "tracktableendindex",
-            ]
-        )
-        no_pointing_updates = set()
-        if pointing_related_attrs.intersection(kwargs) == no_pointing_updates:
-            self.logger.debug(
-                "%s component state has changed \nnew value: [%s]"
-                "\ncurrent dish manager component state: [%s]",
-                device.value,
-                kwargs,
-                self.component_state,
-            )
-
         if "powerstate" in kwargs:
             new_power_state = self._state_transition.compute_power_state(
                 ds_component_state,
