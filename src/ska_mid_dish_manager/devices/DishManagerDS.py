@@ -11,6 +11,10 @@ from functools import reduce
 from typing import List, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, ResultCode
+from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (  # noqa: F401
+    B5dcFrequency,
+    B5dcPllState,
+)
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango import AttrWriteType, DevLong64, DevState, DevVarStringArray, DispLevel
@@ -62,7 +66,7 @@ from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
 )
-from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency, B5dcPllState # noqa: F401
+
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 
 # Used for input validation. Input samples to tracktable that is less that
