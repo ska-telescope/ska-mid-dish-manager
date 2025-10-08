@@ -80,7 +80,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
 
     expected_progress_updates = [
         f"Fanned out commands: DS.SetIndexPosition, SPFRX.{command}",
-        f"Awaiting configuredband, dishmode change to {band_number}, STANDBY_FP",
+        f"Awaiting configuredband change to {band_number}",
         f"{command} completed",
     ]
 
