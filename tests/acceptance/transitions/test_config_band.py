@@ -34,7 +34,7 @@ def test_configure_band_2(
     progress_event_store.clear_queue()
 
     dish_manager_proxy.ConfigureBand2(True)
-    main_event_store.wait_for_value(Band.B2, timeout=10)
+    main_event_store.wait_for_value(Band.B2)
     assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [

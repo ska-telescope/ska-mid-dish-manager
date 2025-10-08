@@ -201,7 +201,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
-            for monitored_attribute in monitored_attributes:
+            for monitored_attribute in self._monitored_attributes:
                 attr = monitored_attribute.lower()
                 try:
                     value = device_proxy.read_attribute(attr).value
