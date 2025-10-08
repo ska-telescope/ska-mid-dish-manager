@@ -8,6 +8,7 @@ from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.constants import (
+    DEFAULT_B5DC_TRL,
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
@@ -63,6 +64,8 @@ class TestDishManagerVersioning:
         assert build_state_json["spfrx_device"]["address"] == DEFAULT_SPFRX_TRL
         assert build_state_json["spfc_device"]["version"] == ""
         assert build_state_json["spfc_device"]["address"] == DEFAULT_SPFC_TRL
+        assert build_state_json["b5dc_device"]["version"] == ""
+        assert build_state_json["b5dc_device"]["address"] == DEFAULT_B5DC_TRL
 
     @pytest.mark.parametrize(
         "device, build_state_key",
