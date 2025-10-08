@@ -194,29 +194,3 @@ class DscCtrlState(enum.IntEnum):
     ENGINEERING_CONTROL = 2
     REMOTE_CONTROL = 3
     NO_AUTHORITY = 4
-
-
-class B5dcPllState(enum.IntEnum):
-    """Band 5 down-converter Phase lock loop state."""
-
-    LOCKED = 0
-    LOCKED_WITH_LOSS_DETECTED = 1
-    NOT_LOCKED = 2
-    NOT_LOCKED_WITH_LOSS_DETECTED = 3
-
-
-class B5dcFrequency(enum.IntEnum):
-    """Band 5 down-converter frequency options."""
-
-    F_11_1_GHZ = 1
-    F_13_2_GHZ = 2
-    F_13_86_GHZ = 3
-
-    def frequency_value_ghz(self) -> float:
-        """Return the frequency in GHz based on the enum value."""
-        frequency_mapping = {
-            B5dcFrequency.F_11_1_GHZ: 11.1,
-            B5dcFrequency.F_13_2_GHZ: 13.2,
-            B5dcFrequency.F_13_86_GHZ: 13.86,
-        }
-        return frequency_mapping[self]

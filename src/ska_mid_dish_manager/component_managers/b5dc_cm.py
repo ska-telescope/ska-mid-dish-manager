@@ -4,10 +4,12 @@ import logging
 from threading import Lock
 from typing import Any, Callable, Optional
 
-from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
-from ska_mid_dish_manager.models.dish_enums import (
+from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (  # noqa: F401
+    B5dcFrequency,
     B5dcPllState,
 )
+
+from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 
 
 class B5DCComponentManager(TangoDeviceComponentManager):
@@ -55,15 +57,6 @@ class B5DCComponentManager(TangoDeviceComponentManager):
             if attr in kwargs:
                 kwargs[attr] = enum_(kwargs[attr])
         super()._update_component_state(**kwargs)
-
-    # def _update_communication_state(self, communication_state: CommunicationStatus) -> None:
-    #     if (self._communication_state is CommunicationStatus.ESTABLISHED) and (
-    #         communication_state is CommunicationStatus.NOT_ESTABLISHED
-    #     ):
-    #         # Reset flag to ensure buildState is fetched the next time a server
-    #         # connection is established
-    #         self.build_state_fetched = False
-    #     super()._update_communication_state(communication_state)
 
     # pylint: disable=missing-function-docstring, invalid-name
     def on(self, task_callback: Callable = None) -> Any:  # type: ignore

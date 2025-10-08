@@ -11,6 +11,10 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
+from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (  # noqa: F401
+    B5dcFrequency,
+    B5dcPllState,
+)
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.b5dc_cm import B5DCComponentManager
@@ -27,7 +31,6 @@ from ska_mid_dish_manager.models.constants import (
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
-    B5dcPllState,
     Band,
     BandInFocus,
     CapabilityStates,
@@ -282,7 +285,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5dc_device_fqdn,
                 logger=logger,
                 state_update_lock=self._state_update_lock,
-                # self._state_update_lock,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.B5DC
                 ),

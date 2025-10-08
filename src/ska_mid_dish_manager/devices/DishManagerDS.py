@@ -11,6 +11,7 @@ from functools import reduce
 from typing import List, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, ResultCode
+from ska_mid_dish_dcp_lib.mappings import B5dcFrequency, B5dcPllState  # noqa: F401
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango import AttrWriteType, DevLong64, DevState, DevVarStringArray, DispLevel
@@ -38,7 +39,6 @@ from ska_mid_dish_manager.models.constants import (
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
-    B5dcPllState,
     Band,
     CapabilityStates,
     DishDevice,
