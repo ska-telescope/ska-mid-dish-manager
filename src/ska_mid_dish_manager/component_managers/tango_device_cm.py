@@ -197,7 +197,8 @@ class TangoDeviceComponentManager(BaseComponentManager):
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
 
         # fallback to defaults if not provided
-        monitored_attributes = monitored_attributes or self._monitored_attributes
+        # monitored_attributes = monitored_attributes or self._monitored_attributes
+        monitored_attributes = self._monitored_attributes
 
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
