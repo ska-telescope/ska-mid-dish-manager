@@ -162,6 +162,7 @@ cython_debug/
 # helm artefacts/ local config
 PrivateRules.mak
 charts/ska-mid-dish-manager/charts
+Chart.lock
 
 # Files and directories starting with 'karoo-tmp'
 karoo-tmp*
