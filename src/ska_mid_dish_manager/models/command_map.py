@@ -532,14 +532,15 @@ class CommandMap:
                 "awaitedValuesList": [band_enum],
             },
         }
+        current_dish_mode = self._dish_manager_cm.component_state["dishmode"]
 
         self._run_long_running_command(
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
             requested_cmd,
-            ["configuredband"],
-            [band_enum],
+            ["configuredband", "dishmode"],
+            [band_enum, current_dish_mode],
         )
 
     def slew(

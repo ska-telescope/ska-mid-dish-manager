@@ -97,7 +97,7 @@ def test_ignoring_spfrx(
 
     expected_progress_updates = [
         "Fanned out commands: DS.SetIndexPosition",
-        "Awaiting configuredband change to B2",
+        "Awaiting configuredband, dishmode change to B2, STANDBY_FP",
         "ConfigureBand2 completed",
     ]
 
