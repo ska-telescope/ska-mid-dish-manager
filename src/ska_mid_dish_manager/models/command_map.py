@@ -374,21 +374,21 @@ class CommandMap:
         task_callback: Optional[Callable] = None,
     ):
         """Transition the dish to OPERATE mode."""
-        if self._dish_manager_cm.component_state["configuredband"] in [Band.NONE, Band.UNKNOWN]:
-            update_task_status(
-                task_callback,
-                progress="No configured band: SetOperateMode execution not allowed",
-                status=TaskStatus.REJECTED,
-                result=(ResultCode.NOT_ALLOWED, "SetOperateMode requires a configured band"),
-            )
-            return
+        # if self._dish_manager_cm.component_state["configuredband"] in [Band.NONE, Band.UNKNOWN]:
+        #     update_task_status(
+        #         task_callback,
+        #         progress="No configured band: SetOperateMode execution not allowed",
+        #         status=TaskStatus.REJECTED,
+        #         result=(ResultCode.NOT_ALLOWED, "SetOperateMode requires a configured band"),
+        #     )
+        #     return
 
         commands_for_sub_devices = {
-            "SPF": {
-                "command": "SetOperateMode",
-                "awaitedAttributes": ["operatingmode"],
-                "awaitedValuesList": [SPFOperatingMode.OPERATE],
-            },
+            # "SPF": {
+            #     "command": "SetOperateMode",
+            #     "awaitedAttributes": ["operatingmode"],
+            #     "awaitedValuesList": [SPFOperatingMode.OPERATE],
+            # },
             "DS": {
                 "command": "SetPointMode",
                 "awaitedAttributes": ["operatingmode"],

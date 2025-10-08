@@ -1027,11 +1027,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Track the commanded pointing position."""
 
         def _is_track_cmd_allowed():
-            if self.component_state["dishmode"] != DishMode.OPERATE:
+            if self.component_state["dishmode"] not in [DishMode.OPERATE, DishMode.STANDBY_FP]:
                 update_task_status(
                     task_callback,
                     progress="Track command rejected for current dishMode. "
-                    "Track command is allowed for dishMode OPERATE",
+                    "Track command is allowed for dishMode STANDBY-FP, OPERATE",
                 )
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
