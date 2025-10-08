@@ -21,6 +21,7 @@ from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
     AbortCommandsDeprecatedCommand,
     ApplyPointingModelCommand,
+    ResetTrackTableCommand,
     SetKValueCommand,
     StowCommand,
 )
@@ -42,6 +43,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishDevice,
     DishMode,
     DscCmdAuthType,
+    DscCtrlState,
     NoiseDiodeMode,
     PointingState,
     PowerState,
@@ -210,6 +212,11 @@ class DishManager(SKAController):
         self.register_command_object(
             "ApplyPointingModel",
             ApplyPointingModelCommand(self.component_manager, self.logger),
+        )
+
+        self.register_command_object(
+            "ResetTrackTable",
+            ResetTrackTableCommand(self.component_manager, self.logger),
         )
 
     # ---------
@@ -394,6 +401,7 @@ class DishManager(SKAController):
                 "windgust": "windGust",
                 "autowindstowenabled": "autoWindStowEnabled",
                 "lastcommandedmode": "lastCommandedMode",
+                "dscctrlstate": "dscCtrlState",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1500,6 +1508,17 @@ class DishManager(SKAController):
         if not enabled:
             self.component_manager.wind_stow_active = enabled
 
+    @attribute(
+        dtype=DscCtrlState,
+        access=AttrWriteType.READ,
+        doc=("DSC Control State - an aggregation of DSC Command Authority and DSC State"),
+    )
+    def dscCtrlState(self) -> str:
+        """Returns DSC Control State."""
+        return self.component_manager.component_state.get(
+            "dscctrlstate", DscCtrlState.NO_AUTHORITY
+        )
+
     # --------
     # Commands
     # --------
@@ -2073,6 +2092,29 @@ class DishManager(SKAController):
             [ResultCode.OK],
             [f"Watchdog timer reset at {value}s"],
         )
+
+    @command(
+        dtype_in=None,
+        doc_in="""This command resets the program track table on the controller""",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    @BaseInfoIt(show_args=False, show_kwargs=False, show_ret=True)
+    def ResetTrackTable(self) -> DevVarLongStringArrayType:
+        """Resets the program track table on the controller.
+
+        Track table is cleared on the controller in RESET load mode
+        """
+        handler = self.get_command_object("ResetTrackTable")
+        result_code, message = handler()
+        if result_code == ResultCode.FAILED:
+            raise RuntimeError(f"{message}")
+        assert isinstance(message, list), f"Expected a table from the handler but got: {message}"
+
+        self._program_track_table = message
+        self.push_change_event("programTrackTable", message)
+        self.push_archive_event("programTrackTable", message)
+        return ([result_code], ["programTrackTable successfully reset"])
 
     @command(dtype_out="DevVarLongStringArray")
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)

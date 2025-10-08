@@ -13,9 +13,6 @@ def test_set_kvalue_handler(
     """Verify behaviour of SetKValue command handler.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
-    :param callbacks: a dictionary of mocks, passed as callbacks to
-        the command tracker under test
     """
     # set_kvalue has no pre-condition.
     result_code, message = component_manager.set_kvalue(5)

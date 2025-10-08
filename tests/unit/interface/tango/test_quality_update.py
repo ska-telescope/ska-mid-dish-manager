@@ -44,6 +44,7 @@ def test_change(qual_before, qual_after, event_store_class, dish_manager_resourc
     event_store.wait_for_quality(qual_after)
 
 
+@pytest.mark.forked
 def test_event_handling(event_store_class, dish_manager_resources):
     """Test the change events on the tango device cm level."""
     device_proxy, dish_manager_cm = dish_manager_resources

@@ -182,6 +182,17 @@ class DscCmdAuthType(enum.IntEnum):
     EGUI = 3
 
 
+class DscCtrlState(enum.IntEnum):
+    """Dish structure control state enums."""
+
+    # Note LOCKED_STOWED also equates to LOCKED
+    LOCKED = 0
+    MANUAL_CONTROL = 1
+    ENGINEERING_CONTROL = 2
+    REMOTE_CONTROL = 3
+    NO_AUTHORITY = 4
+
+
 class FannedOutCommandStatus(enum.IntEnum):
     """Fanned out command status enums."""
 

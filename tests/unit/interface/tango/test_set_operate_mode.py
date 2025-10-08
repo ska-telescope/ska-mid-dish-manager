@@ -120,9 +120,8 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     # TODO: Remove call to SetOperateMode following DM updates to align with new states and modes
     # ICD
     device_proxy.SetOperateMode()
-    # wait a bit before forcing the updates on the subcomponents
+    # wait a bit for the lrc updates to come through
     main_event_store.get_queue_values()
-
     # transition subservient devices to their respective operatingMode
     # and observe that DishManager transitions dishMode to OPERATE mode
     # SPF are already in the expected operatingMode
@@ -130,14 +129,11 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     main_event_store.wait_for_value(DishMode.OPERATE)
 
     expected_progress_updates = [
-        "SetPointMode called on DS",
-        "SetOperateMode called on SPF",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
         "Awaiting dishmode change to OPERATE",
         "SetOperateMode completed",
     ]
-
     events = progress_event_store.wait_for_progress_update(expected_progress_updates[-1])
-
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared

@@ -45,6 +45,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishDevice,
     DishMode,
     DscCmdAuthType,
+    DscCtrlState,
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
@@ -61,8 +62,8 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
-from ska_mid_dish_manager.utils.action_helpers import update_task_status
 from ska_mid_dish_manager.utils.decorators import check_communicating
+from ska_mid_dish_manager.utils.helper_module import update_task_status
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 from ska_mid_dish_manager.utils.tango_helpers import TangoDbAccessor
@@ -162,6 +163,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             meanwindspeed=-1,
             windgust=-1,
             lastcommandedmode=("0.0", ""),
+            dscctrlstate=DscCtrlState.NO_AUTHORITY,
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -214,7 +216,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=PointingState.UNKNOWN,
                 achievedtargetlock=None,
-                dscmdauth=DscCmdAuthType.NO_AUTHORITY,
+                dsccmdauth=DscCmdAuthType.NO_AUTHORITY,
                 configuretargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.UNKNOWN,
@@ -234,6 +236,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 actstaticoffsetvalueel=None,
                 tracktablecurrentindex=0,
                 tracktableendindex=0,
+                dscctrlstate=DscCtrlState.NO_AUTHORITY,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.DS
                 ),
@@ -296,6 +299,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "actStaticOffsetValueEl",
                 "trackTableCurrentIndex",
                 "trackTableEndIndex",
+                "dscCtrlState",
             ],
             "SPFRX": [
                 "noiseDiodeMode",
@@ -721,6 +725,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 dsc_power_limit,
             )
             self._update_component_state(dscpowerlimitkw=ds_component_state["dscpowerlimitkw"])
+
+        if "dscctrlstate" in kwargs:
+            dsc_ctrl_state = ds_component_state["dscctrlstate"]
+            self.logger.debug(
+                (
+                    "Updating dish manager dscCtrlState with: [%s]. "
+                    "Sub-component dscCtrlState DS [%s]"
+                ),
+                dsc_ctrl_state,
+                dsc_ctrl_state,
+            )
+            self._update_component_state(dscctrlstate=ds_component_state["dscctrlstate"])
 
         # spf bandInFocus
         if not self.is_device_ignored("SPF") and (
@@ -1238,11 +1254,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         def _is_slew_cmd_allowed():
-            if self.component_state["dishmode"] != DishMode.OPERATE:
+            if self.component_state["dishmode"] not in [DishMode.OPERATE, DishMode.STANDBY_FP]:
                 update_task_status(
                     task_callback,
                     progress="Slew command rejected for current dishMode. "
-                    "Slew command is allowed for dishMode OPERATE",
+                    "Slew command is allowed for dishMode STANDBY-FP, OPERATE",
                 )
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
@@ -1659,8 +1675,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.get_current_tai_offset_from_dsc_with_manual_fallback() + 5
         )  # add 5 seconds lead time
         # use abitrary constant values for az, el but within the mechanical limits
-        reset_point = [timestamp, 0.0, 50.0] * 5
-        sequence_length = 1
+        sequence_length = 5
+        reset_point = [timestamp, 0.0, 50.0] * sequence_length
         load_mode = TrackTableLoadMode.RESET
 
         task_status, msg = self.track_load_table(sequence_length, reset_point, load_mode)

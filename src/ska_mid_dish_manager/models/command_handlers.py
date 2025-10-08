@@ -41,7 +41,7 @@ class Abort:
             TrackStopAction(self.logger, self._component_manager).execute(
                 task_callback, task_abort_event
             )
-            self.logger.debug("abort-sequence: dish slew has been successfully stopped")
+            self.logger.debug("abort-sequence: dish has been successfully stopped")
         except Exception as exc:  # pylint:disable=broad-except
             if task_callback:
                 task_callback(status=TaskStatus.FAILED, exception=exc)

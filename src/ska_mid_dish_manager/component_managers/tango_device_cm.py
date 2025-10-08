@@ -183,7 +183,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 self._component_state[_monitored_attribute] = 0
 
     def update_state_from_monitored_attributes(
-        self, specific_attributes: Optional[Tuple[str, ...]] = None
+        self, monitored_attributes: Tuple[str, ...] | None = None
     ) -> None:
         """Update the component state by reading the monitored attributes.
 
@@ -195,31 +195,29 @@ class TangoDeviceComponentManager(BaseComponentManager):
         monitored attributes on the device and the component state.
         """
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
-        # Handle case where _dp_factory_signal is set and the device proxy could be none
-        # (e.g. device is ignored)
-        if device_proxy is None:
-            return
 
         # fallback to defaults if not provided
-        specific_attributes = specific_attributes or self._monitored_attributes
+        monitored_attributes = monitored_attributes or self._monitored_attributes
+
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
-            for attr in specific_attributes:
-                _monitored_attribute = attr.lower()
+            for monitored_attribute in monitored_attributes:
+                attr = monitored_attribute.lower()
                 try:
-                    value = device_proxy.read_attribute(_monitored_attribute).value
-                except tango.DevFailed as err:
-                    err_description = "".join([str(arg.desc) for arg in err.args])
+                    value = device_proxy.read_attribute(attr).value
+                except tango.DevFailed:
                     self.logger.error(
-                        "Encountered an error retrieving the current value of %s from %s: %s",
-                        _monitored_attribute,
+                        "Encountered an error retrieving the current value of %s from %s",
+                        attr,
                         self._tango_device_fqdn,
-                        err_description,
                     )
                     continue
+
                 if isinstance(value, np.ndarray):
                     value = list(value)
-                monitored_attribute_values[_monitored_attribute] = value
+
+                monitored_attribute_values[attr] = value
+
             self._update_component_state(**monitored_attribute_values)
 
     @classmethod

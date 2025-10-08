@@ -49,6 +49,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     spf_device_proxy.raiseCmdException = True
     spfrx_device_proxy.raiseCmdException = True
     result_event_store.clear_queue()
+    progress_event_store.clear_queue()
 
     dish_manager_proxy.SetStandbyLPMode()
 

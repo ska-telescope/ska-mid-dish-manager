@@ -70,7 +70,7 @@ copyright = "2024, KAROO Team"
 author = "KAROO Team"
 
 # The full version, including alpha/beta/rc tags
-release = "8.3.0"
+release = "8.4.2"
 
 
 # -- General configuration ---------------------------------------------------

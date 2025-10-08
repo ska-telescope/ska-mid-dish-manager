@@ -34,6 +34,9 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
 
     # restart the sub-component device
     device_proxy = dp_manager(f"mid-dish/{family}/SKA001")
+    # Release authority before restarting DSManager
+    if family == "ds-manager":
+        device_proxy.ReleaseAuth()
     admin_device_proxy = dp_manager(device_proxy.adm_name())
     admin_device_proxy.RestartServer()
 

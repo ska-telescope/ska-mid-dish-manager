@@ -213,6 +213,7 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             "b5bcapabilitystate",
             "achievedtargetlock",
             "dsccmdauth",
+            "dscctrlstate",
             "configuretargetlock",
             "achievedpointing",
             "configuredband",
@@ -235,6 +236,7 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             "achievedPointing",
             "achievedTargetLock",
             "dscCmdAuth",
+            "dscCtrlState",
             "configureTargetLock",
         ),
     )

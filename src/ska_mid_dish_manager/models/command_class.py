@@ -147,6 +147,27 @@ class SetKValueCommand(FastCommand):
         return self._component_manager.set_kvalue(*args)
 
 
+class ResetTrackTableCommand(FastCommand):
+    """Class for handling the ResetTrackTable command."""
+
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
+        """Initialise a new ResetTrackTableCommand instance.
+
+        :param component_manager: the device to which this command belongs.
+        :param logger: a logger for this command to use.
+        """
+        self._component_manager = component_manager
+        super().__init__(logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Implement ResetTrackTable command functionality.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
+        """
+        return self._component_manager.reset_track_table(*args)
+
+
 class StowCommand(SubmittedSlowCommand):
     """A custom class for Stow Command."""
 
