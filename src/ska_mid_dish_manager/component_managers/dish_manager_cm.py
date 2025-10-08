@@ -796,6 +796,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         attrs = self.direct_mapped_attrs[device]
         cm_state = self.sub_component_managers[device.value].component_state
 
+        pointing_related_attrs = set(
+            [
+                "desiredpointingaz",
+                "desiredpointingel",
+                "achievedpointing",
+                "tracktablecurrentindex",
+                "tracktableendindex",
+            ]
+        )
+
         enum_attr_mapping = {
             "trackInterpolationMode": TrackInterpolationMode,
             "noiseDiodeMode": NoiseDiodeMode,
