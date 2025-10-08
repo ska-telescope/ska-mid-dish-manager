@@ -139,16 +139,16 @@ def test_configure_band_2_json(
         expected_progress_updates[-1], timeout=10
     )
 
+    # Do it again to check result
+    result_event_store.clear_queue()
+    progress_event_store.clear_queue()
+
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store.
     for message in expected_progress_updates:
         assert message in events_string
-
-    # Do it again to check result
-    result_event_store.clear_queue()
-    progress_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
     progress_event_store.wait_for_progress_update("Already in band B2", timeout=10)
