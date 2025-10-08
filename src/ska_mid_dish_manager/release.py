@@ -40,13 +40,14 @@ class ReleaseInfo:
             ds_manager_device=self._ds_manager_device_info,
             spfrx_device=self._spfrx_device_info,
             spfc_device=self._spfc_device_info,
+            b5dc_device=self.b5dc_device_info,
         )
 
         self._device_to_update_method_map = {
             DishDevice.DS: self._update_ds_manager_version,
             DishDevice.SPF: self._update_spfc_version,
             DishDevice.SPFRX: self._update_spfrx_version,
-            DishDevice.B5DC: self._update_spfrx_version,
+            DishDevice.B5DC: self._update_b5dc_version,
         }
 
     def get_build_state(self) -> str:
