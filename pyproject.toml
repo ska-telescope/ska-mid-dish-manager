@@ -33,7 +33,8 @@ dependencies = [
     "networkx==2.6.3",
     "rule-engine==3.5.0",
     "astropy>=6.0.1",
-    "typing-extensions>=4.3.0"
+    "typing-extensions>=4.3.0",
+    "ska-mid-dish-dcp-lib==0.0.6"
 ]
 
 [project.urls]
