@@ -21,3 +21,4 @@ class DmBuildStateDataClass:
     ds_manager_device: Optional[DeviceInfoDataClass] = None
     spfrx_device: Optional[DeviceInfoDataClass] = None
     spfc_device: Optional[DeviceInfoDataClass] = None
+    b5dc_device: Optional[DeviceInfoDataClass] = None
