@@ -537,8 +537,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             requested_cmd,
-            ["configuredband", "dishmode"],
-            [band_enum, DishMode.STANDBY_FP],
+            ["configuredband"],
+            [band_enum],
         )
 
     def slew(
