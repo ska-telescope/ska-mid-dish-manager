@@ -206,7 +206,7 @@ class CommandMap:
         awaited_event_attributes: Optional[List[str]] = None,
         awaited_event_values: Optional[List[Any]] = None,
         completed_response_msg: Optional[str] = None,
-        timeout: int = 45,
+        timeout: int = 3600,  # default timeout of 1 hour
     ) -> None:
         """Executes a long-running command.
 
@@ -442,7 +442,6 @@ class CommandMap:
             "SetMaintenanceMode",
             ["dishmode"],
             [DishMode.MAINTENANCE],
-            timeout=300,  # stow can take longer time
         )
 
     def track_cmd(
@@ -538,8 +537,8 @@ class CommandMap:
             task_abort_event,
             commands_for_sub_devices,
             requested_cmd,
-            ["configuredband", "dishmode"],
-            [band_enum, DishMode.STANDBY_FP],
+            ["configuredband"],
+            [band_enum],
         )
 
     def slew(
