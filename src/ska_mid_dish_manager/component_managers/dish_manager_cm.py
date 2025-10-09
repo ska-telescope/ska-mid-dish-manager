@@ -976,6 +976,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return task_status, msg
 
     @check_communicating
+    def abort_tasks(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        return super().abort_tasks(task_callback)
+
+    @check_communicating
     def set_standby_lp_mode(
         self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
