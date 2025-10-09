@@ -94,6 +94,14 @@ class TestReleaseInfo:
         build_state_json = json.loads(build_state)
         assert build_state_json["ds_manager_device"]["version"] == build_state_update_json
 
+    def test_b5dc_version_update(self):
+        """Test that device versions are updated accordingly."""
+        build_state_update = generate_random_text()
+        self._release_info.update_build_state(DishDevice.B5DC, build_state_update)
+        build_state = self._release_info.get_build_state()
+        build_state_json = json.loads(build_state)
+        assert build_state_json["b5dc_device"]["version"] == build_state_update
+
     def test_ds_manager_version_update_bad_formatting(self):
         """Test that bad json formatting is handled for ds manager version."""
         build_state_update = generate_random_text()
