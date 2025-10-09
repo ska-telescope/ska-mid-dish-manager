@@ -236,11 +236,13 @@ class DishManager(SKAController):
             )
 
     def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
-        device_attribute_name = self._component_state_attr_map.get(attribute_name, None)
-        if device_attribute_name:
-            attribute_object = getattr(self, device_attribute_name, None)
+        attr_name = self._component_state_attr_map.get(attribute_name)
+        attr_value = self.component_manager.component_state.get(attribute_name)
+        if attr_name:
+            attribute_object = getattr(self, attr_name, None)
             if attribute_object:
                 if attribute_object.get_quality() is not new_attribute_quality:
+                    attribute_object.set_value(attr_value)
                     attribute_object.set_quality(new_attribute_quality, True)
 
     def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
