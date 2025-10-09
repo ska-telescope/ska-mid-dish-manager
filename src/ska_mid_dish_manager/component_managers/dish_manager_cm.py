@@ -502,7 +502,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if self.component_state["dishmode"] == DishMode.STOW:
             # remove any queued tasks on the task executor
-            self.abort_commands()
+            self.abort_tasks()
             self.logger.info(f"{trigger_source}: Dish is already in STOW mode, no action taken.")
             return
 
@@ -962,6 +962,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return task_status, msg
 
     @check_communicating
+    def abort_tasks(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        return super().abort_tasks(task_callback)
+
+    @check_communicating
     def set_standby_lp_mode(
         self,
         task_callback: Optional[Callable] = None,
@@ -1206,7 +1210,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             progress="Stow called, monitor dishmode for LRC completed",
         )
         # abort queued and running tasks on the task executor
-        self.abort_commands()
+        self.abort_tasks()
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
 
@@ -1603,8 +1607,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         :param task_callback: Callback for task status updates
         """
         if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
-            self.abort_commands(task_callback=task_callback)
-            self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
+            self.abort_tasks(task_callback=task_callback)
+            self.logger.info("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
             return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
 
         cmds_in_progress = self.get_currently_executing_lrcs()
@@ -1624,7 +1628,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "abort-sequence:abort-lrc", completed_callback=abort_sequence
         )
         abort_task_cb = partial(self._command_tracker.update_command_info, abort_command_id)
-        self.abort_commands(task_callback=abort_task_cb)
+        self.abort_tasks(task_callback=abort_task_cb)
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     def set_dsc_power_limit_kw(
