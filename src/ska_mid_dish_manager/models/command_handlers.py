@@ -92,11 +92,16 @@ class Abort:
         # task_callback != task_cb, one is a partial with a command id and the other isnt
         task_cb = self._command_tracker.update_command_info
 
-        track_stop_command_id = self._command_tracker.new_command(
-            "abort-sequence:trackstop", completed_callback=None
-        )
-        track_stop_task_cb = partial(task_cb, track_stop_command_id)
-        self._stop_dish(task_abort_event, track_stop_task_cb)
+        current_dish_mode = self._component_manager.component_state.get("dishmode")
+        if current_dish_mode == DishMode.STOW:
+            self.logger.debug("Abort sequence: Skipping track stop - dish is in STOW mode")
+
+        else:
+            track_stop_command_id = self._command_tracker.new_command(
+                "abort-sequence:trackstop", completed_callback=None
+            )
+            track_stop_task_cb = partial(task_cb, track_stop_command_id)
+            self._stop_dish(task_abort_event, track_stop_task_cb)
 
         # clear the scan id
         end_scan_command_id = self._command_tracker.new_command(
