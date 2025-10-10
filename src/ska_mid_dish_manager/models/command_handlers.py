@@ -92,6 +92,14 @@ class Abort:
         # task_callback != task_cb, one is a partial with a command id and the other isnt
         task_cb = self._command_tracker.update_command_info
 
+        # the order the commands are run is important here so that the plc is not interrupted
+        # mid way through a command. Dont call a lrc followed by a fast command for example.
+        # the sequence is as follows:
+        # 1. TrackStop - lrc
+        # 2. SetStandbyFPMode - lrc
+        # 3. EndScan - fast command (nothing fanned out to sub devices)
+        # 4. ResetTrackTable - fast command
+        
         current_dish_mode = self._component_manager.component_state.get("dishmode")
         if current_dish_mode == DishMode.STOW:
             self.logger.debug("Abort sequence: Skipping track stop - dish is in STOW mode")
@@ -103,6 +111,13 @@ class Abort:
             track_stop_task_cb = partial(task_cb, track_stop_command_id)
             self._stop_dish(task_abort_event, track_stop_task_cb)
 
+        # go to STANDBY-FP
+        standby_fp_command_id = self._command_tracker.new_command(
+            "abort-sequence:standbyfp", completed_callback=None
+        )
+        standby_fp_task_cb = partial(task_cb, standby_fp_command_id)
+        self._ensure_transition_to_fp_mode(task_abort_event, standby_fp_task_cb)
+
         # clear the scan id
         end_scan_command_id = self._command_tracker.new_command(
             "abort-sequence:endscan", completed_callback=None
@@ -113,12 +128,6 @@ class Abort:
 
         # reset the track table
         self._component_manager.reset_track_table()
-        # go to STANDBY-FP
-        standby_fp_command_id = self._command_tracker.new_command(
-            "abort-sequence:standbyfp", completed_callback=None
-        )
-        standby_fp_task_cb = partial(task_cb, standby_fp_command_id)
-        self._ensure_transition_to_fp_mode(task_abort_event, standby_fp_task_cb)
 
         if task_abort_event.is_set():
             self.logger.debug("Abort sequence failed")
