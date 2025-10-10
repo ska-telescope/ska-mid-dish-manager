@@ -1,5 +1,7 @@
 """Unit test for lastCommandInvoked attribute."""
 
+from time import time
+
 import pytest
 import tango
 from ska_control_model import ResultCode
@@ -53,6 +55,8 @@ def test_last_command_invoked(
     assert float(mode_invoked_time)
     assert commanded_name == "SetStandbyFPMode"
 
+    # Force a 1s sleep so that the next command time is different (Consievably)
+    time.sleep(1)
     # Call SetKValue (non-mode change)
     result_code, _ = dish_manager_cm.set_kvalue(15)
     assert result_code == ResultCode.OK
