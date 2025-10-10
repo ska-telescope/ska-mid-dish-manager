@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 8.4.4
+*************
+- Updated abort logic to not call TrackStop when in Stow.
+
 Version 8.4.3
 *************
 - Added ResetTrackTable command to clear entries in the controller track table buffer.
