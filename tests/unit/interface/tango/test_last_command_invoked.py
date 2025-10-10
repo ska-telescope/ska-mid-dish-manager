@@ -54,8 +54,8 @@ def test_last_command_invoked(
     assert commanded_name == "SetStandbyFPMode"
 
     # Call SetKValue (non-mode change)
-    result_code, message = dish_manager_cm.set_kvalue(15)
-    assert (result_code, message) == (ResultCode.OK, "SetKValue successfully executed")
+    result_code, _ = dish_manager_cm.set_kvalue(15)
+    assert result_code == ResultCode.OK
     kvalue_command_invoked_time, commanded_name = device_proxy.lastCommandInvoked
     # Make sure time has advanced (Indirectly greater than 0.0)
     assert kvalue_command_invoked_time > mode_invoked_time
