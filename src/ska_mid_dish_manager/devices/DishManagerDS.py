@@ -136,6 +136,10 @@ class DishManager(SKAController):
             ("TrackStop", "track_stop_cmd"),
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
+            ("ConfigureBand3", "configure_band_cmd"),
+            ("ConfigureBand4", "configure_band_cmd"),
+            ("ConfigureBand5a", "configure_band_cmd"),
+            ("ConfigureBand5b", "configure_band_cmd"),
             ("Slew", "slew"),
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
@@ -1567,7 +1571,7 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand1")
 
-        result_code, unique_id = handler("1", synchronise)
+        result_code, unique_id = handler(Band.B1, synchronise)
         return ([result_code], [unique_id])
 
     @command(
@@ -1593,7 +1597,7 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand2")
 
-        result_code, unique_id = handler("2", synchronise)
+        result_code, unique_id = handler(Band.B2, synchronise)
         return ([result_code], [unique_id])
 
     @command(
@@ -1612,7 +1616,10 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand3")
+
+        result_code, unique_id = handler(Band.B3, synchronise)
+        return ([result_code], [unique_id])
 
     @command(
         dtype_in=bool,
@@ -1630,7 +1637,10 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand4")
+
+        result_code, unique_id = handler(Band.B4, synchronise)
+        return ([result_code], [unique_id])
 
     @command(
         dtype_in=bool,
@@ -1648,7 +1658,10 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand5a")
+
+        result_code, unique_id = handler(Band.B5a, synchronise)
+        return ([result_code], [unique_id])
 
     @command(
         dtype_in=bool,
@@ -1666,7 +1679,10 @@ class DishManager(SKAController):
         configuration, Dish will automatically revert to the previous Dish
         mode (OPERATE or STANDBY‐FP).
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand5b")
+
+        result_code, unique_id = handler(Band.B5b, synchronise)
+        return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def FlushCommandQueue(self):
