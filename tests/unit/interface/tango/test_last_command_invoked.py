@@ -55,8 +55,8 @@ def test_last_command_invoked(
     assert float(mode_invoked_time)
     assert commanded_name == "SetStandbyFPMode"
 
-    # Force a 0.1s sleep so that the next command time is different (Consievably)
-    time.sleep(0.1)
+    # Force a 5s sleep so that the next command time is different (Consievably)
+    time.sleep(5)
     # Call SetKValue (non-mode change)
     result_code, _ = dish_manager_cm.set_kvalue(15)
     assert result_code == ResultCode.OK
