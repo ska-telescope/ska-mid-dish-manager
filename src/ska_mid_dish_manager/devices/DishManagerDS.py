@@ -1069,7 +1069,6 @@ class DishManager(SKAController):
         # Spectrum that is a multiple of 3 values:
         # - (timestamp, azimuth coordinate, elevation coordinate)
         # i.e. [tai_0, az_pos_0, el_pos_0, ..., tai_n, az_pos_n, el_pos_n]
-        self.logger.debug("programTrackTable write method called with table %s", table)
 
         # perform input validation on table
         try:

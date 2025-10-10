@@ -566,13 +566,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_component_state if not self.is_device_ignored("SPF") else None,
             )
             self.logger.debug(
-                (
-                    "Updating dish manager powerState with: [%s]. "
-                    "Sub-components powerState DS [%s], SPF [%s]"
-                ),
+                ("Updating dish manager powerState with: [%s]."),
                 new_power_state,
-                ds_component_state["powerstate"],
-                spf_component_state["powerstate"],
             )
             self._update_component_state(powerstate=new_power_state)
 
@@ -628,11 +623,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "pointingstate" in kwargs:
             pointing_state = ds_component_state["pointingstate"]
             self.logger.debug(
-                (
-                    "Updating dish manager pointingState with: [%s]. "
-                    "Sub-components pointingState DS [%s]"
-                ),
-                pointing_state,
+                ("Updating dish manager pointingState with: [%s]."),
                 pointing_state,
             )
             self._update_component_state(pointingstate=ds_component_state["pointingstate"])
@@ -640,11 +631,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "dscpowerlimitkw" in kwargs:
             dsc_power_limit = ds_component_state["dscpowerlimitkw"]
             self.logger.debug(
-                (
-                    "Updating dish manager dscPowerLimitKw with: [%s]. "
-                    "Sub-component dscPowerLimitKw DS [%s]"
-                ),
-                dsc_power_limit,
+                ("Updating dish manager dscPowerLimitKw with: [%s]."),
                 dsc_power_limit,
             )
             self._update_component_state(dscpowerlimitkw=ds_component_state["dscpowerlimitkw"])
@@ -652,11 +639,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "dscctrlstate" in kwargs:
             dsc_ctrl_state = ds_component_state["dscctrlstate"]
             self.logger.debug(
-                (
-                    "Updating dish manager dscCtrlState with: [%s]. "
-                    "Sub-component dscCtrlState DS [%s]"
-                ),
-                dsc_ctrl_state,
+                ("Updating dish manager dscCtrlState with: [%s]."),
                 dsc_ctrl_state,
             )
             self._update_component_state(dscctrlstate=ds_component_state["dscctrlstate"])
