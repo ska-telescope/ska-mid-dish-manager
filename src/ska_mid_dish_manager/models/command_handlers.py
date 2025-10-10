@@ -99,7 +99,7 @@ class Abort:
         # 2. SetStandbyFPMode - lrc
         # 3. EndScan - fast command (nothing fanned out to sub devices)
         # 4. ResetTrackTable - fast command
-        
+
         current_dish_mode = self._component_manager.component_state.get("dishmode")
         if current_dish_mode == DishMode.STOW:
             self.logger.debug("Abort sequence: Skipping track stop - dish is in STOW mode")
