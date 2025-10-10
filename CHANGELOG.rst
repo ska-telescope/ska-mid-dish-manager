@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Added ResetTrackTable command to clear entries in the controller track table buffer.
+- Added in attribute `lastCommandInvoked` to report the last command invoked on the dish manager.
 
 Version 8.4.2
 *************

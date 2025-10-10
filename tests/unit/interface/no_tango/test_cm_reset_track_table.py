@@ -1,4 +1,4 @@
-"""Tests dish manager component manager setkvalue command handler."""
+"""Tests dish manager ResetTrackTable command handler."""
 
 from unittest.mock import Mock
 

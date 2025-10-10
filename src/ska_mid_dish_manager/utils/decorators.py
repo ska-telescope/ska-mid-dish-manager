@@ -8,6 +8,21 @@ from typing import Any
 from ska_control_model import CommunicationStatus
 
 
+def last_command_invoked(func: Any) -> Any:
+    """Record the last command invoked and time."""
+
+    @functools.wraps(func)
+    def wrapper_last_command_invoked(*args: Any, **kwargs: Any) -> Any:
+        device_instance = args[0]
+        component_manager = device_instance.component_manager
+        last_command_invoked = (str(time.time()), func.__name__)
+        # pylint: disable=protected-access
+        component_manager._update_component_state(lastcommandinvoked=last_command_invoked)
+        return func(*args, **kwargs)
+
+    return wrapper_last_command_invoked
+
+
 def record_mode_change_request(func: Any) -> Any:
     """Record a mode change request."""
 

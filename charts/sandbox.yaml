@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: sandbox
-  namespace: ska-mid-dish-manager
+  namespace: dish-manager
 spec:
   containers:
     - name: sandbox-pod

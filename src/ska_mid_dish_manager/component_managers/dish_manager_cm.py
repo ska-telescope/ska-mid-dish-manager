@@ -140,6 +140,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             meanwindspeed=-1,
             windgust=-1,
             lastcommandedmode=("0.0", ""),
+            lastcommandinvoked=("0.0", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
             **kwargs,
         )
@@ -445,6 +446,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         :param: trigger_source: The event requesting the dish to stow.
                  It can be due to either a wind condition or communication loss from client.
         """
+        # Update the last commanded mode and last command invoked attributes (Regardless of
+        # command (trigger) success).
+        last_commanded_mode = (str(time.time()), trigger_source)
+        self._update_component_state(lastcommandedmode=last_commanded_mode)
+        self._update_component_state(lastcommandinvoked=last_commanded_mode)
+
         if self.component_state["dishmode"] == DishMode.STOW:
             # remove any queued tasks on the task executor
             self.abort_commands()
@@ -464,9 +471,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_status == TaskStatus.COMPLETED:
                 break
             self._stop_event.wait(retry_interval)
-
-        last_commanded_mode = (str(time.time()), trigger_source)
-        self._update_component_state(lastcommandedmode=last_commanded_mode)
 
     # ---------
     # Callbacks
