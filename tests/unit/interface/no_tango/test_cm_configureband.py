@@ -33,7 +33,7 @@ def test_configureband_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": "Awaiting DS indexerposition change to B2"},
-        {"progress": "Awaiting SPFRX configuredband change to B2"},
+        {"progress": "Awaiting SPFRX configuredband change to 2"},
         {"progress": "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2"},
         {"progress": "Awaiting configuredband change to B2"},
     )
