@@ -1605,7 +1605,7 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -1626,7 +1626,7 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -1647,7 +1647,7 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -1668,7 +1668,7 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -1682,6 +1682,7 @@ class DishManager(SKAController):
         handler = self.get_command_object("ConfigureBand5b")
 
         result_code, unique_id = handler(Band.B5b, synchronise)
+
         return ([result_code], [unique_id])
 
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)

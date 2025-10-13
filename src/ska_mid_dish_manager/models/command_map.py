@@ -520,6 +520,7 @@ class CommandMap:
                 progress="NOTE: Configuring Band 5b to Band 1 until B5DC is available",
             )
             band = Band.B1
+            self.logger.warning("Configuring Band 5b to Band 1 until B5DC is available")
 
         request_cmd = f"ConfigureBand{int(band)}"
         if band == Band.B5a:
