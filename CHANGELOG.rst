@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 8.4.5
+*************
 - Changed order of commands to dish structure manager on calling of Abort()
 
 Version 8.4.4
