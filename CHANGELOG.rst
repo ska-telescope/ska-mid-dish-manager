@@ -9,6 +9,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - Added ResetTrackTable command to clear entries in the controller track table buffer.
 - Added in attribute `lastCommandInvoked` to report the last command invoked on the dish manager.
+- Upgraded ska-mid-dish-simulators chart to v5.4.0.
 
 Version 8.4.2
 *************
