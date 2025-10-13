@@ -33,7 +33,7 @@ Guarantees and Caveats
 
 * Only slew/track tasks will be interrupted when Abort is triggered; tasks like receiver indexing, will not be affected.
 
-* Abort will **stop an ongoing STOW**.
+* Abort will **stop an ongoing slew to STOW position**.
 
 * Dish will always be restored to STANDBY-FP mode regardless of the previous state before Abort was triggered
 
