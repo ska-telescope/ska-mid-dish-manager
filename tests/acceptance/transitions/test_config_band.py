@@ -26,9 +26,10 @@ def test_configure_band_a(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # make sure configuredBand is not B2
-    dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(Band.B1, timeout=8)
-    assert dish_manager_proxy.configuredBand == Band.B1
+    if dish_manager_proxy.configuredBand != Band.B1:
+        dish_manager_proxy.ConfigureBand1(True)
+        main_event_store.wait_for_value(Band.B1, timeout=8)
+        assert dish_manager_proxy.configuredBand == Band.B1
 
     main_event_store.clear_queue()
     progress_event_store.clear_queue()
@@ -110,7 +111,9 @@ def test_configure_band_b(
     main_event_store.clear_queue()
     progress_event_store.clear_queue()
 
-    dish_manager_proxy.command_inout(band_request, True)
+    res = dish_manager_proxy.command_inout(band_request, True)
+    assert res
+    assert len(res) == 2
     main_event_store.wait_for_value(expected_band, timeout=15)
     assert dish_manager_proxy.configuredBand == expected_band
 
