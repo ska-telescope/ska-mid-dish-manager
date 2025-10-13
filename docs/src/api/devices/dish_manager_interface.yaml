@@ -1352,8 +1352,8 @@
     - name: lastCommandInvoked
       data_format: SPECTRUM
       data_type: DevString
-      description: Stores the last invoked command, including its
-        execution time in UNIX UTC format.
+      description: Stores the name and timestamp (in UNIX UTC format) of the last
+        invoked command.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'

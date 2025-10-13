@@ -468,7 +468,7 @@ class DishManager(SKAController):
         dtype=(str, str),
         max_dim_x=2,
         access=AttrWriteType.READ,
-        doc=("Stores the last invoked command, including its execution time in UNIX UTC format."),
+        doc=("Stores the name and timestamp (in UNIX UTC format) of the last invoked command."),
     )
     @requires_component_manager
     def lastCommandInvoked(self) -> tuple[str, str]:
