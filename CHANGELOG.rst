@@ -11,6 +11,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 Version 8.4.5
 *************
 - Changed order of commands to dish structure manager on calling of Abort()
+- Upgraded ska-mid-dish-simulators chart to v5.4.0
 
 Version 8.4.4
 *************
