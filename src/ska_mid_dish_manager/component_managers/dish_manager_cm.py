@@ -446,11 +446,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         :param: trigger_source: The event requesting the dish to stow.
                  It can be due to either a wind condition or communication loss from client.
         """
-        # Update the last commanded mode and last command invoked attributes (Regardless of
-        # command (trigger) success).
         last_commanded_mode = (str(time.time()), trigger_source)
-        self._update_component_state(lastcommandedmode=last_commanded_mode)
-        self._update_component_state(lastcommandinvoked=last_commanded_mode)
+        update_args = {
+            "lastcommandedmode": last_commanded_mode,
+            "lastcommandinvoked": last_commanded_mode,
+        }
+        self._update_component_state(**update_args)
 
         if self.component_state["dishmode"] == DishMode.STOW:
             # remove any queued tasks on the task executor
