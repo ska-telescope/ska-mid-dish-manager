@@ -113,12 +113,15 @@ class Abort:
         task_cb = self._command_tracker.update_command_info
 
         # the order the commands are run is important: so that the plc is not interrupted
-        # mid way through a command. for e.g. dont call a lrc followed by a fast command.
+        # mid way through a command. for e.g. dont call a lrc followed by a fast command
+        # without any delay.
         # the sequence is as follows:
         # 1. TrackStop - lrc
         # 2. SetStandbyFPMode - lrc
         # 3. EndScan - fast command (nothing fanned out to sub devices)
         # 4. ResetTrackTable - fast command
+        # The EndScan provides sufficient delay so that there is no contention when
+        # ResetTrackTable is called after it - TODO: improvement chain commands on completion.
 
         current_dish_mode = self._component_manager.component_state.get("dishmode")
         if current_dish_mode == DishMode.STOW:
