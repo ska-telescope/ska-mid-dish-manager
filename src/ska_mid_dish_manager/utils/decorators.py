@@ -9,7 +9,8 @@ from ska_control_model import CommunicationStatus
 
 
 def record_command(record_mode: bool = False) -> Callable:
-    """.
+    """Return a function that records the 'lastcommandinvoked' and or 'lastcommandedmode'
+       before calling the command.
 
     :param record_mode: Flag to update both or only 'lastcommandinvoked', 'lastcommandedmode'.
     """
