@@ -12,6 +12,10 @@ Version 8.4.5
 *************
 - Changed order of commands to dish structure manager on calling of Abort()
 - Upgraded ska-mid-dish-simulators chart to v5.4.0
+- Upgraded the ska-mid-dish-ds-manager chart to v6.4.1
+  - Dropped the archive rate for achievedPointing and currentPointing attributes
+  - Trimmed the logs
+  - Updated lastcommandupdate attribute format
 
 Version 8.4.4
 *************
