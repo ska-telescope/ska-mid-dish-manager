@@ -31,7 +31,6 @@ def record_command(record_mode: bool = False) -> Callable:
                 component_manager._update_component_state(lastcommandinvoked=command_and_time)
             return func(*args, **kwargs)
 
-        wrapper.__annotations__ = func.__annotations__
         return wrapper
 
     return decorator

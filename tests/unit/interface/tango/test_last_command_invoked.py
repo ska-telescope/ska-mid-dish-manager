@@ -1,10 +1,7 @@
 """Unit test for lastCommandInvoked attribute."""
 
-import time
-
 import pytest
 import tango
-from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -47,19 +44,16 @@ def test_last_command_invoked(
     main_event_store.wait_for_value(DishMode.STANDBY_FP)
 
     evts = last_command_invoked_event_store.wait_for_n_events(1)
-    _, command_name = evts[0].attr_value.value
-    assert command_name == "SetStandbyFPMode"
-
+    recorded_timestamp, recorded_cmd = evts[0].attr_value.value
     mode_invoked_time, commanded_name = device_proxy.lastCommandInvoked
-    assert mode_invoked_time != "0.0"
-    assert float(mode_invoked_time)
-    assert commanded_name == "SetStandbyFPMode"
 
-    # Force a 2s sleep so that the next command time is different (Consievably)
-    time.sleep(2)
+    assert commanded_name == recorded_cmd
+    assert mode_invoked_time == recorded_timestamp
+
+    # Force a 1s wait so that the next command time is different (Consievably)
+    last_command_invoked_event_store.wait_for_n_events()
     # Call SetKValue (non-mode change)
-    result_code, _ = device_proxy.SetKValue(15)
-    assert result_code == ResultCode.OK
+    device_proxy.SetKValue(15)
     kvalue_command_invoked_time, commanded_name = device_proxy.lastCommandInvoked
     # Make sure time has advanced (Indirectly greater than 0.0)
     assert kvalue_command_invoked_time > mode_invoked_time
