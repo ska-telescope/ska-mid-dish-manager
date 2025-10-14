@@ -8,7 +8,7 @@ ska-mid-dish-ds-manager:
   dishstructuremanager:
     image:
       registry: registry.gitlab.com/ska-telescope/ska-mid-dish-ds-manager
-      tag: 6.1.0-dev.c9e1541c4
+      tag: 6.4.1-dev.c75310539
 
 system: SW-infrastructure
 subsystem: ska-dish-lmc
