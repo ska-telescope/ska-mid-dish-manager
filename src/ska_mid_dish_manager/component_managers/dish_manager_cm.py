@@ -122,6 +122,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             band5bpointingmodelparams=[],
             ignorespf=False,
             ignorespfrx=False,
+            ignoreb5dc=False,
             noisediodemode=NoiseDiodeMode.OFF,
             periodicnoisediodepars=[],
             pseudorandomnoisediodepars=[0, 0, 0],
@@ -438,6 +439,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return self.component_state["ignorespf"]
         if device == "SPFRX":
             return self.component_state["ignorespfrx"]
+        if device == "B5DC":
+            return self.component_state["ignoreb5dc"]
         return False
 
     def get_active_sub_component_managers(self) -> Dict:
@@ -499,6 +502,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 ignore_spfrx = ignore_spfrx_value.lower() == "true"
                 self.set_spfrx_device_ignored(ignore_spfrx)
+
+            # ignoreB5dc
+            ignore_b5dc_value = self._get_device_attribute_property_value("ignoreB5dc")
+
+            if ignore_b5dc_value is not None:
+                self.logger.debug(
+                    "Updating ignoreB5dc value with value from database %s.",
+                    ignore_b5dc_value,
+                )
+                ignore_b5dc = ignore_b5dc_value.lower() == "true"
+                self.set_b5dc_device_ignored(ignore_b5dc)
         except tango.DevFailed:
             self.logger.debug(
                 "Could not update memorized attributes. Failed to connect to database."
@@ -959,6 +973,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self.sub_component_managers["SPFRX"].start_communicating()
 
             self._update_component_state(ignorespfrx=ignored)
+
+    def set_b5dc_device_ignored(self, ignored: bool):
+        """Set the B5DC device ignored boolean and update device communication."""
+        if ignored != self.component_state["ignoreb5dc"]:
+            self.logger.debug("Setting ignore B5DC device as %s", ignored)
+            self._update_component_state(ignoreb5dc=ignored)
+            if ignored:
+                if "B5DC" in self.sub_component_managers:
+                    self.sub_component_managers["B5DC"].stop_communicating()
+                    self.sub_component_managers["B5DC"].clear_monitored_attributes()
+            else:
+                self.sub_component_managers["B5DC"].start_communicating()
+
+            self._update_component_state(ignoreb5dc=ignored)
 
     def sync_component_states(self):
         """Sync monitored attributes on component managers with their respective sub devices.

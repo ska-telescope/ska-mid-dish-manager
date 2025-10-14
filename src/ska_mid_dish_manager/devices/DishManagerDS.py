@@ -426,6 +426,7 @@ class DishManager(SKAController):
                 "scanid": "scanID",
                 "ignorespf": "ignoreSpf",
                 "ignorespfrx": "ignoreSpfrx",
+                "ignoreb5dc": "ignoreB5dc",
                 "spfconnectionstate": "spfConnectionState",
                 "spfrxconnectionstate": "spfrxConnectionState",
                 "dsconnectionstate": "dsConnectionState",
@@ -1385,6 +1386,24 @@ class DishManager(SKAController):
         """Sets ignoreSpfrx."""
         self.logger.debug("Write to ignoreSpfrx, %s", value)
         self.component_manager.set_spfrx_device_ignored(value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Flag to disable B5DC device communication. When ignored, no commands will be issued "
+        "to the device, it will be excluded from state aggregation, and no device related "
+        "attributes will be updated.",
+        memorized=True,
+    )
+    def ignoreB5dc(self):
+        """Returns ignoreB5dc."""
+        return self.component_manager.component_state.get("ignoreb5dc", False)
+
+    @ignoreB5dc.write
+    def ignoreB5dc(self, value):
+        """Sets ignoreB5dc."""
+        self.logger.debug("Write to ignoreB5dc, %s", value)
+        self.component_manager.set_b5dc_device_ignored(value)
 
     @attribute(
         dtype=NoiseDiodeMode,

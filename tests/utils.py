@@ -395,7 +395,7 @@ class EventStore:
         return [(event.attr_value.name, event.attr_value.value) for event in events]
 
 
-def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
+def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx, ignore_b5dc):
     """Sets ignored devices on DishManager."""
     if device_proxy.ignoreSpf != ignore_spf:
         spf_connection_event_store = EventStore()
@@ -429,6 +429,24 @@ def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx):
         else:
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
         device_proxy.unsubscribe_event(spfrx_sub_id)
+
+    # Currently B5DC is not implemented so ignore this for now
+    # if device_proxy.ignoreB5dc != ignore_b5dc:
+    #     b5dc_connection_event_store = EventStore()
+
+    #     b5dc_sub_id = device_proxy.subscribe_event(
+    #         "b5dcConnectionState",
+    #         tango.EventType.CHANGE_EVENT,
+    #         b5dc_connection_event_store,
+    #     )
+
+    #     device_proxy.ignoreB5dc = ignore_b5dc
+
+    #     if ignore_b5dc:
+    #         b5dc_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
+    #     else:
+    #         b5dc_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+    #     device_proxy.unsubscribe_event(b5dc_sub_id)
 
 
 def generate_random_text(length=10):
