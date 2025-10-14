@@ -39,7 +39,7 @@ def test_configure_band_2(
 
     expected_progress_updates = [
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
-        "Awaiting configuredband, dishmode change to B2, STANDBY_FP",
+        "Awaiting configuredband change to B2",
         "ConfigureBand2 completed",
     ]
 

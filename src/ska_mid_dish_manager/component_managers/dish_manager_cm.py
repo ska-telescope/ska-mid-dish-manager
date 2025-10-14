@@ -294,7 +294,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # ----------------
         # Command Handlers
         # ----------------
-        self._abort_handler = Abort(self, self._command_map, self._command_tracker, logger=logger)
+        self._abort_handler = Abort(
+            self, self._command_map, self._command_tracker, logger=self.logger
+        )
 
     @property
     def wind_stow_active(self) -> bool:
@@ -1494,13 +1496,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
             self.abort_commands(task_callback=task_callback)
-            self.logger.info("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
+            self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
             return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
 
         cmds_in_progress = self.get_currently_executing_lrcs()
         if cmds_in_progress:
             if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
-                self.logger.info("Abort rejected: there is an ongoing abort sequence.")
+                self.logger.error("Abort rejected: there is an ongoing abort sequence.")
                 if task_callback:
                     task_callback(
                         status=TaskStatus.REJECTED,
