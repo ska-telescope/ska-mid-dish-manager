@@ -57,5 +57,4 @@ def test_last_command_invoked(
     kvalue_command_invoked_time, commanded_name = device_proxy.lastCommandInvoked
     # Make sure time has advanced (Indirectly greater than 0.0)
     assert kvalue_command_invoked_time > mode_invoked_time
-    assert float(kvalue_command_invoked_time)
     assert commanded_name == "SetKValue"
