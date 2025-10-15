@@ -50,6 +50,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
             INIT_AZ, abs=POINTING_TOLERANCE_DEG
         ) and pointing_event_val[2] == pytest.approx(INIT_EL, abs=POINTING_TOLERANCE_DEG)
 
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=120)
     achieved_pointing_event_store.wait_for_condition(target_reached_test, timeout=120)
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=120)
 
@@ -84,6 +85,7 @@ def test_track_and_track_stop_cmds(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    assert dish_manager_proxy.pointingState == PointingState.READY
 
     # Load a track table
     current_pointing = dish_manager_proxy.achievedPointing
@@ -121,7 +123,7 @@ def test_track_and_track_stop_cmds(
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
-    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
+    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=20)
 
     expected_progress_updates = [
         "Fanned out commands: DS.Track",
