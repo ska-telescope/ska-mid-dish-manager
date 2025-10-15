@@ -150,7 +150,7 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
 
     # Unstow is a long running command on the DSManager so we don't need to increase our proxy
-    # timeout.
+    # timeout for the alarm horn. Stow will block the proxy if used.
     ds_device_proxy.unstow()
     dsc_event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=120)
     ds_device_proxy.slew([REQUESTED_AZIMUTH_VALUE, REQUESTED_ELEVATION_VALUE])

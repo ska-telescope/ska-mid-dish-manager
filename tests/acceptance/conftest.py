@@ -70,12 +70,11 @@ def reset_dish_to_standby(
 
     try:
         if dish_manager_proxy.dishMode == DishMode.MAINTENANCE:
-            # Maintenance mode releases DSC authority, so increase client request timeout to 15
-            # seconds so that we don't time out while waiting for the DS horn when taking authority
-            # Since Stow is not submitted as a task on DSManager this command will block the proxy.
-            dish_manager_proxy.set_timeout_millis(15000)
+            # Unstow is a long running command on the DSManager so we don't need to increase our
+            # proxy timeout for the alarm horn. Stow will block the proxy if used.
+            ds_device_proxy.unstow()
+            event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=10)
             dish_manager_proxy.SetStowMode()
-            dish_manager_proxy.set_timeout_millis(5000)
             dish_mode_events.wait_for_value(DishMode.STOW, timeout=10)
 
         spf_device_proxy.ResetToDefault()
