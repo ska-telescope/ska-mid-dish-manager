@@ -51,7 +51,7 @@ def test_last_command_invoked(
     assert mode_invoked_time == recorded_timestamp
 
     # Force a 1s wait so that the next command time is different (Consievably)
-    last_command_invoked_event_store.wait_for_n_events()
+    last_command_invoked_event_store.wait_for_n_events(1)
     # Call SetKValue (non-mode change)
     device_proxy.SetKValue(15)
     kvalue_command_invoked_time, commanded_name = device_proxy.lastCommandInvoked
