@@ -33,15 +33,14 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
     )
 
     expected_progress_updates = [
-        "SetMaintenanceMode called on SPF",
-        "Stow called on DS",
+        "Fanned out commands: SPF.SetMaintenanceMode, DS.Stow",
         "Awaiting dishmode change to MAINTENANCE",
         "SetMaintenanceMode completed",
     ]
 
     events = progress_event_store.wait_for_progress_update(expected_progress_updates[-1])
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store

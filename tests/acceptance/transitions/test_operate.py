@@ -33,8 +33,7 @@ def test_set_operate(
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     expected_progress_updates = [
-        "SetPointMode called on DS",
-        "SetOperateMode called on SPF",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
         "Awaiting dishmode change to OPERATE",
         "SetOperateMode completed",
     ]
@@ -43,7 +42,7 @@ def test_set_operate(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     for message in expected_progress_updates:
         assert message in events_string

@@ -69,8 +69,7 @@ def test_ignoring_spf(
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyFPMode called on DS",
-        "SPF device is disabled. SetOperateMode call ignored",
+        "Fanned out commands: DS.SetStandbyFPMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
@@ -79,7 +78,7 @@ def test_ignoring_spf(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store
@@ -109,8 +108,7 @@ def test_ignoring_spfrx(
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetIndexPosition called on DS",
-        "SPFRX device is disabled. ConfigureBand2 call ignored",
+        "Fanned out commands: DS.SetIndexPosition",
         "Awaiting configuredband change to B2",
         "ConfigureBand2 completed",
     ]
@@ -119,7 +117,7 @@ def test_ignoring_spfrx(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store
@@ -149,9 +147,7 @@ def test_ignoring_all(
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyLPMode called on DS",
-        "SPF device is disabled. SetStandbyLPMode call ignored",
-        "SPFRX device is disabled. SetStandbyMode call ignored",
+        "Fanned out commands: DS.SetStandbyLPMode",
         "Awaiting dishmode change to STANDBY_LP",
         "SetStandbyLPMode completed",
     ]
@@ -160,7 +156,7 @@ def test_ignoring_all(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store

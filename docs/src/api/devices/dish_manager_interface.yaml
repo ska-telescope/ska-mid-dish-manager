@@ -162,6 +162,12 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
+    - name: ResetTrackTable
+      disp_level: OPERATOR
+      doc_in: This command resets the program track table on the controller
+      doc_out: Uninitialised
+      dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ResetWatchdogTimer
       disp_level: OPERATOR
       doc_in: This command resets the watchdog timer. `lastWatchdogReset` attribute
@@ -1580,7 +1586,7 @@
       format: '%s'
       label: longRunningCommandInProgress
       max_alarm: Not specified
-      max_dim_x: 4
+      max_dim_x: 1
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified

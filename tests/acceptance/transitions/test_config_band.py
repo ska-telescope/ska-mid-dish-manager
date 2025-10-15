@@ -38,8 +38,7 @@ def test_configure_band_2(
     assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [
-        "SetIndexPosition called on DS",
-        "ConfigureBand2 called on SPFRX, ID",
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
         "Awaiting configuredband change to B2",
         "ConfigureBand2 completed",
     ]

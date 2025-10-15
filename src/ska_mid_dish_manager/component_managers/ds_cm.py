@@ -2,9 +2,9 @@
 
 import logging
 from threading import Lock
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Tuple
 
-from ska_control_model import HealthState
+from ska_control_model import HealthState, ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -81,6 +81,20 @@ class DSComponentManager(TangoDeviceComponentManager):
                 kwargs[attr] = enum_(kwargs[attr])
 
         super()._update_component_state(**kwargs)
+
+    def _interpret_command_reply(self, command_name: str, reply: Any) -> Tuple[TaskStatus, Any]:
+        """Override default interpretation to handle DS specific reply format."""
+        # on this method evocation the reply from DS is of type DevVarLongStringArray
+        [[result_code], [msg]] = reply
+        if result_code == ResultCode.FAILED:
+            self.logger.error(
+                "[%s] on [%s] failed with message: %s",
+                command_name,
+                self._tango_device_fqdn,
+                msg,
+            )
+            return TaskStatus.FAILED, msg
+        return TaskStatus.IN_PROGRESS, msg
 
     # pylint: disable=missing-function-docstring, invalid-name
     def on(self, task_callback: Callable = None) -> Any:  # type: ignore
