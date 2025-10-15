@@ -33,9 +33,17 @@ def test_slew_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": "Awaiting DS pointingstate change to SLEW"},
         {"progress": "Fanned out commands: DS.Slew"},
-        {"progress": "Awaiting pointingstate change to SLEW"},
+        {
+            "progress": "The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing"
+            " attributes for the completion status of the task.",
+            "status": TaskStatus.COMPLETED,
+            "result": (
+                ResultCode.OK,
+                "The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing"
+                " attributes for the completion status of the task.",
+            ),
+        },
     )
 
     # check that the initial lrc updates come through
@@ -50,22 +58,3 @@ def test_slew_handler(
         pointingstate=PointingState.SLEW
     )
     component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)
-
-    # wait a bit for the lrc updates to come through
-    component_state_cb.get_queue_values(timeout=1)
-    # check that the final lrc updates come through
-    task_cb = callbacks["task_cb"]
-    task_cb.assert_called_with(
-        progress=(
-            "The DS has been commanded to Slew to [20.0, 30.0]. "
-            "Monitor the pointing attributes for the completion status of the task."
-        ),
-        status=TaskStatus.COMPLETED,
-        result=(
-            ResultCode.OK,
-            (
-                "The DS has been commanded to Slew to [20.0, 30.0]. "
-                "Monitor the pointing attributes for the completion status of the task."
-            ),
-        ),
-    )
