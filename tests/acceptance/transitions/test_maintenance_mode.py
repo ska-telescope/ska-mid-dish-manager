@@ -126,6 +126,7 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
     dish_manager_proxy.set_timeout_millis(15000)
     dish_manager_proxy.SetStowMode()
     dsc_event_store.wait_for_value(DSOperatingMode.STOW, timeout=120)
+    dish_manager_proxy.set_timeout_millis(5000)
 
     assert dish_manager_proxy.dishMode == DishMode.STOW
 

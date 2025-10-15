@@ -75,6 +75,7 @@ def reset_dish_to_standby(
             # Since Stow is not submitted as a task on DSManager this command will block the proxy.
             dish_manager_proxy.set_timeout_millis(15000)
             dish_manager_proxy.SetStowMode()
+            dish_manager_proxy.set_timeout_millis(5000)
             dish_mode_events.wait_for_value(DishMode.STOW, timeout=10)
 
         spf_device_proxy.ResetToDefault()

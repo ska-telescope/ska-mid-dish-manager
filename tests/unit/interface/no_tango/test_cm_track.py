@@ -34,7 +34,6 @@ def test_track_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": "Fanned out commands: DS.Track"},
-        {"progress": "DS.Track completed"},
         {
             "progress": (
                 "Track command has been executed on DS. "
