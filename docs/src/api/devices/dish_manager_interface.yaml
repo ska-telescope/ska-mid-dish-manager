@@ -177,6 +177,21 @@
       doc_out: Uninitialised
       dtype_in: DevString
       dtype_out: DevVarLongStringArray
+    - name: SetFrequency
+      disp_level: OPERATOR
+      doc_in: "Set the frequency on the band 5 down converter.\n\n        :param frequency:\
+        \ frequency to set [B5dcFrequency.F_11_1_GHZ(1),\n        B5dcFrequency.F_13_2_GHZ(2)\
+        \ or B5dcFrequency.F_13_86_GHZ(3)]\n        "
+      doc_out: Uninitialised
+      dtype_in: DevLong64
+      dtype_out: DevVarLongStringArray
+    - name: SetHPolAttenuation
+      disp_level: OPERATOR
+      doc_in: "Set the horizontal polarization attenuation on the band 5 down converter.\n\
+        \n        :param attenuation_db: value to set in dB [0-31dB]\n        "
+      doc_out: Uninitialised
+      dtype_in: DevLong64
+      dtype_out: DevVarLongStringArray
     - name: SetKValue
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -212,6 +227,13 @@
       doc_in: Uninitialised
       doc_out: Uninitialised
       dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
+    - name: SetVPolAttenuation
+      disp_level: OPERATOR
+      doc_in: "Set the vertical polarization attenuation on the band 5 down converter.\n\
+        \n        :param attenuation_db: value to set in dB [0-31dB]\n        "
+      doc_out: Uninitialised
+      dtype_in: DevLong64
       dtype_out: DevVarLongStringArray
     - name: Slew
       disp_level: OPERATOR
@@ -642,6 +664,26 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b5dcconnectionState
+      data_format: SCALAR
+      data_type: DevEnum
+      description: Return the status of the connection to the B5dc server endpoint
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - DISABLED
+      - NOT_ESTABLISHED
+      - ESTABLISHED
+      format: '%s'
+      label: b5dcconnectionState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: band0PointingModelParams
       data_format: SPECTRUM
       data_type: DevDouble
@@ -916,6 +958,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: clkPhotodiodeCurrent
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the photodiode current in mA.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: clkPhotodiodeCurrent
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: commandedState
       data_format: SCALAR
       data_type: DevString
@@ -1108,7 +1166,8 @@
     - name: dscCtrlState
       data_format: SCALAR
       data_type: DevEnum
-      description: DSC Control State - an aggregation of DSC Command Authority and DSC State
+      description: DSC Control State - an aggregation of DSC Command Authority and
+        DSC State
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1266,6 +1325,40 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: hPolRfPowerIn
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM RF power input for horizonal polarization in
+        dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: hPolRfPowerIn
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: hPolRfPowerOut
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM RF power output for horizonal polarization in
+        dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: hPolRfPowerOut
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: healthState
       data_format: SCALAR
       data_type: DevEnum
@@ -1290,6 +1383,24 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: ignoreB5dc
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Flag to disable B5DC device communication. When ignored, no commands
+        will be issued to the device, it will be excluded from state aggregation,
+        and no device related attributes will be updated.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: ignoreB5dc
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: ignoreB5dc
     - name: ignoreSpf
       data_format: SCALAR
       data_type: DevBoolean
@@ -1781,6 +1892,107 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: pseudoRandomNoiseDiodePars
+    - name: rfTemperature
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM RF PCB temperature in deg C.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfTemperature
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmFrequency
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Indicates the PLL Output Frequency. The default value is 11.1 GHz
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmFrequency
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmHAttenuation
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM H-polarization attenuation value in dB.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmHAttenuation
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmPllLock
+      data_format: SCALAR
+      data_type: DevEnum
+      description: Status flags for RFCM PLL lock and lock loss detection.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - LOCKED
+      - LOCKED_WITH_LOSS_DETECTED
+      - NOT_LOCKED
+      - NOT_LOCKED_WITH_LOSS_DETECTED
+      format: '%s'
+      label: rfcmPllLock
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmPsuPcbTemperature
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects RFCM PSU PCB temperature in deg C.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmPsuPcbTemperature
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmVAttenuation
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM V-polarization attenuation value in dB.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmVAttenuation
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: scanID
       data_format: SCALAR
       data_type: DevString
@@ -1980,6 +2192,39 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: trackTableLoadMode
+    - name: vPolRfPowerIn
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM RF power input for vertical polarization in dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: vPolRfPowerIn
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: vPolRfPowerOut
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM RF power output for vertical polarization in
+        dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: vPolRfPowerOut
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: versionId
       data_format: SCALAR
       data_type: DevString
@@ -2055,6 +2300,7 @@
       writable: READ
       writable_attr_name: None
     properties:
+    - name: B5DCDeviceFqdn
     - name: DSDeviceFqdn
     - name: DefaultWatchdogTimeout
     - name: DishId
@@ -2069,5 +2315,5 @@
     - name: SkaLevel
     - name: WMSDeviceNames
     - name: WindGustThreshold
+    - name: __SubDevices
     - name: polled_cmd
-
