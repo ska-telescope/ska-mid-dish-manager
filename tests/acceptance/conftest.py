@@ -70,6 +70,9 @@ def reset_dish_to_standby(
 
     try:
         if dish_manager_proxy.dishMode == DishMode.MAINTENANCE:
+            # Maintenance mode releases authority, so increase client request timeout to 15 seconds
+            # so that we don't time out while waiting for the DS horn when taking authority back
+            dish_manager_proxy.set_timeout_millis(15000)
             dish_manager_proxy.SetStowMode()
             dish_mode_events.wait_for_value(DishMode.STOW, timeout=10)
 

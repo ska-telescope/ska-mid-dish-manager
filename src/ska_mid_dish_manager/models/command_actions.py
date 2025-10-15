@@ -572,7 +572,6 @@ class TrackAction(Action):
             device="DS",
             command_name="Track",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            timeout_s=10,  # TODO: Confirm timeout values
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
