@@ -285,7 +285,10 @@ def test_maximum_capacity(
         "trackTableEndIndex": end_index_event_store,
         "longRunningCommandResult": result_event_store,
     }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    # Don't reset the queues, if the table indexes are already at 1 and 50 then the NEW load below
+    # will not trigger a CHANGE_EVENT and current_index_event_store.wait_for_value(1) will time
+    # out. By not resetting the queues we ensure that these initial values are there for the waits.
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping, reset_queue=False)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 

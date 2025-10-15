@@ -798,9 +798,7 @@ class SlewAction(Action):
             device="DS",
             command_name="Slew",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            timeout_s=10,  # TODO: Confirm timeout values
             command_argument=target,
-            awaited_component_state={"pointingstate": PointingState.SLEW},
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
