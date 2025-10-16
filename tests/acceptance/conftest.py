@@ -1,15 +1,21 @@
 """Fixtures for running ska-mid-dish-manager acceptance tests."""
 
+import logging
+
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
+    DscCmdAuthType,
     DSOperatingMode,
     DSPowerState,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
 from tests.utils import remove_subscriptions, setup_subscriptions
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -96,7 +102,7 @@ def reset_dish_to_standby(
         dish_mode_events.wait_for_value(DishMode.STANDBY_LP, timeout=10)
     except (RuntimeError, AssertionError):
         # check dish manager before giving up
-        pass
+        logger.exception("Failed to reset subdevices to known states.")
 
     try:
         [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
