@@ -64,6 +64,7 @@ def reset_dish_to_standby(
             {
                 "dishMode": dish_mode_events,
                 "longRunningCommandResult": result_events,
+                "dscCmdAuth": event_store,
             },
         )
     )
@@ -73,7 +74,9 @@ def reset_dish_to_standby(
             # Unstow is a long running command on the DSManager so we don't need to increase our
             # proxy timeout for the alarm horn. Stow will block the proxy if used.
             ds_device_proxy.unstow()
-            event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=10)
+            event_store.wait_for_value(DscCmdAuthType.LMC, timeout=20)
+            event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=20)
+            dish_mode_events.clear_queue()
             dish_manager_proxy.SetStowMode()
             dish_mode_events.wait_for_value(DishMode.STOW, timeout=10)
 
