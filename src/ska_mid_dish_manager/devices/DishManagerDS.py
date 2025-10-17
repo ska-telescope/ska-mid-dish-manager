@@ -2138,13 +2138,14 @@ class DishManager(SKAController):
         B5dcFrequency.F_13_2_GHZ(2) or B5dcFrequency.F_13_86_GHZ(3)]
         """,
     )
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetFrequency(self, value) -> DevVarLongStringArrayType:
         """Set the frequency on the band 5 down converter."""
         handler = self.get_command_object("SetFrequency")
         return_code, message = handler(value)
         return ([return_code], [message])
 
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",
@@ -2154,13 +2155,14 @@ class DishManager(SKAController):
         :param attenuation_db: value to set in dB [0-31dB]
         """,
     )
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetVPolAttenuation(self, value) -> DevVarLongStringArrayType:
         """Set the vertical polarization attenuation on the band 5 down converter."""
         handler = self.get_command_object("SetVPolAttenuation")
         return_code, message = handler(value)
         return ([return_code], [message])
 
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",
@@ -2170,7 +2172,6 @@ class DishManager(SKAController):
         :param attenuation_db: value to set in dB [0-31dB]
         """,
     )
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     def SetHPolAttenuation(self, value) -> DevVarLongStringArrayType:
         """Set the horizontal polarization attenuation on the band 5 down converter."""
         handler = self.get_command_object("SetHPolAttenuation")
