@@ -26,7 +26,10 @@ from ska_mid_dish_manager.models.command_class import (
     AbortCommandsDeprecatedCommand,
     ApplyPointingModelCommand,
     ResetTrackTableCommand,
+    SetFrequencyCommand,
+    SetHPolAttenuationCommand,
     SetKValueCommand,
+    SetVPolAttenuationCommand,
     StowCommand,
 )
 from ska_mid_dish_manager.models.constants import (
@@ -147,9 +150,6 @@ class DishManager(SKAController):
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
             ("EndScan", "end_scan"),
-            ("SetHPolAttenuation", "set_h_attenuation"),
-            ("SetVPolAttenuation", "set_v_attenuation"),
-            ("SetFrequency", "set_frequency"),
         ]:
             self.register_command_object(
                 command_name,
@@ -203,15 +203,25 @@ class DishManager(SKAController):
             "SetKValue",
             SetKValueCommand(self.component_manager, self.logger),
         )
-
         self.register_command_object(
             "ApplyPointingModel",
             ApplyPointingModelCommand(self.component_manager, self.logger),
         )
-
         self.register_command_object(
             "ResetTrackTable",
             ResetTrackTableCommand(self.component_manager, self.logger),
+        )
+        self.register_command_object(
+            "SetFrequency",
+            SetFrequencyCommand(self.component_manager, self.logger),
+        )
+        self.register_command_object(
+            "SetHPolAttenuation",
+            SetHPolAttenuationCommand(self.component_manager, self.logger),
+        )
+        self.register_command_object(
+            "SetVPolAttenuation",
+            SetVPolAttenuationCommand(self.component_manager, self.logger),
         )
 
     # ---------
@@ -2090,6 +2100,55 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     @command(
+        dtype_in=int,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="""Set the frequency on the band 5 down converter.
+
+        :param frequency: frequency to set [B5dcFrequency.F_11_1_GHZ(1),
+        B5dcFrequency.F_13_2_GHZ(2) or B5dcFrequency.F_13_86_GHZ(3)]
+        """,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def SetFrequency(self, value) -> DevVarLongStringArrayType:
+        """Set the frequency on the band 5 down converter."""
+        handler = self.get_command_object("SetFrequency")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
+    @command(
+        dtype_in=int,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="""Set the vertical polarization attenuation on the band 5 down converter.
+
+        :param attenuation_db: value to set in dB [0-31dB]
+        """,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def SetVPolAttenuation(self, value) -> DevVarLongStringArrayType:
+        """Set the vertical polarization attenuation on the band 5 down converter."""
+        handler = self.get_command_object("SetVPolAttenuation")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
+    @command(
+        dtype_in=int,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="""Set the horizontal polarization attenuation on the band 5 down converter.
+
+        :param attenuation_db: value to set in dB [0-31dB]
+        """,
+    )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    def SetHPolAttenuation(self, value) -> DevVarLongStringArrayType:
+        """Set the horizontal polarization attenuation on the band 5 down converter."""
+        handler = self.get_command_object("SetHPolAttenuation")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
+    @command(
         dtype_in="DevString",
         doc_in="""The command accepts a JSON input (value) containing data to update a particular
         band's (b1-b5b). The following 18 coefficients need to be within the JSON object:
@@ -2247,52 +2306,6 @@ class DishManager(SKAController):
         self.push_change_event("programTrackTable", message)
         self.push_archive_event("programTrackTable", message)
         return ([result_code], ["programTrackTable successfully reset"])
-
-    @command(
-        dtype_in=int,
-        dtype_out="DevVarLongStringArray",
-        doc_in="""Set the horizontal polarization attenuation on the band 5 down converter.
-
-        :param attenuation_db: value to set in dB [0-31dB]
-        """,
-    )
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    def SetHPolAttenuation(self, value) -> DevVarLongStringArrayType:
-        """Set the horizontal polarization attenuation on the band 5 down converter."""
-        handler = self.get_command_object("SetHPolAttenuation")
-        return_code, message = handler(value)
-        return ([return_code], [message])
-
-    @command(
-        dtype_in=int,
-        dtype_out="DevVarLongStringArray",
-        doc_in="""Set the vertical polarization attenuation on the band 5 down converter.
-
-        :param attenuation_db: value to set in dB [0-31dB]
-        """,
-    )
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    def SetVPolAttenuation(self, value) -> DevVarLongStringArrayType:
-        """Set the vertical polarization attenuation on the band 5 down converter."""
-        handler = self.get_command_object("SetVPolAttenuation")
-        result_code, unique_id = handler(value)
-        return [result_code], [unique_id]
-
-    @command(
-        dtype_in=int,
-        dtype_out="DevVarLongStringArray",
-        doc_in="""Set the frequency on the band 5 down converter.
-
-        :param frequency: frequency to set [B5dcFrequency.F_11_1_GHZ(1),
-        B5dcFrequency.F_13_2_GHZ(2) or B5dcFrequency.F_13_86_GHZ(3)]
-        """,
-    )
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    def SetFrequency(self, frequency) -> DevVarLongStringArrayType:
-        """Set the frequency on the band 5 down converter."""
-        handler = self.get_command_object("SetFrequency")
-        result_code, unique_id = handler(frequency)
-        return [result_code], [unique_id]
 
     @command(dtype_out="DevVarLongStringArray")
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)

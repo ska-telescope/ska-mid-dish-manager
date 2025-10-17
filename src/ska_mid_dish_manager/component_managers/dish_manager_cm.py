@@ -1661,7 +1661,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return ResultCode.FAILED, msg
         return ResultCode.OK, reset_point
 
-    def set_h_attenuation(
+    def set_h_pol_attenuation(
         self, value: int, task_callback: Optional[Callable] = None
     ) -> Tuple[ResultCode, str]:
         b5dc_cm = self.sub_component_managers["B5DC"]
@@ -1679,7 +1679,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
         return (ResultCode.OK, "Successfully updated HPolAttenuation on the B5DC proxy.")
 
-    def set_v_attenuation(
+    def set_v_pol_attenuation(
         self, value: int, task_callback: Optional[Callable] = None
     ) -> Tuple[ResultCode, str]:
         b5dc_cm = self.sub_component_managers["B5DC"]
