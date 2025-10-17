@@ -430,7 +430,6 @@ def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx, ignore_b5dc):
             spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
         device_proxy.unsubscribe_event(spfrx_sub_id)
 
-    # Currently B5DC is not implemented so ignore this for now
     if device_proxy.ignoreB5dc != ignore_b5dc:
         b5dc_connection_event_store = EventStore()
 

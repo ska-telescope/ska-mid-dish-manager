@@ -11,8 +11,7 @@ from functools import reduce
 from typing import List, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
-from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (  # noqa: F401
-    B5dcFrequency,
+from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
 from ska_tango_base import SKAController
@@ -546,7 +545,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="Return the status of the connection to the B5dc server endpoint",
     )
-    def b5dcconnectionState(self) -> CommunicationStatus:
+    def b5dcConnectionState(self) -> CommunicationStatus:
         """Return the status of the connection to the B5dc server endpoint."""
         return self.component_manager.component_state.get(
             "b5dcconnectionstate", CommunicationStatus.NOT_ESTABLISHED

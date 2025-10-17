@@ -71,8 +71,15 @@ def test_b5dc_emits_change_and_archive_events(dish_manager_proxy, attr_name, eve
     archive_store = event_store_class()
 
     # Subscribe to CHANGE and ARCHIVE events
-    dish_manager_proxy.subscribe_event(attr_name, tango.EventType.CHANGE_EVENT, change_store)
-    dish_manager_proxy.subscribe_event(attr_name, tango.EventType.ARCHIVE_EVENT, archive_store)
+    sub_id_arch = dish_manager_proxy.subscribe_event(
+        attr_name, tango.EventType.CHANGE_EVENT, change_store
+    )
+    sub_id_event = dish_manager_proxy.subscribe_event(
+        attr_name, tango.EventType.ARCHIVE_EVENT, archive_store
+    )
 
     assert change_store.get_queue_events()
     assert archive_store.get_queue_events()
+
+    dish_manager_proxy.unsubscribe_event(sub_id_arch)
+    dish_manager_proxy.unsubscribe_event(sub_id_event)

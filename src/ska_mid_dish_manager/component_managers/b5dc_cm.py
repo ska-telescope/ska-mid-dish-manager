@@ -4,8 +4,7 @@ import logging
 from threading import Lock
 from typing import Any, Callable, Optional
 
-from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (  # noqa: F401
-    B5dcFrequency,
+from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
 
@@ -57,19 +56,3 @@ class B5DCComponentManager(TangoDeviceComponentManager):
             if attr in kwargs:
                 kwargs[attr] = enum_(kwargs[attr])
         super()._update_component_state(**kwargs)
-
-    # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError

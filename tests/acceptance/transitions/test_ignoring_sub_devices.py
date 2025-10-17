@@ -31,7 +31,7 @@ def toggle_ignore_spf(dish_manager_proxy):
 
 
 @pytest.fixture
-def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
+def toggle_ignore_spf_and_spfrx_b5dc(dish_manager_proxy):
     """Ignore SPF, SPFRx and B5DC."""
     set_ignored_devices(
         device_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=True, ignore_b5dc=True
