@@ -6,7 +6,6 @@ import pytest
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
-    DscCmdAuthType,
     DSOperatingMode,
     DSPowerState,
     SPFOperatingMode,
