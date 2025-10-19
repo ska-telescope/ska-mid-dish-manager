@@ -196,8 +196,8 @@ class StowCommand(SubmittedSlowCommand):
             return ResultCode.STARTED, "Stow called on Dish Structure, monitor dishmode for STOW"
         elif status == TaskStatus.IN_PROGRESS:
             return (
-                ResultCode.STARTED, "Stow will be called on Dish Structure, monitor dishmode"
-                " for STOW"
+                ResultCode.STARTED,
+                "Stow will be called on Dish Structure, monitor dishmode for STOW",
             )
         return (
             ResultCode.FAILED,
