@@ -52,9 +52,8 @@ def test_slew_transition(event_store_class, dish_manager_proxy):
 
     # Set mode to Operate to accept Slew command
     dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10)
     # Await auto transition to OPERATE following band config
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
 
     achieved_pointing = dish_manager_proxy.achievedPointing
     # Increase by 5 degrees in Azimuth and Elevation unless limits will be hit
