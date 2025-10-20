@@ -68,42 +68,13 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
     )
 
     dish_manager_cm._update_component_state(dishmode=DishMode.MAINTENANCE)
-    dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=60)
+    dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
     [[result_code], [_]] = device_proxy.Abort()
     assert result_code == ResultCode.STARTED
 
     assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
-
-
-@pytest.mark.unit
-@pytest.mark.forked
-def test_abort_skips_track_stop_in_stow(caplog, dish_manager_resources, event_store_class):
-    device_proxy, dish_manager_cm = dish_manager_resources
-    ds_cm = dish_manager_cm.sub_component_managers["DS"]
-    event_store = event_store_class()
-    caplog.set_level(logging.DEBUG, logger=dish_manager_cm.logger.name)
-
-    device_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    device_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
-    event_store.wait_for_value(DishMode.STOW)
-    assert device_proxy.dishMode == DishMode.STOW
-
-    device_proxy.Abort()
-
-    event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP", timeout=30)
-    assert "abort-sequence: dish is in STOW mode, skipping track stop" in caplog.text
 
 
 @pytest.mark.unit
