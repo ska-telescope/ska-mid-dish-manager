@@ -670,7 +670,7 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
-    - name: b5dcconnectionState
+    - name: b5dcConnectionState
       data_format: SCALAR
       data_type: DevEnum
       description: Return the status of the connection to the B5dc server endpoint
@@ -681,7 +681,7 @@
       - NOT_ESTABLISHED
       - ESTABLISHED
       format: '%s'
-      label: b5dcconnectionState
+      label: b5dcConnectionState
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
@@ -2338,5 +2338,5 @@
     - name: SkaLevel
     - name: WMSDeviceNames
     - name: WindGustThreshold
-    - name: __SubDevices
     - name: polled_cmd
+ 
