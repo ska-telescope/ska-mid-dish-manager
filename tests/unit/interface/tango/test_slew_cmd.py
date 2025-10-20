@@ -1,4 +1,4 @@
-"""Unit tests for the Track command."""
+"""Unit tests for the Slew command."""
 
 import pytest
 import tango
@@ -6,36 +6,11 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     PointingState,
     SPFOperatingMode,
     SPFRxOperatingMode,
-    TrackInterpolationMode,
 )
-
-
-@pytest.mark.unit
-@pytest.mark.forked
-def test_track_interpolation_mode_updates(dish_manager_resources, event_store_class):
-    """Test the trackInterpolationMode attribute updates on change."""
-    device_proxy, dish_manager_cm = dish_manager_resources
-    ds_cm = dish_manager_cm.sub_component_managers["DS"]
-
-    event_store = event_store_class()
-    device_proxy.subscribe_event(
-        "trackInterpolationMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    test_mode = TrackInterpolationMode.NEWTON
-
-    # Check that the default is spline
-    assert device_proxy.trackInterpolationMode == TrackInterpolationMode.SPLINE
-
-    # Check that the value updates correctly
-    ds_cm._update_component_state(trackinterpolationmode=test_mode)
-
-    event_store.wait_for_value(test_mode)
-    assert device_proxy.trackInterpolationMode == test_mode
 
 
 @pytest.mark.unit
@@ -44,7 +19,6 @@ def test_track_interpolation_mode_updates(dish_manager_resources, event_store_cl
     "current_dish_mode",
     [
         DishMode.STANDBY_LP,
-        DishMode.STANDBY_FP,
         DishMode.STARTUP,
         DishMode.SHUTDOWN,
         DishMode.MAINTENANCE,
@@ -52,7 +26,7 @@ def test_track_interpolation_mode_updates(dish_manager_resources, event_store_cl
         DishMode.CONFIG,
     ],
 )
-def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
+def test_set_slew_cmd_fails_when_dish_mode_is_not_operate_or_fp(
     dish_manager_resources,
     event_store_class,
     current_dish_mode,
@@ -61,6 +35,7 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
     lrc_status_event_store = event_store_class()
+    lrc_progress_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -79,16 +54,26 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
         tango.EventType.CHANGE_EVENT,
         lrc_status_event_store,
     )
+    device_proxy.subscribe_event(
+        "longRunningCommandProgress",
+        tango.EventType.CHANGE_EVENT,
+        lrc_progress_event_store,
+    )
 
-    # Ensure that the pointingState precondition is met before testing Track() against dishMode
     dish_manager_cm._update_component_state(pointingstate=PointingState.READY)
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=5)
 
     dish_manager_cm._update_component_state(dishmode=current_dish_mode)
     dish_mode_event_store.wait_for_value(current_dish_mode, timeout=5)
 
-    [[_], [unique_id]] = device_proxy.Track()
+    [[_], [unique_id]] = device_proxy.Slew([0.0, 50.0])
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
+
+    expected_progress_updates = (
+        "Slew command rejected for current dishMode. "
+        "Slew command is allowed for dishMode STANDBY-FP, OPERATE"
+    )
+    lrc_progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
 
 
 @pytest.mark.unit
@@ -102,16 +87,16 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
         PointingState.UNKNOWN,
     ],
 )
-def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
+def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
     dish_manager_resources,
     event_store_class,
     current_pointing_state,
 ):
-    """Test to verify that call to Track cmd is rejected if pointingState is not READY."""
     device_proxy, dish_manager_cm = dish_manager_resources
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
     lrc_status_event_store = event_store_class()
+    lrc_progress_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -131,20 +116,37 @@ def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
         lrc_status_event_store,
     )
 
-    # Ensure that the dishMode precondition is met before testing Track() against pointingState
+    device_proxy.subscribe_event(
+        "longRunningCommandProgress",
+        tango.EventType.CHANGE_EVENT,
+        lrc_progress_event_store,
+    )
+
     dish_manager_cm._update_component_state(dishmode=DishMode.OPERATE)
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
 
     dish_manager_cm._update_component_state(pointingstate=current_pointing_state)
     pointing_state_event_store.wait_for_value(current_pointing_state, timeout=5)
 
-    [[_], [unique_id]] = device_proxy.Track()
+    [[_], [unique_id]] = device_proxy.Slew([0.0, 50.0])
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
+
+    expected_progress_updates = (
+        "Slew command rejected for current pointingState. "
+        "Slew command is allowed for pointingState READY"
+    )
+    lrc_progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
 
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
+@pytest.mark.parametrize(
+    ("dish_mode, operating_mode"),
+    [(DishMode.OPERATE, DSOperatingMode.POINT), (DishMode.STANDBY_FP, DSOperatingMode.STANDBY)],
+)
+def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
+    dish_mode,
+    operating_mode,
     dish_manager_resources,
     event_store_class,
 ):
@@ -173,33 +175,32 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
         progress_event_store,
     )
 
-    # Force dishManager dishMode to go to OPERATE
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+    ds_cm._update_component_state(
+        operatingmode=operating_mode,
+        powerstate=DSPowerState.FULL_POWER,
+    )
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
-    main_event_store.wait_for_value(DishMode.OPERATE)
+    main_event_store.wait_for_value(dish_mode)
     ds_cm._update_component_state(pointingstate=PointingState.READY)
     main_event_store.wait_for_value(PointingState.READY)
 
     # Clear out the queue to make sure we don't catch old events
     main_event_store.clear_queue()
 
-    # Request Track on Dish
-    device_proxy.Track()
+    # Request Slew on Dish
+    device_proxy.Slew([0.0, 50.0])
     # wait a bit before forcing the updates on the subcomponents
     main_event_store.get_queue_values()
 
-    # Transition DS pointingState to TRACK
+    # Transition DS pointingState to Slew
     ds_cm._update_component_state(pointingstate=PointingState.SLEW)
     main_event_store.wait_for_value(PointingState.SLEW)
 
-    ds_cm._update_component_state(pointingstate=PointingState.TRACK)
-    main_event_store.wait_for_value(PointingState.TRACK)
-
     expected_progress_updates = [
-        "Fanned out commands: DS.Track",
-        "Track command has been executed on DS. "
-        "Monitor the achievedTargetLock attribute to determine when the dish is on source.",
+        "Fanned out commands: DS.Slew",
+        "The DS has been commanded to Slew to [ 0. 50.]. "
+        "Monitor the pointing attributes for the completion status of the task.",
     ]
 
     events = progress_event_store.wait_for_progress_update(
@@ -209,6 +210,5 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
-    # in the event store
     for message in expected_progress_updates:
         assert message in events_string

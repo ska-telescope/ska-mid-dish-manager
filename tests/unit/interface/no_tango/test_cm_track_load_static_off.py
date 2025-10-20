@@ -1,7 +1,5 @@
 """Tests dish manager component manager trackloadstaticoff command handler."""
 
-from unittest.mock import Mock, patch
-
 import pytest
 from ska_control_model import ResultCode, TaskStatus
 
@@ -9,16 +7,13 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
 
 
 @pytest.mark.unit
-@patch("json.dumps", Mock(return_value="mocked sub-device-command-ids"))
 def test_track_load_static_off_handler(
     component_manager: DishManagerComponentManager,
-    mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
     """Verify behaviour of TrackLoadStaticOff command handler.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -37,12 +32,11 @@ def test_track_load_static_off_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": f"TrackLoadStaticOff called on DS, ID {mock_command_tracker.new_command()}"},
         {
             "progress": "Awaiting DS actstaticoffsetvaluexel, actstaticoffsetvalueel change to "
             "1.0, 2.0"
         },
-        {"progress": "Commands: mocked sub-device-command-ids"},
+        {"progress": "Fanned out commands: DS.TrackLoadStaticOff"},
         {
             "progress": "Awaiting actstaticoffsetvaluexel, actstaticoffsetvalueel change to "
             "1.0, 2.0"

@@ -117,7 +117,7 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
     main_event_store.wait_for_value(PointingState.READY)
 
     expected_progress_updates = [
-        "TrackStop called on DS, ID",
+        "Fanned out commands: DS.TrackStop",
         "Awaiting DS pointingstate change to READY",
         "TrackStop completed",
     ]
@@ -126,9 +126,6 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
-
-    # Check that all the expected progress messages appeared
-    # in the event store
+    events_string = "".join([str(event.attr_value.value) for event in events])
     for message in expected_progress_updates:
         assert message in events_string

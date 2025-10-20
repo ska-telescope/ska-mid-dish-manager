@@ -9,6 +9,58 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - Implemented SetMaintenanceMode command to align with states and modes ICD version 5C
 
+Version 8.4.5
+*************
+- Changed order of commands to dish structure manager on calling of Abort()
+- Upgraded ska-mid-dish-simulators chart to v5.4.0
+- Upgraded the ska-mid-dish-ds-manager chart to v6.4.1
+  - Dropped the archive rate for achievedPointing and currentPointing attributes
+  - Trimmed the logs
+  - Updated lastcommandupdate attribute format
+
+Version 8.4.4
+*************
+- Updated abort logic to not call TrackStop when in Stow.
+
+Version 8.4.3
+*************
+
+Version 8.4.5
+*************
+- Changed order of commands to dish structure manager on calling of Abort()
+- Upgraded ska-mid-dish-simulators chart to v5.4.0
+- Upgraded the ska-mid-dish-ds-manager chart to v6.4.1
+  - Dropped the archive rate for achievedPointing and currentPointing attributes
+  - Trimmed the logs
+  - Updated lastcommandupdate attribute format
+
+Version 8.4.4
+*************
+- Updated abort logic to not call TrackStop when in Stow.
+
+Version 8.4.3
+*************
+- Added ResetTrackTable command to clear entries in the controller track table buffer.
+- Added in attribute `lastCommandInvoked` to report the last command invoked on the dish manager.
+- Upgraded ska-mid-dish-simulators chart to v5.4.0.
+
+Version 8.4.2
+*************
+- Upgraded ska-mid-wms chart to v1.0.1
+- Upgraded ska-mid-dish-simulators chart to v5.0.1
+- Upgraded ska-mid-dish-ds-manger chart to v6.4.0
+- Added in a new attribute, dscCtrlState (DSC Control State), propagated from DSManager.
+
+Version 8.4.1
+*************
+- Upgraded ska-mid-dish-ds-manager chart to v6.3.1
+
+  - Fixed ska-mid-dish-ds-manager memory leak with an upgrade of PyTango to v10.0.3
+
+Version 8.4.0
+*************
+- Upgraded ska-mid-dish-ds-manager chart to v6.3.0
+
 Version 8.3.0
 *************
 - Added `dishmanager.wms.station_id` helm value to build up `wmsDeviceNames` property for WMS component manager.

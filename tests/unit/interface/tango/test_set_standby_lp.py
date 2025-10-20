@@ -111,9 +111,7 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     assert device_proxy.powerState == PowerState.LOW
 
     expected_progress_updates = [
-        "SetStandbyMode called on DS",
-        "SetStandbyLPMode called on SPF",
-        "SetStandbyMode called on SPFRX",
+        "Fanned out commands: SPF.SetStandbyLPMode, SPFRX.SetStandbyMode, DS.SetStandbyMode",
         "Awaiting dishmode change to STANDBY_LP",
         "SetStandbyLPMode completed",
     ]

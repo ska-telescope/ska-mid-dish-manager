@@ -59,7 +59,7 @@ def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
     assert device_proxy.powerState == PowerState.FULL
 
     expected_progress_updates = [
-        "SetStandbyMode called on DS",
+        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]

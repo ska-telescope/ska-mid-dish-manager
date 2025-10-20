@@ -15,6 +15,7 @@ def test_attribute_change_events(dish_manager_proxy):
 
     all_attr_ch_events_configured = True
     err_msg = ""
+    subscriptions = {}
 
     try:
         subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -37,6 +38,7 @@ def test_attribute_archive_events(dish_manager_proxy):
 
     all_attr_arch_events_configured = True
     err_msg = ""
+    subscriptions = {}
 
     try:
         subscriptions = setup_subscriptions(

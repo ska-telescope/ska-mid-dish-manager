@@ -30,3 +30,17 @@ def convert_enums_to_names(values) -> list[str]:
         else:
             enum_labels.append(val)
     return enum_labels
+
+
+def report_awaited_attributes(task_callback, awaited_attributes, awaited_values, device=None):
+    """Report the awaited attributes and their expected values."""
+    if awaited_values:
+        awaited_attributes = ", ".join(awaited_attributes)
+        awaited_values = convert_enums_to_names(awaited_values)
+        awaited_values = ", ".join(map(str, awaited_values))
+        if device:
+            msg = f"Awaiting {device} {awaited_attributes} change to {awaited_values}"
+        else:
+            msg = f"Awaiting {awaited_attributes} change to {awaited_values}"
+
+        update_task_status(task_callback, progress=msg)

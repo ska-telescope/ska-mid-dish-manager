@@ -7,6 +7,8 @@ from typing import Any, Callable, Dict
 
 import tango
 
+from ska_mid_dish_manager.models.constants import DEVICE_PROXY_TIMEOUT_MS
+
 
 def retry_connection(func: Callable) -> Any:
     """Return a function that retries connection to a tango device if it is not available.
@@ -105,7 +107,6 @@ class DeviceProxyManager:
                 device_proxy = self._create_tango_device_proxy(trl)
             except (tango.DevFailed, RuntimeError):
                 self.logger.warning("Failed creating DeviceProxy to device at %s", trl)
-                self._device_proxies[trl] = device_proxy
                 return device_proxy
             self._device_proxies[trl] = device_proxy
 
@@ -115,6 +116,7 @@ class DeviceProxyManager:
             except (tango.DevFailed, RuntimeError):
                 self.logger.warning("Device at %s is unresponsive.", trl)
 
+        device_proxy.set_timeout_millis(DEVICE_PROXY_TIMEOUT_MS)
         return device_proxy
 
     def _is_tango_device_running(self, tango_device_proxy: tango.DeviceProxy) -> bool:

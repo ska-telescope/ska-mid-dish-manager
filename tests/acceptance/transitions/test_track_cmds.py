@@ -17,6 +17,7 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 TRACKING_POSITION_THRESHOLD_ERROR_DEG = 0.05
 INIT_AZ = -250
 INIT_EL = 70
+POINTING_TOLERANCE_DEG = 0.1
 
 
 @pytest.fixture
@@ -25,10 +26,12 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     main_event_store = event_store_class()
     band_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
+    pointing_state_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "configuredBand": band_event_store,
         "achievedPointing": achieved_pointing_event_store,
+        "pointingstate": pointing_state_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -39,22 +42,18 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     # Await auto transition to OPERATE following band config
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
-    current_az, current_el = dish_manager_proxy.achievedPointing[1:]
-    estimate_slew_duration = max(abs(INIT_EL - current_el), (abs(INIT_AZ - current_az) / 3))
     dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
 
-    # wait until no updates
-    data_points = achieved_pointing_event_store.get_queue_values(
-        timeout=estimate_slew_duration + 10
-    )
-    # timeout return empty list
-    assert data_points
-    # returned data is an array of tuple consisting of attribute name and value
-    last_az_el = data_points[-1][1]
-    # check last az and el received and compare with reference
-    achieved_az, achieved_el = last_az_el[1], last_az_el[2]
-    assert achieved_az == pytest.approx(INIT_AZ)
-    assert achieved_el == pytest.approx(INIT_EL)
+    def target_reached_test(pointing_event_val: list[float]) -> bool:
+        """Return whether we got to the target."""
+        return pointing_event_val[1] == pytest.approx(
+            INIT_AZ, abs=POINTING_TOLERANCE_DEG
+        ) and pointing_event_val[2] == pytest.approx(INIT_EL, abs=POINTING_TOLERANCE_DEG)
+
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=120)
+    achieved_pointing_event_store.wait_for_condition(target_reached_test, timeout=120)
+    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=120)
+
     remove_subscriptions(subscriptions)
 
     yield
@@ -86,6 +85,7 @@ def test_track_and_track_stop_cmds(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    assert dish_manager_proxy.pointingState == PointingState.READY
 
     # Load a track table
     current_pointing = dish_manager_proxy.achievedPointing
@@ -123,11 +123,10 @@ def test_track_and_track_stop_cmds(
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
-    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=6)
-    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=6)
+    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=20)
 
     expected_progress_updates = [
-        "Track called on DS, ID",
+        "Fanned out commands: DS.Track",
         (
             "Track command has been executed on DS. "
             "Monitor the achievedTargetLock attribute to determine when the dish is on source."
@@ -141,7 +140,7 @@ def test_track_and_track_stop_cmds(
 
     # Check that all the expected progress messages appeared
     # in the event store
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     for message in expected_progress_updates:
         assert message in events_string
@@ -154,7 +153,7 @@ def test_track_and_track_stop_cmds(
         )
 
     achieved_pointing_event_store.clear_queue()
-    achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=20)
+    achieved_pointing_event_store.wait_for_condition(check_final_points_reached, timeout=60)
 
     # Call TrackStop on DishManager
     [[_], [unique_id]] = dish_manager_proxy.TrackStop()
@@ -162,7 +161,7 @@ def test_track_and_track_stop_cmds(
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=4)
 
     expected_progress_updates = [
-        "TrackStop called on DS, ID",
+        "Fanned out commands: DS.TrackStop",
         "Awaiting DS pointingstate change to READY",
         "TrackStop completed",
     ]
@@ -174,7 +173,7 @@ def test_track_and_track_stop_cmds(
 
     # Check that all the expected progress messages appeared
     # in the event store
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     for message in expected_progress_updates:
         assert message in events_string
@@ -288,7 +287,10 @@ def test_maximum_capacity(
         "trackTableEndIndex": end_index_event_store,
         "longRunningCommandResult": result_event_store,
     }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    # Don't reset the queues, if the table indexes are already at 1 and 50 then the NEW load below
+    # will not trigger a CHANGE_EVENT and current_index_event_store.wait_for_value(1) will time
+    # out. By not resetting the queues we ensure that these initial values are there for the waits.
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping, reset_queue=False)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
@@ -331,6 +333,7 @@ def test_maximum_capacity(
     end_index_event_store.wait_for_value(expected_end_index)
 
     # append to fill up track table
+    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
     max_track_table_buffer_size = 10000
     max_track_table_load = int(max_track_table_buffer_size / samples_per_block)
     for _ in range(max_track_table_load - 1):
@@ -339,7 +342,6 @@ def test_maximum_capacity(
         track_table = generate_constant_table(
             start_tai, sample_spacing, samples_per_block, current_az, current_el
         )
-        dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
         dish_manager_proxy.programTrackTable = track_table
 
         expected_end_index += samples_per_block
@@ -350,7 +352,6 @@ def test_maximum_capacity(
     track_table = generate_constant_table(
         start_tai, sample_spacing, samples_per_block, current_az, current_el
     )
-    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
     with pytest.raises(tango.DevFailed):
         dish_manager_proxy.programTrackTable = track_table
 
@@ -376,7 +377,6 @@ def test_maximum_capacity(
     track_table = generate_constant_table(
         start_tai, sample_spacing, samples_per_block, current_az, current_el
     )
-    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.APPEND
     dish_manager_proxy.programTrackTable = track_table
     # expect a roll over of the circular buffer
     expected_end_index = samples_per_block

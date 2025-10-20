@@ -9,7 +9,6 @@ DishManager Models
    Command Actions<command_actions>
    Command Class<command_class>
    Command Handlers<command_handlers>
-   Command Checks<is_allowed_rules>
    Constants<constants>
    Data Classes<data_classes>
    DishMode Model<dish_mode_model>

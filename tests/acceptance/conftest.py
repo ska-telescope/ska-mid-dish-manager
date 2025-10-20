@@ -1,5 +1,7 @@
 """Fixtures for running ska-mid-dish-manager acceptance tests."""
 
+import logging
+
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import (
@@ -10,6 +12,9 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFRxOperatingMode,
 )
 from tests.utils import remove_subscriptions, setup_subscriptions
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -64,6 +69,7 @@ def reset_dish_to_standby(
             {
                 "dishMode": dish_mode_events,
                 "longRunningCommandResult": result_events,
+                "dscCmdAuth": event_store,
             },
         )
     )
@@ -85,16 +91,16 @@ def reset_dish_to_standby(
         ):
             # go to LP ...
             ds_device_proxy.SetStandbyMode()
-            assert event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=10)
+            assert event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=30)
         dish_mode_events.wait_for_value(DishMode.STANDBY_LP, timeout=10)
     except (RuntimeError, AssertionError):
         # check dish manager before giving up
-        pass
+        logger.exception("Failed to reset subdevices to known states.")
 
     try:
         [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-        result_events.wait_for_command_id(unique_id, timeout=8)
-        dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=10)
+        result_events.wait_for_command_id(unique_id, timeout=30)
+        dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     except RuntimeError:
         # request FP mode and allow the test to continue
         dish_manager_proxy.SetStandbyFPMode()

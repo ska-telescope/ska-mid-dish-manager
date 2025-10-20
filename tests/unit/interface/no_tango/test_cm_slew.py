@@ -1,7 +1,5 @@
 """Tests dish manager component manager slew command handler."""
 
-from unittest.mock import Mock, patch
-
 import pytest
 from ska_control_model import ResultCode, TaskStatus
 
@@ -10,16 +8,13 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 
 
 @pytest.mark.unit
-@patch("json.dumps", Mock(return_value="mocked sub-device-command-ids"))
 def test_slew_handler(
     component_manager: DishManagerComponentManager,
-    mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
     """Verify behaviour of Slew command handler.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -38,10 +33,17 @@ def test_slew_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": f"Slew called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS pointingstate change to SLEW"},
-        {"progress": "Commands: mocked sub-device-command-ids"},
-        {"progress": "Awaiting pointingstate change to SLEW"},
+        {"progress": "Fanned out commands: DS.Slew"},
+        {
+            "progress": "The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing"
+            " attributes for the completion status of the task.",
+            "status": TaskStatus.COMPLETED,
+            "result": (
+                ResultCode.OK,
+                "The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing"
+                " attributes for the completion status of the task.",
+            ),
+        },
     )
 
     # check that the initial lrc updates come through
@@ -56,22 +58,3 @@ def test_slew_handler(
         pointingstate=PointingState.SLEW
     )
     component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)
-
-    # wait a bit for the lrc updates to come through
-    component_state_cb.get_queue_values(timeout=1)
-    # check that the final lrc updates come through
-    task_cb = callbacks["task_cb"]
-    task_cb.assert_called_with(
-        progress=(
-            "The DS has been commanded to Slew to [20.0, 30.0]. "
-            "Monitor the pointing attributes for the completion status of the task."
-        ),
-        status=TaskStatus.COMPLETED,
-        result=(
-            ResultCode.OK,
-            (
-                "The DS has been commanded to Slew to [20.0, 30.0]. "
-                "Monitor the pointing attributes for the completion status of the task."
-            ),
-        ),
-    )

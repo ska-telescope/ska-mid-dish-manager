@@ -48,9 +48,8 @@ def test_configure_band_2(
 
     expected_progress_updates = [
         # ConfigureBand2
-        "SetIndexPosition called on DS",
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
         "Awaiting DS indexerposition change to B2",
-        "ConfigureBand2 called on SPFRX, ID",
         "Awaiting SPFRX configuredband change to B2",
         "Awaiting configuredband change to B2",
         "DS indexerposition changed to B2",
@@ -59,9 +58,8 @@ def test_configure_band_2(
         "SPFRX.ConfigureBand2 completed",
         "ConfigureBand2 complete. Triggering on success action.",
         # Then SetOperateMode
-        "SetOperateMode called on SPF",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
         "Awaiting SPF operatingmode change to OPERATE",
-        "SetPointMode called on DS",
         "Awaiting DS operatingmode change to POINT",
         "Awaiting dishmode change to OPERATE",
         "SPF operatingmode changed to OPERATE",

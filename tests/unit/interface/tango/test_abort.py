@@ -1,10 +1,11 @@
 """Unit tests for Abort/AbortCommands command."""
 
+import logging
 from unittest.mock import Mock
 
 import pytest
 import tango
-from ska_control_model import ResultCode
+from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -36,7 +37,11 @@ def test_abort_commands_raises_deprecation_warning(dish_manager_resources):
 @pytest.mark.unit
 @pytest.mark.forked
 def test_only_one_abort_runs_at_a_time(dish_manager_resources):
-    device_proxy, _ = dish_manager_resources
+    device_proxy, dish_manager_cm = dish_manager_resources
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    # update the execute_command mock to return IN_PROGRESS and a timestamp
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
+
     [[result_code], [_]] = device_proxy.Abort()
     assert result_code == ResultCode.STARTED
 
@@ -47,18 +52,12 @@ def test_only_one_abort_runs_at_a_time(dish_manager_resources):
 
 @pytest.mark.unit
 @pytest.mark.forked
-@pytest.mark.parametrize(
-    "abort_cmd",
-    [
-        ("Abort"),
-        ("AbortCommands"),
-    ],
-)
-def test_abort_is_rejected_in_maintenance_dishmode(
-    abort_cmd, dish_manager_resources, event_store_class
+def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
+    caplog, dish_manager_resources, event_store_class
 ):
     """Verify Abort/AbortCommands is rejected when DishMode is MAINTENANCE."""
     device_proxy, dish_manager_cm = dish_manager_resources
+    caplog.set_level(logging.DEBUG, logger=dish_manager_cm.logger.name)
 
     dish_mode_event_store = event_store_class()
 
@@ -67,12 +66,44 @@ def test_abort_is_rejected_in_maintenance_dishmode(
         tango.EventType.CHANGE_EVENT,
         dish_mode_event_store,
     )
+
     dish_manager_cm._update_component_state(dishmode=DishMode.MAINTENANCE)
     dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=60)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
-    [[result_code], [_]] = device_proxy.command_inout(abort_cmd, None)
-    assert result_code == ResultCode.REJECTED
+    [[result_code], [_]] = device_proxy.Abort()
+    assert result_code == ResultCode.STARTED
+
+    assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_abort_skips_track_stop_in_stow(caplog, dish_manager_resources, event_store_class):
+    device_proxy, dish_manager_cm = dish_manager_resources
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    event_store = event_store_class()
+    caplog.set_level(logging.DEBUG, logger=dish_manager_cm.logger.name)
+
+    device_proxy.subscribe_event(
+        "longRunningCommandProgress",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    device_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
+    event_store.wait_for_value(DishMode.STOW)
+    assert device_proxy.dishMode == DishMode.STOW
+
+    device_proxy.Abort()
+
+    event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP", timeout=30)
+    assert "abort-sequence: dish is in STOW mode, skipping track stop" in caplog.text
 
 
 @pytest.mark.unit
@@ -90,6 +121,9 @@ def test_abort_during_dish_movement(
     """Verify Abort/AbortCommands executes the abort sequence."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
+
+    # update the execute_command mock to return IN_PROGRESS and a timestamp
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
 
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -152,24 +186,14 @@ def test_abort_during_dish_movement(
     result_event_store.wait_for_command_id(fp_unique_id, timeout=5)
     progress_event_store.wait_for_progress_update("SetStandbyFPMode aborted")
 
+    # initial progress messages
     expected_progress_updates = [
-        "Clearing scanID",
-        "EndScan completed",
-        "SetStandbyMode called on DS",
-        "Awaiting dishmode change to STANDBY_FP",
+        "Fanned out commands: DS.TrackStop",
+        "Awaiting pointingstate change to READY",
+        "DS pointingstate changed to READY",
+        "TrackStop completed",
     ]
 
-    if pointing_state == PointingState.SLEW:
-        slew_progress_updates = [
-            "TrackStop called on DS",
-            "Awaiting pointingstate change to READY",
-            "DS pointingstate changed to READY",
-            "TrackStop completed",
-        ]
-        expected_progress_updates = slew_progress_updates + expected_progress_updates
-
-    # Wait some time for the abort command to try stop the dish before setting PointingState.READY
-    dish_mode_event_store.get_queue_values(timeout=1)
     ds_cm._update_component_state(pointingstate=PointingState.READY)
     events = progress_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=5
@@ -180,7 +204,19 @@ def test_abort_during_dish_movement(
 
     # trigger update on ds to make sure FP transition happens
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY)
-    progress_event_store.wait_for_progress_update("SetStandbyFPMode completed", timeout=5)
+    # next progress messages
+    expected_progress_updates = [
+        "SetStandbyFPMode completed",
+        "Clearing scanID",
+        "EndScan completed",
+        "ResetTrackTable completed",
+    ]
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=30
+    )
+    events_string = "".join([str(event.attr_value.value) for event in events])
+    for message in expected_progress_updates:
+        assert message in events_string
 
     # Confirm that abort finished and the queue is cleared
     result_event_store.wait_for_command_id(abort_unique_id)

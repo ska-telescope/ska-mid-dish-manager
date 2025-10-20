@@ -162,6 +162,12 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
+    - name: ResetTrackTable
+      disp_level: OPERATOR
+      doc_in: This command resets the program track table on the controller
+      doc_out: Uninitialised
+      dtype_in: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ResetWatchdogTimer
       disp_level: OPERATOR
       doc_in: This command resets the watchdog timer. `lastWatchdogReset` attribute
@@ -1087,7 +1093,7 @@
     - name: dscCmdAuth
       data_format: SCALAR
       data_type: DevEnum
-      description: 'Indicates who has command authority'
+      description: Indicates who has command authority
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1097,6 +1103,29 @@
       - EGUI
       format: '%s'
       label: dscCmdAuth
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: dscCtrlState
+      data_format: SCALAR
+      data_type: DevEnum
+      description: DSC Control State - an aggregation of DSC Command Authority and
+        DSC State
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - LOCKED
+      - MANUAL_CONTROL
+      - ENGINEERING_CONTROL
+      - REMOTE_CONTROL
+      - NO_AUTHORITY
+      format: '%s'
+      label: dscCtrlState
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
@@ -1320,6 +1349,23 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: lastCommandInvoked
+      data_format: SPECTRUM
+      data_type: DevString
+      description: Stores the name and timestamp (in UNIX UTC format) of the last
+        invoked command.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lastCommandInvoked
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: lastCommandedMode
       data_format: SPECTRUM
       data_type: DevString
@@ -1447,7 +1493,7 @@
       format: '%s'
       label: longRunningCommandInProgress
       max_alarm: Not specified
-      max_dim_x: 4
+      max_dim_x: 1
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -2048,4 +2094,3 @@
     - name: WMSDeviceNames
     - name: WindGustThreshold
     - name: polled_cmd
-
