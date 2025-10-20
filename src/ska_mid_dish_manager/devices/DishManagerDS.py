@@ -1832,7 +1832,6 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
     )
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @record_mode_change_request
     @requires_component_manager
     def SetStowMode(self) -> DevVarLongStringArrayType:
         """Implemented as a Long Running Command.
