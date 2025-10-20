@@ -47,7 +47,7 @@ def test_abort_commands(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Attempt to configure which will take SPF to Operate mode,
-    # this wont happen asskipAttributeUpdates was set to True
+    # this wont happen because skipAttributeUpdates was set to True
     [[_], [op_unique_id]] = dish_manager_proxy.ConfigureBand1(True)
 
     # Check that Dish Manager is waiting to transition

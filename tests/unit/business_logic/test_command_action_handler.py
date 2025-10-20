@@ -107,6 +107,10 @@ class TestActionHandler:
         assert "Awaiting attr change to True" in self.progress_calls
         assert "DeviceX device timed out executing CommandX command" in self.progress_calls
         assert (
+            "DeviceX device timed out executing CommandX command with ID command_id"
+            in self.progress_calls
+        )
+        assert (
             "Action 'HandlerX' failed. Fanned out commands: {'DeviceX.CommandX': 'TIMED_OUT'}"
         ) in self.progress_calls
 
