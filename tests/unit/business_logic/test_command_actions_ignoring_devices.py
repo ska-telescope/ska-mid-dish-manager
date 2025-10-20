@@ -23,7 +23,6 @@ LOGGER = logging.getLogger(__name__)
 class TestCommandActionsIgnoringDevices:
     """Tests for ignoring devices in command Action."""
 
-    # pylint: disable=protected-access,attribute-defined-outside-init
     def setup_method(self):
         """Set up context."""
         sub_component_managers_mock = {

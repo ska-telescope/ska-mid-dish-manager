@@ -786,7 +786,7 @@ class SlewAction(Action):
             waiting_callback=self.waiting_callback,
         )
         self.completed_message = (
-            "The DS has been commanded to Slew to [20.0, 30.0]. "
+            f"The DS has been commanded to Slew to {target}. "
             "Monitor the pointing attributes for the completion status of the task."
         )
 
