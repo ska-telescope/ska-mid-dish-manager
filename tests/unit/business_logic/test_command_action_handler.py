@@ -104,12 +104,10 @@ class TestActionHandler:
         handler.execute(self.my_task_callback, task_abort_event)
 
         assert self.component_state["attr"] is False
+        assert "Fanned out commands: DeviceX.CommandX" in self.progress_calls
         assert "Awaiting attr change to True" in self.progress_calls
         assert "DeviceX device timed out executing CommandX command" in self.progress_calls
-        assert (
-            "DeviceX device timed out executing CommandX command with ID command_id"
-            in self.progress_calls
-        )
+        assert "DeviceX.CommandX timed out" in self.progress_calls
         assert (
             "Action 'HandlerX' failed. Fanned out commands: {'DeviceX.CommandX': 'TIMED_OUT'}"
         ) in self.progress_calls

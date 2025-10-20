@@ -227,9 +227,8 @@ class TestCommandActions:
 
         expected_progress_updates = [
             # ConfigureBand2
-            "SetIndexPosition called on DS",
+            "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
             "Awaiting DS indexerposition change to B2",
-            "ConfigureBand2 called on SPFRX, ID",
             "Awaiting SPFRX configuredband change to B2",
             "Awaiting configuredband change to B2",
             "DS indexerposition changed to B2",
@@ -238,9 +237,8 @@ class TestCommandActions:
             "SPFRX.ConfigureBand2 completed",
             "ConfigureBand2 complete. Triggering on success action.",
             # Then SetOperateMode
-            "SetOperateMode called on SPF",
+            "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
             "Awaiting SPF operatingmode change to OPERATE",
-            "SetPointMode called on DS",
             "Awaiting DS operatingmode change to POINT",
             "Awaiting dishmode change to OPERATE",
             "SPF operatingmode changed to OPERATE",
@@ -307,18 +305,18 @@ class TestCommandActions:
 
         expected_progress_updates = [
             # First SetStandbyFPMode
-            "SetStandbyMode called on DS",
+            "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
             "Awaiting DS operatingmode change to STANDBY",
-            "SetPowerMode called on DS",
             "Awaiting DS powerstate change to FULL_POWER",
             "Awaiting dishmode change to STANDBY_FP",
             "DS operatingmode changed to STANDBY",
-            "DS.SetStandbyMode completedDS powerstate changed to FULL_POWER",
-            "DS.SetPowerMode completedSetStandbyFPMode complete. Triggering on success action.",
+            "DS.SetStandbyMode completed",
+            "DS powerstate changed to FULL_POWER",
+            "DS.SetPowerMode completed",
+            "SetStandbyFPMode complete. Triggering on success action.",
             # Then ConfigureBand2
-            "SetIndexPosition called on DS",
+            "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
             "Awaiting DS indexerposition change to B2",
-            "ConfigureBand2 called on SPFRX, ID",
             "Awaiting SPFRX configuredband change to B2",
             "Awaiting configuredband change to B2",
             "DS indexerposition changed to B2",
@@ -327,9 +325,8 @@ class TestCommandActions:
             "SPFRX.ConfigureBand2 completed",
             "ConfigureBand2 complete. Triggering on success action.",
             # Then SetOperateMode
-            "SetOperateMode called on SPF",
+            "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
             "Awaiting SPF operatingmode change to OPERATE",
-            "SetPointMode called on DS",
             "Awaiting DS operatingmode change to POINT",
             "Awaiting dishmode change to OPERATE",
             "SPF operatingmode changed to OPERATE",

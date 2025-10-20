@@ -116,7 +116,7 @@ class ActionHandler:
         update_task_status(task_callback, progress=message)
 
         if self.action_on_failure:
-            next_action_msg = f"{self.name} failed. Triggering on failure action."
+            next_action_msg = f"{self.action_name} failed. Triggering on failure action."
             self.logger.debug(next_action_msg)
             update_task_status(task_callback, progress=next_action_msg)
             self.action_on_failure.execute(task_callback, task_abort_event)
@@ -124,11 +124,11 @@ class ActionHandler:
             update_task_status(
                 task_callback,
                 status=TaskStatus.FAILED,
-                result=(ResultCode.FAILED, f"{self.name} failed"),
+                result=(ResultCode.FAILED, f"{self.action_name} failed"),
             )
 
     def _trigger_success(self, task_callback, task_abort_event, completed_response_msg: str):
-        final_message = completed_response_msg or f"{self.name} completed"
+        final_message = completed_response_msg or f"{self.action_name} completed"
         self.logger.debug(final_message)
 
         if self.action_on_success:
