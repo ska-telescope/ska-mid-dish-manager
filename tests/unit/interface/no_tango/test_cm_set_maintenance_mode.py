@@ -1,5 +1,6 @@
 """Tests dish manager component manager set_maintenance_mode command handler."""
 
+import logging
 from unittest.mock import Mock, patch
 
 import pytest
@@ -14,8 +15,8 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
-@patch("json.dumps", Mock(return_value="mocked sub-device-command-ids"))
 def test_set_maintenance_mode_handler(
+    caplog,
     component_manager: DishManagerComponentManager,
     mock_command_tracker: Mock,
     callbacks: dict,
@@ -27,21 +28,22 @@ def test_set_maintenance_mode_handler(
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
+    caplog.set_level(logging.DEBUG)
     component_manager.set_maintenance_mode(callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
     component_state_cb = callbacks["comp_state_cb"]
     component_state_cb.get_queue_values()
 
+    # TODO: Remove below. Waiting for SPFRx to implement maintenance mode
+    assert "Nothing done on SPFRx, awaiting implementation on it." in caplog.text
+
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": f"Stow called on DS, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting DS operatingmode change to STOW"},
-        {"progress": f"SetStandbyMode called on SPFRX, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting SPFRX operatingmode change to STANDBY"},
-        {"progress": f"SetMaintenanceMode called on SPF, ID {mock_command_tracker.new_command()}"},
         {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},
-        {"progress": "Commands: mocked sub-device-command-ids"},
+        {"progress": "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode"},
         {"progress": "Awaiting dishmode change to STOW"},
         {
             "progress": "SetMaintenanceMode completed",

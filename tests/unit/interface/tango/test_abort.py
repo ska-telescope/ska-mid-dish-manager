@@ -1,10 +1,11 @@
 """Unit tests for Abort/AbortCommands command."""
 
+import logging
 from unittest.mock import Mock
 
 import pytest
 import tango
-from ska_control_model import ResultCode
+from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -36,7 +37,11 @@ def test_abort_commands_raises_deprecation_warning(dish_manager_resources):
 @pytest.mark.unit
 @pytest.mark.forked
 def test_only_one_abort_runs_at_a_time(dish_manager_resources):
-    device_proxy, _ = dish_manager_resources
+    device_proxy, dish_manager_cm = dish_manager_resources
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    # update the execute_command mock to return IN_PROGRESS and a timestamp
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
+
     [[result_code], [_]] = device_proxy.Abort()
     assert result_code == ResultCode.STARTED
 
@@ -47,18 +52,12 @@ def test_only_one_abort_runs_at_a_time(dish_manager_resources):
 
 @pytest.mark.unit
 @pytest.mark.forked
-@pytest.mark.parametrize(
-    "abort_cmd",
-    [
-        ("Abort"),
-        ("AbortCommands"),
-    ],
-)
-def test_abort_is_rejected_in_maintenance_dishmode(
-    abort_cmd, dish_manager_resources, event_store_class
+def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
+    caplog, dish_manager_resources, event_store_class
 ):
     """Verify Abort/AbortCommands is rejected when DishMode is MAINTENANCE."""
     device_proxy, dish_manager_cm = dish_manager_resources
+    caplog.set_level(logging.DEBUG, logger=dish_manager_cm.logger.name)
 
     dish_mode_event_store = event_store_class()
 
@@ -67,12 +66,15 @@ def test_abort_is_rejected_in_maintenance_dishmode(
         tango.EventType.CHANGE_EVENT,
         dish_mode_event_store,
     )
+
     dish_manager_cm._update_component_state(dishmode=DishMode.MAINTENANCE)
-    dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=60)
+    dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
-    [[result_code], [_]] = device_proxy.command_inout(abort_cmd, None)
-    assert result_code == ResultCode.REJECTED
+    [[result_code], [_]] = device_proxy.Abort()
+    assert result_code == ResultCode.STARTED
+
+    assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
 
 
 @pytest.mark.unit
@@ -91,6 +93,9 @@ def test_abort_during_dish_movement(
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
+
+    # update the execute_command mock to return IN_PROGRESS and a timestamp
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
 
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
@@ -152,22 +157,15 @@ def test_abort_during_dish_movement(
     result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
     progress_event_store.wait_for_progress_update("SetStandbyFPMode Aborted")
 
+    # initial progress messages
     expected_progress_updates = [
-        "Clearing scanID",
-        "EndScan completed",
-        "SetOperateMode called on SPF",
-        "SetStandbyFPMode called on DS",
+        "Fanned out commands: DS.TrackStop",
+        "Awaiting pointingstate change to READY",
+        "DS pointingstate changed to READY",
+        "TrackStop completed",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode",
         "Awaiting dishmode change to STANDBY_FP",
     ]
-
-    if pointing_state == PointingState.SLEW:
-        slew_progress_updates = [
-            "TrackStop called on DS",
-            "Awaiting pointingstate change to READY",
-            "DS pointingstate changed to 0",
-            "TrackStop completed",
-        ]
-        expected_progress_updates = slew_progress_updates + expected_progress_updates
 
     ds_cm._update_component_state(pointingstate=PointingState.READY)
     events = progress_event_store.wait_for_progress_update(
@@ -177,10 +175,21 @@ def test_abort_during_dish_movement(
     for message in expected_progress_updates:
         assert message in events_string
 
-    # trigger update on spf to make sure FP transition happens
+    # allow FP transition to complete the abort sequence
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    progress_event_store.wait_for_progress_update("SetStandbyFPMode completed", timeout=30)
-
+    # next progress messages
+    expected_progress_updates = [
+        "SetStandbyFPMode completed",
+        "Clearing scanID",
+        "EndScan completed",
+        "ResetTrackTable completed",
+    ]
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=30
+    )
+    events_string = "".join([str(event.attr_value.value) for event in events])
+    for message in expected_progress_updates:
+        assert message in events_string
     # Confirm that abort finished and the queue is cleared
     result_event_store.wait_for_command_id(abort_unique_id)
     cmds_in_queue_store.wait_for_value((), timeout=30)

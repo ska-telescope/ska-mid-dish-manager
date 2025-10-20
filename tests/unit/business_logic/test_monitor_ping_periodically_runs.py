@@ -82,4 +82,4 @@ def test_monitor_ping_log_count():
 
         assert mocked_tango.DeviceProxy.call_count == 1
         assert mocked_dp.command_inout.call_count > 2
-        assert mocked_logger.exception.call_count == 2
+        assert mocked_logger.error.call_count == 2

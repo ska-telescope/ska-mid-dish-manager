@@ -38,8 +38,7 @@ def test_configure_band_2(
     assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [
-        "SetIndexPosition called on DS",
-        "ConfigureBand2 called on SPFRX, ID",
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
         "Awaiting configuredband change to B2",
         "ConfigureBand2 completed",
     ]
@@ -48,7 +47,7 @@ def test_configure_band_2(
         expected_progress_updates[-1], timeout=6
     )
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store.

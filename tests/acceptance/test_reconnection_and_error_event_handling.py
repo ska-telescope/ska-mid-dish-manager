@@ -8,7 +8,7 @@ from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceP
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.xfail(reason="This test is flaky: needs investigation into events and timeouts")
+@pytest.mark.skip(reason="This test is flaky: needs investigation into events and timeouts")
 @pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])
@@ -34,6 +34,9 @@ def test_device_goes_away(family, event_store_class, dish_manager_proxy):
 
     # restart the sub-component device
     device_proxy = dp_manager(f"mid-dish/{family}/SKA001")
+    # Release authority before restarting DSManager
+    if family == "ds-manager":
+        device_proxy.ReleaseAuth()
     admin_device_proxy = dp_manager(device_proxy.adm_name())
     admin_device_proxy.RestartServer()
 

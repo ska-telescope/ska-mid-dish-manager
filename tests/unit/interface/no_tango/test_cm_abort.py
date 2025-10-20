@@ -37,7 +37,6 @@ def test_abort_handler_runs_only_one_sequence_at_a_time(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     MagicMock(return_value=True),
 )
-@patch("json.dumps", MagicMock(return_value="mocked sub-device-command-ids"))
 def test_abort_handler(
     component_manager: DishManagerComponentManager,
     mock_command_tracker: MagicMock,
@@ -59,11 +58,9 @@ def test_abort_handler(
     callbacks["task_cb"].call_args_list.clear()
 
     mock_command_tracker.command_statuses = [("SetStandbyLPMode", TaskStatus.IN_PROGRESS)]
-    mock_abort_event = MagicMock()
-    mock_abort_event.is_set.return_value = False
 
     # issue an abort while the command is busy running
-    task_status, message = component_manager.abort(callbacks["task_cb"], mock_abort_event)
+    task_status, message = component_manager.abort(callbacks["task_cb"])
     assert task_status == TaskStatus.IN_PROGRESS
     assert message == "Abort sequence has started"
 

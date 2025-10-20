@@ -3,24 +3,37 @@
 import functools
 import logging
 import time
-from typing import Any
+from typing import Any, Callable
 
 from ska_control_model import CommunicationStatus
 
 
-def record_mode_change_request(func: Any) -> Any:
-    """Record a mode change request."""
+def record_command(record_mode: bool = False) -> Callable:
+    """Return a function that records the 'lastcommandinvoked' and or 'lastcommandedmode'
+       before calling the command.
 
-    @functools.wraps(func)
-    def wrapper_record_mode_change_request(*args: Any, **kwargs: Any) -> Any:
-        device_instance = args[0]
-        component_manager = device_instance.component_manager
-        last_commanded_mode = (str(time.time()), func.__name__)
-        # pylint: disable=protected-access
-        component_manager._update_component_state(lastcommandedmode=last_commanded_mode)
-        return func(*args, **kwargs)
+    :param record_mode: Flag to update both or only 'lastcommandinvoked', 'lastcommandedmode'.
+    """
 
-    return wrapper_record_mode_change_request
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            device_instance = args[0]
+            component_manager = device_instance.component_manager
+            command_and_time = (str(time.time()), func.__name__)
+            # record both if True
+            if record_mode:
+                component_manager._update_component_state(
+                    lastcommandinvoked=command_and_time,
+                    lastcommandedmode=command_and_time,
+                )
+            else:
+                component_manager._update_component_state(lastcommandinvoked=command_and_time)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def check_communicating(func: Any) -> Any:
