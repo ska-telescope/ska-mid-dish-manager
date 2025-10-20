@@ -130,7 +130,7 @@ def test_ignoring_spfrx(
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_ignoring_all(
-    monitor_tango_servers, toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy
+    monitor_tango_servers, toggle_ignore_spf_and_spfrx_b5dc, event_store_class, dish_manager_proxy
 ):
     """Test ignoring both SPF and SPFRx devices."""
     result_event_store = event_store_class()
