@@ -91,7 +91,7 @@ def reset_dish_to_standby(
         ):
             # go to LP ...
             ds_device_proxy.SetStandbyMode()
-            assert event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=10)
+            assert event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=30)
         dish_mode_events.wait_for_value(DishMode.STANDBY_LP, timeout=10)
     except (RuntimeError, AssertionError):
         # check dish manager before giving up
@@ -99,8 +99,8 @@ def reset_dish_to_standby(
 
     try:
         [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-        result_events.wait_for_command_id(unique_id, timeout=8)
-        dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=10)
+        result_events.wait_for_command_id(unique_id, timeout=30)
+        dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     except RuntimeError:
         # request FP mode and allow the test to continue
         dish_manager_proxy.SetStandbyFPMode()

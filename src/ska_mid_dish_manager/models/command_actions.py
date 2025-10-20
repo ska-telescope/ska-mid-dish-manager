@@ -313,7 +313,7 @@ class SetStandbyLPModeAction(Action):
             device="DS",
             command_name="SetStandbyMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            timeout_s=10,  # TODO: Confirm timeout values
+            timeout_s=30,  # TODO: Confirm timeout values
             command_argument=None,
             awaited_component_state={
                 "operatingmode": DSOperatingMode.STANDBY,
@@ -381,7 +381,7 @@ class SetStandbyFPModeAction(Action):
             command_name="SetStandbyMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"operatingmode": DSOperatingMode.STANDBY},
-            timeout_s=10,  # TODO: Confirm timeout values
+            timeout_s=30,  # TODO: Confirm timeout values
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
         # Action to set the power mode of DS to Full Power
@@ -395,7 +395,7 @@ class SetStandbyFPModeAction(Action):
             command_argument=[False, dsc_power_limit],
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"powerstate": DSPowerState.FULL_POWER},
-            timeout_s=10,  # TODO: Confirm timeout values
+            timeout_s=30,  # TODO: Confirm timeout values
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
@@ -448,7 +448,7 @@ class SetOperateModeAction(Action):
             command_name="SetPointMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"operatingmode": DSOperatingMode.POINT},
-            timeout_s=10,  # TODO: Confirm timeout values
+            timeout_s=30,  # TODO: Confirm timeout values
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
@@ -850,7 +850,7 @@ class TrackLoadStaticOffAction(Action):
             device="DS",
             command_name="TrackLoadStaticOff",
             device_component_manager=dish_manager_cm.sub_component_managers["DS"],
-            timeout_s=10,  # TODO: Confirm timeout values
+            timeout_s=30,  # TODO: Confirm timeout values
             command_argument=[off_xel, off_el],
             awaited_component_state={
                 "actstaticoffsetvaluexel": off_xel,
