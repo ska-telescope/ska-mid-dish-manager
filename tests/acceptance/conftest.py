@@ -79,28 +79,30 @@ def reset_dish_to_standby(
             dish_manager_proxy.SetStowMode()
             dish_mode_events.wait_for_value(DishMode.STOW, timeout=10)
 
-        spf_device_proxy.ResetToDefault()
-        assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=10)
+        if dish_manager_proxy.dishmode != DishMode.STANDBY_LP:
+            spf_device_proxy.ResetToDefault()
+            assert event_store.wait_for_value(SPFOperatingMode.STANDBY_LP, timeout=10)
 
-        spfrx_device_proxy.ResetToDefault()
-        assert event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=10)
+            spfrx_device_proxy.ResetToDefault()
+            assert event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=10)
 
-        if (
-            ds_device_proxy.operatingMode != DSOperatingMode.STANDBY
-            or ds_device_proxy.powerstate != DSPowerState.LOW_POWER
-        ):
-            # go to LP ...
-            ds_device_proxy.SetStandbyMode()
-            assert event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=30)
-        dish_mode_events.wait_for_value(DishMode.STANDBY_LP, timeout=10)
+            if (
+                ds_device_proxy.operatingMode != DSOperatingMode.STANDBY
+                or ds_device_proxy.powerstate != DSPowerState.LOW_POWER
+            ):
+                # go to LP ...
+                ds_device_proxy.SetStandbyMode()
+                assert event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=30)
+            dish_mode_events.wait_for_value(DishMode.STANDBY_LP, timeout=10)
     except (RuntimeError, AssertionError):
         # check dish manager before giving up
         logger.exception("Failed to reset subdevices to known states.")
 
     try:
-        [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
-        result_events.wait_for_command_id(unique_id, timeout=30)
-        dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+        if dish_manager_proxy.dishmode != DishMode.STANDBY_FP:
+            [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
+            result_events.wait_for_command_id(unique_id, timeout=30)
+            dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     except RuntimeError:
         # request FP mode and allow the test to continue
         dish_manager_proxy.SetStandbyFPMode()

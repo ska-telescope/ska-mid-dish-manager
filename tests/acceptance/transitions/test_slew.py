@@ -29,7 +29,8 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     assert "Command is not allowed" in events[-1].attr_value.value[1]
 
     expected_progress_updates = (
-        "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE"
+        "Slew command rejected for current pointingState. Slew command is allowed for"
+        " pointingState READY"
     )
 
     # Wait for the slew command progress update
