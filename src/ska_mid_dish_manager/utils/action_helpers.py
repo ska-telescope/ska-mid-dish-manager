@@ -32,12 +32,6 @@ def convert_enums_to_names(values) -> list[str]:
     return enum_labels
 
 
-def update_task_status(task_callback: Optional[Callable], **task_statuses) -> None:
-    """Wraps the task callback to report lrc statuses."""
-    if task_callback:
-        task_callback(**task_statuses)
-
-
 def report_awaited_attributes(task_callback, awaited_attributes, awaited_values, device=None):
     """Report the awaited attributes and their expected values."""
     if awaited_values:
