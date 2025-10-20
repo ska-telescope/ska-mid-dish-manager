@@ -3,7 +3,7 @@
 from unittest.mock import call
 
 import pytest
-import tango
+from ska_control_model import TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode
 from tests.utils import remove_subscriptions, setup_subscriptions
@@ -38,7 +38,7 @@ def test_happy_case(dish_manager_resources, event_store_class):
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
     # Check that the ReleaseAuth command was executed
-    execute_command_args = ds_cm.execute_command.call_args_list[0]
+    execute_command_args = ds_cm.execute_command.call_args_list[-1]
     assert execute_command_args == call("ReleaseAuth", None)
 
     remove_subscriptions(subscriptions)
@@ -81,16 +81,15 @@ def test_exception_on_callback(dish_manager_resources, event_store_class):
     subscriptions = setup_subscriptions(device_proxy, attr_cb_mapping)
 
     # Configure the mock to raise a Tango exception when execute_command is called
-    ds_cm.execute_command.side_effect = tango.DevFailed()
+    ds_cm.execute_command.return_value = TaskStatus.FAILED, "Simulated failure"
 
     [[_], [unique_id]] = device_proxy.SetMaintenanceMode()
     results = result_event_store.get_queue_values()
-    fanout_ids = [result[1][0] for result in results]
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
+
+    _, result_msg = results[0][1]
+    assert result_msg == '[3, "SetMaintenanceMode failed"]'
 
     expected_status = [unique_id, "FAILED"]
-    for ids in fanout_ids:
-        expected_status.extend([ids, "COMPLETED"])
 
     lrc_status_event_store.wait_for_value(tuple(expected_status), timeout=10)
 

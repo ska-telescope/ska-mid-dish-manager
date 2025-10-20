@@ -37,6 +37,7 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
     )
 
     expected_progress_updates = [
+        "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode",
         "Fanned out commands: SPF.SetMaintenanceMode, DS.Stow",
         "Awaiting dishmode change to MAINTENANCE",
         "SetMaintenanceMode completed",
