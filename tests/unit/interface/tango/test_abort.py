@@ -57,9 +57,6 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
 ):
     """Verify Abort/AbortCommands is rejected when DishMode is MAINTENANCE."""
     device_proxy, dish_manager_cm = dish_manager_resources
-    ds_cm = dish_manager_cm.sub_component_managers["DS"]
-    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
-    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
     caplog.set_level(logging.DEBUG, logger=dish_manager_cm.logger.name)
 
     dish_mode_event_store = event_store_class()
