@@ -16,7 +16,6 @@ def test_dsccmdauth_attr(
     event_store_class,
     dish_manager_proxy,
     ds_device_proxy,
-    return_authority,
 ):
     """Test DSC Control State can be read on Dish Manager."""
     dsc_cmd_auth_event_store = event_store_class()
