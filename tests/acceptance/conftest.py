@@ -26,6 +26,17 @@ def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
 
 
 @pytest.fixture
+def toggle_skip_attributes(spf_device_proxy):
+    """Ensure that attribute updates on spf is restored."""
+    # Set a flag on SPF to skip attribute updates.
+    # This is useful to ensure that the long running command
+    # does not finish executing before AbortCommands is triggered
+    spf_device_proxy.skipAttributeUpdates = True
+    yield
+    spf_device_proxy.skipAttributeUpdates = False
+
+
+@pytest.fixture
 def reset_dish_to_standby(
     event_store_class,
     dish_manager_proxy,

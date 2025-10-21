@@ -12,17 +12,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import calculate_slew_target, remove_subscriptions, setup_subscriptions
 
 
-@pytest.fixture
-def toggle_skip_attributes(spf_device_proxy):
-    """Ensure that attribute updates on spf is restored."""
-    # Set a flag on SPF to skip attribute updates.
-    # This is useful to ensure that the long running command
-    # does not finish executing before AbortCommands is triggered
-    spf_device_proxy.skipAttributeUpdates = True
-    yield
-    spf_device_proxy.skipAttributeUpdates = False
-
-
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands(

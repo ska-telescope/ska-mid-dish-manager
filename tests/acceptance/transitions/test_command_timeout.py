@@ -45,8 +45,18 @@ def test_action_timeout(
     dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=10)
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
 
-    ret = result_event_store.wait_for_command_id(configure_unique_id, timeout=30)
+    ret = result_event_store.result_event_store.wait_for_command_result(
+        configure_unique_id, '[3, "SetOperateMode failed"]', timeout=30
+    )
+
+    dish_manager_proxy.actionTimeoutSeconds = 60
+
+    [[_], [configure_unique_id]] = dish_manager_proxy.ConfigureBand2(True)
+
+    # TODO: Wait N seconds (< 60) and check that command is still running, then finish the operate
+    # changes and wait for the command to complete
 
     print(ret)
+    assert 0
 
     remove_subscriptions(subscriptions)
