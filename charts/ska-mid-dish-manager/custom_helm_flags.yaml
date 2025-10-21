@@ -19,14 +19,6 @@ ska-mid-dish-simulators:
   dsOpcuaSimulator:
     enabled: true
 
-  # Test development simulator image
-  dishsimulators:
-    image:
-      registry: registry.gitlab.com/ska-telescope/ska-mid-dish-simulators
-      image: ska-mid-dish-simulators
-      tag: 5.4.0-dev.ca985db0d
-      pullPolicy: IfNotPresent
-
 ska-mid-wms:
   enabled: true
 
