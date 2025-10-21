@@ -7,7 +7,7 @@ from unittest import mock
 
 import pytest
 import tango
-from ska_control_model import TaskStatus
+from ska_control_model import CommunicationStatus, TaskStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -39,6 +39,8 @@ def configure_mocks_for_dish_manager():
         class_instance = DishManager.instances.get(device_proxy.name())
         dish_manager_cm = class_instance.component_manager
         wms_cm = dish_manager_cm.sub_component_managers["WMS"]
+        wms_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
+        dish_manager_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
 
         # mock _fetch_wind_limits on dish manager component manager
         dish_manager_cm._fetch_wind_limits = mock.Mock(
