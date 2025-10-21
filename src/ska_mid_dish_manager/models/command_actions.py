@@ -34,6 +34,7 @@ class Action(ABC):
         self,
         logger: logging.Logger,
         dish_manager_cm,
+        timeout_s: float = 0,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -43,6 +44,7 @@ class Action(ABC):
         self.action_on_success = action_on_success
         self.action_on_failure = action_on_failure
         self.waiting_callback = waiting_callback
+        self.timeout_s = timeout_s
         self._handler: Optional["ActionHandler"] = None
 
     @property
@@ -264,6 +266,7 @@ class SetStandbyLPModeAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
+        timeout_s: float = 0,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -271,6 +274,7 @@ class SetStandbyLPModeAction(Action):
         super().__init__(
             logger,
             dish_manager_cm,
+            timeout_s,
             action_on_success,
             action_on_failure,
             waiting_callback,
@@ -281,7 +285,6 @@ class SetStandbyLPModeAction(Action):
             device="SPF",
             command_name="SetStandbyLPMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPF"],
-            timeout_s=10,  # TODO: Confirm timeout values
             command_argument=None,
             awaited_component_state={"operatingmode": SPFOperatingMode.STANDBY_LP},
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
@@ -292,7 +295,6 @@ class SetStandbyLPModeAction(Action):
             device="SPFRX",
             command_name="SetStandbyMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
-            timeout_s=10,  # TODO: Confirm timeout values
             command_argument=None,
             awaited_component_state={"operatingmode": SPFRxOperatingMode.STANDBY},
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
@@ -303,7 +305,6 @@ class SetStandbyLPModeAction(Action):
             device="DS",
             command_name="SetStandbyMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            timeout_s=30,  # TODO: Confirm timeout values
             command_argument=None,
             awaited_component_state={
                 "operatingmode": DSOperatingMode.STANDBY,
@@ -323,6 +324,7 @@ class SetStandbyLPModeAction(Action):
             action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
+            timeout_s=self.timeout_s,
         )
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
@@ -352,6 +354,7 @@ class SetStandbyFPModeAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
+        timeout_s: float = 0,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -359,6 +362,7 @@ class SetStandbyFPModeAction(Action):
         super().__init__(
             logger,
             dish_manager_cm,
+            timeout_s,
             action_on_success,
             action_on_failure,
             waiting_callback,
@@ -369,7 +373,6 @@ class SetStandbyFPModeAction(Action):
             command_name="SetStandbyMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"operatingmode": DSOperatingMode.STANDBY},
-            timeout_s=30,  # TODO: Confirm timeout values
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
         # Action to set the power mode of DS to Full Power
@@ -383,7 +386,6 @@ class SetStandbyFPModeAction(Action):
             command_argument=[False, dsc_power_limit],
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"powerstate": DSPowerState.FULL_POWER},
-            timeout_s=30,  # TODO: Confirm timeout values
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
 
@@ -399,6 +401,7 @@ class SetStandbyFPModeAction(Action):
             action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
+            timeout_s=self.timeout_s,
         )
 
 
@@ -409,6 +412,7 @@ class SetOperateModeAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
+        timeout_s: float = 0,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -416,6 +420,7 @@ class SetOperateModeAction(Action):
         super().__init__(
             logger,
             dish_manager_cm,
+            timeout_s,
             action_on_success,
             action_on_failure,
             waiting_callback,
@@ -427,7 +432,6 @@ class SetOperateModeAction(Action):
             command_name="SetOperateMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPF"],
             awaited_component_state={"operatingmode": SPFOperatingMode.OPERATE},
-            timeout_s=10,  # TODO: Confirm timeout values
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
         )
         ds_command = FannedOutSlowCommand(
@@ -436,7 +440,6 @@ class SetOperateModeAction(Action):
             command_name="SetPointMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"operatingmode": DSOperatingMode.POINT},
-            timeout_s=30,  # TODO: Confirm timeout values
         )
 
         self._handler = ActionHandler(
@@ -451,6 +454,7 @@ class SetOperateModeAction(Action):
             action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
+            timeout_s=self.timeout_s,
         )
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
@@ -472,6 +476,7 @@ class SetMaintenanceModeAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
+        timeout_s: float = 0,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -479,6 +484,7 @@ class SetMaintenanceModeAction(Action):
         super().__init__(
             logger,
             dish_manager_cm,
+            timeout_s,
             action_on_success,
             action_on_failure,
             waiting_callback,
@@ -489,7 +495,6 @@ class SetMaintenanceModeAction(Action):
             command_name="Stow",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"operatingmode": DSOperatingMode.STOW},
-            timeout_s=180,  # TODO: Confirm timeout values
         )
         spfrx_command = FannedOutSlowCommand(
             logger=self.logger,
@@ -497,7 +502,6 @@ class SetMaintenanceModeAction(Action):
             command_name="SetStandbyMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
             awaited_component_state={"operatingmode": SPFRxOperatingMode.STANDBY},
-            timeout_s=10,  # TODO: Confirm timeout values
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
         )
         spf_command = FannedOutSlowCommand(
@@ -506,7 +510,6 @@ class SetMaintenanceModeAction(Action):
             command_name="SetMaintenanceMode",
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPF"],
             awaited_component_state={"operatingmode": SPFOperatingMode.MAINTENANCE},
-            timeout_s=10,  # TODO: Confirm timeout values
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
         )
 
@@ -522,6 +525,7 @@ class SetMaintenanceModeAction(Action):
             action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
+            timeout_s=timeout_s,
         )
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
@@ -546,6 +550,7 @@ class TrackAction(Action):
         super().__init__(
             logger,
             dish_manager_cm,
+            0,  # no timeout for the track action since there is no awaited_component_state
             action_on_success,
             action_on_failure,
             waiting_callback,
@@ -587,6 +592,7 @@ class TrackStopAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
+        timeout_s: float = 0,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -594,6 +600,7 @@ class TrackStopAction(Action):
         super().__init__(
             logger,
             dish_manager_cm,
+            timeout_s,
             action_on_success,
             action_on_failure,
             waiting_callback,
@@ -603,7 +610,6 @@ class TrackStopAction(Action):
             device="DS",
             command_name="TrackStop",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            timeout_s=10,  # TODO: Confirm timeout values
             awaited_component_state={"pointingstate": PointingState.READY},
         )
 
@@ -619,6 +625,7 @@ class TrackStopAction(Action):
             action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
+            timeout_s=timeout_s,
         )
 
 
@@ -631,6 +638,7 @@ class ConfigureBandAction(Action):
         dish_manager_cm,
         band_number,
         synchronise,
+        timeout_s: float = 0,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -638,6 +646,7 @@ class ConfigureBandAction(Action):
         super().__init__(
             logger,
             dish_manager_cm,
+            timeout_s,
             action_on_success,
             action_on_failure,
             waiting_callback,
@@ -654,7 +663,6 @@ class ConfigureBandAction(Action):
             device="SPFRX",
             command_name=self.requested_cmd,
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
-            timeout_s=10,  # TODO: Confirm timeout values
             command_argument=synchronise,
             awaited_component_state={"configuredband": self.band_enum},
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
@@ -665,7 +673,6 @@ class ConfigureBandAction(Action):
             device="DS",
             command_name="SetIndexPosition",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            timeout_s=120,  # TODO: Confirm timeout values
             command_argument=self.indexer_enum,
             awaited_component_state={"indexerposition": self.indexer_enum},
         )
@@ -679,6 +686,7 @@ class ConfigureBandAction(Action):
             action_on_success=action_on_success,
             action_on_failure=action_on_failure,
             waiting_callback=self.waiting_callback,
+            timeout_s=timeout_s,
         )
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
@@ -704,9 +712,19 @@ class ConfigureBandActionSequence(Action):
         dish_manager_cm,
         band_number: int,
         synchronise: bool,
+        timeout_s: float = 0,
+        action_on_success: Optional["Action"] = None,
+        action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
     ):
-        super().__init__(logger, dish_manager_cm, waiting_callback=waiting_callback)
+        super().__init__(
+            logger,
+            dish_manager_cm,
+            timeout_s,
+            action_on_success,
+            action_on_failure,
+            waiting_callback,
+        )
         self.band_number = band_number
         self.synchronise = synchronise
         self.band_enum = Band[f"B{band_number}"]
@@ -720,7 +738,10 @@ class ConfigureBandActionSequence(Action):
         operate_action = SetOperateModeAction(
             logger=self.logger,
             dish_manager_cm=self.dish_manager_cm,
+            action_on_success=self.action_on_success,
+            action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
+            timeout_s=self.timeout_s,
         )
 
         # Step 1: Configure band action
@@ -731,6 +752,7 @@ class ConfigureBandActionSequence(Action):
             synchronise=self.synchronise,
             action_on_success=operate_action,  # chain operate action
             waiting_callback=self.waiting_callback,
+            timeout_s=self.timeout_s,
         )
 
         # Step 0: Pre-action if we need LP -> FP
@@ -740,10 +762,11 @@ class ConfigureBandActionSequence(Action):
                 dish_manager_cm=self.dish_manager_cm,
                 action_on_success=configure_action,  # chain configure action
                 waiting_callback=self.waiting_callback,
+                timeout_s=self.timeout_s,
             )
             return pre_action.execute(task_callback, task_abort_event, completed_response_msg)
 
-        # If no LP -> FP transition is needed, start directly with ConfigureBand
+        # If no LP -> FP transition is needed then start with ConfigureBand
         return configure_action.execute(task_callback, task_abort_event, completed_response_msg)
 
 
@@ -762,6 +785,7 @@ class SlewAction(Action):
         super().__init__(
             logger,
             dish_manager_cm,
+            0,  # no timeout for the slew action since there is no awaited_component_state
             action_on_success,
             action_on_failure,
             waiting_callback,
@@ -780,7 +804,6 @@ class SlewAction(Action):
             action_name="Slew",
             fanned_out_commands=[ds_command],
             component_state=self.dish_manager_cm._component_state,
-            awaited_component_state={"pointingstate": PointingState.SLEW},
             action_on_success=action_on_success,
             action_on_failure=action_on_failure,
             waiting_callback=self.waiting_callback,
@@ -805,6 +828,7 @@ class TrackLoadStaticOffAction(Action):
         dish_manager_cm,
         off_xel,
         off_el,
+        timeout_s: float = 0,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -812,6 +836,7 @@ class TrackLoadStaticOffAction(Action):
         super().__init__(
             logger,
             dish_manager_cm,
+            timeout_s,
             action_on_success,
             action_on_failure,
             waiting_callback,
@@ -822,7 +847,6 @@ class TrackLoadStaticOffAction(Action):
             device="DS",
             command_name="TrackLoadStaticOff",
             device_component_manager=dish_manager_cm.sub_component_managers["DS"],
-            timeout_s=30,  # TODO: Confirm timeout values
             command_argument=[off_xel, off_el],
             awaited_component_state={
                 "actstaticoffsetvaluexel": off_xel,
@@ -842,4 +866,5 @@ class TrackLoadStaticOffAction(Action):
             action_on_success=action_on_success,
             action_on_failure=action_on_failure,
             waiting_callback=self.waiting_callback,
+            timeout_s=timeout_s,
         )

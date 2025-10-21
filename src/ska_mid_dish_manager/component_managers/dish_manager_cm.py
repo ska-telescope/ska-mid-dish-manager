@@ -31,6 +31,7 @@ from ska_mid_dish_manager.models.command_actions import (
 from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
+    DEFAULT_ACTION_TIMEOUT_S,
     DSC_MIN_POWER_LIMIT_KW,
     MAINTENANCE_MODE_ACTIVE_PROPERTY,
     MAINTENANCE_MODE_FALSE_VALUE,
@@ -86,6 +87,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
+        action_timeout_s: float,
         *args,
         wms_device_names: Optional[List[str]] = [],
         wind_stow_callback: Optional[Callable] = None,
@@ -165,6 +167,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             lastcommandedmode=("0.0", ""),
             lastcommandinvoked=("0.0", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
+            actiontimeoutseconds=action_timeout_s,
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -985,7 +988,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
         status, response = self.submit_task(
-            SetStandbyLPModeAction(self.logger, self).execute,
+            SetStandbyLPModeAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_set_standby_lp_allowed,
             task_callback=task_callback,
         )
@@ -1005,7 +1008,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
         status, response = self.submit_task(
-            SetStandbyFPModeAction(self.logger, self).execute,
+            SetStandbyFPModeAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_set_standby_fp_allowed,
             task_callback=task_callback,
         )
@@ -1024,7 +1027,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback=task_callback,
         )
         status, response = self.submit_task(
-            SetOperateModeAction(self.logger, self).execute,
+            SetOperateModeAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_set_operate_mode_allowed,
             task_callback=task_callback,
         )
@@ -1044,7 +1047,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
         status, response = self.submit_task(
-            SetMaintenanceModeAction(self.logger, self).execute,
+            SetMaintenanceModeAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_set_maintenance_mode_allowed,
             task_callback=task_callback,
         )
@@ -1124,7 +1127,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return True
 
         status, response = self.submit_task(
-            TrackStopAction(self.logger, self).execute,
+            TrackStopAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_track_stop_cmd_allowed,
             task_callback=task_callback,
         )
@@ -1153,6 +1156,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self,
                 band_number=band_number,
                 synchronise=synchronise,
+                timeout_s=self.get_action_timeout(),
             ).execute,
             is_cmd_allowed=_is_configure_band_cmd_allowed,
             task_callback=task_callback,
@@ -1328,6 +1332,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self,
                 off_xel=values[0],
                 off_el=values[1],
+                timeout_s=self.get_action_timeout(),
             ).execute,
             task_callback=task_callback,
         )
@@ -1665,3 +1670,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             return ResultCode.FAILED, msg
         return ResultCode.OK, reset_point
+
+    def get_action_timeout(self) -> float:
+        """Get the timeout (in seconds) to be used for fanned out actions."""
+        return self.component_state.get("actiontimeoutseconds", DEFAULT_ACTION_TIMEOUT_S)
+
+    def set_action_timeout(self, timeout_s: float) -> None:
+        """Set the timeout (in seconds) to be used for fanned out actions."""
+        if timeout_s != self.component_state["actiontimeoutseconds"]:
+            self.logger.debug("Setting action timeous as %ss", timeout_s)
+            self._update_component_state(actiontimeoutseconds=timeout_s)

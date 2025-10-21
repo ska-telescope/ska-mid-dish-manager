@@ -27,6 +27,7 @@ from ska_mid_dish_manager.models.command_class import (
 )
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
+    DEFAULT_ACTION_TIMEOUT_S,
     DEFAULT_DISH_ID,
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
@@ -98,6 +99,11 @@ class DishManager(SKAController):
         doc="Threshold value for wind gust speed (in m/s) used to trigger stow.",
         default_value=WIND_GUST_THRESHOLD_MPS,
     )
+    DefaultActionTimeoutSeconds = device_property(
+        dtype=float,
+        doc="The default timeout value (in seconds) for each fanned out action.",
+        default_value=DEFAULT_ACTION_TIMEOUT_S,
+    )
 
     def create_component_manager(self) -> DishManagerComponentManager:
         """Create the component manager for DishManager.
@@ -114,6 +120,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
+            self.DefaultActionTimeoutSeconds,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
             wms_device_names=self.WMSDeviceNames,
@@ -363,6 +370,7 @@ class DishManager(SKAController):
             )
             device._build_state = device._release_info.get_build_state()
             device._version_id = device._release_info.get_dish_manager_release_version()
+            device._action_timeout_seconds = DEFAULT_ACTION_TIMEOUT_S
 
             # push change events, needed to use testing library
 
@@ -418,6 +426,7 @@ class DishManager(SKAController):
                 "lastcommandedmode": "lastCommandedMode",
                 "lastcommandinvoked": "lastCommandInvoked",
                 "dscctrlstate": "dscCtrlState",
+                "actiontimeoutseconds": "actionTimeoutSeconds",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1544,6 +1553,24 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get(
             "dscctrlstate", DscCtrlState.NO_AUTHORITY
         )
+
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ_WRITE,
+        doc="""
+            Timeout (in seconds) to be used for each action. On each action DishManager will wait
+            for the timeout duration for expected subservient device attribute updates.
+        """,
+    )
+    def actionTimeoutSeconds(self):
+        """Returns actionTimeoutSeconds."""
+        return self.component_manager.get_action_timeout()
+
+    @actionTimeoutSeconds.write
+    def actionTimeoutSeconds(self, value):
+        """Sets actionTimeoutSeconds."""
+        self.logger.debug("Write to actionTimeoutSeconds, %s", value)
+        self.component_manager.set_action_timeout(value)
 
     # --------
     # Commands
