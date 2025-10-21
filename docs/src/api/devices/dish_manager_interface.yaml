@@ -1349,6 +1349,23 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: lastCommandInvoked
+      data_format: SPECTRUM
+      data_type: DevString
+      description: Stores the name and timestamp (in UNIX UTC format) of the last
+        invoked command.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lastCommandInvoked
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: lastCommandedMode
       data_format: SPECTRUM
       data_type: DevString

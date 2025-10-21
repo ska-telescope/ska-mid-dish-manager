@@ -1,5 +1,6 @@
 """Unit tests for Abort/AbortCommands command."""
 
+import logging
 from unittest.mock import Mock
 
 import pytest
@@ -55,11 +56,11 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
     caplog, dish_manager_resources, event_store_class
 ):
     """Verify Abort/AbortCommands is rejected when DishMode is MAINTENANCE."""
-    caplog.set_level("DEBUG")
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
+    caplog.set_level(logging.DEBUG, logger=dish_manager_cm.logger.name)
 
     dish_mode_event_store = event_store_class()
 
@@ -80,6 +81,35 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
     assert result_code == ResultCode.STARTED
 
     assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_abort_skips_track_stop_in_stow(caplog, dish_manager_resources, event_store_class):
+    device_proxy, dish_manager_cm = dish_manager_resources
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    event_store = event_store_class()
+    caplog.set_level(logging.DEBUG, logger=dish_manager_cm.logger.name)
+
+    device_proxy.subscribe_event(
+        "longRunningCommandProgress",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    device_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
+    event_store.wait_for_value(DishMode.STOW)
+    assert device_proxy.dishMode == DishMode.STOW
+
+    device_proxy.Abort()
+
+    event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP", timeout=30)
+    assert "abort-sequence: dish is in STOW mode, skipping track stop" in caplog.text
 
 
 @pytest.mark.unit
@@ -162,21 +192,15 @@ def test_abort_during_dish_movement(
     result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
     progress_event_store.wait_for_progress_update("SetStandbyFPMode Aborted")
 
+    # initial progress messages
     expected_progress_updates = [
-        "Clearing scanID",
-        "EndScan completed",
+        "Fanned out commands: DS.TrackStop",
+        "Awaiting pointingstate change to READY",
+        "DS pointingstate changed to READY",
+        "TrackStop completed",
         "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode",
         "Awaiting dishmode change to STANDBY_FP",
     ]
-
-    if pointing_state == PointingState.SLEW:
-        slew_progress_updates = [
-            "Fanned out commands: DS.TrackStop",
-            "Awaiting pointingstate change to READY",
-            "DS pointingstate changed to READY",
-            "TrackStop completed",
-        ]
-        expected_progress_updates = slew_progress_updates + expected_progress_updates
 
     ds_cm._update_component_state(pointingstate=PointingState.READY)
     events = progress_event_store.wait_for_progress_update(
@@ -186,10 +210,21 @@ def test_abort_during_dish_movement(
     for message in expected_progress_updates:
         assert message in events_string
 
-    # trigger update on spf to make sure FP transition happens
+    # allow FP transition to complete the abort sequence
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    progress_event_store.wait_for_progress_update("SetStandbyFPMode completed", timeout=30)
-
+    # next progress messages
+    expected_progress_updates = [
+        "SetStandbyFPMode completed",
+        "Clearing scanID",
+        "EndScan completed",
+        "ResetTrackTable completed",
+    ]
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=30
+    )
+    events_string = "".join([str(event.attr_value.value) for event in events])
+    for message in expected_progress_updates:
+        assert message in events_string
     # Confirm that abort finished and the queue is cleared
     result_event_store.wait_for_command_id(abort_unique_id)
     cmds_in_queue_store.wait_for_value((), timeout=30)
