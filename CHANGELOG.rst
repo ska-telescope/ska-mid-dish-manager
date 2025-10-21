@@ -26,6 +26,7 @@ Version 8.4.3
 - Added ResetTrackTable command to clear entries in the controller track table buffer.
 - Upgraded ska-mid-dish-simulators chart to v5.4.0
 - Implemented ConfigureBand command that ingests a JSON string to configure bands on SPFRx.
+- Added in attribute `lastCommandInvoked` to report the last command invoked on the dish manager.
 
 Version 8.4.2
 *************
