@@ -196,8 +196,12 @@ class TangoDeviceComponentManager(BaseComponentManager):
         """
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
 
+        # TODO ST 10-2025 Passing monitored_attributes doesn't work for configureband command
+        # because it only checks that configuredBand is B[x] but dishMode is also needed
+        # cross checks all the other commands or just wait for feature branch with new S&M
         # fallback to defaults if not provided
-        monitored_attributes = monitored_attributes or self._monitored_attributes
+        # monitored_attributes = monitored_attributes or self._monitored_attributes
+        monitored_attributes = self._monitored_attributes
 
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
