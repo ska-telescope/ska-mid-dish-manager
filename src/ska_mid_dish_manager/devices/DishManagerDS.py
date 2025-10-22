@@ -54,10 +54,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
-from ska_mid_dish_manager.utils.decorators import (
-    record_command,
-    requires_component_manager,
-)
+from ska_mid_dish_manager.utils.decorators import record_command, requires_component_manager
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
 from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,

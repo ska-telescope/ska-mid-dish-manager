@@ -8,9 +8,7 @@ from typing import Any, Callable
 from ska_control_model import TaskStatus
 from ska_tango_base.base import BaseComponentManager
 
-from ska_mid_dish_manager.models.dish_enums import (
-    FannedOutCommandStatus,
-)
+from ska_mid_dish_manager.models.dish_enums import FannedOutCommandStatus
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
     report_awaited_attributes,

@@ -34,6 +34,7 @@ def test_track_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": "Fanned out commands: DS.Track"},
+        {"progress": "DS.Track completed"},
         {
             "progress": (
                 "Track command has been executed on DS. "
@@ -53,7 +54,6 @@ def test_track_handler(
 
     # check that the initial lrc updates come through
     actual_call_kwargs = callbacks["task_cb"].call_args_list
-    print(actual_call_kwargs)
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]

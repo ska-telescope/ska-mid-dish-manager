@@ -4,6 +4,7 @@ import logging
 
 import pytest
 
+from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
@@ -34,6 +35,13 @@ def toggle_skip_attributes(spf_device_proxy):
     spf_device_proxy.skipAttributeUpdates = True
     yield
     spf_device_proxy.skipAttributeUpdates = False
+
+
+@pytest.fixture
+def restore_action_timeout(dish_manager_proxy):
+    """Ensure that attribute updates on spf is restored."""
+    yield
+    dish_manager_proxy.actionTimeoutSeconds = DEFAULT_ACTION_TIMEOUT_S
 
 
 @pytest.fixture

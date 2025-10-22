@@ -8,6 +8,7 @@ from unittest import mock
 import pytest
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ def test_component_manager_gracefully_cleans_up_resources(patch_dp, caplog):
             "sub-device-1",
             "sub-device-2",
             "sub-device-3",
+            action_timeout_s=DEFAULT_ACTION_TIMEOUT_S,
         )
         weak_ref = weakref.ref(component_manager)
         component_manager.start_communicating()

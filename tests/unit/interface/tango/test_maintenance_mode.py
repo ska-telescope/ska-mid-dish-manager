@@ -5,11 +5,7 @@ from unittest.mock import call
 import pytest
 from ska_control_model import TaskStatus
 
-from ska_mid_dish_manager.models.dish_enums import (
-    DishMode,
-    DSOperatingMode,
-    SPFOperatingMode,
-)
+from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SPFOperatingMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
