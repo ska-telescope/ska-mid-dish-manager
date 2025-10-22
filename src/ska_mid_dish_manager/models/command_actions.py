@@ -8,7 +8,7 @@ from typing import Any, Callable, List, Optional
 import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus
 
-from ska_mid_dish_manager.models.constants import DSC_MIN_POWER_LIMIT_KW
+from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S, DSC_MIN_POWER_LIMIT_KW
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
@@ -34,7 +34,7 @@ class Action(ABC):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        timeout_s: float = 0,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -76,7 +76,7 @@ class ActionHandler:
         action_on_success: Optional[Action] = None,
         action_on_failure: Optional[Action] = None,
         waiting_callback: Optional[Callable] = None,
-        timeout_s: float = 0,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
     ):
         """:param logger: Logger instance
         :type logger: Logger
@@ -266,7 +266,7 @@ class SetStandbyLPModeAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        timeout_s: float = 0,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -354,7 +354,7 @@ class SetStandbyFPModeAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        timeout_s: float = 0,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -412,7 +412,7 @@ class SetOperateModeAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        timeout_s: float = 0,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -476,7 +476,7 @@ class SetMaintenanceModeAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        timeout_s: float = 0,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -592,7 +592,7 @@ class TrackStopAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        timeout_s: float = 0,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -638,7 +638,7 @@ class ConfigureBandAction(Action):
         dish_manager_cm,
         band_number,
         synchronise,
-        timeout_s: float = 0,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -712,7 +712,7 @@ class ConfigureBandActionSequence(Action):
         dish_manager_cm,
         band_number: int,
         synchronise: bool,
-        timeout_s: float = 0,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
@@ -828,7 +828,7 @@ class TrackLoadStaticOffAction(Action):
         dish_manager_cm,
         off_xel,
         off_el,
-        timeout_s: float = 0,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,

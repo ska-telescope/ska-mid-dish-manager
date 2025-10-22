@@ -67,6 +67,7 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             "sub-device-1",
             "sub-device-2",
             "sub-device-3",
+            action_timeout_s=120,
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
         )

@@ -986,7 +986,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             component_manager=self,
             task_callback=task_callback,
         )
-
         status, response = self.submit_task(
             SetStandbyLPModeAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_set_standby_lp_allowed,
@@ -1006,7 +1005,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             component_manager=self,
             task_callback=task_callback,
         )
-
         status, response = self.submit_task(
             SetStandbyFPModeAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_set_standby_fp_allowed,
