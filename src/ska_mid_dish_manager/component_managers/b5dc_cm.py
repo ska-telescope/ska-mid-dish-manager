@@ -48,7 +48,7 @@ class B5DCComponentManager(TangoDeviceComponentManager):
         self._communication_state_lock = state_update_lock
         self._component_state_lock = state_update_lock
 
-    def _update_component_state(self, **kwargs) -> None:  # type: ignore
+    def _update_component_state(self, **kwargs) -> None:
         enum_conversion = {
             "rfcmpllLock": B5dcPllState,
         }

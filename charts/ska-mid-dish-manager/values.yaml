@@ -119,16 +119,7 @@ ska-mid-wms:
     enabled: True
 
 ska-mid-dish-b5dc-proxy:
-  enabled: true
-  ska-tango-base:
-    enabled: false
-    itango:
-      enabled: false
-  deviceServers:
-     b5dc-proxy:
-      enabled: true
+  enabled: false
 
 ska-mid-dish-dcp-lib:
-  enabled: true
-  b5dcSimulator:
-    enabled: true
+  enabled: false
