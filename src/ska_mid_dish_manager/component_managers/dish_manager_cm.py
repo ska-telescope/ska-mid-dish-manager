@@ -20,7 +20,6 @@ from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
     SetMaintenanceModeAction,
-    SetOperateModeAction,
     SetStandbyFPModeAction,
     SetStandbyLPModeAction,
     SlewAction,
@@ -1008,25 +1007,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status, response = self.submit_task(
             SetStandbyFPModeAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_set_standby_fp_allowed,
-            task_callback=task_callback,
-        )
-        return status, response
-
-    @check_communicating
-    def set_operate_mode(
-        self,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
-        """Transition the dish to OPERATE mode."""
-        _is_set_operate_mode_allowed = partial(
-            self._dish_mode_model.is_command_allowed,
-            "SetOperateMode",
-            component_manager=self,
-            task_callback=task_callback,
-        )
-        status, response = self.submit_task(
-            SetOperateModeAction(self.logger, self, self.get_action_timeout()).execute,
-            is_cmd_allowed=_is_set_operate_mode_allowed,
             task_callback=task_callback,
         )
         return status, response

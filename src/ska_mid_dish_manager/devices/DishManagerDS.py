@@ -133,7 +133,6 @@ class DishManager(SKAController):
 
         for command_name, method_name in [
             ("SetStandbyLPMode", "set_standby_lp_mode"),
-            ("SetOperateMode", "set_operate_mode"),
             ("SetMaintenanceMode", "set_maintenance_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
@@ -1626,8 +1625,8 @@ class DishManager(SKAController):
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 1. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -1653,8 +1652,8 @@ class DishManager(SKAController):
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 2. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -1678,8 +1677,8 @@ class DishManager(SKAController):
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 3. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
         """
         raise NotImplementedError
 
@@ -1697,8 +1696,8 @@ class DishManager(SKAController):
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 4. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
         """
         raise NotImplementedError
 
@@ -1716,8 +1715,8 @@ class DishManager(SKAController):
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 5a. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
         """
         raise NotImplementedError
 
@@ -1735,8 +1734,8 @@ class DishManager(SKAController):
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 5b. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
         """
         raise NotImplementedError
 
@@ -1794,21 +1793,24 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
     )
     def SetOperateMode(self) -> DevVarLongStringArrayType:
-        """Implemented as a Long Running Command.
+        """Deprecated command.
 
-        This command triggers the Dish to transition to the OPERATE Dish
-        Element Mode, and returns to the caller. This mode fulfils the main
-        purpose of the Dish, which is to point to designated directions while
-        capturing data and transmitting it to CSP. The Dish will automatically
-        start capturing data after entering OPERATE mode.
+        This command was previously used to trigger the Dish to transition to the OPERATE Dish
+        Element Mode, however, this command has now been deprecated. To transition to OPERATE dish
+        mode the ConfigureBandX command should be used to configure a band, this will automatically
+        transition to OPERATE dish mode on successfull configuration.
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("SetOperateMode")
-        result_code, unique_id = handler()
-
-        return ([result_code], [unique_id])
+        return (
+            [ResultCode.REJECTED],
+            [
+                "SetOperateMode command is deprecated. To transition to OPERATE dish mode use the"
+                " ConfigureBandX command to configure a band, this will automatically transition"
+                " to OPERATE dish mode on successfull configuration."
+            ],
+        )
 
     @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)

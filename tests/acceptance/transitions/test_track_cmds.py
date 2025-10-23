@@ -385,9 +385,6 @@ def test_maximum_capacity(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_fails_when_track_called_late(

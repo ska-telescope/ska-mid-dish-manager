@@ -198,10 +198,6 @@ class SetStandbyFPMode:
     """SetStandbyFPMode command handler."""
 
 
-class SetOperateMode:
-    """SetOperateMode command handler."""
-
-
 class Track:
     """Track command handler."""
 
