@@ -111,10 +111,12 @@ def reset_dish_to_standby(
             ):
                 # go to LP ...
                 ds_device_proxy.SetStandbyMode()
-            dish_mode_events.wait_for_value(DishMode.STANDBY_LP, timeout=20)
+            dish_mode_events.wait_for_value(DishMode.STANDBY_LP, timeout=30)
     except (RuntimeError, AssertionError):
         # check dish manager before giving up
         logger.exception("Failed to reset subdevices to known states.")
+        logger.info("DishManager commands: %s", dish_manager_proxy.longrunningcommandstatus)
+        logger.info("DSManager commands: %s", dish_manager_proxy.longrunningcommandstatus)
 
     try:
         if dish_manager_proxy.dishmode != DishMode.STANDBY_FP:
