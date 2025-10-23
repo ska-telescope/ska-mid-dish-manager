@@ -400,6 +400,24 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: actionTimeoutSeconds
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "\n            Timeout (in seconds) to be used for each action.\
+        \ On each action DishManager will wait\n            for the timeout duration\
+        \ for expected subservient device attribute updates.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: actionTimeoutSeconds
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: actionTimeoutSeconds
     - name: adminMode
       data_format: SCALAR
       data_type: DevEnum
@@ -2080,17 +2098,15 @@
       writable_attr_name: None
     properties:
     - name: DSDeviceFqdn
-    - name: DefaultWatchdogTimeout
     - name: DishId
-    - name: GroupDefinitions
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
+    - name: MaintenanceModeActive
     - name: MaxCapabilities
-    - name: MeanWindSpeedThreshold
     - name: ReceptorNumber
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: WMSDeviceNames
-    - name: WindGustThreshold
+    - name: __SubDevices
     - name: polled_cmd
+

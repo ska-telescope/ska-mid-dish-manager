@@ -1797,8 +1797,8 @@ class DishManager(SKAController):
 
         This command was previously used to trigger the Dish to transition to the OPERATE Dish
         Element Mode, however, this command has now been deprecated. To transition to OPERATE dish
-        mode the ConfigureBandX command should be used to configure a band, this will automatically
-        transition to OPERATE dish mode on successfull configuration.
+        mode the ConfigureBand<N> command should be used to configure a band, this will
+        automatically transition to OPERATE dish mode on successfull configuration.
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -1807,7 +1807,7 @@ class DishManager(SKAController):
             [ResultCode.REJECTED],
             [
                 "SetOperateMode command is deprecated. To transition to OPERATE dish mode use the"
-                " ConfigureBandX command to configure a band, this will automatically transition"
+                " ConfigureBand<N> command to configure a band, this will automatically transition"
                 " to OPERATE dish mode on successfull configuration."
             ],
         )
