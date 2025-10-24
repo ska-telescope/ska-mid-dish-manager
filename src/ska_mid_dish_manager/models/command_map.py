@@ -516,6 +516,8 @@ class CommandMap:
         request_cmd = f"ConfigureBand{int(band)}"
         if band == Band.B5a:
             request_cmd = "ConfigureBand5a"
+        if band == Band.B5b:
+            request_cmd = "ConfigureBand5b"
 
         indexer_enum = IndexerPosition(int(band))
 
