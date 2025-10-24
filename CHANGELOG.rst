@@ -10,6 +10,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 Version 8.4.7
 *************
+- Added `lastcommandinvoked` attribute
+- Reduced dish manager logs
 - Add handlers for configureBand<3, 4, 5a, 5b>
   - NOTE: ConfigureBand5b will call ConfigureBand1 until we have a B5DC
 
