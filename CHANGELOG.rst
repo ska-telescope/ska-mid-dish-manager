@@ -7,6 +7,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Add handlers for configureBand<3, 4, 5a, 5b>
+  - NOTE: ConfigureBand5b will call ConfigureBand1 until we have a B5DC
 
 Version 8.4.5
 *************
