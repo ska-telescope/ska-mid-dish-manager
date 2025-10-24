@@ -68,6 +68,9 @@ server:
                     {{- range $.Values.dishmanager.wms.station_ids }}
                     - "ska-mid/weather-monitoring/{{ . }}"
                     {{- end }}
+                - name: "DefaultActionTimeoutSeconds"
+                  values:
+                    - "{{ $.Values.dishmanager.actions.timeout_seconds }}"
               attribute_properties:
                 - attribute: "ignoreSpf"
                   properties:
