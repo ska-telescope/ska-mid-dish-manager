@@ -513,15 +513,6 @@ class CommandMap:
         :param task_callback: task callback, defaults to None
         :type task_callback: Optional[Callable], optional
         """
-        # Temporary mapping until B5DC is available
-        if band == Band.B5b:
-            update_task_status(
-                task_callback,
-                progress="NOTE: Configuring Band 5b to Band 1 until B5DC is available",
-            )
-            band = Band.B1
-            self.logger.warning("Configuring Band 5b to Band 1 until B5DC is available")
-
         request_cmd = f"ConfigureBand{int(band)}"
         if band == Band.B5a:
             request_cmd = "ConfigureBand5a"

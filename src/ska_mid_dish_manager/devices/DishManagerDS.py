@@ -1699,7 +1699,8 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand5b")
 
-        result_code, unique_id = handler(Band.B5b, synchronise)
+        self.logger.warning("ConfigureBand5b called, but we're configuring B1 until 5B is ready.")
+        result_code, unique_id = handler(Band.B1, synchronise)
 
         return ([result_code], [unique_id])
 
