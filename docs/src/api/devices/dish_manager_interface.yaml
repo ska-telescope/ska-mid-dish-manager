@@ -405,7 +405,9 @@
       data_type: DevDouble
       description: "\n            Timeout (in seconds) to be used for each action.\
         \ On each action DishManager will wait\n            for the timeout duration\
-        \ for expected subservient device attribute updates.\n        "
+        \ for expected subservient device attribute updates. A value\n           \
+        \ <= 0 will disable waiting and actions will complete immediately.\n    \
+        \    "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -2098,15 +2100,18 @@
       writable_attr_name: None
     properties:
     - name: DSDeviceFqdn
+    - name: DefaultWatchdogTimeout
     - name: DishId
+    - name: GroupDefinitions
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
     - name: MaintenanceModeActive
     - name: MaxCapabilities
+    - name: MeanWindSpeedThreshold
     - name: ReceptorNumber
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: __SubDevices
+    - name: WMSDeviceNames
+    - name: WindGustThreshold
     - name: polled_cmd
-

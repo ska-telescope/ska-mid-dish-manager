@@ -1555,7 +1555,8 @@ class DishManager(SKAController):
         access=AttrWriteType.READ_WRITE,
         doc="""
             Timeout (in seconds) to be used for each action. On each action DishManager will wait
-            for the timeout duration for expected subservient device attribute updates.
+            for the timeout duration for expected subservient device attribute updates. A value
+            <= 0 will disable waiting and actions will complete immediately.
         """,
     )
     def actionTimeoutSeconds(self):
