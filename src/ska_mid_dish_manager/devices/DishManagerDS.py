@@ -483,6 +483,8 @@ class DishManager(SKAController):
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
+                "isklocked": "isKLocked",
+                "spectralinversion": "spectralInversion",
                 "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
                 "actstaticoffsetvalueel": "actStaticOffsetValueEl",
                 "dscpowerlimitkw": "dscPowerLimitKw",
@@ -1464,6 +1466,40 @@ class DishManager(SKAController):
     def pseudoRandomNoiseDiodePars(self, values):
         """Set the device pseudo random noise diode pars."""
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
+
+    @attribute(
+        dtype=bool,
+        doc="""
+            Check the SAT.RM module to see if
+            the k- value is locked. If not false is returned.
+        """,
+        access=AttrWriteType.READ,
+    )
+    def isKLocked(self):
+        """Returns the status of the SPFRx isKLocked attribute."""
+        self.logger.debug("Read isKLocked")
+        return self.component_manager.component_state.get("isklocked", False)
+
+    @attribute(
+        dtype=bool,
+        doc="""
+            Spectral inversion to correct the frequency sense of the currently
+            configured band with respect to the RF signal.
+
+            Logic 0: Output signal in the same frequency sense as input.
+
+            Logic 1: Output signal in the opposite frequency sense as input.
+
+            Setting this attribute to true will set the
+            spectrum to be flipped.
+
+        """,
+        access=AttrWriteType.READ,
+    )
+    def spectralInversion(self):
+        """Returns the status of the SPFRx spectralInversion attribute."""
+        self.logger.debug("Read spectralInversion")
+        return self.component_manager.component_state.get("spectralinversion", False)
 
     @attribute(
         dtype=str,

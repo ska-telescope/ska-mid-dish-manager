@@ -126,6 +126,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             noisediodemode=NoiseDiodeMode.OFF,
             periodicnoisediodepars=[],
             pseudorandomnoisediodepars=[0, 0, 0],
+            isklocked=False,
+            spectralinversion=False,
             actstaticoffsetvaluexel=0.0,
             actstaticoffsetvalueel=0.0,
             tracktablecurrentindex=0,
@@ -190,6 +192,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "noisediodemode": NoiseDiodeMode.OFF,
             "periodicnoisediodepars": [0, 0, 0],
             "pseudorandomnoisediodepars": [0, 0, 0],
+            "isklocked": False,
+            "spectralinversion": False,
             "adminmode": AdminMode.OFFLINE,
             "communication_state_callback": partial(
                 self._sub_device_communication_state_changed, DishDevice.SPFRX
@@ -305,6 +309,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "noiseDiodeMode",
                 "periodicNoiseDiodePars",
                 "pseudoRandomNoiseDiodePars",
+                "isKLocked",
+                "spectralInversion",
             ],
         }
 

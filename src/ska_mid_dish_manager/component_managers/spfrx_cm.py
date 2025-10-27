@@ -110,6 +110,8 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "attenuation1polv/y",
             "attenuation2polh/x",
             "attenuation2polv/y",
+            "isklocked",
+            "spectralinversion",
         )
 
         super().__init__(
