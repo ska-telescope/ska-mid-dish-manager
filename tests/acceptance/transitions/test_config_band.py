@@ -69,7 +69,6 @@ def test_configure_band_a(
     remove_subscriptions(subscriptions)
 
 
-
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_configure_band_2_json(
@@ -221,6 +220,7 @@ def test_configure_band_5b_json(
 
     remove_subscriptions(subscriptions)
 
+
 @pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -298,4 +298,3 @@ def test_configure_band_b(
     progress_event_store.clear_queue()
 
     remove_subscriptions(subscriptions)
-

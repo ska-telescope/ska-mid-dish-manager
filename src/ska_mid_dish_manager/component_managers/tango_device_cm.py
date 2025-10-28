@@ -201,7 +201,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # cross checks all the other commands or just wait for feature branch with new S&M
         # fallback to defaults if not provided
         # monitored_attributes = monitored_attributes or self._monitored_attributes
-        monitored_attributes = self._monitored_attributes
 
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
