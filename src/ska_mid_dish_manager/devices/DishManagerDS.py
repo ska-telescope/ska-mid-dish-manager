@@ -1313,6 +1313,7 @@ class DishManager(SKAController):
     @ignoreSpf.write
     def ignoreSpf(self, value):
         """Sets ignoreSpf."""
+        print(f"Setting ignoreSpf to: {value}")
         self.logger.debug("Write to ignoreSpf, %s", value)
         self.component_manager.set_spf_device_ignored(value)
 
@@ -1332,6 +1333,7 @@ class DishManager(SKAController):
     @ignoreSpfrx.write
     def ignoreSpfrx(self, value):
         """Sets ignoreSpfrx."""
+        print(f"Setting ignoreSpfrx to: {value}")
         self.logger.debug("Write to ignoreSpfrx, %s", value)
         self.component_manager.set_spfrx_device_ignored(value)
 

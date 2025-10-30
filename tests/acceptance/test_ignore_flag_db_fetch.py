@@ -8,7 +8,7 @@ from ska_mid_dish_manager.utils.helper_module import get_device_attribute_proper
 
 
 @pytest.mark.only
-@pytest.mark.forked
+# @pytest.mark.forked
 def test_device_fetches_db_value_on_restart(dish_manager_proxy):
     """Test dish manager fetches db values for ignore flags after device restarts."""
     assert not dish_manager_proxy.ignoreSpf
@@ -40,8 +40,8 @@ def test_device_fetches_db_value_on_restart(dish_manager_proxy):
     db_spfrx_ignore_flag = get_device_attribute_property_value(
         "ignoreSpfrx", dish_manager_proxy.dev_name()
     )
-    assert db_spf_ignore_flag == "true"
-    assert db_spfrx_ignore_flag == "true"
+    assert db_spf_ignore_flag == "true", dish_manager_proxy.ignoreSpf
+    assert db_spfrx_ignore_flag == "true", dish_manager_proxy.ignoreSpfrx
 
     # check that the ignore flags are persisted by the device after restart
     assert dish_manager_proxy.ignoreSpf
