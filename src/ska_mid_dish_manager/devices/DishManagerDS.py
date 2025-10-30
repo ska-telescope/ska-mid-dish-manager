@@ -1304,7 +1304,6 @@ class DishManager(SKAController):
         "to the device, it will be excluded from state aggregation, and no device related "
         "attributes will be updated.",
         memorized=True,
-        hw_memorized=True,
     )
     def ignoreSpf(self):
         """Returns ignoreSpf."""
@@ -1324,7 +1323,6 @@ class DishManager(SKAController):
         "to the device, it will be excluded from state aggregation, and no device related "
         "attributes will be updated.",
         memorized=True,
-        hw_memorized=True,
     )
     def ignoreSpfrx(self):
         """Returns ignoreSpfrx."""

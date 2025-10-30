@@ -454,7 +454,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ignore_spf_value,
                 )
                 ignore_spf = ignore_spf_value.lower() == "true"
-                self.set_spf_device_ignored(ignore_spf, sync=False)
+                self.set_spf_device_ignored(ignore_spf, sync=False, skip_db_update=True)
 
             # ignoreSpfrx
             ignore_spfrx_value = self._tango_db_accessor.get_device_attribute_property_value(
@@ -468,7 +468,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ignore_spfrx_value,
                 )
                 ignore_spfrx = ignore_spfrx_value.lower() == "true"
-                self.set_spfrx_device_ignored(ignore_spfrx, sync=False)
+                self.set_spfrx_device_ignored(ignore_spfrx, sync=False, skip_db_update=True)
         except tango.DevFailed:
             self.logger.debug(
                 "Could not update memorized attributes. Failed to connect to database."
@@ -896,34 +896,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
 
-    def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
-        """Set the SPF device ignored boolean and update device communication."""
-        if ignored != self.component_state["ignorespf"]:
-            self.logger.debug("Setting ignore SPF device as %s", ignored)
-            self._update_component_state(ignorespf=ignored)
-            if ignored:
-                if "SPF" in self.sub_component_managers:
-                    self.sub_component_managers["SPF"].stop_communicating()
-            else:
-                self.sub_component_managers["SPF"].start_communicating()
-
-            if sync:
-                self.sync_component_states()
-
-    def set_spfrx_device_ignored(self, ignored: bool, sync: bool = True):
-        """Set the SPFRxdevice ignored boolean and update device communication."""
-        if ignored != self.component_state["ignorespfrx"]:
-            self.logger.debug("Setting ignore SPFRx device as %s", ignored)
-            self._update_component_state(ignorespfrx=ignored)
-            if ignored:
-                if "SPFRX" in self.sub_component_managers:
-                    self.sub_component_managers["SPFRX"].stop_communicating()
-            else:
-                self.sub_component_managers["SPFRX"].start_communicating()
-
-            if sync:
-                self.sync_component_states()
-
     def sync_component_states(self):
         """Sync monitored attributes on component managers with their respective sub devices.
 
@@ -937,6 +909,64 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if not self.is_device_ignored(device) and device != "WMS":
                     component_manager.clear_monitored_attributes()
                     component_manager.update_state_from_monitored_attributes()
+
+    def set_spf_device_ignored(
+        self, ignored: bool, sync: bool = True, skip_db_update: bool = False
+    ):
+        """Set the SPF device ignored boolean and update device communication."""
+        if ignored != self.component_state["ignorespf"]:
+            self.logger.debug("Setting ignore SPF device as %s", ignored)
+            self._update_component_state(ignorespf=ignored)
+            if ignored:
+                if "SPF" in self.sub_component_managers:
+                    self.sub_component_managers["SPF"].stop_communicating()
+            else:
+                self.sub_component_managers["SPF"].start_communicating()
+
+            if sync:
+                self.sync_component_states()
+
+            if not skip_db_update:
+                # update the memorized attribute in TangoDB
+                try:
+                    self._tango_db_accessor.set_device_attribute_property_value(
+                        "ignoreSpf", self.tango_device_name, ignored
+                    )
+                except tango.DevFailed:
+                    print(f"Failed to update ignoreSpf in TangoDB for {self.tango_device_name}.")
+                    self.logger.exception(
+                        "Could not update ignoreSpf in TangoDB for device %s.",
+                        self.tango_device_name,
+                    )
+
+    def set_spfrx_device_ignored(
+        self, ignored: bool, sync: bool = True, skip_db_update: bool = False
+    ):
+        """Set the SPFRxdevice ignored boolean and update device communication."""
+        if ignored != self.component_state["ignorespfrx"]:
+            self.logger.debug("Setting ignore SPFRx device as %s", ignored)
+            self._update_component_state(ignorespfrx=ignored)
+            if ignored:
+                if "SPFRX" in self.sub_component_managers:
+                    self.sub_component_managers["SPFRX"].stop_communicating()
+            else:
+                self.sub_component_managers["SPFRX"].start_communicating()
+
+            if sync:
+                self.sync_component_states()
+
+            if not skip_db_update:
+                # update the memorized attribute in TangoDB
+                try:
+                    self._tango_db_accessor.set_device_attribute_property_value(
+                        "ignoreSpfrx", self.tango_device_name, ignored
+                    )
+                except tango.DevFailed:
+                    print(f"Failed to update ignoreSpfrx in TangoDB for {self.tango_device_name}.")
+                    self.logger.exception(
+                        "Could not update ignoreSpfrx in TangoDB for device %s.",
+                        self.tango_device_name,
+                    )
 
     def update_pointing_model_params(self, attr: str, values: list[float]) -> None:
         """Update band pointing model parameters for the given attribute."""
