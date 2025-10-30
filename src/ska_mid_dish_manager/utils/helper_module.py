@@ -31,10 +31,15 @@ def get_device_attribute_property_value(
 
     :param: attribute_name: Tango attribute name
     :type attribute_name: str
+    :param: device_name: Tango device name
+    :type device_name: str
+    :param: logger: Logger instance
+    :type logger: logging.Logger
     :return: value for the given attribute
     :rtype: Optional[str]
     """
     logger.debug("Getting attribute property value for %s.", attribute_name)
+    print(f"Getting attribute property value for {attribute_name}.")
     database = tango.Database()
     attr_property = database.get_device_attribute_property(device_name, attribute_name)
     attr_property_value = attr_property[attribute_name]
