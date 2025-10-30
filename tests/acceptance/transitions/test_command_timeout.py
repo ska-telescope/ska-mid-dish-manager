@@ -21,7 +21,7 @@ def test_action_timeout(
     toggle_skip_attributes,
     restore_action_timeout,
 ):
-    """Test AbortCommands aborts the executing long running command."""
+    """Test commanded action timeout."""
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
     result_event_store = event_store_class()

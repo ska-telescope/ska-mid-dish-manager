@@ -744,13 +744,15 @@ class ConfigureBandActionSequence(Action):
             timeout_s=self.timeout_s,
         )
 
+        final_action = operate_action if current_dish_mode != DishMode.STOW else None
+
         # Step 1: Configure band action
         configure_action = ConfigureBandAction(
             logger=self.logger,
             dish_manager_cm=self.dish_manager_cm,
             band_number=self.band_number,
             synchronise=self.synchronise,
-            action_on_success=operate_action,  # chain operate action
+            action_on_success=final_action,  # chain operate action if we aren't in STOW
             waiting_callback=self.waiting_callback,
             timeout_s=self.timeout_s,
         )

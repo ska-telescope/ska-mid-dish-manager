@@ -88,3 +88,71 @@ def test_configure_band_2(
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+@pytest.mark.forked
+def test_configure_band_2_from_stow(
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+):
+    """Test ConfigureBand2."""
+    main_event_store = event_store_class()
+    result_event_store = event_store_class()
+    progress_event_store = event_store_class()
+
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "configuredBand": main_event_store,
+        "longRunningCommandProgress": progress_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+
+    # make sure configuredBand is not B2
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+    )
+    assert dish_manager_proxy.configuredBand == Band.B1
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+
+    main_event_store.clear_queue()
+    progress_event_store.clear_queue()
+
+    # Stow the dish
+    current_el = dish_manager_proxy.achievedPointing[2]
+    stow_position = 90.2
+    estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
+    dish_manager_proxy.SetStowMode()
+    main_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
+
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "ConfigureBand2 completed"]', timeout=30
+    )
+    main_event_store.wait_for_value(Band.B2, timeout=30)
+
+    expected_progress_updates = [
+        # ConfigureBand2
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
+        "Awaiting DS indexerposition change to B2",
+        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting configuredband change to B2",
+        "DS indexerposition changed to B2",
+        "DS.SetIndexPosition completed",
+        "SPFRX configuredband changed to B2",
+        "SPFRX.ConfigureBand2 completed",
+    ]
+
+    events = progress_event_store.get_queue_values(timeout=0)
+
+    events_string = "".join([str(attr_value) for _, attr_value in events])
+    for message in expected_progress_updates:
+        assert message in events_string
+
+    assert dish_manager_proxy.configuredBand == Band.B2
+    assert dish_manager_proxy.dishMode == DishMode.STOW
+
+    remove_subscriptions(subscriptions)
