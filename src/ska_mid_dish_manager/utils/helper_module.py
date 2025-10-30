@@ -46,3 +46,23 @@ def get_device_attribute_property_value(
     if len(attr_property_value) > 0:  # If the returned dict is not empty
         return attr_property_value["__value"][0]
     return None
+
+
+def set_device_attribute_property_value(
+    attribute_name, device_name, prop_value, logger=logging.getLogger(__name__)
+) -> None:
+    """Set attribute values on TangoDB.
+
+    :param: attribute_name: Tango attribute name
+    :type attribute_name: str
+    :param: device_name: Tango device name
+    :type device_name: str
+    :param: prop_value: Property value to set
+    :type prop_value: Any
+    :param: logger: Logger instance
+    :type logger: logging.Logger
+    """
+    logger.debug("Setting attribute property value for %s.", attribute_name)
+    print(f"Setting attribute property value for {attribute_name}.")
+    database = tango.Database()
+    database.put_device_attribute_property(device_name, {attribute_name: {"__value": prop_value}})
