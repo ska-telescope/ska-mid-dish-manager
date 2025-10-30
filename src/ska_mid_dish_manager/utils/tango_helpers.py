@@ -46,3 +46,19 @@ class TangoDbAccessor:
             self._database.put_device_property(self._tango_device_name, {property_name: value})
         except tango.DevFailed as e:
             self._logger.error("Failed to set property %s: %s", property_name, e)
+
+    def get_device_attribute_property_value(self, attribute_name, device_name) -> Optional[str]:
+        """Read memorized attributes values from TangoDB.
+
+        :param: attribute_name: Tango attribute name
+        :type attribute_name: str
+        :return: value for the given attribute
+        :rtype: Optional[str]
+        """
+        self._logger.debug("Getting attribute property value for %s.", attribute_name)
+        database = tango.Database()
+        attr_property = database.get_device_attribute_property(device_name, attribute_name)
+        attr_property_value = attr_property[attribute_name]
+        if len(attr_property_value) > 0:  # If the returned dict is not empty
+            return attr_property_value["__value"][0]
+        return None

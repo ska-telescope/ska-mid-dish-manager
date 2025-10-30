@@ -401,24 +401,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return active_component_managers
 
-    def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
-        """Read memorized attributes values from TangoDB.
-
-        :param: attribute_name: Tango attribute name
-        :type attribute_name: str
-        :return: value for the given attribute
-        :rtype: Optional[str]
-        """
-        self.logger.debug("Getting attribute property value for %s.", attribute_name)
-        database = tango.Database()
-        attr_property = database.get_device_attribute_property(
-            self.tango_device_name, attribute_name
-        )
-        attr_property_value = attr_property[attribute_name]
-        if len(attr_property_value) > 0:  # If the returned dict is not empty
-            return attr_property_value["__value"][0]
-        return None
-
     def _is_maintenance_mode_active(self) -> bool:
         """Check if MaintenanceModeActive property is set to True.
 
@@ -461,7 +443,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating memorized attributes. Trying to read from database.")
         try:
             # ignoreSpf
-            ignore_spf_value = self._get_device_attribute_property_value("ignoreSpf")
+            ignore_spf_value = self._tango_db_accessor.get_device_attribute_property_value(
+                "ignoreSpf",
+                self.tango_device_name,
+            )
 
             if ignore_spf_value is not None:
                 self.logger.debug(
@@ -472,7 +457,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self.set_spf_device_ignored(ignore_spf, sync=False)
 
             # ignoreSpfrx
-            ignore_spfrx_value = self._get_device_attribute_property_value("ignoreSpfrx")
+            ignore_spfrx_value = self._tango_db_accessor.get_device_attribute_property_value(
+                "ignoreSpfrx",
+                self.tango_device_name,
+            )
 
             if ignore_spfrx_value is not None:
                 self.logger.debug(
