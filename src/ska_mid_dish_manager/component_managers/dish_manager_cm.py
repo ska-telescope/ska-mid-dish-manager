@@ -50,7 +50,10 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.utils.decorators import check_communicating
-from ska_mid_dish_manager.utils.helper_module import update_task_status
+from ska_mid_dish_manager.utils.helper_module import (
+    get_device_attribute_property_value,
+    update_task_status,
+)
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
@@ -390,24 +393,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return active_component_managers
 
-    def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
-        """Read memorized attributes values from TangoDB.
-
-        :param: attribute_name: Tango attribute name
-        :type attribute_name: str
-        :return: value for the given attribute
-        :rtype: Optional[str]
-        """
-        self.logger.debug("Getting attribute property value for %s.", attribute_name)
-        database = tango.Database()
-        attr_property = database.get_device_attribute_property(
-            self.tango_device_name, attribute_name
-        )
-        attr_property_value = attr_property[attribute_name]
-        if len(attr_property_value) > 0:  # If the returned dict is not empty
-            return attr_property_value["__value"][0]
-        return None
-
     def try_update_memorized_attributes_from_db(self):
         """Read memorized attributes values from TangoDB and update device attributes."""
         if "TANGO_HOST" not in os.environ:
@@ -417,7 +402,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating memorized attributes. Trying to read from database.")
         try:
             # ignoreSpf
-            ignore_spf_value = self._get_device_attribute_property_value("ignoreSpf")
+            ignore_spf_value = get_device_attribute_property_value(
+                "ignoreSpf", self.tango_device_name, self.logger
+            )
 
             if ignore_spf_value is not None:
                 self.logger.debug(
@@ -428,7 +415,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self.set_spf_device_ignored(ignore_spf)
 
             # ignoreSpfrx
-            ignore_spfrx_value = self._get_device_attribute_property_value("ignoreSpfrx")
+            ignore_spfrx_value = get_device_attribute_property_value(
+                "ignoreSpfrx", self.tango_device_name, self.logger
+            )
 
             if ignore_spfrx_value is not None:
                 self.logger.debug(
