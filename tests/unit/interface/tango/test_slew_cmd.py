@@ -19,6 +19,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     "current_dish_mode",
     [
         DishMode.STANDBY_LP,
+        DishMode.STANDBY_FP,
         DishMode.STARTUP,
         DishMode.SHUTDOWN,
         DishMode.MAINTENANCE,
@@ -26,7 +27,7 @@ from ska_mid_dish_manager.models.dish_enums import (
         DishMode.CONFIG,
     ],
 )
-def test_set_slew_cmd_fails_when_dish_mode_is_not_operate_or_fp(
+def test_set_slew_cmd_fails_when_dish_mode_is_not_operate(
     dish_manager_resources,
     event_store_class,
     current_dish_mode,
@@ -70,8 +71,7 @@ def test_set_slew_cmd_fails_when_dish_mode_is_not_operate_or_fp(
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
     expected_progress_updates = (
-        "Slew command rejected for current dishMode. "
-        "Slew command is allowed for dishMode STANDBY-FP, OPERATE"
+        "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE"
     )
     lrc_progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
 
@@ -140,13 +140,7 @@ def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
 
 @pytest.mark.unit
 @pytest.mark.forked
-@pytest.mark.parametrize(
-    ("dish_mode, operating_mode"),
-    [(DishMode.OPERATE, DSOperatingMode.POINT), (DishMode.STANDBY_FP, DSOperatingMode.STANDBY)],
-)
 def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
-    dish_mode,
-    operating_mode,
     dish_manager_resources,
     event_store_class,
 ):
@@ -176,12 +170,12 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
     )
 
     ds_cm._update_component_state(
-        operatingmode=operating_mode,
+        operatingmode=DSOperatingMode.POINT,
         powerstate=DSPowerState.FULL_POWER,
     )
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
-    main_event_store.wait_for_value(dish_mode)
+    main_event_store.wait_for_value(DishMode.OPERATE)
     ds_cm._update_component_state(pointingstate=PointingState.READY)
     main_event_store.wait_for_value(PointingState.READY)
 
