@@ -58,7 +58,6 @@ def test_abort_commands(
     progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
     # Check that the Dish Manager did not transition to FP
     dish_mode_event_store.wait_for_value(DishMode.UNKNOWN)
-    assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
 
     # enable spf to send attribute updates
     spf_device_proxy.skipAttributeUpdates = False

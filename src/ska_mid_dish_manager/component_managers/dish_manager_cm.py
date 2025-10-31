@@ -470,7 +470,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ignore_spf_value,
                 )
                 ignore_spf = ignore_spf_value.lower() == "true"
-                self.set_spf_device_ignored(ignore_spf)
+                self.set_spf_device_ignored(ignore_spf, sync=False)
 
             # ignoreSpfrx
             ignore_spfrx_value = self._get_device_attribute_property_value("ignoreSpfrx")
@@ -481,7 +481,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ignore_spfrx_value,
                 )
                 ignore_spfrx = ignore_spfrx_value.lower() == "true"
-                self.set_spfrx_device_ignored(ignore_spfrx)
+                self.set_spfrx_device_ignored(ignore_spfrx, sync=False)
         except tango.DevFailed:
             self.logger.debug(
                 "Could not update memorized attributes. Failed to connect to database."
@@ -713,9 +713,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
             except tango.DevFailed:
                 # this will impact configuredBand calculation on dish manager
-                self.logger.warning(
-                    "Encountered an error writing bandInFocus %s on SPF", band_in_focus
-                )
+                pass
             else:
                 spf_component_state["bandinfocus"] = band_in_focus
 
@@ -896,7 +894,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
 
-    def set_spf_device_ignored(self, ignored: bool):
+    def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPF device ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespf"]:
             self.logger.debug("Setting ignore SPF device as %s", ignored)
@@ -904,11 +902,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if ignored:
                 if "SPF" in self.sub_component_managers:
                     self.sub_component_managers["SPF"].stop_communicating()
-                    self.sub_component_managers["SPF"].clear_monitored_attributes()
             else:
                 self.sub_component_managers["SPF"].start_communicating()
 
-    def set_spfrx_device_ignored(self, ignored: bool):
+            if sync:
+                self.sync_component_states()
+
+    def set_spfrx_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPFRxdevice ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespfrx"]:
             self.logger.debug("Setting ignore SPFRx device as %s", ignored)
@@ -916,11 +916,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if ignored:
                 if "SPFRX" in self.sub_component_managers:
                     self.sub_component_managers["SPFRX"].stop_communicating()
-                    self.sub_component_managers["SPFRX"].clear_monitored_attributes()
             else:
                 self.sub_component_managers["SPFRX"].start_communicating()
 
-            self._update_component_state(ignorespfrx=ignored)
+            if sync:
+                self.sync_component_states()
 
     def sync_component_states(self):
         """Sync monitored attributes on component managers with their respective sub devices.
@@ -940,17 +940,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Update band pointing model parameters for the given attribute."""
         try:
             if len(values) != BAND_POINTING_MODEL_PARAMS_LENGTH:
-                raise ValueError(
+                err_msg = (
                     f"Expected {BAND_POINTING_MODEL_PARAMS_LENGTH} arguments but got"
                     f" {len(values)} arg(s)."
                 )
+                self.logger.error(err_msg)
+                raise ValueError(err_msg)
             ds_com_man = self.sub_component_managers["DS"]
             ds_com_man.write_attribute_value(attr, values)
         except tango.DevFailed:
-            self.logger.exception("Failed to write to %s on DSManager", attr)
-            raise
-        except ValueError:
-            self.logger.exception("Failed to update %s", attr)
             raise
 
     def track_load_table(
@@ -1240,11 +1238,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         def _is_slew_cmd_allowed():
-            if self.component_state["dishmode"] not in [DishMode.OPERATE, DishMode.STANDBY_FP]:
+            if self.component_state["dishmode"] != DishMode.OPERATE:
                 update_task_status(
                     task_callback,
                     progress="Slew command rejected for current dishMode. "
-                    "Slew command is allowed for dishMode STANDBY-FP, OPERATE",
+                    "Slew command is allowed for dishMode OPERATE",
                 )
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
@@ -1507,7 +1505,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"to band {band_value} on DS"
             )
         except tango.DevFailed as err:
-            self.logger.exception("%s. The error response is: %s", ResultCode.FAILED, err)
             result_code = ResultCode.FAILED
             message = str(err)
 
@@ -1523,7 +1520,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
             self.logger.debug("Successfully updated trackInterpolationMode on DSManager.")
         except tango.DevFailed:
-            self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
         return (ResultCode.OK, "Successfully updated trackInterpolationMode on DSManager")
 
@@ -1537,7 +1533,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrx_cm.write_attribute_value("noiseDiodeMode", noise_diode_mode)
             self.logger.debug("Successfully updated noiseDiodeMode on SPFRx.")
         except tango.DevFailed:
-            self.logger.error("Failed to update noiseDiodeMode on SPFRx.")
             raise
         return (ResultCode.OK, "Successfully updated noiseDiodeMode on SPFRx")
 
@@ -1561,7 +1556,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_cm.write_attribute_value("periodicNoiseDiodePars", values)
                 self.logger.debug("Successfully updated periodicNoiseDiodePars on SPFRx.")
             except tango.DevFailed:
-                self.logger.error("Failed to update periodicNoiseDiodePars on SPFRx.")
                 raise
         else:
             raise AssertionError(
@@ -1592,7 +1586,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
                 self.logger.debug("Successfully updated pseudoRandomNoiseDiodePars on SPFRx.")
             except tango.DevFailed:
-                self.logger.error("Failed to update pseudoRandomNoiseDiodePars on SPFRx.")
                 raise
         else:
             raise AssertionError(
@@ -1645,7 +1638,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Successfully updated dscPowerLimitKw on DS.")
             self._update_component_state(dscpowerlimitkw=power_limit)
         except tango.DevFailed:
-            self.logger.error("Failed to update dscPowerLimitKw on DS.")
             raise
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
 
