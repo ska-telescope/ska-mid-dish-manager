@@ -666,9 +666,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
             except tango.DevFailed:
                 # this will impact configuredBand calculation on dish manager
-                self.logger.warning(
-                    "Encountered an error writing bandInFocus %s on SPF", band_in_focus
-                )
+                pass
             else:
                 spf_component_state["bandinfocus"] = band_in_focus
 
@@ -895,17 +893,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Update band pointing model parameters for the given attribute."""
         try:
             if len(values) != BAND_POINTING_MODEL_PARAMS_LENGTH:
-                raise ValueError(
+                err_msg = (
                     f"Expected {BAND_POINTING_MODEL_PARAMS_LENGTH} arguments but got"
                     f" {len(values)} arg(s)."
                 )
+                self.logger.error(err_msg)
+                raise ValueError(err_msg)
             ds_com_man = self.sub_component_managers["DS"]
             ds_com_man.write_attribute_value(attr, values)
         except tango.DevFailed:
-            self.logger.exception("Failed to write to %s on DSManager", attr)
-            raise
-        except ValueError:
-            self.logger.exception("Failed to update %s", attr)
             raise
 
     def track_load_table(
@@ -1413,7 +1409,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"to band {band_value} on DS"
             )
         except tango.DevFailed as err:
-            self.logger.exception("%s. The error response is: %s", ResultCode.FAILED, err)
             result_code = ResultCode.FAILED
             message = str(err)
 
@@ -1429,7 +1424,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
             self.logger.debug("Successfully updated trackInterpolationMode on DSManager.")
         except tango.DevFailed:
-            self.logger.error("Failed to update trackInterpolationMode on DSManager.")
             raise
         return (ResultCode.OK, "Successfully updated trackInterpolationMode on DSManager")
 
@@ -1443,7 +1437,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrx_cm.write_attribute_value("noiseDiodeMode", noise_diode_mode)
             self.logger.debug("Successfully updated noiseDiodeMode on SPFRx.")
         except tango.DevFailed:
-            self.logger.error("Failed to update noiseDiodeMode on SPFRx.")
             raise
         return (ResultCode.OK, "Successfully updated noiseDiodeMode on SPFRx")
 
@@ -1467,7 +1460,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_cm.write_attribute_value("periodicNoiseDiodePars", values)
                 self.logger.debug("Successfully updated periodicNoiseDiodePars on SPFRx.")
             except tango.DevFailed:
-                self.logger.error("Failed to update periodicNoiseDiodePars on SPFRx.")
                 raise
         else:
             raise AssertionError(
@@ -1498,7 +1490,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
                 self.logger.debug("Successfully updated pseudoRandomNoiseDiodePars on SPFRx.")
             except tango.DevFailed:
-                self.logger.error("Failed to update pseudoRandomNoiseDiodePars on SPFRx.")
                 raise
         else:
             raise AssertionError(
@@ -1551,7 +1542,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Successfully updated dscPowerLimitKw on DS.")
             self._update_component_state(dscpowerlimitkw=power_limit)
         except tango.DevFailed:
-            self.logger.error("Failed to update dscPowerLimitKw on DS.")
             raise
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
 
