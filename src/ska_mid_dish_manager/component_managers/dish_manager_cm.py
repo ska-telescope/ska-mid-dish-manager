@@ -425,7 +425,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ignore_spf_value,
                 )
                 ignore_spf = ignore_spf_value.lower() == "true"
-                self.set_spf_device_ignored(ignore_spf)
+                self.set_spf_device_ignored(ignore_spf, sync=False)
 
             # ignoreSpfrx
             ignore_spfrx_value = self._get_device_attribute_property_value("ignoreSpfrx")
@@ -436,7 +436,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ignore_spfrx_value,
                 )
                 ignore_spfrx = ignore_spfrx_value.lower() == "true"
-                self.set_spfrx_device_ignored(ignore_spfrx)
+                self.set_spfrx_device_ignored(ignore_spfrx, sync=False)
         except tango.DevFailed:
             self.logger.debug(
                 "Could not update memorized attributes. Failed to connect to database."
@@ -849,7 +849,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
 
-    def set_spf_device_ignored(self, ignored: bool):
+    def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPF device ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespf"]:
             self.logger.debug("Setting ignore SPF device as %s", ignored)
@@ -857,11 +857,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if ignored:
                 if "SPF" in self.sub_component_managers:
                     self.sub_component_managers["SPF"].stop_communicating()
-                    self.sub_component_managers["SPF"].clear_monitored_attributes()
             else:
                 self.sub_component_managers["SPF"].start_communicating()
 
-    def set_spfrx_device_ignored(self, ignored: bool):
+            if sync:
+                self.sync_component_states()
+
+    def set_spfrx_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPFRxdevice ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespfrx"]:
             self.logger.debug("Setting ignore SPFRx device as %s", ignored)
@@ -869,11 +871,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if ignored:
                 if "SPFRX" in self.sub_component_managers:
                     self.sub_component_managers["SPFRX"].stop_communicating()
-                    self.sub_component_managers["SPFRX"].clear_monitored_attributes()
             else:
                 self.sub_component_managers["SPFRX"].start_communicating()
 
-            self._update_component_state(ignorespfrx=ignored)
+            if sync:
+                self.sync_component_states()
 
     def sync_component_states(self):
         """Sync monitored attributes on component managers with their respective sub devices.
