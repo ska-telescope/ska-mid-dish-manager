@@ -636,8 +636,9 @@ class ConfigureBandAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        band_number,
-        synchronise,
+        band: Band,
+        synchronise: bool,
+        requested_cmd: str,
         timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
@@ -651,12 +652,13 @@ class ConfigureBandAction(Action):
             action_on_failure,
             waiting_callback,
         )
-        self.band_number = band_number
+        self.band = band
         self.synchronise = synchronise
 
-        self.band_enum = Band[f"B{band_number}"]
-        self.indexer_enum = IndexerPosition[f"B{band_number}"]
-        self.requested_cmd = f"ConfigureBand{band_number}"
+        self.indexer_enum = (
+            IndexerPosition[band] if band in IndexerPosition else IndexerPosition.UNKNOWN
+        )
+        self.requested_cmd = requested_cmd
 
         spfrx_configure_band_command = FannedOutSlowCommand(
             logger=self.logger,
@@ -710,8 +712,9 @@ class ConfigureBandActionSequence(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        band_number: int,
+        band: Band,
         synchronise: bool,
+        requested_cmd: str,
         timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
@@ -725,10 +728,12 @@ class ConfigureBandActionSequence(Action):
             action_on_failure,
             waiting_callback,
         )
-        self.band_number = band_number
+        self.band = band
         self.synchronise = synchronise
-        self.band_enum = Band[f"B{band_number}"]
-        self.indexer_enum = IndexerPosition[f"B{band_number}"]
+        self.indexer_enum = (
+            IndexerPosition[band] if band in IndexerPosition else IndexerPosition.UNKNOWN
+        )
+        self.requested_cmd = requested_cmd
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         """Execute the defined action."""
@@ -750,8 +755,9 @@ class ConfigureBandActionSequence(Action):
         configure_action = ConfigureBandAction(
             logger=self.logger,
             dish_manager_cm=self.dish_manager_cm,
-            band_number=self.band_number,
+            band=self.band,
             synchronise=self.synchronise,
+            requested_cmd=self.self.requested_cmd,
             action_on_success=final_action,  # chain operate action if we aren't in STOW
             waiting_callback=self.waiting_callback,
             timeout_s=self.timeout_s,

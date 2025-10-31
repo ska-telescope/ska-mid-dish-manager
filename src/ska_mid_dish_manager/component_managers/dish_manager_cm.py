@@ -1114,7 +1114,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     @check_communicating
     def configure_band_cmd(
         self,
-        band_number: Band,
+        band: Band,
         synchronise: bool,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
@@ -1129,10 +1129,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         :return: Result status and message
         :rtype: Tuple[TaskStatus, str]
         """
-        req_cmd = f"ConfigureBand{int(band_number)}"
-        if band_number == Band.B5a:
+        req_cmd = f"ConfigureBand{int(band)}"
+        if band == Band.B5a:
             req_cmd = "ConfigureBand5a"
-        if band_number == Band.B5b:
+        if band == Band.B5b:
             req_cmd = "ConfigureBand5b"
 
         _is_configure_band_cmd_allowed = partial(
@@ -1146,8 +1146,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ConfigureBandActionSequence(
                 self.logger,
                 self,
-                band_number=band_number,
+                band=band,
                 synchronise=synchronise,
+                requested_cmd=req_cmd,
                 timeout_s=self.get_action_timeout(),
             ).execute,
             is_cmd_allowed=_is_configure_band_cmd_allowed,
