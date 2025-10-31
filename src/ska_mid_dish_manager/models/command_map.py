@@ -1,6 +1,7 @@
 """Module to manage the mapping of commands to subservient devices."""
 
 import time
+from threading import Event
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -206,7 +207,7 @@ class CommandMap:
         awaited_event_attributes: Optional[List[str]] = None,
         awaited_event_values: Optional[List[Any]] = None,
         completed_response_msg: Optional[str] = None,
-        timeout: int = 3600,  # default timeout of 1 hour
+        timeout: int = 120,
     ) -> None:
         """Executes a long-running command.
 
@@ -442,6 +443,7 @@ class CommandMap:
             "SetMaintenanceMode",
             ["dishmode"],
             [DishMode.MAINTENANCE],
+            timeout=300,  # stow can take longer time
         )
 
     def track_cmd(
@@ -496,39 +498,53 @@ class CommandMap:
 
     def configure_band_cmd(
         self,
-        band_number,
-        synchronise,
-        task_abort_event=None,
+        band: Band,
+        synchronise: bool,
+        task_abort_event: Event = None,
         task_callback: Optional[Callable] = None,
     ):
-        """Configure band on DS and SPFRx."""
-        band_enum = Band[f"B{band_number}"]
-        indexer_enum = IndexerPosition[f"B{band_number}"]
-        requested_cmd = f"ConfigureBand{band_number}"
+        """Configure band on DS and SPFRx.
 
-        if self._dish_manager_cm.component_state["configuredband"] == band_enum:
+        :param band_number: Selected band
+        :type band_number: Band
+        :param synchronise: Passed on to SPFRx
+        :type synchronise: bool
+        :param task_abort_event: task abort flag, defaults to None
+        :type task_abort_event: Optional[Callable], optional
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        """
+        request_cmd = f"ConfigureBand{int(band)}"
+        if band == Band.B5a:
+            request_cmd = "ConfigureBand5a"
+        if band == Band.B5b:
+            request_cmd = "ConfigureBand5b"
+
+        indexer_enum = IndexerPosition(int(band))
+
+        if self._dish_manager_cm.component_state["configuredband"] == band:
             update_task_status(
                 task_callback,
-                progress=f"Already in band {band_enum}",
+                progress=f"Already in band {band}",
                 status=TaskStatus.COMPLETED,
-                result=(ResultCode.OK, f"{requested_cmd} completed"),
+                result=(ResultCode.OK, f"{request_cmd} completed"),
             )
             return
 
-        self.logger.info(f"{requested_cmd} called with synchronise = {synchronise}")
+        self.logger.info(f"{request_cmd} called with synchronise = {synchronise}")
 
         commands_for_sub_devices = {
             "DS": {
                 "command": "SetIndexPosition",
-                "commandArgument": int(band_number),
+                "commandArgument": int(band),
                 "awaitedAttributes": ["indexerposition"],
                 "awaitedValuesList": [indexer_enum],
             },
             "SPFRX": {
-                "command": requested_cmd,
+                "command": request_cmd,
                 "commandArgument": synchronise,
                 "awaitedAttributes": ["configuredband"],
-                "awaitedValuesList": [band_enum],
+                "awaitedValuesList": [band],
             },
         }
 
@@ -536,9 +552,9 @@ class CommandMap:
             task_callback,
             task_abort_event,
             commands_for_sub_devices,
-            requested_cmd,
+            request_cmd,
             ["configuredband"],
-            [band_enum],
+            [band],
         )
 
     def slew(
