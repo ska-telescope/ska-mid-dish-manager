@@ -655,9 +655,7 @@ class ConfigureBandAction(Action):
         self.band = band
         self.synchronise = synchronise
 
-        self.indexer_enum = (
-            IndexerPosition[band] if band in IndexerPosition else IndexerPosition.UNKNOWN
-        )
+        self.indexer_enum = IndexerPosition(int(band))
         self.requested_cmd = requested_cmd
 
         spfrx_configure_band_command = FannedOutSlowCommand(
@@ -666,7 +664,7 @@ class ConfigureBandAction(Action):
             command_name=self.requested_cmd,
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
             command_argument=synchronise,
-            awaited_component_state={"configuredband": self.band_enum},
+            awaited_component_state={"configuredband": self.band},
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
         )
 
@@ -684,7 +682,7 @@ class ConfigureBandAction(Action):
             action_name=self.requested_cmd,
             fanned_out_commands=[ds_set_index_position_command, spfrx_configure_band_command],
             component_state=self.dish_manager_cm._component_state,
-            awaited_component_state={"configuredband": self.band_enum},
+            awaited_component_state={"configuredband": self.band},
             action_on_success=action_on_success,
             action_on_failure=action_on_failure,
             waiting_callback=self.waiting_callback,
@@ -692,10 +690,10 @@ class ConfigureBandAction(Action):
         )
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
-        if self.dish_manager_cm._component_state["configuredband"] == self.band_enum:
+        if self.dish_manager_cm._component_state["configuredband"] == self.band:
             update_task_status(
                 task_callback,
-                progress=f"Already in band {self.band_enum}",
+                progress=f"Already in band {self.band}",
                 status=TaskStatus.COMPLETED,
                 result=(ResultCode.OK, f"{self.requested_cmd} completed"),
             )
@@ -730,9 +728,7 @@ class ConfigureBandActionSequence(Action):
         )
         self.band = band
         self.synchronise = synchronise
-        self.indexer_enum = (
-            IndexerPosition[band] if band in IndexerPosition else IndexerPosition.UNKNOWN
-        )
+        self.indexer_enum = IndexerPosition(int(band))
         self.requested_cmd = requested_cmd
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
@@ -757,7 +753,7 @@ class ConfigureBandActionSequence(Action):
             dish_manager_cm=self.dish_manager_cm,
             band=self.band,
             synchronise=self.synchronise,
-            requested_cmd=self.self.requested_cmd,
+            requested_cmd=self.requested_cmd,
             action_on_success=final_action,  # chain operate action if we aren't in STOW
             waiting_callback=self.waiting_callback,
             timeout_s=self.timeout_s,

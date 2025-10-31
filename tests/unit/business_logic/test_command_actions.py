@@ -221,8 +221,10 @@ class TestCommandActions:
         ConfigureBandActionSequence(
             LOGGER,
             self.dish_manager_cm_mock,
-            band_number=Band.B2,
+            band=Band.B2,
+            requested_cmd="ConfigureBand2",
             synchronise=True,
+            timeout_s=5,
         ).execute(my_task_callback, task_abort_event)
 
         expected_progress_updates = [
@@ -299,8 +301,10 @@ class TestCommandActions:
         ConfigureBandActionSequence(
             LOGGER,
             self.dish_manager_cm_mock,
-            band_number=Band.B2,
+            band=Band.B2,
+            requested_cmd="ConfigureBand2",
             synchronise=True,
+            timeout_s=5,
         ).execute(my_task_callback, task_abort_event)
 
         expected_progress_updates = [
