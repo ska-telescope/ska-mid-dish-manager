@@ -207,7 +207,7 @@ class CommandMap:
         awaited_event_attributes: Optional[List[str]] = None,
         awaited_event_values: Optional[List[Any]] = None,
         completed_response_msg: Optional[str] = None,
-        timeout: int = 3600,  # default timeout of 1 hour
+        timeout: int = 120,
     ) -> None:
         """Executes a long-running command.
 
@@ -443,6 +443,7 @@ class CommandMap:
             "SetMaintenanceMode",
             ["dishmode"],
             [DishMode.MAINTENANCE],
+            timeout=300,  # stow can take longer time
         )
 
     def track_cmd(
