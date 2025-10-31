@@ -139,6 +139,10 @@ class DishManager(SKAController):
             ("TrackStop", "track_stop_cmd"),
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
+            ("ConfigureBand3", "configure_band_cmd"),
+            ("ConfigureBand4", "configure_band_cmd"),
+            ("ConfigureBand5a", "configure_band_cmd"),
+            ("ConfigureBand5b", "configure_band_cmd"),
             ("Slew", "slew"),
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
@@ -1634,7 +1638,7 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand1")
 
-        result_code, unique_id = handler("1", synchronise)
+        result_code, unique_id = handler(Band.B1, synchronise)
         return ([result_code], [unique_id])
 
     @record_command(False)
@@ -1661,7 +1665,7 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand2")
 
-        result_code, unique_id = handler("2", synchronise)
+        result_code, unique_id = handler(Band.B2, synchronise)
         return ([result_code], [unique_id])
 
     @record_command(False)
@@ -1671,7 +1675,7 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def ConfigureBand3(self, synchronise):  # pylint: disable=unused-argument
@@ -1681,7 +1685,10 @@ class DishManager(SKAController):
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand3")
+
+        result_code, unique_id = handler(Band.B3, synchronise)
+        return ([result_code], [unique_id])
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -1690,7 +1697,7 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def ConfigureBand4(self, synchronise):  # pylint: disable=unused-argument
@@ -1700,7 +1707,10 @@ class DishManager(SKAController):
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand4")
+
+        result_code, unique_id = handler(Band.B4, synchronise)
+        return ([result_code], [unique_id])
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -1709,7 +1719,7 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def ConfigureBand5a(self, synchronise):  # pylint: disable=unused-argument
@@ -1719,7 +1729,10 @@ class DishManager(SKAController):
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand5a")
+
+        result_code, unique_id = handler(Band.B5a, synchronise)
+        return ([result_code], [unique_id])
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -1728,7 +1741,7 @@ class DishManager(SKAController):
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
         "being configured, and the band counters are reset. (Should be default to False).",
-        dtype_out=None,
+        dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def ConfigureBand5b(self, synchronise):  # pylint: disable=unused-argument
@@ -1738,7 +1751,12 @@ class DishManager(SKAController):
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
         """
-        raise NotImplementedError
+        handler = self.get_command_object("ConfigureBand5b")
+
+        self.logger.warning("ConfigureBand5b called, but we're configuring B1 until 5B is ready.")
+        result_code, unique_id = handler(Band.B1, synchronise)
+
+        return ([result_code], [unique_id])
 
     @record_command(False)
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)

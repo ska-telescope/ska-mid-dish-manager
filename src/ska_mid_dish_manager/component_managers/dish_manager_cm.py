@@ -1114,12 +1114,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     @check_communicating
     def configure_band_cmd(
         self,
-        band_number,
-        synchronise,
+        band_number: Band,
+        synchronise: bool,
         task_callback: Optional[Callable] = None,
     ) -> Tuple[TaskStatus, str]:
-        """Configure frequency band."""
-        req_cmd = f"ConfigureBand{band_number}"
+        """Configure the given band.
+
+        :param band_number: Selected band
+        :type band_number: Band
+        :param synchronise: Passed on to SPFRx
+        :type synchronise: bool
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :return: Result status and message
+        :rtype: Tuple[TaskStatus, str]
+        """
+        req_cmd = f"ConfigureBand{int(band_number)}"
+        if band_number == Band.B5a:
+            req_cmd = "ConfigureBand5a"
+        if band_number == Band.B5b:
+            req_cmd = "ConfigureBand5b"
 
         _is_configure_band_cmd_allowed = partial(
             self._dish_mode_model.is_command_allowed,
