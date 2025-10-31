@@ -62,7 +62,7 @@ CI_REGISTRY ?= registry.gitlab.com
 
 # Use the previously built image when running in the pipeline
 CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
-	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
+	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/mid-dish/$(NAME) \
 	--set dishmanager.image.tag=$(OCI_TAG)
 K8S_TIMEOUT=600s
 

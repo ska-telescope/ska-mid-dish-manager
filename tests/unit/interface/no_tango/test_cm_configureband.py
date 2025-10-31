@@ -25,7 +25,7 @@ def test_configureband_handler(
         the command tracker under test
     """
     component_state_cb = callbacks["comp_state_cb"]
-    component_manager.configure_band_cmd(2, True, callbacks["task_cb"])
+    component_manager.configure_band_cmd(Band.B2, True, callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
 
