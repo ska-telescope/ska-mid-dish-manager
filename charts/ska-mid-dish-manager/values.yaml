@@ -47,7 +47,7 @@ dsconfig:
 dishmanager:
   image:
     registry: artefact.skao.int
-    image: mid-dish/ska-mid-dish-manager
+    image: ska-mid-dish-manager
     tag: 8.5.0
     pullPolicy: IfNotPresent
 
