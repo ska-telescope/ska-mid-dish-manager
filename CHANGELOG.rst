@@ -11,6 +11,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 Version 8.5.1
 *************
 - Fixed CAR image path
+- Upgraded ska-mid-dish-ds-manager chart to v6.5.1
+- Upgraded ska-mid-dish-simulators chart to v5.4.2
 
 Version 8.5.0
 *************
