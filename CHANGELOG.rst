@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 8.5.1
+*************
+- Fixed CAR image path
+
 Version 8.5.0
 *************
 - Baseline release
