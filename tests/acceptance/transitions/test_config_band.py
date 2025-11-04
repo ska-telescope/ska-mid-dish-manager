@@ -83,7 +83,7 @@ def test_configure_band_a(
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     progress_event_store.wait_for_progress_update("Already in band 2", timeout=10)
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "ConfigureBand2 completed"]', timeout=10
+        unique_id, '[0, "SetOperateMode completed"]', timeout=10
     )
     assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
