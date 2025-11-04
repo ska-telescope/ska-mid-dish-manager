@@ -113,7 +113,14 @@ class ActionHandler:
         max_timeout = max((c.timeout_s for c in self.fanned_out_commands), default=0)
         return max_timeout + 5 if max_timeout > 0 else 0
 
-    def _trigger_failure(self, task_callback, task_abort_event, message: str):
+    def _trigger_failure(
+        self,
+        task_callback,
+        task_abort_event,
+        message: str,
+        task_status=TaskStatus.FAILED,
+        result_code=ResultCode.FAILED
+    ):
         self.logger.error(message)
         update_task_status(task_callback, progress=message)
 
@@ -125,11 +132,11 @@ class ActionHandler:
         else:
             update_task_status(
                 task_callback,
-                status=TaskStatus.FAILED,
-                result=(ResultCode.FAILED, f"{self.action_name} failed"),
+                status=task_status,
+                result=(result_code, f"{self.action_name} failed"),
             )
 
-    def _trigger_success(self, task_callback, task_abort_event, completed_response_msg: str):
+    def _trigger_success(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         final_message = completed_response_msg or f"{self.action_name} completed"
         self.logger.debug(final_message)
 
@@ -334,13 +341,10 @@ class SetStandbyLPModeAction(Action):
                 try:
                     spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)
                 except tango.DevFailed:
-                    update_task_status(
+                    self.handler._trigger_failure(
                         task_callback,
-                        status=TaskStatus.FAILED,
-                        result=(
-                            ResultCode.FAILED,
-                            "Failed to transition SPFRx from AdminMode ENGINEERING to ONLINE",
-                        ),
+                        task_abort_event,
+                        "Failed to transition SPFRx from AdminMode ENGINEERING to ONLINE"
                     )
                     return
 
@@ -459,11 +463,12 @@ class SetOperateModeAction(Action):
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         if self.dish_manager_cm._component_state["configuredband"] in [Band.NONE, Band.UNKNOWN]:
-            update_task_status(
+            self.handler._trigger_failure(
                 task_callback,
-                progress="No configured band: SetOperateMode execution not allowed",
-                status=TaskStatus.REJECTED,
-                result=(ResultCode.NOT_ALLOWED, "SetOperateMode requires a configured band"),
+                task_abort_event,
+                "No configured band: SetOperateMode execution not allowed",
+                task_status=TaskStatus.REJECTED,
+                result_code=ResultCode.NOT_ALLOWED,
             )
             return
         return super().execute(task_callback, task_abort_event, completed_response_msg)
@@ -694,9 +699,8 @@ class ConfigureBandAction(Action):
             update_task_status(
                 task_callback,
                 progress=f"Already in band {self.band}",
-                status=TaskStatus.COMPLETED,
-                result=(ResultCode.OK, f"{self.requested_cmd} completed"),
             )
+            self.handler._trigger_success(task_callback, task_abort_event)
             return
 
         self.logger.info(f"{self.requested_cmd} called with synchronise = {self.synchronise}")
