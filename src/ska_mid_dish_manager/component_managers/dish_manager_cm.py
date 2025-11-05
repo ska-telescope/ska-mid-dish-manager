@@ -1227,16 +1227,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
 
         def _is_slew_cmd_allowed():
-            if self.component_state["dishmode"] in [DishMode.OPERATE, DishMode.STANDBY_FP]:
-                update_task_status(
-                    task_callback,
-                    progress="Slew command rejected for current dishMode. "
-                    "Slew command is allowed for dishMode STANDBY-FP, OPERATE",
+            if self.component_state["dishmode"] != DishMode.OPERATE:
+                self._report_task_progress("Slew command rejected for current dishMode. "
+                    "Slew command is allowed for dishMode OPERATE",
                 )
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
                 self._report_task_progress(
-                    "Slew command rejected for pointingState. "
+                    "Slew command rejected for current pointingState. "
                     "Slew command is allowed for pointingState READY",
                 )
                 return False
@@ -1563,7 +1561,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
             self.abort_tasks(task_callback=task_callback)
-            self.logger.info("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
+            self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
             return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
 
         cmds_in_progress = self.get_currently_executing_lrcs()
