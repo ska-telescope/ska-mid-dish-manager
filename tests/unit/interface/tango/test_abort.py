@@ -61,7 +61,7 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
     assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
 
 
-@pytest.mark.unit
+@pytest.mark.debugit
 @pytest.mark.forked
 @pytest.mark.parametrize(
     "pointing_state",
@@ -88,7 +88,13 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     device_proxy.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
+        event_store,
+    )
+
+    device_proxy.subscribe_event(
+        "pointingState",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
     )
 
     device_proxy.subscribe_event(
@@ -107,7 +113,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
-    dish_mode_event_store.wait_for_value(DishMode.OPERATE)
+    event_store.wait_for_value(DishMode.OPERATE)
 
     # since we check that the queue is empty, remove the empty queue
     # event received after subscription to prevent false reporting
@@ -125,6 +131,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
         dish_manager_cm.track_load_table = mock_response
 
     # update the pointingState to simulate a dish movement
+    event_store.clear_queue()
     ds_cm._update_component_state(pointingstate=pointing_state)
 
     # Abort the LRC
