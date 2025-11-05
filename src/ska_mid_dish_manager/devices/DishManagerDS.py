@@ -1560,7 +1560,9 @@ class DishManager(SKAController):
         doc="""
             Timeout (in seconds) to be used for each action. On each action DishManager will wait
             for the timeout duration for expected subservient device attribute updates. A value
-            <= 0 will disable waiting and actions will complete immediately.
+            <= 0 will disable waiting and no monitoring will occur, commands will be fanned out to
+            their respective subsevient devices and then the DishManager command will return as
+            COMPLETED immediately.
         """,
     )
     def actionTimeoutSeconds(self):

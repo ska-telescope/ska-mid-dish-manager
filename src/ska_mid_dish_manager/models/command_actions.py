@@ -28,7 +28,17 @@ from ska_mid_dish_manager.utils.action_helpers import (
 
 
 class Action(ABC):
-    """Base class for actions. Subclasses should implement execute()."""
+    """
+    Base class for actions.
+
+    The ``Action`` class represents a high-level operation that involves executing one or more
+    commands on subservient devices. Each concrete subclass is responsible for defining its own
+    :class:`FannedOutSlowCommand` instances and assigning an :class:`ActionHandler` instance
+    to coordinate and monitor their execution.
+
+    Actions can be chained using optional ``action_on_success`` and ``action_on_failure``
+    callbacks, allowing for conditional execution sequences.
+    """
 
     def __init__(
         self,
@@ -39,6 +49,21 @@ class Action(ABC):
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
     ):
+        """
+        :param logger: Logger instance.
+        :type logger: logging.Logger
+        :param dish_manager_cm: The DishManagerComponentManager instance.
+        :type dish_manager_cm: DishManagerComponentManager
+        :param timeout_s: Timeout (in seconds) for this action to complete. Defaults to
+            DEFAULT_ACTION_TIMEOUT_S.
+        :type timeout_s: float
+        :param action_on_success: Optional Action to execute automatically if this action succeeds.
+        :type action_on_success: Optional[Action]
+        :param action_on_failure: Optional Action to execute automatically if this action fails.
+        :type action_on_failure: Optional[Action]
+        :param waiting_callback: Optional callback executed periodically while waiting on commands.
+        :type waiting_callback: Optional[Callable]
+        """
         self.logger = logger
         self.dish_manager_cm = dish_manager_cm
         self.action_on_success = action_on_success
@@ -49,7 +74,11 @@ class Action(ABC):
 
     @property
     def handler(self) -> "ActionHandler":
-        # Subclasses must assign a handler before executing
+        """
+        :return: The ActionHandler instance assigned to this action.
+        :rtype: ActionHandler
+        :raises NotImplementedError: If no handler has been assigned by the subclass.
+        """
         if self._handler is None:
             raise NotImplementedError("Action does not have a handler")
         return self._handler
@@ -57,13 +86,25 @@ class Action(ABC):
     def execute(
         self, task_callback: Callable, task_abort_event: Any, completed_response_msg: str = ""
     ):
-        """Execute the defined action."""
+        """
+        Execute the defined action using the assigned handler.
+
+        :param task_callback: Callback function used for reporting.
+        :type task_callback: Callable
+        :param task_abort_event: Event or flag used to signal that the task should be aborted.
+        :type task_abort_event: Any
+        :param completed_response_msg: Optional message to use upon successful completion.
+        :type completed_response_msg: str
+        :raises NotImplementedError: If the action has no assigned handler.
+        """
         self.handler.execute(task_callback, task_abort_event, completed_response_msg)
 
 
 class ActionHandler:
-    """Manages a group of fanned-out commands. It succeeds only if all fanned-out commandss.
-    It fails if any fanned out command fails or times out, or if the main action times out.
+    """
+    Manages a group of fanned-out commands. It succeeds only if all fanned-out commands complete
+    successfully. It fails if any fanned out command fails or times out, or if the main action
+    times out.
     """
 
     def __init__(
@@ -78,7 +119,8 @@ class ActionHandler:
         waiting_callback: Optional[Callable] = None,
         timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
     ):
-        """:param logger: Logger instance
+        """
+        :param logger: Logger instance
         :type logger: Logger
         :param action_name: A name for this command action
         :type action_name: str
@@ -109,7 +151,12 @@ class ActionHandler:
         self.timeout_s = timeout_s or self._compute_timeout()
 
     def _compute_timeout(self) -> float:
-        """Compute the timeout for the action based on the fanned out command timeouts."""
+        """
+        Compute the timeout for the action based on the fanned out command timeouts.
+
+        :return: The timeout value in seconds.
+        :rtype: float
+        """
         max_timeout = max((c.timeout_s for c in self.fanned_out_commands), default=0)
         return max_timeout + 5 if max_timeout > 0 else 0
 
@@ -120,7 +167,21 @@ class ActionHandler:
         message: str,
         task_status=TaskStatus.FAILED,
         result_code=ResultCode.FAILED,
-    ):
+    ) -> None:
+        """
+        Handle failure of the action and optionally trigger the on-failure action.
+
+        :param task_callback: Callback function used for reporting.
+        :type task_callback: Callable
+        :param task_abort_event: Event or flag used to signal task abortion.
+        :type task_abort_event: Any
+        :param message: Failure message.
+        :type message: str
+        :param task_status: Status to use for the task_callback (default: TaskStatus.FAILED).
+        :type task_status: TaskStatus
+        :param result_code: Result code to use for the task_callback (default: ResultCode.FAILED).
+        :type result_code: ResultCode
+        """
         self.logger.error(message)
         update_task_status(task_callback, progress=message)
 
@@ -136,7 +197,23 @@ class ActionHandler:
                 result=(result_code, f"{self.action_name} failed"),
             )
 
-    def _trigger_success(self, task_callback, task_abort_event, completed_response_msg: str = ""):
+    def _trigger_success(
+        self,
+        task_callback,
+        task_abort_event,
+        completed_response_msg: str = ""
+    ) -> None:
+        """
+        Handle successful completion of this action and optionally trigger the on-success action.
+
+        :param task_callback: Callback function used for reporting.
+        :type task_callback: Callable
+        :param task_abort_event: Event or flag used to signal task abortion.
+        :type task_abort_event: Any
+        :param completed_response_msg: Optional message describing completion; defaults to
+            "{action_name} completed".
+        :type completed_response_msg: str
+        """
         final_message = completed_response_msg or f"{self.action_name} completed"
         self.logger.debug(final_message)
 
@@ -156,7 +233,17 @@ class ActionHandler:
     def execute(
         self, task_callback: Callable, task_abort_event: Any, completed_response_msg: str = ""
     ):
-        """Execute all fan-out commands and track progress across subservient devices."""
+        """
+        Execute all fanned-out commands associated with this action and track progress.
+
+        :param task_callback: Callback function used for reporting.
+        :type task_callback: Callable
+        :param task_abort_event: Event or flag used to signal task abortion.
+        :type task_abort_event: Any
+        :param completed_response_msg: Optional message to use when the action completes
+            successfully.
+        :type completed_response_msg: str
+        """
         if task_abort_event.is_set():
             self.logger.warning(f"Action '{self.action_name}' aborted.")
             update_task_status(
@@ -552,6 +639,18 @@ class TrackAction(Action):
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
     ):
+        """
+        :param logger: Logger instance.
+        :type logger: logging.Logger
+        :param dish_manager_cm: The DishManagerComponentManager instance.
+        :type dish_manager_cm: DishManagerComponentManager
+        :param action_on_success: Optional Action to execute automatically if this action succeeds.
+        :type action_on_success: Optional[Action]
+        :param action_on_failure: Optional Action to execute automatically if this action fails.
+        :type action_on_failure: Optional[Action]
+        :param waiting_callback: Optional callback executed periodically while waiting on commands.
+        :type waiting_callback: Optional[Callable]
+        """
         super().__init__(
             logger,
             dish_manager_cm,
@@ -790,6 +889,18 @@ class SlewAction(Action):
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
     ):
+        """
+        :param logger: Logger instance.
+        :type logger: logging.Logger
+        :param dish_manager_cm: The DishManagerComponentManager instance.
+        :type dish_manager_cm: DishManagerComponentManager
+        :param action_on_success: Optional Action to execute automatically if this action succeeds.
+        :type action_on_success: Optional[Action]
+        :param action_on_failure: Optional Action to execute automatically if this action fails.
+        :type action_on_failure: Optional[Action]
+        :param waiting_callback: Optional callback executed periodically while waiting on commands.
+        :type waiting_callback: Optional[Callable]
+        """
         super().__init__(
             logger,
             dish_manager_cm,
