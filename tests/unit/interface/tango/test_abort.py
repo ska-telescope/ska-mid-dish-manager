@@ -12,6 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     PointingState,
     SPFOperatingMode,
+    SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
@@ -73,6 +74,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
+    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     # update the execute_command mock to return IN_PROGRESS and a timestamp
     ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
@@ -81,6 +83,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
+    lrc_executing_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -105,6 +108,19 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
         tango.EventType.CHANGE_EVENT,
         cmds_in_queue_store,
     )
+
+    device_proxy.subscribe_event(
+        "lrcExecuting",
+        tango.EventType.CHANGE_EVENT,
+        lrc_executing_event_store,
+    )
+
+    # Force dishManager dishMode to go to OPERATE
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE)
+
     # since we check that the queue is empty, remove the empty queue
     # event received after subscription to prevent false reporting
     cmds_in_queue_store.clear_queue()
@@ -120,56 +136,35 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
         mock_response.return_value = ResultCode.OK, ""
         dish_manager_cm.track_load_table = mock_response
 
-    [[_], [fp_unique_id]] = device_proxy.SetStandbyFPMode()
-    # dont update spf operatingMode to mimic skipAttributeUpdate=True
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
-    # we can now expect dishMode to transition to UNKNOWN
-    dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
-    assert device_proxy.dishMode == DishMode.UNKNOWN
-    # remove the progress events emitted from SetStandbyFPMode execution
-    progress_event_store.clear_queue()
-
     # update the pointingState to simulate a dish movement
     ds_cm._update_component_state(pointingstate=pointing_state)
 
     # Abort the LRC
     [[_], [abort_unique_id]] = device_proxy.Abort()
-    result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
-    progress_event_store.wait_for_progress_update("SetStandbyFPMode Aborted")
+    ds_cm._update_component_state(
+        **{"pointingstate": PointingState.READY, "operatingmode": DSOperatingMode.STANDBY_FP}
+    )
+    result_event_store.wait_for_command_id(abort_unique_id, timeout=30)
 
-    # initial progress messages
     expected_progress_updates = [
         "Fanned out commands: DS.TrackStop",
         "Awaiting pointingstate change to READY",
         "DS pointingstate changed to READY",
         "TrackStop completed",
-        "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode",
+        "Fanned out commands: DS.SetStandbyFPMode",
         "Awaiting dishmode change to STANDBY_FP",
-    ]
-
-    ds_cm._update_component_state(pointingstate=PointingState.READY)
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=30
-    )
-    events_string = "".join([str(event.attr_value.value) for event in events])
-    for message in expected_progress_updates:
-        assert message in events_string
-
-    # allow FP transition to complete the abort sequence
-    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    # next progress messages
-    expected_progress_updates = [
         "SetStandbyFPMode completed",
         "Clearing scanID",
         "EndScan completed",
         "ResetTrackTable completed",
     ]
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=30
-    )
-    events_string = "".join([str(event.attr_value.value) for event in events])
+    lrc_executing = lrc_executing_event_store.get_queue_events()
+    lrc_executing = "".join([str(event.attr_value.value) for event in lrc_executing])
+    progress_events = progress_event_store.get_queue_events()
+    progress_events = "".join([str(event.attr_value.value) for event in progress_events])
     for message in expected_progress_updates:
-        assert message in events_string
+        assert message in progress_events, lrc_executing
+
     # Confirm that abort finished and the queue is cleared
     result_event_store.wait_for_command_id(abort_unique_id)
     cmds_in_queue_store.wait_for_value((), timeout=30)

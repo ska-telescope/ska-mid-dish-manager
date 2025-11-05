@@ -1283,7 +1283,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         update_task_status(
             task_callback, progress="Clearing scanID", status=TaskStatus.IN_PROGRESS
         )
-        update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
         self._update_component_state(scanid="")
         update_task_status(
             task_callback,

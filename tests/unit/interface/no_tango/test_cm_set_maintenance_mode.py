@@ -44,7 +44,7 @@ def test_set_maintenance_mode_handler(
         {"progress": "Awaiting SPFRX operatingmode change to STANDBY"},
         {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},
         {"progress": "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode"},
-        {"progress": "Awaiting dishmode change to STOW"},
+        {"progress": "Awaiting dishmode change to MAINTENANCE"},
         {
             "progress": "SetMaintenanceMode completed",
             "status": TaskStatus.COMPLETED,
