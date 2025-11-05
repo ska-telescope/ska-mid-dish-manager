@@ -24,6 +24,7 @@ from ska_mid_dish_manager.models.command_class import (
     SetKValueCommand,
     StowCommand,
 )
+from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_DISH_ID,
@@ -183,12 +184,13 @@ class DishManager(SKAController):
             ),
         )
 
+        abort_sequence_handler = Abort(self.component_manager, self._command_tracker, self.logger)
         self.register_command_object(
             "Abort",
             AbortCommand(
                 self._command_tracker,
                 self.component_manager,
-                callback=None,
+                callback=abort_sequence_handler,
                 logger=self.logger,
             ),
         )

@@ -17,17 +17,19 @@ class Abort:
     def __init__(
         self,
         component_manager: Any,
-        command_map: Any,
         command_tracker: Any,
         logger: logging.Logger,
     ):
         self.logger = logger
         self._component_manager = component_manager
-        self._command_map = command_map
+        self._command_map = component_manager._command_map
         self._command_tracker = command_tracker
 
-    def __call__(self, task_callback: Optional[Callable] = None) -> None:
-        self.abort(task_callback=task_callback)
+    def __call__(self, callback_args: bool) -> None:
+        if not callback_args:
+            command_id = self._command_tracker.new_command("Abort")
+            task_callback = partial(self._command_tracker.update_command_info, command_id)
+            self.abort(task_callback=task_callback)
 
     def _reset_track_table(
         self, task_abort_event: Event, task_callback: Optional[Callable] = None
@@ -36,6 +38,7 @@ class Abort:
             self.logger.debug("abort-sequence: failed to reset track table")
             update_task_status(task_callback, status=TaskStatus.FAILED)
             return
+        update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
         self.logger.debug("abort-sequence: resetting track table")
         result_code, msg = self._component_manager.reset_track_table()
         if result_code == ResultCode.FAILED:
@@ -62,14 +65,10 @@ class Abort:
             self.logger.debug("abort-sequence: failed to stop dish")
             update_task_status(task_callback, status=TaskStatus.FAILED)
             return
+
         self.logger.debug("abort-sequence: stopping dish")
-        try:
-            self._command_map.track_stop_cmd(task_abort_event, task_callback)
-            self.logger.debug("abort-sequence: dish has been successfully stopped")
-        except Exception as exc:  # pylint:disable=broad-except
-            update_task_status(task_callback, status=TaskStatus.FAILED, exception=exc)
-            task_abort_event.set()
-            self.logger.error("abort-sequence: failed to stop dish: %s", str(exc))
+        self._command_map.track_stop_cmd(task_abort_event, task_callback)
+        self.logger.debug("abort-sequence: dish has been successfully stopped")
 
     def _ensure_transition_to_fp_mode(
         self,
@@ -94,23 +93,13 @@ class Abort:
             return
 
         # fan out respective FP command to the sub devices
-        try:
-            self._command_map.set_standby_fp_mode(task_abort_event, task_callback)
-            self.logger.debug("abort-sequence: SetStandbyFPMode command completed successfully")
-        except Exception as exc:  # pylint:disable=broad-except
-            update_task_status(task_callback, status=TaskStatus.FAILED, exception=exc)
-            task_abort_event.set()
-            self.logger.error(
-                "abort-sequence: failed to transition dish to StandbyFP mode: %s", str(exc)
-            )
+        self._command_map.set_standby_fp_mode(task_abort_event, task_callback)
+        self.logger.debug("abort-sequence: SetStandbyFPMode command completed successfully")
 
     def _complete_abort_sequence(
         self, task_abort_event: Optional[Event] = None, task_callback: Optional[Callable] = None
     ):
         update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
-
-        # task_callback != task_cb, one is a partial with a command id and the other isnt
-        task_cb = self._command_tracker.update_command_info
 
         # the order the commands are run is important: so that the plc is not interrupted
         # mid way through a command. for e.g. dont call a lrc followed by a fast command
@@ -128,39 +117,24 @@ class Abort:
             self.logger.debug("abort-sequence: dish is in STOW mode, skipping track stop")
 
         else:
-            track_stop_command_id = self._command_tracker.new_command(
-                "abort-sequence:trackstop", completed_callback=None
-            )
-            track_stop_task_cb = partial(task_cb, track_stop_command_id)
-            self._stop_dish(task_abort_event, track_stop_task_cb)
+            self._stop_dish(task_abort_event)
 
         # go to STANDBY-FP
-        standby_fp_command_id = self._command_tracker.new_command(
-            "abort-sequence:standbyfp", completed_callback=None
-        )
-        standby_fp_task_cb = partial(task_cb, standby_fp_command_id)
-        self._ensure_transition_to_fp_mode(task_abort_event, standby_fp_task_cb)
+        self._ensure_transition_to_fp_mode(task_abort_event)
 
         # clear the scan id
-        end_scan_command_id = self._command_tracker.new_command(
-            "abort-sequence:endscan", completed_callback=None
-        )
-        end_scan_task_cb = partial(task_cb, end_scan_command_id)
         self.logger.debug("abort-sequence: issuing EndScan")
-        self._component_manager._end_scan(task_abort_event, end_scan_task_cb)
+        self._component_manager._end_scan(task_abort_event)
 
         # reset the track table
-        reset_track_table_command_id = self._command_tracker.new_command(
-            "abort-sequence:resettracktable", completed_callback=None
-        )
-        reset_track_table_task_cb = partial(task_cb, reset_track_table_command_id)
-        self._reset_track_table(task_abort_event, reset_track_table_task_cb)
+        self._reset_track_table(task_abort_event)
 
         if task_abort_event.is_set():
             self.logger.debug("Abort sequence failed")
             update_task_status(
                 task_callback,
                 status=TaskStatus.FAILED,
+                progress="Abort sequence failed",
                 result=(ResultCode.FAILED, "Abort sequence failed"),
             )
             return
@@ -168,6 +142,7 @@ class Abort:
         update_task_status(
             task_callback,
             status=TaskStatus.COMPLETED,
+            progress="Abort sequence completed",
             result=(ResultCode.OK, "Abort sequence completed"),
         )
         self.logger.debug("Abort sequence completed")

@@ -11,7 +11,9 @@ from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowComma
 class AbortCommand(SlowCommand):
     """A custom class for Abort Command."""
 
-    def __init__(self, command_tracker, component_manager, callback, logger: None) -> None:
+    def __init__(
+        self, command_tracker, component_manager, callback, logger: logging.Logger | None = None
+    ) -> None:
         """Initialise a new AbortCommand instance.
 
         :param command_tracker: the device's command tracker

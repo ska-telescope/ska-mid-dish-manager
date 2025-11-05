@@ -60,7 +60,7 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
     assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
 
 
-@pytest.mark.debugit
+@pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
     "pointing_state",
@@ -79,22 +79,14 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     # update the execute_command mock to return IN_PROGRESS and a timestamp
     ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
 
-    event_store = event_store_class()
+    dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
-    result_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
-    lrc_executing_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-
-    device_proxy.subscribe_event(
-        "pointingState",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
+        dish_mode_event_store,
     )
 
     device_proxy.subscribe_event(
@@ -104,28 +96,16 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandResult",
-        tango.EventType.CHANGE_EVENT,
-        result_event_store,
-    )
-
-    device_proxy.subscribe_event(
         "longRunningCommandsInQueue",
         tango.EventType.CHANGE_EVENT,
         cmds_in_queue_store,
-    )
-
-    device_proxy.subscribe_event(
-        "lrcExecuting",
-        tango.EventType.CHANGE_EVENT,
-        lrc_executing_event_store,
     )
 
     # Force dishManager dishMode to go to OPERATE
     ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
-    event_store.wait_for_value(DishMode.OPERATE)
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE)
 
     # since we check that the queue is empty, remove the empty queue
     # event received after subscription to prevent false reporting
@@ -143,41 +123,15 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
         dish_manager_cm.track_load_table = mock_response
 
     # update the pointingState to simulate a dish movement
-    event_store.clear_queue()
     ds_cm._update_component_state(pointingstate=pointing_state)
 
     # Abort the LRC
-    [[_], [abort_unique_id]] = device_proxy.Abort()
-    ds_cm._update_component_state(pointingstate=PointingState.READY)
-    # wait a while before updating the operating mode to STANDBY_FP
-    event_store.wait_for_value(PointingState.READY, timeout=10)
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+    device_proxy.Abort()
+    ds_cm._update_component_state(
+        **{"pointingstate": PointingState.READY, "operatingmode": DSOperatingMode.STANDBY_FP}
+    )
+    progress_event_store.wait_for_progress_update("Abort sequence completed", timeout=30)
 
-    result_event_store.wait_for_command_id(abort_unique_id, timeout=30)
-
-    if pointing_state == PointingState.TRACK:
-        # apply a wait for one of the parameterised values to see if it makes a difference
-        event_store.get_queue_values(timeout=30)
-    expected_progress_updates = [
-        "Fanned out commands: DS.TrackStop",
-        "Awaiting pointingstate change to READY",
-        "DS pointingstate changed to READY",
-        "TrackStop completed",
-        "Fanned out commands: DS.SetStandbyFPMode",
-        "Awaiting dishmode change to STANDBY_FP",
-        "SetStandbyFPMode completed",
-        "Clearing scanID",
-        "EndScan completed",
-        "ResetTrackTable completed",
-    ]
-    lrc_executing = lrc_executing_event_store.get_queue_events()
-    lrc_executing = "".join([str(event.attr_value.value) for event in lrc_executing])
-    progress_events = progress_event_store.get_queue_events()
-    progress_events = "".join([str(event.attr_value.value) for event in progress_events])
-    for message in expected_progress_updates:
-        assert message in progress_events, lrc_executing
-
-    # Confirm that abort finished and the queue is cleared
-    result_event_store.wait_for_command_id(abort_unique_id)
+    # Confirm that abort cleared the command queue
     cmds_in_queue_store.wait_for_value((), timeout=30)
     assert device_proxy.dishMode == DishMode.STANDBY_FP

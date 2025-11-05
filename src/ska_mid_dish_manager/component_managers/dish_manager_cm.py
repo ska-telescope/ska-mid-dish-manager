@@ -17,7 +17,6 @@ from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
-from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.command_map import CommandMap
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
@@ -303,13 +302,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "pseudoRandomNoiseDiodePars",
             ],
         }
-
-        # ----------------
-        # Command Handlers
-        # ----------------
-        self._abort_handler = Abort(
-            self, self._command_map, self._command_tracker, logger=self.logger
-        )
 
     @property
     def wind_stow_active(self) -> bool:
@@ -1580,13 +1572,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
 
-        abort_sequence = partial(self._abort_handler, task_callback)
         self.logger.debug("Aborting LRCs from Abort sequence")
-        abort_command_id = self._command_tracker.new_command(
-            "abort-sequence:cancel-lrc", completed_callback=abort_sequence
-        )
-        abort_task_cb = partial(self._command_tracker.update_command_info, abort_command_id)
-        self.abort_tasks(task_callback=abort_task_cb)
+        self.abort_tasks(task_callback=task_callback)
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     def set_dsc_power_limit_kw(self, power_limit: float) -> Tuple[ResultCode, str]:
