@@ -18,24 +18,6 @@ from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestam
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_abort_commands_raises_deprecation_warning(dish_manager_resources):
-    # this test will be removed when AbortCommands is also removed
-    device_proxy, _ = dish_manager_resources
-    with pytest.warns(DeprecationWarning) as record:
-        device_proxy.AbortCommands()
-
-    # check that only one warning was raised
-    assert len(record) == 1
-    # check that the message matches
-    warning_msg = (
-        "AbortCommands is deprecated, use Abort instead. "
-        "Issuing Abort sequence for requested command."
-    )
-    assert record[0].message.args[0] == warning_msg
-
-
-@pytest.mark.unit
-@pytest.mark.forked
 def test_only_one_abort_runs_at_a_time(dish_manager_resources):
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
@@ -80,14 +62,14 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
-    "abort_cmd, pointing_state",
+    "pointing_state",
     [
-        ("Abort", PointingState.SLEW),
-        ("AbortCommands", PointingState.TRACK),
+        PointingState.SLEW,
+        PointingState.TRACK,
     ],
 )
 def test_abort_during_dish_movement(
-    dish_manager_resources, event_store_class, abort_cmd, pointing_state
+    dish_manager_resources, event_store_class, pointing_state
 ):
     """Verify Abort/AbortCommands executes the abort sequence."""
     device_proxy, dish_manager_cm = dish_manager_resources
@@ -153,7 +135,7 @@ def test_abort_during_dish_movement(
     ds_cm._update_component_state(pointingstate=pointing_state)
 
     # Abort the LRC
-    [[_], [abort_unique_id]] = device_proxy.command_inout(abort_cmd, None)
+    [[_], [abort_unique_id]] = device_proxy.Abort()
     result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
     progress_event_store.wait_for_progress_update("SetStandbyFPMode Aborted")
 

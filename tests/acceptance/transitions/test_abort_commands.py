@@ -63,7 +63,7 @@ def test_abort_commands(
     spf_device_proxy.skipAttributeUpdates = False
 
     # Abort the LRC
-    [[_], [abort_unique_id]] = dish_manager_proxy.AbortCommands()
+    [[_], [abort_unique_id]] = dish_manager_proxy.Abort()
     # Confirm Dish Manager aborted the request on LRC
     result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
     # Abort will execute standbyfp dishmode last as part of its abort sequence
@@ -188,7 +188,7 @@ def test_abort_commands_during_track(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Call AbortCommands on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
@@ -236,7 +236,7 @@ def test_abort_commands_during_slew(
     main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 
     # Call AbortCommands on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
@@ -285,7 +285,7 @@ def test_abort_commands_during_stow(
     main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 
     # Call AbortCommands on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )

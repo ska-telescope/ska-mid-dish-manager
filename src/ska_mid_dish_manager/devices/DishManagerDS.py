@@ -19,7 +19,6 @@ from tango.server import attribute, command, device_property, run
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
-    AbortCommandsDeprecatedCommand,
     ApplyPointingModelCommand,
     ResetTrackTableCommand,
     SetKValueCommand,
@@ -118,6 +117,7 @@ class DishManager(SKAController):
             component_state_callback=self._component_state_changed,
             wms_device_names=self.WMSDeviceNames,
             wind_stow_callback=self._wind_stow_inform,
+            command_progress_callback=self._update_status,
             default_watchdog_timeout=self.DefaultWatchdogTimeout,
             default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
             default_wind_gust_threshold=self.WindGustThreshold,
@@ -186,22 +186,8 @@ class DishManager(SKAController):
         self.register_command_object(
             "Abort",
             AbortCommand(
-                "Abort",
                 self._command_tracker,
                 self.component_manager,
-                "abort",
-                callback=None,
-                logger=self.logger,
-            ),
-        )
-
-        self.register_command_object(
-            "AbortCommands",
-            AbortCommandsDeprecatedCommand(
-                "AbortCommands",
-                self._command_tracker,
-                self.component_manager,
-                "abort",
                 callback=None,
                 logger=self.logger,
             ),
@@ -225,6 +211,12 @@ class DishManager(SKAController):
     # ---------
     # Callbacks
     # ---------
+
+    def _update_status(self, status: str) -> None:
+        """Update the status of the device."""
+        self.set_status(status)
+        self.logger.debug(status)
+        self.push_change_event("status")
 
     def _update_version_of_subdevice_on_success(self, device: DishDevice, build_state: str):
         """Update the version information of subdevice if connection is successful."""
@@ -1555,26 +1547,6 @@ class DishManager(SKAController):
             information purpose only.
         """
         handler = self.get_command_object("Abort")
-        (return_code, message) = handler()
-        return ([return_code], [message])
-
-    @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @command(
-        doc_in="Abort currently executing long running command on "
-        "DishManager including stopping dish movement and transitioning "
-        "dishMode to StandbyFP. For details consult DishManager documentation",
-        display_level=DispLevel.OPERATOR,
-        dtype_out="DevVarLongStringArray",
-    )
-    def AbortCommands(self) -> DevVarLongStringArrayType:
-        """Empty out long running commands in queue.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        """
-        handler = self.get_command_object("AbortCommands")
         (return_code, message) = handler()
         return ([return_code], [message])
 
