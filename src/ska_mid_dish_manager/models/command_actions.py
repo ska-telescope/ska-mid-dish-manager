@@ -192,7 +192,7 @@ class ActionHandler:
     def _trigger_success(
         self, task_callback, task_abort_event, completed_response_msg: str = ""
     ) -> None:
-        """Handle successful completion of this action and optionally trigger the on-success action.
+        """Handle successful completion of the action and optionally trigger the on-success action.
 
         :param task_callback: Callback function used for reporting.
         :type task_callback: Callable
