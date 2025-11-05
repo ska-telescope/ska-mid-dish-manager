@@ -28,8 +28,7 @@ from ska_mid_dish_manager.utils.action_helpers import (
 
 
 class Action(ABC):
-    """
-    Base class for actions.
+    """Base class for actions.
 
     The ``Action`` class represents a high-level operation that involves executing one or more
     commands on subservient devices. Each concrete subclass is responsible for defining its own
@@ -49,8 +48,7 @@ class Action(ABC):
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
     ):
-        """
-        :param logger: Logger instance.
+        """:param logger: Logger instance.
         :type logger: logging.Logger
         :param dish_manager_cm: The DishManagerComponentManager instance.
         :type dish_manager_cm: DishManagerComponentManager
@@ -74,8 +72,7 @@ class Action(ABC):
 
     @property
     def handler(self) -> "ActionHandler":
-        """
-        :return: The ActionHandler instance assigned to this action.
+        """:return: The ActionHandler instance assigned to this action.
         :rtype: ActionHandler
         :raises NotImplementedError: If no handler has been assigned by the subclass.
         """
@@ -86,8 +83,7 @@ class Action(ABC):
     def execute(
         self, task_callback: Callable, task_abort_event: Any, completed_response_msg: str = ""
     ):
-        """
-        Execute the defined action using the assigned handler.
+        """Execute the defined action using the assigned handler.
 
         :param task_callback: Callback function used for reporting.
         :type task_callback: Callable
@@ -101,8 +97,7 @@ class Action(ABC):
 
 
 class ActionHandler:
-    """
-    Manages a group of fanned-out commands. It succeeds only if all fanned-out commands complete
+    """Manages a group of fanned-out commands. It succeeds only if all fanned-out commands complete
     successfully. It fails if any fanned out command fails or times out, or if the main action
     times out.
     """
@@ -119,8 +114,7 @@ class ActionHandler:
         waiting_callback: Optional[Callable] = None,
         timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
     ):
-        """
-        :param logger: Logger instance
+        """:param logger: Logger instance
         :type logger: Logger
         :param action_name: A name for this command action
         :type action_name: str
@@ -151,8 +145,7 @@ class ActionHandler:
         self.timeout_s = timeout_s or self._compute_timeout()
 
     def _compute_timeout(self) -> float:
-        """
-        Compute the timeout for the action based on the fanned out command timeouts.
+        """Compute the timeout for the action based on the fanned out command timeouts.
 
         :return: The timeout value in seconds.
         :rtype: float
@@ -168,8 +161,7 @@ class ActionHandler:
         task_status=TaskStatus.FAILED,
         result_code=ResultCode.FAILED,
     ) -> None:
-        """
-        Handle failure of the action and optionally trigger the on-failure action.
+        """Handle failure of the action and optionally trigger the on-failure action.
 
         :param task_callback: Callback function used for reporting.
         :type task_callback: Callable
@@ -198,13 +190,9 @@ class ActionHandler:
             )
 
     def _trigger_success(
-        self,
-        task_callback,
-        task_abort_event,
-        completed_response_msg: str = ""
+        self, task_callback, task_abort_event, completed_response_msg: str = ""
     ) -> None:
-        """
-        Handle successful completion of this action and optionally trigger the on-success action.
+        """Handle successful completion of this action and optionally trigger the on-success action.
 
         :param task_callback: Callback function used for reporting.
         :type task_callback: Callable
@@ -233,8 +221,7 @@ class ActionHandler:
     def execute(
         self, task_callback: Callable, task_abort_event: Any, completed_response_msg: str = ""
     ):
-        """
-        Execute all fanned-out commands associated with this action and track progress.
+        """Execute all fanned-out commands associated with this action and track progress.
 
         :param task_callback: Callback function used for reporting.
         :type task_callback: Callable
@@ -639,8 +626,7 @@ class TrackAction(Action):
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
     ):
-        """
-        :param logger: Logger instance.
+        """:param logger: Logger instance.
         :type logger: logging.Logger
         :param dish_manager_cm: The DishManagerComponentManager instance.
         :type dish_manager_cm: DishManagerComponentManager
@@ -889,8 +875,7 @@ class SlewAction(Action):
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
     ):
-        """
-        :param logger: Logger instance.
+        """:param logger: Logger instance.
         :type logger: logging.Logger
         :param dish_manager_cm: The DishManagerComponentManager instance.
         :type dish_manager_cm: DishManagerComponentManager
