@@ -68,9 +68,7 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
         PointingState.TRACK,
     ],
 )
-def test_abort_during_dish_movement(
-    dish_manager_resources, event_store_class, pointing_state
-):
+def test_abort_during_dish_movement(dish_manager_resources, event_store_class, pointing_state):
     """Verify Abort/AbortCommands executes the abort sequence."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
