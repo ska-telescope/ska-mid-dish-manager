@@ -8,6 +8,11 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.0.0
+*************
+- Deprecated the SetOperateMode command 
+- Modified the ConfigureBand<x> commands to also drive the dish to operate
+
 Version 8.5.1
 *************
 - Fixed CAR image path
