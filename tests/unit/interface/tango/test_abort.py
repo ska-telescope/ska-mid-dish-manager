@@ -83,6 +83,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     dish_mode_event_store = event_store_class()
     status_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
+    lrc_executing_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
