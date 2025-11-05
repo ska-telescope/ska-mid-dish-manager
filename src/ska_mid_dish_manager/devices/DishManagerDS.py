@@ -13,7 +13,7 @@ from typing import List, Optional, Tuple
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
-from tango import AttrWriteType, DevLong64, DevState, DevVarStringArray, DispLevel
+from tango import AttrQuality, AttrWriteType, DevLong64, DevState, DevVarStringArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -227,15 +227,16 @@ class DishManager(SKAController):
                 "Failed to update build state information for [%s] device.", device.value
             )
 
-    def _attr_quality_state_changed(self, attribute_name, new_attribute_quality):
+    def _attr_quality_state_changed(
+        self, attribute_name: str, new_attribute_quality: AttrQuality
+    ) -> None:
         attr_name = self._component_state_attr_map.get(attribute_name)
         attr_value = self.component_manager.component_state.get(attribute_name)
         if attr_name:
             attribute_object = getattr(self, attr_name, None)
             if attribute_object:
-                if attribute_object.get_quality() is not new_attribute_quality:
-                    attribute_object.set_value(attr_value)
-                    attribute_object.set_quality(new_attribute_quality, True)
+                attribute_object.set_value(attr_value)
+                attribute_object.set_quality(new_attribute_quality, True)
 
     def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
         wind_stow_active = self.component_manager.wind_stow_active
