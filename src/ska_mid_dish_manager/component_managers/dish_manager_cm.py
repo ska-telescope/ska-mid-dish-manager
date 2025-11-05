@@ -1184,8 +1184,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         update_task_status(
             task_callback,
             status=TaskStatus.COMPLETED,
+            progress="Stow called, monitor dishmode for LRC completed",
         )
-        self._report_task_progress("Stow called, monitor dishmode for LRC completed")
         # abort queued and running tasks on the task executor
         self.abort_tasks()
 
@@ -1262,7 +1262,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         update_task_status(
             task_callback, status=TaskStatus.COMPLETED, result=(ResultCode.OK, "Scan completed")
         )
-        self._report_task_progress("Scan completed")
 
     def end_scan(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Clear the scanid."""
@@ -1278,7 +1277,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         update_task_status(
             task_callback, status=TaskStatus.COMPLETED, result=(ResultCode.OK, "EndScan completed")
         )
-        self._report_task_progress("EndScan completed")
 
     @check_communicating
     def track_load_static_off(
