@@ -30,7 +30,7 @@ PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-fi
 
 K8S_TEST_RUNNER_MARK ?= acceptance
 
-python-test: MARK = debugit
+python-test: MARK = unit
 k8s-test-runner: MARK = $(K8S_TEST_RUNNER_MARK)
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 

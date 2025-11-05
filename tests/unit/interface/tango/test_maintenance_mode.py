@@ -30,11 +30,7 @@ def test_happy_case(dish_manager_resources, event_store_class):
 
     expected_progress_update = "SetMaintenanceMode completed"
 
-    events = progress_event_store.wait_for_progress_update(expected_progress_update, timeout=6)
-    events_string = "".join([str(event.attr_value.value) for event in events])
-    for message in expected_progress_update:
-        assert message in events_string
-
+    progress_event_store.wait_for_progress_update(expected_progress_update, timeout=6)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
     # Check that the ReleaseAuth command was executed

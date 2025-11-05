@@ -446,7 +446,7 @@ class CommandMap:
             commands_for_sub_devices,
             "SetMaintenanceMode",
             ["dishmode"],
-            [DishMode.MAINTENANCE],
+            [DishMode.STOW],
             timeout=300,  # stow can take longer time
         )
 
