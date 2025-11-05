@@ -64,7 +64,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x."
 )
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_track_and_track_stop_cmds(
     slew_dish_to_init,
     monitor_tango_servers,
@@ -187,7 +186,6 @@ def test_track_and_track_stop_cmds(
     "Modify fixture once the dish states and modes updates have been made on dish manager."
 )
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_append_dvs_case(
     slew_dish_to_init,
     monitor_tango_servers,
@@ -275,7 +273,6 @@ def test_append_dvs_case(
     "Modify fixture once the dish states and modes updates have been made on dish manager."
 )
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_maximum_capacity(
     slew_dish_to_init,
     monitor_tango_servers,
@@ -395,7 +392,6 @@ def test_maximum_capacity(
     reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
 )
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_track_fails_when_track_called_late(
     monitor_tango_servers,
     event_store_class,

@@ -36,7 +36,6 @@ def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
     "manager states and modes changes"
 )
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_ignoring_spf(
     monitor_tango_servers, toggle_ignore_spf, event_store_class, dish_manager_proxy
 ):
@@ -82,7 +81,6 @@ def test_ignoring_spf(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_ignoring_spfrx(
     monitor_tango_servers, toggle_ignore_spfrx, event_store_class, dish_manager_proxy
 ):
@@ -121,7 +119,6 @@ def test_ignoring_spfrx(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_ignoring_all(
     monitor_tango_servers, toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy
 ):

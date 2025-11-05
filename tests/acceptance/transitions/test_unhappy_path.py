@@ -15,7 +15,6 @@ from tests.utils import remove_subscriptions, setup_subscriptions
     reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
 )
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_dish_handles_unhappy_path_in_command_execution(
     undo_raise_exceptions,
     event_store_class,

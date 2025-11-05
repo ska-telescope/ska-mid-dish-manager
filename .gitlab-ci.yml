@@ -57,6 +57,11 @@ k8s-test-runner:
     - make k8s-install-chart
     - make k8s-wait
 
+python-test-forked:
+  extends: python-test
+  script:
+    - make python-test-forked;
+
 
 #mypy job
 mypy:

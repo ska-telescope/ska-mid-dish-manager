@@ -19,7 +19,6 @@ def reset_diode_params(dish_manager_proxy: tango.DeviceProxy):
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("attribute, valid_write_value"),
     [

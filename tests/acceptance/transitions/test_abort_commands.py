@@ -29,7 +29,6 @@ def toggle_skip_attributes(event_store_class, spf_device_proxy, dish_manager_pro
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_abort_commands(
     monitor_tango_servers,
     event_store_class,
@@ -170,7 +169,6 @@ def track_a_sample(
     "Modify test fixture following dish manager states and modes updates."
 )
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_abort_commands_during_track(
     monitor_tango_servers,
     track_a_sample,
@@ -203,7 +201,6 @@ def test_abort_commands_during_track(
     reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
 )
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_abort_commands_during_slew(
     monitor_tango_servers,
     event_store_class,
@@ -253,7 +250,6 @@ def test_abort_commands_during_slew(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_abort_commands_during_stow(
     monitor_tango_servers,
     event_store_class,

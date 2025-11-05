@@ -16,7 +16,6 @@ def reset_global_pointing(dish_manager_proxy: tango.DeviceProxy):
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_track_load_static_off(
     dish_manager_proxy: tango.DeviceProxy, event_store_class: Any
 ) -> None:

@@ -6,7 +6,6 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     """Test Scan and EndScan command."""
     result_event_store = event_store_class()

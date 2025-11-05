@@ -10,7 +10,6 @@ from tests.utils import remove_subscriptions, setup_subscriptions
     reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
 )
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_set_operate(
     monitor_tango_servers,
     event_store_class,

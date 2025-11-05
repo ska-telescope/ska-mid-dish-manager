@@ -10,7 +10,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_dsccmdauth_attr(
     monitor_tango_servers,
     event_store_class,

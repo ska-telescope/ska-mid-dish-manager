@@ -7,7 +7,6 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test transition on CapabilityState b1."""
     main_event_store = event_store_class()

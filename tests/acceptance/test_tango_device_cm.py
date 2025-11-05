@@ -13,7 +13,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_tango_device_component_manager_state(
     monitor_tango_servers, component_state_store, ds_device_fqdn
 ):
@@ -54,7 +53,6 @@ def test_tango_device_component_manager_state(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_stress_component_monitor(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates."""
     mock_callable = MockCallable(timeout=5)

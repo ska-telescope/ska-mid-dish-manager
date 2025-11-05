@@ -52,7 +52,6 @@ def read_file_contents(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     "band_selection",
     [
@@ -95,7 +94,6 @@ def test_best_case_json(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -> None:
     """Test the `lastCommandedPointingParams` attribute of the dish manager."""
     pointing_model_json_str, _ = read_file_contents("global_pointing_model.json", "Band_2")
@@ -116,7 +114,6 @@ def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("file_name, response"),
     [
@@ -143,7 +140,6 @@ def test_inconsistent_json(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_missing_coeffs_json(
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
@@ -164,7 +160,6 @@ def test_missing_coeffs_json(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_out_of_order_pointing_coeff_json(
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
@@ -185,7 +180,6 @@ def test_out_of_order_pointing_coeff_json(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("resp", "unit", "value_range", "coeff"),
     [
@@ -212,7 +206,6 @@ def test_unit_and_range(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("file_name, response"),
     [
