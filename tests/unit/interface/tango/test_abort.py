@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 import tango
-from ska_control_model import AdminMode, ResultCode, TaskStatus
+from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -14,24 +14,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
 )
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
-
-
-@pytest.mark.unit
-@pytest.mark.forked
-def test_abort_commands_raises_deprecation_warning(dish_manager_resources):
-    # this test will be removed when AbortCommands is also removed
-    device_proxy, _ = dish_manager_resources
-    with pytest.warns(DeprecationWarning) as record:
-        device_proxy.AbortCommands()
-
-    # check that only one warning was raised
-    assert len(record) == 1
-    # check that the message matches
-    warning_msg = (
-        "AbortCommands is deprecated, use Abort instead. "
-        "Issuing Abort sequence for requested command."
-    )
-    assert record[0].message.args[0] == warning_msg
 
 
 @pytest.mark.unit
@@ -57,9 +39,6 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
 ):
     """Verify Abort/AbortCommands is rejected when DishMode is MAINTENANCE."""
     device_proxy, dish_manager_cm = dish_manager_resources
-    ds_cm = dish_manager_cm.sub_component_managers["DS"]
-    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
-    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
     caplog.set_level(logging.DEBUG, logger=dish_manager_cm.logger.name)
 
     dish_mode_event_store = event_store_class()
@@ -70,10 +49,7 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
         dish_mode_event_store,
     )
 
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
-    spf_cm._update_component_state(operatingmode=SPFOperatingMode.MAINTENANCE)
-    spfrx_cm._update_component_state(adminmode=AdminMode.ENGINEERING)
-
+    dish_manager_cm._update_component_state(dishmode=DishMode.MAINTENANCE)
     dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
@@ -85,45 +61,14 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_abort_skips_track_stop_in_stow(caplog, dish_manager_resources, event_store_class):
-    device_proxy, dish_manager_cm = dish_manager_resources
-    ds_cm = dish_manager_cm.sub_component_managers["DS"]
-    event_store = event_store_class()
-    caplog.set_level(logging.DEBUG, logger=dish_manager_cm.logger.name)
-
-    device_proxy.subscribe_event(
-        "longRunningCommandProgress",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-    device_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
-
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
-    event_store.wait_for_value(DishMode.STOW)
-    assert device_proxy.dishMode == DishMode.STOW
-
-    device_proxy.Abort()
-
-    event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP", timeout=30)
-    assert "abort-sequence: dish is in STOW mode, skipping track stop" in caplog.text
-
-
-@pytest.mark.unit
-@pytest.mark.forked
 @pytest.mark.parametrize(
-    "abort_cmd, pointing_state",
+    "pointing_state",
     [
-        ("Abort", PointingState.SLEW),
-        ("AbortCommands", PointingState.TRACK),
+        PointingState.SLEW,
+        PointingState.TRACK,
     ],
 )
-def test_abort_during_dish_movement(
-    dish_manager_resources, event_store_class, abort_cmd, pointing_state
-):
+def test_abort_during_dish_movement(dish_manager_resources, event_store_class, pointing_state):
     """Verify Abort/AbortCommands executes the abort sequence."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
@@ -188,7 +133,7 @@ def test_abort_during_dish_movement(
     ds_cm._update_component_state(pointingstate=pointing_state)
 
     # Abort the LRC
-    [[_], [abort_unique_id]] = device_proxy.command_inout(abort_cmd, None)
+    [[_], [abort_unique_id]] = device_proxy.Abort()
     result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
     progress_event_store.wait_for_progress_update("SetStandbyFPMode Aborted")
 

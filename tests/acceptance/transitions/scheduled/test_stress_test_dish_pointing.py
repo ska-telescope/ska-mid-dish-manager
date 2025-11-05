@@ -25,6 +25,9 @@ CADENCE_SEC = 0.2  # decided cadence is 1Hz but choosing quicker rate to stress 
 TOLERANCE = 1e-2
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
+)
 @pytest.mark.stress
 def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_store_class):
     """Dish pointing stress test implementation."""

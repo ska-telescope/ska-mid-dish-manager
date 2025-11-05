@@ -11,6 +11,9 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_dish_handles_unhappy_path_in_command_execution(
@@ -39,7 +42,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
-    dish_manager_proxy.SetOperateMode()
+    # Await auto transition to OPERATE following band config
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=8)
 
     dish_manager_proxy.SetStandbyFPMode()

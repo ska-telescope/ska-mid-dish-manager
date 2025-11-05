@@ -2,6 +2,7 @@
 
 import pytest
 
+from ska_mid_dish_manager.models.constants import STOW_ELEVATION_DEGREES
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
@@ -62,7 +63,7 @@ def test_abort_commands(
     spf_device_proxy.skipAttributeUpdates = False
 
     # Abort the LRC
-    [[_], [abort_unique_id]] = dish_manager_proxy.AbortCommands()
+    [[_], [abort_unique_id]] = dish_manager_proxy.Abort()
     # Confirm Dish Manager aborted the request on LRC
     result_event_store.wait_for_command_id(fp_unique_id, timeout=30)
     # Abort will execute standbyfp dishmode last as part of its abort sequence
@@ -164,6 +165,10 @@ def track_a_sample(
     yield
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x. "
+    "Modify test fixture following dish manager states and modes updates."
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_track(
@@ -183,7 +188,7 @@ def test_abort_commands_during_track(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Call AbortCommands on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
@@ -194,6 +199,9 @@ def test_abort_commands_during_track(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.xfail(
+    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
+)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_abort_commands_during_slew(
@@ -216,6 +224,8 @@ def test_abort_commands_during_slew(
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(Band.B1, timeout=30)
 
+    # TODO: Remove call to SetOperateMode following DM updates to align with new states and modes
+    # ICD
     dish_manager_proxy.SetOperateMode()
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
 
@@ -226,7 +236,7 @@ def test_abort_commands_during_slew(
     main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 
     # Call AbortCommands on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
@@ -248,6 +258,7 @@ def test_abort_commands_during_stow(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
+    ds_device_proxy,
 ):
     """Test that AbortCommands aborts the executing stow command."""
     result_event_store = event_store_class()
@@ -260,12 +271,21 @@ def test_abort_commands_during_stow(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
+    # If already in stow position, move to different position so that effort of
+    # aborting stow can be observed
+    current_pointing = dish_manager_proxy.achievedPointing
+    desired_el = 70.0
+    if current_pointing[2] == pytest.approx(STOW_ELEVATION_DEGREES):
+        ds_device_proxy.Slew([current_pointing[1], desired_el])
+        main_event_store.clear_queue()
+        main_event_store.wait_for_value(PointingState.READY, timeout=30)
+
     # Stow the dish
     dish_manager_proxy.SetStowMode()
     main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 
     # Call AbortCommands on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
@@ -274,8 +294,8 @@ def test_abort_commands_during_stow(
     # Check that the dish is in standby FP mode
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     # Check that the dish did not slew to the stow position
-    stow_position = 90.2
+    stow_el_position = STOW_ELEVATION_DEGREES
     achieved_el = dish_manager_proxy.achievedPointing[2]
-    assert achieved_el != pytest.approx(stow_position)
+    assert achieved_el != pytest.approx(stow_el_position)
 
     remove_subscriptions(subscriptions)

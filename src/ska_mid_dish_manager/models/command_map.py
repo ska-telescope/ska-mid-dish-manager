@@ -424,18 +424,22 @@ class CommandMap:
                 return
 
         commands_for_sub_devices = {
-            "SPF": {
-                "command": "SetMaintenanceMode",
-                "awaitedAttributes": ["operatingmode"],
-                "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
-            },
             "DS": {
                 "command": "Stow",
                 "awaitedAttributes": ["operatingmode"],
                 "awaitedValuesList": [DSOperatingMode.STOW],
             },
+            "SPFRX": {
+                "command": "SetStandbyMode",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [SPFRxOperatingMode.STANDBY],
+            },
+            "SPF": {
+                "command": "SetMaintenanceMode",
+                "awaitedAttributes": ["operatingmode"],
+                "awaitedValuesList": [SPFOperatingMode.MAINTENANCE],
+            },
         }
-
         self._run_long_running_command(
             task_callback,
             task_abort_event,

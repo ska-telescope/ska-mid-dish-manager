@@ -19,7 +19,6 @@ from tango.server import attribute, command, device_property, run
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
-    AbortCommandsDeprecatedCommand,
     ApplyPointingModelCommand,
     ResetTrackTableCommand,
     SetKValueCommand,
@@ -118,6 +117,7 @@ class DishManager(SKAController):
             component_state_callback=self._component_state_changed,
             wms_device_names=self.WMSDeviceNames,
             wind_stow_callback=self._wind_stow_inform,
+            command_progress_callback=self._update_status,
             default_watchdog_timeout=self.DefaultWatchdogTimeout,
             default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
             default_wind_gust_threshold=self.WindGustThreshold,
@@ -130,7 +130,6 @@ class DishManager(SKAController):
         for command_name, method_name in [
             ("SetStandbyLPMode", "set_standby_lp_mode"),
             ("SetOperateMode", "set_operate_mode"),
-            ("SetMaintenanceMode", "set_maintenance_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("TrackStop", "track_stop_cmd"),
@@ -157,6 +156,21 @@ class DishManager(SKAController):
                 ),
             )
 
+        # SetMaintenanceMode is a special command that is split into two parts, after the
+        # initial fan-out of commands to sub-devices, the command waits for the dish to stow
+        # then proceeds to set the dish into maintenance mode.
+        self.register_command_object(
+            "SetMaintenanceMode",
+            SubmittedSlowCommand(
+                "SetMaintenanceMode",
+                self._command_tracker,
+                self.component_manager,
+                "set_maintenance_mode",
+                callback=self.component_manager.stow_to_maintenance_transition_callback,
+                logger=self.logger,
+            ),
+        )
+
         self.register_command_object(
             "SetStowMode",
             StowCommand(
@@ -172,22 +186,8 @@ class DishManager(SKAController):
         self.register_command_object(
             "Abort",
             AbortCommand(
-                "Abort",
                 self._command_tracker,
                 self.component_manager,
-                "abort",
-                callback=None,
-                logger=self.logger,
-            ),
-        )
-
-        self.register_command_object(
-            "AbortCommands",
-            AbortCommandsDeprecatedCommand(
-                "AbortCommands",
-                self._command_tracker,
-                self.component_manager,
-                "abort",
                 callback=None,
                 logger=self.logger,
             ),
@@ -211,6 +211,12 @@ class DishManager(SKAController):
     # ---------
     # Callbacks
     # ---------
+
+    def _update_status(self, status: str) -> None:
+        """Update the status of the device."""
+        self.set_status(status)
+        self.logger.debug(status)
+        self.push_change_event("status")
 
     def _update_version_of_subdevice_on_success(self, device: DishDevice, build_state: str):
         """Update the version information of subdevice if connection is successful."""
@@ -1547,26 +1553,6 @@ class DishManager(SKAController):
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @command(
-        doc_in="Abort currently executing long running command on "
-        "DishManager including stopping dish movement and transitioning "
-        "dishMode to StandbyFP. For details consult DishManager documentation",
-        display_level=DispLevel.OPERATOR,
-        dtype_out="DevVarLongStringArray",
-    )
-    def AbortCommands(self) -> DevVarLongStringArrayType:
-        """Empty out long running commands in queue.
-
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
-        """
-        handler = self.get_command_object("AbortCommands")
-        (return_code, message) = handler()
-        return ([return_code], [message])
-
-    @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
@@ -1837,6 +1823,8 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @requires_component_manager
     def SetStowMode(self) -> DevVarLongStringArrayType:
         """Implemented as a Long Running Command.
 
@@ -1849,6 +1837,10 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
+        # Handle the exit from maintenance mode if the dish is in maintenance mode.
+        if self.component_manager.component_state["dishmode"] == DishMode.MAINTENANCE:
+            self.component_manager.handle_exit_maintenance_mode_transition()
+
         handler = self.get_command_object("SetStowMode")
         result_code, unique_id = handler()
 

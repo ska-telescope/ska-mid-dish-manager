@@ -111,15 +111,16 @@ make docs-build html
 Use the code below to generate the mode transition graph:
 
 ```python
-from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
-from  matplotlib import pyplot as plt
 import networkx as nx
+import matplotlib.pyplot as plt
+from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
-model = DishModeModel()
-# create a matplotlib axis object
-ax = plt.subplot(121)
+dm_graph = DishModeModel().dishmode_graph
 
-# draw the transitions
-nx.draw(model.dishmode_graph, ax=axis, with_labels=True, font_weight='bold')
+pos = nx.spring_layout(dm_graph)
+
+nx.draw_networkx_labels(dm_graph, pos)
+nx.draw_networkx_edges(dm_graph, pos)
+
 plt.show()
 ```

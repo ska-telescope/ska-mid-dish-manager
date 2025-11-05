@@ -177,9 +177,6 @@ class Abort:
         task_callback: Optional[Callable] = None,
     ) -> None:
         """Executes the abort sequence."""
-        self.logger.debug(
-            "Handing over work from abort-thread to executor to complete the abort sequence"
-        )
         self._component_manager.submit_task(
             self._complete_abort_sequence,
             args=[],
