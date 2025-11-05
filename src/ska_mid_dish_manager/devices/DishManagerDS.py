@@ -25,6 +25,7 @@ from ska_mid_dish_manager.models.command_class import (
     SetKValueCommand,
     StowCommand,
 )
+from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
