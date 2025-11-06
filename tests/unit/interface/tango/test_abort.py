@@ -10,6 +10,7 @@ from ska_control_model import ResultCode, TaskStatus
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     PointingState,
     SPFOperatingMode,
     SPFRxOperatingMode,
@@ -128,7 +129,11 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     # Abort the LRC
     device_proxy.Abort()
     ds_cm._update_component_state(
-        **{"pointingstate": PointingState.READY, "operatingmode": DSOperatingMode.STANDBY_FP}
+        **{
+            "pointingstate": PointingState.READY,
+            "operatingmode": DSOperatingMode.STANDBY,
+            "powerstate": DSPowerState.FULL_POWER,
+        }
     )
     progress_event_store.wait_for_progress_update("Abort sequence completed", timeout=30)
 
