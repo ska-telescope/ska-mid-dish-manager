@@ -27,7 +27,6 @@ def clean_up(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_initial_power_limit(
     ds_device_proxy: tango.DeviceProxy,
     dish_manager_proxy: tango.DeviceProxy,
@@ -42,7 +41,6 @@ def test_initial_power_limit(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_correct_power_limit_change(
     ds_device_proxy: tango.DeviceProxy,
     dish_manager_proxy: tango.DeviceProxy,
@@ -71,7 +69,6 @@ def test_correct_power_limit_change(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_incorrect_power_limit_change(
     ds_device_proxy: tango.DeviceProxy,
     dish_manager_proxy: tango.DeviceProxy,
@@ -92,7 +89,6 @@ def test_incorrect_power_limit_change(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("parameter", "allowed"),
     [

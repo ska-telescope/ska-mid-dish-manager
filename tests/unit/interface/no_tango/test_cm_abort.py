@@ -66,18 +66,20 @@ def test_abort_handler(
 
     # wait a bit for the lrc updates to come through
     component_state_cb = callbacks["comp_state_cb"]
-    component_state_cb.get_queue_values(timeout=60)
+    component_state_cb.get_queue_values()
 
     expected_call_kwargs = (
-        {
-            "progress": "SetStandbyLPMode aborted",
-            "status": TaskStatus.ABORTED,
-            "result": (ResultCode.ABORTED, "SetStandbyLPMode aborted"),
-        },
+        {"status": TaskStatus.IN_PROGRESS},
+        # TODO remove extra status check following release after base classes v1.3.2
         {"status": TaskStatus.IN_PROGRESS},
         {
+            "progress": "SetStandbyLPMode Aborted",
+            "status": TaskStatus.ABORTED,
+            "result": (ResultCode.ABORTED, "SetStandbyLPMode Aborted"),
+        },
+        {
             "status": TaskStatus.COMPLETED,
-            "result": (ResultCode.OK, "Abort sequence completed"),
+            "result": (ResultCode.OK, "Abort completed OK"),
         },
     )
 

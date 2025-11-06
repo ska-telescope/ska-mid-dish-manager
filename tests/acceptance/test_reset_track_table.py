@@ -7,7 +7,6 @@ from tests.utils import generate_track_table, remove_subscriptions, setup_subscr
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_reset_track_table(event_store_class, dish_manager_proxy, ds_device_proxy) -> None:
     """Test ResetTrackTable."""
     end_index_event_store = event_store_class()

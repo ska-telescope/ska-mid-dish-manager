@@ -20,7 +20,6 @@ REQUESTED_ELEVATION_VALUE = 60.0
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_maintenance_mode_cmds(
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
@@ -59,7 +58,6 @@ def test_maintenance_mode_cmds(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_power_cycle_in_maintenance_mode(
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
@@ -101,7 +99,6 @@ def test_power_cycle_in_maintenance_mode(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_exiting_maintenance_mode_when_ds_on_stow(
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
@@ -134,7 +131,6 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_exiting_maintenance_mode_when_ds_not_on_stow(
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,

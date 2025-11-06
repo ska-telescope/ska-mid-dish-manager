@@ -23,7 +23,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 def test_set_maintenance_mode_handler(
     caplog,
     component_manager: DishManagerComponentManager,
-    mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
     """Verify behaviour of SetMaintenanceMode command handler.

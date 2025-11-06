@@ -10,7 +10,6 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_action_timeout(
     reset_dish_to_standby,
     monitor_tango_servers,
@@ -78,9 +77,9 @@ def test_action_timeout(
             configure_unique_id, '[3, "SetOperateMode failed"]', timeout=DEFAULT_ACTION_TIMEOUT_S
         )
     except RuntimeError:
-        # Call AbortCommands on DishManager if anything goes wrong so the LRCs aren't stuck
+        # Call Abort on DishManager if anything goes wrong so the LRCs aren't stuck
         # IN_PROGRESS
-        [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+        [[_], [unique_id]] = dish_manager_proxy.Abort()
         result_event_store.wait_for_command_result(
             unique_id, '[0, "Abort sequence completed"]', timeout=30
         )

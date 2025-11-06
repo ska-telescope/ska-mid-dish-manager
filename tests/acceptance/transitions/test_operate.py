@@ -7,7 +7,6 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_set_operate(
     monitor_tango_servers,
     event_store_class,

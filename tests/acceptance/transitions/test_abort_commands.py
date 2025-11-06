@@ -1,4 +1,4 @@
-"""Test AbortCommands."""
+"""Test Abort."""
 
 import pytest
 
@@ -13,7 +13,6 @@ from tests.utils import calculate_slew_target, remove_subscriptions, setup_subsc
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_abort_commands(
     monitor_tango_servers,
     event_store_class,
@@ -21,7 +20,7 @@ def test_abort_commands(
     spf_device_proxy,
     toggle_skip_attributes,
 ):
-    """Test AbortCommands aborts the executing long running command."""
+    """Test Abort aborts the executing long running command."""
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
@@ -49,7 +48,7 @@ def test_abort_commands(
     spf_device_proxy.skipAttributeUpdates = False
 
     # Abort the LRC
-    [[_], [abort_unique_id]] = dish_manager_proxy.AbortCommands()
+    [[_], [abort_unique_id]] = dish_manager_proxy.Abort()
     # Confirm Dish Manager aborted the request on LRC
     result_event_store.wait_for_command_id(op_unique_id, timeout=30)
     # Abort will execute standbyfp dishmode as part of its abort sequence
@@ -150,14 +149,13 @@ def track_a_sample(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_abort_commands_during_track(
     monitor_tango_servers,
     track_a_sample,
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test that AbortCommands aborts the executing track command."""
+    """Test that Abort aborts the executing track command."""
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 
@@ -167,8 +165,8 @@ def test_abort_commands_during_track(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    # Call AbortCommands on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    # Call Abort on DishManager
+    [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
@@ -180,13 +178,12 @@ def test_abort_commands_during_track(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_abort_commands_during_slew(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test that AbortCommands aborts the executing slew command."""
+    """Test that Abort aborts the executing slew command."""
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 
@@ -207,8 +204,8 @@ def test_abort_commands_during_slew(
     dish_manager_proxy.Slew([requested_az, requested_el])
     main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 
-    # Call AbortCommands on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    # Call Abort on DishManager
+    [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
@@ -225,14 +222,13 @@ def test_abort_commands_during_slew(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_abort_commands_during_stow(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
     ds_device_proxy,
 ):
-    """Test that AbortCommands aborts the executing stow command."""
+    """Test that Abort aborts the executing stow command."""
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 
@@ -256,8 +252,8 @@ def test_abort_commands_during_stow(
     dish_manager_proxy.SetStowMode()
     main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 
-    # Call AbortCommands on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.AbortCommands()
+    # Call Abort on DishManager
+    [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
