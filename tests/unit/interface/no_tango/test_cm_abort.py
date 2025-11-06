@@ -73,9 +73,9 @@ def test_abort_handler(
         # TODO remove extra status check following release after base classes v1.3.2
         {"status": TaskStatus.IN_PROGRESS},
         {
-            "progress": "SetStandbyLPMode Aborted",
+            "progress": "SetStandbyLPMode aborted",
             "status": TaskStatus.ABORTED,
-            "result": (ResultCode.ABORTED, "SetStandbyLPMode Aborted"),
+            "result": (ResultCode.ABORTED, "SetStandbyLPMode aborted"),
         },
         {
             "status": TaskStatus.COMPLETED,

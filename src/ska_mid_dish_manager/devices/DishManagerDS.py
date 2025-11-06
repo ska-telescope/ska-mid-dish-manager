@@ -17,6 +17,7 @@ from tango import AttrQuality, AttrWriteType, DevLong64, DevState, DevVarStringA
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.models.abort_sequence_command_handler import Abort
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
     ApplyPointingModelCommand,
@@ -24,7 +25,6 @@ from ska_mid_dish_manager.models.command_class import (
     SetKValueCommand,
     StowCommand,
 )
-from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
