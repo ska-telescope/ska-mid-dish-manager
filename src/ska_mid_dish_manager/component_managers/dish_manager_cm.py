@@ -27,7 +27,6 @@ from ska_mid_dish_manager.models.command_actions import (
     TrackLoadStaticOffAction,
     TrackStopAction,
 )
-from ska_mid_dish_manager.models.command_handlers import Abort
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
@@ -88,16 +87,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spfrx_device_fqdn: str,
         action_timeout_s: float,
         *args,
-        wms_device_names: Optional[List[str]] = [],
+        wms_device_names: Optional[List[str]] = None,
         wind_stow_callback: Optional[Callable] = None,
+        command_progress_callback: Optional[Callable] = None,
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
         self.logger = logger
         self.tango_device_name = tango_device_name
         self._tango_db_accessor = TangoDbAccessor(logger, tango_device_name)
-        self.sub_component_managers = None
-        wms_device_names = list(wms_device_names)
         default_watchdog_timeout = kwargs.pop("default_watchdog_timeout", 0.0)
         default_mean_wind_speed_threshold = kwargs.pop(
             "default_mean_wind_speed_threshold", MEAN_WIND_SPEED_THRESHOLD_MPS
@@ -172,6 +170,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._build_state_callback = build_state_callback
         self._quality_state_callback = quality_state_callback
         self._wind_stow_callback = wind_stow_callback
+        self._command_progress_callback = command_progress_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
@@ -278,7 +277,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
             ),
             "WMS": WMSComponentManager(
-                wms_device_names,
+                list(wms_device_names or []),
                 logger=logger,
                 component_state_callback=self._evaluate_wind_speed_averages,
                 communication_state_callback=partial(
@@ -310,11 +309,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "pseudoRandomNoiseDiodePars",
             ],
         }
-
-        # ----------------
-        # Command Handlers
-        # ----------------
-        self._abort_handler = Abort(self, self._command_tracker, logger=logger)
 
     @property
     def wind_stow_active(self) -> bool:
@@ -507,7 +501,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if self.component_state["dishmode"] == DishMode.STOW:
             # remove any queued tasks on the task executor
-            self.abort_commands()
+            self.abort_tasks()
             self.logger.info(f"{trigger_source}: Dish is already in STOW mode, no action taken.")
             return
 
@@ -524,6 +518,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_status == TaskStatus.COMPLETED:
                 break
             self._stop_event.wait(retry_interval)
+
+    def _report_task_progress(self, progress_msg: str) -> None:
+        """Wraps the command progress callback to update device status."""
+        if self._command_progress_callback:
+            self._command_progress_callback(progress_msg)
+
+    def get_action_timeout(self) -> float:
+        """Get the timeout (in seconds) to be used for fanned out actions."""
+        return self.component_state.get("actiontimeoutseconds", DEFAULT_ACTION_TIMEOUT_S)
+
+    def set_action_timeout(self, timeout_s: float) -> None:
+        """Set the timeout (in seconds) to be used for fanned out actions."""
+        if timeout_s != self.component_state["actiontimeoutseconds"]:
+            self.logger.debug("Setting action timeous as %ss", timeout_s)
+            self._update_component_state(actiontimeoutseconds=timeout_s)
 
     # ---------
     # Callbacks
@@ -973,8 +982,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     @check_communicating
     def set_standby_lp_mode(
-        self,
-        task_callback: Optional[Callable] = None,
+        self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STANDBY_LP mode."""
         _is_set_standby_lp_allowed = partial(
@@ -992,8 +1000,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     @check_communicating
     def set_standby_fp_mode(
-        self,
-        task_callback: Optional[Callable] = None,
+        self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to STANDBY_FP mode."""
         _is_set_standby_fp_allowed = partial(
@@ -1011,8 +1018,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     @check_communicating
     def set_maintenance_mode(
-        self,
-        task_callback: Optional[Callable] = None,
+        self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
         """Transition the dish to MAINTENANCE mode."""
         _is_set_maintenance_mode_allowed = partial(
@@ -1055,10 +1061,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
     @check_communicating
-    def track_cmd(
-        self,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
+    def track_cmd(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Track the commanded pointing position."""
 
         def _is_track_cmd_allowed():
@@ -1086,10 +1089,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     @check_communicating
-    def track_stop_cmd(
-        self,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
+    def track_stop_cmd(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Stop tracking."""
 
         def _is_track_stop_cmd_allowed():
@@ -1111,10 +1111,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     @check_communicating
     def configure_band_cmd(
-        self,
-        band: Band,
-        synchronise: bool,
-        task_callback: Optional[Callable] = None,
+        self, band: Band, synchronise: bool, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
         """Configure the given band.
 
@@ -1178,10 +1175,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating dish manager dishmode to %s.", new_dish_mode)
         self._update_component_state(dishmode=new_dish_mode)
 
-    def set_stow_mode(
-        self,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
+    def set_stow_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode."""
         ds_cm = self.sub_component_managers["DS"]
         task_status, msg = ds_cm.execute_command("Stow", None)
@@ -1195,7 +1189,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             progress="Stow called, monitor dishmode for LRC completed",
         )
         # abort queued and running tasks on the task executor
-        self.abort_commands()
+        self.abort_tasks()
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
 
@@ -1215,9 +1209,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     @check_communicating
     def slew(
-        self,
-        values: list[float],
-        task_callback: Optional[Callable] = None,
+        self, values: list[float], task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
         """Slew the dish."""
         if len(values) != 2:
@@ -1255,20 +1247,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def scan(
-        self,
-        scanid: str,
-        task_callback: Optional[Callable] = None,
+        self, scanid: str, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
         """Scan a target."""
         status, response = self.submit_task(self._scan, args=[scanid], task_callback=task_callback)
         return status, response
 
     def _scan(
-        self,
-        scanid: str,
-        task_abort_event=None,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
+        self, scanid: str, task_abort_event=None, task_callback: Optional[Callable] = None
+    ) -> None:
         """Scan a target."""
         update_task_status(task_callback, progress="Setting scanID", status=TaskStatus.IN_PROGRESS)
         self._update_component_state(scanid=scanid)
@@ -1279,19 +1266,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             result=(ResultCode.OK, "Scan completed"),
         )
 
-    def end_scan(
-        self,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
+    def end_scan(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Clear the scanid."""
         status, response = self.submit_task(self._end_scan, args=[], task_callback=task_callback)
         return status, response
 
-    def _end_scan(
-        self,
-        task_abort_event=None,
-        task_callback: Optional[Callable] = None,
-    ) -> Tuple[TaskStatus, str]:
+    def _end_scan(self, task_abort_event=None, task_callback: Optional[Callable] = None) -> None:
         """Clear the scanid."""
         update_task_status(
             task_callback, progress="Clearing scanID", status=TaskStatus.IN_PROGRESS
@@ -1306,9 +1286,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     @check_communicating
     def track_load_static_off(
-        self,
-        values: list[float],
-        task_callback: Optional[Callable] = None,
+        self, values: list[float], task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
         """Load the static pointing model offsets."""
         if len(values) != 2:
@@ -1329,7 +1307,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    def set_kvalue(self, k_value) -> Tuple[ResultCode, str]:
+    def set_kvalue(self, k_value: float) -> Tuple[ResultCode, str]:
         """Set the k-value on the SPFRx.
         Note that it will only take effect after
         SPFRx has been restarted.
@@ -1504,10 +1482,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return result_code, message
 
-    def set_track_interpolation_mode(
-        self,
-        interpolation_mode,
-    ) -> None:
+    def set_track_interpolation_mode(self, interpolation_mode) -> Tuple[ResultCode, str]:
         """Set the trackInterpolationMode on the DS."""
         ds_cm = self.sub_component_managers["DS"]
         try:
@@ -1517,10 +1492,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             raise
         return (ResultCode.OK, "Successfully updated trackInterpolationMode on DSManager")
 
-    def set_noise_diode_mode(
-        self,
-        noise_diode_mode,
-    ) -> None:
+    def set_noise_diode_mode(self, noise_diode_mode) -> Tuple[ResultCode, str]:
         """Set the noiseDiodeMode on the SPFRx."""
         spfrx_cm = self.sub_component_managers["SPFRX"]
         try:
@@ -1530,10 +1502,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             raise
         return (ResultCode.OK, "Successfully updated noiseDiodeMode on SPFRx")
 
-    def set_periodic_noise_diode_pars(
-        self,
-        values,
-    ) -> None:
+    def set_periodic_noise_diode_pars(self, values) -> Tuple[ResultCode, str]:
         """Set the periodicNoiseDiodePars on the SPFRx."""
         if len(values) != 3:
             raise ValueError(
@@ -1560,10 +1529,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return (ResultCode.OK, "Successfully updated periodicNoiseDiodePars on SPFRx")
 
-    def set_pseudo_random_noise_diode_pars(
-        self,
-        values,
-    ) -> None:
+    def set_pseudo_random_noise_diode_pars(self, values) -> Tuple[ResultCode, str]:
         """Set the pseudoRandomNoiseDiodePars on the SPFRx."""
         if len(values) != 3:
             raise ValueError(
@@ -1597,7 +1563,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         :param task_callback: Callback for task status updates
         """
         if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
-            self.abort_commands(task_callback=task_callback)
+            self.abort_tasks(task_callback=task_callback)
             self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
             return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
 
@@ -1612,19 +1578,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
 
-        abort_sequence = partial(self._abort_handler, task_callback)
         self.logger.debug("Aborting LRCs from Abort sequence")
-        abort_command_id = self._command_tracker.new_command(
-            "abort-sequence:abort-lrc", completed_callback=abort_sequence
-        )
-        abort_task_cb = partial(self._command_tracker.update_command_info, abort_command_id)
-        self.abort_commands(task_callback=abort_task_cb)
+        self.abort_tasks(task_callback=task_callback)
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
-    def set_dsc_power_limit_kw(
-        self,
-        power_limit: float,
-    ) -> None:
+    def set_dsc_power_limit_kw(self, power_limit: float) -> Tuple[ResultCode, str]:
         """Set the DSC Power Limit kW on the DS."""
         ds_cm = self.sub_component_managers["DS"]
         try:
@@ -1655,13 +1613,3 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             return ResultCode.FAILED, msg
         return ResultCode.OK, reset_point
-
-    def get_action_timeout(self) -> float:
-        """Get the timeout (in seconds) to be used for fanned out actions."""
-        return self.component_state.get("actiontimeoutseconds", DEFAULT_ACTION_TIMEOUT_S)
-
-    def set_action_timeout(self, timeout_s: float) -> None:
-        """Set the timeout (in seconds) to be used for fanned out actions."""
-        if timeout_s != self.component_state["actiontimeoutseconds"]:
-            self.logger.debug("Setting action timeous as %ss", timeout_s)
-            self._update_component_state(actiontimeoutseconds=timeout_s)

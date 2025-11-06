@@ -26,15 +26,19 @@ PYTHON_LINE_LENGTH = 99
 # Set the specific environment variables required for pytest
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
-PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --pointing-files-path=build/pointing
+PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --pointing-files-path=build/pointing
 
 K8S_TEST_RUNNER_MARK ?= acceptance
 
-python-test: MARK = unit
+python-test: MARK = unit and (not forked)
 k8s-test-runner: MARK = $(K8S_TEST_RUNNER_MARK)
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
 -include .make/python.mk
+
+python-test-forked: MARK = forked
+python-test-forked: PYTHON_VARS_AFTER_PYTEST += --forked
+python-test-forked: python-pre-test python-do-test python-post-test
 
 python-do-format:
 	$(PYTHON_RUNNER) ruff format $(PYTHON_LINT_TARGET)

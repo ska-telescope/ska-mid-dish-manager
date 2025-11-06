@@ -1,4 +1,4 @@
-"""Test that DSC Control State can be read on Dish Manager's interface."""
+"""Test that DSC Control State and Command Authority can be read on Dish Manager's interface."""
 
 import pytest
 import tango
@@ -7,14 +7,13 @@ from ska_mid_dish_manager.models.dish_enums import DscCmdAuthType, DscCtrlState
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
-def test_dsccmdauth_attr(
+def test_dsccmdauth_and_dsccmdauth_attrs(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
     ds_device_proxy,
 ):
-    """Test DSC Control State can be read on Dish Manager."""
+    """Test DSC Control State and Command Authority can be read on Dish Manager."""
     dsc_cmd_auth_event_store = event_store_class()
     dsc_cmd_auth_id = dish_manager_proxy.subscribe_event(
         "dscCmdAuth",

@@ -7,7 +7,6 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_configure_band_a(
     monitor_tango_servers,
     event_store_class,
@@ -92,7 +91,6 @@ def test_configure_band_a(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     ("band_request", "expected_band", "message_str"),
     [
@@ -171,7 +169,6 @@ def test_configure_band_b(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_configure_band_2_from_stow(
     monitor_tango_servers,
     event_store_class,

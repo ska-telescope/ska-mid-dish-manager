@@ -62,7 +62,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_track_and_track_stop_cmds(
     slew_dish_to_init,
     monitor_tango_servers,
@@ -182,7 +181,6 @@ def test_track_and_track_stop_cmds(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_append_dvs_case(
     slew_dish_to_init,
     monitor_tango_servers,
@@ -266,7 +264,6 @@ def test_append_dvs_case(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_maximum_capacity(
     slew_dish_to_init,
     monitor_tango_servers,
@@ -386,7 +383,6 @@ def test_maximum_capacity(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_track_fails_when_track_called_late(
     monitor_tango_servers,
     event_store_class,
