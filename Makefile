@@ -30,7 +30,7 @@ PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --json-report --json-report-file=build/
 
 K8S_TEST_RUNNER_MARK ?= acceptance
 
-python-test: MARK = thread_leak_check
+python-test: MARK = unit and (not forked)
 k8s-test-runner: MARK = $(K8S_TEST_RUNNER_MARK)
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
