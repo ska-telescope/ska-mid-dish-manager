@@ -78,3 +78,7 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             sub_component_manager._update_communication_state(CommunicationStatus.ESTABLISHED)
 
         yield dish_manager_cm
+
+        # cleanup resources
+        dish_manager_cm.stop_communicating()
+        dish_manager_cm._task_executor.abort()
