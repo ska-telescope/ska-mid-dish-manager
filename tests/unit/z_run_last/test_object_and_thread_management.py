@@ -23,7 +23,6 @@ def force_gc_on_weak_ref(weak_ref: weakref.ref) -> None:
         gc.collect()
 
 
-@pytest.mark.skip(reason="Debugging in session scoped fixture")
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
 @mock.patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor")

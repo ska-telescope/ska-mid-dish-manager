@@ -89,7 +89,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         *args,
         wms_device_names: Optional[List[str]] = None,
         wind_stow_callback: Optional[Callable] = None,
-        command_progress_callback: Optional[Callable] = None,
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
@@ -170,7 +169,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._build_state_callback = build_state_callback
         self._quality_state_callback = quality_state_callback
         self._wind_stow_callback = wind_stow_callback
-        self._command_progress_callback = command_progress_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
@@ -518,11 +516,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if task_status == TaskStatus.COMPLETED:
                 break
             self._stop_event.wait(retry_interval)
-
-    def _report_task_progress(self, progress_msg: str) -> None:
-        """Wraps the command progress callback to update device status."""
-        if self._command_progress_callback:
-            self._command_progress_callback(progress_msg)
 
     def get_action_timeout(self) -> float:
         """Get the timeout (in seconds) to be used for fanned out actions."""
