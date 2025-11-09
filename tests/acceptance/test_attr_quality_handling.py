@@ -8,7 +8,7 @@ from tango import AttrQuality
 from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.skip(reason="It was never enabled")
+@pytest.mark.skip(reason="It was never enabled - fix in a separate MR")
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "qual_before,qual_after",
