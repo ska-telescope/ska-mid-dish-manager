@@ -6,8 +6,8 @@ import time
 from typing import Any, Callable
 
 from ska_control_model import TaskStatus
-from ska_tango_base.base import BaseComponentManager
 
+from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import FannedOutCommandStatus
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
@@ -149,7 +149,7 @@ class FannedOutSlowCommand(FannedOutCommand):
         logger: logging.Logger,
         device: str,
         command_name: str,
-        device_component_manager: BaseComponentManager,
+        device_component_manager: TangoDeviceComponentManager,
         command_argument: Any = None,
         awaited_component_state: dict = {},
         timeout_s: float = 0,
@@ -162,7 +162,7 @@ class FannedOutSlowCommand(FannedOutCommand):
         :param command_name: The name for the command to be executed
         :type command_name: str
         :param device_component_manager: The component manager of the subservient device
-        :type device_component_manager: BaseComponentManager
+        :type device_component_manager: TangoDeviceComponentManager
         :param timeout_s: Timeout (in seconds) for the command execution
         :type timeout_s: float
         :param command_argument: Argument for the requested command

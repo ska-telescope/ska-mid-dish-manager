@@ -122,6 +122,7 @@ class DishManager(SKAController):
             component_state_callback=self._component_state_changed,
             wms_device_names=self.WMSDeviceNames,
             wind_stow_callback=self._wind_stow_inform,
+            command_progress_callback=self._update_status,
             default_watchdog_timeout=self.DefaultWatchdogTimeout,
             default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
             default_wind_gust_threshold=self.WindGustThreshold,
@@ -216,6 +217,12 @@ class DishManager(SKAController):
     # ---------
     # Callbacks
     # ---------
+
+    def _update_status(self, status: str) -> None:
+        """Update the status of the device."""
+        self.set_status(status)
+        self.logger.debug(status)
+        self.push_change_event("status")
 
     def _update_version_of_subdevice_on_success(self, device: DishDevice, build_state: str):
         """Update the version information of subdevice if connection is successful."""

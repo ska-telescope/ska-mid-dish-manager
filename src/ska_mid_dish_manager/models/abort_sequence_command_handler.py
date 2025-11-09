@@ -19,6 +19,7 @@ class Abort:
         self.logger = logger
         self._component_manager = component_manager
         self._command_tracker = command_tracker
+        self._progress_callback = component_manager._report_task_progress
 
     def __call__(self, triggered_from_invoked: bool) -> None:
         if not triggered_from_invoked:
@@ -112,18 +113,18 @@ class Abort:
 
         if task_abort_event.is_set():
             self.logger.debug("Abort sequence failed")
+            self._progress_callback("Abort sequence failed")
             update_task_status(
                 task_callback,
                 status=TaskStatus.FAILED,
-                progress="Abort sequence failed",
                 result=(ResultCode.FAILED, "Abort sequence failed"),
             )
             return
 
+        self._progress_callback("Abort sequence completed")
         update_task_status(
             task_callback,
             status=TaskStatus.COMPLETED,
-            progress="Abort sequence completed",
             result=(ResultCode.OK, "Abort sequence completed"),
         )
         self.logger.debug("Abort sequence completed")
