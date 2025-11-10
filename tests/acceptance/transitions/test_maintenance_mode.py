@@ -120,8 +120,13 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
     subscriptions.update(setup_subscriptions(ds_device_proxy, ds_attr_cb_mapping))
     dish_manager_proxy.SetMaintenanceMode()
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
+    # Maintenance mode releases DSC authority, so increase client request timeout to 15 seconds
+    # so that we don't time out while waiting for the DS horn when taking authority back.
+    # Since Stow is not submitted as a task on DSManager this command will block the proxy.
+    dish_manager_proxy.set_timeout_millis(15000)
     dish_manager_proxy.SetStowMode()
     dsc_event_store.wait_for_value(DSOperatingMode.STOW, timeout=120)
+    dish_manager_proxy.set_timeout_millis(5000)
 
     assert dish_manager_proxy.dishMode == DishMode.STOW
 
@@ -144,8 +149,10 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
     dish_manager_proxy.SetMaintenanceMode()
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
 
+    # Unstow is a long running command on the DSManager so we don't need to increase our proxy
+    # timeout for the alarm horn. Stow will block the proxy if used.
     ds_device_proxy.unstow()
-    dsc_event_store.wait_for_value(DSOperatingMode.STANDBY_FP, timeout=120)
+    dsc_event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=120)
     ds_device_proxy.slew([REQUESTED_AZIMUTH_VALUE, REQUESTED_ELEVATION_VALUE])
     dsc_event_store.wait_for_value(DSOperatingMode.POINT, timeout=30)
     dish_manager_proxy.SetStowMode()

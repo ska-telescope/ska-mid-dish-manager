@@ -11,9 +11,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_dish_handles_unhappy_path_in_command_execution(
@@ -56,10 +53,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
 
     dish_manager_proxy.SetStandbyLPMode()
 
-    progress_msg = (
-        "DishManager.SetStandbyLPMode failed: "
-        "SPF.SetStandbyLPMode, SPFRX.SetStandbyMode failed to execute"
-    )
+    progress_msg = "SetStandbyLPMode failed Exception:"
     progress_event_store.wait_for_progress_update(progress_msg, timeout=5)
 
     result_event_store = result_event_store.get_queue_values(timeout=5)
@@ -69,7 +63,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     assert "SetStandbyLPMode failed" in expected_result_message, lrc_result_msgs
 
     # check that the mode transition to LP mode did not happen on dish manager, spf and spfrx
-    assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
+    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     assert spf_device_proxy.operatingMode == SPFOperatingMode.OPERATE
     assert spfrx_device_proxy.operatingMode == SPFRxOperatingMode.OPERATE
 

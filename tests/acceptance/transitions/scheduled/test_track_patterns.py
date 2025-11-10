@@ -8,10 +8,7 @@ from typing import Any
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import (
-    Band,
-    DishMode,
-)
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.data import RADIAL_CSV_PATH, SPIRAL_CSV_PATH
 from tests.utils import (
     compare_trajectories,
@@ -39,9 +36,6 @@ def load_csv_data(file_path: str) -> list[tuple[float, float, float]]:
     return data
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
-)
 @pytest.mark.forked
 @pytest.mark.track_patterns
 @pytest.mark.parametrize(
@@ -73,8 +67,7 @@ def test_track_pattern(
     if dish_manager_proxy.configuredBand != Band.B1:
         dish_manager_proxy.ConfigureBand1(True)
         main_event_store.wait_for_value(Band.B1, timeout=60)
-    dish_manager_proxy.SetOperateMode()
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
+        main_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
 
     track_table = load_csv_data(track_csv_file)
 

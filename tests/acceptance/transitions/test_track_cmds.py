@@ -50,6 +50,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
             INIT_AZ, abs=POINTING_TOLERANCE_DEG
         ) and pointing_event_val[2] == pytest.approx(INIT_EL, abs=POINTING_TOLERANCE_DEG)
 
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=120)
     achieved_pointing_event_store.wait_for_condition(target_reached_test, timeout=120)
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=120)
 
@@ -60,9 +61,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     dish_manager_proxy.TrackStop()
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x."
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_and_track_stop_cmds(
@@ -87,6 +85,7 @@ def test_track_and_track_stop_cmds(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    assert dish_manager_proxy.pointingState == PointingState.READY
 
     # Load a track table
     current_pointing = dish_manager_proxy.achievedPointing
@@ -124,7 +123,7 @@ def test_track_and_track_stop_cmds(
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
-    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
+    pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=20)
 
     expected_progress_updates = [
         "Fanned out commands: DS.Track",
@@ -182,10 +181,6 @@ def test_track_and_track_stop_cmds(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x. "
-    "Modify fixture once the dish states and modes updates have been made on dish manager."
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_append_dvs_case(
@@ -270,10 +265,6 @@ def test_append_dvs_case(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x. "
-    "Modify fixture once the dish states and modes updates have been made on dish manager."
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_maximum_capacity(
@@ -296,7 +287,10 @@ def test_maximum_capacity(
         "trackTableEndIndex": end_index_event_store,
         "longRunningCommandResult": result_event_store,
     }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    # Don't reset the queues, if the table indexes are already at 1 and 50 then the NEW load below
+    # will not trigger a CHANGE_EVENT and current_index_event_store.wait_for_value(1) will time
+    # out. By not resetting the queues we ensure that these initial values are there for the waits.
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping, reset_queue=False)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
@@ -391,9 +385,6 @@ def test_maximum_capacity(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling ConfigureBand_x"
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_track_fails_when_track_called_late(

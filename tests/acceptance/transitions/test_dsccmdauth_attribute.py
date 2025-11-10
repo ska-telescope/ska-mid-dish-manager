@@ -3,10 +3,7 @@
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import (
-    DishMode,
-    DscCmdAuthType,
-)
+from ska_mid_dish_manager.models.dish_enums import DishMode, DscCmdAuthType
 
 
 @pytest.mark.acceptance

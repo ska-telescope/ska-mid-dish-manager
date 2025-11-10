@@ -9,6 +9,7 @@ from tango.test_context import DeviceTestContext
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
+    DSPowerState,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -62,7 +63,8 @@ def dish_manager_resources():
             setattr(spfrx_cm, method_name, mock_method)
 
         # trigger transition to StandbyLP mode
-        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY)
+        ds_cm._update_component_state(powerstate=DSPowerState.LOW_POWER)
         spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 

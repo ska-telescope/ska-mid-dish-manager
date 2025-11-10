@@ -27,6 +27,7 @@ from ska_mid_dish_manager.models.command_class import (
 )
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
+    DEFAULT_ACTION_TIMEOUT_S,
     DEFAULT_DISH_ID,
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
@@ -53,10 +54,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
-from ska_mid_dish_manager.utils.decorators import (
-    record_command,
-    requires_component_manager,
-)
+from ska_mid_dish_manager.utils.decorators import record_command, requires_component_manager
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
 from ska_mid_dish_manager.utils.track_table_input_validation import (
     TrackLoadTableFormatting,
@@ -98,6 +96,11 @@ class DishManager(SKAController):
         doc="Threshold value for wind gust speed (in m/s) used to trigger stow.",
         default_value=WIND_GUST_THRESHOLD_MPS,
     )
+    DefaultActionTimeoutSeconds = device_property(
+        dtype=float,
+        doc="The default timeout value (in seconds) for each fanned out action.",
+        default_value=DEFAULT_ACTION_TIMEOUT_S,
+    )
 
     def create_component_manager(self) -> DishManagerComponentManager:
         """Create the component manager for DishManager.
@@ -114,6 +117,7 @@ class DishManager(SKAController):
             self.DSDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
+            self.DefaultActionTimeoutSeconds,
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
             wms_device_names=self.WMSDeviceNames,
@@ -129,7 +133,7 @@ class DishManager(SKAController):
 
         for command_name, method_name in [
             ("SetStandbyLPMode", "set_standby_lp_mode"),
-            ("SetOperateMode", "set_operate_mode"),
+            ("SetMaintenanceMode", "set_maintenance_mode"),
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("TrackStop", "track_stop_cmd"),
@@ -155,6 +159,21 @@ class DishManager(SKAController):
                     logger=self.logger,
                 ),
             )
+
+        # SetMaintenanceMode is a special command that is split into two parts, after the
+        # initial fan-out of commands to sub-devices, the command waits for the dish to stow
+        # then proceeds to set the dish into maintenance mode.
+        self.register_command_object(
+            "SetMaintenanceMode",
+            SubmittedSlowCommand(
+                "SetMaintenanceMode",
+                self._command_tracker,
+                self.component_manager,
+                "set_maintenance_mode",
+                callback=self.component_manager.stow_to_maintenance_transition_callback,
+                logger=self.logger,
+            ),
+        )
 
         # SetMaintenanceMode is a special command that is split into two parts, after the
         # initial fan-out of commands to sub-devices, the command waits for the dish to stow
@@ -351,6 +370,7 @@ class DishManager(SKAController):
             )
             device._build_state = device._release_info.get_build_state()
             device._version_id = device._release_info.get_dish_manager_release_version()
+            device._action_timeout_seconds = DEFAULT_ACTION_TIMEOUT_S
 
             # push change events, needed to use testing library
 
@@ -406,6 +426,7 @@ class DishManager(SKAController):
                 "lastcommandedmode": "lastCommandedMode",
                 "lastcommandinvoked": "lastCommandInvoked",
                 "dscctrlstate": "dscCtrlState",
+                "actiontimeoutseconds": "actionTimeoutSeconds",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1533,6 +1554,27 @@ class DishManager(SKAController):
             "dscctrlstate", DscCtrlState.NO_AUTHORITY
         )
 
+    @attribute(
+        dtype=float,
+        access=AttrWriteType.READ_WRITE,
+        doc="""
+            Timeout (in seconds) to be used for each action. On each action DishManager will wait
+            for the timeout duration for expected subservient device attribute updates. A value
+            <= 0 will disable waiting and no monitoring will occur, commands will be fanned out to
+            their respective subsevient devices and then the DishManager command will return as
+            COMPLETED immediately.
+        """,
+    )
+    def actionTimeoutSeconds(self):
+        """Returns actionTimeoutSeconds."""
+        return self.component_manager.get_action_timeout()
+
+    @actionTimeoutSeconds.write
+    def actionTimeoutSeconds(self, value):
+        """Sets actionTimeoutSeconds."""
+        self.logger.debug("Write to actionTimeoutSeconds, %s", value)
+        self.component_manager.set_action_timeout(value)
+
     # --------
     # Commands
     # --------
@@ -1590,8 +1632,8 @@ class DishManager(SKAController):
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 1. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -1617,8 +1659,8 @@ class DishManager(SKAController):
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 2. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -1642,8 +1684,8 @@ class DishManager(SKAController):
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 3. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
         """
         handler = self.get_command_object("ConfigureBand3")
 
@@ -1664,8 +1706,8 @@ class DishManager(SKAController):
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 4. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
         """
         handler = self.get_command_object("ConfigureBand4")
 
@@ -1686,8 +1728,8 @@ class DishManager(SKAController):
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 5a. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
         """
         handler = self.get_command_object("ConfigureBand5a")
 
@@ -1708,8 +1750,8 @@ class DishManager(SKAController):
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
         operate in frequency band 5b. On completion of the band
-        configuration, Dish will automatically revert to the previous Dish
-        mode (OPERATE or STANDBY‐FP).
+        configuration, Dish will automatically transition to Dish
+        mode OPERATE.
         """
         handler = self.get_command_object("ConfigureBand5b")
 
@@ -1772,21 +1814,24 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
     )
     def SetOperateMode(self) -> DevVarLongStringArrayType:
-        """Implemented as a Long Running Command.
+        """Deprecated command.
 
-        This command triggers the Dish to transition to the OPERATE Dish
-        Element Mode, and returns to the caller. This mode fulfils the main
-        purpose of the Dish, which is to point to designated directions while
-        capturing data and transmitting it to CSP. The Dish will automatically
-        start capturing data after entering OPERATE mode.
+        This command was previously used to trigger the Dish to transition to the OPERATE Dish
+        Element Mode, however, this command has now been deprecated. To transition to OPERATE dish
+        mode the ConfigureBand<N> command should be used to configure a band, this will
+        automatically transition to OPERATE dish mode on successfull configuration.
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("SetOperateMode")
-        result_code, unique_id = handler()
-
-        return ([result_code], [unique_id])
+        return (
+            [ResultCode.REJECTED],
+            [
+                "SetOperateMode command is deprecated. To transition to OPERATE dish mode use the"
+                " ConfigureBand<N> command to configure a band, this will automatically transition"
+                " to OPERATE dish mode on successfull configuration."
+            ],
+        )
 
     @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -1849,7 +1894,6 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @requires_component_manager
     def SetStowMode(self) -> DevVarLongStringArrayType:
         """Implemented as a Long Running Command.

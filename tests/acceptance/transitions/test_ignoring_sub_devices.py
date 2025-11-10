@@ -2,7 +2,7 @@
 
 import pytest
 
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from ska_mid_dish_manager.models.dish_enums import Band
 from tests.utils import remove_subscriptions, set_ignored_devices, setup_subscriptions
 
 
@@ -30,11 +30,6 @@ def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
     set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False)
 
 
-@pytest.mark.xfail(
-    reason="Transition to dish mode OPERATE only allowed through calling "
-    "ConfigureBand_x, SetOperateMode call no longer valid. Remove call following dish "
-    "manager states and modes changes"
-)
 @pytest.mark.acceptance
 @pytest.mark.forked
 def test_ignoring_spf(
@@ -55,14 +50,11 @@ def test_ignoring_spf(
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(Band.B1, timeout=8)
 
-    dish_manager_proxy.SetOperateMode()
-    main_event_store.wait_for_value(DishMode.OPERATE)
-
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "Fanned out commands: DS.SetStandbyFPMode",
+        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
@@ -103,7 +95,11 @@ def test_ignoring_spfrx(
     expected_progress_updates = [
         "Fanned out commands: DS.SetIndexPosition",
         "Awaiting configuredband change to B2",
-        "ConfigureBand2 completed",
+        "DS.SetIndexPosition completed",
+        "ConfigureBand2 complete. Triggering on success action.",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed",
     ]
 
     events = progress_event_store.wait_for_progress_update(
@@ -140,7 +136,7 @@ def test_ignoring_all(
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "Fanned out commands: DS.SetStandbyLPMode",
+        "Fanned out commands: DS.SetStandbyMode",
         "Awaiting dishmode change to STANDBY_LP",
         "SetStandbyLPMode completed",
     ]

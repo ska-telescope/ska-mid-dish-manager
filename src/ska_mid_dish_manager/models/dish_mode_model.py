@@ -59,6 +59,7 @@ class DishModeModel:
         # From Stow to other modes
         dishmode_graph.add_edge("STOW", "STANDBY_FP", commands=["SetStandbyFPMode"])
         dishmode_graph.add_edge("STOW", "STANDBY_LP", commands=["SetStandbyLPMode"])
+        dishmode_graph.add_edge("STOW", "CONFIG", commands=CONFIG_COMMANDS)
         dishmode_graph.add_edge("STOW", "MAINTENANCE", commands=["SetMaintenanceMode"])
 
         # From any mode to Stow
