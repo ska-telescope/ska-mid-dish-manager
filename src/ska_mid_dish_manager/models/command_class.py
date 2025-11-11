@@ -194,6 +194,11 @@ class StowCommand(SubmittedSlowCommand):
         # dont return the command id to the client
         if status == TaskStatus.COMPLETED:
             return ResultCode.STARTED, "Stow called on Dish Structure, monitor dishmode for STOW"
+        elif status == TaskStatus.IN_PROGRESS:
+            return (
+                ResultCode.STARTED,
+                "Stow will be called on Dish Structure, monitor dishmode for STOW",
+            )
         return (
             ResultCode.FAILED,
             f"{status.name} was returned by command method with message: {message}",

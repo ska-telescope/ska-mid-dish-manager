@@ -127,8 +127,5 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
     )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
-
-    # Check that all the expected progress messages appeared
-    # in the event store
     for message in expected_progress_updates:
         assert message in events_string

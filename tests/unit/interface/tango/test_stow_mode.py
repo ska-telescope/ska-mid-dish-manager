@@ -33,10 +33,4 @@ def test_stow_mode(dish_manager_resources, event_store_class):
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
 
     expected_progress_update = "Stow called, monitor dishmode for LRC completed"
-
-    events = progress_event_store.wait_for_progress_update(expected_progress_update, timeout=6)
-    events_string = "".join([str(event.attr_value.value) for event in events])
-    # Check that all the expected progress messages appeared
-    # in the event store
-    for message in expected_progress_update:
-        assert message in events_string
+    progress_event_store.wait_for_progress_update(expected_progress_update, timeout=6)

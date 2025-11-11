@@ -6,7 +6,6 @@ import mock
 import pytest
 import tango
 from ska_control_model import CommunicationStatus, TaskStatus
-from tango import DevError
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 
@@ -21,7 +20,7 @@ def test_log_command_inout(patched_dev_factory, caplog: pytest.LogCaptureFixture
 
     # Set up mocks
     mock_device_proxy = mock.MagicMock(name="DP")
-    mock_device_proxy.command_inout.side_effect = tango.DevFailed(DevError())
+    mock_device_proxy.command_inout.side_effect = tango.DevFailed(tango.DevError())
 
     class DummyFactory:
         def __call__(self, *args, **kwargs):

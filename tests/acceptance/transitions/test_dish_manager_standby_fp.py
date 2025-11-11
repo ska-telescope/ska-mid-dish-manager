@@ -12,20 +12,25 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
     """Test transition to Standby_FP."""
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
+    dish_mode_event_store = event_store_class()
     attr_cb_mapping = {
         "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
+        "dishmode": dish_mode_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
+    dish_mode_event_store.clear_queue()
+    progress_event_store.clear_queue()
+
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "Fanned out commands: SPF.SetOperateMode, DS.SetStandbyFPMode",
+        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
@@ -41,7 +46,7 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
     for message in expected_progress_updates:
         assert message in events_string
 
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+    assert dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
     assert dish_manager_proxy.powerState == PowerState.FULL
 
     remove_subscriptions(subscriptions)

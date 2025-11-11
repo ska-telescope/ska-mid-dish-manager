@@ -56,6 +56,7 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             "ska_mid_dish_manager.utils.schedulers.WatchdogTimer",
             disable=MagicMock(),
         ),
+        patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
     ):
         dish_manager_cm = DishManagerComponentManager(
             LOGGER,
@@ -66,6 +67,7 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             "sub-device-1",
             "sub-device-2",
             "sub-device-3",
+            action_timeout_s=120,
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
         )

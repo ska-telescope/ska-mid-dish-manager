@@ -5,7 +5,12 @@ import json
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SPFOperatingMode
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    DSPowerState,
+    SPFOperatingMode,
+)
 
 
 @pytest.mark.unit
@@ -36,7 +41,9 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     device_proxy.SetStandbyFPMode()
     progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
 
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+    ds_cm._update_component_state(
+        operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
+    )
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
 
     events = result_event_store.wait_for_n_events(1, timeout=5)
