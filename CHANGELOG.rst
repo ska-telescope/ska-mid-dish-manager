@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 9.0.0
+*************
 - Update implementation to match new states & modes ICD rev 6
   - SetMaintenanceMode command and associated Maintenance DishMode updated
   - ConfigureBand<N> command will now transition to OPERATE Dish mode on successful configuration
@@ -39,22 +42,6 @@ Version 8.4.5
 - Upgraded ska-mid-dish-simulators chart to v5.4.0
 - Upgraded the ska-mid-dish-ds-manager chart to v6.4.1
 
-  - Dropped the archive rate for achievedPointing and currentPointing attributes
-  - Trimmed the logs
-  - Updated lastcommandupdate attribute format
-
-Version 8.4.4
-*************
-- Updated abort logic to not call TrackStop when in Stow.
-
-Version 8.4.3
-*************
-
-Version 8.4.5
-*************
-- Changed order of commands to dish structure manager on calling of Abort()
-- Upgraded ska-mid-dish-simulators chart to v5.4.0
-- Upgraded the ska-mid-dish-ds-manager chart to v6.4.1
   - Dropped the archive rate for achievedPointing and currentPointing attributes
   - Trimmed the logs
   - Updated lastcommandupdate attribute format
