@@ -34,6 +34,7 @@ def test_track_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": "Fanned out commands: DS.Track"},
+        {"progress": "DS.Track completed"},
         {
             "progress": (
                 "Track command has been executed on DS. "
@@ -60,22 +61,3 @@ def test_track_handler(
     # check that the component state reports the requested command
     component_manager._update_component_state(pointingstate=PointingState.TRACK)
     component_state_cb.wait_for_value("pointingstate", PointingState.TRACK)
-
-    # wait a bit for the lrc updates to come through
-    component_state_cb.get_queue_values()
-    # check that the final lrc updates come through
-    task_cb = callbacks["task_cb"]
-    task_cb.assert_called_with(
-        progress=(
-            "Track command has been executed on DS. "
-            "Monitor the achievedTargetLock attribute to determine when the dish is on source."
-        ),
-        status=TaskStatus.COMPLETED,
-        result=(
-            ResultCode.OK,
-            (
-                "Track command has been executed on DS. "
-                "Monitor the achievedTargetLock attribute to determine when the dish is on source."
-            ),
-        ),
-    )

@@ -28,24 +28,21 @@ def test_slew_handler(
     component_manager.slew([20.0, 30.0], callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
     component_state_cb = callbacks["comp_state_cb"]
-    component_state_cb.get_queue_values()
+    component_state_cb.get_queue_values(timeout=1)
 
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {"progress": "Fanned out commands: DS.Slew"},
+        {"progress": "DS.Slew completed"},
         {
-            "progress": (
-                "The DS has been commanded to Slew to [20.0, 30.0]. "
-                "Monitor the pointing attributes for the completion status of the task."
-            ),
+            "progress": "The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing"
+            " attributes for the completion status of the task.",
             "status": TaskStatus.COMPLETED,
             "result": (
                 ResultCode.OK,
-                (
-                    "The DS has been commanded to Slew to [20.0, 30.0]. "
-                    "Monitor the pointing attributes for the completion status of the task."
-                ),
+                "The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing"
+                " attributes for the completion status of the task.",
             ),
         },
     )
@@ -58,23 +55,7 @@ def test_slew_handler(
 
     # check that the component state reports the requested command
     component_manager._update_component_state(pointingstate=PointingState.SLEW)
-    component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)
-
-    # wait a bit for the lrc updates to come through
-    component_state_cb.get_queue_values()
-    # check that the final lrc updates come through
-    task_cb = callbacks["task_cb"]
-    task_cb.assert_called_with(
-        progress=(
-            "The DS has been commanded to Slew to [20.0, 30.0]. "
-            "Monitor the pointing attributes for the completion status of the task."
-        ),
-        status=TaskStatus.COMPLETED,
-        result=(
-            ResultCode.OK,
-            (
-                "The DS has been commanded to Slew to [20.0, 30.0]. "
-                "Monitor the pointing attributes for the completion status of the task."
-            ),
-        ),
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        pointingstate=PointingState.SLEW
     )
+    component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)

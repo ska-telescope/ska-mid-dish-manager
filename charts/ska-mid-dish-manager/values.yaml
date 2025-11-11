@@ -82,6 +82,9 @@ dishmanager:
   watchdog:
     timeout_seconds: "0.0"  # Default is 0.0 (<= 0 means watchdog timer is disabled)
 
+  actions:
+    timeout_seconds: "120.0"  # Default is 120s (<= 0 means the actions will not wait for anything)
+
 dev_pod:
   enabled: false
 

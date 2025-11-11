@@ -8,6 +8,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     BandInFocus,
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     IndexerPosition,
     SPFOperatingMode,
     SPFRxOperatingMode,
@@ -47,7 +48,9 @@ def test_last_commanded_mode_attr_records_mode_transition_requests(
     )
     # Force dishManager dishMode to go to STANDBY_FP
     device_proxy.SetStandbyFPMode()
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+    ds_cm._update_component_state(
+        operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
+    )
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     main_event_store.wait_for_value(DishMode.STANDBY_FP)
 

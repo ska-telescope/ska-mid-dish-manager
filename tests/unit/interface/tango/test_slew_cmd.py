@@ -6,6 +6,7 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     PointingState,
     SPFOperatingMode,
     SPFRxOperatingMode,
@@ -168,7 +169,10 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
         progress_event_store,
     )
 
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+    ds_cm._update_component_state(
+        operatingmode=DSOperatingMode.POINT,
+        powerstate=DSPowerState.FULL_POWER,
+    )
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
     main_event_store.wait_for_value(DishMode.OPERATE)
