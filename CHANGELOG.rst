@@ -12,6 +12,12 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
   - ConfigureBand<N> command will now transition to OPERATE Dish mode on successful configuration
   - SetOperateMode command deprecated, use ConfigureBand<N> to transition to OPERATE Dish mode
 
+Version 8.5.1
+*************
+- Fixed CAR image path
+- Upgraded ska-mid-dish-ds-manager chart to v6.5.1
+- Upgraded ska-mid-dish-simulators chart to v5.4.2
+
 Version 8.5.0
 *************
 - Baseline release
