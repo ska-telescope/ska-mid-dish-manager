@@ -6,7 +6,13 @@ import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from ska_mid_dish_manager.models.dish_enums import (
+    Band,
+    DSOperatingMode,
+    IndexerPosition,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 
 
 @pytest.mark.unit
@@ -25,7 +31,7 @@ def test_configureband_handler(
         the command tracker under test
     """
     component_state_cb = callbacks["comp_state_cb"]
-    component_manager.configure_band_cmd(2, True, callbacks["task_cb"])
+    component_manager.configure_band_cmd(Band.B2, True, callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
 
@@ -45,14 +51,24 @@ def test_configureband_handler(
         assert kwargs == expected_call_kwargs[count]
 
     # check that the component state reports the requested command
-    component_manager._update_component_state(configuredband=Band.B2, dishmode=DishMode.STANDBY_FP)
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        operatingmode=SPFOperatingMode.OPERATE
+    )
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        configuredband=Band.B2, operatingmode=SPFRxOperatingMode.OPERATE
+    )
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        indexerposition=IndexerPosition.B2, operatingmode=DSOperatingMode.POINT
+    )
+    # component_manager._update_component_state(configuredband=Band.B2)
+    component_state_cb.wait_for_value("configuredband", Band.B2)
+
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
-
-    # check that the final lrc updates come through
+    # check that the updates for the final SetOperate call in the sequence come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="ConfigureBand2 completed",
+        progress="SetOperateMode completed",
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "ConfigureBand2 completed"),
+        result=(ResultCode.OK, "SetOperateMode completed"),
     )

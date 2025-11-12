@@ -39,6 +39,7 @@ class TestDishManagerVersioning:
                 "ska_mid_dish_manager.component_managers.wms_cm."
                 "WMSComponentManager.start_communicating"
             ),
+            patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
         ):
             self.tango_context = DeviceTestContext(DishManager)
             self.tango_context.start()

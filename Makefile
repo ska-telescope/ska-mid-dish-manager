@@ -5,6 +5,8 @@ NAME=ska-mid-dish-manager
 VERSION=$(shell grep -e "^version = s*" pyproject.toml | cut -d = -f 2 | xargs)
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
+# values.yaml shall be used as the default and variables can be overridden by the user
+# by defining them in the custom_helm_flags.yaml file
 VALUES_FILE ?= charts/ska-mid-dish-manager/custom_helm_flags.yaml
 
 -include .make/base.mk
@@ -60,7 +62,7 @@ CI_REGISTRY ?= registry.gitlab.com
 
 # Use the previously built image when running in the pipeline
 CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
-	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
+	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/mid-dish/$(NAME) \
 	--set dishmanager.image.tag=$(OCI_TAG)
 K8S_TIMEOUT=600s
 

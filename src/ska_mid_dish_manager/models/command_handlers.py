@@ -7,6 +7,7 @@ from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
 
+from ska_mid_dish_manager.models.command_actions import SetStandbyFPModeAction, TrackStopAction
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from ska_mid_dish_manager.utils.helper_module import update_task_status
 
@@ -17,13 +18,11 @@ class Abort:
     def __init__(
         self,
         component_manager: Any,
-        command_map: Any,
         command_tracker: Any,
         logger: logging.Logger,
     ):
         self.logger = logger
         self._component_manager = component_manager
-        self._command_map = command_map
         self._command_tracker = command_tracker
 
     def __call__(self, task_callback: Optional[Callable] = None) -> None:
@@ -64,7 +63,9 @@ class Abort:
             return
         self.logger.debug("abort-sequence: stopping dish")
         try:
-            self._command_map.track_stop_cmd(task_abort_event, task_callback)
+            TrackStopAction(self.logger, self._component_manager).execute(
+                task_callback, task_abort_event
+            )
             self.logger.debug("abort-sequence: dish has been successfully stopped")
         except Exception as exc:  # pylint:disable=broad-except
             update_task_status(task_callback, status=TaskStatus.FAILED, exception=exc)
@@ -95,7 +96,9 @@ class Abort:
 
         # fan out respective FP command to the sub devices
         try:
-            self._command_map.set_standby_fp_mode(task_abort_event, task_callback)
+            SetStandbyFPModeAction(self.logger, self._component_manager).execute(
+                task_callback, task_abort_event
+            )
             self.logger.debug("abort-sequence: SetStandbyFPMode command completed successfully")
         except Exception as exc:  # pylint:disable=broad-except
             update_task_status(task_callback, status=TaskStatus.FAILED, exception=exc)
@@ -193,10 +196,6 @@ class SetStandbyLPMode:
 
 class SetStandbyFPMode:
     """SetStandbyFPMode command handler."""
-
-
-class SetOperateMode:
-    """SetOperateMode command handler."""
 
 
 class Track:

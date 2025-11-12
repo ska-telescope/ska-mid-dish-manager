@@ -68,7 +68,7 @@
         (Should be default to False).
       doc_out: Uninitialised
       dtype_in: DevBoolean
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand4
       disp_level: OPERATOR
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
@@ -77,7 +77,7 @@
         (Should be default to False).
       doc_out: Uninitialised
       dtype_in: DevBoolean
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand5a
       disp_level: OPERATOR
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
@@ -86,7 +86,7 @@
         (Should be default to False).
       doc_out: Uninitialised
       dtype_in: DevBoolean
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand5b
       disp_level: OPERATOR
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
@@ -95,7 +95,7 @@
         (Should be default to False).
       doc_out: Uninitialised
       dtype_in: DevBoolean
-      dtype_out: DevVoid
+      dtype_out: DevVarLongStringArray
     - name: DebugDevice
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -422,6 +422,28 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: actionTimeoutSeconds
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "\n            Timeout (in seconds) to be used for each action.\
+        \ On each action DishManager will wait\n            for the timeout duration\
+        \ for expected subservient device attribute updates. A value\n           \
+        \ <= 0 will disable waiting and no monitoring will occur, commands will be\
+        \ fanned out to\n            their respective subsevient devices and then\
+        \ the DishManager command will return as\n            COMPLETED immediately.\n\
+        \        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: actionTimeoutSeconds
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: actionTimeoutSeconds
     - name: adminMode
       data_format: SCALAR
       data_type: DevEnum
@@ -2325,18 +2347,16 @@
     properties:
     - name: B5DCDeviceFqdn
     - name: DSDeviceFqdn
-    - name: DefaultWatchdogTimeout
     - name: DishId
-    - name: GroupDefinitions
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
+    - name: MaintenanceModeActive
     - name: MaxCapabilities
-    - name: MeanWindSpeedThreshold
     - name: ReceptorNumber
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: WMSDeviceNames
-    - name: WindGustThreshold
+    - name: __SubDevices
     - name: polled_cmd
+
  

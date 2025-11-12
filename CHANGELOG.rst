@@ -12,11 +12,40 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Updated ska-mid-dcp-lib to v0.0.6.
 
 
+Version 9.0.0
+*************
+- Update implementation to match new states & modes ICD rev 6
+  - SetMaintenanceMode command and associated Maintenance DishMode updated
+  - ConfigureBand<N> command will now transition to OPERATE Dish mode on successful configuration
+  - SetOperateMode command deprecated, use ConfigureBand<N> to transition to OPERATE Dish mode
+
+Version 8.5.1
+*************
+- Fixed CAR image path
+- Upgraded ska-mid-dish-ds-manager chart to v6.5.1
+- Upgraded ska-mid-dish-simulators chart to v5.4.2
+
+Version 8.5.0
+*************
+- Baseline release
+
+  - Maintains legacy States and Modes configurations.
+  - Applies fixes for issues identified during DVS testing for s-AIV.
+
+Version 8.4.7
+*************
+- Added `lastcommandinvoked` attribute
+- Reduced dish manager logs
+- Add handlers for configureBand<3, 4, 5a, 5b>
+
+  - NOTE: ConfigureBand5b will call ConfigureBand1 until we have a B5DC
+
 Version 8.4.5
 *************
 - Changed order of commands to dish structure manager on calling of Abort()
 - Upgraded ska-mid-dish-simulators chart to v5.4.0
 - Upgraded the ska-mid-dish-ds-manager chart to v6.4.1
+
   - Dropped the archive rate for achievedPointing and currentPointing attributes
   - Trimmed the logs
   - Updated lastcommandupdate attribute format

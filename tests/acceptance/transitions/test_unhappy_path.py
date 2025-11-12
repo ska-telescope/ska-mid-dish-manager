@@ -39,7 +39,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
-    dish_manager_proxy.SetOperateMode()
+    # Await auto transition to OPERATE following band config
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=8)
 
     dish_manager_proxy.SetStandbyFPMode()
@@ -53,10 +53,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
 
     dish_manager_proxy.SetStandbyLPMode()
 
-    progress_msg = (
-        "DishManager.SetStandbyLPMode failed: "
-        "SPF.SetStandbyLPMode, SPFRX.SetStandbyMode failed to execute"
-    )
+    progress_msg = "SetStandbyLPMode failed Exception:"
     progress_event_store.wait_for_progress_update(progress_msg, timeout=5)
 
     result_event_store = result_event_store.get_queue_values(timeout=5)
@@ -66,7 +63,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     assert "SetStandbyLPMode failed" in expected_result_message, lrc_result_msgs
 
     # check that the mode transition to LP mode did not happen on dish manager, spf and spfrx
-    assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
+    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     assert spf_device_proxy.operatingMode == SPFOperatingMode.OPERATE
     assert spfrx_device_proxy.operatingMode == SPFRxOperatingMode.OPERATE
 
