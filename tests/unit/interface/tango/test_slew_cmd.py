@@ -181,10 +181,10 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
     ds_cm._update_component_state(pointingstate=PointingState.SLEW)
     main_event_store.wait_for_value(PointingState.SLEW)
 
-    expected_progress_updates = (
+    expected_progress_updates = [
         "Fanned out commands: DS.Slew",
         "The DS has been commanded to Slew to [ 0. 50.]. "
         "Monitor the pointing attributes for the completion status of the task.",
-    )
+    ]
 
-    command_progress_callback.wait_for_args(expected_progress_updates, timeout=30)
+    command_progress_callback.wait_for_args(tuple(expected_progress_updates), timeout=30)
