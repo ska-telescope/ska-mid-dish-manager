@@ -15,6 +15,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from ska_mid_dish_manager.utils.method_calls_store_helper import MethodCallsStore
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
 
@@ -84,6 +85,9 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     progress_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
 
+    command_progress_callback = MethodCallsStore()
+    dish_manager_cm._command_progress_callback = command_progress_callback
+
     device_proxy.subscribe_event(
         "dishMode",
         tango.EventType.CHANGE_EVENT,
@@ -135,7 +139,9 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
             "powerstate": DSPowerState.FULL_POWER,
         }
     )
-    progress_event_store.wait_for_progress_update("Abort sequence completed", timeout=30)
+    # progress_event_store.wait_for_progress_update("Abort sequence completed", timeout=30)
+
+    command_progress_callback.wait_for_args(("Abort sequence completed",), timeout=30)
 
     # Confirm that abort cleared the command queue
     cmds_in_queue_store.wait_for_value((), timeout=30)
