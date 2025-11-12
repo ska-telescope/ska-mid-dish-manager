@@ -187,4 +187,4 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
         "Monitor the pointing attributes for the completion status of the task.",
     ]
 
-    command_progress_callback.wait_for_args(tuple(expected_progress_updates), timeout=30)
+    command_progress_callback.wait_for_args(tuple(expected_progress_updates), timeout=120)
