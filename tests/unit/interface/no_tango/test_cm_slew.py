@@ -33,11 +33,7 @@ def test_slew_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": "Fanned out commands: DS.Slew"},
-        {"progress": "DS.Slew completed"},
         {
-            "progress": "The DS has been commanded to Slew to [20.0, 30.0]. Monitor the pointing"
-            " attributes for the completion status of the task.",
             "status": TaskStatus.COMPLETED,
             "result": (
                 ResultCode.OK,

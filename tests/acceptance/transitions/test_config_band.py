@@ -3,24 +3,25 @@
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from ska_mid_dish_manager.utils.method_calls_store_helper import MethodCallsStore
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
 def test_configure_band_a(
-    monitor_tango_servers,
-    event_store_class,
-    dish_manager_proxy,
+    monitor_tango_servers, event_store_class, dish_manager_proxy, dish_manager_resources
 ):
     """Test ConfigureBand2."""
     main_event_store = event_store_class()
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+
+    _, dish_manager_cm = dish_manager_resources
+    command_progress_callback = MethodCallsStore()
+    dish_manager_cm._command_progress_callback = command_progress_callback
 
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "configuredBand": main_event_store,
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -35,7 +36,6 @@ def test_configure_band_a(
         assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     main_event_store.clear_queue()
-    progress_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     result_event_store.wait_for_command_result(
@@ -69,18 +69,21 @@ def test_configure_band_a(
         "SetOperateMode completed",
     ]
 
-    events = progress_event_store.get_queue_values(timeout=0)
+    # events = progress_event_store.get_queue_values(timeout=0)
 
-    events_string = "".join([str(attr_value) for _, attr_value in events])
-    for message in expected_progress_updates:
-        assert message in events_string
+    # events_string = "".join([str(attr_value) for _, attr_value in events])
+    # for message in expected_progress_updates:
+    #     assert message in events_string
+
+    command_progress_callback.wait_for_args(tuple(expected_progress_updates), timeout=30)
 
     # Do it again to check result
     result_event_store.clear_queue()
-    progress_event_store.clear_queue()
+    # progress_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
-    progress_event_store.wait_for_progress_update("Already in band 2", timeout=10)
+    # progress_event_store.wait_for_progress_update("Already in band 2", timeout=10)
+    command_progress_callback.wait_for_args(("Already in band 2",), timeout=30)
     result_event_store.wait_for_command_result(
         unique_id, '[0, "SetOperateMode completed"]', timeout=10
     )

@@ -879,6 +879,8 @@ class SlewAction(Action):
         :type logger: logging.Logger
         :param dish_manager_cm: The DishManagerComponentManager instance.
         :type dish_manager_cm: DishManagerComponentManager
+        :target: The target coordinates to slew to.
+        :type target: list[float]
         :param action_on_success: Optional Action to execute automatically if this action succeeds.
         :type action_on_success: Optional[Action]
         :param action_on_failure: Optional Action to execute automatically if this action fails.
