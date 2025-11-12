@@ -40,3 +40,24 @@ class MethodCallsStore:
                     return True
         except queue.Empty as err:
             raise RuntimeError(f"Never got a {expected_kwargs}, but got {queue_values}") from err
+
+    def wait_for_args(self, expected_args: tuple, timeout: int = 3) -> bool:
+        """Wait for a specific arg list to arrive.
+
+        :param expected_args: The args we're expecting
+        :type expected_args: tuple
+        :param timeout: How long to wait, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: When the expected value is not found
+        :return: Whether it was found or not
+        :rtype: bool
+        """
+        try:
+            queue_values = []
+            while True:
+                queue_args = self._queue.get(timeout=timeout)
+                queue_values.append(queue_args)
+                if queue_args == expected_args:
+                    return True
+        except queue.Empty as err:
+            raise RuntimeError(f"Never got a {expected_args}, but got {queue_values}") from err
