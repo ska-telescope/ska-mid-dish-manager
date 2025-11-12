@@ -29,7 +29,7 @@ def test_set_stow_mode_handler(
     component_state_cb = callbacks["comp_state_cb"]
     component_state_cb.get_queue_values()
 
-    expected_call_kwargs = {"status": TaskStatus.COMPLETED}
+    expected_call_kwargs = ({"status": TaskStatus.COMPLETED},)
 
     # check that the initial lrc updates come through
     actual_call_kwargs = callbacks["task_cb"].call_args_list
