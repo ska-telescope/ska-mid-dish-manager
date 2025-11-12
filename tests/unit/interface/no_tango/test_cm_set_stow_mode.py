@@ -30,10 +30,7 @@ def test_set_stow_mode_handler(
     component_state_cb.get_queue_values()
 
     expected_call_kwargs = (
-        {
-            "status": TaskStatus.COMPLETED,
-            "progress": "Stow called, monitor dishmode for LRC completed",
-        },
+        {"status": TaskStatus.COMPLETED}
     )
 
     # check that the initial lrc updates come through

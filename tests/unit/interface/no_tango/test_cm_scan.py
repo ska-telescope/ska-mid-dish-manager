@@ -25,12 +25,8 @@ def test_scan_handler(
 
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
+        {"status": TaskStatus.IN_PROGRESS},
         {
-            "progress": "Setting scanID",
-            "status": TaskStatus.IN_PROGRESS,
-        },
-        {
-            "progress": "Scan completed",
             "status": TaskStatus.COMPLETED,
             "result": (ResultCode.OK, "Scan completed"),
         },
