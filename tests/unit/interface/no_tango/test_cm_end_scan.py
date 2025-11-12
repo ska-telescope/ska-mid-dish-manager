@@ -25,12 +25,10 @@ def test_end_scan_handler(
 
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
+        {"status": "Clearing scanID"},
+        {"status": TaskStatus.IN_PROGRESS},
+        {"status": "EndScan completed"},
         {
-            "progress": "Clearing scanID",
-            "status": TaskStatus.IN_PROGRESS,
-        },
-        {
-            "progress": "EndScan completed",
             "status": TaskStatus.COMPLETED,
             "result": (ResultCode.OK, "EndScan completed"),
         },
