@@ -139,7 +139,6 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
             "powerstate": DSPowerState.FULL_POWER,
         }
     )
-    # progress_event_store.wait_for_progress_update("Abort sequence completed", timeout=30)
 
     command_progress_callback.wait_for_args(("Abort sequence completed",), timeout=30)
 
