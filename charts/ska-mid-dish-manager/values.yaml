@@ -47,8 +47,8 @@ dsconfig:
 dishmanager:
   image:
     registry: artefact.skao.int
-    image: mid-dish/ska-mid-dish-manager
-    tag: 8.5.0
+    image: ska-mid-dish-manager
+    tag: 9.0.0
     pullPolicy: IfNotPresent
 
   # Setting fqdn assumes you are only deploying one Dish Manager

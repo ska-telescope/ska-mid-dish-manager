@@ -153,8 +153,8 @@ def test_fp_lp_power_limit_used(
     # Call command that also makes use of the SetPowerMode command
     ds_device_proxy.SetStandbyMode()
     status_event_store.wait_for_value(
-        f"Path [Management.Commands.SetPowerMode] called with args [(True, {limit_value})] from"
-        " [SetStandbyMode] command"
+        "_call_opc_ua_method for [Management.Commands.SetPowerMode] called with args"
+        f" [(True, {limit_value})] from [SetStandbyMode] command"
     )
 
     # FP transition
@@ -165,8 +165,8 @@ def test_fp_lp_power_limit_used(
     # Call command that also makes use of the SetPowerMode command
     ds_device_proxy.SetPointMode()
     status_event_store.wait_for_value(
-        f"Path [Management.Commands.SetPowerMode] called with args [(False, {limit_value})] from"
-        " [SetPointMode] command",
+        "_call_opc_ua_method for [Management.Commands.SetPowerMode] called with args"
+        f" [(False, {limit_value})] from [SetPointMode] command",
         timeout=6,
     )
     remove_subscriptions(subscriptions)
