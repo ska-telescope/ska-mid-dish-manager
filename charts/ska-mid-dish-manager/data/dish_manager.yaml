@@ -10,11 +10,11 @@ server:
       classes:
         - name: "DishManager"
           devices:
-            - name: "mid-dish/dish-manager/SKA{{ printf "%01s" ( . | toString ) }}"
+            - name: "mid-dish/dish-manager/{{ if regexMatch "^[0-9]+$" . }}SKA{{ . }}{{ else }}{{ . }}{{ end }}"
               properties:
                 - name: "ReceptorNumber"
                   values:
-                    - "{{ printf "%01s" . }}"
+                    - "{{ regexFind "[0-9]+" . }}"
                 - name: "SkaLevel"
                   values:
                     - "1"
@@ -53,7 +53,7 @@ server:
                     {{- end }}
                 - name: "DishId"
                   values:
-                    - "SKA{{ printf "%01s" . }}"
+                    - "{{ regexFind "[0-9]+" . }}"
                 - name: "DefaultWatchdogTimeout"
                   values:
                     - "{{ $.Values.dishmanager.watchdog.timeout_seconds }}"
