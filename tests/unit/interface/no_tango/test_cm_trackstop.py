@@ -33,9 +33,6 @@ def test_track_stop_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": "Awaiting DS pointingstate change to READY"},
-        {"progress": "Fanned out commands: DS.TrackStop"},
-        {"progress": "Awaiting pointingstate change to READY"},
     )
 
     # check that the initial lrc updates come through
@@ -43,6 +40,11 @@ def test_track_stop_handler(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    progress_cb = callbacks["progress_cb"]
+    progress_cb.wait_for_args(("Awaiting DS pointingstate change to READY",))
+    progress_cb.wait_for_args(("Fanned out commands: DS.TrackStop",))
+    progress_cb.wait_for_args(("Awaiting pointingstate change to READY",))
 
     # check that the component state reports the requested command
     component_manager.sub_component_managers["DS"]._update_component_state(
@@ -56,7 +58,7 @@ def test_track_stop_handler(
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="TrackStop completed",
         status=TaskStatus.COMPLETED,
         result=(ResultCode.OK, "TrackStop completed"),
     )
+    progress_cb.wait_for_args(("TrackStop completed",))

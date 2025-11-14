@@ -37,6 +37,8 @@ def test_set_stow_mode_handler(
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
 
+    progress_cb = callbacks["progress_cb"]
+    progress_cb.wait_for_args(("Stow called, monitor dishmode for LRC completed",))
     # check that the component state reports the requested command
     component_manager._update_component_state(dishmode=DishMode.STOW)
     component_state_cb.wait_for_value("dishmode", DishMode.STOW)

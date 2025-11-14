@@ -11,7 +11,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
-from ska_mid_dish_manager.utils.method_calls_store_helper import MethodCallsStore
 
 
 @pytest.mark.unit
@@ -37,9 +36,7 @@ def test_set_slew_cmd_fails_when_dish_mode_is_not_operate(
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
     lrc_status_event_store = event_store_class()
-
-    command_progress_callback = MethodCallsStore()
-    dish_manager_cm._command_progress_callback = command_progress_callback
+    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -59,6 +56,12 @@ def test_set_slew_cmd_fails_when_dish_mode_is_not_operate(
         lrc_status_event_store,
     )
 
+    device_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
+    )
+
     dish_manager_cm._update_component_state(pointingstate=PointingState.READY)
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=5)
 
@@ -69,9 +72,9 @@ def test_set_slew_cmd_fails_when_dish_mode_is_not_operate(
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
     expected_progress_updates = (
-        "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE",
+        "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE"
     )
-    command_progress_callback.wait_for_args(expected_progress_updates, timeout=30)
+    status_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
 
 
 @pytest.mark.unit
@@ -94,9 +97,7 @@ def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
     lrc_status_event_store = event_store_class()
-
-    command_progress_callback = MethodCallsStore()
-    dish_manager_cm._command_progress_callback = command_progress_callback
+    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -116,6 +117,12 @@ def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
         lrc_status_event_store,
     )
 
+    device_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
+    )
+
     dish_manager_cm._update_component_state(dishmode=DishMode.OPERATE)
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
 
@@ -127,9 +134,9 @@ def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
 
     expected_progress_updates = (
         "Slew command rejected for current pointingState. "
-        "Slew command is allowed for pointingState READY",
+        "Slew command is allowed for pointingState READY"
     )
-    command_progress_callback.wait_for_args(expected_progress_updates, timeout=30)
+    status_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
 
 
 @pytest.mark.unit
@@ -143,10 +150,8 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
-    command_progress_callback = MethodCallsStore()
-    dish_manager_cm._command_progress_callback = command_progress_callback
-
     main_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     attributes_to_subscribe_to = (
         "dishMode",
@@ -158,6 +163,12 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
             tango.EventType.CHANGE_EVENT,
             main_event_store,
         )
+
+    device_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
+    )
 
     ds_cm._update_component_state(
         operatingmode=DSOperatingMode.POINT,
@@ -187,4 +198,10 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
         "Monitor the pointing attributes for the completion status of the task.",
     ]
 
-    command_progress_callback.wait_for_args(tuple(expected_progress_updates), timeout=120)
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+
+    events_string = "".join([str(event.attr_value.value) for event in events])
+
+    # Check that all the expected progress messages appeared
+    for message in expected_progress_updates:
+        assert message in events_string

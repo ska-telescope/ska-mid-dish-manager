@@ -15,7 +15,6 @@ from ska_mid_dish_manager.models.constants import (
     MEAN_WIND_SPEED_THRESHOLD_MPS,
     WIND_GUST_THRESHOLD_MPS,
 )
-from ska_mid_dish_manager.utils.method_calls_store_helper import MethodCallsStore
 
 
 @pytest.fixture
@@ -77,24 +76,26 @@ def configure_mocks_for_dish_manager():
 @pytest.mark.unit
 @pytest.mark.forked
 def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
-    dish_manager_resources, configure_mocks_for_dish_manager, event_store_class
+    configure_mocks_for_dish_manager, event_store_class
 ):
     """Verify that the dish stows when the mean wind speed exceeds the threshold."""
-    _, dish_manager_cm = dish_manager_resources
     device_proxy, wms_cm = configure_mocks_for_dish_manager
     mean_wind_speed_average_period = wms_cm._wind_speed_moving_average_period
     polling_period = wms_cm._wms_polling_period
     wait_event = threading.Event()
 
     mean_wind_speed_event_store = event_store_class()
-
-    command_progress_callback = MethodCallsStore()
-    dish_manager_cm._command_progress_callback = command_progress_callback
+    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "meanWindSpeed",
         tango.EventType.CHANGE_EVENT,
         mean_wind_speed_event_store,
+    )
+    device_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
     )
 
     # enable wind stow action for mean wind speed
@@ -124,8 +125,10 @@ def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
     assert mean_wind_speed_event_store.wait_for_value(expected_mean_wind_speed)
 
     # the stow trigger will update the lrc progress
-    expected_progress_update = ("Stow called, monitor dishmode for LRC completed",)
-    command_progress_callback.wait_for_args(expected_progress_update, timeout=30)
+    expected_progress_update = "Stow called, monitor dishmode for LRC completed"
+    lrc_progress_event_values = status_event_store.get_queue_values()
+    lrc_progress_event_values = "".join([str(event[1]) for event in lrc_progress_event_values])
+    assert expected_progress_update in lrc_progress_event_values
     _, requested_action = device_proxy.lastCommandedMode
     assert requested_action == "WindStow"
 
@@ -139,24 +142,26 @@ def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
 @pytest.mark.unit
 @pytest.mark.forked
 def test_wind_stow_triggered_on_wind_gust_exceeding_threshold(
-    dish_manager_resources, configure_mocks_for_dish_manager, event_store_class
+    configure_mocks_for_dish_manager, event_store_class
 ):
     """Verify that the dish stows when the wind gust exceeds the threshold."""
     device_proxy, wms_cm = configure_mocks_for_dish_manager
-    _, dish_manager_cm = dish_manager_resources
     wind_gust_average_period = wms_cm._wind_gust_period
     polling_period = wms_cm._wms_polling_period
     wait_event = threading.Event()
 
     wind_gust_event_store = event_store_class()
-
-    command_progress_callback = MethodCallsStore()
-    dish_manager_cm._command_progress_callback = command_progress_callback
+    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "windGust",
         tango.EventType.CHANGE_EVENT,
         wind_gust_event_store,
+    )
+    device_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
     )
 
     # enable wind stow action for wind gust
@@ -185,8 +190,10 @@ def test_wind_stow_triggered_on_wind_gust_exceeding_threshold(
     assert wind_gust_event_store.wait_for_value(expected_wind_gust)
 
     # the stow trigger will update the lrc progress
-    expected_progress_update = ("Stow called, monitor dishmode for LRC completed",)
-    command_progress_callback.wait_for_args(expected_progress_update, timeout=30)
+    expected_progress_update = "Stow called, monitor dishmode for LRC completed"
+    lrc_progress_event_values = status_event_store.get_queue_values()
+    lrc_progress_event_values = "".join([str(event[1]) for event in lrc_progress_event_values])
+    assert expected_progress_update in lrc_progress_event_values
     _, requested_action = device_proxy.lastCommandedMode
     assert requested_action == "WindStow"
 

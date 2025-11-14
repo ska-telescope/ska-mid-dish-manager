@@ -8,6 +8,7 @@ from typing import Any, Callable
 import networkx as nx
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.utils.action_helpers import report_task_progress
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -139,7 +140,6 @@ class DishModeModel:
             logger = component_manager.logger
             logger.debug(msg)
 
-        if task_callback:
-            task_callback(progress=msg)  # status and result are handled in executor
+        report_task_progress(msg, progress_callback)
 
         return False

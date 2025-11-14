@@ -49,6 +49,16 @@ def test_slew_handler(
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
 
+    progress_cb = callbacks["progress_cb"]
+    progress_cb.wait_for_args(("Fanned out commands: DS.Slew",))
+    progress_cb.wait_for_args(("DS.Slew completed",))
+    progress_cb.wait_for_args(
+        (
+            "The DS has been commanded to Slew to [20.0, 30.0]. "
+            "Monitor the pointing attributes for the completion status of the task.",
+        )
+    )
+
     # check that the component state reports the requested command
     component_manager._update_component_state(pointingstate=PointingState.SLEW)
     component_manager.sub_component_managers["DS"]._update_component_state(

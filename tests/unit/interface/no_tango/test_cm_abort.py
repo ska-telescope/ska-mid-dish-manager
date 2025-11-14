@@ -73,7 +73,6 @@ def test_abort_handler(
         # TODO remove extra status check following release after base classes v1.3.2
         {"status": TaskStatus.IN_PROGRESS},
         {
-            "progress": "SetStandbyLPMode aborted",
             "status": TaskStatus.ABORTED,
             "result": (ResultCode.ABORTED, "SetStandbyLPMode aborted"),
         },
@@ -88,6 +87,9 @@ def test_abort_handler(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    progress_cb = callbacks["progress_cb"]
+    progress_cb.wait_for_args(("SetStandbyLPMode aborted",))
 
     # check that the component state reports the requested command
     component_manager._update_component_state(dishmode=DishMode.STANDBY_FP)

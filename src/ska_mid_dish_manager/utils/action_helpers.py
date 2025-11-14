@@ -21,6 +21,12 @@ def update_task_status(task_callback: Optional[Callable], **task_statuses) -> No
         task_callback(**task_statuses)
 
 
+def report_task_progress(progress_msg: str, command_progress_callback=None) -> None:
+    """Wraps the command progress callback to update device status."""
+    if command_progress_callback:
+        command_progress_callback(progress_msg)
+
+
 def convert_enums_to_names(values) -> list[str]:
     """Convert any enums in the given list to their names."""
     enum_labels = []
@@ -32,7 +38,7 @@ def convert_enums_to_names(values) -> list[str]:
     return enum_labels
 
 
-def report_awaited_attributes(task_callback, awaited_attributes, awaited_values, device=None):
+def report_awaited_attributes(progress_callback, awaited_attributes, awaited_values, device=None):
     """Report the awaited attributes and their expected values."""
     if awaited_values:
         awaited_attributes = ", ".join(awaited_attributes)
@@ -43,4 +49,4 @@ def report_awaited_attributes(task_callback, awaited_attributes, awaited_values,
         else:
             msg = f"Awaiting {awaited_attributes} change to {awaited_values}"
 
-        update_task_status(task_callback, progress=msg)
+        report_task_progress(msg, progress_callback)
