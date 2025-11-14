@@ -27,7 +27,7 @@ def report_task_progress(progress_msg: str, command_progress_callback=None) -> N
         command_progress_callback(progress_msg)
 
 
-def convert_enums_to_names(values) -> list[str]:
+def convert_enums_to_names(values: list) -> list[str]:
     """Convert any enums in the given list to their names."""
     enum_labels = []
     for val in values:
@@ -38,7 +38,12 @@ def convert_enums_to_names(values) -> list[str]:
     return enum_labels
 
 
-def report_awaited_attributes(progress_callback, awaited_attributes, awaited_values, device=None):
+def report_awaited_attributes(
+    progress_callback: Optional[Callable],
+    awaited_attributes: list,
+    awaited_values: list,
+    device=None,
+):
     """Report the awaited attributes and their expected values."""
     if awaited_values:
         awaited_attributes = ", ".join(awaited_attributes)
