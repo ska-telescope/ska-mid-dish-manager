@@ -984,7 +984,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             "SetStandbyLPMode",
             component_manager=self,
-            task_callback=task_callback,
+            progress_callback=self._command_progress_callback,
         )
         status, response = self.submit_task(
             SetStandbyLPModeAction(self.logger, self, self.get_action_timeout()).execute,
@@ -1002,7 +1002,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             "SetStandbyFPMode",
             component_manager=self,
-            task_callback=task_callback,
+            progress_callback=self._command_progress_callback,
         )
         status, response = self.submit_task(
             SetStandbyFPModeAction(self.logger, self, self.get_action_timeout()).execute,
@@ -1020,7 +1020,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             "SetMaintenanceMode",
             component_manager=self,
-            task_callback=task_callback,
+            progress_callback=self._command_progress_callback,
         )
 
         status, response = self.submit_task(
@@ -1100,7 +1100,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status, response = self.submit_task(
             TrackStopAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_track_stop_cmd_allowed,
-            task_callback=task_callback,
+            progress_callback=self._command_progress_callback,
         )
         return status, response
 
@@ -1129,7 +1129,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             req_cmd,
             component_manager=self,
-            task_callback=task_callback,
+            progress_callback=self._command_progress_callback,
         )
 
         status, response = self.submit_task(

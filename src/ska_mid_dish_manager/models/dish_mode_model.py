@@ -85,7 +85,7 @@ class DishModeModel:
         cmd_name: str,
         dish_mode: str | None = None,
         component_manager: Any | None = None,
-        task_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
     ) -> bool:
         """Determine if requested tango command is allowed based on current dish mode.
 
@@ -101,7 +101,7 @@ class DishModeModel:
         :param cmd_name: the requested command
         :param dish_mode: the current dishMode reported by the component state
         :param component_manager: the component manager containing the component state
-        :param task_callback: callback to update the command info
+        :param progress_callback: progress_callback function to report progress
 
         :raises TypeError: when no dish_mode or component_manager is provided to function call
 
