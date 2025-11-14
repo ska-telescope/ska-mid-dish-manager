@@ -33,16 +33,6 @@ def test_track_load_static_off_handler(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
         {
-            "progress": "Awaiting DS actstaticoffsetvaluexel, actstaticoffsetvalueel change to "
-            "1.0, 2.0"
-        },
-        {"progress": "Fanned out commands: DS.TrackLoadStaticOff"},
-        {
-            "progress": "Awaiting actstaticoffsetvaluexel, actstaticoffsetvalueel change to "
-            "1.0, 2.0"
-        },
-        {
-            "progress": "TrackLoadStaticOff completed",
             "status": TaskStatus.COMPLETED,
             "result": (ResultCode.OK, "TrackLoadStaticOff completed"),
         },
@@ -53,3 +43,13 @@ def test_track_load_static_off_handler(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    progress_cb = callbacks["progress_cb"]
+    progress_cb.wait_for_args(
+        ("Awaiting DS actstaticoffsetvaluexel, actstaticoffsetvalueel change to 1.0, 2.0",)
+    )
+    progress_cb.wait_for_args(("Fanned out commands: DS.TrackLoadStaticOff",))
+    progress_cb.wait_for_args(
+        ("Awaiting actstaticoffsetvaluexel, actstaticoffsetvalueel change to 1.0, 2.0",)
+    )
+    progress_cb.wait_for_args(("TrackLoadStaticOff completed",))
