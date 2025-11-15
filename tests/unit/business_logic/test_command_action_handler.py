@@ -19,20 +19,16 @@ class TestActionHandler:
 
     def setup_method(self):
         self.component_state = {}
-        self.progress_calls = []
         self.status_calls = []
         self.result_calls = []
 
     def my_task_callback(self, **kwargs):
-        # if kwargs.get("progress") is not None:
-        #     self.progress_calls.append(kwargs["progress"])
         if kwargs.get("status") is not None:
             self.status_calls.append(kwargs["status"])
         if kwargs.get("result") is not None:
             self.result_calls.append(kwargs["result"])
 
     def reset_task_callbacks(self):
-        self.progress_calls = []
         self.status_calls = []
         self.result_calls = []
 
@@ -41,7 +37,7 @@ class TestActionHandler:
         self.reset_task_callbacks()
         self.component_state["attr"] = False
 
-        def mock_command(task_callback):
+        def mock_command(task_callback=None):
             self.component_state["attr"] = True
             return "OK", "fanned out command msg"
 
@@ -82,7 +78,7 @@ class TestActionHandler:
 
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback):
+        def mock_command(task_callback=None):
             # Don't do anything so that the command times out
             return "OK", "fanned out command msg"
 
@@ -126,7 +122,7 @@ class TestActionHandler:
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback):
+        def mock_command(task_callback=None):
             # Don't do anything so that the command times out
             return "OK", "fanned out command msg"
 
@@ -165,7 +161,7 @@ class TestActionHandler:
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback):
+        def mock_command(task_callback=None):
             # Don't do anything so that the command times out
             return "OK", "fanned out command msg"
 
@@ -205,7 +201,7 @@ class TestActionHandler:
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback):
+        def mock_command(task_callback=None):
             # Don't do anything so that the command times out
             return "OK", "fanned out command msg"
 
@@ -245,7 +241,7 @@ class TestActionHandler:
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback):
+        def mock_command(task_callback=None):
             self.component_state["attr"] = True
             return "OK", "fanned out command msg"
 
@@ -284,7 +280,7 @@ class TestActionHandler:
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback):
+        def mock_command(task_callback=None):
             # Don't do anything so that the command keeps running
             return "OK", "fanned out command msg"
 

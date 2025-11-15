@@ -76,7 +76,7 @@ class FannedOutCommand:
         self.start_time = time.time()
 
         try:
-            res = self.command()
+            res = self.command(self.command_argument)
             assert len(res) == 2, (
                 f"FannedOutCommand 'command' Callable expects a response of len 2, but got '{res}'"
             )
