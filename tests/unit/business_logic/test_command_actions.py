@@ -68,6 +68,7 @@ class TestCommandActions:
             },
         )
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
+        self._command_progress_callback = MethodCallsStore()
 
         def is_device_ignored(device: str):
             """Check whether the given device is ignored."""
@@ -84,7 +85,7 @@ class TestCommandActions:
         """Test set_standby_lp_mode."""
         task_abort_event = Event()
         # Save any progress calls
-        progress_callback = MethodCallsStore()
+        progress_callback = self._command_progress_callback
 
         def my_task_callback(**kwargs):
             pass
@@ -93,6 +94,9 @@ class TestCommandActions:
             my_task_callback, task_abort_event
         )
 
+        SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
+            my_task_callback, task_abort_event
+        )
         expected_progress_updates = [
             "Fanned out commands: SPF.SetStandbyLPMode, SPFRX.SetStandbyMode, DS.SetStandbyMode",
             # Expected sub device changes
@@ -116,7 +120,7 @@ class TestCommandActions:
         """Test track_load_static_off."""
         task_abort_event = Event()
         # Save any progress calls
-        progress_callback = MethodCallsStore()
+        progress_callback = self._command_progress_callback
 
         # pylint: disable=unused-argument
         def my_task_callback(**kwargs):
@@ -152,7 +156,7 @@ class TestCommandActions:
         )
         task_abort_event = Event()
         # Save any progress calls
-        progress_callback = MethodCallsStore()
+        progress_callback = self._command_progress_callback
 
         def my_task_callback(**kwargs):
             pass
