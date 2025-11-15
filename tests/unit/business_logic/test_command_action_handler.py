@@ -272,7 +272,10 @@ class TestActionHandler:
         handler.execute(self.my_task_callback, task_abort_event)
 
         assert self.component_state["attr"] is True  # command completed execution
-        handler.progress_callback.wait_for_args(("Awaiting",))
+        handler.progress_callback.wait_for_args(("Fanned out commands: DeviceX.CommandX'",))
+        handler.progress_callback.wait_for_args(("Awaiting attr change to True",))
+        handler.progress_callback.wait_for_args(("DeviceX attr changed to True",))
+        handler.progress_callback.wait_for_args(("DeviceX.CommandX completed",))
         handler.progress_callback.wait_for_args(("HandlerX completed",))
 
     @pytest.mark.unit

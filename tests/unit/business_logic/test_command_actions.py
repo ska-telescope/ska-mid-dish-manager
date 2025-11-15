@@ -21,6 +21,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from tests.utils import MethodCallsStore
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -83,11 +84,10 @@ class TestCommandActions:
         """Test set_standby_lp_mode."""
         task_abort_event = Event()
         # Save any progress calls
-        progress_calls = []
+        progress_callback = MethodCallsStore()
 
         def my_task_callback(**kwargs):
-            if kwargs.get("progress") is not None:
-                progress_calls.append(kwargs["progress"])
+            pass
 
         SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
             my_task_callback, task_abort_event
@@ -108,22 +108,19 @@ class TestCommandActions:
             "SetStandbyLPMode completed",
         ]
 
-        progress_string = "".join([str(event) for event in progress_calls])
-
-        for progress_update in expected_progress_updates:
-            assert progress_update in progress_string
+        for msg in expected_progress_updates:
+            progress_callback.wait_for_args((msg,))
 
     @pytest.mark.unit
     def test_happy_path_command_with_argument(self):
         """Test track_load_static_off."""
         task_abort_event = Event()
         # Save any progress calls
-        progress_calls = []
+        progress_callback = MethodCallsStore()
 
         # pylint: disable=unused-argument
         def my_task_callback(**kwargs):
-            if kwargs.get("progress") is not None:
-                progress_calls.append(kwargs["progress"])
+            pass
 
         TrackLoadStaticOffAction(
             LOGGER,
@@ -144,10 +141,8 @@ class TestCommandActions:
             "TrackLoadStaticOff completed",
         ]
 
-        progress_string = "".join([str(event) for event in progress_calls])
-
-        for progress_update in expected_progress_updates:
-            assert progress_update in progress_string
+        for msg in expected_progress_updates:
+            progress_callback.wait_for_args((msg,))
 
     @pytest.mark.unit
     def test_unhappy_path_command_failed_task_status(self):
@@ -157,11 +152,10 @@ class TestCommandActions:
         )
         task_abort_event = Event()
         # Save any progress calls
-        progress_calls = []
+        progress_callback = MethodCallsStore()
 
         def my_task_callback(**kwargs):
-            if kwargs.get("progress") is not None:
-                progress_calls.append(kwargs["progress"])
+            pass
 
         SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
             my_task_callback, task_abort_event
@@ -175,37 +169,33 @@ class TestCommandActions:
         expected_progress_updates = [
             "SetStandbyLPMode failed some failure message",
         ]
-        progress_string = "".join([str(event) for event in progress_calls])
-
-        for progress_update in expected_progress_updates:
-            assert progress_update in progress_string
+        for msg in expected_progress_updates:
+            progress_callback.wait_for_args((msg,))
 
     @pytest.mark.unit
     def test_configure_band_sequence_from_fp(self):
         """Test configure_band_cmd happy path from full power."""
         task_abort_event = Event()
-        progress_calls = []
+        progress_callback = MethodCallsStore()
+
         result_calls = []
 
         def my_task_callback(**kwargs):
-            if kwargs.get("progress") is not None:
-                progress_calls.append(kwargs["progress"])
-
-                # Update the mock component states as callbacks come in so that the states move
-                # as expected
-                if "Awaiting configuredband change to B2" in kwargs["progress"]:
-                    self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                        "indexerposition"
-                    ] = IndexerPosition.B2
-                    self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
-                        "configuredband"
-                    ] = Band.B2
-                    self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
-                elif "Awaiting dishmode change to OPERATE" in kwargs["progress"]:
-                    self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                        "operatingmode"
-                    ] = DSOperatingMode.POINT
-                    self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
+            # Update the mock component states as callbacks come in so that the states move
+            # as expected
+            if "Awaiting configuredband change to B2" in kwargs["progress"]:
+                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+                    "indexerposition"
+                ] = IndexerPosition.B2
+                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
+                    "configuredband"
+                ] = Band.B2
+                self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
+            elif "Awaiting dishmode change to OPERATE" in kwargs["progress"]:
+                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+                    "operatingmode"
+                ] = DSOperatingMode.POINT
+                self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
             if kwargs.get("result") is not None:
                 result_calls.append(kwargs.get("result"))
 
@@ -250,10 +240,8 @@ class TestCommandActions:
             "SetOperateMode completed",
         ]
 
-        progress_string = "".join([str(event) for event in progress_calls])
-
-        for progress_update in expected_progress_updates:
-            assert progress_update in progress_string
+        for msg in expected_progress_updates:
+            progress_callback.wait_for_args((msg,))
 
         assert len(result_calls) == 1
         assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
@@ -262,39 +250,36 @@ class TestCommandActions:
     def test_configure_band_sequence_from_lp(self):
         """Test configure_band_cmd happy path from low power."""
         task_abort_event = Event()
-        progress_calls = []
         result_calls = []
+        progress_callback = MethodCallsStore()
 
         def my_task_callback(**kwargs):
-            if kwargs.get("progress") is not None:
-                progress_calls.append(kwargs["progress"])
-
-                # Update the mock component states as callbacks come in so that the states move
-                # as expected
-                if "Awaiting dishmode change to STANDBY_FP" in kwargs["progress"]:
-                    self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                        "operatingmode"
-                    ] = DSOperatingMode.STANDBY
-                    self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                        "powerstate"
-                    ] = DSPowerState.FULL_POWER
-                    self.dish_manager_cm_mock.sub_component_managers["SPF"]._component_state[
-                        "operatingmode"
-                    ] = SPFOperatingMode.OPERATE
-                    self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.STANDBY_FP
-                elif "Awaiting configuredband change to B2" in kwargs["progress"]:
-                    self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                        "indexerposition"
-                    ] = IndexerPosition.B2
-                    self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
-                        "configuredband"
-                    ] = Band.B2
-                    self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
-                elif "Awaiting dishmode change to OPERATE" in kwargs["progress"]:
-                    self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                        "operatingmode"
-                    ] = DSOperatingMode.POINT
-                    self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
+            # Update the mock component states as callbacks come in so that the states move
+            # as expected
+            if "Awaiting dishmode change to STANDBY_FP" in kwargs["progress"]:
+                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+                    "operatingmode"
+                ] = DSOperatingMode.STANDBY
+                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+                    "powerstate"
+                ] = DSPowerState.FULL_POWER
+                self.dish_manager_cm_mock.sub_component_managers["SPF"]._component_state[
+                    "operatingmode"
+                ] = SPFOperatingMode.OPERATE
+                self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.STANDBY_FP
+            elif "Awaiting configuredband change to B2" in kwargs["progress"]:
+                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+                    "indexerposition"
+                ] = IndexerPosition.B2
+                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
+                    "configuredband"
+                ] = Band.B2
+                self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
+            elif "Awaiting dishmode change to OPERATE" in kwargs["progress"]:
+                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+                    "operatingmode"
+                ] = DSOperatingMode.POINT
+                self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
             if kwargs.get("result") is not None:
                 result_calls.append(kwargs.get("result"))
 
@@ -340,10 +325,8 @@ class TestCommandActions:
             "SetOperateMode completed",
         ]
 
-        progress_string = "".join([str(event) for event in progress_calls])
-
-        for progress_update in expected_progress_updates:
-            assert progress_update in progress_string
+        for msg in expected_progress_updates:
+            progress_callback.wait_for_args((msg,))
 
         assert len(result_calls) == 1
         assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
