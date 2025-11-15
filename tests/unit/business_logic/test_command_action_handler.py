@@ -45,6 +45,8 @@ class TestActionHandler:
             self.component_state["attr"] = True
             return "OK", "fanned out command msg"
 
+        progress_callback = MethodCallsStore()
+
         fanned_out = FannedOutCommand(
             LOGGER,
             device="DeviceX",
@@ -53,6 +55,7 @@ class TestActionHandler:
             timeout_s=1,
             component_state=self.component_state,
             awaited_component_state={"attr": True},
+            progress_callback=progress_callback,
         )
 
         handler = ActionHandler(
@@ -61,7 +64,7 @@ class TestActionHandler:
             [fanned_out],
             component_state=self.component_state,
             awaited_component_state={"attr": True},
-            progress_callback=MethodCallsStore(),
+            progress_callback=progress_callback,
         )
 
         task_abort_event = Event()
@@ -77,6 +80,8 @@ class TestActionHandler:
         self.reset_task_callbacks()
         self.component_state["attr"] = False
 
+        progress_callback = MethodCallsStore()
+
         def mock_command(task_callback):
             # Don't do anything so that the command times out
             return "OK", "fanned out command msg"
@@ -89,6 +94,7 @@ class TestActionHandler:
             timeout_s=1,
             component_state=self.component_state,
             awaited_component_state={"attr": True},
+            progress_callback=progress_callback,
         )
 
         handler = ActionHandler(
@@ -97,7 +103,7 @@ class TestActionHandler:
             [fanned_out],
             component_state=self.component_state,
             awaited_component_state={"attr": True},
-            progress_callback=MethodCallsStore(),
+            progress_callback=progress_callback,
         )
 
         task_abort_event = Event()
@@ -118,6 +124,7 @@ class TestActionHandler:
     def test_action_timeout_no_command_timeout(self):
         self.reset_task_callbacks()
         self.component_state["attr"] = False
+        progress_callback = MethodCallsStore()
 
         def mock_command(task_callback):
             # Don't do anything so that the command times out
@@ -130,6 +137,7 @@ class TestActionHandler:
             command=mock_command,
             component_state=self.component_state,
             awaited_component_state={"attr": True},
+            progress_callback=progress_callback,
         )
 
         handler = ActionHandler(
@@ -138,7 +146,7 @@ class TestActionHandler:
             [fanned_out],
             component_state=self.component_state,
             awaited_component_state={"attr": True},
-            progress_callback=MethodCallsStore(),
+            progress_callback=progress_callback,
             timeout_s=1,
         )
 
@@ -155,6 +163,7 @@ class TestActionHandler:
     def test_command_timeout_with_action_timeout(self):
         self.reset_task_callbacks()
         self.component_state["attr"] = False
+        progress_callback = MethodCallsStore()
 
         def mock_command(task_callback):
             # Don't do anything so that the command times out
@@ -167,6 +176,7 @@ class TestActionHandler:
             command=mock_command,
             component_state=self.component_state,
             awaited_component_state={"attr": True},
+            progress_callback=progress_callback,
             timeout_s=1,
         )
 
@@ -176,7 +186,7 @@ class TestActionHandler:
             [fanned_out],
             component_state=self.component_state,
             awaited_component_state={"attr": True},
-            progress_callback=MethodCallsStore(),
+            progress_callback=progress_callback,
             timeout_s=2,
         )
 
@@ -193,6 +203,7 @@ class TestActionHandler:
     def test_action_timeout_with_command_timeout(self):
         self.reset_task_callbacks()
         self.component_state["attr"] = False
+        progress_callback = MethodCallsStore()
 
         def mock_command(task_callback):
             # Don't do anything so that the command times out
@@ -205,6 +216,7 @@ class TestActionHandler:
             command=mock_command,
             component_state=self.component_state,
             awaited_component_state={"attr": True},
+            progress_callback=progress_callback,
             timeout_s=2,
         )
 
@@ -214,7 +226,7 @@ class TestActionHandler:
             [fanned_out],
             component_state=self.component_state,
             awaited_component_state={"attr": True},
-            progress_callback=MethodCallsStore(),
+            progress_callback=progress_callback,
             timeout_s=1,
         )
 
@@ -231,6 +243,7 @@ class TestActionHandler:
     def test_action_no_timeouts(self):
         self.reset_task_callbacks()
         self.component_state["attr"] = False
+        progress_callback = MethodCallsStore()
 
         def mock_command(task_callback):
             self.component_state["attr"] = True
@@ -243,6 +256,7 @@ class TestActionHandler:
             command=mock_command,
             component_state=self.component_state,
             awaited_component_state={"attr": True},
+            progress_callback=progress_callback,
         )
 
         handler = ActionHandler(
@@ -251,7 +265,7 @@ class TestActionHandler:
             [fanned_out],
             component_state=self.component_state,
             awaited_component_state={"attr": True},
-            progress_callback=MethodCallsStore(),
+            progress_callback=progress_callback,
         )
 
         task_abort_event = Event()
@@ -265,6 +279,7 @@ class TestActionHandler:
     def test_action_abort(self):
         self.reset_task_callbacks()
         self.component_state["attr"] = False
+        progress_callback = MethodCallsStore()
 
         def mock_command(task_callback):
             # Don't do anything so that the command keeps running
@@ -277,6 +292,7 @@ class TestActionHandler:
             command=mock_command,
             component_state=self.component_state,
             awaited_component_state={"attr": True},
+            progress_callback=progress_callback,
         )
 
         handler = ActionHandler(
@@ -285,7 +301,7 @@ class TestActionHandler:
             [fanned_out],
             component_state=self.component_state,
             awaited_component_state={"attr": True},
-            progress_callback=MethodCallsStore(),
+            progress_callback=progress_callback,
             timeout_s=10,
         )
 
