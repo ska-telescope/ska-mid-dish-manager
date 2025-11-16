@@ -5,9 +5,7 @@ import tango
 
 from tests.utils import remove_subscriptions, setup_subscriptions
 
-IGNORE_ATTRIBUTES_LIST = [
-    "lrcProtocolVersions",
-]
+IGNORE_ATTRIBUTES_LIST = ["lrcProtocolVersions", "_lrcevent"]
 
 
 @pytest.mark.acceptance
