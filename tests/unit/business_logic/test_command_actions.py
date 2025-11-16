@@ -94,9 +94,6 @@ class TestCommandActions:
             my_task_callback, task_abort_event
         )
 
-        SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
-            my_task_callback, task_abort_event
-        )
         expected_progress_updates = [
             "Fanned out commands: SPF.SetStandbyLPMode, SPFRX.SetStandbyMode, DS.SetStandbyMode",
             # Expected sub device changes
