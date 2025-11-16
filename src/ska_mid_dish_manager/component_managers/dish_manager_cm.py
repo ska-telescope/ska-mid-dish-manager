@@ -1100,7 +1100,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status, response = self.submit_task(
             TrackStopAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_track_stop_cmd_allowed,
-            progress_callback=self._command_progress_callback,
+            task_callback=task_callback,
         )
         return status, response
 
