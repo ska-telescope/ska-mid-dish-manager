@@ -5,11 +5,9 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from mock import MagicMock
 from ska_control_model import AdminMode, ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.command_actions import (
-    ActionHandler,
     ConfigureBandActionSequence,
     SetStandbyLPModeAction,
     TrackLoadStaticOffAction,
@@ -23,7 +21,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
-from ska_mid_dish_manager.models.fanned_out_command import FannedOutCommand
 from tests.utils import MethodCallsStore
 
 LOGGER = logging.getLogger(__name__)
@@ -70,29 +67,10 @@ class TestCommandActions:
                 "actstaticoffsetvaluexel": 1,
             },
         )
+
+        progress_callback = MethodCallsStore()
+        self.dish_manager_cm_mock._command_progress_callback = progress_callback
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
-        self.progress_callback = MethodCallsStore()
-        self.dish_manager_cm_mock._command_progress_callback = self.progress_callback
-
-        self.fanned_out = FannedOutCommand(
-            LOGGER,
-            device=MagicMock(),
-            command_name=MagicMock(),
-            command=MagicMock(),
-            timeout_s=1,
-            component_state=self.dish_manager_cm_mock._component_state,
-            awaited_component_state={"attr": True},
-            progress_callback=self.dish_manager_cm_mock._command_progress_callback,
-        )
-
-        self.handler = ActionHandler(
-            LOGGER,
-            "HandlerX",
-            [MagicMock()],
-            component_state=self.dish_manager_cm_mock._component_state,
-            awaited_component_state={"attr": True},
-            progress_callback=self.dish_manager_cm_mock._command_progress_callback,
-        )
 
         def is_device_ignored(device: str):
             """Check whether the given device is ignored."""
@@ -135,7 +113,7 @@ class TestCommandActions:
         ]
 
         for msg in expected_progress_updates:
-            self.handler.progress_callback.wait_for_args((msg,))
+            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
 
     @pytest.mark.unit
     def test_happy_path_command_with_argument(self):
@@ -167,7 +145,7 @@ class TestCommandActions:
         ]
 
         for msg in expected_progress_updates:
-            self.handler.progress_callback.wait_for_args((msg,))
+            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
 
     @pytest.mark.unit
     def test_unhappy_path_command_failed_task_status(self):
@@ -194,7 +172,7 @@ class TestCommandActions:
             "SetStandbyLPMode failed some failure message",
         ]
         for msg in expected_progress_updates:
-            self.handler.progress_callback.wait_for_args((msg,))
+            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
 
     @pytest.mark.unit
     def test_configure_band_sequence_from_fp(self):
@@ -264,7 +242,7 @@ class TestCommandActions:
         ]
 
         for msg in expected_progress_updates:
-            self.handler.progress_callback.wait_for_args((msg,))
+            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
 
         assert len(result_calls) == 1
         assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
@@ -348,7 +326,7 @@ class TestCommandActions:
         ]
 
         for msg in expected_progress_updates:
-            self.handler.progress_callback.wait_for_args((msg,))
+            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
 
         assert len(result_calls) == 1
         assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
