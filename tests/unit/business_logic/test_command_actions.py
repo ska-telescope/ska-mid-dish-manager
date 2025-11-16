@@ -85,7 +85,7 @@ class TestCommandActions:
             progress_callback=self.dish_manager_cm_mock._command_progress_callback,
         )
 
-        ActionHandler(
+        self.handler = ActionHandler(
             LOGGER,
             "HandlerX",
             [MagicMock()],
@@ -135,7 +135,7 @@ class TestCommandActions:
         ]
 
         for msg in expected_progress_updates:
-            self.progress_callback.wait_for_args((msg,))
+            self.handler.progress_callback.wait_for_args((msg,))
 
     @pytest.mark.unit
     def test_happy_path_command_with_argument(self):
@@ -167,7 +167,7 @@ class TestCommandActions:
         ]
 
         for msg in expected_progress_updates:
-            self.progress_callback.wait_for_args((msg,))
+            self.handler.progress_callback.wait_for_args((msg,))
 
     @pytest.mark.unit
     def test_unhappy_path_command_failed_task_status(self):
@@ -194,7 +194,7 @@ class TestCommandActions:
             "SetStandbyLPMode failed some failure message",
         ]
         for msg in expected_progress_updates:
-            self.progress_callback.wait_for_args((msg,))
+            self.handler.progress_callback.wait_for_args((msg,))
 
     @pytest.mark.unit
     def test_configure_band_sequence_from_fp(self):
@@ -264,7 +264,7 @@ class TestCommandActions:
         ]
 
         for msg in expected_progress_updates:
-            self.progress_callback.wait_for_args((msg,))
+            self.handler.progress_callback.wait_for_args((msg,))
 
         assert len(result_calls) == 1
         assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
@@ -348,7 +348,7 @@ class TestCommandActions:
         ]
 
         for msg in expected_progress_updates:
-            self.progress_callback.wait_for_args((msg,))
+            self.handler.progress_callback.wait_for_args((msg,))
 
         assert len(result_calls) == 1
         assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
