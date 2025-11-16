@@ -291,7 +291,6 @@ class ActionHandler:
                         self.progress_callback,
                         awaited_attributes,
                         awaited_values,
-                        device=cmd.device,
                     )
 
         deadline = time.time() + self.timeout_s
