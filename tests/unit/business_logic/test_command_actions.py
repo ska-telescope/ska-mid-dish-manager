@@ -72,6 +72,7 @@ class TestCommandActions:
         )
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
         self.progress_callback = MethodCallsStore()
+        self.dish_manager_cm_mock._command_progress_callback = self.progress_callback
 
         self.fanned_out = FannedOutCommand(
             LOGGER,
@@ -79,7 +80,7 @@ class TestCommandActions:
             command_name=MagicMock(),
             command=MagicMock(),
             timeout_s=1,
-            component_state=MagicMock(),
+            component_state=self.dish_manager_cm_mock._component_state,
             awaited_component_state={"attr": True},
             progress_callback=self.progress_callback,
         )
@@ -88,7 +89,7 @@ class TestCommandActions:
             LOGGER,
             "HandlerX",
             [MagicMock()],
-            component_state=MagicMock(),
+            component_state=self.dish_manager_cm_mock._component_state,
             awaited_component_state={"attr": True},
             progress_callback=self.progress_callback,
         )
