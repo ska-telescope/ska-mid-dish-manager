@@ -82,7 +82,7 @@ class TestCommandActions:
             timeout_s=1,
             component_state=self.dish_manager_cm_mock._component_state,
             awaited_component_state={"attr": True},
-            progress_callback=self.progress_callback,
+            progress_callback=self.dish_manager_cm_mock._command_progress_callback,
         )
 
         ActionHandler(
@@ -91,7 +91,7 @@ class TestCommandActions:
             [MagicMock()],
             component_state=self.dish_manager_cm_mock._component_state,
             awaited_component_state={"attr": True},
-            progress_callback=self.progress_callback,
+            progress_callback=self.dish_manager_cm_mock._command_progress_callback,
         )
 
         def is_device_ignored(device: str):
