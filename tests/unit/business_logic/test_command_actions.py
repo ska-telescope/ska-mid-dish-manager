@@ -181,19 +181,6 @@ class TestCommandActions:
         def my_task_callback(**kwargs):
             # Update the mock component states as callbacks come in so that the states move
             # as expected
-            if "Awaiting configuredband change to B2" in kwargs["progress_callback"]:
-                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                    "indexerposition"
-                ] = IndexerPosition.B2
-                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
-                    "configuredband"
-                ] = Band.B2
-                self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
-            elif "Awaiting dishmode change to OPERATE" in kwargs["progress_callback"]:
-                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                    "operatingmode"
-                ] = DSOperatingMode.POINT
-                self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
             if kwargs.get("result") is not None:
                 result_calls.append(kwargs.get("result"))
 
@@ -253,30 +240,6 @@ class TestCommandActions:
         def my_task_callback(**kwargs):
             # Update the mock component states as callbacks come in so that the states move
             # as expected
-            if "Awaiting dishmode change to STANDBY_FP" in kwargs["progress_callback"]:
-                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                    "operatingmode"
-                ] = DSOperatingMode.STANDBY
-                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                    "powerstate"
-                ] = DSPowerState.FULL_POWER
-                self.dish_manager_cm_mock.sub_component_managers["SPF"]._component_state[
-                    "operatingmode"
-                ] = SPFOperatingMode.OPERATE
-                self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.STANDBY_FP
-            elif "Awaiting configuredband change to B2" in kwargs["progress_callback"]:
-                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                    "indexerposition"
-                ] = IndexerPosition.B2
-                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
-                    "configuredband"
-                ] = Band.B2
-                self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
-            elif "Awaiting dishmode change to OPERATE" in kwargs["progress_callback"]:
-                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
-                    "operatingmode"
-                ] = DSOperatingMode.POINT
-                self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
             if kwargs.get("result") is not None:
                 result_calls.append(kwargs.get("result"))
 
