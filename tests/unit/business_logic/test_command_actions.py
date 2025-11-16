@@ -79,7 +79,7 @@ class TestCommandActions:
             command_name=MagicMock(),
             command=MagicMock(),
             timeout_s=1,
-            component_state=self.component_state,
+            component_state=MagicMock(),
             awaited_component_state={"attr": True},
             progress_callback=self.progress_callback,
         )
@@ -88,7 +88,7 @@ class TestCommandActions:
             LOGGER,
             "HandlerX",
             [MagicMock()],
-            component_state=self.component_state,
+            component_state=MagicMock(),
             awaited_component_state={"attr": True},
             progress_callback=self.progress_callback,
         )
