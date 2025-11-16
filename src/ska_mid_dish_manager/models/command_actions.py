@@ -283,15 +283,9 @@ class ActionHandler:
 
         # Report what we are waiting for
         if self.awaited_component_state:
-            for cmd in self.fanned_out_commands:
-                if cmd.awaited_component_state:
-                    awaited_attributes = list(cmd.awaited_component_state.keys())
-                    awaited_values = list(cmd.awaited_component_state.values())
-                    report_awaited_attributes(
-                        self.progress_callback,
-                        awaited_attributes,
-                        awaited_values,
-                    )
+            awaited_attributes = list(self.awaited_component_state.keys())
+            awaited_values = list(self.awaited_component_state.values())
+            report_awaited_attributes(self.progress_callback, awaited_attributes, awaited_values,cmd.device)
 
         deadline = time.time() + self.timeout_s
         while deadline > time.time():
