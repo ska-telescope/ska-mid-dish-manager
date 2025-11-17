@@ -134,6 +134,11 @@ def test_ignoring_all(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
+    dish_manager_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
+    )
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
