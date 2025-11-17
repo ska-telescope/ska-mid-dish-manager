@@ -142,8 +142,9 @@ class TestCommandActions:
             "TrackLoadStaticOff completed",
         ]
 
+        progress_updates = self.progress_callback.get_args_queue()
         for msg in expected_progress_updates:
-            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
+            assert (msg,) in progress_updates
 
     @pytest.mark.unit
     def test_unhappy_path_command_failed_task_status(self):
@@ -226,8 +227,9 @@ class TestCommandActions:
             "SetOperateMode completed",
         ]
 
+        progress_updates = self.progress_callback.get_args_queue()
         for msg in expected_progress_updates:
-            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
+            assert (msg,) in progress_updates
 
         assert len(result_calls) == 1
         assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
@@ -286,8 +288,9 @@ class TestCommandActions:
             "SetOperateMode completed",
         ]
 
+        progress_updates = self.progress_callback.get_args_queue()
         for msg in expected_progress_updates:
-            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
+            assert (msg,) in progress_updates
 
         assert len(result_calls) == 1
         assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
