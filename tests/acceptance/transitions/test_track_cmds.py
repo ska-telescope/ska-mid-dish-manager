@@ -72,17 +72,21 @@ def test_track_and_track_stop_cmds(
     """Test call of Track command and stop."""
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
 
     attr_cb_mapping = {
         "pointingState": pointing_state_event_store,
         "achievedPointing": achieved_pointing_event_store,
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
+    dish_manager_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
+    )
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
     assert dish_manager_proxy.pointingState == PointingState.READY
 
@@ -133,7 +137,7 @@ def test_track_and_track_stop_cmds(
     ]
 
     # Wait for the track command to complete
-    events = progress_event_store.wait_for_progress_update(
+    events = status_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=6
     )
 
@@ -166,7 +170,7 @@ def test_track_and_track_stop_cmds(
     ]
 
     # Wait for the track command to complete
-    events = progress_event_store.wait_for_progress_update(
+    events = status_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=8
     )
 

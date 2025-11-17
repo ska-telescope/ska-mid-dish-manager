@@ -3,6 +3,7 @@
 import time
 
 import pytest
+import tango
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
 from ska_mid_dish_manager.models.dish_enums import DishMode
@@ -22,13 +23,17 @@ def test_action_timeout(
 ):
     """Test commanded action timeout."""
     dish_mode_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     result_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
 
+    dish_manager_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
+    )
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
         "longRunningCommandsInQueue": cmds_in_queue_store,
     }
@@ -42,7 +47,7 @@ def test_action_timeout(
         [[_], [configure_unique_id]] = dish_manager_proxy.ConfigureBand1(True)
 
         # Check that Dish Manager is waiting to transition
-        progress_event_store.wait_for_progress_update("Awaiting configuredband change to B1")
+        status_event_store.wait_for_progress_update("Awaiting configuredband change to B1")
         # Check that the Dish Manager did not transition
         dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=10)
         assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
@@ -60,7 +65,7 @@ def test_action_timeout(
         [[_], [configure_unique_id]] = dish_manager_proxy.ConfigureBand2(True)
 
         # Check that Dish Manager is waiting to transition
-        progress_event_store.wait_for_progress_update("Awaiting configuredband change to B2")
+        status_event_store.wait_for_progress_update("Awaiting configuredband change to B2")
 
         time.sleep(DEFAULT_ACTION_TIMEOUT_S // 2)
 

@@ -34,7 +34,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     main_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     status_event_store = event_store_class()
 
     for attr in [
@@ -49,9 +49,9 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         )
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
     device_proxy.subscribe_event(
         "Status",

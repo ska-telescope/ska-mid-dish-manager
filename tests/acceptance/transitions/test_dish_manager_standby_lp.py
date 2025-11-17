@@ -1,6 +1,7 @@
 """Test StandbyLP."""
 
 import pytest
+import tango
 
 from ska_mid_dish_manager.models.dish_enums import DishMode, PowerState
 from tests.utils import remove_subscriptions, setup_subscriptions
@@ -9,16 +10,21 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 @pytest.mark.acceptance
 def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test transition to Standby_LP."""
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     main_event_store = event_store_class()
     attr_cb_mapping = {
-        "longRunningCommandProgress": progress_event_store,
         "dishmode": main_event_store,
         "powerstate": main_event_store,
     }
+
+    dish_manager_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
+    )
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    progress_event_store.clear_queue()
+    status_event_store.clear_queue()
     dish_manager_proxy.SetStandbyLPMode()
 
     expected_progress_updates = [
@@ -27,7 +33,7 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
         "SetStandbyLPMode completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
+    events = status_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=6
     )
 

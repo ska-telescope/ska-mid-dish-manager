@@ -1,6 +1,7 @@
 """Test that Dish Slews to target Azimuth and Elevation."""
 
 import pytest
+import tango
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
@@ -13,14 +14,18 @@ POINTING_TOLERANCE_DEG = 0.1
 @pytest.mark.acceptance
 def test_slew_rejected(event_store_class, dish_manager_proxy):
     """Test slew command rejected when not in OPERATE."""
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     result_event_store = event_store_class()
     attr_cb_mapping = {
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
+    dish_manager_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
+    )
     # Position must be in range but absolute not important
     [[_], [unique_id]] = dish_manager_proxy.Slew([0.0, 50.0])
     events = result_event_store.wait_for_command_id(unique_id, timeout=10)
@@ -32,7 +37,7 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     )
 
     # Wait for the slew command progress update
-    progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
+    status_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
     remove_subscriptions(subscriptions)
 
 
