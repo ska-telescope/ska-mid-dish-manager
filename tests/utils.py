@@ -99,7 +99,8 @@ class MethodCallsStore:
 
     def __init__(self) -> None:
         """Init the class."""
-        self._queue: queue.Queue = queue.Queue()
+        self._queue_args: queue.Queue = queue.Queue()
+        self._queue_kwargs: queue.Queue = queue.Queue()
 
     def __call__(self, *args: tuple, **kwargs: dict) -> None:
         """Store the kwargs used in calls to the MethodCallsStore class.
@@ -108,9 +109,9 @@ class MethodCallsStore:
         :type kwargs: dict
         """
         if kwargs:
-            self._queue.put(kwargs)
+            self._queue_kwargs.put(kwargs)
         if args:
-            self._queue.put(args)
+            self._queue_args.put(args)
 
     def wait_for_kwargs(self, expected_kwargs: dict, timeout: int = 3) -> bool:
         """Wait for a specific dict to arrive.
@@ -126,7 +127,7 @@ class MethodCallsStore:
         try:
             queue_values = []
             while True:
-                queue_kwargs = self._queue.get(timeout=timeout)
+                queue_kwargs = self._queue_kwargs.get(timeout=timeout)
                 filtered_queue_kwargs = {k: v for k, v in queue_kwargs.items() if v is not None}
                 queue_values.append(filtered_queue_kwargs)
                 if filtered_queue_kwargs == expected_kwargs:
@@ -148,12 +149,44 @@ class MethodCallsStore:
         try:
             queue_values = []
             while True:
-                queue_args = self._queue.get(timeout=timeout)
+                queue_args = self._queue_args.get(timeout=timeout)
                 queue_values.append(queue_args)
                 if queue_args == expected_args:
                     return True
         except queue.Empty as err:
             raise RuntimeError(f"Never got a {expected_args}, but got {queue_values}") from err
+
+    def get_args_queue(self, timeout: int = 3) -> List[tuple]:
+        """Get all args from the queue.
+
+        :param timeout: How long to wait, defaults to 3
+        :type timeout: int, optional
+        :return: List of args tuples
+        :rtype: List[tuple]
+        """
+        items = []
+        try:
+            while True:
+                kwarg = self._queue_args.get(timeout=timeout)
+                items.append(kwarg)
+        except queue.Empty:
+            return items
+
+    def get_kwargs_queue(self, timeout: int = 3) -> List[dict]:
+        """Get all kwargs from the queue.
+
+        :param timeout: How long to wait, defaults to 3
+        :type timeout: int, optional
+        :return: List of kwargs dicts
+        :rtype: List[dict]
+        """
+        items = []
+        try:
+            while True:
+                arg = self._queue_kwargs.get(timeout=timeout)
+                items.append(arg)
+        except queue.Empty:
+            return items
 
 
 class EventStore:

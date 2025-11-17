@@ -68,8 +68,8 @@ class TestCommandActions:
             },
         )
 
-        progress_callback = MethodCallsStore()
-        self.dish_manager_cm_mock._command_progress_callback = progress_callback
+        self.progress_callback = MethodCallsStore()
+        self.dish_manager_cm_mock._command_progress_callback = self.progress_callback
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
 
         def is_device_ignored(device: str):
@@ -109,8 +109,9 @@ class TestCommandActions:
             "SetStandbyLPMode completed",
         ]
 
+        progress_updates = self.progress_callback.get_args_queue()
         for msg in expected_progress_updates:
-            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
+            assert (msg,) in progress_updates
 
     @pytest.mark.unit
     def test_happy_path_command_with_argument(self):
