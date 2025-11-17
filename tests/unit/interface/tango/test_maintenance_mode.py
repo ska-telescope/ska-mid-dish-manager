@@ -3,6 +3,7 @@
 from unittest.mock import call
 
 import pytest
+import tango
 from ska_control_model import TaskStatus
 
 from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SPFOperatingMode
@@ -17,14 +18,19 @@ def test_happy_case(dish_manager_resources, event_store_class):
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
 
     dish_mode_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     result_event_store = event_store_class()
 
     attr_cb_mapping = {
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
         "dishmode": dish_mode_event_store,
     }
+
+    device_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
+    )
     subscriptions = setup_subscriptions(device_proxy, attr_cb_mapping)
 
     device_proxy.SetMaintenanceMode()
@@ -33,7 +39,7 @@ def test_happy_case(dish_manager_resources, event_store_class):
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.MAINTENANCE)
 
     expected_progress_update = "SetMaintenanceMode completed"
-    progress_event_store.wait_for_progress_update(expected_progress_update, timeout=6)
+    status_event_store.wait_for_progress_update(expected_progress_update, timeout=6)
     dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
 
     # Check that the ReleaseAuth command was executed

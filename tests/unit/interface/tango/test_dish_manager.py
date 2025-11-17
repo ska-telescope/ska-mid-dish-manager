@@ -22,7 +22,7 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
 
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "longRunningCommandResult",
@@ -32,14 +32,14 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     result_event_store.clear_queue()
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
 
     assert device_proxy.dishMode == DishMode.STANDBY_LP
     device_proxy.SetStandbyFPMode()
-    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
+    status_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
 
     ds_cm._update_component_state(
         operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER

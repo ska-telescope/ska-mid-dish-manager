@@ -35,6 +35,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
 
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     for attr in [
         "dishMode",
@@ -52,6 +53,11 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         tango.EventType.CHANGE_EVENT,
         progress_event_store,
     )
+    device_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
+    )
 
     assert device_proxy.dishMode == DishMode.STANDBY_LP
 
@@ -59,7 +65,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     main_event_store.clear_queue()
 
     [[_], [unique_id]] = device_proxy.SetStandbyFPMode()
-    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
+    status_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
 
     ds_cm._update_component_state(
         operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
@@ -91,9 +97,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         f"{command} completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 
