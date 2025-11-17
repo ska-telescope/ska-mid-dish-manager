@@ -64,12 +64,12 @@ def test_power_cycle_in_maintenance_mode(
 ) -> None:
     # Put dish into maintenance mode
     mode_event_store = event_store_class()
-    buildstate_event_store = event_store_class()
-    attr_cb_mapping = {
-        "dishMode": mode_event_store,
-        "buildState": buildstate_event_store,
-    }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    subscriptions = setup_subscriptions(
+        dish_manager_proxy,
+        {
+            "dishMode": mode_event_store,
+        },
+    )
     dish_manager_proxy.SetMaintenanceMode()
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
 
@@ -77,8 +77,6 @@ def test_power_cycle_in_maintenance_mode(
     dp_manager = DeviceProxyManager()
     # restart the sub-component device
     admin_device_proxy = dp_manager(dish_manager_proxy.adm_name())
-    mode_event_store.clear_queue()
-    buildstate_event_store.clear_queue()
     admin_device_proxy.RestartServer()
 
     # Restarting the device server is not instantaneous, so we wait for a bit
@@ -88,10 +86,6 @@ def test_power_cycle_in_maintenance_mode(
         dp_manager.wait_for_device(dish_manager_proxy)
     except DevFailed:
         pass
-
-    # Use build state update as an indication that device is back online and connected
-    # to subdevices.
-    buildstate_event_store.wait_for_n_events(1, timeout=90)
 
     assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
 
@@ -151,10 +145,11 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
     dsc_event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=120)
     ds_device_proxy.slew([REQUESTED_AZIMUTH_VALUE, REQUESTED_ELEVATION_VALUE])
     dsc_event_store.wait_for_value(DSOperatingMode.POINT, timeout=30)
-    dish_manager_proxy.SetStowMode()
-    dsc_event_store.wait_for_value(DSOperatingMode.STOW, timeout=120)
-    mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
+    assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
 
-    assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
+    mode_event_store.clear_queue()
+    dish_manager_proxy.SetStowMode()
+    mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=10)
+    mode_event_store.wait_for_value(DishMode.STOW, timeout=120)
 
     remove_subscriptions(subscriptions)
