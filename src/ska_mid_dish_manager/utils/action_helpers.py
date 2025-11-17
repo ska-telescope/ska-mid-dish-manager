@@ -45,15 +45,16 @@ def report_awaited_attributes(
     awaited_attributes: list[Any],
     awaited_values: list[Any],
     device: Any = None,
-):
+) -> None:
     """Report the awaited attributes and their expected values."""
     if awaited_values:
-        awaited_attributes = ", ".join(awaited_attributes)
-        awaited_values = convert_enums_to_names(awaited_values)
-        awaited_values = ", ".join(map(str, awaited_values))
+        attributes_str = ", ".join(awaited_attributes)
+        values_str = convert_enums_to_names(awaited_values)
+        values_str = ", ".join(map(str, values_str))
+
         if device:
-            msg = f"Awaiting {device} {awaited_attributes} change to {awaited_values}"
+            msg = f"Awaiting {device} {attributes_str} change to {values_str}"
         else:
-            msg = f"Awaiting {awaited_attributes} change to {awaited_values}"
+            msg = f"Awaiting {attributes_str} change to {values_str}"
 
         report_task_progress(msg, progress_callback)
