@@ -49,8 +49,8 @@ def report_awaited_attributes(
     """Report the awaited attributes and their expected values."""
     if awaited_values:
         attributes_str = ", ".join(awaited_attributes)
-        values_str = convert_enums_to_names(awaited_values)
-        values_str = ", ".join(map(str, values_str))
+        values_list = convert_enums_to_names(awaited_values)
+        values_str = ", ".join(map(str, values_list))
 
         if device:
             msg = f"Awaiting {device} {attributes_str} change to {values_str}"
