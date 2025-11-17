@@ -145,10 +145,11 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
     dsc_event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=120)
     ds_device_proxy.slew([REQUESTED_AZIMUTH_VALUE, REQUESTED_ELEVATION_VALUE])
     dsc_event_store.wait_for_value(DSOperatingMode.POINT, timeout=30)
-    dish_manager_proxy.SetStowMode()
-    dsc_event_store.wait_for_value(DSOperatingMode.STOW, timeout=120)
-    mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
+    assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
 
-    assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
+    mode_event_store.clear_queue()
+    dish_manager_proxy.SetStowMode()
+    mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=10)
+    mode_event_store.wait_for_value(DishMode.STOW, timeout=120)
 
     remove_subscriptions(subscriptions)
