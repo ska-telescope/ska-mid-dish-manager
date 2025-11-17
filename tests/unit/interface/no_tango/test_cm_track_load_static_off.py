@@ -26,6 +26,9 @@ def test_track_load_static_off_handler(
         callbacks["task_cb"],
     )
     # wait a bit for the lrc updates to come through
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        **{"actstaticoffsetvaluexel": 1.0, "actstaticoffsetvalueel": 2.0}
+    )
     component_state_cb = callbacks["comp_state_cb"]
     component_state_cb.get_queue_values()
 
@@ -45,12 +48,12 @@ def test_track_load_static_off_handler(
         assert kwargs == expected_call_kwargs[count]
 
     progress_cb = callbacks["progress_cb"]
-    expected_progress_updates = [
+    progress_messages = progress_cb.get_args_queue()
+    expected_progress_messages = [
         "Awaiting DS actstaticoffsetvaluexel, actstaticoffsetvalueel change to 1.0, 2.0",
         "Fanned out commands: DS.TrackLoadStaticOff",
         "Awaiting actstaticoffsetvaluexel, actstaticoffsetvalueel change to 1.0, 2.0",
         "TrackLoadStaticOff completed",
     ]
-    progress_updates = progress_cb.get_args_queue()
-    for msg in expected_progress_updates:
-        assert (msg,) in progress_updates
+    for message in expected_progress_messages:
+        assert (message,) in progress_messages

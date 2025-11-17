@@ -890,7 +890,7 @@ class ConfigureBandActionSequence(Action):
 
 
 class SlewAction(Action):
-    """Configure band on DS and SPFRx."""
+    """Slew the dish to the specified target coordinates."""
 
     def __init__(
         self,
@@ -954,7 +954,7 @@ class SlewAction(Action):
 
 
 class TrackLoadStaticOffAction(Action):
-    """Configure band on DS and SPFRx."""
+    """TrackLoadStaticOff action."""
 
     def __init__(
         self,

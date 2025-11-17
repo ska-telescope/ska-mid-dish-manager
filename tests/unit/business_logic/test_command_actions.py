@@ -198,8 +198,6 @@ class TestCommandActions:
                 self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
 
         def my_task_callback(**kwargs):
-            # Update the mock component states as callbacks come in so that the states move
-            # as expected
             if kwargs.get("result") is not None:
                 result_calls.append(kwargs.get("result"))
 
@@ -288,8 +286,6 @@ class TestCommandActions:
                 self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
 
         def my_task_callback(**kwargs):
-            # Update the mock component states as callbacks come in so that the states move
-            # as expected
             if kwargs.get("result") is not None:
                 result_calls.append(kwargs.get("result"))
 
