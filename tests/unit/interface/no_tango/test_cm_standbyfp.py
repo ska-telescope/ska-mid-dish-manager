@@ -41,10 +41,15 @@ def test_set_standbyfp_handler(
         assert kwargs == expected_call_kwargs[count]
 
     progress_cb = callbacks["progress_cb"]
-    progress_cb.wait_for_args(("Awaiting DS operatingmode change to STANDBY",))
-    progress_cb.wait_for_args(("Awaiting DS powerstate change to FULL_POWER",))
-    progress_cb.wait_for_args(("Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",))
-    progress_cb.wait_for_args(("Awaiting dishmode change to STANDBY_FP",))
+    expected_progress_updates = [
+        "Awaiting DS operatingmode change to STANDBY",
+        "Awaiting DS powerstate change to FULL_POWER",
+        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
+        "Awaiting dishmode change to STANDBY_FP",
+    ]
+    progress_updates = progress_cb.get_args_queue()
+    for msg in expected_progress_updates:
+        assert (msg,) in progress_updates
 
     # check that the component state reports the requested command
     component_manager.sub_component_managers["DS"]._update_component_state(

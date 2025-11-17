@@ -45,11 +45,12 @@ def test_track_load_static_off_handler(
         assert kwargs == expected_call_kwargs[count]
 
     progress_cb = callbacks["progress_cb"]
-    progress_cb.wait_for_args(
-        ("Awaiting DS actstaticoffsetvaluexel, actstaticoffsetvalueel change to 1.0, 2.0",)
-    )
-    progress_cb.wait_for_args(("Fanned out commands: DS.TrackLoadStaticOff",))
-    progress_cb.wait_for_args(
-        ("Awaiting actstaticoffsetvaluexel, actstaticoffsetvalueel change to 1.0, 2.0",)
-    )
-    progress_cb.wait_for_args(("TrackLoadStaticOff completed",))
+    expected_progress_updates = [
+        "Awaiting DS actstaticoffsetvaluexel, actstaticoffsetvalueel change to 1.0, 2.0",
+        "Fanned out commands: DS.TrackLoadStaticOff",
+        "Awaiting actstaticoffsetvaluexel, actstaticoffsetvalueel change to 1.0, 2.0",
+        "TrackLoadStaticOff completed",
+    ]
+    progress_updates = progress_cb.get_args_queue()
+    for msg in expected_progress_updates:
+        assert (msg,) in progress_updates

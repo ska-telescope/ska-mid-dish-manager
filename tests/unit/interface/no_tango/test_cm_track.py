@@ -53,14 +53,15 @@ def test_track_handler(
         assert kwargs == expected_call_kwargs[count]
 
     progress_cb = callbacks["progress_cb"]
-    progress_cb.wait_for_args(("Fanned out commands: DS.Track",))
-    progress_cb.wait_for_args(("DS.Track completed",))
-    progress_cb.wait_for_args(
-        (
-            "Track command has been executed on DS. "
-            "Monitor the achievedTargetLock attribute to determine when the dish is on source.",
-        )
-    )
+    expected_progress_updates = [
+        "Fanned out commands: DS.Track",
+        "DS.Track completed",
+        "Track command has been executed on DS. "
+        "Monitor the achievedTargetLock attribute to determine when the dish is on source.",
+    ]
+    progress_updates = progress_cb.get_args_queue()
+    for msg in expected_progress_updates:
+        assert (msg,) in progress_updates
 
     # check that the component state reports the requested command
     component_manager._update_component_state(pointingstate=PointingState.TRACK)

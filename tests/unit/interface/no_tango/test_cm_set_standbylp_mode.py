@@ -47,15 +47,16 @@ def test_set_standbylp_handler(
         assert kwargs == expected_call_kwargs[count]
 
     progress_cb = callbacks["progress_cb"]
-    progress_cb.wait_for_args(("Awaiting SPF operatingmode change to STANDBY_LP",))
-    progress_cb.wait_for_args(("Awaiting SPFRX operatingmode change to STANDBY",))
-    progress_cb.wait_for_args(
-        ("Awaiting DS operatingmode, powerstate change to STANDBY, LOW_POWER",)
-    )
-    progress_cb.wait_for_args(
-        ("Fanned out commands: SPF.SetStandbyLPMode, SPFRX.SetStandbyMode, DS.SetStandbyMode",)
-    )
-    progress_cb.wait_for_args(("Awaiting dishmode change to STANDBY_LP",))
+    expected_progress_updates = [
+        "Awaiting SPF operatingmode change to STANDBY_LP",
+        "Awaiting SPFRX operatingmode change to STANDBY",
+        "Awaiting DS operatingmode, powerstate change to STANDBY, LOW_POWER",
+        "Fanned out commands: SPF.SetStandbyLPMode, SPFRX.SetStandbyMode, DS.SetStandbyMode",
+        "Awaiting dishmode change to STANDBY_LP",
+    ]
+    progress_updates = progress_cb.get_args_queue()
+    for msg in expected_progress_updates:
+        assert (msg,) in progress_updates
 
     # check that the component state reports the requested command
     component_manager.sub_component_managers["SPF"]._update_component_state(

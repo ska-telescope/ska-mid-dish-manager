@@ -105,16 +105,17 @@ class TestActionHandler:
         task_abort_event = Event()
         handler.execute(self.my_task_callback, task_abort_event)
 
+        expected_progress_updates = [
+            "Fanned out commands: DeviceX.CommandX",
+            "Awaiting attr change to True",
+            "DeviceX device timed out executing CommandX command",
+            "DeviceX.CommandX timed out",
+            "Action 'HandlerX' failed. Fanned out commands: {'DeviceX.CommandX': 'TIMED_OUT'}",
+        ]
         assert self.component_state["attr"] is False
-        handler.progress_callback.wait_for_args(("Fanned out commands: DeviceX.CommandX",))
-        handler.progress_callback.wait_for_args(("Awaiting attr change to True",))
-        handler.progress_callback.wait_for_args(
-            ("DeviceX device timed out executing CommandX command",)
-        )
-        handler.progress_callback.wait_for_args(("DeviceX.CommandX timed out",))
-        handler.progress_callback.wait_for_args(
-            ("Action 'HandlerX' failed. Fanned out commands: {'DeviceX.CommandX': 'TIMED_OUT'}",)
-        )
+        progress_updates = progress_callback.get_args_queue()
+        for msg in expected_progress_updates:
+            assert (msg,) in progress_updates
 
     @pytest.mark.unit
     def test_action_timeout_no_command_timeout(self):
@@ -263,16 +264,20 @@ class TestActionHandler:
             awaited_component_state={"attr": True},
             progress_callback=progress_callback,
         )
-
+        expected_progress_updates = [
+            "Fanned out commands: DeviceX.CommandX",
+            "Awaiting attr change to True",
+            "DeviceX attr changed to True",
+            "DeviceX.CommandX completed",
+            "HandlerX completed",
+        ]
         task_abort_event = Event()
         handler.execute(self.my_task_callback, task_abort_event)
 
         assert self.component_state["attr"] is True  # command completed execution
-        handler.progress_callback.wait_for_args(("Fanned out commands: DeviceX.CommandX",))
-        handler.progress_callback.wait_for_args(("Awaiting attr change to True",))
-        handler.progress_callback.wait_for_args(("DeviceX attr changed to True",))
-        handler.progress_callback.wait_for_args(("DeviceX.CommandX completed",))
-        handler.progress_callback.wait_for_args(("HandlerX completed",))
+        progress_updates = progress_callback.get_args_queue()
+        for msg in expected_progress_updates:
+            assert (msg,) in progress_updates
 
     @pytest.mark.unit
     def test_action_abort(self):
