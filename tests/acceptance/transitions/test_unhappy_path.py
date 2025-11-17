@@ -1,7 +1,6 @@
 """Test dish unhappy path."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -29,14 +28,10 @@ def test_dish_handles_unhappy_path_in_command_execution(
         "dishMode": dish_mode_event_store,
         "configuredBand": band_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
     # transition through FP > OPERATE > LP
     # SetStandbyLPMode is the only command which fans out
     # to SPF and SPFRx devices: this allows us test the exception

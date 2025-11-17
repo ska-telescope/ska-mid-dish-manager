@@ -1,7 +1,6 @@
 """Test ignoring subservient devices."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import Band
 from tests.utils import remove_subscriptions, set_ignored_devices, setup_subscriptions
@@ -43,13 +42,9 @@ def test_ignoring_spf(
         "dishMode": main_event_store,
         "configuredband": main_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
 
-    dish_manager_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
@@ -87,14 +82,10 @@ def test_ignoring_spfrx(
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
@@ -131,14 +122,10 @@ def test_ignoring_all(
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 

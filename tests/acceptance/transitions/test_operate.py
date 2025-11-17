@@ -1,7 +1,6 @@
 """Test Operate."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
@@ -21,14 +20,10 @@ def test_set_operate(
         "dishMode": main_event_store,
         "longRunningCommandResult": main_event_store,
         "configuredBand": band_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=30)
 

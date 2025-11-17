@@ -1,7 +1,6 @@
 """Test Maintenance Mode."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.constants import (
     STOW_ELEVATION_DEGREES,
@@ -22,13 +21,9 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
     attr_cb_mapping = {
         "longRunningCommandResult": result_event_store,
         "dishMode": mode_event_store,
+        "Status": status_event_store,
     }
 
-    dish_manager_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     current_el = dish_manager_proxy.achievedPointing[2]

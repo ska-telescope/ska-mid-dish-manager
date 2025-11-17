@@ -1,7 +1,6 @@
 """Test that DS goes into STOW and dishManager reports it."""
 
 import pytest
-import tango
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
@@ -18,14 +17,10 @@ def test_stow_transition(
     status_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
     current_el = dish_manager_proxy.achievedPointing[2]
     stow_position = 90.2
     estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second

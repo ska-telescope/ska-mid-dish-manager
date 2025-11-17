@@ -27,13 +27,9 @@ def test_track_load_static_off(
     attr_cb_mapping = {
         "actStaticOffsetValueXel": model_event_store,
         "actStaticOffsetValueEl": model_event_store,
+        "Status": status_event_store,
     }
 
-    dish_manager_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.TrackLoadStaticOff(write_values)
