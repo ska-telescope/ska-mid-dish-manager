@@ -64,9 +64,7 @@ def test_ignoring_spf(
         "SetStandbyFPMode completed",
     ]
 
-    events = status_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 
@@ -110,9 +108,7 @@ def test_ignoring_spfrx(
         "SetOperateMode completed",
     ]
 
-    events = status_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 
@@ -147,9 +143,7 @@ def test_ignoring_all(
         "SetStandbyLPMode completed",
     ]
 
-    events = status_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 

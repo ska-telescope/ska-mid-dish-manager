@@ -43,9 +43,7 @@ def test_set_operate(
         "SetOperateMode completed",
     ]
 
-    events = status_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 
