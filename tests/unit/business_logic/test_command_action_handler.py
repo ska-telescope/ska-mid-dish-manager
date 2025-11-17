@@ -37,7 +37,7 @@ class TestActionHandler:
         self.reset_task_callbacks()
         self.component_state["attr"] = False
 
-        def mock_command(task_callback=None):
+        def mock_command():
             self.component_state["attr"] = True
             return "OK", "fanned out command msg"
 
@@ -78,7 +78,7 @@ class TestActionHandler:
 
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback=None):
+        def mock_command():
             # Don't do anything so that the command times out
             return "OK", "fanned out command msg"
 
@@ -122,7 +122,7 @@ class TestActionHandler:
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback=None):
+        def mock_command():
             # Don't do anything so that the command times out
             return "OK", "fanned out command msg"
 
@@ -161,7 +161,7 @@ class TestActionHandler:
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback=None):
+        def mock_command():
             # Don't do anything so that the command times out
             return "OK", "fanned out command msg"
 
@@ -201,7 +201,7 @@ class TestActionHandler:
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback=None):
+        def mock_command():
             # Don't do anything so that the command times out
             return "OK", "fanned out command msg"
 
@@ -241,7 +241,7 @@ class TestActionHandler:
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback=None):
+        def mock_command():
             self.component_state["attr"] = True
             return "OK", "fanned out command msg"
 
@@ -280,7 +280,7 @@ class TestActionHandler:
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
-        def mock_command(task_callback=None):
+        def mock_command():
             # Don't do anything so that the command keeps running
             return "OK", "fanned out command msg"
 
