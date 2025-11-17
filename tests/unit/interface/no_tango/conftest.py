@@ -1,5 +1,4 @@
 import logging
-import weakref
 from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
@@ -7,7 +6,6 @@ import pytest
 from ska_control_model import CommunicationStatus, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from tests.unit.z_run_last.test_object_and_thread_management import force_gc_on_weak_ref
 from tests.utils import ComponentStateStore
 
 LOGGER = logging.getLogger(__name__)
@@ -73,7 +71,6 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
         )
-        weak_ref = weakref.ref(dish_manager_cm)
         dish_manager_cm.start_communicating()
         # since the devices are mocks, no change events
         # will be emitted to transition the state to ESTABLISHED
@@ -85,7 +82,3 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
         # cleanup resources
         dish_manager_cm.stop_communicating()
         dish_manager_cm._task_executor.abort()
-        del dish_manager_cm
-        force_gc_on_weak_ref(weak_ref)
-
-        print("YASH: Cleanup complete")
