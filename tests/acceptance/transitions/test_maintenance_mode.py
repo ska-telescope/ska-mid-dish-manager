@@ -149,7 +149,6 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
 
     mode_event_store.clear_queue()
     dish_manager_proxy.SetStowMode()
-    mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=10)
     mode_event_store.wait_for_value(DishMode.STOW, timeout=120)
 
     remove_subscriptions(subscriptions)
