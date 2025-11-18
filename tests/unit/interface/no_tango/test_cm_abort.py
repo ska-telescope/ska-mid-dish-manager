@@ -66,18 +66,19 @@ def test_abort_handler(
 
     # wait a bit for the lrc updates to come through
     component_state_cb = callbacks["comp_state_cb"]
-    component_state_cb.get_queue_values(timeout=60)
+    component_state_cb.get_queue_values()
 
     expected_call_kwargs = (
+        {"status": TaskStatus.IN_PROGRESS},
+        # TODO remove extra status check following release after base classes v1.3.2
+        {"status": TaskStatus.IN_PROGRESS},
         {
-            "progress": "SetStandbyLPMode aborted",
             "status": TaskStatus.ABORTED,
             "result": (ResultCode.ABORTED, "SetStandbyLPMode aborted"),
         },
-        {"status": TaskStatus.IN_PROGRESS},
         {
             "status": TaskStatus.COMPLETED,
-            "result": (ResultCode.OK, "Abort sequence completed"),
+            "result": (ResultCode.OK, "Abort completed OK"),
         },
     )
 
@@ -86,6 +87,9 @@ def test_abort_handler(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    progress_cb = callbacks["progress_cb"]
+    progress_cb.wait_for_args(("SetStandbyLPMode aborted",))
 
     # check that the component state reports the requested command
     component_manager._update_component_state(dishmode=DishMode.STANDBY_FP)

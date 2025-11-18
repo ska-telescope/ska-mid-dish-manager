@@ -33,13 +33,7 @@ def test_track_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": "Fanned out commands: DS.Track"},
-        {"progress": "DS.Track completed"},
         {
-            "progress": (
-                "Track command has been executed on DS. "
-                "Monitor the achievedTargetLock attribute to determine when the dish is on source."
-            ),
             "status": TaskStatus.COMPLETED,
             "result": (
                 ResultCode.OK,
@@ -57,6 +51,17 @@ def test_track_handler(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    progress_cb = callbacks["progress_cb"]
+    expected_progress_updates = [
+        "Fanned out commands: DS.Track",
+        "DS.Track completed",
+        "Track command has been executed on DS. "
+        "Monitor the achievedTargetLock attribute to determine when the dish is on source.",
+    ]
+    progress_updates = progress_cb.get_args_queue()
+    for msg in expected_progress_updates:
+        assert (msg,) in progress_updates
 
     # check that the component state reports the requested command
     component_manager._update_component_state(pointingstate=PointingState.TRACK)

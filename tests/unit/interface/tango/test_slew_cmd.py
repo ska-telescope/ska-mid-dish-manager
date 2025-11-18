@@ -36,7 +36,7 @@ def test_set_slew_cmd_fails_when_dish_mode_is_not_operate(
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
     lrc_status_event_store = event_store_class()
-    lrc_progress_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -55,10 +55,11 @@ def test_set_slew_cmd_fails_when_dish_mode_is_not_operate(
         tango.EventType.CHANGE_EVENT,
         lrc_status_event_store,
     )
+
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        lrc_progress_event_store,
+        status_event_store,
     )
 
     dish_manager_cm._update_component_state(pointingstate=PointingState.READY)
@@ -73,7 +74,7 @@ def test_set_slew_cmd_fails_when_dish_mode_is_not_operate(
     expected_progress_updates = (
         "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE"
     )
-    lrc_progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
+    status_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
 
 
 @pytest.mark.unit
@@ -96,7 +97,7 @@ def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
     lrc_status_event_store = event_store_class()
-    lrc_progress_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -117,9 +118,9 @@ def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        lrc_progress_event_store,
+        status_event_store,
     )
 
     dish_manager_cm._update_component_state(dishmode=DishMode.OPERATE)
@@ -135,7 +136,7 @@ def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
         "Slew command rejected for current pointingState. "
         "Slew command is allowed for pointingState READY"
     )
-    lrc_progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
+    status_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
 
 
 @pytest.mark.unit
@@ -150,7 +151,7 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     main_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     attributes_to_subscribe_to = (
         "dishMode",
@@ -164,9 +165,9 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
         )
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
 
     ds_cm._update_component_state(
@@ -197,9 +198,7 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
         "Monitor the pointing attributes for the completion status of the task.",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 

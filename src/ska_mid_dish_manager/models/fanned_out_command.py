@@ -3,15 +3,16 @@
 import enum
 import logging
 import time
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from ska_control_model import TaskStatus
-from ska_tango_base.base import BaseComponentManager
 
+from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import FannedOutCommandStatus
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
     report_awaited_attributes,
+    report_task_progress,
 )
 
 
@@ -28,6 +29,7 @@ class FannedOutCommand:
         command_argument: Any = None,
         awaited_component_state: dict = {},
         timeout_s: float = 0,
+        progress_callback: Optional[Callable] = None,
     ):
         """:param logger: Logger instance
         :type logger: Logger
@@ -48,6 +50,8 @@ class FannedOutCommand:
         :param timeout_s: Timeout (in seconds) for the command execution. A value <= 0 will disable
             the timeout.
         :type timeout_s: float
+        :param progress_callback: Optional callback to report progress updates.
+        :type progress_callback: Callable
         """
         self.logger = logger
         self.device = device
@@ -59,6 +63,7 @@ class FannedOutCommand:
         self.cmd_message = None
         self._status = FannedOutCommandStatus.PENDING
         self._task_finish_reported = False
+        self._progress_callback = progress_callback
         self.cmd_response = ""
         self.component_state = component_state
         self.awaited_component_state = awaited_component_state
@@ -71,7 +76,7 @@ class FannedOutCommand:
         self.start_time = time.time()
 
         try:
-            res = self.command(task_callback)
+            res = self.command()
             assert len(res) == 2, (
                 f"FannedOutCommand 'command' Callable expects a response of len 2, but got '{res}'"
             )
@@ -112,11 +117,10 @@ class FannedOutCommand:
             ):
                 self._status = FannedOutCommandStatus.COMPLETED
         if self._status in [FannedOutCommandStatus.FAILED, FannedOutCommandStatus.TIMED_OUT]:
-            task_callback(
-                progress=(
-                    f"{self.device} device {self._status.name.lower().replace('_', ' ')}"
-                    f" executing {self.command_name} command"
-                )
+            report_task_progress(
+                f"{self.device} device {self._status.name.lower().replace('_', ' ')}"
+                f" executing {self.command_name} command",
+                self._progress_callback,
             )
 
     def report_progress(self, task_callback: Callable) -> None:
@@ -133,13 +137,16 @@ class FannedOutCommand:
                     if current_value == expected_value:
                         if isinstance(current_value, enum.IntEnum):
                             current_value = current_value.name
-                        task_callback(
-                            progress=f"{self.device} {attr_name} changed to {current_value}"
+                        report_task_progress(
+                            f"{self.device} {attr_name} changed to {current_value}",
+                            self._progress_callback,
                         )
                         self.awaited_update_reports[attr_name] = True
         if self.finished and not self._task_finish_reported:
             status_name = self.status.name.lower().replace("_", " ")
-            task_callback(progress=f"{self.device}.{self.command_name} {status_name}")
+            report_task_progress(
+                f"{self.device}.{self.command_name} {status_name}", self._progress_callback
+            )
             self._task_finish_reported = True
 
 
@@ -149,10 +156,11 @@ class FannedOutSlowCommand(FannedOutCommand):
         logger: logging.Logger,
         device: str,
         command_name: str,
-        device_component_manager: BaseComponentManager,
+        device_component_manager: TangoDeviceComponentManager,
         command_argument: Any = None,
         awaited_component_state: dict = {},
         timeout_s: float = 0,
+        progress_callback: Optional[Callable] = None,
         is_device_ignored: bool = False,
     ):
         """:param logger: Logger instance
@@ -162,7 +170,7 @@ class FannedOutSlowCommand(FannedOutCommand):
         :param command_name: The name for the command to be executed
         :type command_name: str
         :param device_component_manager: The component manager of the subservient device
-        :type device_component_manager: BaseComponentManager
+        :type device_component_manager: TangoDeviceComponentManager
         :param timeout_s: Timeout (in seconds) for the command execution
         :type timeout_s: float
         :param command_argument: Argument for the requested command
@@ -170,6 +178,8 @@ class FannedOutSlowCommand(FannedOutCommand):
         :param awaited_component_state: The component state containing the attributes and values to
             wait for.
         :type awaited_component_state: dict
+        :param progress_callback: Optional callback to report progress updates.
+        :type progress_callback: Callable
         :param is_device_ignored: Toggle to ignore fanning out of command if the device is ignored.
         :type is_device_ignored: bool
         """
@@ -188,9 +198,10 @@ class FannedOutSlowCommand(FannedOutCommand):
             command_argument=command_argument,
             awaited_component_state=awaited_component_state,
             timeout_s=timeout_s,
+            progress_callback=progress_callback,
         )
 
-    def _execute_tango_command(self, task_callback: Callable) -> tuple:
+    def _execute_tango_command(self) -> tuple:
         """Fan out the respective command to the subservient devices."""
         if self.is_device_ignored:
             self.logger.debug(
@@ -206,7 +217,7 @@ class FannedOutSlowCommand(FannedOutCommand):
             awaited_attributes = list(self.awaited_component_state.keys())
             awaited_values = list(self.awaited_component_state.values())
             report_awaited_attributes(
-                task_callback, awaited_attributes, awaited_values, self.device
+                self._progress_callback, awaited_attributes, awaited_values, self.device
             )
 
         if task_status == TaskStatus.FAILED:

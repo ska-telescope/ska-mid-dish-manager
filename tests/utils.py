@@ -94,6 +94,101 @@ class ComponentStateStore:
             self._queue.get()
 
 
+class MethodCallsStore:
+    """Store the calls to this method so it can be awaited."""
+
+    def __init__(self) -> None:
+        """Init the class."""
+        self._queue_args: queue.Queue = queue.Queue()
+        self._queue_kwargs: queue.Queue = queue.Queue()
+
+    def __call__(self, *args: tuple, **kwargs: dict) -> None:
+        """Store the kwargs used in calls to the MethodCallsStore class.
+
+        :param kwargs: The method parameters
+        :type kwargs: dict
+        """
+        if kwargs:
+            self._queue_kwargs.put(kwargs)
+        if args:
+            self._queue_args.put(args)
+
+    def wait_for_kwargs(self, expected_kwargs: dict, timeout: int = 3) -> bool:
+        """Wait for a specific dict to arrive.
+
+        :param expected_kwargs: The kwargs we're expecting
+        :type expected_kwargs: dict
+        :param timeout: How long to wait, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: When the expected value is not fuond
+        :return: Whether it was found or not
+        :rtype: bool
+        """
+        try:
+            queue_values = []
+            while True:
+                queue_kwargs = self._queue_kwargs.get(timeout=timeout)
+                filtered_queue_kwargs = {k: v for k, v in queue_kwargs.items() if v is not None}
+                queue_values.append(filtered_queue_kwargs)
+                if filtered_queue_kwargs == expected_kwargs:
+                    return True
+        except queue.Empty as err:
+            raise RuntimeError(f"Never got a {expected_kwargs}, but got {queue_values}") from err
+
+    def wait_for_args(self, expected_args: tuple, timeout: int = 3) -> bool:
+        """Wait for a specific arg list to arrive.
+
+        :param expected_args: The args we're expecting
+        :type expected_args: tuple
+        :param timeout: How long to wait, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: When the expected value is not found
+        :return: Whether it was found or not
+        :rtype: bool
+        """
+        try:
+            queue_values = []
+            while True:
+                queue_args = self._queue_args.get(timeout=timeout)
+                queue_values.append(queue_args)
+                if queue_args == expected_args:
+                    return True
+        except queue.Empty as err:
+            raise RuntimeError(f"Never got a {expected_args}, but got {queue_values}") from err
+
+    def get_args_queue(self, timeout: int = 3) -> List[tuple]:
+        """Get all args from the queue.
+
+        :param timeout: How long to wait, defaults to 3
+        :type timeout: int, optional
+        :return: List of args tuples
+        :rtype: List[tuple]
+        """
+        items = []
+        try:
+            while True:
+                kwarg = self._queue_args.get(timeout=timeout)
+                items.append(kwarg)
+        except queue.Empty:
+            return items
+
+    def get_kwargs_queue(self, timeout: int = 3) -> List[dict]:
+        """Get all kwargs from the queue.
+
+        :param timeout: How long to wait, defaults to 3
+        :type timeout: int, optional
+        :return: List of kwargs dicts
+        :rtype: List[dict]
+        """
+        items = []
+        try:
+            while True:
+                arg = self._queue_kwargs.get(timeout=timeout)
+                items.append(arg)
+        except queue.Empty:
+            return items
+
+
 class EventStore:
     """Store events with useful functionality."""
 
@@ -291,19 +386,15 @@ class EventStore:
                 events.append(event)
                 if not event.attr_value:
                     continue
-                if not isinstance(event.attr_value.value, tuple):
+                if not isinstance(event.attr_value.value, str):
                     continue
                 progress_update = str(event.attr_value.value)
-                if (
-                    progress_message in progress_update
-                    and event.attr_value.name == "longrunningcommandprogress"
-                ):
+                if progress_message in progress_update and event.attr_value.name == "status":
                     return events
         except queue.Empty as err:
             event_info = [(event.attr_value.name, event.attr_value.value) for event in events]
             raise RuntimeError(
-                f"Never got a progress update with [{progress_message}],",
-                f" but got [{event_info}]",
+                f"Never got a progress update with [{progress_message}] but got {event_info}"
             ) from err
 
     @classmethod
