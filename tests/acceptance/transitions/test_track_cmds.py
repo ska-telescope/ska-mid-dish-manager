@@ -61,7 +61,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_track_and_track_stop_cmds(
     slew_dish_to_init,
     monitor_tango_servers,
@@ -72,14 +71,14 @@ def test_track_and_track_stop_cmds(
     """Test call of Track command and stop."""
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
 
     attr_cb_mapping = {
         "pointingState": pointing_state_event_store,
         "achievedPointing": achieved_pointing_event_store,
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -132,9 +131,7 @@ def test_track_and_track_stop_cmds(
     ]
 
     # Wait for the track command to complete
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     # Check that all the expected progress messages appeared
     # in the event store
@@ -165,9 +162,7 @@ def test_track_and_track_stop_cmds(
     ]
 
     # Wait for the track command to complete
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=8
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=8)
 
     # Check that all the expected progress messages appeared
     # in the event store
@@ -180,7 +175,6 @@ def test_track_and_track_stop_cmds(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_append_dvs_case(
     slew_dish_to_init,
     monitor_tango_servers,
@@ -264,7 +258,6 @@ def test_append_dvs_case(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_maximum_capacity(
     slew_dish_to_init,
     monitor_tango_servers,
@@ -381,7 +374,6 @@ def test_maximum_capacity(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_track_fails_when_track_called_late(
     monitor_tango_servers,
     event_store_class,

@@ -23,6 +23,7 @@ def force_gc_on_weak_ref(weak_ref: weakref.ref) -> None:
 
 
 @pytest.mark.unit
+@pytest.mark.forked
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
 @mock.patch.multiple(
     "ska_mid_dish_manager.component_managers.wms_cm.WMSComponentManager",
@@ -34,6 +35,13 @@ def test_component_manager_gracefully_cleans_up_resources(patch_dp, caplog):
     started and destroyed without resource leaks or errors.
     """
     caplog.set_level(logging.WARNING)
+
+    # Check that there are no pre-existing DishManagerComponentManager instances in memory
+    for obj in gc.get_objects():
+        if isinstance(obj, DishManagerComponentManager):
+            raise AssertionError(
+                "DishManagerComponentManager instance already exists in memory before test"
+            )
 
     for _ in range(100):
         component_manager = DishManagerComponentManager(

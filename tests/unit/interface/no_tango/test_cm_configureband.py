@@ -32,10 +32,6 @@ def test_configureband_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": "Awaiting DS indexerposition change to B2"},
-        {"progress": "Awaiting SPFRX configuredband change to B2"},
-        {"progress": "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2"},
-        {"progress": "Awaiting configuredband change to B2"},
     )
 
     # check that the initial lrc updates come through
@@ -43,6 +39,16 @@ def test_configureband_handler(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    msgs = [
+        "Awaiting DS indexerposition change to B2",
+        "Awaiting SPFRX configuredband change to B2",
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
+        "Awaiting configuredband change to B2",
+    ]
+    progress_cb = callbacks["progress_cb"]
+    for msg in msgs:
+        progress_cb.wait_for_args((msg,))
 
     # check that the component state reports the requested command
     component_manager._update_component_state(configuredband=Band.B2, dishmode=DishMode.STANDBY_FP)
@@ -52,7 +58,7 @@ def test_configureband_handler(
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="ConfigureBand2 completed",
         status=TaskStatus.COMPLETED,
         result=(ResultCode.OK, "ConfigureBand2 completed"),
     )
+    progress_cb.wait_for_args(("SetOperateMode completed",))

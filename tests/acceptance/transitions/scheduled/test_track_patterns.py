@@ -39,7 +39,6 @@ def load_csv_data(file_path: str) -> list[tuple[float, float, float]]:
     return data
 
 
-@pytest.mark.forked
 @pytest.mark.track_patterns
 @pytest.mark.parametrize(
     "track_csv_file",

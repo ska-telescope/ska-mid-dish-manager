@@ -62,7 +62,7 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     main_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     result_event_store = event_store_class()
 
     for attr in [
@@ -83,14 +83,14 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
 
     # Force dishManager dishMode to go to STANDBY_FP
     device_proxy.SetStandbyFPMode()
-    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
+    status_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
     ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     main_event_store.wait_for_value(DishMode.STANDBY_FP)
@@ -123,7 +123,7 @@ def test_set_operate_mode_succeeds_from_standbyfp_dish_mode(
         "Awaiting dishmode change to OPERATE",
         "SetOperateMode completed",
     ]
-    events = progress_event_store.wait_for_progress_update(expected_progress_updates[-1])
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1])
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared

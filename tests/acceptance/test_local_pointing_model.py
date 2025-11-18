@@ -10,7 +10,6 @@ from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LEN
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     "tango_attribute",
     [
@@ -34,7 +33,6 @@ def test_read_band_static_pointing_model_parameters(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     "tango_attribute",
     [

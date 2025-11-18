@@ -7,7 +7,6 @@ import tango
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_set_kvalue(
     dish_manager_proxy: tango.DeviceProxy,
     spfrx_device_proxy: tango.DeviceProxy,

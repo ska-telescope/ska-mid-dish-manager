@@ -63,7 +63,7 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     main_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     attributes_to_subscribe_to = (
         "dishMode",
@@ -78,9 +78,9 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
         )
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
 
     # Force dishManager dishMode to go to OPERATE
@@ -122,9 +122,7 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
         "TrackStop completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 

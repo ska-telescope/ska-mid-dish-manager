@@ -14,6 +14,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from tests.utils import MethodCallsStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,6 +41,10 @@ class TestCommandMapIgnoringDevices:
         self.dish_manager_cm_mock = mock.MagicMock(
             component_state={"dishmode": DishMode.STANDBY_LP}
         )
+        self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
+
+        self.progress_callback = MethodCallsStore()
+        self.dish_manager_cm_mock._command_progress_callback = self.progress_callback
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
 
         def is_device_ignored(device: str):
@@ -71,11 +76,10 @@ class TestCommandMapIgnoringDevices:
         """Test ignoring SPF device in command map."""
         caplog.set_level(logging.DEBUG)
         task_abort_event = Event()
-        progress_calls = []
+        # Save any progress calls
 
         def my_task_callback(**kwargs):
-            if kwargs.get("progress") is not None:
-                progress_calls.append(kwargs["progress"])
+            pass
 
         self.set_devices_ignored(spf_ignored=True, spfrx_ignored=False)
 
@@ -91,10 +95,9 @@ class TestCommandMapIgnoringDevices:
             "Awaiting dishmode change to STANDBY_LP",
             "SetStandbyLPMode completed",
         ]
-        progress_string = "".join([str(event) for event in progress_calls])
 
-        for progress_update in expected_progress_updates:
-            assert progress_update in progress_string
+        for msg in expected_progress_updates:
+            self.progress_callback.wait_for_args((msg,))
 
         assert (
             "SPF device is disabled. "
@@ -106,11 +109,9 @@ class TestCommandMapIgnoringDevices:
         """Test ignoring SPFRx device in command map."""
         caplog.set_level(logging.DEBUG)
         task_abort_event = Event()
-        progress_calls = []
 
         def my_task_callback(**kwargs):
-            if kwargs.get("progress") is not None:
-                progress_calls.append(kwargs["progress"])
+            pass
 
         self.set_devices_ignored(spf_ignored=False, spfrx_ignored=True)
 
@@ -126,10 +127,9 @@ class TestCommandMapIgnoringDevices:
             "Awaiting dishmode change to STANDBY_LP",
             "SetStandbyLPMode completed",
         ]
-        progress_string = "".join([str(event) for event in progress_calls])
 
-        for progress_update in expected_progress_updates:
-            assert progress_update in progress_string
+        for msg in expected_progress_updates:
+            self.progress_callback.wait_for_args((msg,))
 
         assert (
             "SPFRX device is disabled. "
@@ -141,11 +141,10 @@ class TestCommandMapIgnoringDevices:
         """Test ignoring both subservient devices in command map."""
         caplog.set_level(logging.DEBUG)
         task_abort_event = Event()
-        progress_calls = []
 
-        def my_task_callback(**kwargs):
-            if kwargs.get("progress") is not None:
-                progress_calls.append(kwargs["progress"])
+        # pylint: disable=unused-argument
+        def my_task_callback(progress=None, status=None, result=None):
+            pass
 
         self.set_devices_ignored(spf_ignored=True, spfrx_ignored=True)
 
@@ -161,10 +160,9 @@ class TestCommandMapIgnoringDevices:
             "Awaiting dishmode change to STANDBY_LP",
             "SetStandbyLPMode completed",
         ]
-        progress_string = "".join([str(event) for event in progress_calls])
 
-        for progress_update in expected_progress_updates:
-            assert progress_update in progress_string
+        for msg in expected_progress_updates:
+            self.progress_callback.wait_for_args((msg,))
 
         assert (
             "SPF device is disabled. "

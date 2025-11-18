@@ -55,7 +55,7 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
 
     dish_mode_event_store = event_store_class()
     power_state_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -70,9 +70,9 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
 
     assert device_proxy.dishMode == DishMode.STANDBY_LP
@@ -116,9 +116,7 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
         "SetStandbyLPMode completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 
@@ -141,7 +139,7 @@ def test_standbylp_cmd_succeeds_from_maintenance_dish_mode(
 
     dish_mode_event_store = event_store_class()
     power_state_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -156,9 +154,9 @@ def test_standbylp_cmd_succeeds_from_maintenance_dish_mode(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
 
     assert device_proxy.dishMode == DishMode.STANDBY_LP
@@ -198,9 +196,7 @@ def test_standbylp_cmd_succeeds_from_maintenance_dish_mode(
         "SetStandbyLPMode completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 

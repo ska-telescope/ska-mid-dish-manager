@@ -2,7 +2,7 @@
 Abort on DishManager
 ====================
 
-DishManager implemented *AbortCommands* as part of its adaptation of the base classes long running command interface (LRC).
+DishManager implemented *Abort* as part of its adaptation of the base classes long running command interface (LRC).
 There is extensive `documentation`_ on the implementation details and usage LRC. For clients of DishLMC, cancelling a task
 (Stop for MeerKAT dish proxy and Abort for TMC) means more than just instructing the executor to cancel a LRC.
 

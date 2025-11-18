@@ -8,7 +8,7 @@ DishManager Models
    
    Command Map<command_map>
    Command Class<command_class>
-   Command Handlers<command_handlers>
+   Abort Sequence<abort_sequence_cmd_handler>
    Constants<constants>
    Data Classes<data_classes>
    DishMode Model<dish_mode_model>

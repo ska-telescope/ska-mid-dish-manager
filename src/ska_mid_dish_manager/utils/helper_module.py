@@ -19,3 +19,11 @@ def update_task_status(task_callback: Optional[Callable], **task_statuses) -> No
     """Wraps the task callback to report lrc statuses."""
     if task_callback:
         task_callback(**task_statuses)
+
+
+def report_task_progress(
+    progress_msg: str, command_progress_callback: Optional[Callable] = None
+) -> None:
+    """Wraps the command progress callback to update device status."""
+    if command_progress_callback:
+        command_progress_callback(progress_msg)

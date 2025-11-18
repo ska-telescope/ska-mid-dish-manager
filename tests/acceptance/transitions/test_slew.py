@@ -11,8 +11,7 @@ POINTING_TOLERANCE_DEG = 0.1
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
-def test_slew(event_store_class, dish_manager_proxy):
+def test_slew_transition(event_store_class, dish_manager_proxy):
     """Test transition to SLEW."""
     main_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()

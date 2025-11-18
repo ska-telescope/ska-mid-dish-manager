@@ -31,20 +31,20 @@ def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_ignoring_spf(
     monitor_tango_servers, toggle_ignore_spf, event_store_class, dish_manager_proxy
 ):
     """Test ignoring SPF device."""
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     main_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "configuredband": main_event_store,
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
+
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
@@ -62,9 +62,7 @@ def test_ignoring_spf(
         "SetStandbyFPMode completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 
@@ -77,18 +75,17 @@ def test_ignoring_spf(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_ignoring_spfrx(
     monitor_tango_servers, toggle_ignore_spfrx, event_store_class, dish_manager_proxy
 ):
     """Test ignoring SPFRX device."""
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -101,9 +98,7 @@ def test_ignoring_spfrx(
         "ConfigureBand2 completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 
@@ -116,18 +111,17 @@ def test_ignoring_spfrx(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_ignoring_all(
     monitor_tango_servers, toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy
 ):
     """Test ignoring both SPF and SPFRx devices."""
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -140,9 +134,7 @@ def test_ignoring_all(
         "SetStandbyLPMode completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 

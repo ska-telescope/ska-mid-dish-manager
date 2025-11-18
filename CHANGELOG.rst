@@ -7,6 +7,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated progress messages to be sent on `Status` attribute instead of `longRunningCommandProgress` attribute.
+- Updated PyTango to v10.0.3
+- Updated `ska-tango-base` to use latest version limited to minor releases (<2.0.0).
+- Removed forked mark on acceptance tests; limited forked tests to tests that use DeviceTestContext.
 
 Version 8.5.1
 *************
