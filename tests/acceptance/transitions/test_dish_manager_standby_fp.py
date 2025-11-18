@@ -10,20 +10,21 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test transition to Standby_FP."""
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
     attr_cb_mapping = {
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
         "dishmode": dish_mode_event_store,
+        "Status": status_event_store,
     }
+
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     dish_mode_event_store.clear_queue()
-    progress_event_store.clear_queue()
+    status_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
@@ -34,9 +35,7 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
         "SetStandbyFPMode completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 

@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated progress messages to be sent on `Status` attribute instead of `longRunningCommandProgress` attribute.
 
 Version 9.0.0
 *************

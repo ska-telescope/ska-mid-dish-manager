@@ -9,7 +9,7 @@ from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.command_actions import SetStandbyFPModeAction, TrackStopAction
 from ska_mid_dish_manager.models.dish_enums import DishMode
-from ska_mid_dish_manager.utils.helper_module import update_task_status
+from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
 
 
 class Abort:
@@ -19,6 +19,7 @@ class Abort:
         self.logger = logger
         self._component_manager = component_manager
         self._command_tracker = command_tracker
+        self._progress_callback = component_manager._command_progress_callback
 
     def __call__(self, triggered_from_invoked: bool) -> None:
         if not triggered_from_invoked:
@@ -112,18 +113,18 @@ class Abort:
 
         if task_abort_event.is_set():
             self.logger.debug("Abort sequence failed")
+            report_task_progress("Abort sequence failed", self._progress_callback)
             update_task_status(
                 task_callback,
                 status=TaskStatus.FAILED,
-                progress="Abort sequence failed",
                 result=(ResultCode.FAILED, "Abort sequence failed"),
             )
             return
 
+        report_task_progress("Abort sequence completed", self._progress_callback)
         update_task_status(
             task_callback,
             status=TaskStatus.COMPLETED,
-            progress="Abort sequence completed",
             result=(ResultCode.OK, "Abort sequence completed"),
         )
         self.logger.debug("Abort sequence completed")

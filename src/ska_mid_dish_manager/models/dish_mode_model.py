@@ -8,6 +8,7 @@ from typing import Any, Callable
 import networkx as nx
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.utils.action_helpers import report_task_progress
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -84,7 +85,7 @@ class DishModeModel:
         cmd_name: str,
         dish_mode: str | None = None,
         component_manager: Any | None = None,
-        task_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
     ) -> bool:
         """Determine if requested tango command is allowed based on current dish mode.
 
@@ -100,7 +101,7 @@ class DishModeModel:
         :param cmd_name: the requested command
         :param dish_mode: the current dishMode reported by the component state
         :param component_manager: the component manager containing the component state
-        :param task_callback: callback to update the command info
+        :param progress_callback: progress_callback function to report progress
 
         :raises TypeError: when no dish_mode or component_manager is provided to function call
 
@@ -139,7 +140,6 @@ class DishModeModel:
             logger = component_manager.logger
             logger.debug(msg)
 
-        if task_callback:
-            task_callback(progress=msg)  # status and result are handled in executor
+        report_task_progress(msg, progress_callback)
 
         return False

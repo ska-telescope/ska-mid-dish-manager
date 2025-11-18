@@ -32,10 +32,6 @@ def test_set_standbyfp_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": "Awaiting DS operatingmode change to STANDBY"},
-        {"progress": "Awaiting DS powerstate change to FULL_POWER"},
-        {"progress": "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode"},
-        {"progress": "Awaiting dishmode change to STANDBY_FP"},
     )
 
     # check that the initial lrc updates come through
@@ -43,6 +39,17 @@ def test_set_standbyfp_handler(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    progress_cb = callbacks["progress_cb"]
+    expected_progress_updates = [
+        "Awaiting DS operatingmode change to STANDBY",
+        "Awaiting DS powerstate change to FULL_POWER",
+        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
+        "Awaiting dishmode change to STANDBY_FP",
+    ]
+    progress_updates = progress_cb.get_args_queue()
+    for msg in expected_progress_updates:
+        assert (msg,) in progress_updates
 
     # check that the component state reports the requested command
     component_manager.sub_component_managers["DS"]._update_component_state(
@@ -55,7 +62,7 @@ def test_set_standbyfp_handler(
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="SetStandbyFPMode completed",
         status=TaskStatus.COMPLETED,
         result=(ResultCode.OK, "SetStandbyFPMode completed"),
     )
+    progress_cb.wait_for_args(("SetStandbyFPMode completed",))

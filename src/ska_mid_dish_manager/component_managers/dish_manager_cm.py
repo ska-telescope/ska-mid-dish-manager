@@ -61,8 +61,8 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
+from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
 from ska_mid_dish_manager.utils.decorators import check_communicating
-from ska_mid_dish_manager.utils.helper_module import update_task_status
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 from ska_mid_dish_manager.utils.tango_helpers import TangoDbAccessor
@@ -89,6 +89,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         *args,
         wms_device_names: Optional[List[str]] = None,
         wind_stow_callback: Optional[Callable] = None,
+        command_progress_callback: Optional[Callable] = None,
         **kwargs,
     ):
         # pylint: disable=useless-super-delegation
@@ -169,6 +170,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._build_state_callback = build_state_callback
         self._quality_state_callback = quality_state_callback
         self._wind_stow_callback = wind_stow_callback
+        self._command_progress_callback = command_progress_callback
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
@@ -982,7 +984,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             "SetStandbyLPMode",
             component_manager=self,
-            task_callback=task_callback,
+            progress_callback=self._command_progress_callback,
         )
         status, response = self.submit_task(
             SetStandbyLPModeAction(self.logger, self, self.get_action_timeout()).execute,
@@ -1000,7 +1002,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             "SetStandbyFPMode",
             component_manager=self,
-            task_callback=task_callback,
+            progress_callback=self._command_progress_callback,
         )
         status, response = self.submit_task(
             SetStandbyFPModeAction(self.logger, self, self.get_action_timeout()).execute,
@@ -1018,7 +1020,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             "SetMaintenanceMode",
             component_manager=self,
-            task_callback=task_callback,
+            progress_callback=self._command_progress_callback,
         )
 
         status, response = self.submit_task(
@@ -1059,18 +1061,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         def _is_track_cmd_allowed():
             if self.component_state["dishmode"] != DishMode.OPERATE:
-                update_task_status(
-                    task_callback,
-                    progress="Track command rejected for current dishMode. "
-                    "Track command is allowed for dishMode OPERATE",
+                msg = (
+                    "Track command rejected for current dishMode. "
+                    "Track command is allowed for dishMode OPERATE"
                 )
+                report_task_progress(msg, self._command_progress_callback)
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
-                update_task_status(
-                    task_callback,
-                    progress="Track command rejected for current pointingState. "
-                    "Track command is allowed for pointingState READY",
+                msg = (
+                    "Track command rejected for current pointingState. "
+                    "Track command is allowed for pointingState READY"
                 )
+                report_task_progress(msg, self._command_progress_callback)
                 return False
             return True
 
@@ -1127,7 +1129,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._dish_mode_model.is_command_allowed,
             req_cmd,
             component_manager=self,
-            task_callback=task_callback,
+            progress_callback=self._command_progress_callback,
         )
 
         status, response = self.submit_task(
@@ -1176,10 +1178,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             update_task_status(task_callback, status=TaskStatus.FAILED, exception=msg)
             return TaskStatus.FAILED, msg
 
+        report_task_progress(
+            "Stow called, monitor dishmode for LRC completed", self._command_progress_callback
+        )
         update_task_status(
             task_callback,
             status=TaskStatus.COMPLETED,
-            progress="Stow called, monitor dishmode for LRC completed",
         )
         # abort queued and running tasks on the task executor
         self.abort_tasks()
@@ -1213,18 +1217,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         def _is_slew_cmd_allowed():
             if self.component_state["dishmode"] != DishMode.OPERATE:
-                update_task_status(
-                    task_callback,
-                    progress="Slew command rejected for current dishMode. "
-                    "Slew command is allowed for dishMode OPERATE",
+                msg = (
+                    "Slew command rejected for current dishMode. "
+                    "Slew command is allowed for dishMode OPERATE"
                 )
+                report_task_progress(msg, self._command_progress_callback)
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
-                update_task_status(
-                    task_callback,
-                    progress="Slew command rejected for current pointingState. "
-                    "Slew command is allowed for pointingState READY",
+                msg = (
+                    "Slew command rejected for current pointingState. "
+                    "Slew command is allowed for pointingState READY"
                 )
+                report_task_progress(msg, self._command_progress_callback)
                 return False
             return True
 
@@ -1250,13 +1254,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self, scanid: str, task_abort_event=None, task_callback: Optional[Callable] = None
     ) -> None:
         """Scan a target."""
-        update_task_status(task_callback, progress="Setting scanID", status=TaskStatus.IN_PROGRESS)
+        report_task_progress("Setting scanID", self._command_progress_callback)
+        update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
         self._update_component_state(scanid=scanid)
+        report_task_progress("Scan completed", self._command_progress_callback)
         update_task_status(
-            task_callback,
-            progress="Scan completed",
-            status=TaskStatus.COMPLETED,
-            result=(ResultCode.OK, "Scan completed"),
+            task_callback, status=TaskStatus.COMPLETED, result=(ResultCode.OK, "Scan completed")
         )
 
     def end_scan(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
@@ -1266,15 +1269,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _end_scan(self, task_abort_event=None, task_callback: Optional[Callable] = None) -> None:
         """Clear the scanid."""
-        update_task_status(
-            task_callback, progress="Clearing scanID", status=TaskStatus.IN_PROGRESS
-        )
+        report_task_progress("Clearing scanID", self._command_progress_callback)
+        update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
         self._update_component_state(scanid="")
+        report_task_progress("EndScan completed", self._command_progress_callback)
         update_task_status(
-            task_callback,
-            progress="EndScan completed",
-            status=TaskStatus.COMPLETED,
-            result=(ResultCode.OK, "EndScan completed"),
+            task_callback, status=TaskStatus.COMPLETED, result=(ResultCode.OK, "EndScan completed")
         )
 
     @check_communicating

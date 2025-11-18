@@ -25,12 +25,8 @@ def test_end_scan_handler(
 
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
+        {"status": TaskStatus.IN_PROGRESS},
         {
-            "progress": "Clearing scanID",
-            "status": TaskStatus.IN_PROGRESS,
-        },
-        {
-            "progress": "EndScan completed",
             "status": TaskStatus.COMPLETED,
             "result": (ResultCode.OK, "EndScan completed"),
         },
@@ -42,5 +38,8 @@ def test_end_scan_handler(
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
 
+    progress_cb = callbacks["progress_cb"]
+    progress_cb.wait_for_args(("Clearing scanID",))
+    progress_cb.wait_for_args(("EndScan completed",))
     # check that the scan id is cleared
     assert component_manager.component_state["scanid"] == ""

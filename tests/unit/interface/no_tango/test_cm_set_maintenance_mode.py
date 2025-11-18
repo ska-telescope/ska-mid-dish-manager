@@ -39,19 +39,7 @@ def test_set_maintenance_mode_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": "Awaiting DS operatingmode change to STOW"},
-        {"progress": "Awaiting SPFRX operatingmode change to STANDBY"},
-        {"progress": "Awaiting SPF operatingmode change to MAINTENANCE"},
-        {"progress": "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode"},
-        {"progress": "Awaiting dishmode change to STOW"},
-        {"progress": "SPFRX operatingmode changed to STANDBY"},
-        {"progress": "SPFRX.SetStandbyMode completed"},
-        {"progress": "DS operatingmode changed to STOW"},
-        {"progress": "DS.Stow completed"},
-        {"progress": "SPF operatingmode changed to MAINTENANCE"},
-        {"progress": "SPF.SetMaintenanceMode completed"},
         {
-            "progress": "SetMaintenanceMode completed",
             "status": TaskStatus.COMPLETED,
             "result": (ResultCode.OK, "SetMaintenanceMode completed"),
         },
@@ -81,3 +69,20 @@ def test_set_maintenance_mode_handler(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    msgs = [
+        "Awaiting DS operatingmode change to STOW",
+        "Awaiting SPFRX operatingmode change to STANDBY",
+        "Awaiting SPF operatingmode change to MAINTENANCE",
+        "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode",
+        "Awaiting dishmode change to STOW",
+        "SPFRX operatingmode changed to STANDBY",
+        "SPFRX.SetStandbyMode completed",
+        "DS operatingmode changed to STOW",
+        "DS.Stow completed",
+        "SPF operatingmode changed to MAINTENANCE",
+        "SPF.SetMaintenanceMode completed",
+    ]
+    progress_cb = callbacks["progress_cb"]
+    for msg in msgs:
+        progress_cb.wait_for_args((msg,))

@@ -14,10 +14,10 @@ def test_stow_transition(
 ):
     """Test transition to STOW."""
     main_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
-        "longRunningCommandProgress": progress_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -28,7 +28,7 @@ def test_stow_transition(
     main_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
 
     expected_progress_update = "Stow called, monitor dishmode for LRC completed"
-    events = progress_event_store.wait_for_progress_update(expected_progress_update)
+    events = status_event_store.wait_for_progress_update(expected_progress_update)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
     for message in expected_progress_update:
