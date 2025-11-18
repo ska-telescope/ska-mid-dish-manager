@@ -2,17 +2,31 @@
 
 import functools
 import logging
-import warnings
 from typing import Any, Optional
 
 from ska_control_model import ResultCode, TaskStatus
-from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
+from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
 
 
-class AbortCommand(SubmittedSlowCommand):
+class AbortCommand(SlowCommand):
     """A custom class for Abort Command."""
 
-    def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+    def __init__(
+        self, command_tracker, component_manager, callback, logger: logging.Logger | None = None
+    ) -> None:
+        """Initialise a new AbortCommand instance.
+
+        :param command_tracker: the device's command tracker
+        :param component_manager: the device's component manager
+        :param callback: callback to be called when this command
+            starts and finishes
+        :param logger: a logger for this command object to use
+        """
+        self._command_tracker = command_tracker
+        self._component_manager = component_manager
+        super().__init__(callback=callback, logger=logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
         """Stateless hook for command functionality.
 
         :param args: positional args to the component manager method
@@ -23,53 +37,9 @@ class AbortCommand(SubmittedSlowCommand):
             the command has been accepted) or an informational message
             (if the command was rejected)
         """
-        command_id = self._command_tracker.new_command(
-            self._command_name, completed_callback=self._completed
-        )
-        method = getattr(self._component_manager, self._method_name)
-        status, message = method(
-            *args,
+        command_id = self._command_tracker.new_command("Abort", completed_callback=self._completed)
+        status, message = self._component_manager.abort(
             functools.partial(self._command_tracker.update_command_info, command_id),
-            **kwargs,
-        )
-
-        if status == TaskStatus.IN_PROGRESS:
-            return ResultCode.STARTED, command_id
-        if status == TaskStatus.REJECTED:
-            return ResultCode.REJECTED, command_id
-        return (
-            ResultCode.FAILED,
-            f"{status.name} was returned by command method with message: {message}",
-        )
-
-
-class AbortCommandsDeprecatedCommand(SubmittedSlowCommand):
-    """A custom class for AbortCommands Command."""
-
-    def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """Stateless hook for command functionality.
-
-        :param args: positional args to the component manager method
-        :param kwargs: keyword args to the component manager method
-
-        :return: A tuple containing the result code (e.g. STARTED)
-            and a string message containing a command_id (if
-            the command has been accepted) or an informational message
-            (if the command was rejected)
-        """
-        warnings.warn(
-            "AbortCommands is deprecated, use Abort instead. "
-            "Issuing Abort sequence for requested command.",
-            DeprecationWarning,
-        )
-        command_id = self._command_tracker.new_command(
-            self._command_name, completed_callback=self._completed
-        )
-        method = getattr(self._component_manager, self._method_name)
-        status, message = method(
-            *args,
-            functools.partial(self._command_tracker.update_command_info, command_id),
-            **kwargs,
         )
 
         if status == TaskStatus.IN_PROGRESS:

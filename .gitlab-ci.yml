@@ -57,6 +57,10 @@ k8s-test-runner:
     - make k8s-install-chart
     - make k8s-wait
 
+python-test-forked:
+  extends: python-test
+  script:
+    - make python-test-forked;
 
 #mypy job
 mypy:
@@ -70,7 +74,6 @@ mypy:
       src/ska_mid_dish_manager/models/dish_mode_model.py
       src/ska_mid_dish_manager/models/dish_state_transition.py
   allow_failure: true
-
 
 # create a job to run multiple k8s-test-runs
 k8s-test-runner-parallel:
