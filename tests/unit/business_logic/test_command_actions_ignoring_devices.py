@@ -52,8 +52,8 @@ class TestCommandActionsIgnoringDevices:
         )
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
 
-        progress_callback = MethodCallsStore()
-        self.dish_manager_cm_mock._command_progress_callback = progress_callback
+        self.progress_callback = MethodCallsStore()
+        self.dish_manager_cm_mock._command_progress_callback = self.progress_callback
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
 
         def is_device_ignored(device: str):
@@ -101,7 +101,7 @@ class TestCommandActionsIgnoringDevices:
         ]
 
         for msg in expected_progress_updates:
-            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
+            self.progress_callback.wait_for_args((msg,))
 
         assert "SPF device is disabled. SetStandbyLPMode call ignored" in caplog.text
 
@@ -127,7 +127,7 @@ class TestCommandActionsIgnoringDevices:
         ]
 
         for msg in expected_progress_updates:
-            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
+            self.progress_callback.wait_for_args((msg,))
 
         assert "SPFRX device is disabled. SetStandbyMode call ignored" in caplog.text
 
@@ -154,7 +154,7 @@ class TestCommandActionsIgnoringDevices:
         ]
 
         for msg in expected_progress_updates:
-            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
+            self.progress_callback.wait_for_args((msg,))
 
         assert "SPF device is disabled. SetStandbyLPMode call ignored" in caplog.text
         assert "SPFRX device is disabled. SetStandbyMode call ignored" in caplog.text

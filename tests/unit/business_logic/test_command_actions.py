@@ -171,7 +171,7 @@ class TestCommandActions:
             "SetStandbyLPMode failed some failure message",
         ]
         for msg in expected_progress_updates:
-            self.dish_manager_cm_mock._command_progress_callback.wait_for_args((msg,))
+            self.progress_callback.wait_for_args((msg,))
 
     @pytest.mark.unit
     def test_configure_band_sequence_from_fp(self):
