@@ -142,7 +142,7 @@ description = "Astronomy and astrophysics core library"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-markers = "python_version >= \"3.11\""
+markers = "python_version != \"3.10\""
 files = [
     {file = "astropy-7.1.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:8e2bc5cb91dc319bcf65ee08c68abea617c52b5d042d245542a4853b07269233"},
     {file = "astropy-7.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:fba97e3d99ad48540b6eb7c6f7849e57dd6aaf9d9d48707b227bf39ac77c6368"},
@@ -2629,14 +2629,14 @@ reference = "ska-nexus"
 
 [[package]]
 name = "ska-tango-base"
-version = "1.3.2"
+version = "1.4.0rc1"
 description = "SKA Tango base classes"
 optional = false
-python-versions = ">=3.10,<4.0"
+python-versions = ">=3.10.0,<4.0.0"
 groups = ["main"]
 files = [
-    {file = "ska_tango_base-1.3.2-py3-none-any.whl", hash = "sha256:7318d9460eaee24863b77e68c965b44428a32be51bf2595316c5e9230bf616ea"},
-    {file = "ska_tango_base-1.3.2.tar.gz", hash = "sha256:2d23369c3ae737bff66839c1d7a8d6f4691e0064a5296ef4b48983b9082e11e8"},
+    {file = "ska_tango_base-1.4.0rc1-py3-none-any.whl", hash = "sha256:38ce3b3149969b460f344a2204f69ee50cb8d6ada65aa63d1c90a291e6521e66"},
+    {file = "ska_tango_base-1.4.0rc1.tar.gz", hash = "sha256:4fbd40793f9081e2916ec101699a4a4e1d3051994767bf26b952dabce6bfbcc6"},
 ]
 
 [package.dependencies]
@@ -2645,7 +2645,7 @@ jsonschema = ">=4.17.3,<5.0.0"
 numpy = [
     {version = ">=1.21.6", markers = "python_version == \"3.10\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
+    {version = ">=1.26.0", markers = "python_version != \"3.10\" and python_version != \"3.11\""},
 ]
 pytango = ">=9.4.2,<11.0.0"
 ska-control-model = ">=1.0.0,<2.0.0"
@@ -3325,4 +3325,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "94da7641ac5d2eed6b517d911c37471519e80cd9ab9c150eeddd3e4f6b41bc8c"
+content-hash = "9eab3925d25ac9607b1eebb997558759bba60df2d4d4fc86b48cc6c340906a1a"
