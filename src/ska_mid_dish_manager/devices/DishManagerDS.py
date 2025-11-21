@@ -421,10 +421,6 @@ class DishManager(SKAController):
                 "versionId",
                 "loggingLevel",
                 "loggingTargets",
-                "elementLoggerAddress",
-                "elementAlarmAddress",
-                "elementTelStateAddress",
-                "elementDatabaseAddress",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
