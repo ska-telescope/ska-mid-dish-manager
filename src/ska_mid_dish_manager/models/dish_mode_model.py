@@ -8,7 +8,7 @@ from typing import Any, Callable
 import networkx as nx
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
-from ska_mid_dish_manager.utils.action_helpers import report_task_progress
+from ska_mid_dish_manager.utils.helper_module import report_task_progress
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",

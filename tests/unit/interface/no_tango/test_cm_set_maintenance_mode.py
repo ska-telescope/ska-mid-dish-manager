@@ -81,17 +81,10 @@ def test_set_maintenance_mode_handler(
         assert kwargs == expected_call_kwargs[count]
 
     msgs = [
-        "Awaiting DS operatingmode change to STOW",
-        "Awaiting SPFRX operatingmode change to STANDBY",
         "Awaiting SPF operatingmode change to MAINTENANCE",
-        "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode",
-        "Awaiting dishmode change to STOW",
-        "SPFRX operatingmode changed to STANDBY",
-        "SPFRX.SetStandbyMode completed",
-        "DS operatingmode changed to STOW",
-        "DS.Stow completed",
-        "SPF operatingmode changed to MAINTENANCE",
-        "SPF.SetMaintenanceMode completed",
+        "Awaiting DS operatingmode change to STOW",
+        "Fanned out commands: SPF.SetMaintenanceMode, DS.Stow",
+        "Awaiting dishmode change to MAINTENANCE",
     ]
     progress_cb = callbacks["progress_cb"]
     for msg in msgs:

@@ -52,7 +52,6 @@ from ska_mid_dish_manager.utils.decorators import check_communicating
 from ska_mid_dish_manager.utils.helper_module import report_task_progress, update_task_status
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
-from ska_mid_dish_manager.utils.tango_helpers import TangoDbAccessor
 
 
 class DishManagerComponentManager(TaskExecutorComponentManager):
@@ -80,7 +79,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ):
         # pylint: disable=useless-super-delegation
         self.tango_device_name = tango_device_name
-        self._tango_db_accessor = TangoDbAccessor(logger, tango_device_name)
         default_watchdog_timeout = kwargs.pop("default_watchdog_timeout", 0.0)
         default_mean_wind_speed_threshold = kwargs.pop(
             "default_mean_wind_speed_threshold", MEAN_WIND_SPEED_THRESHOLD_MPS
@@ -144,7 +142,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
             **kwargs,
         )
-        self.logger = logger
         self._build_state_callback = build_state_callback
         self._quality_state_callback = quality_state_callback
         self._wind_stow_callback = wind_stow_callback
@@ -1074,30 +1071,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback=task_callback,
         )
         return status, response
-
-    def handle_exit_maintenance_mode_transition(self) -> None:
-        """Handles state transition from maintenance mode.
-
-        This will set the MaintenanceModeActive property to false and
-        recompute the dish mode.
-        """
-        if self.component_state["dishmode"] != DishMode.MAINTENANCE:
-            return
-
-        self.logger.debug("Exiting maintenance mode.")
-        # Set the MaintenanceModeActive property to false
-        self._set_maintenance_mode_inactive()
-        # Recompute the dish mode
-        ds_component_state = self.sub_component_managers["DS"].component_state
-        spf_component_state = self.sub_component_managers["SPF"].component_state
-        spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
-        new_dish_mode = self._state_transition.compute_dish_mode(
-            ds_component_state,
-            spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-            spf_component_state if not self.is_device_ignored("SPF") else None,
-        )
-        self.logger.debug("Updating dish manager dishmode to %s.", new_dish_mode)
-        self._update_component_state(dishmode=new_dish_mode)
 
     def set_stow_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode."""
