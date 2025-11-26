@@ -2886,8 +2886,8 @@ telemetry = ["opentelemetry-exporter-otlp (>=1.29.0)", "opentelemetry-sdk (>=1.2
 [package.source]
 type = "git"
 url = "https://gitlab.com/ska-telescope/ska-tango-base.git"
-reference = "main"
-resolved_reference = "a8c7d7e3caee32460b30ba9989acb42728a5fd66"
+reference = "wom-977-update-user-dicts-immediately"
+resolved_reference = "fb40634073edafc9d4fceb2930f537449086e99a"
 
 [[package]]
 name = "ska-tango-testing"
@@ -3566,4 +3566,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "b3d033fe8649475562d32d7b6a43717cfa0e5582f342a8e62ff94b2d763d458a"
+content-hash = "e461ab9dd8ce1bdd02b4810b967f46934eb694648c097e45553215e4889ae175"

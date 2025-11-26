@@ -30,7 +30,7 @@ pytango = "10.0.3"
 numpy = "<2.0.0"
 ska-control-model = ">=1.0.0"
 ska-ser-logging = ">=0.4.1"
-ska-tango-base = { git = "https://gitlab.com/ska-telescope/ska-tango-base.git", branch = "main" }
+ska-tango-base = { git = "https://gitlab.com/ska-telescope/ska-tango-base.git", branch = "wom-977-update-user-dicts-immediately" }
 networkx = "2.6.3"
 rule-engine = "3.5.0"
 astropy = ">=6.0.1"
