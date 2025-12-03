@@ -180,6 +180,39 @@ def test_track_and_track_stop_cmds(
 
 
 @pytest.mark.acceptance
+def test_timing_track_load_table(
+    dish_manager_proxy,
+    ds_device_proxy,
+):
+    """Test timing of Track table load."""
+    # Load a track table
+    current_pointing = dish_manager_proxy.achievedPointing
+    current_az = current_pointing[1]
+    current_el = current_pointing[2]
+
+    current_time_tai_s = ds_device_proxy.GetCurrentTAIOffset()
+    lead_time_s = 20
+    max_table_size = 50
+    track_table = []
+    sample_time_s = 1
+    for i in range(max_table_size):
+        table = [
+            current_time_tai_s + lead_time_s + i * sample_time_s,
+            current_az,
+            current_el,
+        ]
+        track_table.extend(table)
+
+    dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
+
+    start_time = time.perf_counter()
+    dish_manager_proxy.programTrackTable = track_table
+    end_time = time.perf_counter()
+    load_duration_s = end_time - start_time
+    assert load_duration_s < 0.5, f"Track table load took too long: {load_duration_s} s"
+
+
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_append_dvs_case(
     slew_dish_to_init,

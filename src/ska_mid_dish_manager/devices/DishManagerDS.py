@@ -58,10 +58,6 @@ from ska_mid_dish_manager.utils.decorators import (
     requires_component_manager,
 )
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
-from ska_mid_dish_manager.utils.track_table_input_validation import (
-    TrackLoadTableFormatting,
-    TrackTableTimestampError,
-)
 
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 
@@ -1085,17 +1081,6 @@ class DishManager(SKAController):
         # Spectrum that is a multiple of 3 values:
         # - (timestamp, azimuth coordinate, elevation coordinate)
         # i.e. [tai_0, az_pos_0, el_pos_0, ..., tai_n, az_pos_n, el_pos_n]
-
-        # perform input validation on table
-        try:
-            TrackLoadTableFormatting().check_track_table_input_valid(
-                table,
-                TRACK_LOAD_FUTURE_THRESHOLD_SEC,
-            )
-        except TrackTableTimestampError as te:
-            self.logger.warning("Track table timestamp warning: %s", te)
-        except ValueError as ve:
-            raise ve
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
