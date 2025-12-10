@@ -31,17 +31,17 @@ def test_change(qual_before, qual_after, event_store_class, dish_manager_resourc
     device_proxy, dish_manager_cm = dish_manager_resources
     event_store = event_store_class()
     device_proxy.subscribe_event(
-        "attenuation1PolV/Y",
+        "attenuation1PolVY",
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
 
     dish_manager_cm._quality_state_callback(
-        "attenuation1polv/y", qual_before, TEST_ATTENUATION_VALUE
+        "attenuation1polvy", qual_before, TEST_ATTENUATION_VALUE
     )
     event_store.wait_for_quality(qual_before)
     dish_manager_cm._quality_state_callback(
-        "attenuation1polv/y", qual_after, TEST_ATTENUATION_VALUE
+        "attenuation1polvy", qual_after, TEST_ATTENUATION_VALUE
     )
     event_store.wait_for_quality(qual_after)
 
@@ -54,20 +54,20 @@ def test_event_handling(event_store_class, dish_manager_resources):
 
     event_store = event_store_class()
     device_proxy.subscribe_event(
-        "attenuation1PolV/Y",
+        "attenuation1PolVY",
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
 
     valid_event = MagicMock()
     valid_event.attr_value = MagicMock()
-    valid_event.attr_value.name = "attenuation1PolV/Y"
+    valid_event.attr_value.name = "attenuation1PolVY"
     valid_event.attr_value.quality = AttrQuality.ATTR_VALID
     valid_event.attr_value.value = 1000
 
     invalid_event = MagicMock()
     invalid_event.attr_value = MagicMock()
-    invalid_event.attr_value.name = "attenuation1PolV/Y"
+    invalid_event.attr_value.name = "attenuation1PolVY"
     invalid_event.attr_value.quality = AttrQuality.ATTR_INVALID
     invalid_event.attr_value.value = None
 
