@@ -104,14 +104,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "default_wind_gust_threshold", WIND_GUST_THRESHOLD_MPS
         )
 
-        for key in [
-            "attenuation1polh/x",
-            "attenuation1polv/y",
-            "attenuation2polh/x",
-            "attenuation2polv/y",
-        ]:
-            kwargs[key] = 0.0
-            
         default_dish_mode = DishMode.UNKNOWN
         # Check tangodb whether maintenance mode is active
         if self._is_maintenance_mode_active():
@@ -161,6 +153,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             achievedpointing=[0.0, 0.0, 0.0],
             dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
             powerstate=PowerState.LOW,
+            attenuation1polhx=0.0,
+            attenuation1polvy=0.0,
+            attenuation2polhx=0.0,
+            attenuation2polvy=0.0,
+            attenuationpolhx=0.0,
+            attenuationpolvy=0.0,
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
@@ -192,39 +190,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._wind_limits = {
             "WindGustThreshold": default_wind_gust_threshold,
             "MeanWindSpeedThreshold": default_mean_wind_speed_threshold,
-        }
-
-        # The declaration of the kwargs for SPFRx are defined separately to
-        # allow for the attenuation attrs to be added to the kwargs list given
-        # their names contain a "/"
-        spfrx_kwargs = {
-            "operatingmode": SPFRxOperatingMode.UNKNOWN,
-            "configuredband": Band.NONE,
-            "capturingdata": False,
-            "attenuation1polh/x": 0.0,
-            "attenuation1polv/y": 0.0,
-            "attenuation2polh/x": 0.0,
-            "attenuation2polv/y": 0.0,
-            "kvalue": 0,
-            "b1capabilitystate": SPFRxCapabilityStates.UNKNOWN,
-            "b2capabilitystate": SPFRxCapabilityStates.UNKNOWN,
-            "b3capabilitystate": SPFRxCapabilityStates.UNKNOWN,
-            "b4capabilitystate": SPFRxCapabilityStates.UNKNOWN,
-            "b5acapabilitystate": SPFRxCapabilityStates.UNKNOWN,
-            "b5bcapabilitystate": SPFRxCapabilityStates.UNKNOWN,
-            "noisediodemode": NoiseDiodeMode.OFF,
-            "periodicnoisediodepars": [0, 0, 0],
-            "pseudorandomnoisediodepars": [0, 0, 0],
-            "isklocked": False,
-            "spectralinversion": False,
-            "adminmode": AdminMode.OFFLINE,
-            "communication_state_callback": partial(
-                self._sub_device_communication_state_changed, DishDevice.SPFRX
-            ),
-            "component_state_callback": partial(
-                self._sub_device_component_state_changed, DishDevice.SPFRX
-            ),
-            "quality_state_callback": self._quality_state_callback,
         }
 
         # SPF has to go first
@@ -292,7 +257,34 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_device_fqdn,
                 logger,
                 self._state_update_lock,
-                **spfrx_kwargs,
+                operatingmode=SPFRxOperatingMode.UNKNOWN,
+                configuredband=Band.NONE,
+                capturingdata=False,
+                healthstate=HealthState.UNKNOWN,
+                attenuationpolhx=0.0,
+                attenuationpolvy=0.0,
+                attenuation1polhx=0.0,
+                attenuation1polvy=0.0,
+                attenuation2polhx=0.0,
+                attenuation2polvy=0.0,
+                kvalue=0,
+                b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b3capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b4capabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b5acapabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                b5bcapabilitystate=SPFRxCapabilityStates.UNKNOWN,
+                noisediodemode=NoiseDiodeMode.OFF,
+                periodicnoisediodepars=[0, 0, 0],
+                pseudorandomnoisediodepars=[0, 0, 0],
+                adminmode=AdminMode.OFFLINE,
+                communication_state_callback=partial(
+                    self._sub_device_communication_state_changed, DishDevice.SPFRX
+                ),
+                component_state_callback=partial(
+                    self._sub_device_component_state_changed, DishDevice.SPFRX
+                ),
+                quality_state_callback=self._quality_state_callback,
             ),
             "WMS": WMSComponentManager(
                 list(wms_device_names or []),
@@ -327,6 +319,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "pseudoRandomNoiseDiodePars",
                 "isKLocked",
                 "spectralInversion",
+                "attenuation1PolHX",
+                "attenuation1PolVY",
+                "attenuation2PolHX",
+                "attenuation2PolVY",
+                "attenuationPolHX",
+                "attenuationPolVY",
             ],
         }
 
@@ -750,29 +748,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 pass
             else:
                 spf_component_state["bandinfocus"] = band_in_focus
-
-        # spfrx attenuation
-        if (
-            "attenuation1polh/x" in kwargs
-            or "attenuation1polv/y" in kwargs
-            or "attenuation2polh/x" in kwargs
-            or "attenuation2polv/y" in kwargs
-        ):
-            attenuation = {
-                "attenuation1polh/x": spfrx_component_state["attenuation1polh/x"],
-                "attenuation1polv/y": spfrx_component_state["attenuation1polv/y"],
-                "attenuation2polh/x": spfrx_component_state["attenuation2polh/x"],
-                "attenuation2polv/y": spfrx_component_state["attenuation2polv/y"],
-            }
-            self.logger.debug(
-                (
-                    "Updating dish manager attenuation1PolH/X, attenuation1PolV/Y,"
-                    " attenuation2PolH/X and attenuation2PolV/Y"
-                    " with: SPFRX attenuation [%s]"
-                ),
-                attenuation,
-            )
-            self._update_component_state(**attenuation)
 
         # kvalue
         if "kvalue" in kwargs:

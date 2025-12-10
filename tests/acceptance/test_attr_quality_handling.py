@@ -1,6 +1,7 @@
 """Test dish manager handles and publishes change events on attribute quality update."""
 
 import itertools
+
 import pytest
 from tango import AttrQuality
 
@@ -31,10 +32,10 @@ def test_transitions(dish_manager_proxy, spfrx_device_proxy, qual_before, qual_a
     dm_event_store = EventStore()
     spfrx_event_store = EventStore()
     spfrx_subsciptions = setup_subscriptions(
-        spfrx_device_proxy, {"attenuation1PolV/Y": spfrx_event_store}
+        spfrx_device_proxy, {"attenuation1PolVY": spfrx_event_store}
     )
     dm_subscriptions = setup_subscriptions(
-        dish_manager_proxy, {"attenuation1PolV/Y": dm_event_store}
+        dish_manager_proxy, {"attenuation1PolVY": dm_event_store}
     )
 
     # Setting up subscriptions to the attrs forces them to be VALID,

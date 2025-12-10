@@ -381,10 +381,12 @@ class DishManager(SKAController):
                 "band4pointingmodelparams": "band4PointingModelParams",
                 "band5apointingmodelparams": "band5aPointingModelParams",
                 "band5bpointingmodelparams": "band5bPointingModelParams",
-                "attenuation1polh/x": "attenuation1PolH/X",
-                "attenuation1polv/y": "attenuation1PolV/Y",
-                "attenuation2polh/x": "attenuation2PolH/X",
-                "attenuation2polv/y": "attenuation2PolV/Y",
+                "attenuation1polhx": "attenuation1PolHX",
+                "attenuation1polvy": "attenuation1PolVY",
+                "attenuation2polhx": "attenuation2PolHX",
+                "attenuation2polvy": "attenuation2PolVY",
+                "attenuationpolhx": "attenuationPolHX",
+                "attenuationpolvy": "attenuationPolVY",
                 "kvalue": "kValue",
                 "trackinterpolationmode": "trackInterpolationMode",
                 "scanid": "scanID",
@@ -592,22 +594,65 @@ class DishManager(SKAController):
         """Index of last point in the track table."""
         return self.component_manager.component_state.get("tracktableendindex", 0)
 
-    # Band agnostic attenuation attributes getter methods
-    def get_attenuation_1_pol_h_x(self):
+    @attribute(
+        dtype=float,
+        doc="""The current attenuation value for attenuator 1 on the
+        H/X polarization.""",
+        access=AttrWriteType.READ,
+    )
+    def attenuation1PolHX(self):
         """Get the attenuation Pol H/X for attenuator 1."""
-        return self.component_manager.component_state.get("attenuation1polh/x", 0.0)
+        return self.component_manager.component_state.get("attenuation1polhx", 0.0)
 
-    def get_attenuation_1_pol_v_y(self):
+    @attribute(
+        dtype=float,
+        doc="""The current attenuation value for attenuator 1 on the
+        V/Y polarization.""",
+        access=AttrWriteType.READ,
+    )
+    def attenuation1PolVY(self):
         """Get the attenuation Pol V/Y for attenuator 1."""
-        return self.component_manager.component_state.get("attenuation1polv/y", 0.0)
+        return self.component_manager.component_state.get("attenuation1polvy", 0.0)
 
-    def get_attenuation_2_pol_h_x(self):
+    @attribute(
+        dtype=float,
+        doc="""The current attenuation value for attenuator 2 on the
+        H/X polarization.""",
+        access=AttrWriteType.READ,
+    )
+    def attenuation2PolHX(self):
         """Get the attenuation Pol H/X for attenuator 2."""
-        return self.component_manager.component_state.get("attenuation2polh/x", 0.0)
+        return self.component_manager.component_state.get("attenuation2polhx", 0.0)
 
-    def get_attenuation_2_pol_v_y(self):
-        """Get the attenuation Pol V/Y for attenuator 2."""
-        return self.component_manager.component_state.get("attenuation2polv/y", 0.0)
+    @attribute(
+        dtype=float,
+        doc="""The current attenuation value for attenuator 2 on the
+        V/Y polarization.""",
+        access=AttrWriteType.READ,
+    )
+    def attenuation2PolVY(self):
+        """Get the attenuation Pol H/X for attenuator 2."""
+        return self.component_manager.component_state.get("attenuation2polvy", 0.0)
+
+    @attribute(
+        dtype=float,
+        doc="""The current total attenuation value across both attenuators on the
+        H/X polarization.""",
+        access=AttrWriteType.READ,
+    )
+    def attenuationPolHX(self):
+        """Get the total attenuation Pol H/X."""
+        return self.component_manager.component_state.get("attenuationpolhx", 0.0)
+
+    @attribute(
+        dtype=float,
+        doc="""The current total attenuation value across both attenuators on the
+        V/Y polarization.""",
+        access=AttrWriteType.READ,
+    )
+    def attenuationPolVY(self):
+        """Get the total attenuation Pol V/Y."""
+        return self.component_manager.component_state.get("attenuationpolvy", 0.0)
 
     @attribute(
         dtype=int,
