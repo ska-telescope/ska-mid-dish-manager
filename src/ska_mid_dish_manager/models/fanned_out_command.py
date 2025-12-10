@@ -220,6 +220,6 @@ class FannedOutSlowCommand(FannedOutCommand):
                 self._progress_callback, awaited_attributes, awaited_values, self.device
             )
 
-        if task_status == TaskStatus.FAILED:
+        if task_status in (TaskStatus.FAILED, TaskStatus.REJECT):
             raise RuntimeError(msg)
         return task_status, msg

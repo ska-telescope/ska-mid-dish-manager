@@ -3,9 +3,11 @@
 import logging
 from threading import Event
 from unittest import mock
+from types import SimpleNamespace
 
 import pytest
 from ska_control_model import AdminMode, ResultCode, TaskStatus
+from ska_mid_dish_manager.models.command_actions import FannedOutSlowCommand
 
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
@@ -172,6 +174,32 @@ class TestCommandActions:
         ]
         for msg in expected_progress_updates:
             self.progress_callback.wait_for_args((msg,))
+
+    @pytest.mark.unit
+    def test_fanned_out_slow_command_reject(self):
+        """Test that FannedOutSlowCommand correctly handles a REJECT TaskStatus."""
+        progress_callback = MethodCallsStore()
+
+        fake_cm = SimpleNamespace(
+            _component_state={},
+            execute_command=lambda name, arg: (TaskStatus.REJECT, "reject message")
+        )
+
+        cmd = FannedOutSlowCommand(
+            LOGGER,
+            device="DeviceX",
+            command_name="Cmd",
+            device_component_manager=fake_cm,
+            command_argument=None,
+            progress_callback=progress_callback,
+        )
+
+        with pytest.raises(RuntimeError, match="reject message"):
+            cmd.execute(lambda **kwargs: None)
+
+        # Status should be FAILED after REJECT
+        assert cmd.failed is True
+
 
     @pytest.mark.unit
     def test_configure_band_sequence_from_fp(self):
