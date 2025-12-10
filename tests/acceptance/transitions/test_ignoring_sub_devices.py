@@ -2,7 +2,7 @@
 
 import pytest
 
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from ska_mid_dish_manager.models.dish_enums import Band
 from tests.utils import remove_subscriptions, set_ignored_devices, setup_subscriptions
 
 
@@ -31,43 +31,37 @@ def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_ignoring_spf(
     monitor_tango_servers, toggle_ignore_spf, event_store_class, dish_manager_proxy
 ):
     """Test ignoring SPF device."""
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     main_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "configuredband": main_event_store,
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
+
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(Band.B1, timeout=8)
 
-    dish_manager_proxy.SetOperateMode()
-    main_event_store.wait_for_value(DishMode.OPERATE)
-
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyFPMode called on DS",
-        "SPF device is disabled. SetOperateMode call ignored",
+        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store
@@ -78,18 +72,17 @@ def test_ignoring_spf(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_ignoring_spfrx(
     monitor_tango_servers, toggle_ignore_spfrx, event_store_class, dish_manager_proxy
 ):
     """Test ignoring SPFRX device."""
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -97,17 +90,18 @@ def test_ignoring_spfrx(
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetIndexPosition called on DS",
-        "SPFRX device is disabled. ConfigureBand2 call ignored",
+        "Fanned out commands: DS.SetIndexPosition",
         "Awaiting configuredband change to B2",
-        "ConfigureBand2 completed",
+        "DS.SetIndexPosition completed",
+        "ConfigureBand2 complete. Triggering on success action.",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store
@@ -118,18 +112,17 @@ def test_ignoring_spfrx(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_ignoring_all(
     monitor_tango_servers, toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy
 ):
     """Test ignoring both SPF and SPFRx devices."""
     result_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -137,18 +130,14 @@ def test_ignoring_all(
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "SetStandbyLPMode called on DS",
-        "SPF device is disabled. SetStandbyLPMode call ignored",
-        "SPFRX device is disabled. SetStandbyMode call ignored",
+        "Fanned out commands: DS.SetStandbyMode",
         "Awaiting dishmode change to STANDBY_LP",
         "SetStandbyLPMode completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store

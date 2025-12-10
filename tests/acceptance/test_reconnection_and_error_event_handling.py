@@ -8,9 +8,8 @@ from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceP
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.xfail(reason="This test is flaky: needs investigation into events and timeouts")
+@pytest.mark.skip(reason="This test is flaky: needs investigation into events and timeouts")
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize("family", ["ds-manager", "simulator-spfc", "simulator-spfrx"])
 def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     """Test dish manager reacts to devices restarting."""

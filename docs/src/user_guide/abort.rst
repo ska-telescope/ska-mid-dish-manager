@@ -2,7 +2,7 @@
 Abort on DishManager
 ====================
 
-DishManager implemented *AbortCommands* as part of its adaptation of the base classes long running command interface (LRC).
+DishManager implemented *Abort* as part of its adaptation of the base classes long running command interface (LRC).
 There is extensive `documentation`_ on the implementation details and usage LRC. For clients of DishLMC, cancelling a task
 (Stop for MeerKAT dish proxy and Abort for TMC) means more than just instructing the executor to cancel a LRC.
 
@@ -33,7 +33,7 @@ Guarantees and Caveats
 
 * Only slew/track tasks will be interrupted when Abort is triggered; tasks like receiver indexing, will not be affected.
 
-* Abort will **stop an ongoing STOW**.
+* Abort will **stop an ongoing slew to STOW position**.
 
 * Dish will always be restored to STANDBY-FP mode regardless of the previous state before Abort was triggered
 

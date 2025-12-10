@@ -1,7 +1,10 @@
 """Contains pytest fixtures for other tests setup."""
 
+import logging
 import os
 import socket
+import threading
+import time
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from typing import List, Tuple
@@ -19,6 +22,22 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_WMS_TRL,
 )
 from tests.utils import ComponentStateStore, EventStore
+
+LOGGER = logging.getLogger(__name__)
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    """Log remaining threads at the end."""
+    time.sleep(1)
+    threads = threading.enumerate()
+    for t in threads:
+        LOGGER.info(
+            "  - %s (Alive: %s, ident=%s, daemon=%s)", t.name, t.is_alive(), t.ident, t.daemon
+        )
+        if t is threading.main_thread():
+            continue
+
+    assert len(threads) == 1, "Unexpected threads remaining after tests"
 
 
 def pytest_addoption(parser):

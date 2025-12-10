@@ -154,11 +154,10 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     main_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     attributes_to_subscribe_to = (
         "dishMode",
-        "longRunningCommandResult",
         "pointingState",
     )
     for attribute_name in attributes_to_subscribe_to:
@@ -169,9 +168,9 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
         )
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
 
     # Force dishManager dishMode to go to OPERATE
@@ -198,16 +197,14 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
     main_event_store.wait_for_value(PointingState.TRACK)
 
     expected_progress_updates = [
-        "Track called on DS, ID",
+        "Fanned out commands: DS.Track",
         "Track command has been executed on DS. "
         "Monitor the achievedTargetLock attribute to determine when the dish is on source.",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store

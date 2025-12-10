@@ -3,12 +3,13 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
+from ska_control_model import CommunicationStatus, TaskStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
+    DSPowerState,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -26,6 +27,7 @@ def dish_manager_resources():
             "ska_mid_dish_manager.component_managers.wms_cm."
             "WMSComponentManager.start_communicating"
         ),
+        patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
     ):
         tango_context = DeviceTestContext(DishManager)
         tango_context.start()
@@ -44,16 +46,6 @@ def dish_manager_resources():
                 communication_state=CommunicationStatus.ESTABLISHED
             )
 
-        # patch run method which spawns a thread
-        def _simulate_lrc_callbacks(*args, **kwargs):
-            task_callback = args[-1]
-            task_callback(status=TaskStatus.IN_PROGRESS)
-            task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(None)))
-            return TaskStatus.QUEUED, "message"
-
-        for com_man in [ds_cm, spf_cm, spfrx_cm]:
-            com_man.run_device_command = Mock(side_effect=_simulate_lrc_callbacks)
-
         # set up mocks for methods creating a device proxy to the sub component
         candidate_stub_methods = [
             "update_state_from_monitored_attributes",
@@ -62,12 +54,17 @@ def dish_manager_resources():
             "execute_command",
         ]
         for method_name in candidate_stub_methods:
-            setattr(ds_cm, method_name, Mock())
-            setattr(spf_cm, method_name, Mock())
-            setattr(spfrx_cm, method_name, Mock())
+            if method_name == "execute_command":
+                mock_method = Mock(return_value=(TaskStatus.IN_PROGRESS, "some string"))
+            else:
+                mock_method = Mock()
+            setattr(ds_cm, method_name, mock_method)
+            setattr(spf_cm, method_name, mock_method)
+            setattr(spfrx_cm, method_name, mock_method)
 
         # trigger transition to StandbyLP mode
-        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_LP)
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY)
+        ds_cm._update_component_state(powerstate=DSPowerState.LOW_POWER)
         spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
         spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
 

@@ -8,6 +8,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     BandInFocus,
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     IndexerPosition,
     SPFOperatingMode,
     SPFRxOperatingMode,
@@ -33,7 +34,8 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     main_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     for attr in [
         "dishMode",
@@ -47,9 +49,14 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         )
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
+    )
+    device_proxy.subscribe_event(
+        "Status",
+        tango.EventType.CHANGE_EVENT,
+        status_event_store,
     )
 
     assert device_proxy.dishMode == DishMode.STANDBY_LP
@@ -58,11 +65,13 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     main_event_store.clear_queue()
 
     [[_], [unique_id]] = device_proxy.SetStandbyFPMode()
-    progress_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
+    status_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
 
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+    ds_cm._update_component_state(
+        operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
+    )
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
 
     assert main_event_store.wait_for_command_id(unique_id, timeout=6)
     assert device_proxy.dishMode == DishMode.STANDBY_FP
@@ -71,25 +80,26 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     # wait a bit before forcing the updates on the subcomponents
     main_event_store.get_queue_values()
 
-    spfrx_cm._update_component_state(configuredband=Band[band_number])
-    ds_cm._update_component_state(indexerposition=IndexerPosition[band_number])
+    spfrx_cm._update_component_state(
+        configuredband=Band[band_number], operatingmode=SPFRxOperatingMode.OPERATE
+    )
+    ds_cm._update_component_state(
+        indexerposition=IndexerPosition[band_number], operatingmode=DSOperatingMode.POINT
+    )
     spf_cm._update_component_state(bandinfocus=BandInFocus[band_number])
 
     assert main_event_store.wait_for_command_id(unique_id, timeout=5)
     assert device_proxy.configuredBand == Band[band_number]
 
     expected_progress_updates = [
-        "SetIndexPosition called on DS",
-        f"{command} called on SPFRX, ID",
+        f"Fanned out commands: DS.SetIndexPosition, SPFRX.{command}",
         f"Awaiting configuredband change to {band_number}",
         f"{command} completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
 
-    events_string = "".join([str(event) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
     # in the event store

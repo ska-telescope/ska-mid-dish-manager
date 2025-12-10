@@ -54,8 +54,6 @@ def construct_mock_error_event_data(attr_name: str, reason: str) -> tango.EventD
     return mock_error_event_data
 
 
-@pytest.mark.timeout(5)
-@pytest.mark.forked
 @pytest.mark.unit
 def test_component_manager_continues_reconnecting_when_device_is_unreachable(caplog):
     caplog.set_level(logging.DEBUG)

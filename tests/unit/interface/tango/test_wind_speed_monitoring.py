@@ -7,6 +7,7 @@ from unittest import mock
 
 import pytest
 import tango
+from ska_control_model import CommunicationStatus, TaskStatus
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -29,6 +30,7 @@ def configure_mocks_for_dish_manager():
             "ska_mid_dish_manager.component_managers.wms_cm."
             "WMSComponentManager.start_communicating"
         ),
+        mock.patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
     ):
         tango_context = DeviceTestContext(DishManager)
         tango_context.start()
@@ -37,6 +39,8 @@ def configure_mocks_for_dish_manager():
         class_instance = DishManager.instances.get(device_proxy.name())
         dish_manager_cm = class_instance.component_manager
         wms_cm = dish_manager_cm.sub_component_managers["WMS"]
+        wms_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
+        dish_manager_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
 
         # mock _fetch_wind_limits on dish manager component manager
         dish_manager_cm._fetch_wind_limits = mock.Mock(
@@ -48,7 +52,7 @@ def configure_mocks_for_dish_manager():
 
         # mock execute_command on the ds component manager
         ds_cm = dish_manager_cm.sub_component_managers["DS"]
-        ds_cm.execute_command = mock.Mock()
+        ds_cm.execute_command = mock.Mock(return_value=(TaskStatus.IN_PROGRESS, "some string"))
 
         # update instance variables on the wms component manager
         wms_cm = dish_manager_cm.sub_component_managers["WMS"]
@@ -80,17 +84,18 @@ def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
     polling_period = wms_cm._wms_polling_period
     wait_event = threading.Event()
 
-    progress_event_store = event_store_class()
     mean_wind_speed_event_store = event_store_class()
+    status_event_store = event_store_class()
+
     device_proxy.subscribe_event(
         "meanWindSpeed",
         tango.EventType.CHANGE_EVENT,
         mean_wind_speed_event_store,
     )
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
 
     # enable wind stow action for mean wind speed
@@ -121,7 +126,7 @@ def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
 
     # the stow trigger will update the lrc progress
     expected_progress_update = "Stow called, monitor dishmode for LRC completed"
-    lrc_progress_event_values = progress_event_store.get_queue_values()
+    lrc_progress_event_values = status_event_store.get_queue_values()
     lrc_progress_event_values = "".join([str(event[1]) for event in lrc_progress_event_values])
     assert expected_progress_update in lrc_progress_event_values
     _, requested_action = device_proxy.lastCommandedMode
@@ -145,17 +150,18 @@ def test_wind_stow_triggered_on_wind_gust_exceeding_threshold(
     polling_period = wms_cm._wms_polling_period
     wait_event = threading.Event()
 
-    progress_event_store = event_store_class()
     wind_gust_event_store = event_store_class()
+    status_event_store = event_store_class()
+
     device_proxy.subscribe_event(
         "windGust",
         tango.EventType.CHANGE_EVENT,
         wind_gust_event_store,
     )
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
 
     # enable wind stow action for wind gust
@@ -185,7 +191,7 @@ def test_wind_stow_triggered_on_wind_gust_exceeding_threshold(
 
     # the stow trigger will update the lrc progress
     expected_progress_update = "Stow called, monitor dishmode for LRC completed"
-    lrc_progress_event_values = progress_event_store.get_queue_values()
+    lrc_progress_event_values = status_event_store.get_queue_values()
     lrc_progress_event_values = "".join([str(event[1]) for event in lrc_progress_event_values])
     assert expected_progress_update in lrc_progress_event_values
     _, requested_action = device_proxy.lastCommandedMode

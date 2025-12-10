@@ -7,7 +7,6 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test transition on CapabilityState b1."""
     main_event_store = event_store_class()
@@ -26,9 +25,8 @@ def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_mana
     dish_manager_proxy.ConfigureBand1(True)
 
     cap_state_event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=10)
-    cap_state_event_store.wait_for_value(CapabilityStates.STANDBY, timeout=10)
+    cap_state_event_store.wait_for_value(CapabilityStates.OPERATE_FULL, timeout=10)
 
-    assert dish_manager_proxy.b1CapabilityState == CapabilityStates.STANDBY
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     remove_subscriptions(subscriptions)

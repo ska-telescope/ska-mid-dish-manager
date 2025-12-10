@@ -11,14 +11,13 @@ POINTING_TOLERANCE_DEG = 0.1
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_slew_rejected(event_store_class, dish_manager_proxy):
     """Test slew command rejected when not in OPERATE."""
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
     result_event_store = event_store_class()
     attr_cb_mapping = {
-        "longRunningCommandProgress": progress_event_store,
         "longRunningCommandResult": result_event_store,
+        "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -33,13 +32,12 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     )
 
     # Wait for the slew command progress update
-    progress_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
+    status_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
     remove_subscriptions(subscriptions)
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
-def test_slew(event_store_class, dish_manager_proxy):
+def test_slew_transition(event_store_class, dish_manager_proxy):
     """Test transition to SLEW."""
     main_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
@@ -51,8 +49,8 @@ def test_slew(event_store_class, dish_manager_proxy):
 
     # Set mode to Operate to accept Slew command
     dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10)
-    dish_manager_proxy.SetOperateMode()
+    # Await auto transition to OPERATE following band config
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
 
     achieved_pointing = dish_manager_proxy.achievedPointing
     # Increase by 5 degrees in Azimuth and Elevation unless limits will be hit

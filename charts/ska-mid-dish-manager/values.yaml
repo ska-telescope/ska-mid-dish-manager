@@ -48,7 +48,7 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 8.4.2
+    tag: 9.0.0
     pullPolicy: IfNotPresent
 
   # Setting fqdn assumes you are only deploying one Dish Manager
@@ -81,6 +81,9 @@ dishmanager:
 
   watchdog:
     timeout_seconds: "0.0"  # Default is 0.0 (<= 0 means watchdog timer is disabled)
+
+  actions:
+    timeout_seconds: "120.0"  # Default is 120s (<= 0 means the actions will not wait for anything)
 
 dev_pod:
   enabled: false

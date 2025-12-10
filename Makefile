@@ -5,6 +5,8 @@ NAME=ska-mid-dish-manager
 VERSION=$(shell grep -e "^version = s*" pyproject.toml | cut -d = -f 2 | xargs)
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
+# values.yaml shall be used as the default and variables can be overridden by the user
+# by defining them in the custom_helm_flags.yaml file
 VALUES_FILE ?= charts/ska-mid-dish-manager/custom_helm_flags.yaml
 
 -include .make/base.mk
@@ -24,15 +26,19 @@ PYTHON_LINE_LENGTH = 99
 # Set the specific environment variables required for pytest
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
-PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --pointing-files-path=build/pointing
+PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --pointing-files-path=build/pointing
 
 K8S_TEST_RUNNER_MARK ?= acceptance
 
-python-test: MARK = unit
+python-test: MARK = unit and (not forked)
 k8s-test-runner: MARK = $(K8S_TEST_RUNNER_MARK)
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
 -include .make/python.mk
+
+python-test-forked: MARK = forked
+python-test-forked: PYTHON_VARS_AFTER_PYTEST += --forked
+python-test-forked: python-pre-test python-do-test python-post-test
 
 python-do-format:
 	$(PYTHON_RUNNER) ruff format $(PYTHON_LINT_TARGET)
@@ -60,7 +66,7 @@ CI_REGISTRY ?= registry.gitlab.com
 
 # Use the previously built image when running in the pipeline
 CUSTOM_VALUES = --set dishmanager.image.image=$(NAME) \
-	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/$(NAME) \
+	--set dishmanager.image.registry=$(CI_REGISTRY)/ska-telescope/mid-dish/$(NAME) \
 	--set dishmanager.image.tag=$(OCI_TAG)
 K8S_TIMEOUT=600s
 
