@@ -2,15 +2,15 @@
 
 import logging
 from threading import Event
-from unittest import mock
 from types import SimpleNamespace
+from unittest import mock
 
 import pytest
 from ska_control_model import AdminMode, ResultCode, TaskStatus
-from ska_mid_dish_manager.models.command_actions import FannedOutSlowCommand
 
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
+    FannedOutSlowCommand,
     SetStandbyLPModeAction,
     TrackLoadStaticOffAction,
 )
