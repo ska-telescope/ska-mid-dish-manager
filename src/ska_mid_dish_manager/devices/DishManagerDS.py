@@ -55,11 +55,11 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
 from ska_mid_dish_manager.utils.decorators import record_command, requires_component_manager
-from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
-from ska_mid_dish_manager.utils.track_table_input_validation import (
+from ska_mid_dish_manager.utils.input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
 )
+from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
 
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 
@@ -138,6 +138,7 @@ class DishManager(SKAController):
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("TrackStop", "track_stop_cmd"),
+            ("ConfigureBand", "configure_band_with_json"),
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
             ("ConfigureBand3", "configure_band_cmd"),
@@ -1579,6 +1580,61 @@ class DishManager(SKAController):
         handler = self.get_command_object("Abort")
         (return_code, message) = handler()
         return ([return_code], [message])
+
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @command(
+        dtype_in="DevString",
+        doc_in="""The command accepts a JSON string containing data to configure the SPFRx.
+        The JSON structure is as follows:
+        {
+            "receiver_band": <string>,
+            "sub_band": <integer>,
+            "spfrx_processing_parameters": {
+                "dishes": List[<string>],
+                "sync_pps":  <bool>,
+                "attenuation_pol_x": <float>,
+                "attenuation_pol_y": <float>,
+                "attenuation_1_pol_x": <float>,
+                "attenuation_1_pol_y": <float>,
+                "attenuation_2_pol_x": <float>,
+                "attenuation_2_pol_y": <float>,
+                "saturation_threshold": <float>,
+                "noise_diode": {
+                    "pseudo_random": {
+                        "binary_polynomial": <long>,
+                        "seed": <long>,
+                        "dwell": <long>,
+                    },
+                    "periodic": {
+                        "period": <long>,
+                        "duty_cycle": <long>,
+                        "phase_shift": <long>,
+                    }
+                }
+            }
+        }
+        where 'receiver_band', 'dishes' and 'sync_pps' are mandatory fields.
+        when 'receiver_band' is set to '5b', the 'sub_band' field is mandatory.
+        The 'dishes' field is a list of dish names that the SPFRx should be configured for,
+        if 'all' is specified in the list, the SPFRx will be configured for all dishes.
+        """,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    def ConfigureBand(self, value) -> DevVarLongStringArrayType:
+        """Configure band according to JSON string supplied.
+
+        This command triggers the Dish to transition to the CONFIG Dish
+        Element Mode, and returns to the caller.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
+        """
+        handler = self.get_command_object("ConfigureBand")
+
+        result_code, unique_id = handler(value)
+        return ([result_code], [unique_id])
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)

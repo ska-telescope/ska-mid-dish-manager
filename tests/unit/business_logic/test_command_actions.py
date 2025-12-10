@@ -1,5 +1,6 @@
 """Tests for CommandActions."""
 
+import json
 import logging
 from threading import Event
 from unittest import mock
@@ -233,6 +234,88 @@ class TestCommandActions:
             "SPFRX configuredband changed to B2",
             "SPFRX.ConfigureBand2 completed",
             "ConfigureBand2 complete. Triggering on success action.",
+            # Then SetOperateMode
+            "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
+            "Awaiting SPF operatingmode change to OPERATE",
+            "Awaiting DS operatingmode change to POINT",
+            "Awaiting dishmode change to OPERATE",
+            "SPF operatingmode changed to OPERATE",
+            "SPF.SetOperateMode completed",
+            "DS operatingmode changed to POINT",
+            "DS.SetPointMode completed",
+            "SetOperateMode completed",
+        ]
+
+        for msg in expected_progress_updates:
+            assert msg in progress_updates
+
+        assert len(result_calls) == 1
+        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
+
+    @pytest.mark.unit
+    def test_configure_band_sequence_with_json_from_fp(self):
+        """Test configure_band_cmd happy path from full power with json."""
+        task_abort_event = Event()
+
+        result_calls = []
+        progress_updates = []
+
+        def progress_callback(msg):
+            progress_updates.append(msg)
+            if "Awaiting configuredband change to B2" in msg:
+                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+                    "indexerposition"
+                ] = IndexerPosition.B2
+                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
+                    "configuredband"
+                ] = Band.B2
+                self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
+            elif "Awaiting dishmode change to OPERATE" in msg:
+                self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+                    "operatingmode"
+                ] = DSOperatingMode.POINT
+                self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
+
+        def my_task_callback(**kwargs):
+            if kwargs.get("result") is not None:
+                result_calls.append(kwargs.get("result"))
+
+        # Reconfiguring the progress callback to our local one to capture messages
+        self.dish_manager_cm_mock._command_progress_callback = progress_callback
+
+        # Set mock component states to FP
+        self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+            "operatingmode"
+        ] = DSOperatingMode.STANDBY
+        self.dish_manager_cm_mock.sub_component_managers["SPF"]._component_state[
+            "operatingmode"
+        ] = SPFOperatingMode.OPERATE
+        self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.STANDBY_FP
+
+        cfg_band = {
+            "dish": {"receiver_band": "2", "spfrx_processing_parameters": [{"dishes": ["SKA001"]}]}
+        }
+        json_str = json.dumps(cfg_band)
+
+        ConfigureBandActionSequence(
+            LOGGER,
+            self.dish_manager_cm_mock,
+            data=json_str,
+            requested_cmd="ConfigureBand",
+            timeout_s=5,
+        ).execute(my_task_callback, task_abort_event)
+
+        expected_progress_updates = [
+            # ConfigureBand
+            "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
+            "Awaiting DS indexerposition change to B2",
+            "Awaiting SPFRX configuredband change to B2",
+            "Awaiting configuredband change to B2",
+            "DS indexerposition changed to B2",
+            "DS.SetIndexPosition completed",
+            "SPFRX configuredband changed to B2",
+            "SPFRX.ConfigureBand completed",
+            "ConfigureBand complete. Triggering on success action.",
             # Then SetOperateMode
             "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
             "Awaiting SPF operatingmode change to OPERATE",
