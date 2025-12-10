@@ -182,7 +182,7 @@ class TestCommandActions:
 
         fake_cm = SimpleNamespace(
             _component_state={},
-            execute_command=lambda name, arg: (TaskStatus.REJECT, "reject message"),
+            execute_command=lambda name, arg: (TaskStatus.REJECTED, "reject message"),
         )
 
         cmd = FannedOutSlowCommand(
