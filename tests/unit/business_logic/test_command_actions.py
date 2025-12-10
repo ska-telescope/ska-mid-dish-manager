@@ -182,7 +182,7 @@ class TestCommandActions:
 
         fake_cm = SimpleNamespace(
             _component_state={},
-            execute_command=lambda name, arg: (TaskStatus.REJECT, "reject message")
+            execute_command=lambda name, arg: (TaskStatus.REJECT, "reject message"),
         )
 
         cmd = FannedOutSlowCommand(
@@ -199,7 +199,6 @@ class TestCommandActions:
 
         # Status should be FAILED after REJECT
         assert cmd.failed is True
-
 
     @pytest.mark.unit
     def test_configure_band_sequence_from_fp(self):
