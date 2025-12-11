@@ -7,8 +7,6 @@ from unittest import mock
 
 import pytest
 from ska_control_model import AdminMode, ResultCode, TaskStatus
-from ska_mid_dish_manager.models.dish_enums import FannedOutCommandStatus
-
 
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
@@ -21,6 +19,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
     DSPowerState,
+    FannedOutCommandStatus,
     IndexerPosition,
     SPFOperatingMode,
     SPFRxOperatingMode,
