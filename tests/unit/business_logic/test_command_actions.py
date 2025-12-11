@@ -7,6 +7,8 @@ from unittest import mock
 
 import pytest
 from ska_control_model import AdminMode, ResultCode, TaskStatus
+from ska_mid_dish_manager.models.dish_enums import FannedOutCommandStatus
+
 
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
@@ -194,11 +196,14 @@ class TestCommandActions:
             progress_callback=progress_callback,
         )
 
-        with pytest.raises(RuntimeError, match="reject message"):
-            cmd.execute(lambda **kwargs: None)
+        cmd.command = cmd._execute_tango_command
+
+        cmd.execute(lambda **kwargs: None)
 
         # Status should be FAILED after REJECT
         assert cmd.failed is True
+        assert "reject message" in cmd.cmd_response
+        assert cmd._status == FannedOutCommandStatus.FAILED
 
     @pytest.mark.unit
     def test_configure_band_sequence_from_fp(self):

@@ -220,7 +220,7 @@ class FannedOutSlowCommand(FannedOutCommand):
             results[dev] = (task_status, msg)
 
             if task_status in (TaskStatus.FAILED, TaskStatus.REJECTED):
-                self.failed = True
+                self._failed = True
                 raise RuntimeError(msg)
 
         if self.awaited_component_state is not None:
