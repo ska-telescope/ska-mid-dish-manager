@@ -35,6 +35,7 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     status_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
     remove_subscriptions(subscriptions)
 
+
 @pytest.mark.acceptance
 def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
     """Test that when given out of bounds azel values, dish manager rejects and returns error."""
@@ -46,7 +47,7 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
         {
             "longRunningCommandResult": result_store,
             "longRunningCommandStatus": status_store,
-        }
+        },
     )
 
     [[_], [cmd_id]] = dish_manager_proxy.Slew([100, 91])
@@ -65,6 +66,7 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
     assert cmd_id not in ids_in_queue
 
     remove_subscriptions(subscriptions)
+
 
 @pytest.mark.acceptance
 def test_slew_transition(event_store_class, dish_manager_proxy):

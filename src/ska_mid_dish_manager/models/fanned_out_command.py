@@ -209,8 +209,7 @@ class FannedOutSlowCommand(FannedOutCommand):
             )
             self._status = FannedOutCommandStatus.IGNORED
             return None, None
-
-        results = {}
+        results={}
 
         devices = getattr(self, "devices", [self.device])
 
@@ -223,7 +222,7 @@ class FannedOutSlowCommand(FannedOutCommand):
             if task_status in (TaskStatus.FAILED, TaskStatus.REJECTED):
                 self.failed = True
                 raise RuntimeError(msg)
-
+            
         if self.awaited_component_state is not None:
             awaited_attributes = list(self.awaited_component_state.keys())
             awaited_values = list(self.awaited_component_state.values())
@@ -233,3 +232,4 @@ class FannedOutSlowCommand(FannedOutCommand):
 
         last_dev = devices[-1]
         return results[last_dev]
+    
