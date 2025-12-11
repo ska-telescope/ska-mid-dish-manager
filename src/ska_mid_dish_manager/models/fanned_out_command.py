@@ -209,7 +209,7 @@ class FannedOutSlowCommand(FannedOutCommand):
             )
             self._status = FannedOutCommandStatus.IGNORED
             return None, None
-        results={}
+        results = {}
 
         devices = getattr(self, "devices", [self.device])
 
