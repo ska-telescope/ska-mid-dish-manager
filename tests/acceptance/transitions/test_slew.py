@@ -53,10 +53,12 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
     [[_], [cmd_id]] = dish_manager_proxy.Slew([100, 91])
 
     events = result_store.wait_for_command_id(cmd_id, timeout=10)
-    final = events[-1].attr_value.value
+    final_status = events[-1].attr_value.value
 
-    assert final[0] == "FAILED"
-    assert "REJECT" in final[1].upper()
+    _, status_msg = final_status
+
+    assert "FAILED" in status_msg.upper()
+    assert "REJECT" in status_msg.upper()
 
     statuses = status_store.values_for_command_id(cmd_id)
     assert "STAGING" not in statuses
