@@ -92,7 +92,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
     ):
         monitored_attr_names = (
             "operatingMode",
-            "capturingData",
+            "dataFiberCheck",
             "configuredBand",
             "healthState",
             "b1CapabilityState",

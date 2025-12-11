@@ -259,7 +259,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._state_update_lock,
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
-                capturingdata=False,
+                dataFiberCheck=False,
                 healthstate=HealthState.UNKNOWN,
                 attenuationpolhx=0.0,
                 attenuationpolvy=0.0,
@@ -778,13 +778,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
-        if "capturingdata" in kwargs:
-            capturing_data = spfrx_component_state["capturingdata"]
+        if "dataFiberCheck" in kwargs:
+            data_fiber_check = spfrx_component_state["dataFiberCheck"]
             self.logger.debug(
                 ("Updating dish manager capturing with: SPFRx [%s]"),
-                capturing_data,
+                data_fiber_check,
             )
-            self._update_component_state(capturing=capturing_data)
+            self._update_component_state(capturing=data_fiber_check)
 
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode or operatingmode changes
