@@ -8,7 +8,7 @@ import tango
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
-    "tango_attribute, sensor_value",
+    "tango_attribute, write_value",
     [
         ("attenuation1PolHX", 1.0),
         ("attenuation1PolVY", 2.0),
@@ -20,7 +20,7 @@ import tango
 )
 def test_attenuation_attrs(
     tango_attribute: str,
-    sensor_value: Any,
+    write_value: Any,
     dish_manager_proxy: tango.DeviceProxy,
     spfrx_device_proxy: tango.DeviceProxy,
     event_store_class: Any,
@@ -31,7 +31,7 @@ def test_attenuation_attrs(
     sub_id = dish_manager_proxy.subscribe_event(
         tango_attribute, tango.EventType.CHANGE_EVENT, dm_event_store
     )
-    spfrx_device_proxy.write_attribute(tango_attribute, sensor_value)
+    spfrx_device_proxy.write_attribute(tango_attribute, write_value)
 
-    dm_event_store.wait_for_value(sensor_value, timeout=7)
+    dm_event_store.wait_for_value(write_value, timeout=7)
     dish_manager_proxy.unsubscribe_event(sub_id)
