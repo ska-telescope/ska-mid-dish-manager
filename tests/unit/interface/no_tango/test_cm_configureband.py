@@ -92,7 +92,6 @@ def test_configureband_json_handler_happy(
     """Verify behaviour of ConfigureBand for json happy case.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -175,7 +174,6 @@ def test_configureband_badly_formatted_json(
     """Verify behaviour of ConfigureBand for json badly formatted case.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -207,7 +205,6 @@ def test_configureband_b5b_without_subband(
     """Verify behaviour of ConfigureBand for json missing subband case.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -244,7 +241,6 @@ def test_configureband_5b_with_subband(
     """Verify behaviour of ConfigureBand for json missing subband case.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -328,7 +324,6 @@ def test_configureband_bad_root_key(
     """Verify behaviour of ConfigureBand for json missing subband case.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -366,7 +361,6 @@ def test_configureband_invalid_receiver_band(
     """Verify behaviour of ConfigureBand for json with invalid receiver band.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
