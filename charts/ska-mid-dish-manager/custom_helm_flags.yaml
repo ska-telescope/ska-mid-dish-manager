@@ -18,11 +18,6 @@ ska-tango-base:
 
 ska-mid-dish-simulators:
   enabled: true
-  image:
-    registry: registry.gitlab.com/ska-telescope/ska-mid-dish-simulators
-    image: ska-mid-dish-simulators
-    tag: 5.4.2-dev.ca7c9a66f
-    pullPolicy: IfNotPresent
   deviceServers:
     spfdevice:
       enabled: true
