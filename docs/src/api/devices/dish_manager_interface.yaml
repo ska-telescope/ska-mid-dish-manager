@@ -11,9 +11,7 @@
       dtype_out: DevVarLongStringArray
     - name: AbortCommands
       disp_level: OPERATOR
-      doc_in: Abort currently executing long running command on DishManager including
-        stopping dish movement and transitioning dishMode to StandbyFP. For details
-        consult DishManager documentation
+      doc_in: Uninitialised
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
@@ -331,6 +329,23 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: _lrcEvent
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read the long running commands events. Always returns\
+        \ an empty list.\n\n        :return: empty list.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: _lrcEvent
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: achievedPointing
       data_format: SPECTRUM
       data_type: DevDouble
@@ -447,40 +462,108 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: adminMode
-    - name: attenuationPolH
+    - name: attenuation1PolHX
       data_format: SCALAR
       data_type: DevDouble
-      description: Indicates the SPFRx attenuation in the horizontal signal chain
-        for the configuredband.
+      description: "The current attenuation value for attenuator 1 on the\n      \
+        \  H/X polarization."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
-      label: attenuationPolH
+      label: attenuation1PolHX
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ_WRITE
-      writable_attr_name: attenuationPolH
-    - name: attenuationPolV
+      writable: READ
+      writable_attr_name: None
+    - name: attenuation1PolVY
       data_format: SCALAR
       data_type: DevDouble
-      description: Indicates the SPFRx attenuation in the vertical signal chain for
-        the configuredband.
+      description: "The current attenuation value for attenuator 1 on the\n      \
+        \  V/Y polarization."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
-      label: attenuationPolV
+      label: attenuation1PolVY
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ_WRITE
-      writable_attr_name: attenuationPolV
+      writable: READ
+      writable_attr_name: None
+    - name: attenuation2PolHX
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "The current attenuation value for attenuator 2 on the\n      \
+        \  H/X polarization."
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: attenuation2PolHX
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: attenuation2PolVY
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "The current attenuation value for attenuator 2 on the\n      \
+        \  V/Y polarization."
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: attenuation2PolVY
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: attenuationPolHX
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "The current total attenuation value across both attenuators on\
+        \ the\n        H/X polarization."
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: attenuationPolHX
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: attenuationPolVY
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "The current total attenuation value across both attenuators on\
+        \ the\n        V/Y polarization."
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: attenuationPolVY
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: autoWindStowEnabled
       data_format: SCALAR
       data_type: DevBoolean
@@ -1355,6 +1438,23 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: ignoreSpfrx
+    - name: isKLocked
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: "\n            Check the SAT.RM module to see if\n            the\
+        \ k- value is locked. If not false is returned.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: isKLocked
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: kValue
       data_format: SCALAR
       data_type: DevLong64
@@ -1496,7 +1596,7 @@
       format: '%s'
       label: longRunningCommandIDsInQueue
       max_alarm: Not specified
-      max_dim_x: 65
+      max_dim_x: 66
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1515,7 +1615,7 @@
       format: '%s'
       label: longRunningCommandInProgress
       max_alarm: Not specified
-      max_dim_x: 1
+      max_dim_x: 2
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1535,7 +1635,7 @@
       format: '%s'
       label: longRunningCommandProgress
       max_alarm: Not specified
-      max_dim_x: 2
+      max_dim_x: 4
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1574,7 +1674,7 @@
       format: '%s'
       label: longRunningCommandStatus
       max_alarm: Not specified
-      max_dim_x: 130
+      max_dim_x: 132
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1585,16 +1685,88 @@
       data_format: SPECTRUM
       data_type: DevString
       description: "\n        Read the long running commands in the queue.\n\n   \
-        \      Keep track of which commands are that are currently known about.\n\
-        \         Entries are removed `self._command_tracker._removal_time` seconds\n\
-        \         after they have finished.\n\n        :param attr: Tango attribute\
+        \     Keep track of which commands are that are currently known about.\n \
+        \       Entries are removed `self._command_tracker._removal_time` seconds\n\
+        \        after they have finished.\n\n        :param attr: Tango attribute\
         \ being read\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
       label: longRunningCommandsInQueue
       max_alarm: Not specified
-      max_dim_x: 65
+      max_dim_x: 66
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcExecuting
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read info of the currently executing long running commands.\n\
+        \n        Returns a list of info JSON blobs of the currently executing commands.\n\
+        \n        :param attr: Tango attribute being read\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcExecuting
+      max_alarm: Not specified
+      max_dim_x: 3
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcFinished
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read info of the finished long running commands.\n\n\
+        \        :return: a list of info JSON blobs of the finished long running commands.\n\
+        \        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcFinished
+      max_alarm: Not specified
+      max_dim_x: 100
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcProtocolVersions
+      data_format: SPECTRUM
+      data_type: DevLong64
+      description: "\n        Return supported protocol versions.\n\n        :return:\
+        \ A tuple containing the lower and upper bounds of supported long running\n\
+        \            command protocol versions.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%d'
+      label: lrcProtocolVersions
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcQueue
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read info of the long running commands in queue.\n\n\
+        \        Returns a list of info JSON blobs of the commands in queue.\n\n \
+        \       :param attr: Tango attribute being read\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcQueue
+      max_alarm: Not specified
+      max_dim_x: 66
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1866,6 +2038,27 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: simulationMode
+    - name: spectralInversion
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: "\n            Spectral inversion to correct the frequency sense\
+        \ of the currently\n            configured band with respect to the RF signal.\n\
+        \n            Logic 0: Output signal in the same frequency sense as input.\n\
+        \n            Logic 1: Output signal in the opposite frequency sense as input.\n\
+        \n            Setting this attribute to true will set the\n            spectrum\
+        \ to be flipped.\n\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: spectralInversion
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: spfConnectionState
       data_format: SCALAR
       data_type: DevEnum
@@ -2102,15 +2295,18 @@
       writable_attr_name: None
     properties:
     - name: DSDeviceFqdn
+    - name: DefaultActionTimeoutSeconds
+    - name: DefaultWatchdogTimeout
     - name: DishId
+    - name: GroupDefinitions
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
-    - name: MaintenanceModeActive
     - name: MaxCapabilities
+    - name: MeanWindSpeedThreshold
     - name: ReceptorNumber
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: __SubDevices
+    - name: WindGustThreshold
     - name: polled_cmd
 

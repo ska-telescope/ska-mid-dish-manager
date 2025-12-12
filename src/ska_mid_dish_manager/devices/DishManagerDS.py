@@ -381,8 +381,12 @@ class DishManager(SKAController):
                 "band4pointingmodelparams": "band4PointingModelParams",
                 "band5apointingmodelparams": "band5aPointingModelParams",
                 "band5bpointingmodelparams": "band5bPointingModelParams",
-                "attenuationpolh": "attenuationPolH",
-                "attenuationpolv": "attenuationPolV",
+                "attenuation1polhx": "attenuation1PolHX",
+                "attenuation1polvy": "attenuation1PolVY",
+                "attenuation2polhx": "attenuation2PolHX",
+                "attenuation2polvy": "attenuation2PolVY",
+                "attenuationpolhx": "attenuationPolHX",
+                "attenuationpolvy": "attenuationPolVY",
                 "kvalue": "kValue",
                 "trackinterpolationmode": "trackInterpolationMode",
                 "scanid": "scanID",
@@ -395,6 +399,8 @@ class DishManager(SKAController):
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
+                "isklocked": "isKLocked",
+                "spectralinversion": "spectralInversion",
                 "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
                 "actstaticoffsetvalueel": "actStaticOffsetValueEl",
                 "dscpowerlimitkw": "dscPowerLimitKw",
@@ -590,36 +596,63 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=float,
-        access=AttrWriteType.READ_WRITE,
-        doc="Indicates the SPFRx attenuation in the horizontal "
-        "signal chain for the configuredband.",
+        doc="""The current attenuation value for attenuator 1 on the
+        H/X polarization.""",
+        access=AttrWriteType.READ,
     )
-    def attenuationPolH(self):
-        """Returns the attenuationPolH."""
-        return self.component_manager.component_state.get("attenuationpolh", 0.0)
-
-    @attenuationPolH.write
-    def attenuationPolH(self, value):
-        """Set the attenuationPolH."""
-        # pylint: disable=attribute-defined-outside-init
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("attenuationPolH", value)
+    def attenuation1PolHX(self):
+        """Get the attenuation Pol H/X for attenuator 1."""
+        return self.component_manager.component_state.get("attenuation1polhx", 0.0)
 
     @attribute(
         dtype=float,
-        access=AttrWriteType.READ_WRITE,
-        doc="Indicates the SPFRx attenuation in the vertical signal chain for the configuredband.",
+        doc="""The current attenuation value for attenuator 1 on the
+        V/Y polarization.""",
+        access=AttrWriteType.READ,
     )
-    def attenuationPolV(self):
-        """Returns the attenuationPolV."""
-        return self.component_manager.component_state.get("attenuationpolv", 0.0)
+    def attenuation1PolVY(self):
+        """Get the attenuation Pol V/Y for attenuator 1."""
+        return self.component_manager.component_state.get("attenuation1polvy", 0.0)
 
-    @attenuationPolV.write
-    def attenuationPolV(self, value):
-        """Set the attenuation Pol V."""
-        # pylint: disable=attribute-defined-outside-init
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("attenuationPolV", value)
+    @attribute(
+        dtype=float,
+        doc="""The current attenuation value for attenuator 2 on the
+        H/X polarization.""",
+        access=AttrWriteType.READ,
+    )
+    def attenuation2PolHX(self):
+        """Get the attenuation Pol H/X for attenuator 2."""
+        return self.component_manager.component_state.get("attenuation2polhx", 0.0)
+
+    @attribute(
+        dtype=float,
+        doc="""The current attenuation value for attenuator 2 on the
+        V/Y polarization.""",
+        access=AttrWriteType.READ,
+    )
+    def attenuation2PolVY(self):
+        """Get the attenuation Pol H/X for attenuator 2."""
+        return self.component_manager.component_state.get("attenuation2polvy", 0.0)
+
+    @attribute(
+        dtype=float,
+        doc="""The current total attenuation value across both attenuators on the
+        H/X polarization.""",
+        access=AttrWriteType.READ,
+    )
+    def attenuationPolHX(self):
+        """Get the total attenuation Pol H/X."""
+        return self.component_manager.component_state.get("attenuationpolhx", 0.0)
+
+    @attribute(
+        dtype=float,
+        doc="""The current total attenuation value across both attenuators on the
+        V/Y polarization.""",
+        access=AttrWriteType.READ,
+    )
+    def attenuationPolVY(self):
+        """Get the total attenuation Pol V/Y."""
+        return self.component_manager.component_state.get("attenuationpolvy", 0.0)
 
     @attribute(
         dtype=int,
@@ -1400,6 +1433,40 @@ class DishManager(SKAController):
     def pseudoRandomNoiseDiodePars(self, values):
         """Set the device pseudo random noise diode pars."""
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
+
+    @attribute(
+        dtype=bool,
+        doc="""
+            Check the SAT.RM module to see if
+            the k- value is locked. If not false is returned.
+        """,
+        access=AttrWriteType.READ,
+    )
+    def isKLocked(self):
+        """Returns the status of the SPFRx isKLocked attribute."""
+        self.logger.debug("Read isKLocked")
+        return self.component_manager.component_state.get("isklocked", False)
+
+    @attribute(
+        dtype=bool,
+        doc="""
+            Spectral inversion to correct the frequency sense of the currently
+            configured band with respect to the RF signal.
+
+            Logic 0: Output signal in the same frequency sense as input.
+
+            Logic 1: Output signal in the opposite frequency sense as input.
+
+            Setting this attribute to true will set the
+            spectrum to be flipped.
+
+        """,
+        access=AttrWriteType.READ,
+    )
+    def spectralInversion(self):
+        """Returns the status of the SPFRx spectralInversion attribute."""
+        self.logger.debug("Read spectralInversion")
+        return self.component_manager.component_state.get("spectralinversion", False)
 
     @attribute(
         dtype=str,
