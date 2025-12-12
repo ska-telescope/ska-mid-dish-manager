@@ -9,7 +9,6 @@ import tango
 from tango import AttrQuality
 
 LOGGER = logging.getLogger(__name__)
-TEST_ATTENUATION_VALUE = 23
 
 
 @pytest.mark.unit
