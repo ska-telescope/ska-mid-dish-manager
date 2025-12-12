@@ -10,12 +10,12 @@ import tango
 @pytest.mark.parametrize(
     "tango_attribute, sensor_value",
     [
-        ("attenuation1polhx", 1.0),
-        ("attenuation1polvy", 2.0),
-        ("attenuation2polhx", 3.0),
-        ("attenuation2polvy", 4.0),
-        ("attenuationpolhx", 5.0),
-        ("attenuationpolvy", 6.0),
+        ("attenuation1PolHX", 1.0),
+        ("attenuation1PolVY", 2.0),
+        ("attenuation2PolHX", 3.0),
+        ("attenuation2PolVY", 4.0),
+        ("attenuationPolHX", 5.0),
+        ("attenuationPolVY", 6.0),
     ],
 )
 def test_attenuation_attrs(
