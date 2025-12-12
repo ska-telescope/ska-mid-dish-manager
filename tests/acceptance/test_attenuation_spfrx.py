@@ -1,0 +1,38 @@
+"""Test attenuation attributes on SPFRx."""
+
+from typing import Any
+
+import pytest
+import tango
+
+
+@pytest.mark.acceptance
+@pytest.mark.xfail
+@pytest.mark.parametrize(
+    "tango_attribute, sensor_value",
+    [
+        ("attenuation1PolHX", 1),
+        ("attenuation1PolVY", 2),
+        ("attenuation2PolHX", 3),
+        ("attenuation2PolVY", 4),
+        ("attenuation_placehoder_attr_1", 5),
+        ("attenuation_placehoder_attr_2", 6),
+    ],
+)
+def test_attenuation_attrs(
+    tango_attribute: str,
+    sensor_value: Any,
+    dish_manager_proxy: tango.DeviceProxy,
+    spfrx_device_proxy: tango.DeviceProxy,
+    event_store_class: Any,
+) -> None:
+    """Test attenuation attributes on SPFRx."""
+    dm_event_store = event_store_class()
+
+    sub_id = dish_manager_proxy.subscribe_event(
+        tango_attribute, tango.EventType.CHANGE_EVENT, dm_event_store
+    )
+    spfrx_device_proxy.write_attribute(tango_attribute, sensor_value)
+
+    dm_event_store.wait_for_value(sensor_value, timeout=7)
+    dish_manager_proxy.unsubscribe_event(sub_id)
