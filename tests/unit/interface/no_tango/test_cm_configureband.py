@@ -352,3 +352,40 @@ def test_configureband_bad_root_key(
     )
     assert status == TaskStatus.FAILED
     assert "Error parsing JSON." in response
+
+
+@pytest.mark.unit
+@patch(
+    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
+    Mock(return_value=True),
+)
+def test_configureband_invalid_receiver_band(
+    component_manager: DishManagerComponentManager,
+    callbacks: dict,
+) -> None:
+    """Verify behaviour of ConfigureBand for json with invalid receiver band.
+
+    :param component_manager: the component manager under test
+    :param mock_command_tracker: a representing the command tracker class
+    :param callbacks: a dictionary of mocks, passed as callbacks to
+        the command tracker under test
+    """
+    configure_json = """
+
+        {
+            "dish": {
+                "receiver_band": "7",
+                "spfrx_processing_parameters": [
+                    {
+                        "dishes": ["SKA001"]
+                    }
+                ]
+            }
+        }
+        """
+
+    status, response = component_manager.configure_band_with_json(
+        configure_json, callbacks["task_cb"]
+    )
+    assert status == TaskStatus.FAILED
+    assert "Invalid receiver band in JSON." in response
