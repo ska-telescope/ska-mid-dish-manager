@@ -36,13 +36,9 @@ def test_change(qual_before, qual_after, event_store_class, dish_manager_resourc
         event_store,
     )
 
-    dish_manager_cm._quality_state_callback(
-        "attenuation1polvy", qual_before, TEST_ATTENUATION_VALUE
-    )
+    dish_manager_cm._quality_state_callback("attenuation1polvy", qual_before)
     event_store.wait_for_quality(qual_before)
-    dish_manager_cm._quality_state_callback(
-        "attenuation1polvy", qual_after, TEST_ATTENUATION_VALUE
-    )
+    dish_manager_cm._quality_state_callback("attenuation1polvy", qual_after)
     event_store.wait_for_quality(qual_after)
 
 
