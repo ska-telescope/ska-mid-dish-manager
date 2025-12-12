@@ -31,7 +31,9 @@ def test_attenuation_attrs(
     sub_id = dish_manager_proxy.subscribe_event(
         tango_attribute, tango.EventType.CHANGE_EVENT, dm_event_store
     )
+    # Set the attenuation attribute on the SPFRx device 
     spfrx_device_proxy.write_attribute(tango_attribute, write_value)
 
+    # Wait for the DishManager to receive the updated value
     dm_event_store.wait_for_value(write_value, timeout=7)
     dish_manager_proxy.unsubscribe_event(sub_id)
