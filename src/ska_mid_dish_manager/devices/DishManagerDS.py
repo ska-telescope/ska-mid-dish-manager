@@ -1622,7 +1622,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand(self, value) -> DevVarLongStringArrayType:
+    def ConfigureBand(self, json_string) -> DevVarLongStringArrayType:
         """Configure band according to JSON string supplied.
 
         This command triggers the Dish to transition to the CONFIG Dish
@@ -1633,7 +1633,7 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand")
 
-        result_code, unique_id = handler(value)
+        result_code, unique_id = handler(json_string)
         return ([result_code], [unique_id])
 
     @record_command(False)
