@@ -7,16 +7,15 @@ import tango
 
 
 @pytest.mark.acceptance
-@pytest.mark.xfail
 @pytest.mark.parametrize(
     "tango_attribute, sensor_value",
     [
-        ("attenuation1PolHX", 1),
-        ("attenuation1PolVY", 2),
-        ("attenuation2PolHX", 3),
-        ("attenuation2PolVY", 4),
-        ("attenuation_placehoder_attr_1", 5),
-        ("attenuation_placehoder_attr_2", 6),
+        ("attenuation1polhx", 1.0),
+        ("attenuation1polvy", 2.0),
+        ("attenuation2polhx", 3.0),
+        ("attenuation2polvy", 4.0),
+        ("attenuationpolhx", 5.0),
+        ("attenuationpolvy", 6.0),
     ],
 )
 def test_attenuation_attrs(
