@@ -27,7 +27,7 @@ def test_attenuation_attrs(
 ) -> None:
     """Test attenuation attributes on SPFRx."""
     dm_event_store = event_store_class()
-
+    # Subscribe to the DishManager attribute change event to monitor updates
     sub_id = dish_manager_proxy.subscribe_event(
         tango_attribute, tango.EventType.CHANGE_EVENT, dm_event_store
     )
