@@ -1,6 +1,7 @@
 """Test that Dish Slews to target Azimuth and Elevation."""
 
 import pytest
+import queue
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
