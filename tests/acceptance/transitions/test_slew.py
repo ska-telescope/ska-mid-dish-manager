@@ -63,7 +63,8 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
 
     assert "NOT ALLOWED" in status_msg.upper()
 
-    statuses = status_store.values_for_command_id(cmd_id)
+    status_events = status_store.wait_for_command_id(cmd_id, timeout=10)
+    statuses = [event.attr_value.value for event in status_events]
     assert "STAGING" not in statuses
 
     queue = dish_manager_proxy.longRunningCommandStatus
