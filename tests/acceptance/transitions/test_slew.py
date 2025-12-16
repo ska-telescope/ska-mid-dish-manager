@@ -59,17 +59,17 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
     except queue.Empty:
         pass
 
-    relevant_events = [
-        e for e in events
-        if e.attr_value and cmd_id in str(e.attr_value.value)
-    ]
+    relevant_events = [e for e in events if e.attr_value and cmd_id in str(e.attr_value.value)]
 
     assert relevant_events, f"No events found for command {cmd_id}"
 
     rejected = any(
-        ("REJECT" in str(e.attr_value.value).upper()
-         or "NOT ALLOWED" in str(e.attr_value.value).upper()
-         or "FAILED" in str(e.attr_value.value).upper())
+        (
+            "REJECT" in str(e.attr_value.value).upper()
+            or "NOT ALLOWED" in str(e.attr_value.value).upper()
+            or "FAILED" in str(e.attr_value.value).upper()
+        )
+        for e in relevant_events
     )
 
     assert rejected, f"Command {cmd_id} was not rejected as expected"
