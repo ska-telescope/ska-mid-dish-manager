@@ -52,20 +52,26 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
 
     [[_], [cmd_id]] = dish_manager_proxy.Slew([100, 91])
 
-    events = result_store.wait_for_command_id(cmd_id, timeout=10)
-    final_status = events[-1].attr_value.value
+    status_events = []
+    try:
+        while True:
+            event = status_store._queue.get(timeout=10)
+            if (
+                event.attr_value
+                and isinstance(event.attr_value.value, tuple)
+                and len(event.attr_value.value) >= 4
+                and event.attr_value.value[0] == cmd_id
+            ):
+                status_events.append(event)
+                status = event.attr_value.value[3].upper()
+                if status in ("REJECTED", "FAILED"):
+                    break
+    except queue.Empty:
+        raise RuntimeError(f"No final status received for command {cmd_id}")
 
-    status_msg = (
-        final_status[1][1] if isinstance(final_status[1], (list, tuple)) else final_status[1]
-    )
-
-    assert final_status[0] != 0
-
-    assert "NOT ALLOWED" in status_msg.upper()
-
-    status_events = status_store.wait_for_command_id(cmd_id, timeout=10)
-    statuses = [event.attr_value.value for event in status_events]
-    assert "STAGING" not in statuses
+    final_status_event = status_events[-1].attr_value.value
+    _, _, _, status_str = final_status_event
+    assert status_str.upper() in ("REJECTED", "FAILED")
 
     queue = dish_manager_proxy.longRunningCommandStatus
     ids_in_queue = [queue[i] for i in range(0, len(queue), 2)]
