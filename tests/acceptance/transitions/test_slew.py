@@ -56,9 +56,7 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
     final_status = events[-1].attr_value.value
 
     status_msg = (
-        final_status[1][1]
-        if isinstance(final_status[1], (list, tuple))
-        else final_status[1]
+        final_status[1][1] if isinstance(final_status[1], (list, tuple)) else final_status[1]
     )
 
     assert final_status[0] != 0
