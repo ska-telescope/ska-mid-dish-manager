@@ -41,39 +41,39 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
 @pytest.mark.acceptance
 def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
     """Test that when given out of bounds azel values, dish manager rejects and returns error."""
-    result_store = event_store_class()
     status_store = event_store_class()
 
     subscriptions = setup_subscriptions(
         dish_manager_proxy,
         {
-            "longRunningCommandResult": result_store,
             "longRunningCommandStatus": status_store,
         },
     )
 
     [[_], [cmd_id]] = dish_manager_proxy.Slew([100, 91])
 
-    status_events = []
+    events = []
     try:
         while True:
-            event = status_store._queue.get(timeout=10)
-            if (
-                event.attr_value
-                and isinstance(event.attr_value.value, tuple)
-                and len(event.attr_value.value) >= 4
-                and event.attr_value.value[0] == cmd_id
-            ):
-                status_events.append(event)
-                status = event.attr_value.value[3].upper()
-                if status in ("REJECTED", "FAILED"):
-                    break
+            events.append(status_store._queue.get(timeout=10))
     except queue.Empty:
-        raise RuntimeError(f"No final status received for command {cmd_id}")
+        pass
 
-    final_status_event = status_events[-1].attr_value.value
-    _, _, _, status_str = final_status_event
-    assert status_str.upper() in ("REJECTED", "FAILED")
+    status_events = [
+        e
+        for e in events
+        if (
+            e.attr_value
+            and isinstance(e.attr_value, tuple)
+            and len(e.attr_value.value) >= 4
+            and e.attr_value.value[0] == cmd_id
+        )
+    ]
+
+    assert status_events, f"No status events found for command {cmd_id}"
+
+    final_status = str(status_events[-1].attr_value.value[3]).upper()
+    assert final_status in ("REJECTED", "FAILED")
 
     status_queue = dish_manager_proxy.longRunningCommandStatus
     ids_in_queue = [status_queue[i] for i in range(0, len(queue), 2)]
