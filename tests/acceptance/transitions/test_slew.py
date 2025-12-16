@@ -1,7 +1,8 @@
 """Test that Dish Slews to target Azimuth and Elevation."""
 
-import pytest
 import queue
+
+import pytest
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
@@ -74,8 +75,8 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
     _, _, _, status_str = final_status_event
     assert status_str.upper() in ("REJECTED", "FAILED")
 
-    queue = dish_manager_proxy.longRunningCommandStatus
-    ids_in_queue = [queue[i] for i in range(0, len(queue), 2)]
+    status_queue = dish_manager_proxy.longRunningCommandStatus
+    ids_in_queue = [status_queue[i] for i in range(0, len(queue), 2)]
     assert cmd_id not in ids_in_queue
 
     remove_subscriptions(subscriptions)
