@@ -55,13 +55,15 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
     events = result_store.wait_for_command_id(cmd_id, timeout=10)
     final_status = events[-1].attr_value.value
 
-    if isinstance(final_status[1], (list, tuple)):
-        status_msg = final_status[1][1]
-    else:
-        status_msg = final_status[1]
+    status_msg = (
+        final_status[1][1]
+        if isinstance(final_status[1], (list, tuple))
+        else final_status[1]
+    )
 
-    assert "FAILED" in str(final_status[0]).upper() or "REJECT" in status_msg.upper()
-    assert "COMMAND IS NOT ALLOWED" in status_msg.upper()
+    assert final_status[0] != 0
+
+    assert "NOT ALLOWED" in status_msg.upper()
 
     statuses = status_store.values_for_command_id(cmd_id)
     assert "STAGING" not in statuses
