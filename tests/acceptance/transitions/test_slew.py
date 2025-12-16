@@ -64,7 +64,7 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
         for e in events
         if (
             e.attr_value
-            and isinstance(e.attr_value, tuple)
+            and isinstance(e.attr_value.value, tuple)
             and len(e.attr_value.value) >= 4
             and e.attr_value.value[0] == cmd_id
         )
@@ -72,11 +72,12 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
 
     assert status_events, f"No status events found for command {cmd_id}"
 
-    final_status = str(status_events[-1].attr_value.value[3]).upper()
-    assert final_status in ("REJECTED", "FAILED")
+    final_status = status_events[-1].attr_value.value
+    _, _, _, status_str = final_status
+    assert status_str.upper() in ("REJECTED", "FAILED")
 
-    status_queue = dish_manager_proxy.longRunningCommandStatus
-    ids_in_queue = [status_queue[i] for i in range(0, len(queue), 2)]
+    queue_contents = dish_manager_proxy.longRunningCommandStatus
+    ids_in_queue = [queue_contents[i] for i in range(0, len(queue_contents), 2)]
     assert cmd_id not in ids_in_queue
 
     remove_subscriptions(subscriptions)
