@@ -1534,12 +1534,24 @@ class DishManager(SKAController):
             spectrum to be flipped.
 
         """,
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
     )
     def spectralInversion(self):
         """Returns the status of the SPFRx spectralInversion attribute."""
         self.logger.debug("Read spectralInversion")
         return self.component_manager.component_state.get("spectralinversion", False)
+
+    @spectralInversion.write
+    def spectralInversion(self, value):
+        """Set the status of the SPFRx spectralInversion attribute."""
+        self.logger.debug("spectralInversion write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("spectralInversion", value)
+        else:
+            self.logger.warning("No component manager to write spectralInversion yet")
+            raise RuntimeError("Failed to write to spectralInversion on DishManager")
 
     @attribute(
         dtype=str,
