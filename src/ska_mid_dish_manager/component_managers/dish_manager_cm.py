@@ -63,6 +63,10 @@ from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
 from ska_mid_dish_manager.utils.decorators import check_communicating
+from ska_mid_dish_manager.utils.input_validation import (
+    ConfigureBandValidationError,
+    validate_configure_band_input,
+)
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 from ska_mid_dish_manager.utils.tango_helpers import TangoDbAccessor
@@ -1142,6 +1146,47 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band=band,
                 synchronise=synchronise,
                 requested_cmd=req_cmd,
+                timeout_s=self.get_action_timeout(),
+            ).execute,
+            is_cmd_allowed=_is_configure_band_cmd_allowed,
+            task_callback=task_callback,
+        )
+        return status, response
+
+    @check_communicating
+    def configure_band_with_json(
+        self,
+        data: str,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Configure frequency band using JSON string.
+
+        :param data: JSON string containing band configuration parameters.
+        :type data: str
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :return: Result status and message
+        :rtype: Tuple[TaskStatus, str]
+        """
+        _is_configure_band_cmd_allowed = partial(
+            self._dish_mode_model.is_command_allowed,
+            "ConfigureBand",
+            component_manager=self,
+            progress_callback=self._command_progress_callback,
+        )
+
+        try:
+            validate_configure_band_input(data)
+        except ConfigureBandValidationError as err:
+            self.logger.error("Error parsing JSON for configure band command.")
+            return TaskStatus.FAILED, str(err)
+
+        status, response = self.submit_task(
+            ConfigureBandActionSequence(
+                self.logger,
+                self,
+                data=data,
+                requested_cmd="ConfigureBand",
                 timeout_s=self.get_action_timeout(),
             ).execute,
             is_cmd_allowed=_is_configure_band_cmd_allowed,
