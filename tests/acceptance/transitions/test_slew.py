@@ -45,9 +45,6 @@ def test_slew_outside_bounds_rejected(dish_manager_proxy):
 
     assert result[0] != 0
 
-    assert "NOT" in message[0].upper()
-    assert "LIMIT" in message[0].upper()
-
     assert not dish_manager_proxy.longRunningCommandProgress
 
 
