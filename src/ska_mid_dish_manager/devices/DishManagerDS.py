@@ -611,8 +611,8 @@ class DishManager(SKAController):
         self.logger.debug("attenuation1PolHX write method called with param %s", value)
 
         if hasattr(self, "component_manager"):
-            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            ds_com_man.write_attribute_value("attenuation1PolHX", value)
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuation1PolHX", value)
         else:
             self.logger.warning("No component manager to write attenuation1PolHX yet")
             raise RuntimeError("Failed to write to attenuation1PolHX on DishManager")
@@ -633,8 +633,8 @@ class DishManager(SKAController):
         self.logger.debug("attenuation1PolVY write method called with param %s", value)
 
         if hasattr(self, "component_manager"):
-            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            ds_com_man.write_attribute_value("attenuation1PolVY", value)
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuation1PolVY", value)
         else:
             self.logger.warning("No component manager to write attenuation1PolVY yet")
             raise RuntimeError("Failed to write to attenuation1PolVY on DishManager")
@@ -655,8 +655,8 @@ class DishManager(SKAController):
         self.logger.debug("attenuation2PolHX write method called with param %s", value)
 
         if hasattr(self, "component_manager"):
-            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            ds_com_man.write_attribute_value("attenuation2PolHX", value)
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuation2PolHX", value)
         else:
             self.logger.warning("No component manager to write attenuation2PolHX yet")
             raise RuntimeError("Failed to write to attenuation2PolHX on DishManager")
@@ -677,8 +677,8 @@ class DishManager(SKAController):
         self.logger.debug("attenuation2PolVY write method called with param %s", value)
 
         if hasattr(self, "component_manager"):
-            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            ds_com_man.write_attribute_value("attenuation2PolVY", value)
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuation2PolVY", value)
         else:
             self.logger.warning("No component manager to write attenuation2PolVY yet")
             raise RuntimeError("Failed to write to attenuation2PolVY on DishManager")
@@ -699,8 +699,8 @@ class DishManager(SKAController):
         self.logger.debug("attenuationPolHX write method called with param %s", value)
 
         if hasattr(self, "component_manager"):
-            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            ds_com_man.write_attribute_value("attenuationPolHX", value)
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuationPolHX", value)
         else:
             self.logger.warning("No component manager to write attenuationPolHX yet")
             raise RuntimeError("Failed to write to attenuationPolHX on DishManager")
@@ -721,8 +721,8 @@ class DishManager(SKAController):
         self.logger.debug("attenuationPolVY write method called with param %s", value)
 
         if hasattr(self, "component_manager"):
-            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            ds_com_man.write_attribute_value("attenuationPolVY", value)
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuationPolVY", value)
         else:
             self.logger.warning("No component manager to write attenuationPolVY yet")
             raise RuntimeError("Failed to write to attenuationPolVY on DishManager")
