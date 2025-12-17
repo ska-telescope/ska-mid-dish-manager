@@ -41,7 +41,7 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
 @pytest.mark.acceptance
 def test_slew_outside_bounds_rejected(dish_manager_proxy):
     """Out of bounds azel is rejected immediately and does not start LRC."""
-    result, message = dish_manager_proxy.Slew([100, 91])
+    result, _ = dish_manager_proxy.Slew([100, 91])
 
     assert result[0] != 0
 
