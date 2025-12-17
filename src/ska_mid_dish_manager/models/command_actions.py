@@ -1,5 +1,6 @@
 """Module containing the fanned out command actions."""
 
+import json
 import logging
 import time
 from abc import ABC
@@ -752,9 +753,10 @@ class ConfigureBandAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        band: Band,
-        synchronise: bool,
         requested_cmd: str,
+        band: Optional[Band] = None,
+        synchronise: Optional[bool] = None,
+        data: Optional[str] = None,
         timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
@@ -770,20 +772,44 @@ class ConfigureBandAction(Action):
         )
         self.band = band
         self.synchronise = synchronise
+        self.data = data
+        # If data is provided then band and synchronise are ignored
+        assert (self.data is not None) or (
+            self.band is not None and self.synchronise is not None
+        ), "Either data or both band and synchronise must be provided"
 
-        self.indexer_enum = IndexerPosition(int(band))
+        self.indexer_enum = IndexerPosition(int(band)) if band is not None else None
         self.requested_cmd = requested_cmd
 
-        spfrx_configure_band_command = FannedOutSlowCommand(
-            logger=self.logger,
-            device="SPFRX",
-            command_name=self.requested_cmd,
-            device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
-            command_argument=synchronise,
-            awaited_component_state={"configuredband": self.band},
-            progress_callback=self._progress_callback,
-            is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
-        )
+        if self.data is not None:
+            data_json = json.loads(self.data)
+            dish_data = data_json.get("dish")
+            receiver_band = dish_data.get("receiver_band")
+            # Override band and indexer_enum if json data is provided
+            self.band = Band[f"B{receiver_band}"]
+            self.indexer_enum = IndexerPosition[f"B{receiver_band}"]
+
+            spfrx_configure_band_command = FannedOutSlowCommand(
+                logger=self.logger,
+                device="SPFRX",
+                command_name=self.requested_cmd,
+                device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
+                command_argument=self.data,
+                awaited_component_state={"configuredband": self.band},
+                progress_callback=self._progress_callback,
+                is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
+            )
+        else:
+            spfrx_configure_band_command = FannedOutSlowCommand(
+                logger=self.logger,
+                device="SPFRX",
+                command_name=self.requested_cmd,
+                device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
+                command_argument=self.synchronise,
+                awaited_component_state={"configuredband": self.band},
+                progress_callback=self._progress_callback,
+                is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
+            )
 
         ds_set_index_position_command = FannedOutSlowCommand(
             logger=self.logger,
@@ -814,7 +840,7 @@ class ConfigureBandAction(Action):
             self.handler._trigger_success(task_callback, task_abort_event)
             return
 
-        self.logger.info(f"{self.requested_cmd} called with synchronise = {self.synchronise}")
+        self.logger.info(f"{self.requested_cmd} called")
         return super().execute(task_callback, task_abort_event, completed_response_msg)
 
 
@@ -825,9 +851,10 @@ class ConfigureBandActionSequence(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        band: Band,
-        synchronise: bool,
         requested_cmd: str,
+        band: Optional[Band] = None,
+        synchronise: Optional[bool] = None,
+        data: Optional[str] = None,
         timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
@@ -843,7 +870,8 @@ class ConfigureBandActionSequence(Action):
         )
         self.band = band
         self.synchronise = synchronise
-        self.indexer_enum = IndexerPosition(int(band))
+        self.data = data
+        self.indexer_enum = IndexerPosition(int(band)) if band is not None else None
         self.requested_cmd = requested_cmd
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
@@ -868,6 +896,7 @@ class ConfigureBandActionSequence(Action):
             dish_manager_cm=self.dish_manager_cm,
             band=self.band,
             synchronise=self.synchronise,
+            data=self.data,
             requested_cmd=self.requested_cmd,
             action_on_success=final_action,  # chain operate action if we aren't in STOW
             waiting_callback=self.waiting_callback,

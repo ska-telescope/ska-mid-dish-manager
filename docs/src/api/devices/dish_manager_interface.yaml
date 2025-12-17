@@ -11,9 +11,7 @@
       dtype_out: DevVarLongStringArray
     - name: AbortCommands
       disp_level: OPERATOR
-      doc_in: Abort currently executing long running command on DishManager including
-        stopping dish movement and transitioning dishMode to StandbyFP. For details
-        consult DishManager documentation
+      doc_in: Uninitialised
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
@@ -42,6 +40,33 @@
       doc_out: Uninitialised
       dtype_in: DevString
       dtype_out: DevString
+    - name: ConfigureBand
+      disp_level: OPERATOR
+      doc_in: "The command accepts a JSON string containing data to configure the\
+        \ SPFRx.\n        The JSON structure is as follows:\n        {\n         \
+        \   \"receiver_band\": <string>,\n            \"sub_band\": <integer>,\n \
+        \           \"spfrx_processing_parameters\": {\n                \"dishes\"\
+        : List[<string>],\n                \"sync_pps\":  <bool>,\n              \
+        \  \"attenuation_pol_x\": <float>,\n                \"attenuation_pol_y\"\
+        : <float>,\n                \"attenuation_1_pol_x\": <float>,\n          \
+        \      \"attenuation_1_pol_y\": <float>,\n                \"attenuation_2_pol_x\"\
+        : <float>,\n                \"attenuation_2_pol_y\": <float>,\n          \
+        \      \"saturation_threshold\": <float>,\n                \"noise_diode\"\
+        : {\n                    \"pseudo_random\": {\n                        \"\
+        binary_polynomial\": <long>,\n                        \"seed\": <long>,\n\
+        \                        \"dwell\": <long>,\n                    },\n    \
+        \                \"periodic\": {\n                        \"period\": <long>,\n\
+        \                        \"duty_cycle\": <long>,\n                       \
+        \ \"phase_shift\": <long>,\n                    }\n                }\n   \
+        \         }\n        }\n        where 'receiver_band', 'dishes' and 'sync_pps'\
+        \ are mandatory fields.\n        when 'receiver_band' is set to '5b', the\
+        \ 'sub_band' field is mandatory.\n        The 'dishes' field is a list of\
+        \ dish names that the SPFRx should be configured for,\n        if 'all' is\
+        \ specified in the list, the SPFRx will be configured for all dishes.\n  \
+        \      "
+      doc_out: Uninitialised
+      dtype_in: DevString
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand1
       disp_level: OPERATOR
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
@@ -325,6 +350,23 @@
       label: Status
       max_alarm: Not specified
       max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: _lrcEvent
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read the long running commands events. Always returns\
+        \ an empty list.\n\n        :return: empty list.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: _lrcEvent
+      max_alarm: Not specified
+      max_dim_x: 2
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1496,7 +1538,7 @@
       format: '%s'
       label: longRunningCommandIDsInQueue
       max_alarm: Not specified
-      max_dim_x: 65
+      max_dim_x: 66
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1515,7 +1557,7 @@
       format: '%s'
       label: longRunningCommandInProgress
       max_alarm: Not specified
-      max_dim_x: 1
+      max_dim_x: 2
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1535,7 +1577,7 @@
       format: '%s'
       label: longRunningCommandProgress
       max_alarm: Not specified
-      max_dim_x: 2
+      max_dim_x: 4
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1574,7 +1616,7 @@
       format: '%s'
       label: longRunningCommandStatus
       max_alarm: Not specified
-      max_dim_x: 130
+      max_dim_x: 132
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1585,16 +1627,88 @@
       data_format: SPECTRUM
       data_type: DevString
       description: "\n        Read the long running commands in the queue.\n\n   \
-        \      Keep track of which commands are that are currently known about.\n\
-        \         Entries are removed `self._command_tracker._removal_time` seconds\n\
-        \         after they have finished.\n\n        :param attr: Tango attribute\
+        \     Keep track of which commands are that are currently known about.\n \
+        \       Entries are removed `self._command_tracker._removal_time` seconds\n\
+        \        after they have finished.\n\n        :param attr: Tango attribute\
         \ being read\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
       label: longRunningCommandsInQueue
       max_alarm: Not specified
-      max_dim_x: 65
+      max_dim_x: 66
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcExecuting
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read info of the currently executing long running commands.\n\
+        \n        Returns a list of info JSON blobs of the currently executing commands.\n\
+        \n        :param attr: Tango attribute being read\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcExecuting
+      max_alarm: Not specified
+      max_dim_x: 3
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcFinished
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read info of the finished long running commands.\n\n\
+        \        :return: a list of info JSON blobs of the finished long running commands.\n\
+        \        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcFinished
+      max_alarm: Not specified
+      max_dim_x: 100
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcProtocolVersions
+      data_format: SPECTRUM
+      data_type: DevLong64
+      description: "\n        Return supported protocol versions.\n\n        :return:\
+        \ A tuple containing the lower and upper bounds of supported long running\n\
+        \            command protocol versions.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%d'
+      label: lrcProtocolVersions
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcQueue
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read info of the long running commands in queue.\n\n\
+        \        Returns a list of info JSON blobs of the commands in queue.\n\n \
+        \       :param attr: Tango attribute being read\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcQueue
+      max_alarm: Not specified
+      max_dim_x: 66
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -2102,15 +2216,20 @@
       writable_attr_name: None
     properties:
     - name: DSDeviceFqdn
+    - name: DefaultActionTimeoutSeconds
+    - name: DefaultWatchdogTimeout
     - name: DishId
+    - name: GroupDefinitions
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
-    - name: MaintenanceModeActive
     - name: MaxCapabilities
+    - name: MeanWindSpeedThreshold
     - name: ReceptorNumber
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
+    - name: WMSDeviceNames
+    - name: WindGustThreshold
     - name: __SubDevices
     - name: polled_cmd
 
