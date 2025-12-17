@@ -10,7 +10,6 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, SPFOperatingMode
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_spf_lna_power_state_attributes_initial_values(dish_manager_resources) -> None:
     """Test the spf lna attribute initial values are correct."""
     device_proxy, _ = dish_manager_resources
@@ -23,7 +22,6 @@ def test_spf_lna_power_state_attributes_initial_values(dish_manager_resources) -
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_spf_lna_power_state_attributes_types(dish_manager_resources) -> None:
     """Test the spf lna attribute configurations are read and write."""
     device_proxy, _ = dish_manager_resources
@@ -34,7 +32,6 @@ def test_spf_lna_power_state_attributes_types(dish_manager_resources) -> None:
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_spf_lna_power_state_change_unhappy_path(
     dish_manager_proxy: tango.DeviceProxy,
     spf_device_proxy: tango.DeviceProxy,
@@ -50,7 +47,6 @@ def test_spf_lna_power_state_change_unhappy_path(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_spf_lna_power_state_change_happy_path_dishmode_operate(
     dish_manager_proxy: tango.DeviceProxy,
     spf_device_proxy: tango.DeviceProxy,
@@ -71,7 +67,6 @@ def test_spf_lna_power_state_change_happy_path_dishmode_operate(
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_spf_lna_power_state_change_happy_path_dishmode_maintainance(
     dish_manager_proxy: tango.DeviceProxy,
     spf_device_proxy: tango.DeviceProxy,

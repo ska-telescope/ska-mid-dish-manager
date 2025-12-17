@@ -331,6 +331,23 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: _lrcEvent
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read the long running commands events. Always returns\
+        \ an empty list.\n\n        :return: empty list.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: _lrcEvent
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: achievedPointing
       data_format: SPECTRUM
       data_type: DevDouble
@@ -555,6 +572,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b1LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPF C LNA H polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b1LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b1LnaHPowerState
     - name: b2CapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -578,6 +611,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b2LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPF C LNA H polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b2LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b2LnaHPowerState
     - name: b3CapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -601,6 +650,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b3LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPF C LNA H polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b3LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b3LnaHPowerState
     - name: b4CapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -624,6 +689,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b4LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPF C LNA H & V polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b4LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b4LnaHPowerState
     - name: b5aCapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -647,6 +728,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b5aLnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPF C LNA H & V polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b5aLnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b5aLnaHPowerState
     - name: b5bCapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -670,6 +767,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b5bLnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPF C LNA H & V polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b5bLnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b5bLnaHPowerState
     - name: band0PointingModelParams
       data_format: SPECTRUM
       data_type: DevDouble
@@ -1295,6 +1408,40 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: hPolRfPowerIn
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM RF power input for horizonal polarization in
+        dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: hPolRfPowerIn
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: hPolRfPowerOut
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM RF power output for horizonal polarization in
+        dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: hPolRfPowerOut
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: healthState
       data_format: SCALAR
       data_type: DevEnum
@@ -1496,7 +1643,7 @@
       format: '%s'
       label: longRunningCommandIDsInQueue
       max_alarm: Not specified
-      max_dim_x: 65
+      max_dim_x: 66
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1515,7 +1662,7 @@
       format: '%s'
       label: longRunningCommandInProgress
       max_alarm: Not specified
-      max_dim_x: 1
+      max_dim_x: 2
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1535,7 +1682,7 @@
       format: '%s'
       label: longRunningCommandProgress
       max_alarm: Not specified
-      max_dim_x: 2
+      max_dim_x: 4
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1574,7 +1721,7 @@
       format: '%s'
       label: longRunningCommandStatus
       max_alarm: Not specified
-      max_dim_x: 130
+      max_dim_x: 132
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1585,16 +1732,88 @@
       data_format: SPECTRUM
       data_type: DevString
       description: "\n        Read the long running commands in the queue.\n\n   \
-        \      Keep track of which commands are that are currently known about.\n\
-        \         Entries are removed `self._command_tracker._removal_time` seconds\n\
-        \         after they have finished.\n\n        :param attr: Tango attribute\
+        \     Keep track of which commands are that are currently known about.\n \
+        \       Entries are removed `self._command_tracker._removal_time` seconds\n\
+        \        after they have finished.\n\n        :param attr: Tango attribute\
         \ being read\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
       label: longRunningCommandsInQueue
       max_alarm: Not specified
-      max_dim_x: 65
+      max_dim_x: 66
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcExecuting
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read info of the currently executing long running commands.\n\
+        \n        Returns a list of info JSON blobs of the currently executing commands.\n\
+        \n        :param attr: Tango attribute being read\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcExecuting
+      max_alarm: Not specified
+      max_dim_x: 3
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcFinished
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read info of the finished long running commands.\n\n\
+        \        :return: a list of info JSON blobs of the finished long running commands.\n\
+        \        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcFinished
+      max_alarm: Not specified
+      max_dim_x: 100
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcProtocolVersions
+      data_format: SPECTRUM
+      data_type: DevLong64
+      description: "\n        Return supported protocol versions.\n\n        :return:\
+        \ A tuple containing the lower and upper bounds of supported long running\n\
+        \            command protocol versions.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%d'
+      label: lrcProtocolVersions
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcQueue
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read info of the long running commands in queue.\n\n\
+        \        Returns a list of info JSON blobs of the commands in queue.\n\n \
+        \       :param attr: Tango attribute being read\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcQueue
+      max_alarm: Not specified
+      max_dim_x: 66
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1827,6 +2046,38 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: pseudoRandomNoiseDiodePars
+    - name: rfTemperature
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM RF PCB temperature in deg C.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfTemperature
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmPsuPcbTemperature
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects RFCM PSU PCB temperature in deg C.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmPsuPcbTemperature
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: scanID
       data_format: SCALAR
       data_type: DevString
@@ -2026,6 +2277,39 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: trackTableLoadMode
+    - name: vPolRfPowerIn
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM RF power input for vertical polarization in dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: vPolRfPowerIn
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: vPolRfPowerOut
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reflects the RFCM RF power output for vertical polarization in
+        dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: vPolRfPowerOut
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: versionId
       data_format: SCALAR
       data_type: DevString
@@ -2105,12 +2389,9 @@
     - name: DishId
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
-    - name: MaintenanceModeActive
     - name: MaxCapabilities
     - name: ReceptorNumber
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: __SubDevices
     - name: polled_cmd
-
