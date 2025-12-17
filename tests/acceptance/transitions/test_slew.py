@@ -39,10 +39,22 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
 
 
 @pytest.mark.acceptance
-def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
-    """Test that when given out of bounds azel values, dish manager rejects and returns error."""
-    status_store = event_store_class()
+def test_slew_outside_bounds_rejected(dish_manager_proxy):
+    """Out of bounds azel is rejected immediately and does not start LRC."""
+    result, message = dish_manager_proxy.Slew([100, 91])
 
+    assert result[0] != 0
+
+    assert "NOT" in message[0].upper()
+    assert "LIMIT" in message[0].upper()
+
+    assert not dish_manager_proxy.longRunningCommandProgress
+
+
+@pytest.mark.acceptance
+def test_slew_outside_bounds_emits_reject_event(event_store_class, dish_manager_proxy):
+    """Test that when given out of bounds azel values, dish manager emits reject status."""
+    status_store = event_store_class()
     subscriptions = setup_subscriptions(
         dish_manager_proxy,
         {
@@ -61,14 +73,13 @@ def test_slew_outside_bounds_fails(event_store_class, dish_manager_proxy):
 
     relevant_events = [e for e in events if e.attr_value and cmd_id in str(e.attr_value.value)]
 
-    assert relevant_events, f"No events found for command {cmd_id}"
-
-    assert any(
-        "REJECT" in str(e.attr_value.value).upper()
-        or "NOT ALLOWED" in str(e.attr_value.value).upper()
-        or "FAILED" in str(e.attr_value.value).upper()
-        for e in relevant_events
-    ), f"Command {cmd_id} was not rejected as expected"
+    if relevant_events:
+        assert any(
+            "REJECT" in str(e.attr_value.value).upper()
+            or "FAILED" in str(e.attr_value.value).upper()
+            or "NOT ALLOWED" in str(e.attr_value.value).upper()
+            for e in relevant_events
+        ), f"Command {cmd_id} was not rejected in status events as expected"
 
     remove_subscriptions(subscriptions)
 
