@@ -598,61 +598,133 @@ class DishManager(SKAController):
         dtype=float,
         doc="""The current attenuation value for attenuator 1 on the
         H/X polarization.""",
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
     )
     def attenuation1PolHX(self):
         """Get the attenuation Pol H/X for attenuator 1."""
         return self.component_manager.component_state.get("attenuation1polhx", 0.0)
 
+    @attenuation1PolHX.write
+    def attenuation1PolHX(self, value):
+        """Set the attenuation Pol H/X for attenuator 1."""
+        self.logger.debug("attenuation1PolHX write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            ds_com_man.write_attribute_value("attenuation1PolHX", value)
+        else:
+            self.logger.warning("No component manager to write attenuation1PolHX yet")
+            raise RuntimeError("Failed to write to attenuation1PolHX on DishManager")
+
     @attribute(
         dtype=float,
         doc="""The current attenuation value for attenuator 1 on the
         V/Y polarization.""",
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
     )
     def attenuation1PolVY(self):
         """Get the attenuation Pol V/Y for attenuator 1."""
         return self.component_manager.component_state.get("attenuation1polvy", 0.0)
 
+    @attenuation1PolVY.write
+    def attenuation1PolVY(self, value):
+        """Set the attenuation Pol V/Y for attenuator 1."""
+        self.logger.debug("attenuation1PolVY write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            ds_com_man.write_attribute_value("attenuation1PolVY", value)
+        else:
+            self.logger.warning("No component manager to write attenuation1PolVY yet")
+            raise RuntimeError("Failed to write to attenuation1PolVY on DishManager")
+
     @attribute(
         dtype=float,
         doc="""The current attenuation value for attenuator 2 on the
         H/X polarization.""",
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
     )
     def attenuation2PolHX(self):
         """Get the attenuation Pol H/X for attenuator 2."""
         return self.component_manager.component_state.get("attenuation2polhx", 0.0)
 
+    @attenuation2PolHX.write
+    def attenuation2PolHX(self, value):
+        """Set the attenuation Pol H/X for attenuator 2."""
+        self.logger.debug("attenuation2PolHX write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            ds_com_man.write_attribute_value("attenuation2PolHX", value)
+        else:
+            self.logger.warning("No component manager to write attenuation2PolHX yet")
+            raise RuntimeError("Failed to write to attenuation2PolHX on DishManager")
+
     @attribute(
         dtype=float,
         doc="""The current attenuation value for attenuator 2 on the
         V/Y polarization.""",
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
     )
     def attenuation2PolVY(self):
         """Get the attenuation Pol H/X for attenuator 2."""
         return self.component_manager.component_state.get("attenuation2polvy", 0.0)
 
+    @attenuation2PolVY.write
+    def attenuation2PolVY(self, value):
+        """Set the attenuation Pol V/Y for attenuator 2."""
+        self.logger.debug("attenuation2PolVY write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            ds_com_man.write_attribute_value("attenuation2PolVY", value)
+        else:
+            self.logger.warning("No component manager to write attenuation2PolVY yet")
+            raise RuntimeError("Failed to write to attenuation2PolVY on DishManager")
+
     @attribute(
         dtype=float,
         doc="""The current total attenuation value across both attenuators on the
         H/X polarization.""",
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
     )
     def attenuationPolHX(self):
         """Get the total attenuation Pol H/X."""
         return self.component_manager.component_state.get("attenuationpolhx", 0.0)
 
+    @attenuationPolHX.write
+    def attenuationPolHX(self, value):
+        """Set the total attenuation Pol H/X."""
+        self.logger.debug("attenuationPolHX write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            ds_com_man.write_attribute_value("attenuationPolHX", value)
+        else:
+            self.logger.warning("No component manager to write attenuationPolHX yet")
+            raise RuntimeError("Failed to write to attenuationPolHX on DishManager")
+
     @attribute(
         dtype=float,
         doc="""The current total attenuation value across both attenuators on the
         V/Y polarization.""",
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
     )
     def attenuationPolVY(self):
         """Get the total attenuation Pol V/Y."""
         return self.component_manager.component_state.get("attenuationpolvy", 0.0)
+
+    @attenuationPolVY.write
+    def attenuationPolVY(self, value):
+        """Set the total attenuation Pol V/Y."""
+        self.logger.debug("attenuationPolVY write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            ds_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            ds_com_man.write_attribute_value("attenuationPolVY", value)
+        else:
+            self.logger.warning("No component manager to write attenuationPolVY yet")
+            raise RuntimeError("Failed to write to attenuationPolVY on DishManager")
 
     @attribute(
         dtype=int,
