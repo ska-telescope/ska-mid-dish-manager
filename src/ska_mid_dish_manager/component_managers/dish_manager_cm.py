@@ -165,6 +165,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             lastcommandinvoked=("0.0", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
             actiontimeoutseconds=action_timeout_s,
+            b1lnahpowerstate=False,
+            b2lnahpowerstate=False,
+            b3lnahpowerstate=False,
+            b4lnahpowerstate=False,
+            b5alnahpowerstate=False,
+            b5blnahpowerstate=False,
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -202,6 +208,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b1lnahpowerstate=False,
+                b2lnahpowerstate=False,
+                b3lnahpowerstate=False,
+                b4lnahpowerstate=False,
+                b5alnahpowerstate=False,
+                b5blnahpowerstate=False,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPF
                 ),
@@ -307,6 +319,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "noiseDiodeMode",
                 "periodicNoiseDiodePars",
                 "pseudoRandomNoiseDiodePars",
+            ],
+            "SPF": [
+                "b1LnaHPowerState",
+                "b2LnaHPowerState",
+                "b3LnaHPowerState",
+                "b4LnaHPowerState",
+                "b5aLnaHPowerState",
+                "b5bLnaHPowerState",
             ],
         }
 
@@ -823,7 +843,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 self._update_component_state(**{cap_state_name: new_state})
 
-        # Update the pointing model params if they change
         for band in ["0", "1", "2", "3", "4", "5a", "5b"]:
             pointing_param_name = f"band{band}pointingmodelparams"
 
