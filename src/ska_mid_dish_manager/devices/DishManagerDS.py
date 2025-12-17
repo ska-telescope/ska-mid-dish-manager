@@ -1644,7 +1644,6 @@ class DishManager(SKAController):
                 "Cannot change LNA power state while dish is not in operate or maintanance mode."
             )
         spf_com_man.write_attribute_value("b1LnaHPowerState", value)
-        self.component_manager.component_state["b1lnahpowerstate"] = value
 
     @attribute(
         dtype=bool,
@@ -1668,7 +1667,6 @@ class DishManager(SKAController):
                 "Cannot change LNA power state while SPF not in operate or maintanance mode."
             )
         spf_com_man.write_attribute_value("b2LnaHPowerState", value)
-        self.component_manager.component_state["b2lnahpowerstate"] = value
 
     @attribute(
         dtype=bool,
@@ -1692,7 +1690,6 @@ class DishManager(SKAController):
                 "Cannot change LNA power state while SPF not in operate or maintanance mode."
             )
         spf_com_man.write_attribute_value("b3LnaHPowerState", value)
-        self.component_manager.component_state["b3lnahpowerstate"] = value
 
     @attribute(
         dtype=bool,
@@ -1716,7 +1713,6 @@ class DishManager(SKAController):
                 "Cannot change LNA power state while SPF not in operate or maintanance mode."
             )
         spf_com_man.write_attribute_value("b4LnaHPowerState", value)
-        self.component_manager.component_state["b4lnahpowerstate"] = value
 
     @attribute(
         dtype=bool,
@@ -1740,7 +1736,6 @@ class DishManager(SKAController):
                 "Cannot change LNA power state while SPF not in operate or maintanance mode."
             )
         spf_com_man.write_attribute_value("b5aLnaHPowerState", value)
-        self.component_manager.component_state["b5alnahpowerstate"] = value
 
     @attribute(
         dtype=bool,
@@ -1764,7 +1759,6 @@ class DishManager(SKAController):
                 "Cannot change LNA power state while SPF not in operate or maintanance mode."
             )
         spf_com_man.write_attribute_value("b5bLnaHPowerState", value)
-        self.component_manager.component_state["b5blnahpowerstate"] = value
 
     # --------
     # Commands

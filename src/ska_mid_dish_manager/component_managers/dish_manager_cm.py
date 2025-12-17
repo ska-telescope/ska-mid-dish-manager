@@ -858,9 +858,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
         # Update attributes that are mapped directly from subservient devices
-        if device == "SPF":
-            # there's no SPF in the mapped dict
-            return
         attrs = self.direct_mapped_attrs[device]
         cm_state = self.sub_component_managers[device.value].component_state
 
