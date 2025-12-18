@@ -6,7 +6,7 @@ import pytest
 import tango
 from tango import AttrWriteType
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, SPFOperatingMode
+from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
@@ -41,40 +41,35 @@ def test_spf_lna_power_state_attributes_types(dish_manager_resources) -> None:
 @pytest.mark.acceptance
 def test_spf_lna_power_state_change_unhappy_path(
     dish_manager_proxy: tango.DeviceProxy,
-    spf_device_proxy: tango.DeviceProxy,
-    event_store_class: Any,
 ) -> None:
     """Test that SPF Lna Power State change fails when dishmode either not in operate
     or maintainance.
     """
     attr_cb_mapping = {}
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    err_msg = "Cannot change LNA power state while SPF not in operate or maintanance mode."
+    err_msg = "Cannot change LNA power state while dish is not in operate or maintanance mode."
     assert dish_manager_proxy.read_attribute("dishMode").value == DishMode.STANDBY_FP
-    expected_result = dish_manager_proxy.write_attribute("b1LnaHPowerState", True)
-    assert expected_result == err_msg
+    with pytest.raises(tango.DevFailed) as exc_info:
+        dish_manager_proxy.write_attribute("b1LnaHPowerState", True)
+    err_desc = exc_info.value.args[0].desc
+    assert err_msg in err_desc
     remove_subscriptions(subscriptions)
 
 
 @pytest.mark.acceptance
 def test_spf_lna_power_state_change_happy_path_dishmode_operate(
     dish_manager_proxy: tango.DeviceProxy,
-    spf_device_proxy: tango.DeviceProxy,
     event_store_class: Any,
 ) -> None:
     """Test that SPF Lna Power State change works when dishmode is in operate."""
     dm_event_store = event_store_class()
-    spf_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dm_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     attr_change_value = True
     dish_manager_proxy.ConfigureBand1(True)
-
     dm_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
-    spf_event_store.wait_for_value(SPFOperatingMode.OPERATE, timeout=30)
-
     dish_manager_proxy.write_attribute("b1LnaHPowerState").value = attr_change_value
 
     assert dish_manager_proxy.read_attribute("b1LnaHPowerState").value == attr_change_value
@@ -84,12 +79,10 @@ def test_spf_lna_power_state_change_happy_path_dishmode_operate(
 @pytest.mark.acceptance
 def test_spf_lna_power_state_change_happy_path_dishmode_maintainance(
     dish_manager_proxy: tango.DeviceProxy,
-    spf_device_proxy: tango.DeviceProxy,
     event_store_class: Any,
 ) -> None:
     """Test that SPF Lna Power State change works when dishmode is in maintainance."""
     dm_event_store = event_store_class()
-    spf_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dm_event_store,
     }
@@ -98,9 +91,7 @@ def test_spf_lna_power_state_change_happy_path_dishmode_maintainance(
 
     dish_manager_proxy.SetMaintenanceMode()
 
-    dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
-    spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
-
+    dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=50)
     dish_manager_proxy.write_attribute("b1LnaHPowerState").value = attr_change_value
 
     assert dish_manager_proxy.read_attribute("b1LnaHPowerState").value == attr_change_value
