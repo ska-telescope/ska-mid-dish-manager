@@ -144,6 +144,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             noisediodemode=NoiseDiodeMode.OFF,
             periodicnoisediodepars=[],
             pseudorandomnoisediodepars=[0, 0, 0],
+            isklocked=False,
+            spectralinversion=False,
             actstaticoffsetvaluexel=0.0,
             actstaticoffsetvalueel=0.0,
             tracktablecurrentindex=0,
@@ -153,10 +155,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
             achievedpointing=[0.0, 0.0, 0.0],
-            attenuationpolh=0.0,
-            attenuationpolv=0.0,
             dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
             powerstate=PowerState.LOW,
+            attenuation1polhx=0.0,
+            attenuation1polvy=0.0,
+            attenuation2polhx=0.0,
+            attenuation2polvy=0.0,
+            attenuationpolhx=0.0,
+            attenuationpolvy=0.0,
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
@@ -257,10 +263,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._state_update_lock,
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
-                capturingdata=False,
+                datafibercheck=False,  # Maps to Dish Managers "capturing" attribute
                 healthstate=HealthState.UNKNOWN,
-                attenuationpolh=0.0,
-                attenuationpolv=0.0,
+                attenuationpolhx=0.0,
+                attenuationpolvy=0.0,
+                attenuation1polhx=0.0,
+                attenuation1polvy=0.0,
+                attenuation2polhx=0.0,
+                attenuation2polvy=0.0,
                 kvalue=0,
                 b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -311,6 +321,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "noiseDiodeMode",
                 "periodicNoiseDiodePars",
                 "pseudoRandomNoiseDiodePars",
+                "isKLocked",
+                "spectralInversion",
+                "attenuation1PolHX",
+                "attenuation1PolVY",
+                "attenuation2PolHX",
+                "attenuation2PolVY",
+                "attenuationPolHX",
+                "attenuationPolVY",
             ],
         }
 
@@ -735,21 +753,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 spf_component_state["bandinfocus"] = band_in_focus
 
-        # spfrx attenuation
-        if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
-            attenuation = {
-                "attenuationpolv": spfrx_component_state["attenuationpolv"],
-                "attenuationpolh": spfrx_component_state["attenuationpolh"],
-            }
-            self.logger.debug(
-                (
-                    "Updating dish manager attenuationpolv and attenuationpolh "
-                    "with: SPFRX attenuation [%s]"
-                ),
-                attenuation,
-            )
-            self._update_component_state(**attenuation)
-
         # kvalue
         if "kvalue" in kwargs:
             k_value = spfrx_component_state["kvalue"]
@@ -779,13 +782,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
-        if "capturingdata" in kwargs:
-            capturing_data = spfrx_component_state["capturingdata"]
+        if "datafibercheck" in kwargs:
+            data_fiber_check = spfrx_component_state["datafibercheck"]
             self.logger.debug(
                 ("Updating dish manager capturing with: SPFRx [%s]"),
-                capturing_data,
+                data_fiber_check,
             )
-            self._update_component_state(capturing=capturing_data)
+            self._update_component_state(capturing=data_fiber_check)
 
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode or operatingmode changes
