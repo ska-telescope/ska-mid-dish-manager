@@ -1692,7 +1692,7 @@ class DishManager(SKAController):
     def b5bLnaHPowerState(self, value: bool):
         """Sets b5bLnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b5aLnaHPowerState to, %s", value)
+        self.logger.debug("Set b5bLnaHPowerState to, %s", value)
         if spf_com_man["operatingmode"] not in [
             SPFOperatingMode.OPERATE,
             SPFOperatingMode.MAINTENANCE,
