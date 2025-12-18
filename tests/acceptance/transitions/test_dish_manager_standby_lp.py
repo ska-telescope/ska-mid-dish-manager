@@ -40,4 +40,7 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
     main_event_store.wait_for_value(DishMode.STANDBY_LP)
     assert dish_manager_proxy.powerState == PowerState.LOW
 
+    with pytest.raises(RuntimeError):
+        main_event_store.wait_for_value(DishMode.UNKNOWN)
+
     remove_subscriptions(subscriptions)
