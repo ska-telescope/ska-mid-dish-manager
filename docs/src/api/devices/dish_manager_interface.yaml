@@ -504,8 +504,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
+      writable: READ_WRITE
+      writable_attr_name: attenuation1PolHX
     - name: attenuation1PolVY
       data_format: SCALAR
       data_type: DevDouble
@@ -521,8 +521,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
+      writable: READ_WRITE
+      writable_attr_name: attenuation1PolVY
     - name: attenuation2PolHX
       data_format: SCALAR
       data_type: DevDouble
@@ -538,8 +538,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
+      writable: READ_WRITE
+      writable_attr_name: attenuation2PolHX
     - name: attenuation2PolVY
       data_format: SCALAR
       data_type: DevDouble
@@ -555,8 +555,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
+      writable: READ_WRITE
+      writable_attr_name: attenuation2PolVY
     - name: attenuationPolHX
       data_format: SCALAR
       data_type: DevDouble
@@ -572,8 +572,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
+      writable: READ_WRITE
+      writable_attr_name: attenuationPolHX
     - name: attenuationPolVY
       data_format: SCALAR
       data_type: DevDouble
@@ -589,8 +589,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
+      writable: READ_WRITE
+      writable_attr_name: attenuationPolVY
     - name: autoWindStowEnabled
       data_format: SCALAR
       data_type: DevBoolean
@@ -2084,8 +2084,8 @@
       min_alarm: Not specified
       min_value: Not specified
       standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
+      writable: READ_WRITE
+      writable_attr_name: spectralInversion
     - name: spfConnectionState
       data_format: SCALAR
       data_type: DevEnum
@@ -2334,8 +2334,6 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: WMSDeviceNames
     - name: WindGustThreshold
-    - name: __SubDevices
     - name: polled_cmd
 
