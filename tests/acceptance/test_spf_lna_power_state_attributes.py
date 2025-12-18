@@ -70,7 +70,7 @@ def test_spf_lna_power_state_change_happy_path_dishmode_operate(
     attr_change_value = True
     dish_manager_proxy.ConfigureBand1(True)
     dm_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
-    dish_manager_proxy.write_attribute("b1LnaHPowerState", attr_change_value) 
+    dish_manager_proxy.write_attribute("b1LnaHPowerState", attr_change_value)
 
     assert dish_manager_proxy.read_attribute("b1LnaHPowerState").value == attr_change_value
     remove_subscriptions(subscriptions)
@@ -92,7 +92,7 @@ def test_spf_lna_power_state_change_happy_path_dishmode_maintainance(
     dish_manager_proxy.SetMaintenanceMode()
 
     dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
-    dish_manager_proxy.write_attribute("b1LnaHPowerState",attr_change_value)
+    dish_manager_proxy.write_attribute("b1LnaHPowerState", attr_change_value)
 
     assert dish_manager_proxy.read_attribute("b1LnaHPowerState").value == attr_change_value
     remove_subscriptions(subscriptions)
