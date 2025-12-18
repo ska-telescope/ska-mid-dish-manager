@@ -1564,69 +1564,6 @@ class DishManager(SKAController):
         self.logger.debug("Write to actionTimeoutSeconds, %s", value)
         self.component_manager.set_action_timeout(value)
 
-    def clkPhotodiodeCurrent(self):
-        """Return the photo diode current."""
-        return self.component_manager.component_state.get("clkphotodiodecurrent", 0.0)
-
-    @attribute(
-        dtype=float,
-        access=AttrWriteType.READ,
-        doc="Reflects the RFCM RF power input for horizonal polarization in dBm.",
-    )
-    def hPolRfPowerIn(self):
-        """Return the hPolRfPowerIn."""
-        return self.component_manager.component_state.get("hpolrfpowerin", 0.0)
-
-    @attribute(
-        dtype=float,
-        access=AttrWriteType.READ,
-        doc="Reflects the RFCM RF power input for vertical polarization in dBm.",
-    )
-    def vPolRfPowerIn(self):
-        """Return the vPolRfPowerIn."""
-        return self.component_manager.component_state.get("vpolrfpowerin", 0.0)
-
-    @attribute(
-        dtype=float,
-        access=AttrWriteType.READ,
-        doc="Reflects the RFCM RF power output for horizonal polarization in dBm.",
-    )
-    def hPolRfPowerOut(self):
-        """Return the hPolRfPowerOut."""
-        return self.component_manager.component_state.get("hpolrfpowerout", 0.0)
-
-    @attribute(
-        dtype=float,
-        access=AttrWriteType.READ,
-        doc="Reflects the RFCM RF power output for vertical polarization in dBm.",
-    )
-    def vPolRfPowerOut(self):
-        """Return the vPolRfPowerOut sensor value."""
-        return self.component_manager.component_state.get("vpolrfpowerout", 0.0)
-
-    @attribute(
-        dtype=float,
-        access=AttrWriteType.READ,
-        doc="Reflects the RFCM RF PCB temperature in deg C.",
-    )
-    def rfTemperature(self):
-        """Return the of the RFCM RF PCB in deg."""
-        return self.component_manager.component_state.get("rftemperature", 0.0)
-
-    @attribute(
-        dtype=float,
-        access=AttrWriteType.READ,
-        doc="Reflects RFCM PSU PCB temperature in deg C.",
-    )
-    def rfcmPsuPcbTemperature(self):
-        """Return the temperature of the RFCM PSU PCB in deg."""
-        return self.component_manager.component_state.get("rfcmpsupcbtemperature", 0.0)
-
-    @attribute(
-        dtype=bool,
-        access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPF C LNA H polarization power state.",
-    )
     def b1LnaHPowerState(self):
         """Return the SPF C LNA H polarization power state."""
         return self.component_manager.component_state.get("b1lnahpowerstate", False)
