@@ -1564,6 +1564,11 @@ class DishManager(SKAController):
         self.logger.debug("Write to actionTimeoutSeconds, %s", value)
         self.component_manager.set_action_timeout(value)
 
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPF C LNA H polarization power state.",
+    )
     def b1LnaHPowerState(self):
         """Return the SPF C LNA H polarization power state."""
         return self.component_manager.component_state.get("b1lnahpowerstate", False)
