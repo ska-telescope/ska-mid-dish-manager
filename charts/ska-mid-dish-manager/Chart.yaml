@@ -36,7 +36,7 @@ dependencies:
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-simulators.enabled
 - name: ska-mid-dish-ds-manager
-  version: 7.0.3
+  version: 7.0.4
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-ds-manager.enabled
 - name: ska-mid-wms
