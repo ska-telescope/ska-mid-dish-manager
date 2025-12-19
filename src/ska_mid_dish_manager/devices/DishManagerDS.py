@@ -1719,10 +1719,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPF C LNA H polarization power state.",
+        doc="Status of the SPFC LNA H polarization power state.",
     )
     def b1LnaHPowerState(self):
-        """Return the SPF C LNA H polarization power state."""
+        """Return the SPFC LNA H polarization power state."""
         return self.component_manager.component_state.get("b1lnahpowerstate", False)
 
     @b1LnaHPowerState.write
@@ -1742,10 +1742,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPF C LNA H polarization power state.",
+        doc="Status of the SPFC LNA H polarization power state.",
     )
     def b2LnaHPowerState(self):
-        """Return the SPF C LNA H polarization power state."""
+        """Return the SPFC LNA H polarization power state."""
         return self.component_manager.component_state.get("b2lnahpowerstate", False)
 
     @b2LnaHPowerState.write
@@ -1765,10 +1765,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPF C LNA H polarization power state.",
+        doc="Status of the SPFC LNA H polarization power state.",
     )
     def b3LnaHPowerState(self):
-        """Return the SPF C LNA H & V polarization power state."""
+        """Return the SPFC LNA H & V polarization power state."""
         return self.component_manager.component_state.get("b3lnahpowerstate", False)
 
     @b3LnaHPowerState.write
@@ -1788,10 +1788,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPF C LNA H & V polarization power state.",
+        doc="Status of the SPFC LNA H & V polarization power state.",
     )
     def b4LnaHPowerState(self):
-        """Return the SPF C LNA H polarization power state."""
+        """Return the SPFC LNA H polarization power state."""
         return self.component_manager.component_state.get("b4lnahpowerstate", False)
 
     @b4LnaHPowerState.write
@@ -1811,10 +1811,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPF C LNA H & V polarization power state.",
+        doc="Status of the SPFC LNA H & V polarization power state.",
     )
     def b5aLnaHPowerState(self):
-        """Return the SPF C LNA H polarization power state."""
+        """Return the SPFC LNA H polarization power state."""
         return self.component_manager.component_state.get("b5alnahpowerstate", False)
 
     @b5aLnaHPowerState.write
@@ -1834,10 +1834,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPF C LNA H & V polarization power state.",
+        doc="Status of the SPFC LNA H & V polarization power state.",
     )
     def b5bLnaHPowerState(self):
-        """Return the SPF C LNA H polarization power state."""
+        """Return the SPFC LNA H polarization power state."""
         return self.component_manager.component_state.get("b5blnahpowerstate", False)
 
     @b5bLnaHPowerState.write

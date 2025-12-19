@@ -685,7 +685,7 @@
     - name: b1LnaHPowerState
       data_format: SCALAR
       data_type: DevBoolean
-      description: Status of the SPF C LNA H polarization power state.
+      description: Status of the SPFC LNA H polarization power state.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
@@ -724,7 +724,7 @@
     - name: b2LnaHPowerState
       data_format: SCALAR
       data_type: DevBoolean
-      description: Status of the SPF C LNA H polarization power state.
+      description: Status of the SPFC LNA H polarization power state.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
@@ -763,7 +763,7 @@
     - name: b3LnaHPowerState
       data_format: SCALAR
       data_type: DevBoolean
-      description: Status of the SPF C LNA H polarization power state.
+      description: Status of the SPFC LNA H polarization power state.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
@@ -802,7 +802,7 @@
     - name: b4LnaHPowerState
       data_format: SCALAR
       data_type: DevBoolean
-      description: Status of the SPF C LNA H & V polarization power state.
+      description: Status of the SPFC LNA H & V polarization power state.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
@@ -841,7 +841,7 @@
     - name: b5aLnaHPowerState
       data_format: SCALAR
       data_type: DevBoolean
-      description: Status of the SPF C LNA H & V polarization power state.
+      description: Status of the SPFC LNA H & V polarization power state.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
@@ -880,7 +880,7 @@
     - name: b5bLnaHPowerState
       data_format: SCALAR
       data_type: DevBoolean
-      description: Status of the SPF C LNA H & V polarization power state.
+      description: Status of the SPFC LNA H & V polarization power state.
       disp_level: OPERATOR
       display_unit: No display unit
       format: Not specified
