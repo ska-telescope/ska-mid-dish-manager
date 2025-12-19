@@ -1518,40 +1518,6 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
-    - name: hPolRfPowerIn
-      data_format: SCALAR
-      data_type: DevDouble
-      description: Reflects the RFCM RF power input for horizonal polarization in
-        dBm.
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: hPolRfPowerIn
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
-    - name: hPolRfPowerOut
-      data_format: SCALAR
-      data_type: DevDouble
-      description: Reflects the RFCM RF power output for horizonal polarization in
-        dBm.
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: hPolRfPowerOut
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
     - name: healthState
       data_format: SCALAR
       data_type: DevEnum
@@ -2173,38 +2139,6 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: pseudoRandomNoiseDiodePars
-    - name: rfTemperature
-      data_format: SCALAR
-      data_type: DevDouble
-      description: Reflects the RFCM RF PCB temperature in deg C.
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: rfTemperature
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
-    - name: rfcmPsuPcbTemperature
-      data_format: SCALAR
-      data_type: DevDouble
-      description: Reflects RFCM PSU PCB temperature in deg C.
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: rfcmPsuPcbTemperature
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
     - name: scanID
       data_format: SCALAR
       data_type: DevString
@@ -2425,39 +2359,6 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: trackTableLoadMode
-    - name: vPolRfPowerIn
-      data_format: SCALAR
-      data_type: DevDouble
-      description: Reflects the RFCM RF power input for vertical polarization in dBm.
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: vPolRfPowerIn
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
-    - name: vPolRfPowerOut
-      data_format: SCALAR
-      data_type: DevDouble
-      description: Reflects the RFCM RF power output for vertical polarization in
-        dBm.
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%6.2f'
-      label: vPolRfPowerOut
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
     - name: versionId
       data_format: SCALAR
       data_type: DevString
