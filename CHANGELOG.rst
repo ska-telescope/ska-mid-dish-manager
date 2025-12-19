@@ -15,6 +15,7 @@ Version 9.1.0
 - Updated `ska-tango-base` to use latest version limited to minor releases (<2.0.0).
 - Removed forked mark on acceptance tests; limited forked tests to tests that use DeviceTestContext.
 - Implemented ConfigureBand command that ingests a JSON string to configure bands on SPFRx.
+- Exposed SPF B<n>LNAPowerState attributes for bands 1 to 5b. 
 
 Version 9.0.0
 *************
