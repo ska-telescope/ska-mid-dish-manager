@@ -373,6 +373,23 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: _lrcEvent
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read the long running commands events. Always returns\
+        \ an empty list.\n\n        :return: empty list.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: _lrcEvent
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: achievedPointing
       data_format: SPECTRUM
       data_type: DevDouble
@@ -665,6 +682,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b1LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b1LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b1LnaHPowerState
     - name: b2CapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -688,6 +721,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b2LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b2LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b2LnaHPowerState
     - name: b3CapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -711,6 +760,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b3LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b3LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b3LnaHPowerState
     - name: b4CapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -734,6 +799,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b4LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H & V polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b4LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b4LnaHPowerState
     - name: b5aCapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -757,6 +838,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b5aLnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H & V polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b5aLnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b5aLnaHPowerState
     - name: b5bCapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -780,6 +877,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b5bLnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H & V polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b5bLnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b5bLnaHPowerState
     - name: band0PointingModelParams
       data_format: SPECTRUM
       data_type: DevDouble
@@ -2336,4 +2449,3 @@
     - name: SkaLevel
     - name: WindGustThreshold
     - name: polled_cmd
-

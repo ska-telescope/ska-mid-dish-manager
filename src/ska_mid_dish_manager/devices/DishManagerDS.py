@@ -48,6 +48,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     NoiseDiodeMode,
     PointingState,
     PowerState,
+    SPFOperatingMode,
     TrackInterpolationMode,
     TrackProgramMode,
     TrackTableLoadMode,
@@ -416,6 +417,12 @@ class DishManager(SKAController):
                 "lastcommandinvoked": "lastCommandInvoked",
                 "dscctrlstate": "dscCtrlState",
                 "actiontimeoutseconds": "actionTimeoutSeconds",
+                "b1lnahpowerstate": "b1LnaHPowerState",
+                "b2lnahpowerstate": "b2LnaHPowerState",
+                "b3lnahpowerstate": "b3LnaHPowerState",
+                "b4lnahpowerstate": "b4LnaHPowerState",
+                "b5alnahpowerstate": "b5aLnaHPowerState",
+                "b5blnahpowerstate": "b5bLnaHPowerState",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1708,6 +1715,144 @@ class DishManager(SKAController):
         """Sets actionTimeoutSeconds."""
         self.logger.debug("Write to actionTimeoutSeconds, %s", value)
         self.component_manager.set_action_timeout(value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H polarization power state.",
+    )
+    def b1LnaHPowerState(self):
+        """Return the SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b1lnahpowerstate", False)
+
+    @b1LnaHPowerState.write
+    def b1LnaHPowerState(self, value: bool):
+        """Sets b1LnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b1LnaHPowerState to, %s", value)
+        current_dish_mode = self.component_manager.component_state.get(
+            "dishmode", DishMode.UNKNOWN
+        )
+        if current_dish_mode not in [DishMode.OPERATE, DishMode.MAINTENANCE]:
+            raise RuntimeError(
+                "Cannot change LNA power state while dish is not in operate or maintanance mode."
+            )
+        spf_com_man.write_attribute_value("b1LnaHPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H polarization power state.",
+    )
+    def b2LnaHPowerState(self):
+        """Return the SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b2lnahpowerstate", False)
+
+    @b2LnaHPowerState.write
+    def b2LnaHPowerState(self, value: bool):
+        """Sets b2LnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b1LnaHPowerState to, %s", value)
+        if spf_com_man["operatingmode"] not in [
+            SPFOperatingMode.OPERATE,
+            SPFOperatingMode.MAINTENANCE,
+        ]:
+            raise RuntimeError(
+                "Cannot change LNA power state while SPF not in operate or maintanance mode."
+            )
+        spf_com_man.write_attribute_value("b2LnaHPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H polarization power state.",
+    )
+    def b3LnaHPowerState(self):
+        """Return the SPFC LNA H & V polarization power state."""
+        return self.component_manager.component_state.get("b3lnahpowerstate", False)
+
+    @b3LnaHPowerState.write
+    def b3LnaHPowerState(self, value: bool):
+        """Sets b3LnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b3LnaHPowerState to, %s", value)
+        if spf_com_man["operatingmode"] not in [
+            SPFOperatingMode.OPERATE,
+            SPFOperatingMode.MAINTENANCE,
+        ]:
+            raise RuntimeError(
+                "Cannot change LNA power state while SPF not in operate or maintanance mode."
+            )
+        spf_com_man.write_attribute_value("b3LnaHPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H & V polarization power state.",
+    )
+    def b4LnaHPowerState(self):
+        """Return the SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b4lnahpowerstate", False)
+
+    @b4LnaHPowerState.write
+    def b4LnaHPowerState(self, value: bool):
+        """Sets b4LnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b4LnaHPowerState to, %s", value)
+        if spf_com_man["operatingmode"] not in [
+            SPFOperatingMode.OPERATE,
+            SPFOperatingMode.MAINTENANCE,
+        ]:
+            raise RuntimeError(
+                "Cannot change LNA power state while SPF not in operate or maintanance mode."
+            )
+        spf_com_man.write_attribute_value("b4LnaHPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H & V polarization power state.",
+    )
+    def b5aLnaHPowerState(self):
+        """Return the SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b5alnahpowerstate", False)
+
+    @b5aLnaHPowerState.write
+    def b5aLnaHPowerState(self, value: bool):
+        """Sets b5aLnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b5aLnaHPowerState to, %s", value)
+        if spf_com_man["operatingmode"] not in [
+            SPFOperatingMode.OPERATE,
+            SPFOperatingMode.MAINTENANCE,
+        ]:
+            raise RuntimeError(
+                "Cannot change LNA power state while SPF not in operate or maintanance mode."
+            )
+        spf_com_man.write_attribute_value("b5aLnaHPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H & V polarization power state.",
+    )
+    def b5bLnaHPowerState(self):
+        """Return the SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b5blnahpowerstate", False)
+
+    @b5bLnaHPowerState.write
+    def b5bLnaHPowerState(self, value: bool):
+        """Sets b5bLnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b5bLnaHPowerState to, %s", value)
+        if spf_com_man["operatingmode"] not in [
+            SPFOperatingMode.OPERATE,
+            SPFOperatingMode.MAINTENANCE,
+        ]:
+            raise RuntimeError(
+                "Cannot change LNA power state while SPF not in operate or maintanance mode."
+            )
+        spf_com_man.write_attribute_value("b5bLnaHPowerState", value)
 
     # --------
     # Commands
