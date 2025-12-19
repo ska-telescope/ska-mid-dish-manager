@@ -6,15 +6,18 @@ server:
   name: "DishManagerDS"
   instances:
   {{- range .Values.coalesced_dishes }}
-    - name: "{{ . }}"
+    {{- $dish := . | trim }}
+    {{- $dishLower := $dish | lower }}
+    {{- $receptorNumber := regexReplaceAll "[^0-9]" $dish "" }}
+    - name: "{{ $dishLower }}"
       classes:
         - name: "DishManager"
           devices:
-            - name: "mid-dish/dish-manager/SKA{{ printf "%01s" ( . | toString ) }}"
+            - name: "mid-dish/dish-manager/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
               properties:
                 - name: "ReceptorNumber"
                   values:
-                    - "{{ printf "%01s" . }}"
+                    - "{{ $receptorNumber }}"
                 - name: "SkaLevel"
                   values:
                     - "1"
@@ -35,25 +38,25 @@ server:
                     {{- if $.Values.dishmanager.ds.fqdn }}
                     - "{{ $.Values.dishmanager.ds.fqdn }}"
                     {{- else }}
-                    - "{{ $.Values.dishmanager.ds.domain_name }}/{{ $.Values.dishmanager.ds.family_name }}/SKA{{ printf "%01s" . }}"
+                    - "{{ $.Values.dishmanager.ds.domain_name }}/{{ $.Values.dishmanager.ds.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
                     {{- end }}
                 - name: "SPFDeviceFqdn"
                   values:
                     {{- if $.Values.dishmanager.spf.fqdn }}
                     - "{{ $.Values.dishmanager.spf.fqdn }}"
                     {{- else }}
-                    - "{{ $.Values.dishmanager.spf.domain_name }}/{{ $.Values.dishmanager.spf.family_name }}/SKA{{ printf "%01s" . }}"
+                    - "{{ $.Values.dishmanager.spf.domain_name }}/{{ $.Values.dishmanager.spf.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
                     {{- end }}
                 - name: "SPFRxDeviceFqdn"
                   values:
                     {{- if $.Values.dishmanager.spfrx.fqdn }}
                     - "{{ $.Values.dishmanager.spfrx.fqdn }}"
                     {{- else }}
-                    - "{{ $.Values.dishmanager.spfrx.domain_name }}/{{ $.Values.dishmanager.spfrx.family_name }}/SKA{{ printf "%01s" . }}"
+                    - "{{ $.Values.dishmanager.spfrx.domain_name }}/{{ $.Values.dishmanager.spfrx.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
                     {{- end }}
                 - name: "DishId"
                   values:
-                    - "SKA{{ printf "%01s" . }}"
+                    - "{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dish | upper }}{{ end }}"
                 - name: "DefaultWatchdogTimeout"
                   values:
                     - "{{ $.Values.dishmanager.watchdog.timeout_seconds }}"
@@ -66,7 +69,7 @@ server:
                 - name: "WMSDeviceNames"
                   values:
                     {{- range $.Values.dishmanager.wms.station_ids }}
-                    - "ska-mid/weather-monitoring/{{ . }}"
+                    - "ska-mid/weather-monitoring/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
                     {{- end }}
                 - name: "DefaultActionTimeoutSeconds"
                   values:
@@ -82,7 +85,7 @@ server:
                     - name: "__value"
                       values:
                         - "{{ $.Values.dishmanager.spfrx.ignored }}"
-    {{- end }}
+  {{- end }}
 depends_on:
   - device: sys/database/2
 image:
