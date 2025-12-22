@@ -7,11 +7,15 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 9.1.0
+*************
 - Updated progress messages to be sent on `Status` attribute instead of `longRunningCommandProgress` attribute.
 - Updated PyTango to v10.0.3
 - Updated `ska-tango-base` to use latest version limited to minor releases (<2.0.0).
 - Removed forked mark on acceptance tests; limited forked tests to tests that use DeviceTestContext.
 - Implemented ConfigureBand command that ingests a JSON string to configure bands on SPFRx.
+- Exposed SPF B<n>LNAPowerState attributes for bands 1 to 5b. 
 
 Version 9.0.0
 *************

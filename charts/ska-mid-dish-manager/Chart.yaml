@@ -2,8 +2,8 @@ apiVersion: v2
 name: ska-mid-dish-manager
 description: An application for the SKA Dish Manager TANGO device server(s).
 type: application
-version: 9.0.0
-appVersion: 9.0.0
+version: 9.1.0
+appVersion: 9.1.0
 home: https://gitlab.com/ska-telescope/ska-mid-dish-manager/
 icon: http://www.skatelescope.org/wp-content/uploads/2016/07/09545_NEW_LOGO_2014.png
 sources:
@@ -24,8 +24,10 @@ maintainers:
 dependencies:
 - name: ska-tango-util
   version: 1.0.5
+  version: 1.0.5
   repository: https://artefact.skao.int/repository/helm-internal
 - name: ska-tango-base
+  version: 1.0.5
   version: 1.0.5
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-tango-base.enabled
