@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.1.1
+*************
+- Support numeric and prefixed dish IDs in Helm charts.
+
 Version 9.1.0
 *************
 - Updated progress messages to be sent on `Status` attribute instead of `longRunningCommandProgress` attribute.
