@@ -92,6 +92,20 @@ $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
 --set deviceServers.dishmanager.enabled=false \ # disable dishmanager to use devpod
 ```
 
+### **Note**
+The Helm charts now support both numeric and prefixed dish identifiers.
+
+If you pass **numeric values** (e.g., `001`, `002`), the charts will automatically prefix them with SKA, resulting in Tango device names such as:
+
+```bash
+mid-dish/dish-manager/SKA001
+```
+
+If you pass **prefixed IDs** (e.g., `SKA001`, `MKT001`), the charts will use them as-is:
+```bash
+mid-dish/dish-manager/MKT001
+```
+
 - Then start DishManager in the commandline
 
 ```
