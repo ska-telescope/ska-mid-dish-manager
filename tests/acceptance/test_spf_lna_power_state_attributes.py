@@ -87,15 +87,16 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
 ) -> None:
     """Test that SPF Lna Power State change updates when dishmode is in operate."""
     dm_event_store = event_store_class()
+    spf_lna_power_state_attr_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dm_event_store,
+        attribute_name: spf_lna_power_state_attr_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     dish_manager_proxy.ConfigureBand1(True)
     dm_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
     dish_manager_proxy.write_attribute(attribute_name, True)
-
-    assert dish_manager_proxy.read_attribute(attribute_name).value
+    spf_lna_power_state_attr_event_store.wait_for_value(True, timeout=30)
     remove_subscriptions(subscriptions)
 
 
@@ -118,14 +119,16 @@ def test_spf_lna_power_state_change_on_dishmode_maintainance(
 ) -> None:
     """Test that SPF Lna Power State change updates when dishmode is in maintainance."""
     dm_event_store = event_store_class()
+    spf_lna_power_state_attr_event_store = event_store_class()
+
     attr_cb_mapping = {
         "dishMode": dm_event_store,
+        attribute_name: spf_lna_power_state_attr_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     dish_manager_proxy.SetMaintenanceMode()
 
     dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
     dish_manager_proxy.write_attribute(attribute_name, True)
-
-    assert dish_manager_proxy.read_attribute(attribute_name).value
+    spf_lna_power_state_attr_event_store.wait_for_value(True, timeout=30)
     remove_subscriptions(subscriptions)
