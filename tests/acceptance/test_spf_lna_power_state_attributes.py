@@ -39,7 +39,27 @@ def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DevicePr
 
 
 @pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    "boolean_change",
+    [
+        "b1LnaHPowerState",
+        True,
+        "b2LnaHPowerState",
+        True,
+        "b3LnaHPowerState",
+        True,
+        "b4LnaHPowerState",
+        True,
+        "b5aLnaHPowerState",
+        True,
+        "b5bLnaHPowerState",
+        True,
+    ],
+)
 def test_spf_lna_power_state_change_unhappy_path(
+    attribute_name: str,
+    boolean_change: bool,
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
     """Test that SPF Lna Power State change fails when dishmode either not in operate
@@ -50,14 +70,34 @@ def test_spf_lna_power_state_change_unhappy_path(
     err_msg = "Cannot change LNA power state while dish is not in operate or maintanance mode."
     assert dish_manager_proxy.read_attribute("dishMode").value == DishMode.STANDBY_FP
     with pytest.raises(tango.DevFailed) as exc_info:
-        dish_manager_proxy.write_attribute("b1LnaHPowerState", True)
+        dish_manager_proxy.write_attribute(attribute_name, boolean_change)
     err_desc = exc_info.value.args[0].desc
     assert err_msg in err_desc
     remove_subscriptions(subscriptions)
 
 
 @pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    "boolean_change",
+    [
+        "b1LnaHPowerState",
+        True,
+        "b2LnaHPowerState",
+        True,
+        "b3LnaHPowerState",
+        True,
+        "b4LnaHPowerState",
+        True,
+        "b5aLnaHPowerState",
+        True,
+        "b5bLnaHPowerState",
+        True,
+    ],
+)
 def test_spf_lna_power_state_change_happy_path_dishmode_operate(
+    attribute_name: str,
+    boolean_change: bool,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
 ) -> None:
@@ -67,17 +107,36 @@ def test_spf_lna_power_state_change_happy_path_dishmode_operate(
         "dishMode": dm_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    attr_change_value = True
     dish_manager_proxy.ConfigureBand1(True)
     dm_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
-    dish_manager_proxy.write_attribute("b1LnaHPowerState", attr_change_value)
+    dish_manager_proxy.write_attribute(attribute_name, boolean_change)
 
-    assert dish_manager_proxy.read_attribute("b1LnaHPowerState").value == attr_change_value
+    assert dish_manager_proxy.read_attribute(attribute_name).value == boolean_change
     remove_subscriptions(subscriptions)
 
 
 @pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    "boolean_change",
+    [
+        "b1LnaHPowerState",
+        True,
+        "b2LnaHPowerState",
+        True,
+        "b3LnaHPowerState",
+        True,
+        "b4LnaHPowerState",
+        True,
+        "b5aLnaHPowerState",
+        True,
+        "b5bLnaHPowerState",
+        True,
+    ],
+)
 def test_spf_lna_power_state_change_happy_path_dishmode_maintainance(
+    attribute_name: str,
+    boolean_change: bool,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
 ) -> None:
@@ -87,12 +146,10 @@ def test_spf_lna_power_state_change_happy_path_dishmode_maintainance(
         "dishMode": dm_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    attr_change_value = True
-
     dish_manager_proxy.SetMaintenanceMode()
 
     dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
-    dish_manager_proxy.write_attribute("b1LnaHPowerState", attr_change_value)
+    dish_manager_proxy.write_attribute(attribute_name, boolean_change)
 
-    assert dish_manager_proxy.read_attribute("b1LnaHPowerState").value == attr_change_value
+    assert dish_manager_proxy.read_attribute(attribute_name).value == boolean_change
     remove_subscriptions(subscriptions)
