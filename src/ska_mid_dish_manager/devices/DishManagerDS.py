@@ -1751,7 +1751,7 @@ class DishManager(SKAController):
     def b2LnaHPowerState(self, value: bool):
         """Sets b2LnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b1LnaHPowerState to, %s", value)
+        self.logger.debug("Set b2LnaHPowerState to, %s", value)
         current_dish_mode = self.component_manager.component_state.get(
             "dishmode", DishMode.UNKNOWN
         )
