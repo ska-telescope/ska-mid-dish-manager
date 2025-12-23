@@ -40,7 +40,8 @@ def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DevicePr
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
-    "attribute_name", [
+    "attribute_name",
+    [
         "b1lnahpowerstate",
         "b2lnahpowerstate",
         "b3lnahpowerstate",
@@ -69,7 +70,8 @@ def test_spf_lna_power_state_rejects_attribute_writes(
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
-    "attribute_name", [
+    "attribute_name",
+    [
         "b1lnahpowerstate",
         "b2lnahpowerstate",
         "b3lnahpowerstate",
@@ -99,7 +101,8 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
-    "attribute_name", [
+    "attribute_name",
+    [
         "b1lnahpowerstate",
         "b2lnahpowerstate",
         "b3lnahpowerstate",
