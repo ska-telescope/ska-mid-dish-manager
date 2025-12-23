@@ -95,7 +95,7 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     dm_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
     dish_manager_proxy.write_attribute(attribute_name, True)
 
-    assert not dish_manager_proxy.read_attribute(attribute_name).value
+    assert dish_manager_proxy.read_attribute(attribute_name).value
     remove_subscriptions(subscriptions)
 
 
@@ -127,5 +127,5 @@ def test_spf_lna_power_state_change_on_dishmode_maintainance(
     dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
     dish_manager_proxy.write_attribute(attribute_name, True)
 
-    assert not dish_manager_proxy.read_attribute(attribute_name).value
+    assert dish_manager_proxy.read_attribute(attribute_name).value
     remove_subscriptions(subscriptions)
