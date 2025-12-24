@@ -93,7 +93,8 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
         attribute_name: spf_lna_power_state_attr_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    dish_manager_proxy.ConfigureBand1(True)
+    if dish_manager_proxy.dishmode != DishMode.OPERATE:
+        dish_manager_proxy.ConfigureBand1(True)
     dm_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
     dish_manager_proxy.write_attribute(attribute_name, True)
     spf_lna_power_state_attr_event_store.wait_for_value(True, timeout=30)
@@ -126,8 +127,8 @@ def test_spf_lna_power_state_change_on_dishmode_maintainance(
         attribute_name: spf_lna_power_state_attr_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    dish_manager_proxy.SetMaintenanceMode()
-
+    if dish_manager_proxy.dishmode != DishMode.MAINTENANCE:
+        dish_manager_proxy.SetMaintenanceMode()
     dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
     dish_manager_proxy.write_attribute(attribute_name, True)
     spf_lna_power_state_attr_event_store.wait_for_value(True, timeout=30)
