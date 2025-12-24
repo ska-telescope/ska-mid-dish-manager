@@ -42,12 +42,12 @@ def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DevicePr
 @pytest.mark.parametrize(
     "attribute_name",
     [
-        "b1lnahpowerstate",
-        "b2lnahpowerstate",
-        "b3lnahpowerstate",
-        "b4lnahpowerstate",
-        "b5alnahpowerstate",
-        "b5blnahpowerstate",
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b3LnaHPowerState",
+        "b4LnaHPowerState",
+        "b5aLnaHPowerState",
+        "b5bLnaHPowerState",
     ],
 )
 def test_spf_lna_power_state_rejects_attribute_writes(
@@ -72,12 +72,12 @@ def test_spf_lna_power_state_rejects_attribute_writes(
 @pytest.mark.parametrize(
     "band, attribute_name",
     [
-        ("1", "b1lnahpowerstate"),
-        ("2", "b2lnahpowerstate"),
-        ("3", "b3lnahpowerstate"),
-        ("4", "b4lnahpowerstate"),
-        ("5a", "b5alnahpowerstate"),
-        ("5b", "b5blnahpowerstate"),
+        ("1", "b1LnaHPowerState"),
+        ("2", "b2LnaHPowerState"),
+        ("3", "b3LnaHPowerState"),
+        ("4", "b4LnaHPowerState"),
+        ("5a", "b5aLnaHPowerState"),
+        ("5b", "b5bLnaHPowerState"),
     ],
 )
 def test_spf_lna_power_state_change_on_dishmode_operate(
@@ -88,10 +88,10 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
 ) -> None:
     """Test that SPF Lna Power State change updates when dishmode is in operate."""
     dm_event_store = event_store_class()
-    spf_lna_event_store = event_store_class()
+    spf_lna_power_state_attr_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dm_event_store,
-        attribute_name: spf_lna_event_store,
+        attribute_name: spf_lna_power_state_attr_event_store,
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -102,8 +102,16 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
             configure_band_cmd(True)
 
         dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
+        dish_manager_proxy.write_attribute(attribute_name, False)
+        spf_lna_power_state_attr_event_store.wait_for_value(
+            True, timeout=30, proxy=dish_manager_proxy
+        )
         dish_manager_proxy.write_attribute(attribute_name, True)
-        spf_lna_event_store.wait_for_value(True, timeout=30, proxy=dish_manager_proxy)
+        spf_lna_power_state_attr_event_store.wait_for_value(
+            True, timeout=30, proxy=dish_manager_proxy
+        )
+        dm_event_store.clear_queue()
+        spf_lna_power_state_attr_event_store.clear_queue()
 
     finally:
         remove_subscriptions(subscriptions)
@@ -139,7 +147,11 @@ def test_spf_lna_power_state_change_on_dishmode_maintainance(
         if dish_manager_proxy.dishmode != DishMode.MAINTENANCE:
             dish_manager_proxy.SetMaintenanceMode()
         dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
+        dish_manager_proxy.write_attribute(attribute_name, False)
+        spf_lna_power_state_attr_event_store.wait_for_value(False, timeout=30)
         dish_manager_proxy.write_attribute(attribute_name, True)
         spf_lna_power_state_attr_event_store.wait_for_value(True, timeout=30)
+        dm_event_store.clear_queue()
+        spf_lna_power_state_attr_event_store.clear_queue()
     finally:
         remove_subscriptions(subscriptions)
