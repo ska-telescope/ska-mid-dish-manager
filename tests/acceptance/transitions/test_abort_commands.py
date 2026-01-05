@@ -101,13 +101,13 @@ def track_a_sample(
     reference_el = current_el
     # if near limits, adjust to be well within limits
     if current_el >= MAX_ELEVATION_SCIENCE:
-        reference_el = current_el - 5.0
+        reference_el = current_el - 10.0
     if current_el <= MIN_ELEVATION_SCIENCE:
-        reference_el = current_el + 5.0
+        reference_el = current_el + 10.0
     if current_az >= MAX_AZIMUTH:
-        reference_az = current_az - 5.0
+        reference_az = current_az - 10.0
     if current_az <= MIN_AZIMUTH:
-        reference_az = current_az + 5.0
+        reference_az = current_az + 10.0
 
     # create a long track table with last three reference positions the same
     track_table = [
