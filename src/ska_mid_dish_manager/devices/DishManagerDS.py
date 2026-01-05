@@ -1729,13 +1729,7 @@ class DishManager(SKAController):
         """Sets b1LnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
         self.logger.debug("Set b1LnaHPowerState to, %s", value)
-        current_dish_mode = self.component_manager.component_state.get(
-            "dishmode", DishMode.UNKNOWN
-        )
-        if current_dish_mode not in [DishMode.OPERATE, DishMode.MAINTENANCE]:
-            raise RuntimeError(
-                "Cannot change LNA power state while dish is not in operate or maintanance mode."
-            )
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b1LnaHPowerState", value)
 
     @attribute(
@@ -1752,13 +1746,7 @@ class DishManager(SKAController):
         """Sets b2LnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
         self.logger.debug("Set b2LnaHPowerState to, %s", value)
-        current_dish_mode = self.component_manager.component_state.get(
-            "dishmode", DishMode.UNKNOWN
-        )
-        if current_dish_mode not in [DishMode.OPERATE, DishMode.MAINTENANCE]:
-            raise RuntimeError(
-                "Cannot change LNA power state while dish is not in operate or maintanance mode."
-            )
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b2LnaHPowerState", value)
 
     @attribute(
@@ -1775,13 +1763,7 @@ class DishManager(SKAController):
         """Sets b3LnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
         self.logger.debug("Set b3LnaHPowerState to, %s", value)
-        current_dish_mode = self.component_manager.component_state.get(
-            "dishmode", DishMode.UNKNOWN
-        )
-        if current_dish_mode not in [DishMode.OPERATE, DishMode.MAINTENANCE]:
-            raise RuntimeError(
-                "Cannot change LNA power state while dish is not in operate or maintanance mode."
-            )
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b3LnaHPowerState", value)
 
     @attribute(
@@ -1798,13 +1780,7 @@ class DishManager(SKAController):
         """Sets b4LnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
         self.logger.debug("Set b4LnaHPowerState to, %s", value)
-        current_dish_mode = self.component_manager.component_state.get(
-            "dishmode", DishMode.UNKNOWN
-        )
-        if current_dish_mode not in [DishMode.OPERATE, DishMode.MAINTENANCE]:
-            raise RuntimeError(
-                "Cannot change LNA power state while dish is not in operate or maintanance mode."
-            )
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b4LnaHPowerState", value)
 
     @attribute(
@@ -1821,13 +1797,7 @@ class DishManager(SKAController):
         """Sets b5aLnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
         self.logger.debug("Set b5aLnaHPowerState to, %s", value)
-        current_dish_mode = self.component_manager.component_state.get(
-            "dishmode", DishMode.UNKNOWN
-        )
-        if current_dish_mode not in [DishMode.OPERATE, DishMode.MAINTENANCE]:
-            raise RuntimeError(
-                "Cannot change LNA power state while dish is not in operate or maintanance mode."
-            )
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b5aLnaHPowerState", value)
 
     @attribute(
@@ -1844,13 +1814,7 @@ class DishManager(SKAController):
         """Sets b5bLnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
         self.logger.debug("Set b5bLnaHPowerState to, %s", value)
-        current_dish_mode = self.component_manager.component_state.get(
-            "dishmode", DishMode.UNKNOWN
-        )
-        if current_dish_mode not in [DishMode.OPERATE, DishMode.MAINTENANCE]:
-            raise RuntimeError(
-                "Cannot change LNA power state while dish is not in operate or maintanance mode."
-            )
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b5bLnaHPowerState", value)
 
     # --------

@@ -571,6 +571,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Setting action timeous as %ss", timeout_s)
             self._update_component_state(actiontimeoutseconds=timeout_s)
 
+    def check_dish_mode_for_spfc_lna_power_state(self) -> None:
+        """Check if dish is in a mode that allows SPF LNA power state changes.
+
+        SPF LNA power state changes are only allowed when the dish is in
+        MAINTENANCE or OPERATE modes. Raises RuntimeError if in any other mode.
+        """
+        current_dish_mode = self.component_state["dishmode"]
+        if current_dish_mode not in [DishMode.MAINTENANCE, DishMode.OPERATE]:
+            self.logger.warning(
+                "Dish is in %s mode. SPF LNA power state changes are not allowed.",
+                current_dish_mode,
+            )
+            raise RuntimeError(
+                "Cannot change LNA power state while dish is not in operate or maintanance mode."
+            )
+
     # ---------
     # Callbacks
     # ---------
