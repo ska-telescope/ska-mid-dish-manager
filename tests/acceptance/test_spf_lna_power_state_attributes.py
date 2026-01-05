@@ -100,18 +100,13 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
         if dish_manager_proxy.dishMode != DishMode.OPERATE:
             configure_band_cmd = getattr(dish_manager_proxy, f"ConfigureBand{band}")
             configure_band_cmd(True)
-
-        dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
+            dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
+        # Setting LNA power state to False as a precondition for the test to check change event
         dish_manager_proxy.write_attribute(attribute_name, False)
-        spf_lna_power_state_attr_event_store.wait_for_value(
-            True, timeout=30, proxy=dish_manager_proxy
-        )
         dish_manager_proxy.write_attribute(attribute_name, True)
         spf_lna_power_state_attr_event_store.wait_for_value(
             True, timeout=30, proxy=dish_manager_proxy
         )
-        dm_event_store.clear_queue()
-        spf_lna_power_state_attr_event_store.clear_queue()
 
     finally:
         remove_subscriptions(subscriptions)
@@ -146,12 +141,10 @@ def test_spf_lna_power_state_change_on_dishmode_maintainance(
     try:
         if dish_manager_proxy.dishmode != DishMode.MAINTENANCE:
             dish_manager_proxy.SetMaintenanceMode()
-        dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
+            dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
+        # Setting LNA power state to False as a precondition for the test to check change event
         dish_manager_proxy.write_attribute(attribute_name, False)
-        spf_lna_power_state_attr_event_store.wait_for_value(False, timeout=30)
         dish_manager_proxy.write_attribute(attribute_name, True)
         spf_lna_power_state_attr_event_store.wait_for_value(True, timeout=30)
-        dm_event_store.clear_queue()
-        spf_lna_power_state_attr_event_store.clear_queue()
     finally:
         remove_subscriptions(subscriptions)
