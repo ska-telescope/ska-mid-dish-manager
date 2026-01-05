@@ -2,7 +2,13 @@
 
 import pytest
 
-from ska_mid_dish_manager.models.constants import STOW_ELEVATION_DEGREES
+from ska_mid_dish_manager.models.constants import (
+    MAX_AZIMUTH,
+    MAX_ELEVATION_SCIENCE,
+    MIN_AZIMUTH,
+    MIN_ELEVATION_SCIENCE,
+    STOW_ELEVATION_DEGREES,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
@@ -90,27 +96,36 @@ def track_a_sample(
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
     current_time_tai_s = ds_device_proxy.GetCurrentTAIOffset()
 
-    # Directions to move values
-    az_dir = 1 if current_az < 350 else -1
-    el_dir = 1 if current_el < 80 else -1
+    # Use constant azimuth and elevation to track for simplicity
+    reference_az = current_az
+    reference_el = current_el
+    # if near limits, adjust to be well within limits
+    if current_el >= MAX_ELEVATION_SCIENCE:
+        reference_el = current_el - 5.0
+    if current_el <= MIN_ELEVATION_SCIENCE:
+        reference_el = current_el + 5.0
+    if current_az >= MAX_AZIMUTH:
+        reference_az = current_az - 5.0
+    if current_az <= MIN_AZIMUTH:
+        reference_az = current_az + 5.0
 
     # create a long track table with last three reference positions the same
     track_table = [
         current_time_tai_s + 3,
-        current_az + 1 * az_dir,
-        current_el + 1 * el_dir,
+        reference_az,
+        reference_el,
         current_time_tai_s + 5,
-        current_az + 2 * az_dir,
-        current_el + 2 * el_dir,
+        reference_az,
+        reference_el,
         current_time_tai_s + 7,
-        current_az + 3 * az_dir,
-        current_el + 3 * el_dir,
+        reference_az,
+        reference_el,
         current_time_tai_s + 20,
-        current_az + 3 * az_dir,
-        current_el + 3 * el_dir,
+        reference_az,
+        reference_el,
         current_time_tai_s + 30,
-        current_az + 3 * az_dir,
-        current_el + 3 * el_dir,
+        reference_az,
+        reference_el,
     ]
 
     dish_manager_proxy.trackTableLoadMode = TrackTableLoadMode.NEW
