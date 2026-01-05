@@ -7,7 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-
+- SPFC LNA powerstate attributes fix, now checks dish mode correctly before allowing write.
 Version 9.1.1
 *************
 - Support numeric and prefixed dish IDs in Helm charts.

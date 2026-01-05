@@ -579,10 +579,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         current_dish_mode = self.component_state["dishmode"]
         if current_dish_mode not in [DishMode.MAINTENANCE, DishMode.OPERATE]:
-            self.logger.warning(
-                "Dish is in %s mode. SPF LNA power state changes are not allowed.",
-                current_dish_mode,
-            )
             raise RuntimeError(
                 "Cannot change LNA power state while dish is not in operate or maintanance mode."
             )
