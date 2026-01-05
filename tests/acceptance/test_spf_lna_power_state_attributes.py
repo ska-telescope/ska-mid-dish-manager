@@ -39,10 +39,22 @@ def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DevicePr
 
 
 @pytest.mark.acceptance
-def test_spf_lna_power_state_change_unhappy_path(
+@pytest.mark.parametrize(
+    "attribute_name",
+    [
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b3LnaHPowerState",
+        "b4LnaHPowerState",
+        "b5aLnaHPowerState",
+        "b5bLnaHPowerState",
+    ],
+)
+def test_spf_lna_power_state_rejects_attribute_writes(
+    attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
-    """Test that SPF Lna Power State change fails when dishmode either not in operate
+    """Test that SPF Lna Power State change is rejected when dishmode either not in operate
     or maintainance.
     """
     attr_cb_mapping = {}
@@ -50,49 +62,89 @@ def test_spf_lna_power_state_change_unhappy_path(
     err_msg = "Cannot change LNA power state while dish is not in operate or maintanance mode."
     assert dish_manager_proxy.read_attribute("dishMode").value == DishMode.STANDBY_FP
     with pytest.raises(tango.DevFailed) as exc_info:
-        dish_manager_proxy.write_attribute("b1LnaHPowerState", True)
+        dish_manager_proxy.write_attribute(attribute_name, True)
     err_desc = exc_info.value.args[0].desc
     assert err_msg in err_desc
     remove_subscriptions(subscriptions)
 
 
 @pytest.mark.acceptance
-def test_spf_lna_power_state_change_happy_path_dishmode_operate(
+@pytest.mark.parametrize(
+    "band, attribute_name",
+    [
+        ("1", "b1LnaHPowerState"),
+        ("2", "b2LnaHPowerState"),
+        ("3", "b3LnaHPowerState"),
+        ("4", "b4LnaHPowerState"),
+        ("5a", "b5aLnaHPowerState"),
+        ("5b", "b5bLnaHPowerState"),
+    ],
+)
+def test_spf_lna_power_state_change_on_dishmode_operate(
+    band: str,
+    attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
 ) -> None:
-    """Test that SPF Lna Power State change works when dishmode is in operate."""
+    """Test that SPF Lna Power State change updates when dishmode is in operate."""
     dm_event_store = event_store_class()
+    spf_lna_power_state_attr_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dm_event_store,
+        attribute_name: spf_lna_power_state_attr_event_store,
     }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    attr_change_value = True
-    dish_manager_proxy.ConfigureBand1(True)
-    dm_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
-    dish_manager_proxy.write_attribute("b1LnaHPowerState", attr_change_value)
 
-    assert dish_manager_proxy.read_attribute("b1LnaHPowerState").value == attr_change_value
-    remove_subscriptions(subscriptions)
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+
+    try:
+        if dish_manager_proxy.dishMode != DishMode.OPERATE:
+            configure_band_cmd = getattr(dish_manager_proxy, f"ConfigureBand{band}")
+            configure_band_cmd(True)
+            dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
+        # Setting LNA power state to False as a precondition for the test to check change event
+        dish_manager_proxy.write_attribute(attribute_name, False)
+        dish_manager_proxy.write_attribute(attribute_name, True)
+        spf_lna_power_state_attr_event_store.wait_for_value(
+            True, timeout=30, proxy=dish_manager_proxy
+        )
+
+    finally:
+        remove_subscriptions(subscriptions)
 
 
 @pytest.mark.acceptance
-def test_spf_lna_power_state_change_happy_path_dishmode_maintainance(
+@pytest.mark.parametrize(
+    "attribute_name",
+    [
+        "b1lnahpowerstate",
+        "b2lnahpowerstate",
+        "b3lnahpowerstate",
+        "b4lnahpowerstate",
+        "b5alnahpowerstate",
+        "b5blnahpowerstate",
+    ],
+)
+def test_spf_lna_power_state_change_on_dishmode_maintainance(
+    attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
 ) -> None:
-    """Test that SPF Lna Power State change works when dishmode is in maintainance."""
+    """Test that SPF Lna Power State change updates when dishmode is in maintainance."""
     dm_event_store = event_store_class()
+    spf_lna_power_state_attr_event_store = event_store_class()
+
     attr_cb_mapping = {
         "dishMode": dm_event_store,
+        attribute_name: spf_lna_power_state_attr_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    attr_change_value = True
-
-    dish_manager_proxy.SetMaintenanceMode()
-
-    dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
-    dish_manager_proxy.write_attribute("b1LnaHPowerState", attr_change_value)
-
-    assert dish_manager_proxy.read_attribute("b1LnaHPowerState").value == attr_change_value
-    remove_subscriptions(subscriptions)
+    try:
+        if dish_manager_proxy.dishmode != DishMode.MAINTENANCE:
+            dish_manager_proxy.SetMaintenanceMode()
+            dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
+        # Setting LNA power state to False as a precondition for the test to check change event
+        dish_manager_proxy.write_attribute(attribute_name, False)
+        dish_manager_proxy.write_attribute(attribute_name, True)
+        spf_lna_power_state_attr_event_store.wait_for_value(True, timeout=30)
+    finally:
+        remove_subscriptions(subscriptions)

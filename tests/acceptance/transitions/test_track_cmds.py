@@ -303,7 +303,7 @@ def test_maximum_capacity(
 
         return track_table
 
-    track_delay = 70
+    track_delay = 90
     time_now = ds_device_proxy.GetCurrentTAIOffset()
     track_start_tai = time_now + track_delay
     duration_per_block_s = 5
