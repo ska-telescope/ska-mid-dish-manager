@@ -388,8 +388,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "b5aLnaHPowerState",
                 "b5bLnaHPowerState",
             ],
-        }
-            ],
             "B5DC": [
                 "rfcmPllLock",
                 "rfcmHAttenuation",
@@ -404,11 +402,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "vPolRfPowerOut",
             ],
         }
-
-        # ----------------
-        # Command Handlers
-        # ----------------
-        self._abort_handler = Abort(self, self._command_tracker, logger=logger)
 
     @property
     def wind_stow_active(self) -> bool:
