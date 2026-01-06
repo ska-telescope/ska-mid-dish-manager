@@ -11,6 +11,19 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added in ignoreB5dc attribute to ignore B5DC state and quality changes.
 - Updated ska-mid-dcp-lib to v0.0.6.
 
+- SPFC LNA powerstate attributes fix, now checks dish mode correctly before allowing write.
+Version 9.1.1
+*************
+- Support numeric and prefixed dish IDs in Helm charts.
+
+Version 9.1.0
+*************
+- Updated progress messages to be sent on `Status` attribute instead of `longRunningCommandProgress` attribute.
+- Updated PyTango to v10.0.3
+- Updated `ska-tango-base` to use latest version limited to minor releases (<2.0.0).
+- Removed forked mark on acceptance tests; limited forked tests to tests that use DeviceTestContext.
+- Implemented ConfigureBand command that ingests a JSON string to configure bands on SPFRx.
+- Exposed SPF B<n>LNAPowerState attributes for bands 1 to 5b. 
 
 Version 9.0.0
 *************

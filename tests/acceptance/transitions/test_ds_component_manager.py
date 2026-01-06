@@ -13,7 +13,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates."""
     state_update_lock = Lock()
@@ -23,16 +22,17 @@ def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
         state_update_lock,
         component_state_callback=component_state_store,
     )
-    com_man.start_communicating()
+    try:
+        com_man.start_communicating()
 
-    device_proxy = tango.DeviceProxy(ds_device_fqdn)
+        device_proxy = tango.DeviceProxy(ds_device_fqdn)
 
-    device_proxy.SetStandbyMode()
-    component_state_store.wait_for_value("operatingmode", DSOperatingMode.STANDBY)
-    component_state_store.wait_for_value("powerstate", DSPowerState.LOW_POWER)
+        device_proxy.SetStandbyMode()
+        component_state_store.wait_for_value("operatingmode", DSOperatingMode.STANDBY)
+        component_state_store.wait_for_value("powerstate", DSPowerState.LOW_POWER)
 
-    device_proxy.SetPointMode()
-    component_state_store.wait_for_value("powerstate", DSPowerState.FULL_POWER)
-    component_state_store.wait_for_value("operatingmode", DSOperatingMode.POINT)
-
-    com_man.stop_communicating()
+        device_proxy.SetPointMode()
+        component_state_store.wait_for_value("powerstate", DSPowerState.FULL_POWER)
+        component_state_store.wait_for_value("operatingmode", DSOperatingMode.POINT)
+    finally:
+        com_man.stop_communicating()

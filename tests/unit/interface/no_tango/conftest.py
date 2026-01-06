@@ -6,7 +6,7 @@ import pytest
 from ska_control_model import CommunicationStatus, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from tests.utils import ComponentStateStore
+from tests.utils import ComponentStateStore, MethodCallsStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,6 +26,7 @@ def callbacks() -> dict:
         "comm_state_cb": MagicMock(),
         "comp_state_cb": ComponentStateStore(),
         "task_cb": MagicMock(),
+        "progress_cb": MethodCallsStore(),
     }
 
 
@@ -71,6 +72,7 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             action_timeout_s=120,
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
+            command_progress_callback=callbacks["progress_cb"],
         )
         dish_manager_cm.start_communicating()
         # since the devices are mocks, no change events
@@ -79,3 +81,7 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             sub_component_manager._update_communication_state(CommunicationStatus.ESTABLISHED)
 
         yield dish_manager_cm
+
+        # cleanup resources
+        dish_manager_cm.stop_communicating()
+        dish_manager_cm._task_executor.abort()

@@ -26,15 +26,19 @@ PYTHON_LINE_LENGTH = 99
 # Set the specific environment variables required for pytest
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
-PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --forked --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --pointing-files-path=build/pointing
+PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --pointing-files-path=build/pointing
 
 K8S_TEST_RUNNER_MARK ?= acceptance
 
-python-test: MARK = unit
+python-test: MARK = unit and (not forked)
 k8s-test-runner: MARK = $(K8S_TEST_RUNNER_MARK)
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
 -include .make/python.mk
+
+python-test-forked: MARK = forked
+python-test-forked: PYTHON_VARS_AFTER_PYTEST += --forked
+python-test-forked: python-pre-test python-do-test python-post-test
 
 python-do-format:
 	$(PYTHON_RUNNER) ruff format $(PYTHON_LINT_TARGET)
@@ -77,3 +81,35 @@ K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) \
 
 # include your own private variables to add custom deployment configuration
 -include PrivateRules.mak
+
+#############################
+# SIMLIB DOC GENERATION
+#############################
+NAMESPACE_SIMLIB=dish-manager
+POD_SIMLIB=ds-dishmanager-001-0
+DEVICE_DM  = mid-dish/dish-manager/SKA001
+DEVICE_DS  = mid-dish/ds-manager/SKA001
+DEVICE_SPF = mid-dish/simulator-spfc/SKA001
+DEVICE_SPFRX = mid-dish/simulator-spfrx/SKA001
+# Default device
+DEVICE ?= DM
+# Get the full name dynamically
+FULL_DEVICE = $(DEVICE_$(DEVICE))
+# Output filename based on DEVICE
+DOC_OUTPUT = docs_$(DEVICE).yaml
+# List of allowed devices
+VALID_DEVICES = DM DS SPF SPFRX
+
+simlib:
+	@# Check device validity of device parameter
+	@if ! echo $(VALID_DEVICES) | grep -wq $(DEVICE); then \
+	    echo "ERROR: Invalid DEVICE='$(DEVICE)'. Must be one of: $(VALID_DEVICES)"; \
+	    exit 1; \
+	fi
+
+	@echo "Generating docs for $(FULL_DEVICE) ..."
+	@kubectl exec -n $(NAMESPACE_SIMLIB) $(POD_SIMLIB) -- \
+	  tango-yaml tango_device $(FULL_DEVICE) > $(DOC_OUTPUT) 2> doc_errors.log
+	@touch doc_errors.log
+	@echo "Docs generated called: $(DOC_OUTPUT)"
+	@echo "Errors (stderr) logged to doc_errors.log (if any)"
