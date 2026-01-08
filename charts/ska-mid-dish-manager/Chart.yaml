@@ -44,10 +44,10 @@ dependencies:
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-wms.enabled
 - name: ska-mid-dish-b5dc-proxy
-  version: 0.0.1
+  version: 0.0.2
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-b5dc-proxy.enabled
 - name: ska-mid-dish-dcp-lib
-  version: 0.0.6
+  version: 0.0.9
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-dcp-lib.enabled
