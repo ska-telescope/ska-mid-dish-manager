@@ -226,7 +226,7 @@ def test_configureband_b5b_without_subband(
         configure_json, callbacks["task_cb"]
     )
     assert status == TaskStatus.FAILED
-    assert "Invalid sub-band in JSON." in response
+    assert 'Invalid sub-band in JSON. Expected ["1"], ["2"] or ["3"].' in response
 
 
 @pytest.mark.unit
@@ -249,7 +249,7 @@ def test_configureband_5b_with_subband(
     {
         "dish": {
             "receiver_band": "5b",
-            "sub_band": 1,
+            "sub_band": "1",
             "spfrx_processing_parameters": [
                 {
                     "dishes": ["all"],
@@ -332,7 +332,7 @@ def test_configureband_bad_root_key(
         {
             "dish1": {
                 "receiver_band": "5b",
-                "sub_band": 1,
+                "sub_band": "1",
                 "spfrx_processing_parameters": [
                     {
                         "dishes": ["SKA001"]
