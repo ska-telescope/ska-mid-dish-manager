@@ -226,7 +226,7 @@ def test_configureband_b5b_without_subband(
         configure_json, callbacks["task_cb"]
     )
     assert status == TaskStatus.FAILED
-    assert 'Invalid sub-band in JSON. Expected ["1"], ["2"] or ["3"].' in response
+    assert 'Invalid sub-band in JSON. Expected "1", "2" or "3".' in response
 
 
 @pytest.mark.unit
