@@ -1,6 +1,7 @@
 """Test that Dish Slews to target Azimuth and Elevation."""
 
 import queue
+import tango
 
 import pytest
 from ska_control_model import ResultCode
@@ -40,46 +41,38 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
 
 
 @pytest.mark.blah
-def test_slew_outside_bounds_rejected(ds_device_proxy):
+def test_slew_outside_bounds_rejected(event_store_class, ds_device_proxy):
     """Out of bounds azel is rejected immediately and does not start LRC."""
-    [[result], [unique_id]] = ds_device_proxy.Slew([100, 91])
+    [[result_code], [unique_id]] = ds_device_proxy.Slew([100, 91])
 
-    assert result == ResultCode.REJECTED
+    lrc_status_event_store = event_store_class()
 
-    assert ds_device_proxy.longRunningCommandStatus == (unique_id, "REJECTED")
-
-
-@pytest.mark.acceptance
-def test_slew_outside_bounds_emits_reject_event(event_store_class, dish_manager_proxy):
-    """Test that when given out of bounds azel values, dish manager emits reject status."""
-    status_store = event_store_class()
-    subscriptions = setup_subscriptions(
-        dish_manager_proxy,
-        {
-            "longRunningCommandStatus": status_store,
-        },
+    ds_device_proxy.subscribe_event(
+        "longRunningCommandStatus",
+        tango.EventType.CHANGE_EVENT,
+        lrc_status_event_store
     )
 
-    [[_], [cmd_id]] = dish_manager_proxy.Slew([100, 91])
+    assert lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
-    events = []
-    try:
-        while True:
-            events.append(status_store._queue.get(timeout=10))
-    except queue.Empty:
-        pass
+    assert result_code == ResultCode.REJECTED
 
-    relevant_events = [e for e in events if e.attr_value and cmd_id in str(e.attr_value.value)]
 
-    if relevant_events:
-        assert any(
-            "REJECT" in str(e.attr_value.value).upper()
-            or "FAILED" in str(e.attr_value.value).upper()
-            or "NOT ALLOWED" in str(e.attr_value.value).upper()
-            for e in relevant_events
-        ), f"Command {cmd_id} was not rejected in status events as expected"
+@pytest.mark.blah
+def test_slew_extra_arg_fails(event_store_class, dish_manager_proxy):
+    """Test that when given three arguments instead of two, the command is rejected."""
+    [[result_code], [unique_id]] = dish_manager_proxy.Slew([100,100,100])
 
-    remove_subscriptions(subscriptions)
+    lrc_status_event_store = event_store_class()
+
+    dish_manager_proxy.subscribe_event(
+        "longRunningCommandStatus",
+        tango.EventType.CHANGE_EVENT,
+        lrc_status_event_store
+    )
+
+    assert lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
+    assert result_code == ResultCode.REJECTED
 
 
 @pytest.mark.acceptance
