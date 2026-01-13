@@ -38,7 +38,7 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.blah
+@pytest.mark.acceptance
 def test_slew_outside_bounds_rejected(event_store_class, ds_device_proxy):
     """Out of bounds azel is rejected immediately and does not start LRC."""
     [[result_code], [unique_id]] = ds_device_proxy.Slew([100, 91])
@@ -54,7 +54,7 @@ def test_slew_outside_bounds_rejected(event_store_class, ds_device_proxy):
     assert result_code == ResultCode.REJECTED
 
 
-@pytest.mark.blah
+@pytest.mark.acceptance
 def test_slew_extra_arg_fails(event_store_class, dish_manager_proxy):
     """Test that when given three arguments instead of two, the command is rejected."""
     [[result_code], [unique_id]] = dish_manager_proxy.Slew([100, 100, 100])
