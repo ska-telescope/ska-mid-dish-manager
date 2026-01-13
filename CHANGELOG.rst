@@ -11,6 +11,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Updated PyTango to v10.0.3
 - Updated `ska-tango-base` to use latest version limited to minor releases (<2.0.0).
 - Removed forked mark on acceptance tests; limited forked tests to tests that use DeviceTestContext.
+- Added task callback and tests to validate correct behaviour on invalid slew inputs.
 
 Version 9.0.0
 *************
