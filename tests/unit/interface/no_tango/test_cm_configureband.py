@@ -228,7 +228,7 @@ def test_configureband_b5b_without_subband(
     assert status == TaskStatus.FAILED
     assert (
         "Invalid configuration JSON. Valid sub_band required for requested receiver_band [5b]."
-        in response
+        ' Expected "1", "2" or "3".' in response
     )
 
 

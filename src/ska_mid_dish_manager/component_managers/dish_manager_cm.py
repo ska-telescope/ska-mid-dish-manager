@@ -1204,16 +1204,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
         try:
-            config_json = validate_configure_band_input(data)
+            config_dict = validate_configure_band_input(data)
+            data = json.dumps(config_dict)
         except ConfigureBandValidationError as err:
             self.logger.error("Error parsing JSON for configure band command.")
             return TaskStatus.FAILED, str(err)
+        except ValueError:
+            # JSON validation and error handling will be actioned by the SPFRx.
+            pass
 
         status, response = self.submit_task(
             ConfigureBandActionSequence(
                 self.logger,
                 self,
-                data=json.dumps(config_json),
+                data=data,
                 requested_cmd="ConfigureBand",
                 timeout_s=self.get_action_timeout(),
             ).execute,
