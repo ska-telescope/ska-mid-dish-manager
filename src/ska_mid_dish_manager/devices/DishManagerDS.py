@@ -55,11 +55,11 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
 from ska_mid_dish_manager.utils.decorators import record_command, requires_component_manager
-from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
-from ska_mid_dish_manager.utils.track_table_input_validation import (
+from ska_mid_dish_manager.utils.input_validation import (
     TrackLoadTableFormatting,
     TrackTableTimestampError,
 )
+from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
 
 DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 
@@ -138,6 +138,7 @@ class DishManager(SKAController):
             ("SetStandbyFPMode", "set_standby_fp_mode"),
             ("Track", "track_cmd"),
             ("TrackStop", "track_stop_cmd"),
+            ("ConfigureBand", "configure_band_with_json"),
             ("ConfigureBand1", "configure_band_cmd"),
             ("ConfigureBand2", "configure_band_cmd"),
             ("ConfigureBand3", "configure_band_cmd"),
@@ -381,8 +382,12 @@ class DishManager(SKAController):
                 "band4pointingmodelparams": "band4PointingModelParams",
                 "band5apointingmodelparams": "band5aPointingModelParams",
                 "band5bpointingmodelparams": "band5bPointingModelParams",
-                "attenuationpolh": "attenuationPolH",
-                "attenuationpolv": "attenuationPolV",
+                "attenuation1polhx": "attenuation1PolHX",
+                "attenuation1polvy": "attenuation1PolVY",
+                "attenuation2polhx": "attenuation2PolHX",
+                "attenuation2polvy": "attenuation2PolVY",
+                "attenuationpolhx": "attenuationPolHX",
+                "attenuationpolvy": "attenuationPolVY",
                 "kvalue": "kValue",
                 "trackinterpolationmode": "trackInterpolationMode",
                 "scanid": "scanID",
@@ -395,6 +400,8 @@ class DishManager(SKAController):
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
+                "isklocked": "isKLocked",
+                "spectralinversion": "spectralInversion",
                 "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
                 "actstaticoffsetvalueel": "actStaticOffsetValueEl",
                 "dscpowerlimitkw": "dscPowerLimitKw",
@@ -409,6 +416,12 @@ class DishManager(SKAController):
                 "lastcommandinvoked": "lastCommandInvoked",
                 "dscctrlstate": "dscCtrlState",
                 "actiontimeoutseconds": "actionTimeoutSeconds",
+                "b1lnahpowerstate": "b1LnaHPowerState",
+                "b2lnahpowerstate": "b2LnaHPowerState",
+                "b3lnahpowerstate": "b3LnaHPowerState",
+                "b4lnahpowerstate": "b4LnaHPowerState",
+                "b5alnahpowerstate": "b5aLnaHPowerState",
+                "b5blnahpowerstate": "b5bLnaHPowerState",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -590,36 +603,135 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=float,
+        doc="""The current attenuation value for attenuator 1 on the
+        H/X polarization.""",
         access=AttrWriteType.READ_WRITE,
-        doc="Indicates the SPFRx attenuation in the horizontal "
-        "signal chain for the configuredband.",
     )
-    def attenuationPolH(self):
-        """Returns the attenuationPolH."""
-        return self.component_manager.component_state.get("attenuationpolh", 0.0)
+    def attenuation1PolHX(self):
+        """Get the attenuation Pol H/X for attenuator 1."""
+        return self.component_manager.component_state.get("attenuation1polhx", 0.0)
 
-    @attenuationPolH.write
-    def attenuationPolH(self, value):
-        """Set the attenuationPolH."""
-        # pylint: disable=attribute-defined-outside-init
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("attenuationPolH", value)
+    @attenuation1PolHX.write
+    def attenuation1PolHX(self, value):
+        """Set the attenuation Pol H/X for attenuator 1."""
+        self.logger.debug("attenuation1PolHX write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuation1PolHX", value)
+        else:
+            self.logger.warning("No component manager to write attenuation1PolHX yet")
+            raise RuntimeError("Failed to write to attenuation1PolHX on DishManager")
 
     @attribute(
         dtype=float,
+        doc="""The current attenuation value for attenuator 1 on the
+        V/Y polarization.""",
         access=AttrWriteType.READ_WRITE,
-        doc="Indicates the SPFRx attenuation in the vertical signal chain for the configuredband.",
     )
-    def attenuationPolV(self):
-        """Returns the attenuationPolV."""
-        return self.component_manager.component_state.get("attenuationpolv", 0.0)
+    def attenuation1PolVY(self):
+        """Get the attenuation Pol V/Y for attenuator 1."""
+        return self.component_manager.component_state.get("attenuation1polvy", 0.0)
 
-    @attenuationPolV.write
-    def attenuationPolV(self, value):
-        """Set the attenuation Pol V."""
-        # pylint: disable=attribute-defined-outside-init
-        spfrx_cm = self.component_manager.sub_component_managers["SPFRX"]
-        spfrx_cm.write_attribute_value("attenuationPolV", value)
+    @attenuation1PolVY.write
+    def attenuation1PolVY(self, value):
+        """Set the attenuation Pol V/Y for attenuator 1."""
+        self.logger.debug("attenuation1PolVY write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuation1PolVY", value)
+        else:
+            self.logger.warning("No component manager to write attenuation1PolVY yet")
+            raise RuntimeError("Failed to write to attenuation1PolVY on DishManager")
+
+    @attribute(
+        dtype=float,
+        doc="""The current attenuation value for attenuator 2 on the
+        H/X polarization.""",
+        access=AttrWriteType.READ_WRITE,
+    )
+    def attenuation2PolHX(self):
+        """Get the attenuation Pol H/X for attenuator 2."""
+        return self.component_manager.component_state.get("attenuation2polhx", 0.0)
+
+    @attenuation2PolHX.write
+    def attenuation2PolHX(self, value):
+        """Set the attenuation Pol H/X for attenuator 2."""
+        self.logger.debug("attenuation2PolHX write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuation2PolHX", value)
+        else:
+            self.logger.warning("No component manager to write attenuation2PolHX yet")
+            raise RuntimeError("Failed to write to attenuation2PolHX on DishManager")
+
+    @attribute(
+        dtype=float,
+        doc="""The current attenuation value for attenuator 2 on the
+        V/Y polarization.""",
+        access=AttrWriteType.READ_WRITE,
+    )
+    def attenuation2PolVY(self):
+        """Get the attenuation Pol H/X for attenuator 2."""
+        return self.component_manager.component_state.get("attenuation2polvy", 0.0)
+
+    @attenuation2PolVY.write
+    def attenuation2PolVY(self, value):
+        """Set the attenuation Pol V/Y for attenuator 2."""
+        self.logger.debug("attenuation2PolVY write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuation2PolVY", value)
+        else:
+            self.logger.warning("No component manager to write attenuation2PolVY yet")
+            raise RuntimeError("Failed to write to attenuation2PolVY on DishManager")
+
+    @attribute(
+        dtype=float,
+        doc="""The current total attenuation value across both attenuators on the
+        H/X polarization.""",
+        access=AttrWriteType.READ_WRITE,
+    )
+    def attenuationPolHX(self):
+        """Get the total attenuation Pol H/X."""
+        return self.component_manager.component_state.get("attenuationpolhx", 0.0)
+
+    @attenuationPolHX.write
+    def attenuationPolHX(self, value):
+        """Set the total attenuation Pol H/X."""
+        self.logger.debug("attenuationPolHX write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuationPolHX", value)
+        else:
+            self.logger.warning("No component manager to write attenuationPolHX yet")
+            raise RuntimeError("Failed to write to attenuationPolHX on DishManager")
+
+    @attribute(
+        dtype=float,
+        doc="""The current total attenuation value across both attenuators on the
+        V/Y polarization.""",
+        access=AttrWriteType.READ_WRITE,
+    )
+    def attenuationPolVY(self):
+        """Get the total attenuation Pol V/Y."""
+        return self.component_manager.component_state.get("attenuationpolvy", 0.0)
+
+    @attenuationPolVY.write
+    def attenuationPolVY(self, value):
+        """Set the total attenuation Pol V/Y."""
+        self.logger.debug("attenuationPolVY write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("attenuationPolVY", value)
+        else:
+            self.logger.warning("No component manager to write attenuationPolVY yet")
+            raise RuntimeError("Failed to write to attenuationPolVY on DishManager")
 
     @attribute(
         dtype=int,
@@ -1402,6 +1514,52 @@ class DishManager(SKAController):
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
 
     @attribute(
+        dtype=bool,
+        doc="""
+            Check the SAT.RM module to see if
+            the k- value is locked. If not false is returned.
+        """,
+        access=AttrWriteType.READ,
+    )
+    def isKLocked(self):
+        """Returns the status of the SPFRx isKLocked attribute."""
+        self.logger.debug("Read isKLocked")
+        return self.component_manager.component_state.get("isklocked", False)
+
+    @attribute(
+        dtype=bool,
+        doc="""
+            Spectral inversion to correct the frequency sense of the currently
+            configured band with respect to the RF signal.
+
+            Logic 0: Output signal in the same frequency sense as input.
+
+            Logic 1: Output signal in the opposite frequency sense as input.
+
+            Setting this attribute to true will set the
+            spectrum to be flipped.
+
+        """,
+        access=AttrWriteType.READ_WRITE,
+    )
+    def spectralInversion(self):
+        """Returns the status of the SPFRx spectralInversion attribute."""
+        self.logger.debug("Read spectralInversion")
+        return self.component_manager.component_state.get("spectralinversion", False)
+
+    @spectralInversion.write
+    def spectralInversion(self, value):
+        """Set the status of the SPFRx spectralInversion attribute."""
+        self.logger.debug("spectralInversion write method called with param %s", value)
+
+        if hasattr(self, "component_manager"):
+            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+            spfrx_com_man.write_attribute_value("spectralInversion", value)
+        else:
+            self.logger.warning("No component manager to write spectralInversion yet")
+            raise RuntimeError("Failed to write to spectralInversion on DishManager")
+
+    @attribute(
         dtype=str,
         access=AttrWriteType.READ,
         doc=(
@@ -1557,6 +1715,108 @@ class DishManager(SKAController):
         self.logger.debug("Write to actionTimeoutSeconds, %s", value)
         self.component_manager.set_action_timeout(value)
 
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H polarization power state.",
+    )
+    def b1LnaHPowerState(self):
+        """Return the SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b1lnahpowerstate", False)
+
+    @b1LnaHPowerState.write
+    def b1LnaHPowerState(self, value: bool):
+        """Sets b1LnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b1LnaHPowerState to, %s", value)
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
+        spf_com_man.write_attribute_value("b1LnaHPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H polarization power state.",
+    )
+    def b2LnaHPowerState(self):
+        """Return the SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b2lnahpowerstate", False)
+
+    @b2LnaHPowerState.write
+    def b2LnaHPowerState(self, value: bool):
+        """Sets b2LnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b2LnaHPowerState to, %s", value)
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
+        spf_com_man.write_attribute_value("b2LnaHPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H polarization power state.",
+    )
+    def b3LnaHPowerState(self):
+        """Return the SPFC LNA H & V polarization power state."""
+        return self.component_manager.component_state.get("b3lnahpowerstate", False)
+
+    @b3LnaHPowerState.write
+    def b3LnaHPowerState(self, value: bool):
+        """Sets b3LnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b3LnaHPowerState to, %s", value)
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
+        spf_com_man.write_attribute_value("b3LnaHPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H & V polarization power state.",
+    )
+    def b4LnaHPowerState(self):
+        """Return the SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b4lnahpowerstate", False)
+
+    @b4LnaHPowerState.write
+    def b4LnaHPowerState(self, value: bool):
+        """Sets b4LnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b4LnaHPowerState to, %s", value)
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
+        spf_com_man.write_attribute_value("b4LnaHPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H & V polarization power state.",
+    )
+    def b5aLnaHPowerState(self):
+        """Return the SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b5alnahpowerstate", False)
+
+    @b5aLnaHPowerState.write
+    def b5aLnaHPowerState(self, value: bool):
+        """Sets b5aLnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b5aLnaHPowerState to, %s", value)
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
+        spf_com_man.write_attribute_value("b5aLnaHPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the SPFC LNA H & V polarization power state.",
+    )
+    def b5bLnaHPowerState(self):
+        """Return the SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b5blnahpowerstate", False)
+
+    @b5bLnaHPowerState.write
+    def b5bLnaHPowerState(self, value: bool):
+        """Sets b5bLnaHPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b5bLnaHPowerState to, %s", value)
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
+        spf_com_man.write_attribute_value("b5bLnaHPowerState", value)
+
     # --------
     # Commands
     # --------
@@ -1579,6 +1839,61 @@ class DishManager(SKAController):
         handler = self.get_command_object("Abort")
         (return_code, message) = handler()
         return ([return_code], [message])
+
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @command(
+        dtype_in="DevString",
+        doc_in="""The command accepts a JSON string containing data to configure the SPFRx.
+        The JSON structure is as follows:
+        {
+            "receiver_band": <string>,
+            "sub_band": <integer>,
+            "spfrx_processing_parameters": {
+                "dishes": List[<string>],
+                "sync_pps":  <bool>,
+                "attenuation_pol_x": <float>,
+                "attenuation_pol_y": <float>,
+                "attenuation_1_pol_x": <float>,
+                "attenuation_1_pol_y": <float>,
+                "attenuation_2_pol_x": <float>,
+                "attenuation_2_pol_y": <float>,
+                "saturation_threshold": <float>,
+                "noise_diode": {
+                    "pseudo_random": {
+                        "binary_polynomial": <long>,
+                        "seed": <long>,
+                        "dwell": <long>,
+                    },
+                    "periodic": {
+                        "period": <long>,
+                        "duty_cycle": <long>,
+                        "phase_shift": <long>,
+                    }
+                }
+            }
+        }
+        where 'receiver_band', 'dishes' and 'sync_pps' are mandatory fields.
+        when 'receiver_band' is set to '5b', the 'sub_band' field is mandatory.
+        The 'dishes' field is a list of dish names that the SPFRx should be configured for,
+        if 'all' is specified in the list, the SPFRx will be configured for all dishes.
+        """,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    def ConfigureBand(self, json_string) -> DevVarLongStringArrayType:
+        """Configure band according to JSON string supplied.
+
+        This command triggers the Dish to transition to the CONFIG Dish
+        Element Mode, and returns to the caller.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
+        """
+        handler = self.get_command_object("ConfigureBand")
+
+        result_code, unique_id = handler(json_string)
+        return ([result_code], [unique_id])
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)

@@ -63,6 +63,10 @@ from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
 from ska_mid_dish_manager.utils.decorators import check_communicating
+from ska_mid_dish_manager.utils.input_validation import (
+    ConfigureBandValidationError,
+    validate_configure_band_input,
+)
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 from ska_mid_dish_manager.utils.tango_helpers import TangoDbAccessor
@@ -140,6 +144,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             noisediodemode=NoiseDiodeMode.OFF,
             periodicnoisediodepars=[],
             pseudorandomnoisediodepars=[0, 0, 0],
+            isklocked=False,
+            spectralinversion=False,
             actstaticoffsetvaluexel=0.0,
             actstaticoffsetvalueel=0.0,
             tracktablecurrentindex=0,
@@ -149,10 +155,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
             achievedpointing=[0.0, 0.0, 0.0],
-            attenuationpolh=0.0,
-            attenuationpolv=0.0,
             dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
             powerstate=PowerState.LOW,
+            attenuation1polhx=0.0,
+            attenuation1polvy=0.0,
+            attenuation2polhx=0.0,
+            attenuation2polvy=0.0,
+            attenuationpolhx=0.0,
+            attenuationpolvy=0.0,
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
@@ -165,6 +175,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             lastcommandinvoked=("0.0", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
             actiontimeoutseconds=action_timeout_s,
+            b1lnahpowerstate=False,
+            b2lnahpowerstate=False,
+            b3lnahpowerstate=False,
+            b4lnahpowerstate=False,
+            b5alnahpowerstate=False,
+            b5blnahpowerstate=False,
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -202,6 +218,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b1lnahpowerstate=False,
+                b2lnahpowerstate=False,
+                b3lnahpowerstate=False,
+                b4lnahpowerstate=False,
+                b5alnahpowerstate=False,
+                b5blnahpowerstate=False,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPF
                 ),
@@ -253,10 +275,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._state_update_lock,
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
-                capturingdata=False,
+                datafibercheck=False,  # Maps to Dish Managers "capturing" attribute
                 healthstate=HealthState.UNKNOWN,
-                attenuationpolh=0.0,
-                attenuationpolv=0.0,
+                attenuationpolhx=0.0,
+                attenuationpolvy=0.0,
+                attenuation1polhx=0.0,
+                attenuation1polvy=0.0,
+                attenuation2polhx=0.0,
+                attenuation2polvy=0.0,
                 kvalue=0,
                 b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -307,6 +333,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "noiseDiodeMode",
                 "periodicNoiseDiodePars",
                 "pseudoRandomNoiseDiodePars",
+                "isKLocked",
+                "spectralInversion",
+                "attenuation1PolHX",
+                "attenuation1PolVY",
+                "attenuation2PolHX",
+                "attenuation2PolVY",
+                "attenuationPolHX",
+                "attenuationPolVY",
+            ],
+            "SPF": [
+                "b1LnaHPowerState",
+                "b2LnaHPowerState",
+                "b3LnaHPowerState",
+                "b4LnaHPowerState",
+                "b5aLnaHPowerState",
+                "b5bLnaHPowerState",
             ],
         }
 
@@ -529,6 +571,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Setting action timeous as %ss", timeout_s)
             self._update_component_state(actiontimeoutseconds=timeout_s)
 
+    def check_dish_mode_for_spfc_lna_power_state(self) -> None:
+        """Check if dish is in a mode that allows SPF LNA power state changes.
+
+        SPF LNA power state changes are only allowed when the dish is in
+        MAINTENANCE or OPERATE modes. Raises RuntimeError if in any other mode.
+        """
+        current_dish_mode = self.component_state["dishmode"]
+        if current_dish_mode not in [DishMode.MAINTENANCE, DishMode.OPERATE]:
+            raise RuntimeError(
+                "Cannot change LNA power state while dish is not in operate or maintanance mode."
+            )
+
     # ---------
     # Callbacks
     # ---------
@@ -731,21 +785,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 spf_component_state["bandinfocus"] = band_in_focus
 
-        # spfrx attenuation
-        if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
-            attenuation = {
-                "attenuationpolv": spfrx_component_state["attenuationpolv"],
-                "attenuationpolh": spfrx_component_state["attenuationpolh"],
-            }
-            self.logger.debug(
-                (
-                    "Updating dish manager attenuationpolv and attenuationpolh "
-                    "with: SPFRX attenuation [%s]"
-                ),
-                attenuation,
-            )
-            self._update_component_state(**attenuation)
-
         # kvalue
         if "kvalue" in kwargs:
             k_value = spfrx_component_state["kvalue"]
@@ -775,13 +814,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
-        if "capturingdata" in kwargs:
-            capturing_data = spfrx_component_state["capturingdata"]
+        if "datafibercheck" in kwargs:
+            data_fiber_check = spfrx_component_state["datafibercheck"]
             self.logger.debug(
                 ("Updating dish manager capturing with: SPFRx [%s]"),
-                capturing_data,
+                data_fiber_check,
             )
-            self._update_component_state(capturing=capturing_data)
+            self._update_component_state(capturing=data_fiber_check)
 
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode or operatingmode changes
@@ -822,7 +861,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     new_state,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
-
         # Update the pointing model params if they change
         for band in ["0", "1", "2", "3", "4", "5a", "5b"]:
             pointing_param_name = f"band{band}pointingmodelparams"
@@ -839,9 +877,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
         # Update attributes that are mapped directly from subservient devices
-        if device == "SPF":
-            # there's no SPF in the mapped dict
-            return
         attrs = self.direct_mapped_attrs[device]
         cm_state = self.sub_component_managers[device.value].component_state
 
@@ -1139,6 +1174,47 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band=band,
                 synchronise=synchronise,
                 requested_cmd=req_cmd,
+                timeout_s=self.get_action_timeout(),
+            ).execute,
+            is_cmd_allowed=_is_configure_band_cmd_allowed,
+            task_callback=task_callback,
+        )
+        return status, response
+
+    @check_communicating
+    def configure_band_with_json(
+        self,
+        data: str,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Configure frequency band using JSON string.
+
+        :param data: JSON string containing band configuration parameters.
+        :type data: str
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :return: Result status and message
+        :rtype: Tuple[TaskStatus, str]
+        """
+        _is_configure_band_cmd_allowed = partial(
+            self._dish_mode_model.is_command_allowed,
+            "ConfigureBand",
+            component_manager=self,
+            progress_callback=self._command_progress_callback,
+        )
+
+        try:
+            validate_configure_band_input(data)
+        except ConfigureBandValidationError as err:
+            self.logger.error("Error parsing JSON for configure band command.")
+            return TaskStatus.FAILED, str(err)
+
+        status, response = self.submit_task(
+            ConfigureBandActionSequence(
+                self.logger,
+                self,
+                data=data,
+                requested_cmd="ConfigureBand",
                 timeout_s=self.get_action_timeout(),
             ).execute,
             is_cmd_allowed=_is_configure_band_cmd_allowed,

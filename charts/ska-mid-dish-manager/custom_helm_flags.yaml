@@ -1,7 +1,7 @@
 global:
   minikube: true
   operator: true
-  dishes: ["001", "111"]
+  dishes: ["001", "MKT111"]
 
 ska-mid-dish-ds-manager:
   enabled: true

@@ -48,7 +48,7 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 9.0.0
+    tag: 9.1.1
     pullPolicy: IfNotPresent
 
   # Setting fqdn assumes you are only deploying one Dish Manager
@@ -114,4 +114,4 @@ ska-mid-wms:
       modbus_server_hostnames: ["wms-sim-1"]
       modbus_server_ports: ["1502"]
   simulator:
-    enabled: True
+    enabled: true

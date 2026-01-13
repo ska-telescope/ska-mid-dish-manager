@@ -40,6 +40,12 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b4CapabilityState",
             "b5aCapabilityState",
             "b5bCapabilityState",
+            "b1LnaHPowerState",
+            "b2LnaHPowerState",
+            "b3LnaHPowerState",
+            "b4LnaHPowerState",
+            "b5aLnaHPowerState",
+            "b5bLnaHPowerState",
         )
         super().__init__(
             tango_device_fqdn,
