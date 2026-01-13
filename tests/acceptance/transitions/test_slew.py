@@ -1,6 +1,7 @@
 """Test that Dish Slews to target Azimuth and Elevation."""
 
 import pytest
+import tango
 from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
