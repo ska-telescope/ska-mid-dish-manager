@@ -30,7 +30,7 @@ def validate_configure_band_input(data: str) -> dict:
             raise ConfigureBandValidationError("Invalid receiver band in JSON.")
         sub_band = dish_data.get("sub_band")
         if receiver_band == "5b":
-            if sub_band not in ["1", "2", "3"] or sub_band not in [1, 2, 3]:
+            if sub_band not in ["1", "2", "3"] and sub_band not in [1, 2, 3]:
                 raise ConfigureBandValidationError(
                     "Invalid configuration JSON. Valid sub_band required for"
                     " requested receiver_band [5b]."
