@@ -60,7 +60,9 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     main_event_store.clear_queue()
 
     [[_], [unique_id]] = device_proxy.SetStandbyFPMode()
-    status_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP", timeout=120)
+    status_event_store.wait_for_progress_update(
+        "Awaiting dishmode change to STANDBY_FP", timeout=120
+    )
 
     ds_cm._update_component_state(
         operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
