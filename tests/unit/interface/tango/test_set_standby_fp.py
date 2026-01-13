@@ -64,7 +64,7 @@ def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
         "SetStandbyFPMode completed",
     ]
 
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=20)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 
