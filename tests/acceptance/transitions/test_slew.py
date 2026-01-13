@@ -38,7 +38,7 @@ def test_slew_rejected_in_wrong_dish_mode(event_store_class, dish_manager_proxy)
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.blah
+@pytest.mark.acceptance
 def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_device_proxy):
     """Out of bounds azel is rejected on the dish structure."""
     # set up subscriptions on dish manager
@@ -93,7 +93,7 @@ def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_
     ds_device_proxy.unsubscribe_event(event_id)
 
 
-@pytest.mark.blah
+@pytest.mark.acceptance
 def test_slew_extra_arg_fails(event_store_class, dish_manager_proxy):
     """Test that when given three arguments instead of two, the command is rejected."""
     lrc_status_event_store = event_store_class()
