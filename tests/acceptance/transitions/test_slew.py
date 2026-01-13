@@ -39,7 +39,7 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.acceptance
+@pytest.mark.blah
 def test_slew_outside_bounds_rejected(ds_device_proxy):
     """Out of bounds azel is rejected immediately and does not start LRC."""
     [[result], [unique_id]] = ds_device_proxy.Slew([100, 91])
