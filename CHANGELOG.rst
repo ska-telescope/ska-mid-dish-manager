@@ -8,7 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - SPFC LNA powerstate attributes fix, now checks dish mode correctly before allowing write.
-- Remove restriction of reconfiguring band if already configured to that band.
+- Removed restriction of reconfiguring band if already configured to that band.
 - Fixed data type of periodicNoiseDiodePars and pseudoRandomNoiseDiodePars attributes to match SPFRx hardware.
 
 Version 9.1.1
