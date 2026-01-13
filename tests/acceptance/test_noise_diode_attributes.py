@@ -23,7 +23,7 @@ def reset_diode_params(dish_manager_proxy: tango.DeviceProxy):
     ("attribute, valid_write_value"),
     [
         ("noiseDiodeMode", NoiseDiodeMode.PERIODIC),
-        ("periodicnoisediodepars", np.array([1, 2, 3], dtype=np.int64)),
+        ("periodicnoisediodepars", np.array([1, 2, 3], dtype=np.uint32)),
         ("pseudorandomnoisediodepars", np.array([1, 2, 3], dtype=np.int64)),
     ],
 )
