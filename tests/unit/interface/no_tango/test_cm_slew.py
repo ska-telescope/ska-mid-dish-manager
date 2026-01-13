@@ -66,3 +66,15 @@ def test_slew_handler(
         pointingstate=PointingState.SLEW
     )
     component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)
+
+@pytest.mark.unit
+def test_slew_rejection(
+    component_manager: DishManagerComponentManager,
+    callbacks: dict,
+) -> None:
+    """
+    """
+    component_manager.slew([100,100,100], callbacks["task_cb"])
+    mock_task_callback = callbacks["task_cb"]
+
+    mock_task_callback.assert_called_once_with(status=TaskStatus.REJECTED)
