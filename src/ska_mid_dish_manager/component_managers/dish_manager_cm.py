@@ -1204,7 +1204,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
         try:
-            validate_configure_band_input(data)
+            config_json = validate_configure_band_input(data)
+            config_data = json.dumps(config_json)
         except ConfigureBandValidationError as err:
             self.logger.error("Error parsing JSON for configure band command.")
             return TaskStatus.FAILED, str(err)
@@ -1213,7 +1214,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ConfigureBandActionSequence(
                 self.logger,
                 self,
-                data=data,
+                data=config_data,
                 requested_cmd="ConfigureBand",
                 timeout_s=self.get_action_timeout(),
             ).execute,
