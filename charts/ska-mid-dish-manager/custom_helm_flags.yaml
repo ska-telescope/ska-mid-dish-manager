@@ -10,7 +10,7 @@ ska-mid-dish-ds-manager:
     image:
       registry: artefact.skao.int
       image: ska-mid-dish-ds-manager
-      tag: 6.1.0
+      tag: 7.0.3
       pullPolicy: IfNotPresent
 
 ska-tango-base:
