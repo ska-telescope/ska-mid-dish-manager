@@ -72,12 +72,7 @@ def test_slew_rejection(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """Verify behaviour of a Slew rejection given too many arguments.
-    
-    :param component_manager: the component manager under test
-    :param callbacks: a dictionary of mocks, passed as callbacks to
-        the command tracker under test
-    """
+    """Verify behaviour of a Slew rejection given too many arguments."""
     component_manager.slew([100,100,100], callbacks["task_cb"])
     mock_task_callback = callbacks["task_cb"]
 
