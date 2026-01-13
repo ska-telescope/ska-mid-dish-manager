@@ -28,21 +28,20 @@ def validate_configure_band_input(data: str) -> dict:
         receiver_band = dish_data.get("receiver_band")
         if receiver_band not in ["1", "2", "3", "4", "5a", "5b"]:
             raise ConfigureBandValidationError("Invalid receiver band in JSON.")
+        sub_band = dish_data.get("sub_band")
         if receiver_band == "5b":
-            sub_band = dish_data.get("sub_band")
-            # NOTE: The following code segment converts configuration JSON subband from
-            # str type to int type as is required by SPFRx. This is expected to be a
-            # temporary measure to be removed once SPFRx accepts the subband as str
-            if sub_band in ["1", "2", "3"]:
-                data_json["dish"]["sub_band"] = int(sub_band)
-            else:
+            if sub_band not in ["1", "2", "3"] or sub_band not in [1, 2, 3]:
                 raise ConfigureBandValidationError(
-                    'Invalid sub-band in JSON. Expected "1", "2" or "3".'
+                    "Invalid configuration JSON. Valid sub_band required for"
+                    " requested receiver_band [5b]."
                 )
-        elif "sub_band" in dish_data:
-            raise ConfigureBandValidationError(
-                "Invalid JSON. Sub band was supplied when receiver band was not 5b."
-            )
+
+        # NOTE: The following code segment converts configuration JSON subband from
+        # str type to int type as is required by SPFRx. This is expected to be a
+        # temporary measure to be removed once SPFRx accepts the subband as str
+        if isinstance(sub_band, str) and sub_band.isdigit():
+            data_json["dish"]["sub_band"] = int(sub_band)
+
     except (json.JSONDecodeError, AttributeError) as err:
         raise ConfigureBandValidationError("Error parsing JSON.") from err
 
