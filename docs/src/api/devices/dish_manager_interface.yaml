@@ -373,23 +373,6 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
-    - name: _lrcEvent
-      data_format: SPECTRUM
-      data_type: DevString
-      description: "\n        Read the long running commands events. Always returns\
-        \ an empty list.\n\n        :return: empty list.\n        "
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%s'
-      label: _lrcEvent
-      max_alarm: Not specified
-      max_dim_x: 2
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
     - name: achievedPointing
       data_format: SPECTRUM
       data_type: DevDouble
@@ -1988,7 +1971,7 @@
       writable_attr_name: noiseDiodeMode
     - name: periodicNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevLong64
+      data_type: DevULong
       description: "\n            Periodic noise diode pars (units are in time quanta).\n\
         \n            [0]: period, [1]: duty cycle, [2]: phase shift\n\n         \
         \   Note: This attribute does not persist after a power cycle. A default value\
@@ -2121,7 +2104,7 @@
       writable_attr_name: programTrackTable
     - name: pseudoRandomNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevLong64
+      data_type: DevULong
       description: "\n            Pseudo random noise diode pars (units are in time\
         \ quanta).\n\n            [0]: binary polynomial, [1]: seed, [2]: dwell\n\n\
         \            Note: This attribute does not persist after a power cycle. A\
@@ -2449,3 +2432,4 @@
     - name: SkaLevel
     - name: WindGustThreshold
     - name: polled_cmd
+
