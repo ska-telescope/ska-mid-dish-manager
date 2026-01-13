@@ -13,7 +13,7 @@ POINTING_TOLERANCE_DEG = 0.1
 
 
 @pytest.mark.acceptance
-def test_slew_rejected(event_store_class, dish_manager_proxy):
+def test_slew_rejected_in_wrong_dish_mode(event_store_class, dish_manager_proxy):
     """Test slew command rejected when not in OPERATE."""
     status_event_store = event_store_class()
     result_event_store = event_store_class()
@@ -38,35 +38,77 @@ def test_slew_rejected(event_store_class, dish_manager_proxy):
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.acceptance
-def test_slew_outside_bounds_rejected(event_store_class, ds_device_proxy):
-    """Out of bounds azel is rejected immediately and does not start LRC."""
-    [[result_code], [unique_id]] = ds_device_proxy.Slew([100, 91])
-
+@pytest.mark.blah
+def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_device_proxy):
+    """Out of bounds azel is rejected on the dish structure."""
+    # set up subscriptions on dish manager
+    status_event_store = event_store_class()
     lrc_status_event_store = event_store_class()
+    dish_mode_event_store = event_store_class()
+    attr_cb_mapping = {
+        "longRunningCommandStatus": lrc_status_event_store,
+        "Status": status_event_store,
+        "dishMode": dish_mode_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    ds_device_proxy.subscribe_event(
-        "longRunningCommandStatus", tango.EventType.CHANGE_EVENT, lrc_status_event_store
+    # set up subscriptions on dish structure
+    ds_lrc_status_event_store = event_store_class()
+    event_id = ds_device_proxy.subscribe_event(
+        "longRunningCommandStatus",
+        tango.EventType.CHANGE_EVENT,
+        ds_lrc_status_event_store,
     )
+    ds_lrc_status_event_store.clear_queue()
 
-    assert lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
+    # Set mode to Operate to accept Slew command
+    dish_manager_proxy.ConfigureBand1(True)
+    # Await auto transition to OPERATE following band config
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
+    dish_manager_proxy.Slew([100, 91])
 
-    assert result_code == ResultCode.REJECTED
+    # check that dish manager received a rejection message from dish structure
+    ds_reject_msg = (
+        "Slew failed Target point (Az: 100.0, El: 91.0) is not within "
+        "the dishes limits (Az: [-270.0, 270.0], El: [14.8, 90.2])"
+    )
+    status_event_store.wait_for_progress_update(ds_reject_msg, timeout=10)
+
+    # check that dish structure rejected the command
+    lrc_status_events = ds_lrc_status_event_store.get_queue_values()
+    # lrc_status_events looks like:
+    # [('attr_name', ('unique_id', 'STAGING')), ('attr_name', ('unique_id', 'REJECTED')), ... ]
+    # discard the attr_name and join the event values into a single string for easier searching
+    # e.g. "('unique_id', 'STAGING')('unique_id', 'REJECTED')"
+    lrc_status_events = "".join([str(lrc_status) for _, lrc_status in lrc_status_events])
+    assert "Slew', 'REJECTED'" in lrc_status_events
+
+    # check that dish manager reported failure
+    lrc_status_events = lrc_status_event_store.get_queue_values()
+    lrc_status_events = "".join([str(event_value) for _, event_value in lrc_status_events])
+    assert "Slew', 'FAILED'" in lrc_status_events
+
+    # clean up subscriptions
+    remove_subscriptions(subscriptions)
+    ds_device_proxy.unsubscribe_event(event_id)
 
 
-@pytest.mark.acceptance
+@pytest.mark.blah
 def test_slew_extra_arg_fails(event_store_class, dish_manager_proxy):
     """Test that when given three arguments instead of two, the command is rejected."""
-    [[result_code], [unique_id]] = dish_manager_proxy.Slew([100, 100, 100])
-
     lrc_status_event_store = event_store_class()
-
     dish_manager_proxy.subscribe_event(
         "longRunningCommandStatus", tango.EventType.CHANGE_EVENT, lrc_status_event_store
     )
+    lrc_status_event_store.clear_queue()
 
-    assert lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
+    [[result_code], [message]] = dish_manager_proxy.Slew([100, 100, 100])
     assert result_code == ResultCode.REJECTED
+    assert message == "Expected 2 arguments (az, el) but got 3 arg(s)."
+    # Check that the longRunningCommandStatus event shows the command was rejected
+    lrc_status_events = lrc_status_event_store.get_queue_values()
+    lrc_status_events = "".join([str(event_value) for _, event_value in lrc_status_events])
+    assert "Slew', 'REJECTED'" in lrc_status_events
 
 
 @pytest.mark.acceptance
