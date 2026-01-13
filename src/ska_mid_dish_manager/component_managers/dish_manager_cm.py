@@ -1360,6 +1360,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Load the static pointing model offsets."""
         if len(values) != 2:
+            # TODO add test for this case
+            update_task_status(task_callback, status=TaskStatus.REJECTED)
             return (
                 TaskStatus.REJECTED,
                 f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s).",
