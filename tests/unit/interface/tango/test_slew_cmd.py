@@ -205,3 +205,28 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
     # Check that all the expected progress messages appeared
     for message in expected_progress_updates:
         assert message in events_string
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_set_slew_cmd_rejected_invalid_inputs(
+    dish_manager_resources,
+    event_store_class,
+):
+    device_proxy, dish_manager_cm = dish_manager_resources
+    lrc_status_event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "longRunningCommandStatus",
+        tango.EventType.CHANGE_EVENT,
+        lrc_status_event_store,
+    )
+
+    # Clear out the queue to make sure we don't catch old events
+    lrc_status_event_store.clear_queue()
+
+    device_proxy.Slew([0.0, 50.0, 100.0])
+    event_queue = lrc_status_event_store.get_queue_values()
+    # Produces a data structure looking like [('longrunningcommandstatus', ('1768312843.152686_270411648951242_Slew', 'STAGING')),
+    # ('longrunningcommandstatus', ('1768312843.152686_270411648951242_Slew', 'REJECTED'))], so we index to find the correct value
+    expected_status = event_queue[1][1][1]
+    assert expected_status == "REJECTED"
