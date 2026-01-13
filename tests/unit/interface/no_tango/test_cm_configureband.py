@@ -234,6 +234,43 @@ def test_configureband_b5b_without_subband(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
+def test_configureband_with_subband_not_in_b5b(
+    component_manager: DishManagerComponentManager,
+    callbacks: dict,
+) -> None:
+    """Verify behaviour of ConfigureBand for json including subband but not in b5b.
+
+    :param component_manager: the component manager under test
+    :param callbacks: a dictionary of mocks, passed as callbacks to
+        the command tracker under test
+    """
+    configure_json = """
+    {
+        "dish": {
+            "receiver_band": "2",
+            "sub_band": "1",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+        }
+    }
+    """
+
+    status, response = component_manager.configure_band_with_json(
+        configure_json, callbacks["task_cb"]
+    )
+    assert status == TaskStatus.FAILED
+    assert "Invalid JSON. Sub band was supplied when receiver band was not 5b." in response
+
+
+@pytest.mark.unit
+@patch(
+    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
+    Mock(return_value=True),
+)
 def test_configureband_5b_with_subband(
     component_manager: DishManagerComponentManager,
     callbacks: dict,

@@ -39,6 +39,10 @@ def validate_configure_band_input(data: str) -> dict:
                 raise ConfigureBandValidationError(
                     'Invalid sub-band in JSON. Expected "1", "2" or "3".'
                 )
+        elif "sub_band" in dish_data:
+            raise ConfigureBandValidationError(
+                "Invalid JSON. Sub band was supplied when receiver band was not 5b."
+            )
     except (json.JSONDecodeError, AttributeError) as err:
         raise ConfigureBandValidationError("Error parsing JSON.") from err
 
