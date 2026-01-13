@@ -46,9 +46,7 @@ def test_slew_outside_bounds_rejected(event_store_class, ds_device_proxy):
     lrc_status_event_store = event_store_class()
 
     ds_device_proxy.subscribe_event(
-        "longRunningCommandStatus",
-        tango.EventType.CHANGE_EVENT,
-        lrc_status_event_store
+        "longRunningCommandStatus", tango.EventType.CHANGE_EVENT, lrc_status_event_store
     )
 
     assert lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
@@ -59,14 +57,12 @@ def test_slew_outside_bounds_rejected(event_store_class, ds_device_proxy):
 @pytest.mark.blah
 def test_slew_extra_arg_fails(event_store_class, dish_manager_proxy):
     """Test that when given three arguments instead of two, the command is rejected."""
-    [[result_code], [unique_id]] = dish_manager_proxy.Slew([100,100,100])
+    [[result_code], [unique_id]] = dish_manager_proxy.Slew([100, 100, 100])
 
     lrc_status_event_store = event_store_class()
 
     dish_manager_proxy.subscribe_event(
-        "longRunningCommandStatus",
-        tango.EventType.CHANGE_EVENT,
-        lrc_status_event_store
+        "longRunningCommandStatus", tango.EventType.CHANGE_EVENT, lrc_status_event_store
     )
 
     assert lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))

@@ -206,6 +206,7 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
     for message in expected_progress_updates:
         assert message in events_string
 
+
 @pytest.mark.unit
 @pytest.mark.forked
 def test_set_slew_cmd_rejected_invalid_inputs(

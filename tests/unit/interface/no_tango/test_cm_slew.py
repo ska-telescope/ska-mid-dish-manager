@@ -67,13 +67,14 @@ def test_slew_handler(
     )
     component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)
 
+
 @pytest.mark.unit
 def test_slew_rejection(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
     """Verify behaviour of a Slew rejection given too many arguments."""
-    component_manager.slew([100,100,100], callbacks["task_cb"])
+    component_manager.slew([100, 100, 100], callbacks["task_cb"])
     mock_task_callback = callbacks["task_cb"]
 
     mock_task_callback.assert_called_once_with(status=TaskStatus.REJECTED)
