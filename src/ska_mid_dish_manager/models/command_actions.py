@@ -835,11 +835,6 @@ class ConfigureBandAction(Action):
         )
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
-        if self.dish_manager_cm._component_state["configuredband"] == self.band:
-            report_task_progress(f"Already in band {self.band}", self._progress_callback)
-            self.handler._trigger_success(task_callback, task_abort_event)
-            return
-
         self.logger.info(f"{self.requested_cmd} called")
         return super().execute(task_callback, task_abort_event, completed_response_msg)
 
