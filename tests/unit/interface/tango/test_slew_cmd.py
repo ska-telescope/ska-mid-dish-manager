@@ -226,7 +226,9 @@ def test_set_slew_cmd_rejected_invalid_inputs(
 
     device_proxy.Slew([0.0, 50.0, 100.0])
     event_queue = lrc_status_event_store.get_queue_values()
-    # Produces a data structure looking like [('longrunningcommandstatus', ('1768312843.152686_270411648951242_Slew', 'STAGING')),
-    # ('longrunningcommandstatus', ('1768312843.152686_270411648951242_Slew', 'REJECTED'))], so we index to find the correct value
+    # Produces a data structure looking like
+    # [('longrunningcommandstatus', ('1768312843.152686_270411648951242_Slew', 'STAGING')),
+    # ('longrunningcommandstatus', ('1768312843.152686_270411648951242_Slew', 'REJECTED'))],
+    # so we index to find the correct value
     expected_status = event_queue[1][1][1]
     assert expected_status == "REJECTED"
