@@ -57,3 +57,27 @@ def test_track_load_static_off_handler(
     ]
     for message in expected_progress_messages:
         assert (message,) in progress_messages
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "values",
+    [
+        [],
+        [1.0],
+        [1.0, 2.0, 3.0],
+        [1.0, 2.0, 3.0, 4.0]
+    ],
+)
+def test_track_load_static_off_rejects_invalid_args_count(
+    component_manager: DishManagerComponentManager,
+    callbacks: dict,
+    values: list[float],
+) -> None:
+    """Verify invalid argument counts are rejected."""
+    task_cb = callbacks["task_cb"]
+
+    status, msg = component_manager.track_load_static_off(values, task_cb)
+
+    assert status == TaskStatus.REJECTED
+    assert "Expected 2 arguments" in msg
+    task_cb.assert_called_once_with(status=TaskStatus.REJECTED)

@@ -71,12 +71,24 @@ def test_slew_handler(
 # TODO parameterze this test to cover different rejection slew input cases
 # (No need to apply parameterize in other in the other tests)
 @pytest.mark.unit
+@pytest.mark.parametrize(
+    "invalid_slew_args",
+    [
+        [],
+        [100],
+        [100, 100, 100],
+        [100, 100, 100, 100],
+        [100, 100, 100, 100, 100],
+        [100, 100, 100, 100, 100, 100]
+    ],
+)
 def test_slew_rejection(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
+    invalid_slew_args,
 ) -> None:
     """Verify behaviour of a Slew rejection given too many arguments."""
-    component_manager.slew([100, 100, 100], callbacks["task_cb"])
-    mock_task_callback = callbacks["task_cb"]
+    component_manager.slew(invalid_slew_args, callbacks["task_cb"])
 
+    mock_task_callback = callbacks["task_cb"]
     mock_task_callback.assert_called_once_with(status=TaskStatus.REJECTED)
