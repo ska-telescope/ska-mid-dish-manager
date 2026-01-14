@@ -22,21 +22,19 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # make sure configuredBand is not B2
-    if dish_manager_proxy.configuredBand != Band.B1:
-        [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
-        result_event_store.wait_for_command_result(
-            unique_id, '[0, "SetOperateMode completed"]', timeout=30
-        )
-        assert dish_manager_proxy.configuredBand == Band.B1
-        assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    dish_manager_proxy.ConfigureBand1(True)
+    main_event_store.wait_for_value(Band.B1, timeout=30)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
+    # if left in operate mode, SetOperateMode will fail on trigger success
+    dish_manager_proxy.SetStandbyFPMode()
+    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
 
     main_event_store.clear_queue()
     status_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
-    # dish is already in operate mode so 2nd attempt will fail
     result_event_store.wait_for_command_result(
-        unique_id, '[3, "SetOperateMode failed"]', timeout=30
+        unique_id, '[0, "SetOperateMode completed"]', timeout=30
     )
     main_event_store.wait_for_value(Band.B2, timeout=30)
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
@@ -55,9 +53,9 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         "SPFRX.ConfigureBand2 completed",
         "ConfigureBand2 complete. Triggering on success action.",
         # Then SetOperateMode
-        "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
         "Awaiting SPF operatingmode change to OPERATE",
         "Awaiting DS operatingmode change to POINT",
+        "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
         "Awaiting dishmode change to OPERATE",
         "SPF operatingmode changed to OPERATE",
         "SPF.SetOperateMode completed",
@@ -67,10 +65,9 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     ]
 
     events = status_event_store.get_queue_values()
-
-    events_string = "".join([str(attr_value) for _, attr_value in events])
+    statuses = "".join([str(attr_value) for _, attr_value in events])
     for message in expected_progress_updates:
-        assert message in events_string
+        assert message in statuses
 
     # Do it again to check result
     result_event_store.clear_queue()
@@ -78,7 +75,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     status_event_store.wait_for_progress_update("Already in band 2", timeout=10)
-    # dish is already in operate mode so 3rd attempt will fail
+    # dish is already in operate mode so 2nd attempt will fail
     result_event_store.wait_for_command_result(
         unique_id, '[3, "SetOperateMode failed"]', timeout=10
     )
