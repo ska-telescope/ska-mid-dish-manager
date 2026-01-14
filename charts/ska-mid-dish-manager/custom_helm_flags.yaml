@@ -34,6 +34,15 @@ ska-mid-dish-b5dc-proxy:
   deviceServers:
     b5dc-proxy:
       enabled: true
+  ska-mid-dish-dcp-lib:
+    enabled: true
+    b5dcSimulator:
+      enabled: true
+      image:
+        registry: artefact.skao.int
+        image: ska-mid-dish-dcp-lib
+        tag: 0.0.9
+        pullPolicy: IfNotPresent
 
 dishmanager:
   wms:
