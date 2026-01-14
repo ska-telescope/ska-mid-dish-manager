@@ -68,8 +68,6 @@ def test_slew_handler(
     component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)
 
 
-# TODO parameterze this test to cover different rejection slew input cases
-# (No need to apply parameterize in other in the other tests)
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "invalid_slew_args",
