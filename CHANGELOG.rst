@@ -9,6 +9,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - SPFC LNA powerstate attributes fix, now checks dish mode correctly before allowing write.
 - Added conversion of the ConfigureBand command JSON sub_band value from string to int before fanout to SPFRx.
+- Added task callback and tests to validate correct behaviour on invalid slew inputs.
+- Added unit test for validating track load static arguments.
+- Change to image author.
+- Fixes to breaking config band tests.
 
 Version 9.1.1
 *************
@@ -22,7 +26,6 @@ Version 9.1.0
 - Removed forked mark on acceptance tests; limited forked tests to tests that use DeviceTestContext.
 - Implemented ConfigureBand command that ingests a JSON string to configure bands on SPFRx.
 - Exposed SPF B<n>LNAPowerState attributes for bands 1 to 5b. 
-- Added task callback and tests to validate correct behaviour on invalid slew inputs.
 
 Version 9.0.0
 *************
