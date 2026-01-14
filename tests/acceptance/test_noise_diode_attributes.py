@@ -14,8 +14,8 @@ def reset_diode_params(dish_manager_proxy: tango.DeviceProxy):
     yield
     # restore defaults
     dish_manager_proxy.noiseDiodeMode = NoiseDiodeMode.OFF
-    dish_manager_proxy.periodicNoiseDiodePars = np.array([0, 0, 0], dtype=np.int64)
-    dish_manager_proxy.pseudoRandomNoiseDiodePars = np.array([0, 0, 0], dtype=np.int64)
+    dish_manager_proxy.periodicNoiseDiodePars = np.array([0, 0, 0], dtype=np.uint32)
+    dish_manager_proxy.pseudoRandomNoiseDiodePars = np.array([0, 0, 0], dtype=np.uint32)
 
 
 @pytest.mark.acceptance
