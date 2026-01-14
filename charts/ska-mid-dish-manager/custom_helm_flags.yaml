@@ -35,11 +35,6 @@ ska-mid-dish-b5dc-proxy:
     b5dc-proxy:
       enabled: true
 
-ska-mid-dish-dcp-lib:
-  enabled: true
-  b5dcSimulator:
-    enabled: true
-
 dishmanager:
   wms:
     station_ids: ["1"]
