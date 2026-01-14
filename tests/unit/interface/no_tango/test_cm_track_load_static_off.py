@@ -58,15 +58,11 @@ def test_track_load_static_off_handler(
     for message in expected_progress_messages:
         assert (message,) in progress_messages
 
+
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "values",
-    [
-        [],
-        [1.0],
-        [1.0, 2.0, 3.0],
-        [1.0, 2.0, 3.0, 4.0]
-    ],
+    [[], [1.0], [1.0, 2.0, 3.0], [1.0, 2.0, 3.0, 4.0]],
 )
 def test_track_load_static_off_rejects_invalid_args_count(
     component_manager: DishManagerComponentManager,
