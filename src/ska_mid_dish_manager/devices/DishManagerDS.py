@@ -1848,7 +1848,7 @@ class DishManager(SKAController):
         The JSON structure is as follows:
         {
             "receiver_band": <string>,
-            "sub_band": <integer>,
+            "sub_band": <string>,
             "spfrx_processing_parameters": {
                 "dishes": List[<string>],
                 "sync_pps":  <bool>,
