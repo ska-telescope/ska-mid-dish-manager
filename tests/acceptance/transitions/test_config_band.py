@@ -34,8 +34,9 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     status_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
+    # dish is already in operate mode so 2nd attempt will fail
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+        unique_id, '[3, "SetOperateMode failed"]', timeout=30
     )
     main_event_store.wait_for_value(Band.B2, timeout=30)
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
@@ -77,8 +78,9 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     status_event_store.wait_for_progress_update("Already in band 2", timeout=10)
+    # dish is already in operate mode so 3rd attempt will fail
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=10
+        unique_id, '[3, "SetOperateMode failed"]', timeout=10
     )
     assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
@@ -286,8 +288,9 @@ def test_configure_band_json(
     }
     """
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
+    # dish is already in operate mode so 2nd attempt will fail
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+        unique_id, '[3, "SetOperateMode failed"]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE

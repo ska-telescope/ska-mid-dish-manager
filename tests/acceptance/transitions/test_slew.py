@@ -67,13 +67,6 @@ def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
     dish_manager_proxy.Slew([100, 91])
 
-    # check that dish manager received a rejection message from dish structure
-    ds_reject_msg = (
-        "Slew failed Target point (Az: 100.0, El: 91.0) is not within "
-        "the dishes limits (Az: [-270.0, 270.0], El: [14.8, 90.2])"
-    )
-    status_event_store.wait_for_progress_update(ds_reject_msg, timeout=10)
-
     # check that dish structure rejected the command
     lrc_status_events = ds_lrc_status_event_store.get_queue_values()
     # lrc_status_events looks like:
@@ -82,6 +75,13 @@ def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_
     # e.g. "('unique_id', 'STAGING')('unique_id', 'REJECTED')"
     lrc_status_events = "".join([str(lrc_status) for _, lrc_status in lrc_status_events])
     assert "Slew', 'REJECTED'" in lrc_status_events
+
+    # check that dish manager received a rejection message from dish structure
+    ds_reject_msg = (
+        "Slew failed Target point (Az: 100.0, El: 91.0) is not within "
+        "the dishes limits (Az: [-270.0, 270.0], El: [14.8, 90.2])"
+    )
+    status_event_store.wait_for_progress_update(ds_reject_msg)
 
     # check that dish manager reported failure
     lrc_status_events = lrc_status_event_store.get_queue_values()
