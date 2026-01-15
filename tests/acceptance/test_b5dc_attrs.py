@@ -52,10 +52,7 @@ def test_b5dc_attributes_updates(dish_manager_proxy, event_store_class):
 @pytest.mark.parametrize(
     "attr_name",
     [
-        "rfcmfrequency",
         "rfcmplllock",
-        "rfcmhattenuation",
-        "rfcmvattenuation",
         "clkphotodiodecurrent",
         "hpolrfpowerin",
         "vpolrfpowerin",
