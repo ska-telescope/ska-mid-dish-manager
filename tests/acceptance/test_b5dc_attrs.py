@@ -4,6 +4,7 @@ import pytest
 import tango
 
 
+@pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize(
     "attribute",
@@ -29,6 +30,7 @@ def test_b5dc_attributes_are_readable_and_read_only(dish_manager_proxy, attribut
     assert attribute_value is not None
 
 
+@pytest.mark.acceptance
 @pytest.mark.forked
 def test_b5dc_attributes_updates(dish_manager_proxy, event_store_class):
     """Test that dish manager recieves b5dc attribute updates,
@@ -36,11 +38,6 @@ def test_b5dc_attributes_updates(dish_manager_proxy, event_store_class):
     """
     event_store = event_store_class()
     default_rfcmPsuPcbTemperature_value = 0.0
-    dish_manager_proxy.subscribe_event(
-        "rfcmPsuPcbTemperature",
-        tango.EventType.CHANGE_EVENT,
-        event_store,
-    )
     event_store.get_queue_values()
 
     assert (
@@ -50,6 +47,7 @@ def test_b5dc_attributes_updates(dish_manager_proxy, event_store_class):
     assert dish_manager_proxy.rfcmPsuPcbTemperature != default_rfcmPsuPcbTemperature_value
 
 
+@pytest.mark.acceptance
 @pytest.mark.forked
 @pytest.mark.parametrize(
     "attr_name",

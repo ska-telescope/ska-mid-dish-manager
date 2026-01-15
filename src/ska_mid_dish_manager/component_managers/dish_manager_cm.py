@@ -493,7 +493,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if not self.is_device_ignored("SPFRX"):
             active_component_managers["SPFRX"] = self.sub_component_managers["SPFRX"]
-
+        if not self.is_device_ignored("B5DC"):
+            active_component_managers["B5DC"] = self.sub_component_managers["B5DC"]
         return active_component_managers
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:

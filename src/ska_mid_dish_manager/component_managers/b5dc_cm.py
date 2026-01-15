@@ -29,6 +29,7 @@ class B5DCComponentManager(TangoDeviceComponentManager):
             "rfcmVAttenuation",
             "rfcmFrequency",
             "rfcmPllLock",
+            "clkphotodiodecurrent",
             "rfTemperature",
             "rfcmPsuPcbTemperature",
             "hPolRfPowerIn",
