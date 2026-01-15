@@ -741,8 +741,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
-        b5dc_component_state = self.sub_component_managers["B5DC"].component_state
-        
+
         if "powerstate" in kwargs:
             new_power_state = self._state_transition.compute_power_state(
                 ds_component_state,
@@ -869,6 +868,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
                 spf_component_state if not self.is_device_ignored("SPF") else None,
             )
+            # TODO: Add b5dc Frequency??
             self.logger.debug(
                 (
                     "Updating dish manager configuredBand with: [%s]. "
