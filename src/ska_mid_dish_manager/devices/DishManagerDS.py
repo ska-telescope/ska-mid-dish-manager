@@ -242,8 +242,9 @@ class DishManager(SKAController):
         if attr_name:
             attribute_object = getattr(self, attr_name, None)
             if attribute_object:
-                attribute_object.set_value(attr_value)
-                attribute_object.set_quality(new_attribute_quality, True)
+                if attribute_object.get_quality() != new_attribute_quality:
+                    attribute_object.set_value(attr_value)
+                    attribute_object.set_quality(new_attribute_quality, True)
 
     def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
         wind_stow_active = self.component_manager.wind_stow_active
