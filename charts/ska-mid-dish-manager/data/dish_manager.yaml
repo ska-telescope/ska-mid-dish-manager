@@ -59,7 +59,7 @@ server:
                     {{- if $.Values.dishmanager.b5dcproxy.fqdn }}
                     - "{{ $.Values.dishmanager.b5dcproxy.fqdn }}"
                     {{- else }}
-                    - "{{ $.Values.dishmanager.b5dcproxy.domain_name }}/{{ $.Values.dishmanager.b5dcproxy.family_name }}/SKA{{ printf "%01s" . }}"
+                    - "{{ $.Values.dishmanager.b5dcproxy.domain_name }}/{{ $.Values.dishmanager.b5dcproxy.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
                     {{- end }}
                 - name: "DishId"
                   values:

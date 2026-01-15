@@ -77,9 +77,6 @@ def test_b5dc_emits_change_and_archive_events(dish_manager_proxy, attr_name, eve
     sub_id_event = dish_manager_proxy.subscribe_event(
         attr_name, tango.EventType.ARCHIVE_EVENT, archive_store
     )
-    if attr_name == "rfcmfrequency":
-        dish_manager_proxy.SetFrequency(2)
-
     assert change_store.get_queue_events()
     assert archive_store.get_queue_events()
 
