@@ -1921,7 +1921,7 @@ class DishManager(SKAController):
         doc="Reflects the photodiode current in mA.",
     )
     def clkPhotodiodeCurrent(self):
-        """Return the photo diode current."""
+        """Return the clkPhotodiodeCurrent."""
         return self.component_manager.component_state.get("clkphotodiodecurrent", 0.0)
 
     @attribute(

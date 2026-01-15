@@ -191,6 +191,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             vpolrfpowerin=0.0,
             vpolrfpowerout=0.0,
             rfcmfrequency=0.0,
+            clkphotodiodecurrent=0.0,
             actiontimeoutseconds=action_timeout_s,
             b1lnahpowerstate=False,
             b2lnahpowerstate=False,
@@ -350,6 +351,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 vPolRfPowerIn=0.0,
                 vPolRfPowerOut=0.0,
                 rfcmFrequency=0.0,
+                clkPhotodiodeCurrent=0.0,
             ),
         }
 
