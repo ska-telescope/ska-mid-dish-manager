@@ -33,7 +33,7 @@ def test_ska001_is_available(monitor_tango_servers, reset_dish_to_standby, dish_
 
 @pytest.mark.acceptance
 def test_other_dish_instance_is_available():
-    """Test that MKT111 is available."""
+    """Test that a different, arbitrary dish is available."""
     dev_proxy = DeviceProxy("mid-dish/dish-manager/MKT111")
     assert isinstance(dev_proxy.ping(), int)
     assert dev_proxy.State() in [DevState.ON, DevState.ALARM]
