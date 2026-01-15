@@ -38,7 +38,7 @@ def test_b5dc_attributes_updates(dish_manager_proxy, event_store_class):
     """
     event_store = event_store_class()
     default_rfcmPsuPcbTemperature_value = 0.0
-    event_store.get_queue_values()
+    event_store.wait_for_value(dish_manager_proxy.rfcmPsuPcbTemperature, timeout=10)
 
     assert (
         dish_manager_proxy.read_attribute("rfcmPsuPcbTemperature").value
@@ -52,7 +52,10 @@ def test_b5dc_attributes_updates(dish_manager_proxy, event_store_class):
 @pytest.mark.parametrize(
     "attr_name",
     [
+        "rfcmfrequency",
         "rfcmplllock",
+        "rfcmhattenuation",
+        "rfcmvattenuation",
         "clkphotodiodecurrent",
         "hpolrfpowerin",
         "vpolrfpowerin",
@@ -74,8 +77,8 @@ def test_b5dc_emits_change_and_archive_events(dish_manager_proxy, attr_name, eve
     sub_id_event = dish_manager_proxy.subscribe_event(
         attr_name, tango.EventType.ARCHIVE_EVENT, archive_store
     )
-    assert change_store.get_queue_events()
-    assert archive_store.get_queue_events()
+    assert change_store.wait_for_n_events(1, timeout=6)
+    assert archive_store.wait_for_n_events(1, timeout=6)
 
     dish_manager_proxy.unsubscribe_event(sub_id_arch)
     dish_manager_proxy.unsubscribe_event(sub_id_event)
