@@ -335,12 +335,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5dc_device_fqdn,
                 logger=logger,
                 state_update_lock=self._state_update_lock,
-                communication_state_callback=partial(
-                    self._sub_device_communication_state_changed, DishDevice.B5DC
-                ),
-                component_state_callback=partial(
-                    self._sub_device_component_state_changed, DishDevice.B5DC
-                ),
                 rfcmHAttenuation=0.0,
                 rfcmVAttenuation=0.0,
                 rfcmPllLock=B5dcPllState.NOT_LOCKED,
@@ -352,6 +346,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 vPolRfPowerOut=0.0,
                 rfcmFrequency=0.0,
                 clkPhotodiodeCurrent=0.0,
+                communication_state_callback=partial(
+                    self._sub_device_communication_state_changed, DishDevice.B5DC
+                ),
+                component_state_callback=partial(
+                    self._sub_device_component_state_changed, DishDevice.B5DC
+                ),
             ),
         }
 
@@ -741,7 +741,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
-
+        b5dc_component_state = self.sub_component_managers["B5DC"].component_state
+        
         if "powerstate" in kwargs:
             new_power_state = self._state_transition.compute_power_state(
                 ds_component_state,
