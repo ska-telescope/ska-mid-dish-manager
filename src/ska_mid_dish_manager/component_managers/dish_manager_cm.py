@@ -963,8 +963,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "clkphotodiodecurrent",
                 "rftemperature",
                 "rfcmpsupcbtemperature",
-                "hpolrfPowerin",
-                "hPolrfpowerout",
+                "hpolrfpowerin",
+                "hpolrfpowerout",
                 "vpolrfpowerin",
                 "vpolrfpowerout",
             ]
