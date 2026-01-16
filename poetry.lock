@@ -2591,14 +2591,14 @@ reference = "ska-nexus"
 
 [[package]]
 name = "ska-mid-dish-dcp-lib"
-version = "0.0.6"
+version = "0.0.9"
 description = "Band 5 down-converter communication library"
 optional = false
 python-versions = ">=3.10,<4.0"
 groups = ["main"]
 files = [
-    {file = "ska_mid_dish_dcp_lib-0.0.6-py3-none-any.whl", hash = "sha256:c6c3cc7bc02e3a16dbbb3c5eb31679ee9ad1c8c0deedc31e1db5a5c4a8371232"},
-    {file = "ska_mid_dish_dcp_lib-0.0.6.tar.gz", hash = "sha256:eda150f6ba168730b45e5ce08e9391b4aeb8e43938724bafb23bbd2182e7d133"},
+    {file = "ska_mid_dish_dcp_lib-0.0.9-py3-none-any.whl", hash = "sha256:29c2dd860133f1048f68bfa8b9fc1d90688b261697c293c14b4f4e8a3bfd6b60"},
+    {file = "ska_mid_dish_dcp_lib-0.0.9.tar.gz", hash = "sha256:7f4787ff30d9067422c9d3ce19e67a28a58e7f96cd5c948a3113d0bd3b6d258f"},
 ]
 
 [package.source]
@@ -3342,4 +3342,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "ac9e76d09e2ade78474e6808f8caa6bbb870512152308405135588c7c2aad0d6"
+content-hash = "2d5b99f2fb7f7b1a8eb4fc13ed429f095393d10547dce037b1ca9d161f7ee5af"

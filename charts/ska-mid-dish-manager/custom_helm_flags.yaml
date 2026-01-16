@@ -1,7 +1,7 @@
 global:
   minikube: true
   operator: true
-  dishes: ["001", "MKT111"]
+  dishes: ["001", "EFF111"]
 
 ska-mid-dish-ds-manager:
   enabled: true
@@ -34,15 +34,6 @@ ska-mid-dish-b5dc-proxy:
   deviceServers:
     b5dc-proxy:
       enabled: true
-  ska-mid-dish-dcp-lib:
-    enabled: true
-    b5dcSimulator:
-      enabled: true
-      image:
-        registry: artefact.skao.int
-        image: ska-mid-dish-dcp-lib
-        tag: 0.0.9
-        pullPolicy: IfNotPresent
 
 dishmanager:
   wms:
