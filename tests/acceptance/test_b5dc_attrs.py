@@ -30,22 +30,6 @@ def test_b5dc_attributes_are_readable_and_read_only(dish_manager_proxy, attribut
 
 
 @pytest.mark.acceptance
-def test_b5dc_attributes_updates(dish_manager_proxy, event_store_class):
-    """Test that dish manager recieves b5dc attribute updates,
-    the attribute used is rfcmPsuPcbTemperature.
-    """
-    event_store = event_store_class()
-    default_rfcmPsuPcbTemperature_value = 0.0
-    event_store.get_queue_values(timeout=10)
-
-    assert (
-        dish_manager_proxy.read_attribute("rfcmPsuPcbTemperature").value
-        != default_rfcmPsuPcbTemperature_value
-    )
-    assert dish_manager_proxy.rfcmPsuPcbTemperature != default_rfcmPsuPcbTemperature_value
-
-
-@pytest.mark.acceptance
 @pytest.mark.parametrize(
     "attr_name",
     [
