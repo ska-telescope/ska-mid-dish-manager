@@ -282,7 +282,7 @@ def test_configureband_5b_with_subband(
     msgs = [
         "Awaiting DS indexerposition change to B5b",
         "Awaiting SPFRX configuredband change to B5b",
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
+        "Fanned out commands: B5DC.SetFrequency, DS.SetIndexPosition, SPFRX.ConfigureBand",
         "Awaiting configuredband change to B5b",
     ]
     progress_cb = callbacks["progress_cb"]

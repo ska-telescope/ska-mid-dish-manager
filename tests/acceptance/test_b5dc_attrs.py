@@ -5,7 +5,6 @@ import tango
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     "attribute",
     [
@@ -31,7 +30,6 @@ def test_b5dc_attributes_are_readable_and_read_only(dish_manager_proxy, attribut
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_b5dc_attributes_updates(dish_manager_proxy, event_store_class):
     """Test that dish manager recieves b5dc attribute updates,
     the attribute used is rfcmPsuPcbTemperature.
@@ -48,7 +46,6 @@ def test_b5dc_attributes_updates(dish_manager_proxy, event_store_class):
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 @pytest.mark.parametrize(
     "attr_name",
     [
