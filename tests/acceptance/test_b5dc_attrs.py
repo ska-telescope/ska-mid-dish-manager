@@ -36,7 +36,7 @@ def test_b5dc_attributes_updates(dish_manager_proxy, event_store_class):
     """
     event_store = event_store_class()
     default_rfcmPsuPcbTemperature_value = 0.0
-    event_store.wait_for_value(dish_manager_proxy.rfcmPsuPcbTemperature, timeout=10)
+    event_store.get_queue_values(timeout=10)
 
     assert (
         dish_manager_proxy.read_attribute("rfcmPsuPcbTemperature").value
