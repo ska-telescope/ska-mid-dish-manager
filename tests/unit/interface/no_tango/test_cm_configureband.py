@@ -282,7 +282,8 @@ def test_configureband_5b_with_subband(
     msgs = [
         "Awaiting DS indexerposition change to B5b",
         "Awaiting SPFRX configuredband change to B5b",
-        "Fanned out commands: B5DC.SetFrequency, DS.SetIndexPosition, SPFRX.ConfigureBand",
+        "Awaiting B5DC rfcmfrequency change to 11.1",
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand, B5DC.SetFrequency",
         "Awaiting configuredband change to B5b",
     ]
     progress_cb = callbacks["progress_cb"]
@@ -299,9 +300,11 @@ def test_configureband_5b_with_subband(
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B5b, operatingmode=DSOperatingMode.POINT
     )
-    component_state_cb.wait_for_value("configuredband", Band.B5b)
-
+    # component_manager._update_component_state(rfcmfrequency=11.1)
+    component_manager.sub_component_managers["B5DC"]._update_component_state(rfcmfrequency=11.1)
     # wait a bit for the lrc updates to come through
+    component_state_cb.wait_for_value("rfcmfrequency", 11.1, timeout=20)
+    component_state_cb.wait_for_value("configuredband", Band.B5b, timeout=30)
     component_state_cb.get_queue_values()
     # check that the updates for the final SetOperate call in the sequence come through
     task_cb = callbacks["task_cb"]

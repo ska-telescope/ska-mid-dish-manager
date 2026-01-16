@@ -8,6 +8,7 @@ from typing import Any, Callable, List, Optional
 
 import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus
+from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S, DSC_MIN_POWER_LIMIT_KW
 from ska_mid_dish_manager.models.dish_enums import (
@@ -780,12 +781,13 @@ class ConfigureBandAction(Action):
 
         self.indexer_enum = IndexerPosition(int(band)) if band is not None else None
         self.requested_cmd = requested_cmd
-        self.configband_fanned_out_commands = []
+        b5dc_set_frequency_command = None
 
         if self.data is not None:
             data_json = json.loads(self.data)
             dish_data = data_json.get("dish")
             receiver_band = dish_data.get("receiver_band")
+            sub_band = dish_data.get("sub_band")
             # Override band and indexer_enum if json data is provided
             self.band = Band[f"B{receiver_band}"]
             self.indexer_enum = IndexerPosition[f"B{receiver_band}"]
@@ -800,7 +802,25 @@ class ConfigureBandAction(Action):
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
-            self.configband_fanned_out_commands.insert(0, spfrx_configure_band_command)
+            if receiver_band == "5b":
+                frequency_mapping = [
+                    (B5dcFrequency.F_11_1_GHZ, 11.1),
+                    (B5dcFrequency.F_13_2_GHZ, 13.2),
+                    (B5dcFrequency.F_13_86_GHZ, 13.86),
+                ]
+
+                b5dc_set_frequency_command = FannedOutSlowCommand(
+                    logger=self.logger,
+                    device="B5DC",
+                    command_name="SetFrequency",
+                    device_component_manager=self.dish_manager_cm.sub_component_managers["B5DC"],
+                    command_argument=frequency_mapping[int(sub_band) - 1][0],
+                    awaited_component_state={
+                        "rfcmfrequency": frequency_mapping[int(sub_band) - 1][1]
+                    },
+                    progress_callback=self._progress_callback,
+                    is_device_ignored=self.dish_manager_cm.is_device_ignored("B5DC"),
+                )
         else:
             spfrx_configure_band_command = FannedOutSlowCommand(
                 logger=self.logger,
@@ -812,7 +832,6 @@ class ConfigureBandAction(Action):
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
-            self.configband_fanned_out_commands.insert(0, spfrx_configure_band_command)
 
         ds_set_index_position_command = FannedOutSlowCommand(
             logger=self.logger,
@@ -823,25 +842,15 @@ class ConfigureBandAction(Action):
             awaited_component_state={"indexerposition": self.indexer_enum},
             progress_callback=self._progress_callback,
         )
-        self.configband_fanned_out_commands.insert(0, ds_set_index_position_command)
 
-        if self.band == Band.B5b:
-            b5dc_set_frequency_command = FannedOutSlowCommand(
-                logger=self.logger,
-                device="B5DC",
-                command_name="SetFrequency",
-                device_component_manager=self.dish_manager_cm.sub_component_managers["B5DC"],
-                command_argument=self.band,
-                awaited_component_state={"configuredband": self.band},
-                progress_callback=self._progress_callback,
-                is_device_ignored=self.dish_manager_cm.is_device_ignored("B5DC"),
-            )
-            self.configband_fanned_out_commands.insert(0, b5dc_set_frequency_command)
+        fanned_out_commands = [ds_set_index_position_command, spfrx_configure_band_command]
+        if b5dc_set_frequency_command:
+            fanned_out_commands.append(b5dc_set_frequency_command)
 
         self._handler = ActionHandler(
             logger=self.logger,
             action_name=self.requested_cmd,
-            fanned_out_commands=self.configband_fanned_out_commands,
+            fanned_out_commands=fanned_out_commands,
             component_state=self.dish_manager_cm._component_state,
             awaited_component_state={"configuredband": self.band},
             action_on_success=action_on_success,

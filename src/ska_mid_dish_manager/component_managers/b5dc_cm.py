@@ -5,6 +5,7 @@ from threading import Lock
 from typing import Any, Callable, Optional
 
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
+    B5dcFrequency,
     B5dcPllState,
 )
 
@@ -52,6 +53,7 @@ class B5DCComponentManager(TangoDeviceComponentManager):
     def _update_component_state(self, **kwargs) -> None:
         enum_conversion = {
             "rfcmpllLock": B5dcPllState,
+            "rfcmFrequency": B5dcFrequency,
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:
