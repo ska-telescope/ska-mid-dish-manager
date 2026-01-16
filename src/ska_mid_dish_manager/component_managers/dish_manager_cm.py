@@ -957,7 +957,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "tracktableendindex",
             ]
         )
-
+        b5dc_related_attrs = set(
+            [
+                "rfcmplllock",
+                "clkphotodiodecurrent",
+                "rftemperature",
+                "rfcmpsupcbtemperature",
+                "hpolrfPowerin",
+                "hPolrfpowerout",
+                "vpolrfpowerin",
+                "vpolrfpowerout",
+            ]
+        )
         enum_attr_mapping = {
             "trackInterpolationMode": TrackInterpolationMode,
             "noiseDiodeMode": NoiseDiodeMode,
@@ -970,7 +981,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 new_value = cm_state[attr_lower]
                 mapped_enum = enum_attr_mapping.get(attr)
                 new_value = mapped_enum(new_value) if mapped_enum is not None else new_value
-                if attr_lower not in pointing_related_attrs:
+                if (
+                    attr_lower not in pointing_related_attrs
+                    and attr_lower not in b5dc_related_attrs
+                ):
                     self.logger.debug(
                         ("Updating dish manager %s with: %s %s [%s]"),
                         attr,
