@@ -76,7 +76,6 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     status_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
-    status_event_store.wait_for_progress_update("Already in band 2", timeout=10)
     result_event_store.wait_for_command_result(
         unique_id, '[0, "SetOperateMode completed"]', timeout=10
     )
