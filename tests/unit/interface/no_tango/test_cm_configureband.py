@@ -319,6 +319,80 @@ def test_configureband_5b_with_subband(
     progress_cb.wait_for_args(("SetOperateMode completed",))
 
 
+def test_configureband_5b_ignore_b5dc(
+    component_manager: DishManagerComponentManager,
+    callbacks: dict,
+) -> None:
+    """Verify behaviour of ConfigureBand for json missing subband case.
+
+    :param component_manager: the component manager under test
+    :param callbacks: a dictionary of mocks, passed as callbacks to
+        the command tracker under test
+    """
+    component_state_cb = callbacks["comp_state_cb"]
+    configure_json = """
+    {
+        "dish": {
+            "receiver_band": "5b",
+            "sub_band": "1",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+    }"""
+    component_manager._component_state["ignoreb5dc"] = True
+    status, response = component_manager.configure_band_with_json(
+        configure_json, callbacks["task_cb"]
+    )
+    assert status == TaskStatus.QUEUED
+    assert "Task queued" in response
+    # wait a bit for the lrc updates to come through
+    component_state_cb.get_queue_values()
+
+    expected_call_kwargs = (
+        {"status": TaskStatus.QUEUED},
+        {"status": TaskStatus.IN_PROGRESS},
+    )
+
+    # check that the initial lrc updates come through
+    actual_call_kwargs = callbacks["task_cb"].call_args_list
+    for count, mock_call in enumerate(actual_call_kwargs):
+        _, kwargs = mock_call
+        assert kwargs == expected_call_kwargs[count]
+    msgs = [
+        "Awaiting DS indexerposition change to B5b",
+        "Awaiting SPFRX configuredband change to B5b",
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
+        "Awaiting configuredband change to B5b",
+    ]
+    progress_cb = callbacks["progress_cb"]
+    for msg in msgs:
+        progress_cb.wait_for_args((msg,))
+
+    # check that the component state reports the requested command
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        operatingmode=SPFOperatingMode.OPERATE
+    )
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        configuredband=Band.B5b, operatingmode=SPFRxOperatingMode.OPERATE
+    )
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        indexerposition=IndexerPosition.B5b, operatingmode=DSOperatingMode.POINT
+    )
+    component_state_cb.wait_for_value("configuredband", Band.B5b)
+    # wait a bit for the lrc updates to come through
+    component_state_cb.get_queue_values()
+    # check that the updates for the final SetOperate call in the sequence come through
+    task_cb = callbacks["task_cb"]
+    task_cb.assert_called_with(
+        status=TaskStatus.COMPLETED,
+        result=(ResultCode.OK, "SetOperateMode completed"),
+    )
+    progress_cb.wait_for_args(("SetOperateMode completed",))
+
+
 @pytest.mark.unit
 @patch(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
