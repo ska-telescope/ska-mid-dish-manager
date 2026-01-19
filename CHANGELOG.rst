@@ -21,8 +21,8 @@ Version 9.2.0
 
 - Updated package dependencies
 
-  - Upgraded ska-tango-base to v1.0.5
-  - Upgraded ska-tango-util chart to v1.0.5
+  - Upgraded ska-tango-base to v1.4.0
+
 
 Version 9.1.1
 *************
@@ -35,7 +35,11 @@ Version 9.1.0
 - Updated `ska-tango-base` to use latest version limited to minor releases (<2.0.0).
 - Removed forked mark on acceptance tests; limited forked tests to tests that use DeviceTestContext.
 - Implemented ConfigureBand command that ingests a JSON string to configure bands on SPFRx.
-- Exposed SPF B<n>LNAPowerState attributes for bands 1 to 5b. 
+- Exposed SPF B<n>LNAPowerState attributes for bands 1 to 5b.
+- Updated chart dependencies
+
+  - Upgraded ska-tango-base chart to v1.0.5
+  - Upgraded ska-tango-util chart to v1.0.5
 
 Version 9.0.0
 *************
@@ -43,6 +47,8 @@ Version 9.0.0
   - SetMaintenanceMode command and associated Maintenance DishMode updated
   - ConfigureBand<N> command will now transition to OPERATE Dish mode on successful configuration
   - SetOperateMode command deprecated, use ConfigureBand<N> to transition to OPERATE Dish mode
+- Added a configurable timeout for long-running command executions.
+  - Defaults to 120 seconds and can be configured via helm value `dishmanager.actions.timeout_seconds`
 
 Version 8.5.1
 *************
