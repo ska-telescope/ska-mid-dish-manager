@@ -44,10 +44,13 @@ Version 9.1.0
 Version 9.0.0
 *************
 - Update implementation to match new states & modes ICD rev 6
+
   - SetMaintenanceMode command and associated Maintenance DishMode updated
   - ConfigureBand<N> command will now transition to OPERATE Dish mode on successful configuration
   - SetOperateMode command deprecated, use ConfigureBand<N> to transition to OPERATE Dish mode
+
 - Added a configurable timeout for long-running command executions.
+
   - Defaults to 120 seconds and can be configured via helm value `dishmanager.actions.timeout_seconds`
 
 Version 8.5.1
