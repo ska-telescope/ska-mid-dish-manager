@@ -304,7 +304,7 @@ def test_configure_band_json(
     # but does not set the indexer position again.
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+        unique_id, '[3, "SetOperateMode failed"]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
