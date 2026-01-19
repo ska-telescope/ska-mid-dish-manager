@@ -13,6 +13,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Removed restriction of reconfiguring band if already configured to that band.
 - Upgraded ska-tango-base to v1.4.0
 - Upgraded ska-mid-dish-ds-manager chart to v7.1.0
+- Upgraded ska-mid-dish-simulators chart to v5.5.3
 - Improved handling and reporting of rejected commands when invalid inputs are provided.
 - Rejected commands from the Dish Structure Manager are correctly now surfaced to the DishManager.
 
