@@ -29,7 +29,7 @@ dependencies = [
     "numpy<2.0.0",
     "ska-control-model>=1.0.0",
     "ska-ser-logging>=0.4.1",
-    "ska-tango-base==1.3.2",
+    "ska-tango-base==1.4.0",
     "networkx==2.6.3",
     "rule-engine==3.5.0",
     "astropy>=6.0.1",

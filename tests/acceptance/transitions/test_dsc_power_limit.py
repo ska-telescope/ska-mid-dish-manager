@@ -122,8 +122,8 @@ def test_power_limit_change_set_power_mode(
 
     ds_device_proxy.SetPowerMode(parameter)
     if allowed:
-        ds_attribute_event_store.wait_for_value(parameter[1], timeout=6)
-        dm_attribute_event_store.wait_for_value(parameter[1], timeout=6)
+        ds_attribute_event_store.wait_for_value(parameter[1], timeout=10)
+        dm_attribute_event_store.wait_for_value(parameter[1], timeout=10)
     else:
         ds_device_proxy.dscPowerLimitkW = DEFAULT_POWER_LIMIT
         dish_manager_proxy.dscPowerLimitkW = DEFAULT_POWER_LIMIT

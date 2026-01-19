@@ -71,18 +71,6 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     for message in expected_progress_updates:
         assert message in events_string
 
-    # Do it again to check result
-    result_event_store.clear_queue()
-    status_event_store.clear_queue()
-
-    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
-    status_event_store.wait_for_progress_update("Already in band 2", timeout=10)
-    result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=10
-    )
-    assert dish_manager_proxy.configuredBand == Band.B2
-    assert dish_manager_proxy.dishMode == DishMode.OPERATE
-
     remove_subscriptions(subscriptions)
 
 
@@ -300,6 +288,32 @@ def test_configure_band_json(
         "Awaiting configuredband change to B2",
         "DS indexerposition changed to B2",
         "DS.SetIndexPosition completed",
+        "SPFRX configuredband changed to B2",
+        "SPFRX.ConfigureBand completed",
+    ]
+
+    events = status_event_store.get_queue_values(timeout=0)
+
+    events_string = "".join([str(attr_value) for _, attr_value in events])
+    for message in expected_progress_updates:
+        assert message in events_string
+
+    # Do it again to check result
+    result_event_store.clear_queue()
+    status_event_store.clear_queue()
+    # Check that dish manager allows configure band when already in requested band
+    # but does not set the indexer position again.
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+    )
+    assert dish_manager_proxy.configuredBand == Band.B2
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+
+    expected_progress_updates = [
+        "Fanned out commands: SPFRX.ConfigureBand",
+        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting configuredband change to B2",
         "SPFRX configuredband changed to B2",
         "SPFRX.ConfigureBand completed",
     ]
