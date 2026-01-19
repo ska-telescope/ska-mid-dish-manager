@@ -8,7 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
-Version 9.1.2
+Version 9.2.0
 *************
 - SPFC LNA powerstate attributes fix, now checks dish mode correctly before allowing write.
 - Added conversion of the ConfigureBand command JSON sub_band value from string to int before fanout to SPFRx.
