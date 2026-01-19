@@ -14,8 +14,15 @@ Version 9.2.0
 - Added conversion of the ConfigureBand command JSON sub_band value from string to int before fanout to SPFRx.
 - Fixed data type of periodicNoiseDiodePars and pseudoRandomNoiseDiodePars attributes to match SPFRx hardware.
 - Removed restriction of reconfiguring band if already configured to that band.
-- Upgraded ska-tango-base to v1.4.0.
-- Upgraded ska-mid-dish-ds-manager chart to v7.1.0.
+- Updated chart dependencies
+
+  - Upgraded ska-mid-dish-ds-manager chart to v7.1.0
+  - Upgraded ska-mid-dish-simulators chart to v5.5.3
+
+- Updated package dependencies
+
+  - Upgraded ska-tango-base to v1.0.5
+  - Upgraded ska-tango-util chart to v1.0.5
 
 Version 9.1.1
 *************
