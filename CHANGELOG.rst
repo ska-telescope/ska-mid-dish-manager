@@ -7,15 +7,24 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Improved handling and reporting of rejected commands when invalid inputs are provided.
+- Rejected commands from the Dish Structure Manager are correctly now surfaced to the DishManager.
+
+Version 9.2.0
+*************
 - SPFC LNA powerstate attributes fix, now checks dish mode correctly before allowing write.
 - Added conversion of the ConfigureBand command JSON sub_band value from string to int before fanout to SPFRx.
 - Fixed data type of periodicNoiseDiodePars and pseudoRandomNoiseDiodePars attributes to match SPFRx hardware.
 - Removed restriction of reconfiguring band if already configured to that band.
-- Upgraded ska-tango-base to v1.4.0
-- Upgraded ska-mid-dish-ds-manager chart to v7.1.0
-- Upgraded ska-mid-dish-simulators chart to v5.5.3
-- Improved handling and reporting of rejected commands when invalid inputs are provided.
-- Rejected commands from the Dish Structure Manager are correctly now surfaced to the DishManager.
+- Updated chart dependencies
+
+  - Upgraded ska-mid-dish-ds-manager chart to v7.1.0
+  - Upgraded ska-mid-dish-simulators chart to v5.5.3
+
+- Updated package dependencies
+
+  - Upgraded ska-tango-base to v1.4.0
+
 
 Version 9.1.1
 *************
@@ -28,14 +37,23 @@ Version 9.1.0
 - Updated `ska-tango-base` to use latest version limited to minor releases (<2.0.0).
 - Removed forked mark on acceptance tests; limited forked tests to tests that use DeviceTestContext.
 - Implemented ConfigureBand command that ingests a JSON string to configure bands on SPFRx.
-- Exposed SPF B<n>LNAPowerState attributes for bands 1 to 5b. 
+- Exposed SPF B<n>LNAPowerState attributes for bands 1 to 5b.
+- Updated chart dependencies
+
+  - Upgraded ska-tango-base chart to v1.0.5
+  - Upgraded ska-tango-util chart to v1.0.5
 
 Version 9.0.0
 *************
 - Update implementation to match new states & modes ICD rev 6
+
   - SetMaintenanceMode command and associated Maintenance DishMode updated
   - ConfigureBand<N> command will now transition to OPERATE Dish mode on successful configuration
   - SetOperateMode command deprecated, use ConfigureBand<N> to transition to OPERATE Dish mode
+
+- Added a configurable timeout for long-running command executions.
+
+  - Defaults to 120 seconds and can be configured via helm value `dishmanager.actions.timeout_seconds`
 
 Version 8.5.1
 *************
