@@ -395,23 +395,6 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
-    - name: _lrcEvent
-      data_format: SPECTRUM
-      data_type: DevString
-      description: "\n        Read the long running commands events. Always returns\
-        \ an empty list.\n\n        :return: empty list.\n        "
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%s'
-      label: _lrcEvent
-      max_alarm: Not specified
-      max_dim_x: 2
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
     - name: achievedPointing
       data_format: SPECTRUM
       data_type: DevDouble
@@ -1212,7 +1195,7 @@
     - name: clkPhotodiodeCurrent
       data_format: SCALAR
       data_type: DevDouble
-      description: Reflects the photodiode current in mA.
+      description: Reports the current flowing through the clock photodiode in the B5DC. Value is in milliamperes (mA).
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1579,8 +1562,7 @@
     - name: hPolRfPowerIn
       data_format: SCALAR
       data_type: DevDouble
-      description: Reflects the RFCM RF power input for horizonal polarization in
-        dBm.
+      description: Reports the input RF power level for the Horizontal (H) polarization measured at the B5DC RF Control Module (RFCM). Value is in dBm.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -1596,8 +1578,7 @@
     - name: hPolRfPowerOut
       data_format: SCALAR
       data_type: DevDouble
-      description: Reflects the RFCM RF power output for horizonal polarization in
-        dBm.
+      description: Reports the output RF power level for the Horizontal (H) polarization measured at the B5DC RF Control Module (RFCM). Value is in dBm.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -2252,7 +2233,7 @@
     - name: rfTemperature
       data_format: SCALAR
       data_type: DevDouble
-      description: Reflects the RFCM RF PCB temperature in deg C.
+      description: Reports the temperature of the B5DC RF Control Module (RFCM) RF Printed Circuit Board (PCB). Value is in degrees Celsius.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -2268,7 +2249,7 @@
     - name: rfcmFrequency
       data_format: SCALAR
       data_type: DevDouble
-      description: Indicates the PLL Output Frequency. The default value is 11.1 GHz
+      description: Reports the current output frequency of the B5DC PLL in GHz. The default value is 11.1 GHz.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -2284,7 +2265,7 @@
     - name: rfcmHAttenuation
       data_format: SCALAR
       data_type: DevDouble
-      description: Reflects the RFCM H-polarization attenuation value in dB.
+      description: Reports the current attenuation setting for the Horizontal (H) polarization on the B5DC RF Control Module (RFCM). Value is in dB.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -2300,7 +2281,7 @@
     - name: rfcmPllLock
       data_format: SCALAR
       data_type: DevEnum
-      description: Status flags for RFCM PLL lock and lock loss detection.
+      description: Reports the lock status of the B5DC RF Control Module (RFCM) PLL. Returns B5dcPllState enum indicating if locked or lock lost.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -2321,7 +2302,7 @@
     - name: rfcmPsuPcbTemperature
       data_format: SCALAR
       data_type: DevDouble
-      description: Reflects RFCM PSU PCB temperature in deg C.
+      description: Reports the temperature of the B5DC RF Control Module (RFCM) Power Supply Unit (PSU) PCB. Value is in degrees Celsius.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -2337,7 +2318,7 @@
     - name: rfcmVAttenuation
       data_format: SCALAR
       data_type: DevDouble
-      description: Reflects the RFCM V-polarization attenuation value in dB.
+      description: Reports the current attenuation setting for the Vertical (V) polarization on the B5DC RF Control Module (RFCM). Value is in dB.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -2573,7 +2554,7 @@
     - name: vPolRfPowerIn
       data_format: SCALAR
       data_type: DevDouble
-      description: Reflects the RFCM RF power input for vertical polarization in dBm.
+      description: Reports the input RF power level for the Vertical (V) polarization measured at the B5DC RF Control Module (RFCM). Value is in dBm.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -2589,8 +2570,7 @@
     - name: vPolRfPowerOut
       data_format: SCALAR
       data_type: DevDouble
-      description: Reflects the RFCM RF power output for vertical polarization in
-        dBm.
+      description: Reports the output RF power level for the Vertical (V) polarization measured at the B5DC RF Control Module (RFCM). Value is in dBm.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
@@ -2692,7 +2672,8 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
+    - name: WMSDeviceNames
     - name: WindGustThreshold
+    - name: __SubDevices
     - name: polled_cmd
 
- 

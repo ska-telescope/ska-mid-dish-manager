@@ -1882,7 +1882,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Indicates the PLL Output Frequency. The default value is 11.1 GHz",
+        doc="Reports the current output frequency of the B5DC PLL in GHz. "
+        "The default value is 11.1 GHz.",
     )
     def rfcmFrequency(self) -> float:
         """Reflect the PLL output frequency in GHz."""
@@ -1891,7 +1892,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=B5dcPllState,
         access=AttrWriteType.READ,
-        doc="Status flags for RFCM PLL lock and lock loss detection.",
+        doc="Reports the lock status of the B5DC RF Control Module (RFCM) PLL."
+        "Returns B5dcPllState enum indicating if locked or lock lost.",
     )
     def rfcmPllLock(self):
         """Return the Phase lock loop state."""
@@ -1900,7 +1902,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Reflects the RFCM H-polarization attenuation value in dB.",
+        doc="Reports the current attenuation setting for the Horizontal (H) polarization "
+        "on the B5DC RF Control Module (RFCM). Value is in dB.",
     )
     def rfcmHAttenuation(self):
         """Return the rfcmHAttenuation."""
@@ -1909,7 +1912,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Reflects the RFCM V-polarization attenuation value in dB.",
+        doc="Reports the current attenuation setting for the Vertical (V) polarization "
+        "on the B5DC RF Control Module (RFCM). Value is in dB.",
     )
     def rfcmVAttenuation(self):
         """Return the rfcmVAttenuation."""
@@ -1918,7 +1922,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Reflects the photodiode current in mA.",
+        doc="Reports the current flowing through the clock photodiode "
+        "in the B5DC. Value is in milliamperes (mA).",
     )
     def clkPhotodiodeCurrent(self):
         """Return the clkPhotodiodeCurrent."""
@@ -1927,7 +1932,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Reflects the RFCM RF power input for horizonal polarization in dBm.",
+        doc="Reports the input RF power level for the Horizontal (H) polarization "
+        "measured at the B5DC RF Control Module (RFCM). Value is in dBm.",
     )
     def hPolRfPowerIn(self):
         """Return the hPolRfPowerIn."""
@@ -1936,7 +1942,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Reflects the RFCM RF power input for vertical polarization in dBm.",
+        doc="Reports the input RF power level for the Vertical (V) polarization "
+        "measured at the B5DC RF Control Module (RFCM). Value is in dBm.",
     )
     def vPolRfPowerIn(self):
         """Return the vPolRfPowerIn."""
@@ -1945,7 +1952,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Reflects the RFCM RF power output for horizonal polarization in dBm.",
+        doc="Reports the output RF power level for the Horizontal (H) polarization "
+        "measured at the B5DC RF Control Module (RFCM). Value is in dBm.",
     )
     def hPolRfPowerOut(self):
         """Return the hPolRfPowerOut."""
@@ -1954,7 +1962,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Reflects the RFCM RF power output for vertical polarization in dBm.",
+        doc="Reports the output RF power level for the Vertical (V) polarization "
+        "measured at the B5DC RF Control Module (RFCM). Value is in dBm.",
     )
     def vPolRfPowerOut(self):
         """Return the vPolRfPowerOut sensor value."""
@@ -1963,7 +1972,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Reflects the RFCM RF PCB temperature in deg C.",
+        doc="Reports the temperature of the B5DC RF Control Module (RFCM) "
+        "RF Printed Circuit Board (PCB). Value is in degrees Celsius.",
     )
     def rfTemperature(self):
         """Return the of the RFCM RF PCB in deg."""
@@ -1972,7 +1982,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=float,
         access=AttrWriteType.READ,
-        doc="Reflects RFCM PSU PCB temperature in deg C.",
+        doc="Reports the temperature of the B5DC RF Control Module (RFCM) "
+        "Power Supply Unit (PSU) PCB. Value is in degrees Celsius.",
     )
     def rfcmPsuPcbTemperature(self):
         """Return the temperature of the RFCM PSU PCB in deg."""

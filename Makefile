@@ -91,6 +91,7 @@ DEVICE_DM  = mid-dish/dish-manager/SKA001
 DEVICE_DS  = mid-dish/ds-manager/SKA001
 DEVICE_SPF = mid-dish/simulator-spfc/SKA001
 DEVICE_SPFRX = mid-dish/simulator-spfrx/SKA001
+DEVICE_B5DC = mid-dish/b5dc-manager/SKA001
 # Default device
 DEVICE ?= DM
 # Get the full name dynamically
