@@ -16,7 +16,7 @@ from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
 )
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
-from tango import AttrQuality, AttrWriteType, DevLong64, DevState, DevVarStringArray, DispLevel
+from tango import AttrQuality, AttrWriteType, DevState, DevULong, DevVarStringArray, DispLevel
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -261,8 +261,9 @@ class DishManager(SKAController):
         if attr_name:
             attribute_object = getattr(self, attr_name, None)
             if attribute_object:
-                attribute_object.set_value(attr_value)
-                attribute_object.set_quality(new_attribute_quality, True)
+                if attribute_object.get_quality() != new_attribute_quality:
+                    attribute_object.set_value(attr_value)
+                    attribute_object.set_quality(new_attribute_quality, True)
 
     def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
         wind_stow_active = self.component_manager.wind_stow_active
@@ -467,10 +468,6 @@ class DishManager(SKAController):
                 "versionId",
                 "loggingLevel",
                 "loggingTargets",
-                "elementLoggerAddress",
-                "elementAlarmAddress",
-                "elementTelStateAddress",
-                "elementDatabaseAddress",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
@@ -1530,7 +1527,7 @@ class DishManager(SKAController):
         self.component_manager.set_noise_diode_mode(mode)
 
     @attribute(
-        dtype=(DevLong64,),
+        dtype=(DevULong,),
         max_dim_x=3,
         doc="""
             Periodic noise diode pars (units are in time quanta).
@@ -1553,7 +1550,7 @@ class DishManager(SKAController):
         self.component_manager.set_periodic_noise_diode_pars(values)
 
     @attribute(
-        dtype=(DevLong64,),
+        dtype=(DevULong,),
         max_dim_x=3,
         doc="""
             Pseudo random noise diode pars (units are in time quanta).

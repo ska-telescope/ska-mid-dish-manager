@@ -13,6 +13,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 - SPFC LNA powerstate attributes fix, now checks dish mode correctly before allowing write.
 - Added conversion of the ConfigureBand command JSON sub_band value from string to int before fanout to SPFRx.
+- Fixed data type of periodicNoiseDiodePars and pseudoRandomNoiseDiodePars attributes to match SPFRx hardware.
+- Removed restriction of reconfiguring band if already configured to that band.
+- Upgraded ska-tango-base to v1.4.0
+- Upgraded ska-mid-dish-ds-manager chart to v7.1.0
 
 Version 9.1.1
 *************

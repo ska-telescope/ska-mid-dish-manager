@@ -2588,14 +2588,14 @@ reference = "ska-nexus"
 
 [[package]]
 name = "ska-tango-base"
-version = "1.3.2"
+version = "1.4.0"
 description = "SKA Tango base classes"
 optional = false
-python-versions = ">=3.10,<4.0"
+python-versions = ">=3.10.0,<4.0.0"
 groups = ["main"]
 files = [
-    {file = "ska_tango_base-1.3.2-py3-none-any.whl", hash = "sha256:7318d9460eaee24863b77e68c965b44428a32be51bf2595316c5e9230bf616ea"},
-    {file = "ska_tango_base-1.3.2.tar.gz", hash = "sha256:2d23369c3ae737bff66839c1d7a8d6f4691e0064a5296ef4b48983b9082e11e8"},
+    {file = "ska_tango_base-1.4.0-py3-none-any.whl", hash = "sha256:9db60153edd40115ae89ecb98e1de22348cf3a2e9278d4c4a04dd57a078ee205"},
+    {file = "ska_tango_base-1.4.0.tar.gz", hash = "sha256:41006a5b9ce576e4fa43b5d2da58fbf1c37bd4f0b296d0e49b809cd908d740f6"},
 ]
 
 [package.dependencies]
@@ -2604,9 +2604,9 @@ jsonschema = ">=4.17.3,<5.0.0"
 numpy = [
     {version = ">=1.21.6", markers = "python_version == \"3.10\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
+    {version = ">=1.26.0", markers = "python_version != \"3.10\" and python_version != \"3.11\""},
 ]
-pytango = ">=9.4.2,<11.0.0"
+pytango = ">=9.4.2,<9.5.1 || >9.5.1,<11.0.0"
 ska-control-model = ">=1.0.0,<2.0.0"
 ska-ser-logging = ">=0.4.3,<0.5.0"
 transitions = ">=0.9.0,<0.10.0"
@@ -3284,4 +3284,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "a297d91e0ecf732d0fe74a85208dff789c401a4a45edd9d4d316072a438ef0bb"
+content-hash = "73f2ebd36f9810a141fa59b67300fcd147f9c941766c37f6193fa5243f17398a"

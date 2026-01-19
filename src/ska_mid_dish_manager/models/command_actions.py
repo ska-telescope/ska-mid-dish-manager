@@ -833,15 +833,19 @@ class ConfigureBandAction(Action):
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
 
-        ds_set_index_position_command = FannedOutSlowCommand(
-            logger=self.logger,
-            device="DS",
-            command_name="SetIndexPosition",
-            device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            command_argument=self.indexer_enum,
-            awaited_component_state={"indexerposition": self.indexer_enum},
-            progress_callback=self._progress_callback,
-        )
+        fanned_out_commands = [spfrx_configure_band_command]
+        # Only fan out the DS SetIndexPosition command if the band is changing
+        if self.dish_manager_cm._component_state["configuredband"] != self.band:
+            ds_set_index_position_command = FannedOutSlowCommand(
+                logger=self.logger,
+                device="DS",
+                command_name="SetIndexPosition",
+                device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
+                command_argument=self.indexer_enum,
+                awaited_component_state={"indexerposition": self.indexer_enum},
+                progress_callback=self._progress_callback,
+            )
+            fanned_out_commands.insert(0, ds_set_index_position_command)
 
         fanned_out_commands = [ds_set_index_position_command, spfrx_configure_band_command]
         if b5dc_set_frequency_command:

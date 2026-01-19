@@ -149,7 +149,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ignorespfrx=False,
             ignoreb5dc=False,
             noisediodemode=NoiseDiodeMode.OFF,
-            periodicnoisediodepars=[],
+            periodicnoisediodepars=[0, 0, 0],
             pseudorandomnoisediodepars=[0, 0, 0],
             isklocked=False,
             spectralinversion=False,

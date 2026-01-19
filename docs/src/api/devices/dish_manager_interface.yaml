@@ -1545,14 +1545,13 @@
     - name: frequencyResponse
       data_format: IMAGE
       data_type: DevDouble
-      description: Returns the frequencyResponse.
+      description: Reports the output RF power level for the Horizontal (H) polarization measured at the B5DC RF Control Module (RFCM). Value is in dBm.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
-      label: frequencyResponse
+      label: hPolRfPowerOut
       max_alarm: Not specified
-      max_dim_x: 1024
-      max_dim_y: 1024
+      max_dim_x: 1
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -2079,7 +2078,7 @@
       writable_attr_name: noiseDiodeMode
     - name: periodicNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevLong64
+      data_type: DevULong
       description: "\n            Periodic noise diode pars (units are in time quanta).\n\
         \n            [0]: period, [1]: duty cycle, [2]: phase shift\n\n         \
         \   Note: This attribute does not persist after a power cycle. A default value\
@@ -2212,7 +2211,7 @@
       writable_attr_name: programTrackTable
     - name: pseudoRandomNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevLong64
+      data_type: DevULong
       description: "\n            Pseudo random noise diode pars (units are in time\
         \ quanta).\n\n            [0]: binary polynomial, [1]: seed, [2]: dwell\n\n\
         \            Note: This attribute does not persist after a power cycle. A\
