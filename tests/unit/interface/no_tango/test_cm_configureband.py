@@ -321,15 +321,15 @@ def test_configure_band_5b(
         indexerposition=IndexerPosition.B5b, operatingmode=DSOperatingMode.POINT
     )
 
+    # wait a bit for the lrc updates to come through
+    component_state_cb.wait_for_value("configuredband", Band.B5b)
+    component_state_cb.get_queue_values()
+
     if not ignore_b5dc:
         component_manager.sub_component_managers["B5DC"]._update_component_state(
             rfcmfrequency=11.1
         )
         component_state_cb.wait_for_value("rfcmfrequency", 11.1, timeout=6)
-
-    # wait a bit for the lrc updates to come through
-    component_state_cb.wait_for_value("configuredband", Band.B5b)
-    component_state_cb.get_queue_values()
 
     # check that the updates for the final SetOperate call in the sequence come through
     task_cb = callbacks["task_cb"]
