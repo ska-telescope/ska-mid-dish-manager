@@ -843,7 +843,6 @@ class ConfigureBandAction(Action):
             )
             fanned_out_commands.insert(0, ds_set_index_position_command)
 
-        fanned_out_commands = [ds_set_index_position_command, spfrx_configure_band_command]
         if b5dc_set_frequency_command:
             fanned_out_commands.append(b5dc_set_frequency_command)
 
