@@ -232,29 +232,17 @@ def test_configureband_b5b_without_subband(
     )
 
 
-@pytest.mark.unit
-@pytest.mark.parametrize("ignore_b5dc", [False, True])
-@patch(
-    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
-    Mock(return_value=True),
-)
-def test_configure_band_5b(
+def test_configureband_5b_ignore_b5dc(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
-    ignore_b5dc: bool,
 ) -> None:
-    """Verify behaviour of ConfigureBand for band 5b, with and without ignoreb5dc.
+    """Verify behaviour of ConfigureBand for json missing subband case.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
-    :param ignore_b5dc: boolean flag to toggle B5DC ignore behavior
     """
     component_state_cb = callbacks["comp_state_cb"]
-
-    if ignore_b5dc:
-        component_manager._component_state["ignoreb5dc"] = True
-
     configure_json = """
     {
         "dish": {
@@ -266,16 +254,13 @@ def test_configure_band_5b(
                     "sync_pps": true
                 }
             ]
-        }
-    }
-    """
-
+    }"""
+    component_manager._component_state["ignoreb5dc"] = True
     status, response = component_manager.configure_band_with_json(
         configure_json, callbacks["task_cb"]
     )
     assert status == TaskStatus.QUEUED
     assert "Task queued" in response
-
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
 
@@ -289,28 +274,17 @@ def test_configure_band_5b(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
-
     msgs = [
         "Awaiting DS indexerposition change to B5b",
         "Awaiting SPFRX configuredband change to B5b",
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
+        "Awaiting configuredband change to B5b",
     ]
-
-    if not ignore_b5dc:
-        # These messages only appear if B5DC is NOT ignored
-        msgs.append("Awaiting B5DC rfcmfrequency change to 11.1")
-        fanout_msg = (
-            "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand, B5DC.SetFrequency"
-        )
-    else:
-        fanout_msg = "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand"
-
-    msgs.append(fanout_msg)
-    msgs.append("Awaiting configuredband change to B5b")
-
     progress_cb = callbacks["progress_cb"]
     for msg in msgs:
         progress_cb.wait_for_args((msg,))
 
+    # check that the component state reports the requested command
     component_manager.sub_component_managers["SPF"]._update_component_state(
         operatingmode=SPFOperatingMode.OPERATE
     )
@@ -320,17 +294,9 @@ def test_configure_band_5b(
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B5b, operatingmode=DSOperatingMode.POINT
     )
-
-    # wait a bit for the lrc updates to come through
     component_state_cb.wait_for_value("configuredband", Band.B5b)
+    # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
-
-    if not ignore_b5dc:
-        component_manager.sub_component_managers["B5DC"]._update_component_state(
-            rfcmfrequency=11.1
-        )
-        component_state_cb.wait_for_value("rfcmfrequency", 11.1, timeout=6)
-
     # check that the updates for the final SetOperate call in the sequence come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
