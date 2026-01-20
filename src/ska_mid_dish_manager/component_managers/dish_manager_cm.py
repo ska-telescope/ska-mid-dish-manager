@@ -868,7 +868,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
                 spf_component_state if not self.is_device_ignored("SPF") else None,
             )
-            # TODO: Add b5dc Frequency??
             self.logger.debug(
                 (
                     "Updating dish manager configuredBand with: [%s]. "
