@@ -44,10 +44,10 @@
       disp_level: OPERATOR
       doc_in: "The command accepts a JSON string containing data to configure the\
         \ SPFRx.\n        The JSON structure is as follows:\n        {\n         \
-        \   \"receiver_band\": <string>,\n            \"sub_band\": <string>,\n  \
-        \          \"spfrx_processing_parameters\": {\n                \"dishes\"\
-        : List[<string>],\n                \"sync_pps\":  <bool>,\n              \
-        \  \"attenuation_pol_x\": <float>,\n                \"attenuation_pol_y\"\
+        \   \"receiver_band\": <string>,\n            \"band5_downconversion_subband\"\
+        : <string>,\n            \"spfrx_processing_parameters\": {\n            \
+        \    \"dishes\": List[<string>],\n                \"sync_pps\":  <bool>,\n\
+        \                \"attenuation_pol_x\": <float>,\n                \"attenuation_pol_y\"\
         : <float>,\n                \"attenuation_1_pol_x\": <float>,\n          \
         \      \"attenuation_1_pol_y\": <float>,\n                \"attenuation_2_pol_x\"\
         : <float>,\n                \"attenuation_2_pol_y\": <float>,\n          \
@@ -60,10 +60,10 @@
         \ \"phase_shift\": <long>,\n                    }\n                }\n   \
         \         }\n        }\n        where 'receiver_band', 'dishes' and 'sync_pps'\
         \ are mandatory fields.\n        when 'receiver_band' is set to '5b', the\
-        \ 'sub_band' field is mandatory.\n        The 'dishes' field is a list of\
-        \ dish names that the SPFRx should be configured for,\n        if 'all' is\
-        \ specified in the list, the SPFRx will be configured for all dishes.\n  \
-        \      "
+        \ 'band5_downconversion_subband' field is mandatory.\n        The 'dishes'\
+        \ field is a list of dish names that the SPFRx should be configured for,\n\
+        \        if 'all' is specified in the list, the SPFRx will be configured for\
+        \ all dishes.\n        "
       doc_out: Uninitialised
       dtype_in: DevString
       dtype_out: DevVarLongStringArray
@@ -2482,4 +2482,3 @@
     - name: SkaLevel
     - name: WMSDeviceNames
     - name: WindGustThreshold
-

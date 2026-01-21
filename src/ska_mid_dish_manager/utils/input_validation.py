@@ -28,11 +28,12 @@ def validate_configure_band_input(data: str) -> dict:
         receiver_band = dish_data.get("receiver_band")
         if receiver_band not in ["1", "2", "3", "4", "5a", "5b"]:
             raise ConfigureBandValidationError("Invalid receiver band in JSON.")
-        sub_band = dish_data.get("sub_band")
+        # TODO: this is a workaround until the field name and type are finalised
+        sub_band = dish_data.get("band5_downconversion_subband")
         if receiver_band == "5b":
             if sub_band not in ["1", "2", "3"]:
                 raise ConfigureBandValidationError(
-                    "Invalid configuration JSON. Valid sub_band required for"
+                    "Invalid configuration JSON. Valid band5_downconversion_subband required for"
                     ' requested receiver_band [5b]. Expected "1", "2"'
                     ' or "3".'
                 )
@@ -41,7 +42,10 @@ def validate_configure_band_input(data: str) -> dict:
         # str type to int type as is required by SPFRx. This is expected to be a
         # temporary measure to be removed once SPFRx accepts the subband as str
         if sub_band:
-            data_json["dish"]["sub_band"] = int(sub_band)
+            data_json["dish"]["band5_downconversion_subband"] = int(sub_band)
+            # Rename band5_downconversion_subband to sub_band for the SPPFRx device
+            # TODO remove json field renaming when TODO above is resolved
+            data_json["dish"]["sub_band"] = data_json["dish"].pop("band5_downconversion_subband")
 
     except (json.JSONDecodeError, AttributeError) as err:
         raise ConfigureBandValidationError("Error parsing JSON.") from err

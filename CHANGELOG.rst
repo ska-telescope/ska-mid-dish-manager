@@ -7,10 +7,14 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Improved handling and reporting of rejected commands when invalid inputs are provided.
 - Added in B5DC component manager.
 - Added in ignoreB5dc attribute to ignore B5DC state and quality changes.
 - Added ska-mid-dcp-lib v0.0.9 to the package dependencies.
+
+Version 9.2.1-rc.1
+******************
+- Improved handling and reporting of rejected commands when invalid inputs are provided.
+- Updated the ConfigureBand command JSON validation to check for `band5_downconversion_subband` instead of `sub_band`.
 
 Version 9.2.0
 *************
