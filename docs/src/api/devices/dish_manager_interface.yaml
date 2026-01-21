@@ -36,18 +36,18 @@
       dtype_out: DevVarLongStringArray
     - name: CheckLongRunningCommandStatus
       disp_level: OPERATOR
-      doc_in: Uninitialised
-      doc_out: Uninitialised
+      doc_in: command id
+      doc_out: TaskStatus
       dtype_in: DevString
       dtype_out: DevString
     - name: ConfigureBand
       disp_level: OPERATOR
       doc_in: "The command accepts a JSON string containing data to configure the\
         \ SPFRx.\n        The JSON structure is as follows:\n        {\n         \
-        \   \"receiver_band\": <string>,\n            \"sub_band\": <integer>,\n \
-        \           \"spfrx_processing_parameters\": {\n                \"dishes\"\
-        : List[<string>],\n                \"sync_pps\":  <bool>,\n              \
-        \  \"attenuation_pol_x\": <float>,\n                \"attenuation_pol_y\"\
+        \   \"receiver_band\": <string>,\n            \"band5_downconversion_subband\"\
+        : <string>,\n            \"spfrx_processing_parameters\": {\n            \
+        \    \"dishes\": List[<string>],\n                \"sync_pps\":  <bool>,\n\
+        \                \"attenuation_pol_x\": <float>,\n                \"attenuation_pol_y\"\
         : <float>,\n                \"attenuation_1_pol_x\": <float>,\n          \
         \      \"attenuation_1_pol_y\": <float>,\n                \"attenuation_2_pol_x\"\
         : <float>,\n                \"attenuation_2_pol_y\": <float>,\n          \
@@ -60,10 +60,10 @@
         \ \"phase_shift\": <long>,\n                    }\n                }\n   \
         \         }\n        }\n        where 'receiver_band', 'dishes' and 'sync_pps'\
         \ are mandatory fields.\n        when 'receiver_band' is set to '5b', the\
-        \ 'sub_band' field is mandatory.\n        The 'dishes' field is a list of\
-        \ dish names that the SPFRx should be configured for,\n        if 'all' is\
-        \ specified in the list, the SPFRx will be configured for all dishes.\n  \
-        \      "
+        \ 'band5_downconversion_subband' field is mandatory.\n        The 'dishes'\
+        \ field is a list of dish names that the SPFRx should be configured for,\n\
+        \        if 'all' is specified in the list, the SPFRx will be configured for\
+        \ all dishes.\n        "
       doc_out: Uninitialised
       dtype_in: DevString
       dtype_out: DevVarLongStringArray
@@ -133,12 +133,6 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
-    - name: ExecutePendingOperations
-      disp_level: OPERATOR
-      doc_in: Uninitialised
-      doc_out: Uninitialised
-      dtype_in: DevVoid
-      dtype_out: DevVoid
     - name: FlushCommandQueue
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -467,10 +461,9 @@
     - name: adminMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Admin Mode of the device.\n\n        It may\
-        \ interpret the current device condition and condition of all managed\n  \
-        \       devices to set this. Most possibly an aggregate attribute.\n\n   \
-        \     :return: Admin Mode of the device\n        "
+      description: The Admin Mode of the device. It may interpret the current device
+        condition and condition of all managed devices to set this. Most possibly
+        an aggregate attribute.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1153,11 +1146,11 @@
     - name: commandedState
       data_format: SCALAR
       data_type: DevString
-      description: "\n        Read the last commanded operating state of the device.\n\
-        \n        Initial string is \"None\". Only other strings it can change to\
-        \ is \"OFF\",\n        \"STANDBY\" or \"ON\", following the start of the Off(),\
-        \ Standby(), On() or Reset()\n        long running commands.\n\n        :return:\
-        \ commanded operating state string.\n        "
+      description: The last commanded Operating State of the device. Initial string
+        is "None".  Only other strings it can change to is "OFF", "STANDBY" or "ON",
+        following the Off(), Standby() or On() commands. If the state transition commands
+        are long running commands the commanded state will only update when the long
+        running command starts executing.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1217,12 +1210,10 @@
     - name: controlMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Control Mode of the device.\n\n        The\
-        \ control mode of the device are REMOTE, LOCAL\n        Tango Device accepts\
-        \ only from a \u2018local\u2019 client and ignores commands and\n        queries\
-        \ received from TM or any other \u2018remote\u2019 clients. The Local clients\n\
-        \        has to release LOCAL control before REMOTE clients can take control\
-        \ again.\n\n        :return: Control Mode of the device\n        "
+      description: "The control mode of the device are REMOTE, LOCAL Tango Device\
+        \ accepts only from a \u2018local\u2019 client and ignores commands and queries\
+        \ received from TM or any other \u2018remote\u2019 clients. The Local clients\
+        \ has to release LOCAL control before REMOTE clients can take control again."
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1440,10 +1431,9 @@
     - name: healthState
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Health State of the device.\n\n        It interprets\
-        \ the current device condition and condition of\n        all managed devices\
-        \ to set this. Most possibly an aggregate attribute.\n\n        :return: Health\
-        \ State of the device\n        "
+      description: 'Read the Health State of the device. It interprets the current
+        device condition and condition of all managed devices to set this. Most possibly
+        an aggregate attribute. '
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1707,7 +1697,7 @@
       description: "\n        Read the result of the completed long running command.\n\
         \n        Reports unique_id, json-encoded result.\n        Clients can subscribe\
         \ to on_change event and wait for\n        the ID they are interested in.\n\
-        \n        :return: ID, result.\n        "
+        \n        :param attr: Tango attribute being read\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1763,15 +1753,13 @@
     - name: lrcExecuting
       data_format: SPECTRUM
       data_type: DevString
-      description: "\n        Read info of the currently executing long running commands.\n\
-        \n        Returns a list of info JSON blobs of the currently executing commands.\n\
-        \n        :param attr: Tango attribute being read\n        "
+      description: Expose a signal as a Tango attribute.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
       label: lrcExecuting
       max_alarm: Not specified
-      max_dim_x: 3
+      max_dim_x: 2
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1781,9 +1769,7 @@
     - name: lrcFinished
       data_format: SPECTRUM
       data_type: DevString
-      description: "\n        Read info of the finished long running commands.\n\n\
-        \        :return: a list of info JSON blobs of the finished long running commands.\n\
-        \        "
+      description: Expose a signal as a Tango attribute.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1817,15 +1803,13 @@
     - name: lrcQueue
       data_format: SPECTRUM
       data_type: DevString
-      description: "\n        Read info of the long running commands in queue.\n\n\
-        \        Returns a list of info JSON blobs of the commands in queue.\n\n \
-        \       :param attr: Tango attribute being read\n        "
+      description: Expose a signal as a Tango attribute.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
       label: lrcQueue
       max_alarm: Not specified
-      max_dim_x: 66
+      max_dim_x: 32
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -2077,11 +2061,7 @@
     - name: simulationMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Simulation Mode of the device.\n\n        Some\
-        \ devices may implement\n        both modes, while others will have simulators\
-        \ that set simulationMode\n        to True while the real devices always set\
-        \ simulationMode to False.\n\n        :return: Simulation Mode of the device.\n\
-        \        "
+      description: When TRUE the device is using a simulator
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -2161,9 +2141,7 @@
     - name: testMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Test Mode of the device.\n\n        Either\
-        \ no test mode or an indication of the test mode.\n\n        :return: Test\
-        \ Mode of the device\n        "
+      description: If TEST the device is using testing logic
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -2367,5 +2345,3 @@
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
     - name: WindGustThreshold
-    - name: polled_cmd
-
