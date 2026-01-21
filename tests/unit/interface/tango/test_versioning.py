@@ -77,7 +77,7 @@ class TestDishManagerVersioning:
         ],
     )
     def test_build_state_update_on_subdevice_connection(self, device: str, build_state_key: str):
-        """Test that spfc and spfrx build states of subdevices get updated when a subdevice
+        """Test that spfc, spfrx and b5dc build states of subdevices get updated when a subdevice
         establishes connection.
         """
         # configure a mock build state
