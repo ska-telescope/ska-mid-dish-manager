@@ -86,7 +86,7 @@ class DSComponentManager(TangoDeviceComponentManager):
         """Override default interpretation to handle DS specific reply format."""
         # on this method evocation the reply from DS is of type DevVarLongStringArray
         [[result_code], [msg]] = reply
-        if result_code in (ResultCode.FAILED, ResultCode.REJECTED):
+        if result_code == ResultCode.FAILED:
             self.logger.error(
                 "[%s] on [%s] failed with message: %s",
                 command_name,

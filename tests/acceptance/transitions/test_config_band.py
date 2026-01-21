@@ -22,12 +22,10 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # make sure configuredBand is not B2
-    dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(Band.B1, timeout=30)
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
-    # if left in operate mode, SetOperateMode will fail on trigger success
-    dish_manager_proxy.SetStandbyFPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
+    result_event_store.wait_for_command_id(unique_id, timeout=30)
+    assert dish_manager_proxy.configuredBand == Band.B1
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     main_event_store.clear_queue()
     status_event_store.clear_queue()
@@ -65,9 +63,9 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     ]
 
     events = status_event_store.get_queue_values()
-    statuses = "".join([str(attr_value) for _, attr_value in events])
+    events_string = "".join([str(attr_value) for _, attr_value in events])
     for message in expected_progress_updates:
-        assert message in statuses
+        assert message in events_string
 
     remove_subscriptions(subscriptions)
 
@@ -272,9 +270,8 @@ def test_configure_band_json(
     }
     """
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
-    # dish is already in operate mode so 2nd attempt will fail
     result_event_store.wait_for_command_result(
-        unique_id, '[3, "SetOperateMode failed"]', timeout=30
+        unique_id, '[0, "SetOperateMode completed"]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
@@ -304,7 +301,7 @@ def test_configure_band_json(
     # but does not set the indexer position again.
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
     result_event_store.wait_for_command_result(
-        unique_id, '[3, "SetOperateMode failed"]', timeout=30
+        unique_id, '[0, "SetOperateMode completed"]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE

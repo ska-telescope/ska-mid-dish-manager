@@ -8,7 +8,6 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Improved handling and reporting of rejected commands when invalid inputs are provided.
-- Rejected commands from the Dish Structure Manager are correctly now surfaced to the DishManager.
 
 Version 9.2.0
 *************

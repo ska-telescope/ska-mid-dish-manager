@@ -42,19 +42,15 @@ def test_slew_rejected_in_wrong_dish_mode(event_store_class, dish_manager_proxy)
 def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_device_proxy):
     """Out of bounds azel is rejected on the dish structure."""
     # set up subscriptions on dish manager
-    status_event_store = event_store_class()
-    lrc_status_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
-    attr_cb_mapping = {
-        "longRunningCommandStatus": lrc_status_event_store,
-        "Status": status_event_store,
-        "dishMode": dish_mode_event_store,
-    }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    dm_event_id = dish_manager_proxy.subscribe_event(
+        "dishMode", tango.EventType.CHANGE_EVENT, dish_mode_event_store
+    )
+    dish_mode_event_store.clear_queue()
 
     # set up subscriptions on dish structure
     ds_lrc_status_event_store = event_store_class()
-    event_id = ds_device_proxy.subscribe_event(
+    ds_event_id = ds_device_proxy.subscribe_event(
         "longRunningCommandStatus",
         tango.EventType.CHANGE_EVENT,
         ds_lrc_status_event_store,
@@ -76,28 +72,16 @@ def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_
     lrc_status_events = "".join([str(lrc_status) for _, lrc_status in lrc_status_events])
     assert "Slew', 'REJECTED'" in lrc_status_events
 
-    # check that dish manager received a rejection message from dish structure
-    ds_reject_msg = (
-        "Slew failed Target point (Az: 100.0, El: 91.0) is not within "
-        "the dishes limits (Az: [-270.0, 270.0], El: [14.8, 90.2])"
-    )
-    status_event_store.wait_for_progress_update(ds_reject_msg)
-
-    # check that dish manager reported failure
-    lrc_status_events = lrc_status_event_store.get_queue_values()
-    lrc_status_events = "".join([str(event_value) for _, event_value in lrc_status_events])
-    assert "Slew', 'FAILED'" in lrc_status_events
-
     # clean up subscriptions
-    remove_subscriptions(subscriptions)
-    ds_device_proxy.unsubscribe_event(event_id)
+    dish_manager_proxy.unsubscribe_event(dm_event_id)
+    ds_device_proxy.unsubscribe_event(ds_event_id)
 
 
 @pytest.mark.acceptance
 def test_slew_extra_arg_fails(event_store_class, dish_manager_proxy):
     """Test that when given three arguments instead of two, the command is rejected."""
     lrc_status_event_store = event_store_class()
-    dish_manager_proxy.subscribe_event(
+    subscription_id = dish_manager_proxy.subscribe_event(
         "longRunningCommandStatus", tango.EventType.CHANGE_EVENT, lrc_status_event_store
     )
     lrc_status_event_store.clear_queue()
@@ -109,6 +93,8 @@ def test_slew_extra_arg_fails(event_store_class, dish_manager_proxy):
     lrc_status_events = lrc_status_event_store.get_queue_values()
     lrc_status_events = "".join([str(event_value) for _, event_value in lrc_status_events])
     assert "Slew', 'REJECTED'" in lrc_status_events
+
+    dish_manager_proxy.unsubscribe_event(subscription_id)
 
 
 @pytest.mark.acceptance
