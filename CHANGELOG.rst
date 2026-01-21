@@ -5,6 +5,9 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+## unreleased
+*************
+
 Version 9.2.1-rc.1
 ******************
 - Improved handling and reporting of rejected commands when invalid inputs are provided.
