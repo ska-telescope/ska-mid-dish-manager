@@ -1383,6 +1383,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Slew the dish."""
         if len(values) != 2:
+            update_task_status(task_callback, status=TaskStatus.REJECTED)
             return (
                 TaskStatus.REJECTED,
                 f"Expected 2 arguments (az, el) but got {len(values)} arg(s).",
@@ -1456,6 +1457,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Load the static pointing model offsets."""
         if len(values) != 2:
+            update_task_status(task_callback, status=TaskStatus.REJECTED)
             return (
                 TaskStatus.REJECTED,
                 f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s).",

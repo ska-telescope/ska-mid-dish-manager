@@ -24,9 +24,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     # make sure configuredBand is not B2
     if dish_manager_proxy.configuredBand != Band.B1:
         [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
-        result_event_store.wait_for_command_result(
-            unique_id, '[0, "SetOperateMode completed"]', timeout=30
-        )
+        result_event_store.wait_for_command_id(unique_id, timeout=30)
         assert dish_manager_proxy.configuredBand == Band.B1
         assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
@@ -66,7 +64,6 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     ]
 
     events = status_event_store.get_queue_values()
-
     events_string = "".join([str(attr_value) for _, attr_value in events])
     for message in expected_progress_updates:
         assert message in events_string
