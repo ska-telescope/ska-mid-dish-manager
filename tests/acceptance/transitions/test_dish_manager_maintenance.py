@@ -3,8 +3,8 @@
 import pytest
 
 from ska_mid_dish_manager.models.constants import (
+    ELEVATION_SPEED_DEGREES_PER_SECOND,
     STOW_ELEVATION_DEGREES,
-    STOW_SPEED_DEGREES_PER_SECOND,
 )
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
@@ -28,7 +28,7 @@ def test_maintenance_transition(monitor_tango_servers, event_store_class, dish_m
 
     current_el = dish_manager_proxy.achievedPointing[2]
     estimated_stow_duration = (
-        abs(STOW_ELEVATION_DEGREES - current_el) / STOW_SPEED_DEGREES_PER_SECOND
+        abs(STOW_ELEVATION_DEGREES - current_el) / ELEVATION_SPEED_DEGREES_PER_SECOND
     )
 
     [[_], [unique_id]] = dish_manager_proxy.SetMaintenanceMode()
