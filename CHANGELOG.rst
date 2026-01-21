@@ -7,7 +7,11 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 9.2.1-rc.1
+******************
 - Improved handling and reporting of rejected commands when invalid inputs are provided.
+- Updated the ConfigureBand command JSON validation to check for `band5_downconversion_subband` instead of `sub_band`.
 
 Version 9.2.0
 *************

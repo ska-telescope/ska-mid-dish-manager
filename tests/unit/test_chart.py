@@ -49,9 +49,11 @@ def test_chart_versions():
         f" tag {image_tag_version}, must be the same."
     )
 
-    assert docs_version == chart_version, (
-        f"Docs version {docs_version} must match chart version {chart_version}."
-    )
+    if "rc" not in chart_version:
+        # docs rc version can be 9.2.1rc1 and chart version 9.2.1-rc.1
+        assert docs_version == chart_version, (
+            f"Docs version {docs_version} must match chart version {chart_version}."
+        )
 
     # Very rough checks in toml and .release files
     with open(release_file, "r") as f:
@@ -62,13 +64,15 @@ def test_chart_versions():
                     f"`.release` version does not match chart version {chart_version}"
                 )
 
-    with open(pyproject_file, "r") as f:
-        for line in f:
-            if line.startswith("version"):
-                assert chart_version in line, (
-                    "The version line in pyproject.toml does "
-                    f"not match chart version {chart_version}"
-                )
-                break
-        else:
-            assert False, "No version line found in pyproject.toml"
+    if "rc" not in chart_version:
+        # pyproject toml rc version can be 9.2.1rc1 and chart version 9.2.1-rc.1
+        with open(pyproject_file, "r") as f:
+            for line in f:
+                if line.startswith("version"):
+                    assert chart_version in line, (
+                        "The version line in pyproject.toml does "
+                        f"not match chart version {chart_version}"
+                    )
+                    break
+            else:
+                assert False, "No version line found in pyproject.toml"
