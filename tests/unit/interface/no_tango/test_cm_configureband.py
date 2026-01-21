@@ -226,10 +226,12 @@ def test_configureband_b5b_without_subband(
         configure_json, callbacks["task_cb"]
     )
     assert status == TaskStatus.FAILED
-    assert (
-        "Invalid configuration JSON. Valid band5_downconversion_subband required for requested receiver_band [5b]."
-        ' Expected "1", "2" or "3".' in response
+    expected_error_message = (
+        "Invalid configuration JSON. Valid band5_downconversion_subband required"
+        " for requested receiver_band [5b]."
+        ' Expected "1", "2" or "3".'
     )
+    assert expected_error_message in response
 
 
 @pytest.mark.unit

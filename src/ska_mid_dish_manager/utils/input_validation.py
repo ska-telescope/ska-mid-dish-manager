@@ -46,7 +46,6 @@ def validate_configure_band_input(data: str) -> dict:
             # Rename band5_downconversion_subband to sub_band for the SPPFRx device
             # TODO remove json field renaming when TODO above is resolved
             data_json["dish"]["sub_band"] = data_json["dish"].pop("band5_downconversion_subband")
-            
 
     except (json.JSONDecodeError, AttributeError) as err:
         raise ConfigureBandValidationError("Error parsing JSON.") from err
