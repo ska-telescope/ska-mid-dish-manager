@@ -303,7 +303,7 @@ def test_configureband_5b_with_subband(
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B5b, operatingmode=DSOperatingMode.POINT
     )
-    # component_manager._update_component_state(rfcmfrequency=11.1)
+
     component_manager.sub_component_managers["B5DC"]._update_component_state(rfcmfrequency=11.1)
     # wait a bit for the lrc updates to come through
     component_state_cb.wait_for_value("configuredband", Band.B5b)
@@ -319,11 +319,14 @@ def test_configureband_5b_with_subband(
     progress_cb.wait_for_args(("SetOperateMode completed",))
 
 
-def test_configureband_5b_ignore_b5dc(
+def test_configureband_5b_with_subband_ignore_b5dc(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """Verify behaviour of ConfigureBand for json missing subband case.
+    """Verify behaviour of ConfigureBand for Band 5b with sub-band when B5DC is ignored.
+
+    This test checks that the ConfigureBand command succeeds and correctly fans out
+    commands to SPFRx and DS, but excludes B5DC because the ignoreb5dc flag is set.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to

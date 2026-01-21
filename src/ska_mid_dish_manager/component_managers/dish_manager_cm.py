@@ -589,7 +589,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ignore_b5dc_value,
                 )
                 ignore_b5dc = ignore_b5dc_value.lower() == "true"
-                self.set_b5dc_device_ignored(ignore_b5dc)
+                self.set_b5dc_device_ignored(ignore_b5dc, sync=False)
         except tango.DevFailed:
             self.logger.debug(
                 "Could not update memorized attributes. Failed to connect to database."
@@ -947,27 +947,25 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         attrs = self.direct_mapped_attrs[device]
         cm_state = self.sub_component_managers[device.value].component_state
 
-        pointing_related_attrs = set(
-            [
-                "desiredpointingaz",
-                "desiredpointingel",
-                "achievedpointing",
-                "tracktablecurrentindex",
-                "tracktableendindex",
-            ]
-        )
-        b5dc_related_attrs = set(
-            [
-                "rfcmplllock",
-                "clkphotodiodecurrent",
-                "rftemperature",
-                "rfcmpsupcbtemperature",
-                "hpolrfpowerin",
-                "hpolrfpowerout",
-                "vpolrfpowerin",
-                "vpolrfpowerout",
-            ]
-        )
+        pointing_related_attrs = {
+            "desiredpointingaz",
+            "desiredpointingel",
+            "achievedpointing",
+            "tracktablecurrentindex",
+            "tracktableendindex",
+        }
+
+        b5dc_related_attrs = {
+            "rfcmplllock",
+            "clkphotodiodecurrent",
+            "rftemperature",
+            "rfcmpsupcbtemperature",
+            "hpolrfpowerin",
+            "hpolrfpowerout",
+            "vpolrfpowerin",
+            "vpolrfpowerout",
+        }
+
         enum_attr_mapping = {
             "trackInterpolationMode": TrackInterpolationMode,
             "noiseDiodeMode": NoiseDiodeMode,
@@ -1060,7 +1058,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if ignored:
                 if "B5DC" in self.sub_component_managers:
                     self.sub_component_managers["B5DC"].stop_communicating()
-                    self.sub_component_managers["B5DC"].clear_monitored_attributes()
             else:
                 self.sub_component_managers["B5DC"].start_communicating()
 

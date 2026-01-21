@@ -99,7 +99,7 @@ FULL_DEVICE = $(DEVICE_$(DEVICE))
 # Output filename based on DEVICE
 DOC_OUTPUT = docs_$(DEVICE).yaml
 # List of allowed devices
-VALID_DEVICES = DM DS SPF SPFRX
+VALID_DEVICES = DM DS SPF SPFRX B5DC
 
 simlib:
 	@# Check device validity of device parameter

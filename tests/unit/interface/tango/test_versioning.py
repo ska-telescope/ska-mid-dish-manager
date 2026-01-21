@@ -73,6 +73,7 @@ class TestDishManagerVersioning:
         [
             ("SPF", "spfc_device"),
             ("SPFRX", "spfrx_device"),
+            ("B5DC", "b5dc_device"),
         ],
     )
     def test_build_state_update_on_subdevice_connection(self, device: str, build_state_key: str):

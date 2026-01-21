@@ -35,7 +35,6 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
 
     main_event_store = event_store_class()
     status_event_store = event_store_class()
-    status_event_store = event_store_class()
 
     for attr in [
         "dishMode",

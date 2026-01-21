@@ -123,6 +123,3 @@ ska-mid-wms:
 
 ska-mid-dish-b5dc-proxy:
   enabled: false
-
-ska-mid-dish-dcp-lib:
-  enabled: false

@@ -61,7 +61,7 @@ def dish_manager_resources():
             setattr(ds_cm, method_name, mock_method)
             setattr(spf_cm, method_name, mock_method)
             setattr(spfrx_cm, method_name, mock_method)
-            setattr(b5dc_cm, method_name, Mock())
+            setattr(b5dc_cm, method_name, mock_method)
 
         # trigger transition to StandbyLP mode
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY)

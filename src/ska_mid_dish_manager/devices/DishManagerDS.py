@@ -586,10 +586,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=CommunicationStatus,
         access=AttrWriteType.READ,
-        doc="Return the status of the connection to the B5dc server endpoint",
+        doc="Return the status of the connection to the B5DC proxy.",
     )
     def b5dcConnectionState(self) -> CommunicationStatus:
-        """Return the status of the connection to the B5dc server endpoint."""
+        """Return the status of the connection to the B5DC proxy."""
         return self.component_manager.component_state.get(
             "b5dcconnectionstate", CommunicationStatus.NOT_ESTABLISHED
         )
