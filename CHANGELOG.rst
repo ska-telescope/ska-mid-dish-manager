@@ -9,7 +9,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - Added in B5DC component manager.
 - Added in ignoreB5dc attribute to ignore B5DC state and quality changes.
-- Updated ska-mid-dcp-lib to v0.0.9
+- Added ska-mid-dcp-lib v0.0.9 to the package dependencies.
 
 Version 9.2.0
 *************
