@@ -227,7 +227,69 @@ def test_configureband_b5b_without_subband(
     )
     assert status == TaskStatus.FAILED
     expected_error_message = (
-        "Invalid configuration JSON. Valid band5_downconversion_subband required"
+        "Invalid configuration JSON. sub_band or band5_downconversion_subband"
+        " field is required for requested receiver_band [5b]."
+    )
+    assert expected_error_message in response
+
+
+@pytest.mark.unit
+@patch(
+    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
+    Mock(return_value=True),
+)
+@pytest.mark.parametrize(
+    "configure_json",
+    [
+        """
+        {
+            "dish": {
+                "receiver_band": "5b",
+                "band5_downconversion_subband": "4",
+                "spfrx_processing_parameters": [
+                    {
+                        "dishes": ["all"],
+                        "sync_pps": true
+                    }
+                ]
+            }
+        }
+        """,
+        """
+        {
+            "dish": {
+                "receiver_band": "5b",
+                "sub_band": "5",
+                "spfrx_processing_parameters": [
+                    {
+                        "dishes": ["all"],
+                        "sync_pps": true
+                    }
+                ]
+            }
+        }
+        """,
+    ],
+)
+def test_configureband_b5b_without_expected_subband_values(
+    component_manager: DishManagerComponentManager,
+    callbacks: dict,
+    configure_json: str,
+) -> None:
+    """Verify behaviour of ConfigureBand for json missing subband case.
+
+    :param component_manager: the component manager under test
+    :param callbacks: a dictionary of mocks, passed as callbacks to
+        the command tracker under test
+    :param configure_json: the configuration JSON under test
+    """
+    status, response = component_manager.configure_band_with_json(
+        configure_json, callbacks["task_cb"]
+    )
+
+    assert status == TaskStatus.FAILED
+    expected_error_message = (
+        "Invalid configuration JSON. Valid sub band required"
         " for requested receiver_band [5b]."
         ' Expected "1", "2" or "3".'
     )
@@ -239,37 +301,59 @@ def test_configureband_b5b_without_subband(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
+@pytest.mark.parametrize(
+    "configure_json",
+    [
+        """
+        {
+            "dish": {
+                "receiver_band": "5b",
+                "band5_downconversion_subband": "1",
+                "spfrx_processing_parameters": [
+                    {
+                        "dishes": ["all"],
+                        "sync_pps": true
+                    }
+                ]
+            }
+        }
+        """,
+        """
+        {
+            "dish": {
+                "receiver_band": "5b",
+                "sub_band": "2",
+                "spfrx_processing_parameters": [
+                    {
+                        "dishes": ["all"],
+                        "sync_pps": true
+                    }
+                ]
+            }
+        }
+        """,
+    ],
+)
 def test_configureband_5b_with_subband(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
+    configure_json: str,
 ) -> None:
-    """Verify behaviour of ConfigureBand for json missing subband case.
+    """Verify behaviour of ConfigureBand for json with valid subband case.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
+    :param configure_json: the configuration JSON under test
     """
     component_state_cb = callbacks["comp_state_cb"]
-    configure_json = """
-    {
-        "dish": {
-            "receiver_band": "5b",
-            "band5_downconversion_subband": "1",
-            "spfrx_processing_parameters": [
-                {
-                    "dishes": ["all"],
-                    "sync_pps": true
-                }
-            ]
-        }
-    }
-    """
 
     status, response = component_manager.configure_band_with_json(
         configure_json, callbacks["task_cb"]
     )
     assert status == TaskStatus.QUEUED
     assert "Task queued" in response
+
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
 
@@ -390,6 +474,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
     component_state_cb.wait_for_value("configuredband", Band.B5b)
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
+
     # check that the updates for the final SetOperate call in the sequence come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(

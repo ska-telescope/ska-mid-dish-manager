@@ -11,6 +11,14 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added in ignoreB5dc attribute to ignore B5DC state and quality changes.
 - Added ska-mid-dcp-lib v0.0.9 to the package dependencies.
 
+Version 9.2.1
+*************
+- Improved handling and reporting of rejected commands when invalid inputs are provided.
+- Updated the ConfigureBand command JSON validation to check for `band5_downconversion_subband` and `sub_band` fields.
+
+  - This ensures compatibility with both the two JSON schema versions pending a decision.
+
+
 Version 9.2.1-rc.1
 ******************
 - Improved handling and reporting of rejected commands when invalid inputs are provided.
