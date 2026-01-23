@@ -28,24 +28,34 @@ def validate_configure_band_input(data: str) -> dict:
         receiver_band = dish_data.get("receiver_band")
         if receiver_band not in ["1", "2", "3", "4", "5a", "5b"]:
             raise ConfigureBandValidationError("Invalid receiver band in JSON.")
-        # TODO: this is a workaround until the field name and type are finalised
-        sub_band = dish_data.get("band5_downconversion_subband")
+
+        b5dc_sub_band = None
         if receiver_band == "5b":
-            if sub_band not in ["1", "2", "3"]:
+            # TODO: remove validation of two fields for sub band
+            # after decision about JSON schema is finalised
+            sub_band = dish_data.get("sub_band")
+            band5_downconversion_subband = dish_data.get("band5_downconversion_subband")
+            b5dc_sub_band = sub_band or band5_downconversion_subband
+            # raise error if expected sub band fields are not provided or invalid
+            if not b5dc_sub_band:
                 raise ConfigureBandValidationError(
-                    "Invalid configuration JSON. Valid band5_downconversion_subband required for"
+                    "Invalid configuration JSON. sub_band or"
+                    " band5_downconversion_subband field is required for"
+                    " requested receiver_band [5b]."
+                )
+            if b5dc_sub_band not in ["1", "2", "3"]:
+                raise ConfigureBandValidationError(
+                    "Invalid configuration JSON. Valid sub band required for"
                     ' requested receiver_band [5b]. Expected "1", "2"'
                     ' or "3".'
                 )
 
-        # NOTE: The following code segment converts configuration JSON subband from
-        # str type to int type as is required by SPFRx. This is expected to be a
-        # temporary measure to be removed once SPFRx accepts the subband as str
-        if sub_band:
-            data_json["dish"]["band5_downconversion_subband"] = int(sub_band)
-            # Rename band5_downconversion_subband to sub_band for the SPPFRx device
-            # TODO remove json field renaming when TODO above is resolved
-            data_json["dish"]["sub_band"] = data_json["dish"].pop("band5_downconversion_subband")
+            # TODO: remove segment below after decision about JSON schema is finalised
+            # Convert the subband from str type to int type and remove band5_downconversion_subband
+            # field to maintain compatibility with SPFRx firmware
+            data_json["dish"]["sub_band"] = int(b5dc_sub_band)
+            if "band5_downconversion_subband" in data_json["dish"]:
+                data_json["dish"].pop("band5_downconversion_subband")
 
     except (json.JSONDecodeError, AttributeError) as err:
         raise ConfigureBandValidationError("Error parsing JSON.") from err
