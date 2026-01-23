@@ -1845,7 +1845,7 @@ class DishManager(SKAController):
         The JSON structure is as follows:
         {
             "receiver_band": <string>,
-            "band5_downconversion_subband": <string>,
+            "band5_downconversion_subband or sub_band": <string>,
             "spfrx_processing_parameters": {
                 "dishes": List[<string>],
                 "sync_pps":  <bool>,
@@ -1870,8 +1870,8 @@ class DishManager(SKAController):
                 }
             }
         }
-        where 'receiver_band', 'dishes' and 'sync_pps' are mandatory fields.
-        when 'receiver_band' is set to '5b', the 'band5_downconversion_subband' field is mandatory.
+        where 'receiver_band', 'dishes' and 'sync_pps' are mandatory fields. when 'receiver_band'
+        is set to '5b', the 'band5_downconversion_subband or sub_band'field is mandatory.
         The 'dishes' field is a list of dish names that the SPFRx should be configured for,
         if 'all' is specified in the list, the SPFRx will be configured for all dishes.
         """,

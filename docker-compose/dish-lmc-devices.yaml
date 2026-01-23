@@ -13,7 +13,7 @@
 services:
   ds-opcua-server:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-simulators:4.5.1
+    image: artefact.skao.int/ska-mid-dish-simulators:5.5.3
     container_name: ds-opcua-server
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -22,7 +22,7 @@ services:
 
   dish-logger:
     platform: linux/amd64
-    image: artefact.skao.int/ska-dish-lmc:8.1.0
+    image: artefact.skao.int/ska-dish-lmc:9.2.0
     container_name: dish-logger
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -37,7 +37,7 @@ services:
 
   spfrx-simulator:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-simulators:4.5.1
+    image: artefact.skao.int/ska-mid-dish-simulators:5.5.3
     container_name: spfrx-simulator
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -52,7 +52,7 @@ services:
 
   spf-simulator:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-simulators:4.5.1
+    image: artefact.skao.int/ska-mid-dish-simulators:5.5.3
     container_name: spf-simulator
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -67,7 +67,7 @@ services:
 
   ds-manager:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-ds-manager:6.3.0
+    image: artefact.skao.int/ska-mid-dish-ds-manager:7.1.0
     container_name: ds-manager
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -84,7 +84,7 @@ services:
 
   dish-manager:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-manager:8.3.0
+    image: artefact.skao.int/ska-mid-dish-manager:9.2.1
     container_name: dish-manager
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -106,7 +106,7 @@ services:
 
   dev-pod:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-manager:8.3.0
+    image: artefact.skao.int/ska-mid-dish-manager:9.2.1
     container_name: dev-pod
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
