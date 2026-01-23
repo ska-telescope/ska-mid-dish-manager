@@ -826,7 +826,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Update all CapabilityStates when indexerposition, dish_mode or operatingmode changes
         if (
             "indexerposition" in kwargs
-            or "dish_mode" in kwargs
             or "operatingmode" in kwargs
             # Added in `powerstate` and `adminmode` so that if the dishmode changes earlier then
             # the capability states are recalculated as well
