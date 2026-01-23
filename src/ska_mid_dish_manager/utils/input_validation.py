@@ -29,15 +29,15 @@ def validate_configure_band_input(data: str) -> dict:
         if receiver_band not in ["1", "2", "3", "4", "5a", "5b"]:
             raise ConfigureBandValidationError("Invalid receiver band in JSON.")
 
+        # TODO: remove validation of two fields for sub band
+        # after decision about JSON schema is finalised
         b5dc_sub_band = None
+        sub_band = dish_data.get("sub_band")
+        band5_downconversion_subband = dish_data.get("band5_downconversion_subband")
+        b5dc_sub_band = sub_band or band5_downconversion_subband
         if receiver_band == "5b":
-            # TODO: remove validation of two fields for sub band
-            # after decision about JSON schema is finalised
-            sub_band = dish_data.get("sub_band")
-            band5_downconversion_subband = dish_data.get("band5_downconversion_subband")
-            b5dc_sub_band = sub_band or band5_downconversion_subband
             # raise error if expected sub band fields are not provided or invalid
-            if not b5dc_sub_band:
+            if b5dc_sub_band is None:
                 raise ConfigureBandValidationError(
                     "Invalid configuration JSON. sub_band or"
                     " band5_downconversion_subband field is required for"
@@ -50,6 +50,7 @@ def validate_configure_band_input(data: str) -> dict:
                     ' or "3".'
                 )
 
+        if b5dc_sub_band:
             # TODO: remove segment below after decision about JSON schema is finalised
             # Convert the subband from str type to int type and remove band5_downconversion_subband
             # field to maintain compatibility with SPFRx firmware
