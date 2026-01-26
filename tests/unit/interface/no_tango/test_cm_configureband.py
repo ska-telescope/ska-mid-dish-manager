@@ -302,10 +302,10 @@ def test_configureband_b5b_without_expected_subband_values(
     Mock(return_value=True),
 )
 @pytest.mark.parametrize(
-    "configure_json",
+    ("configure_json", "sub_band_frequency"),
     [
-        """
-        {
+        (
+            """{
             "dish": {
                 "receiver_band": "5b",
                 "band5_downconversion_subband": "1",
@@ -316,10 +316,11 @@ def test_configureband_b5b_without_expected_subband_values(
                     }
                 ]
             }
-        }
-        """,
-        """
-        {
+        }""",
+            11.1,
+        ),
+        (
+            """{
             "dish": {
                 "receiver_band": "5b",
                 "sub_band": "2",
@@ -330,14 +331,16 @@ def test_configureband_b5b_without_expected_subband_values(
                     }
                 ]
             }
-        }
-        """,
+        }""",
+            13.2,
+        ),
     ],
 )
 def test_configureband_5b_with_subband(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
     configure_json: str,
+    sub_band_frequency: float,
 ) -> None:
     """Verify behaviour of ConfigureBand for json with valid subband case.
 
@@ -371,7 +374,7 @@ def test_configureband_5b_with_subband(
     msgs = [
         "Awaiting DS indexerposition change to B5b",
         "Awaiting SPFRX configuredband change to B5b",
-        "Awaiting B5DC rfcmfrequency change to 11.1",
+        f"Awaiting B5DC rfcmfrequency change to {sub_band_frequency}",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand, B5DC.SetFrequency",
         "Awaiting configuredband change to B5b",
     ]
@@ -390,10 +393,12 @@ def test_configureband_5b_with_subband(
         indexerposition=IndexerPosition.B5b, operatingmode=DSOperatingMode.POINT
     )
 
-    component_manager.sub_component_managers["B5DC"]._update_component_state(rfcmfrequency=11.1)
+    component_manager.sub_component_managers["B5DC"]._update_component_state(
+        rfcmfrequency=sub_band_frequency
+    )
     # wait a bit for the lrc updates to come through
     component_state_cb.wait_for_value("configuredband", Band.B5b)
-    component_state_cb.wait_for_value("rfcmfrequency", 11.1, timeout=6)
+    component_state_cb.wait_for_value("rfcmfrequency", sub_band_frequency, timeout=6)
 
     component_state_cb.get_queue_values()
     # check that the updates for the final SetOperate call in the sequence come through
