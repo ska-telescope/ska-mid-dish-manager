@@ -8,12 +8,6 @@ ENV POETRY_NO_INTERACTION=1
 ENV POETRY_VIRTUALENVS_IN_PROJECT=1
 ENV POETRY_VIRTUALENVS_CREATE=1
 
-# open telemetry environment variables
-ENV TANGO_TELEMETRY_ENABLE=on
-ENV TANGO_TELEMETRY_TRACES_EXPORTER=grpc
-ENV TANGO_TELEMETRY_TRACES_ENDPOINT=grpc://dev-signoz-otel-collector:4317
-ENV TANGO_TELEMETRY_LOGS_EXPORTER=none
-
 RUN poetry install --no-root
 
 COPY src /app/src
@@ -31,6 +25,13 @@ COPY --from=tools /usr/local/bin/wait-for-it.sh /usr/local/bin/wait-for-it.sh
 
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PYTHONPATH="/app/src:app/.venv/lib/python3.10/site-packages/:${PYTHONPATH}"
+
+# open telemetry environment variables
+ENV TANGO_TELEMETRY_ENABLE=on
+ENV TANGO_TELEMETRY_TRACES_EXPORTER=grpc
+# ENV TANGO_TELEMETRY_TRACES_ENDPOINT=grpc://test-signoz-otel-collector:4317
+ENV TANGO_TELEMETRY_TRACES_ENDPOINT=grpc://localhost:4317
+ENV TANGO_TELEMETRY_LOGS_EXPORTER=none
 
 
 # Metadata labels
