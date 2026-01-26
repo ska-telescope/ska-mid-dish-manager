@@ -8,6 +8,7 @@ from typing import Any, Callable, List, Optional
 
 import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus
+from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S, DSC_MIN_POWER_LIMIT_KW
 from ska_mid_dish_manager.models.dish_enums import (
@@ -780,11 +781,13 @@ class ConfigureBandAction(Action):
 
         self.indexer_enum = IndexerPosition(int(band)) if band is not None else None
         self.requested_cmd = requested_cmd
+        b5dc_set_frequency_command = None
 
         if self.data is not None:
             data_json = json.loads(self.data)
             dish_data = data_json.get("dish")
             receiver_band = dish_data.get("receiver_band")
+            sub_band = dish_data.get("sub_band")
             # Override band and indexer_enum if json data is provided
             self.band = Band[f"B{receiver_band}"]
             self.indexer_enum = IndexerPosition[f"B{receiver_band}"]
@@ -799,6 +802,21 @@ class ConfigureBandAction(Action):
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
+            if receiver_band == "5b":
+                b5dc_freq_enum = B5dcFrequency(int(sub_band))
+
+                b5dc_set_frequency_command = FannedOutSlowCommand(
+                    logger=self.logger,
+                    device="B5DC",
+                    command_name="SetFrequency",
+                    device_component_manager=self.dish_manager_cm.sub_component_managers["B5DC"],
+                    command_argument=b5dc_freq_enum,
+                    awaited_component_state={
+                        "rfcmfrequency": b5dc_freq_enum.frequency_value_ghz()
+                    },
+                    progress_callback=self._progress_callback,
+                    is_device_ignored=self.dish_manager_cm.is_device_ignored("B5DC"),
+                )
         else:
             spfrx_configure_band_command = FannedOutSlowCommand(
                 logger=self.logger,
@@ -824,6 +842,9 @@ class ConfigureBandAction(Action):
                 progress_callback=self._progress_callback,
             )
             fanned_out_commands.insert(0, ds_set_index_position_command)
+
+        if b5dc_set_frequency_command:
+            fanned_out_commands.append(b5dc_set_frequency_command)
 
         self._handler = ActionHandler(
             logger=self.logger,

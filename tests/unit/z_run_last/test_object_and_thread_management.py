@@ -55,6 +55,7 @@ def test_component_manager_gracefully_cleans_up_resources(patch_dp, caplog):
             "sub-device-1",
             "sub-device-2",
             "sub-device-3",
+            "sub-device-4",
             action_timeout_s=DEFAULT_ACTION_TIMEOUT_S,
         )
         weak_ref = weakref.ref(component_manager)

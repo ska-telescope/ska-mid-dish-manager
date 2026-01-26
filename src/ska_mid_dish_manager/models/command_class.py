@@ -117,6 +117,75 @@ class SetKValueCommand(FastCommand):
         return self._component_manager.set_kvalue(*args)
 
 
+class SetFrequencyCommand(FastCommand):
+    """Class for handling the SetFrequency command."""
+
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
+        """Initialise a new SetFrequency instance.
+
+        :param component_manager: the device to which this command belongs.
+        :param logger: a logger for this command to use.
+        """
+        self._component_manager = component_manager
+        super().__init__(logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Implement SetFrequency command functionality.
+
+        :param args:  PLL output frequency (GHz)
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return self._component_manager.set_frequency(*args)
+
+
+class SetVPolAttenuationCommand(FastCommand):
+    """Class for handling the SetVPolAttenuation command."""
+
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
+        """Initialise a new SetVPolAttenuation instance.
+
+        :param component_manager: the device to which this command belongs.
+        :param logger: a logger for this command to use.
+        """
+        self._component_manager = component_manager
+        super().__init__(logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Implement SetVPolAttenuation command functionality.
+
+        :param args: RFCM V-polarization attenuation value (dB)
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return self._component_manager.set_v_pol_attenuation(*args)
+
+
+class SetHPolAttenuationCommand(FastCommand):
+    """Class for handling the SetHPolAttenuation command."""
+
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
+        """Initialise a new SetHPolAttenuation instance.
+
+        :param component_manager: the device to which this command belongs.
+        :param logger: a logger for this command to use.
+        """
+        self._component_manager = component_manager
+        super().__init__(logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Implement SetHPolAttenuation command functionality.
+
+        :param args: RFCM H-polarization attenuation value (dB)
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return self._component_manager.set_h_pol_attenuation(*args)
+
+
 class ResetTrackTableCommand(FastCommand):
     """Class for handling the ResetTrackTable command."""
 

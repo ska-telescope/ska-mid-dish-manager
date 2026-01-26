@@ -15,6 +15,7 @@ from matplotlib import pyplot as plt
 from tango.test_context import get_host_ip
 
 from ska_mid_dish_manager.models.constants import (
+    DEFAULT_B5DC_TRL,
     DEFAULT_DISH_MANAGER_TRL,
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
@@ -125,6 +126,11 @@ def wms_device_fqdn():
     return DEFAULT_WMS_TRL
 
 
+@pytest.fixture(scope="session")
+def b5dc_device_fqdn():
+    return DEFAULT_B5DC_TRL
+
+
 @pytest.fixture(scope="module")
 def dish_manager_proxy(dish_manager_device_fqdn):
     dev_proxy = tango.DeviceProxy(dish_manager_device_fqdn)
@@ -136,6 +142,14 @@ def dish_manager_proxy(dish_manager_device_fqdn):
 @pytest.fixture(scope="module")
 def ds_device_proxy(ds_device_fqdn):
     dev_proxy = tango.DeviceProxy(ds_device_fqdn)
+    # increase client request timeout to 5 seconds
+    dev_proxy.set_timeout_millis(5000)
+    return dev_proxy
+
+
+@pytest.fixture(scope="module")
+def b5dc_device_proxy(b5dc_device_fqdn):
+    dev_proxy = tango.DeviceProxy(b5dc_device_fqdn)
     # increase client request timeout to 5 seconds
     dev_proxy.set_timeout_millis(5000)
     return dev_proxy
@@ -239,6 +253,7 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             "spfconnectionstate",
             "spfrxconnectionstate",
             "dsconnectionstate",
+            "b5dcconnectionstate",
             "longrunningcommandstatus",
             "longrunningcommandresult",
             "longrunningcommandprogress",

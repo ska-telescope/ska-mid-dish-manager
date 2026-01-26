@@ -22,10 +22,11 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # make sure configuredBand is not B2
-    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
-    result_event_store.wait_for_command_id(unique_id, timeout=30)
-    assert dish_manager_proxy.configuredBand == Band.B1
-    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    if dish_manager_proxy.configuredBand != Band.B1:
+        [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
+        result_event_store.wait_for_command_id(unique_id, timeout=30)
+        assert dish_manager_proxy.configuredBand == Band.B1
+        assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     main_event_store.clear_queue()
     status_event_store.clear_queue()

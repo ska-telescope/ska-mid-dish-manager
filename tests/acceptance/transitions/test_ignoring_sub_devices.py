@@ -9,25 +9,37 @@ from tests.utils import remove_subscriptions, set_ignored_devices, setup_subscri
 @pytest.fixture
 def toggle_ignore_spfrx(dish_manager_proxy):
     """Ignore SPFRx."""
-    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=True)
+    set_ignored_devices(
+        device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=True, ignore_b5dc=False
+    )
     yield
-    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False)
+    set_ignored_devices(
+        device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False, ignore_b5dc=False
+    )
 
 
 @pytest.fixture
 def toggle_ignore_spf(dish_manager_proxy):
     """Ignore SPF."""
-    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False)
+    set_ignored_devices(
+        device_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False, ignore_b5dc=False
+    )
     yield
-    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False)
+    set_ignored_devices(
+        device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False, ignore_b5dc=False
+    )
 
 
 @pytest.fixture
-def toggle_ignore_spf_and_spfrx(dish_manager_proxy):
-    """Ignore SPF and SPFRx."""
-    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=True)
+def toggle_ignore_spf_and_spfrx_b5dc(dish_manager_proxy):
+    """Ignore SPF, SPFRx and B5DC."""
+    set_ignored_devices(
+        device_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=True, ignore_b5dc=True
+    )
     yield
-    set_ignored_devices(device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False)
+    set_ignored_devices(
+        device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False, ignore_b5dc=False
+    )
 
 
 @pytest.mark.acceptance
@@ -113,7 +125,7 @@ def test_ignoring_spfrx(
 
 @pytest.mark.acceptance
 def test_ignoring_all(
-    monitor_tango_servers, toggle_ignore_spf_and_spfrx, event_store_class, dish_manager_proxy
+    monitor_tango_servers, toggle_ignore_spf_and_spfrx_b5dc, event_store_class, dish_manager_proxy
 ):
     """Test ignoring both SPF and SPFRx devices."""
     result_event_store = event_store_class()

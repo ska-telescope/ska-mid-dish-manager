@@ -27,11 +27,13 @@ class TestReleaseInfo:
         self._ds_manager_add = generate_random_text()
         self._spfc_add = generate_random_text()
         self._spfrx_add = generate_random_text()
+        self.b5dc_add = generate_random_text()
         self._release_info = ReleaseInfo(
             timestamp=self._timestamp,
             ds_manager_address=self._ds_manager_add,
             spfc_address=self._spfc_add,
             spfrx_address=self._spfrx_add,
+            b5dc_address=self.b5dc_add,
         )
 
     def test_default_addresses(self):
@@ -51,6 +53,8 @@ class TestReleaseInfo:
         assert build_state_json["spfrx_device"]["address"] == self._spfrx_add
         assert build_state_json["spfc_device"]["version"] == ""
         assert build_state_json["spfc_device"]["address"] == self._spfc_add
+        assert build_state_json["b5dc_device"]["version"] == ""
+        assert build_state_json["b5dc_device"]["address"] == self.b5dc_add
 
     def test_package_not_found(self):
         """Test response when package is not found."""
@@ -61,6 +65,7 @@ class TestReleaseInfo:
                 ds_manager_address=self._ds_manager_add,
                 spfc_address=self._spfc_add,
                 spfrx_address=self._spfrx_add,
+                b5dc_address=self.b5dc_add,
             )
             dm_release = release_info.get_dish_manager_release_version()
             assert dm_release == f"ERR: parsing {DISH_MANAGER_PACKAGE_NAME} version."
@@ -70,9 +75,10 @@ class TestReleaseInfo:
         [
             (DishDevice.SPF, "spfc_device"),
             (DishDevice.SPFRX, "spfrx_device"),
+            (DishDevice.B5DC, "b5dc_device"),
         ],
     )
-    def test_spf_spfrx_version_update(self, device: DishDevice, build_state_key: str):
+    def test_spf_spfrx_b5dc_version_update(self, device: DishDevice, build_state_key: str):
         """Test that device versions are updated accordingly."""
         build_state_update = generate_random_text()
         self._release_info.update_build_state(device, build_state_update)

@@ -91,6 +91,7 @@ DEVICE_DM  = mid-dish/dish-manager/SKA001
 DEVICE_DS  = mid-dish/ds-manager/SKA001
 DEVICE_SPF = mid-dish/simulator-spfc/SKA001
 DEVICE_SPFRX = mid-dish/simulator-spfrx/SKA001
+DEVICE_B5DC = mid-dish/b5dc-manager/SKA001
 # Default device
 DEVICE ?= DM
 # Get the full name dynamically
@@ -98,7 +99,7 @@ FULL_DEVICE = $(DEVICE_$(DEVICE))
 # Output filename based on DEVICE
 DOC_OUTPUT = docs_$(DEVICE).yaml
 # List of allowed devices
-VALID_DEVICES = DM DS SPF SPFRX
+VALID_DEVICES = DM DS SPF SPFRX B5DC
 
 simlib:
 	@# Check device validity of device parameter

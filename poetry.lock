@@ -2532,6 +2532,23 @@ url = "https://artefact.skao.int/repository/pypi-internal/simple"
 reference = "ska-nexus"
 
 [[package]]
+name = "ska-mid-dish-dcp-lib"
+version = "0.0.9"
+description = "Band 5 down-converter communication library"
+optional = false
+python-versions = ">=3.10,<4.0"
+groups = ["main"]
+files = [
+    {file = "ska_mid_dish_dcp_lib-0.0.9-py3-none-any.whl", hash = "sha256:29c2dd860133f1048f68bfa8b9fc1d90688b261697c293c14b4f4e8a3bfd6b60"},
+    {file = "ska_mid_dish_dcp_lib-0.0.9.tar.gz", hash = "sha256:7f4787ff30d9067422c9d3ce19e67a28a58e7f96cd5c948a3113d0bd3b6d258f"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://artefact.skao.int/repository/pypi-internal/simple"
+reference = "ska-nexus"
+
+[[package]]
 name = "ska-ser-logging"
 version = "0.4.3"
 description = "Square Kilometre Array logging configuration library"
@@ -3267,4 +3284,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "73f2ebd36f9810a141fa59b67300fcd147f9c941766c37f6193fa5243f17398a"
+content-hash = "6533c87674a2924da518182d1449aa533badb134e934208ddc9b8d26090aca52"

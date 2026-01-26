@@ -54,6 +54,13 @@ server:
                     {{- else }}
                     - "{{ $.Values.dishmanager.spfrx.domain_name }}/{{ $.Values.dishmanager.spfrx.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
                     {{- end }}
+                - name: "B5DCDeviceFqdn"
+                  values:
+                    {{- if $.Values.dishmanager.b5dcproxy.fqdn }}
+                    - "{{ $.Values.dishmanager.b5dcproxy.fqdn }}"
+                    {{- else }}
+                    - "{{ $.Values.dishmanager.b5dcproxy.domain_name }}/{{ $.Values.dishmanager.b5dcproxy.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
+                    {{- end }}
                 - name: "DishId"
                   values:
                     - "{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dish | upper }}{{ end }}"

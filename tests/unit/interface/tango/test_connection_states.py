@@ -14,6 +14,7 @@ from ska_control_model import CommunicationStatus
         ("SPFRX", "spfrxConnectionState"),
         ("SPF", "spfConnectionState"),
         ("WMS", "wmsConnectionState"),
+        ("B5DC", "b5dcConnectionState"),
     ],
 )
 def test_connection_state_attrs_mirror_communication_status(
@@ -30,7 +31,7 @@ def test_connection_state_attrs_mirror_communication_status(
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+    event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=10)
 
     # Force communication_state to NOT_ESTABLISHED
     sub_component_manager = dish_manager_cm.sub_component_managers[sub_device]

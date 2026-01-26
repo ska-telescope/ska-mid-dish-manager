@@ -196,19 +196,3 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         self._stop_ping_thread()
 
         super().stop_communicating()
-
-    # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError

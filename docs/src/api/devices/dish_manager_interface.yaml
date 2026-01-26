@@ -2042,6 +2042,108 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: pseudoRandomNoiseDiodePars
+    - name: rfTemperature
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the temperature of the B5DC RF Control Module (RFCM) RF Printed Circuit Board (PCB). Value is in degrees Celsius.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfTemperature
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmFrequency
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the current output frequency of the B5DC PLL in GHz. The default value is 11.1 GHz.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmFrequency
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmHAttenuation
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the current attenuation setting for the Horizontal (H) polarization on the B5DC RF Control Module (RFCM). Value is in dB.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmHAttenuation
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmPllLock
+      data_format: SCALAR
+      data_type: DevEnum
+      description: Reports the lock status of the B5DC RF Control Module (RFCM) PLL. Returns B5dcPllState enum indicating if locked or lock lost.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - LOCKED
+      - LOCKED_WITH_LOSS_DETECTED
+      - NOT_LOCKED
+      - NOT_LOCKED_WITH_LOSS_DETECTED
+      format: '%s'
+      label: rfcmPllLock
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmPsuPcbTemperature
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the temperature of the B5DC RF Control Module (RFCM) Power Supply Unit (PSU) PCB. Value is in degrees Celsius.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmPsuPcbTemperature
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmVAttenuation
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the current attenuation setting for the Vertical (V) polarization on the B5DC RF Control Module (RFCM). Value is in dB.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmVAttenuation
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+
     - name: scanID
       data_format: SCALAR
       data_type: DevString
@@ -2256,6 +2358,39 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: trackTableLoadMode
+    - name: vPolRfPowerIn
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the input RF power level for the Vertical (V) polarization measured at the B5DC RF Control Module (RFCM). Value is in dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: vPolRfPowerIn
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: vPolRfPowerOut
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the output RF power level for the Vertical (V) polarization measured at the B5DC RF Control Module (RFCM). Value is in dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: vPolRfPowerOut
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+
     - name: versionId
       data_format: SCALAR
       data_type: DevString
@@ -2331,6 +2466,7 @@
       writable: READ
       writable_attr_name: None
     properties:
+    - name: B5DCDeviceFqdn
     - name: DSDeviceFqdn
     - name: DefaultActionTimeoutSeconds
     - name: DefaultWatchdogTimeout
@@ -2344,4 +2480,5 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
+    - name: WMSDeviceNames
     - name: WindGustThreshold
