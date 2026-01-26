@@ -43,3 +43,6 @@ ska-mid-dish-b5dc-proxy:
 dishmanager:
   wms:
     station_ids: ["1"]
+
+signoz:
+  enabled: true
