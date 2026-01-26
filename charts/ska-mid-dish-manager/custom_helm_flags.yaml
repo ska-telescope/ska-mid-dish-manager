@@ -1,16 +1,16 @@
 global:
   minikube: true
   operator: true
-  dishes: ["001", "111"]
+  dishes: ["001", "MKT111"]
 
 ska-mid-dish-ds-manager:
   enabled: true
   # Override the image to use a specific version for testing
   # dishstructuremanager:
   #   image:
-  #     registry: registry.gitlab.com/ska-telescope/ska-mid-dish-ds-manager
+  #     registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
   #     image: ska-mid-dish-ds-manager
-  #     tag: 6.1.0-dev.c393b90f1
+  #     tag: 7.0.4-dev.c1c8d2f3c
   #     pullPolicy: IfNotPresent
 
 ska-tango-base:
@@ -26,7 +26,18 @@ ska-mid-dish-simulators:
   dsOpcuaSimulator:
     enabled: true
 
+  # Override the image to use a specific version for testing
+  # dishsimulators:
+  #   image:
+  #     registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-simulators
+  #     image: ska-mid-dish-simulators
+  #     tag: 5.5.3-dev.cb7318790
+  #     pullPolicy: IfNotPresent
+
 ska-mid-wms:
+  enabled: true
+
+ska-mid-dish-b5dc-proxy:
   enabled: true
 
 dishmanager:

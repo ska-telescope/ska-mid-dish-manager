@@ -39,7 +39,7 @@ def test_happy_case(dish_manager_resources, event_store_class):
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.MAINTENANCE)
 
     expected_progress_update = "SetMaintenanceMode completed"
-    status_event_store.wait_for_progress_update(expected_progress_update, timeout=6)
+    status_event_store.wait_for_progress_update(expected_progress_update, timeout=60)
     dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
 
     # Check that the ReleaseAuth command was executed

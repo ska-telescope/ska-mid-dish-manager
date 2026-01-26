@@ -11,8 +11,12 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
+from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
+    B5dcPllState,
+)
 from ska_tango_base.executor import TaskExecutorComponentManager
 
+from ska_mid_dish_manager.component_managers.b5dc_cm import B5DCComponentManager
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
@@ -63,6 +67,10 @@ from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
 from ska_mid_dish_manager.utils.decorators import check_communicating
+from ska_mid_dish_manager.utils.input_validation import (
+    ConfigureBandValidationError,
+    validate_configure_band_input,
+)
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimer
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 from ska_mid_dish_manager.utils.tango_helpers import TangoDbAccessor
@@ -85,6 +93,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
+        b5dc_device_fqdn: str,
         action_timeout_s: float,
         *args,
         wms_device_names: Optional[List[str]] = None,
@@ -128,6 +137,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             wmsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            b5dcconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
             band0pointingmodelparams=[],
             band1pointingmodelparams=[],
             band2pointingmodelparams=[],
@@ -137,9 +147,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             band5bpointingmodelparams=[],
             ignorespf=False,
             ignorespfrx=False,
+            ignoreb5dc=False,
             noisediodemode=NoiseDiodeMode.OFF,
-            periodicnoisediodepars=[],
+            periodicnoisediodepars=[0, 0, 0],
             pseudorandomnoisediodepars=[0, 0, 0],
+            isklocked=False,
+            spectralinversion=False,
             actstaticoffsetvaluexel=0.0,
             actstaticoffsetvalueel=0.0,
             tracktablecurrentindex=0,
@@ -149,10 +162,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             desiredpointingaz=[0.0, 0.0],
             desiredpointingel=[0.0, 0.0],
             achievedpointing=[0.0, 0.0, 0.0],
-            attenuationpolh=0.0,
-            attenuationpolv=0.0,
             dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
             powerstate=PowerState.LOW,
+            attenuation1polhx=0.0,
+            attenuation1polvy=0.0,
+            attenuation2polhx=0.0,
+            attenuation2polvy=0.0,
+            attenuationpolhx=0.0,
+            attenuationpolvy=0.0,
             kvalue=0,
             scanid="",
             trackinterpolationmode=TrackInterpolationMode.SPLINE,
@@ -164,7 +181,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             lastcommandedmode=("0.0", ""),
             lastcommandinvoked=("0.0", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
+            rfcmplllock=B5dcPllState.NOT_LOCKED,
+            rfcmhattenuation=0.0,
+            rfcmvattenuation=0.0,
+            rftemperature=0.0,
+            rfcmpsupcbtemperature=0.0,
+            hpolrfpowerin=0.0,
+            hpolrfpowerout=0.0,
+            vpolrfpowerin=0.0,
+            vpolrfpowerout=0.0,
+            rfcmfrequency=0.0,
+            clkphotodiodecurrent=0.0,
             actiontimeoutseconds=action_timeout_s,
+            b1lnahpowerstate=False,
+            b2lnahpowerstate=False,
+            b3lnahpowerstate=False,
+            b4lnahpowerstate=False,
+            b5alnahpowerstate=False,
+            b5blnahpowerstate=False,
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -202,6 +236,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b4capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5acapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
+                b1lnahpowerstate=False,
+                b2lnahpowerstate=False,
+                b3lnahpowerstate=False,
+                b4lnahpowerstate=False,
+                b5alnahpowerstate=False,
+                b5blnahpowerstate=False,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPF
                 ),
@@ -253,10 +293,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._state_update_lock,
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
-                capturingdata=False,
+                datafibercheck=False,  # Maps to Dish Managers "capturing" attribute
                 healthstate=HealthState.UNKNOWN,
-                attenuationpolh=0.0,
-                attenuationpolv=0.0,
+                attenuationpolhx=0.0,
+                attenuationpolvy=0.0,
+                attenuation1polhx=0.0,
+                attenuation1polvy=0.0,
+                attenuation2polhx=0.0,
+                attenuation2polvy=0.0,
                 kvalue=0,
                 b1capabilitystate=SPFRxCapabilityStates.UNKNOWN,
                 b2capabilitystate=SPFRxCapabilityStates.UNKNOWN,
@@ -287,6 +331,28 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 meanwindspeed=-1,
                 windgust=-1,
             ),
+            "B5DC": B5DCComponentManager(
+                b5dc_device_fqdn,
+                logger=logger,
+                state_update_lock=self._state_update_lock,
+                rfcmHAttenuation=0.0,
+                rfcmVAttenuation=0.0,
+                rfcmPllLock=B5dcPllState.NOT_LOCKED,
+                rfTemperature=0.0,
+                rfcmPsuPcbTemperature=0.0,
+                hPolRfPowerIn=0.0,
+                hPolRfPowerOut=0.0,
+                vPolRfPowerIn=0.0,
+                vPolRfPowerOut=0.0,
+                rfcmFrequency=0.0,
+                clkPhotodiodeCurrent=0.0,
+                communication_state_callback=partial(
+                    self._sub_device_communication_state_changed, DishDevice.B5DC
+                ),
+                component_state_callback=partial(
+                    self._sub_device_component_state_changed, DishDevice.B5DC
+                ),
+            ),
         }
 
         self.direct_mapped_attrs = {
@@ -307,6 +373,35 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "noiseDiodeMode",
                 "periodicNoiseDiodePars",
                 "pseudoRandomNoiseDiodePars",
+                "isKLocked",
+                "spectralInversion",
+                "attenuation1PolHX",
+                "attenuation1PolVY",
+                "attenuation2PolHX",
+                "attenuation2PolVY",
+                "attenuationPolHX",
+                "attenuationPolVY",
+            ],
+            "SPF": [
+                "b1LnaHPowerState",
+                "b2LnaHPowerState",
+                "b3LnaHPowerState",
+                "b4LnaHPowerState",
+                "b5aLnaHPowerState",
+                "b5bLnaHPowerState",
+            ],
+            "B5DC": [
+                "rfcmPllLock",
+                "rfcmHAttenuation",
+                "rfcmVAttenuation",
+                "clkPhotodiodeCurrent",
+                "rfcmFrequency",
+                "rfTemperature",
+                "rfcmPsuPcbTemperature",
+                "hPolRfPowerIn",
+                "hPolRfPowerOut",
+                "vPolRfPowerIn",
+                "vPolRfPowerOut",
             ],
         }
 
@@ -387,6 +482,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return self.component_state["ignorespf"]
         if device == "SPFRX":
             return self.component_state["ignorespfrx"]
+        if device == "B5DC":
+            return self.component_state["ignoreb5dc"]
         return False
 
     def get_active_sub_component_managers(self) -> Dict:
@@ -398,7 +495,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if not self.is_device_ignored("SPFRX"):
             active_component_managers["SPFRX"] = self.sub_component_managers["SPFRX"]
-
+        if not self.is_device_ignored("B5DC"):
+            active_component_managers["B5DC"] = self.sub_component_managers["B5DC"]
         return active_component_managers
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
@@ -481,6 +579,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 ignore_spfrx = ignore_spfrx_value.lower() == "true"
                 self.set_spfrx_device_ignored(ignore_spfrx, sync=False)
+
+            # ignoreB5dc
+            ignore_b5dc_value = self._get_device_attribute_property_value("ignoreB5dc")
+
+            if ignore_b5dc_value is not None:
+                self.logger.debug(
+                    "Updating ignoreB5dc value with value from database %s.",
+                    ignore_b5dc_value,
+                )
+                ignore_b5dc = ignore_b5dc_value.lower() == "true"
+                self.set_b5dc_device_ignored(ignore_b5dc, sync=False)
         except tango.DevFailed:
             self.logger.debug(
                 "Could not update memorized attributes. Failed to connect to database."
@@ -528,6 +637,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if timeout_s != self.component_state["actiontimeoutseconds"]:
             self.logger.debug("Setting action timeous as %ss", timeout_s)
             self._update_component_state(actiontimeoutseconds=timeout_s)
+
+    def check_dish_mode_for_spfc_lna_power_state(self) -> None:
+        """Check if dish is in a mode that allows SPF LNA power state changes.
+
+        SPF LNA power state changes are only allowed when the dish is in
+        MAINTENANCE or OPERATE modes. Raises RuntimeError if in any other mode.
+        """
+        current_dish_mode = self.component_state["dishmode"]
+        if current_dish_mode not in [DishMode.MAINTENANCE, DishMode.OPERATE]:
+            raise RuntimeError(
+                "Cannot change LNA power state while dish is not in operate or maintanance mode."
+            )
 
     # ---------
     # Callbacks
@@ -731,21 +852,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 spf_component_state["bandinfocus"] = band_in_focus
 
-        # spfrx attenuation
-        if "attenuationpolv" in kwargs or "attenuationpolh" in kwargs:
-            attenuation = {
-                "attenuationpolv": spfrx_component_state["attenuationpolv"],
-                "attenuationpolh": spfrx_component_state["attenuationpolh"],
-            }
-            self.logger.debug(
-                (
-                    "Updating dish manager attenuationpolv and attenuationpolh "
-                    "with: SPFRX attenuation [%s]"
-                ),
-                attenuation,
-            )
-            self._update_component_state(**attenuation)
-
         # kvalue
         if "kvalue" in kwargs:
             k_value = spfrx_component_state["kvalue"]
@@ -775,17 +881,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(configuredband=configured_band)
 
         # update capturing attribute when SPFRx captures data
-        if "capturingdata" in kwargs:
-            capturing_data = spfrx_component_state["capturingdata"]
+        if "datafibercheck" in kwargs:
+            data_fiber_check = spfrx_component_state["datafibercheck"]
             self.logger.debug(
                 ("Updating dish manager capturing with: SPFRx [%s]"),
-                capturing_data,
+                data_fiber_check,
             )
-            self._update_component_state(capturing=capturing_data)
+            self._update_component_state(capturing=data_fiber_check)
 
         # CapabilityStates
         # Update all CapabilityStates when indexerposition, dish_mode or operatingmode changes
-        if "indexerposition" in kwargs or "dish_mode" in kwargs or "operatingmode" in kwargs:
+        if (
+            "indexerposition" in kwargs
+            or "operatingmode" in kwargs
+            # Added in `powerstate` and `adminmode` so that if the dishmode changes earlier then
+            # the capability states are recalculated as well
+            or "powerstate" in kwargs
+            or "adminmode" in kwargs
+        ):
             cap_state_updates = {}
             for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
                 cap_state_name = f"{band}capabilitystate"
@@ -822,7 +935,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     new_state,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
-
         # Update the pointing model params if they change
         for band in ["0", "1", "2", "3", "4", "5a", "5b"]:
             pointing_param_name = f"band{band}pointingmodelparams"
@@ -839,21 +951,27 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
         # Update attributes that are mapped directly from subservient devices
-        if device == "SPF":
-            # there's no SPF in the mapped dict
-            return
         attrs = self.direct_mapped_attrs[device]
         cm_state = self.sub_component_managers[device.value].component_state
 
-        pointing_related_attrs = set(
-            [
-                "desiredpointingaz",
-                "desiredpointingel",
-                "achievedpointing",
-                "tracktablecurrentindex",
-                "tracktableendindex",
-            ]
-        )
+        pointing_related_attrs = {
+            "desiredpointingaz",
+            "desiredpointingel",
+            "achievedpointing",
+            "tracktablecurrentindex",
+            "tracktableendindex",
+        }
+
+        b5dc_related_attrs = {
+            "rfcmplllock",
+            "clkphotodiodecurrent",
+            "rftemperature",
+            "rfcmpsupcbtemperature",
+            "hpolrfpowerin",
+            "hpolrfpowerout",
+            "vpolrfpowerin",
+            "vpolrfpowerout",
+        }
 
         enum_attr_mapping = {
             "trackInterpolationMode": TrackInterpolationMode,
@@ -867,7 +985,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 new_value = cm_state[attr_lower]
                 mapped_enum = enum_attr_mapping.get(attr)
                 new_value = mapped_enum(new_value) if mapped_enum is not None else new_value
-                if attr_lower not in pointing_related_attrs:
+                if (
+                    attr_lower not in pointing_related_attrs
+                    and attr_lower not in b5dc_related_attrs
+                ):
                     self.logger.debug(
                         ("Updating dish manager %s with: %s %s [%s]"),
                         attr,
@@ -932,6 +1053,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self.sub_component_managers["SPFRX"].stop_communicating()
             else:
                 self.sub_component_managers["SPFRX"].start_communicating()
+
+            if sync:
+                self.sync_component_states()
+
+    def set_b5dc_device_ignored(self, ignored: bool, sync: bool = True):
+        """Set the B5DC device ignored boolean and update device communication."""
+        if ignored != self.component_state["ignoreb5dc"]:
+            self.logger.debug("Setting ignore B5DC device as %s", ignored)
+            self._update_component_state(ignoreb5dc=ignored)
+            if ignored:
+                if "B5DC" in self.sub_component_managers:
+                    self.sub_component_managers["B5DC"].stop_communicating()
+            else:
+                self.sub_component_managers["B5DC"].start_communicating()
 
             if sync:
                 self.sync_component_states()
@@ -1146,6 +1281,51 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    @check_communicating
+    def configure_band_with_json(
+        self,
+        data: str,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Configure frequency band using JSON string.
+
+        :param data: JSON string containing band configuration parameters.
+        :type data: str
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :return: Result status and message
+        :rtype: Tuple[TaskStatus, str]
+        """
+        _is_configure_band_cmd_allowed = partial(
+            self._dish_mode_model.is_command_allowed,
+            "ConfigureBand",
+            component_manager=self,
+            progress_callback=self._command_progress_callback,
+        )
+
+        try:
+            config_dict = validate_configure_band_input(data)
+            data = json.dumps(config_dict)
+        except ConfigureBandValidationError as err:
+            self.logger.error("Error parsing JSON for configure band command.")
+            return TaskStatus.FAILED, str(err)
+        except ValueError:
+            # JSON validation and error handling will be actioned by the SPFRx.
+            pass
+
+        status, response = self.submit_task(
+            ConfigureBandActionSequence(
+                self.logger,
+                self,
+                data=data,
+                requested_cmd="ConfigureBand",
+                timeout_s=self.get_action_timeout(),
+            ).execute,
+            is_cmd_allowed=_is_configure_band_cmd_allowed,
+            task_callback=task_callback,
+        )
+        return status, response
+
     def handle_exit_maintenance_mode_transition(self) -> None:
         """Handles state transition from maintenance mode.
 
@@ -1210,6 +1390,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Slew the dish."""
         if len(values) != 2:
+            update_task_status(task_callback, status=TaskStatus.REJECTED)
             return (
                 TaskStatus.REJECTED,
                 f"Expected 2 arguments (az, el) but got {len(values)} arg(s).",
@@ -1283,6 +1464,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> Tuple[TaskStatus, str]:
         """Load the static pointing model offsets."""
         if len(values) != 2:
+            update_task_status(task_callback, status=TaskStatus.REJECTED)
             return (
                 TaskStatus.REJECTED,
                 f"Expected 2 arguments (off_xel, off_el) but got {len(values)} arg(s).",
@@ -1606,3 +1788,27 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             return ResultCode.FAILED, msg
         return ResultCode.OK, reset_point
+
+    def set_h_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
+        """Update HPolAttenuation on B5DC."""
+        b5dc_cm = self.sub_component_managers["B5DC"]
+        task_status, msg = b5dc_cm.execute_command("SetHPolAttenuation", value)
+        if task_status == TaskStatus.FAILED:
+            return (ResultCode.FAILED, msg)
+        return (ResultCode.OK, "Successfully updated HPolAttenuation on the B5DC proxy.")
+
+    def set_v_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
+        """Update VPolAttenuation on B5DC."""
+        b5dc_cm = self.sub_component_managers["B5DC"]
+        task_status, msg = b5dc_cm.execute_command("SetVPolAttenuation", value)
+        if task_status == TaskStatus.FAILED:
+            return (ResultCode.FAILED, msg)
+        return (ResultCode.OK, "Successfully updated VPolAttenuation on the B5DC proxy.")
+
+    def set_frequency(self, value: int) -> Tuple[ResultCode, str]:
+        """Update Frequency on B5DC."""
+        b5dc_cm = self.sub_component_managers["B5DC"]
+        task_status, msg = b5dc_cm.execute_command("SetFrequency", value)
+        if task_status == TaskStatus.FAILED:
+            return (ResultCode.FAILED, msg)
+        return (ResultCode.OK, "Successfully updated Frequency on the B5DC proxy.")

@@ -40,6 +40,12 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b4CapabilityState",
             "b5aCapabilityState",
             "b5bCapabilityState",
+            "b1LnaHPowerState",
+            "b2LnaHPowerState",
+            "b3LnaHPowerState",
+            "b4LnaHPowerState",
+            "b5aLnaHPowerState",
+            "b5bLnaHPowerState",
         )
         super().__init__(
             tango_device_fqdn,
@@ -72,19 +78,3 @@ class SPFComponentManager(TangoDeviceComponentManager):
                 kwargs[attr] = enum_(kwargs[attr])
 
         super()._update_component_state(**kwargs)
-
-    # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError

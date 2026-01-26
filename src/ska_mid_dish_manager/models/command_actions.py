@@ -1,5 +1,6 @@
 """Module containing the fanned out command actions."""
 
+import json
 import logging
 import time
 from abc import ABC
@@ -7,6 +8,7 @@ from typing import Any, Callable, List, Optional
 
 import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus
+from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S, DSC_MIN_POWER_LIMIT_KW
 from ska_mid_dish_manager.models.dish_enums import (
@@ -752,9 +754,10 @@ class ConfigureBandAction(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        band: Band,
-        synchronise: bool,
         requested_cmd: str,
+        band: Optional[Band] = None,
+        synchronise: Optional[bool] = None,
+        data: Optional[str] = None,
         timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
@@ -770,35 +773,83 @@ class ConfigureBandAction(Action):
         )
         self.band = band
         self.synchronise = synchronise
+        self.data = data
+        # If data is provided then band and synchronise are ignored
+        assert (self.data is not None) or (
+            self.band is not None and self.synchronise is not None
+        ), "Either data or both band and synchronise must be provided"
 
-        self.indexer_enum = IndexerPosition(int(band))
+        self.indexer_enum = IndexerPosition(int(band)) if band is not None else None
         self.requested_cmd = requested_cmd
+        b5dc_set_frequency_command = None
 
-        spfrx_configure_band_command = FannedOutSlowCommand(
-            logger=self.logger,
-            device="SPFRX",
-            command_name=self.requested_cmd,
-            device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
-            command_argument=synchronise,
-            awaited_component_state={"configuredband": self.band},
-            progress_callback=self._progress_callback,
-            is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
-        )
+        if self.data is not None:
+            data_json = json.loads(self.data)
+            dish_data = data_json.get("dish")
+            receiver_band = dish_data.get("receiver_band")
+            sub_band = dish_data.get("sub_band")
+            # Override band and indexer_enum if json data is provided
+            self.band = Band[f"B{receiver_band}"]
+            self.indexer_enum = IndexerPosition[f"B{receiver_band}"]
 
-        ds_set_index_position_command = FannedOutSlowCommand(
-            logger=self.logger,
-            device="DS",
-            command_name="SetIndexPosition",
-            device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            command_argument=self.indexer_enum,
-            awaited_component_state={"indexerposition": self.indexer_enum},
-            progress_callback=self._progress_callback,
-        )
+            spfrx_configure_band_command = FannedOutSlowCommand(
+                logger=self.logger,
+                device="SPFRX",
+                command_name=self.requested_cmd,
+                device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
+                command_argument=self.data,
+                awaited_component_state={"configuredband": self.band},
+                progress_callback=self._progress_callback,
+                is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
+            )
+            if receiver_band == "5b":
+                b5dc_freq_enum = B5dcFrequency(int(sub_band))
+
+                b5dc_set_frequency_command = FannedOutSlowCommand(
+                    logger=self.logger,
+                    device="B5DC",
+                    command_name="SetFrequency",
+                    device_component_manager=self.dish_manager_cm.sub_component_managers["B5DC"],
+                    command_argument=b5dc_freq_enum,
+                    awaited_component_state={
+                        "rfcmfrequency": b5dc_freq_enum.frequency_value_ghz()
+                    },
+                    progress_callback=self._progress_callback,
+                    is_device_ignored=self.dish_manager_cm.is_device_ignored("B5DC"),
+                )
+        else:
+            spfrx_configure_band_command = FannedOutSlowCommand(
+                logger=self.logger,
+                device="SPFRX",
+                command_name=self.requested_cmd,
+                device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
+                command_argument=self.synchronise,
+                awaited_component_state={"configuredband": self.band},
+                progress_callback=self._progress_callback,
+                is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
+            )
+
+        fanned_out_commands = [spfrx_configure_band_command]
+        # Only fan out the DS SetIndexPosition command if the band is changing
+        if self.dish_manager_cm._component_state["configuredband"] != self.band:
+            ds_set_index_position_command = FannedOutSlowCommand(
+                logger=self.logger,
+                device="DS",
+                command_name="SetIndexPosition",
+                device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
+                command_argument=self.indexer_enum,
+                awaited_component_state={"indexerposition": self.indexer_enum},
+                progress_callback=self._progress_callback,
+            )
+            fanned_out_commands.insert(0, ds_set_index_position_command)
+
+        if b5dc_set_frequency_command:
+            fanned_out_commands.append(b5dc_set_frequency_command)
 
         self._handler = ActionHandler(
             logger=self.logger,
             action_name=self.requested_cmd,
-            fanned_out_commands=[ds_set_index_position_command, spfrx_configure_band_command],
+            fanned_out_commands=fanned_out_commands,
             component_state=self.dish_manager_cm._component_state,
             awaited_component_state={"configuredband": self.band},
             action_on_success=action_on_success,
@@ -809,12 +860,7 @@ class ConfigureBandAction(Action):
         )
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
-        if self.dish_manager_cm._component_state["configuredband"] == self.band:
-            report_task_progress(f"Already in band {self.band}", self._progress_callback)
-            self.handler._trigger_success(task_callback, task_abort_event)
-            return
-
-        self.logger.info(f"{self.requested_cmd} called with synchronise = {self.synchronise}")
+        self.logger.info(f"{self.requested_cmd} called")
         return super().execute(task_callback, task_abort_event, completed_response_msg)
 
 
@@ -825,9 +871,10 @@ class ConfigureBandActionSequence(Action):
         self,
         logger: logging.Logger,
         dish_manager_cm,
-        band: Band,
-        synchronise: bool,
         requested_cmd: str,
+        band: Optional[Band] = None,
+        synchronise: Optional[bool] = None,
+        data: Optional[str] = None,
         timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
@@ -843,7 +890,8 @@ class ConfigureBandActionSequence(Action):
         )
         self.band = band
         self.synchronise = synchronise
-        self.indexer_enum = IndexerPosition(int(band))
+        self.data = data
+        self.indexer_enum = IndexerPosition(int(band)) if band is not None else None
         self.requested_cmd = requested_cmd
 
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
@@ -868,6 +916,7 @@ class ConfigureBandActionSequence(Action):
             dish_manager_cm=self.dish_manager_cm,
             band=self.band,
             synchronise=self.synchronise,
+            data=self.data,
             requested_cmd=self.requested_cmd,
             action_on_success=final_action,  # chain operate action if we aren't in STOW
             waiting_callback=self.waiting_callback,

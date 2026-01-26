@@ -1,12 +1,67 @@
-"""Input validation and formatting needed for translation between DSC and DS manager."""
+"""Input validation and formatting."""
 
+import json
 from typing import List
 
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
 
+class ConfigureBandValidationError(Exception):
+    """Exception raised for errors in the configure band input validation."""
+
+
 class TrackTableTimestampError(ValueError):
     """Class that is used to represent timestamp errors in the track load table."""
+
+
+def validate_configure_band_input(data: str) -> dict:
+    """Validate the input JSON for configure_band command.
+
+    :param data: JSON string containing the configure band parameters.
+    :type data: str
+    :raises ConfigureBandValidationError: If the input JSON is invalid.
+    :return: Parsed JSON as a dictionary if valid.
+    """
+    try:
+        data_json = json.loads(data)
+        dish_data = data_json.get("dish")
+        receiver_band = dish_data.get("receiver_band")
+        if receiver_band not in ["1", "2", "3", "4", "5a", "5b"]:
+            raise ConfigureBandValidationError("Invalid receiver band in JSON.")
+
+        # TODO: remove validation of two fields for sub band
+        # after decision about JSON schema is finalised
+        b5dc_sub_band = None
+        sub_band = dish_data.get("sub_band")
+        band5_downconversion_subband = dish_data.get("band5_downconversion_subband")
+        b5dc_sub_band = sub_band or band5_downconversion_subband
+        if receiver_band == "5b":
+            # raise error if expected sub band fields are not provided or invalid
+            if b5dc_sub_band is None:
+                raise ConfigureBandValidationError(
+                    "Invalid configuration JSON. sub_band or"
+                    " band5_downconversion_subband field is required for"
+                    " requested receiver_band [5b]."
+                )
+            if b5dc_sub_band not in ["1", "2", "3"]:
+                raise ConfigureBandValidationError(
+                    "Invalid configuration JSON. Valid sub band required for"
+                    ' requested receiver_band [5b]. Expected "1", "2"'
+                    ' or "3".'
+                )
+
+        if b5dc_sub_band:
+            # TODO: remove segment below after decision about JSON schema is finalised
+            # Convert the subband from str type to int type and remove band5_downconversion_subband
+            # field to maintain compatibility with SPFRx firmware
+            data_json["dish"]["sub_band"] = int(b5dc_sub_band)
+            if "band5_downconversion_subband" in data_json["dish"]:
+                data_json["dish"].pop("band5_downconversion_subband")
+
+    except (json.JSONDecodeError, AttributeError) as err:
+        raise ConfigureBandValidationError("Error parsing JSON.") from err
+
+    return data_json
 
 
 class TrackLoadTableFormatting:

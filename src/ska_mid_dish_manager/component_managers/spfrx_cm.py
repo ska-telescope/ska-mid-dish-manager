@@ -92,7 +92,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
     ):
         monitored_attr_names = (
             "operatingMode",
-            "capturingData",
+            "dataFiberCheck",
             "configuredBand",
             "healthState",
             "b1CapabilityState",
@@ -101,14 +101,21 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "b4CapabilityState",
             "b5aCapabilityState",
             "b5bCapabilityState",
-            "attenuationPolH",
-            "attenuationPolV",
             "kValue",
             "noisediodemode",
             "periodicnoisediodepars",
             "pseudorandomnoisediodepars",
             # "adminMode", TODO: Wait for SPFRx to implement adminMode
+            "attenuation1polhx",
+            "attenuation1polvy",
+            "attenuation2polhx",
+            "attenuation2polvy",
+            "attenuationpolhx",
+            "attenuationpolvy",
+            "isklocked",
+            "spectralinversion",
         )
+
         super().__init__(
             tango_device_fqdn,
             logger,
@@ -117,8 +124,12 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
             quality_monitored_attributes=(
-                "attenuationpolv",
-                "attenuationpolh",
+                "attenuation1polhx",
+                "attenuation1polvy",
+                "attenuation2polhx",
+                "attenuation2polvy",
+                "attenuationpolhx",
+                "attenuationpolvy",
                 "noisediodemode",
             ),
             **kwargs,
@@ -170,7 +181,6 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
                     kwargs[attr] = enum_(kwargs[attr])
                 except ValueError:
                     self.logger.warning(f"Invalid value for {attr} during enum conversion.")
-
         super()._update_component_state(**kwargs)
 
     def start_communicating(self) -> None:
@@ -186,19 +196,3 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         self._stop_ping_thread()
 
         super().stop_communicating()
-
-    # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError

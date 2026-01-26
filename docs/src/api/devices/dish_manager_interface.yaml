@@ -11,9 +11,7 @@
       dtype_out: DevVarLongStringArray
     - name: AbortCommands
       disp_level: OPERATOR
-      doc_in: Abort currently executing long running command on DishManager including
-        stopping dish movement and transitioning dishMode to StandbyFP. For details
-        consult DishManager documentation
+      doc_in: Uninitialised
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
@@ -38,10 +36,37 @@
       dtype_out: DevVarLongStringArray
     - name: CheckLongRunningCommandStatus
       disp_level: OPERATOR
-      doc_in: Uninitialised
-      doc_out: Uninitialised
+      doc_in: command id
+      doc_out: TaskStatus
       dtype_in: DevString
       dtype_out: DevString
+    - name: ConfigureBand
+      disp_level: OPERATOR
+      doc_in: "The command accepts a JSON string containing data to configure the\
+        \ SPFRx.\n        The JSON structure is as follows:\n        {\n         \
+        \   \"receiver_band\": <string>,\n            \"band5_downconversion_subband\
+        \ or sub_band\": <string>,\n            \"spfrx_processing_parameters\": {\n\
+        \                \"dishes\": List[<string>],\n                \"sync_pps\"\
+        :  <bool>,\n                \"attenuation_pol_x\": <float>,\n            \
+        \    \"attenuation_pol_y\": <float>,\n                \"attenuation_1_pol_x\"\
+        : <float>,\n                \"attenuation_1_pol_y\": <float>,\n          \
+        \      \"attenuation_2_pol_x\": <float>,\n                \"attenuation_2_pol_y\"\
+        : <float>,\n                \"saturation_threshold\": <float>,\n         \
+        \       \"noise_diode\": {\n                    \"pseudo_random\": {\n   \
+        \                     \"binary_polynomial\": <long>,\n                   \
+        \     \"seed\": <long>,\n                        \"dwell\": <long>,\n    \
+        \                },\n                    \"periodic\": {\n               \
+        \         \"period\": <long>,\n                        \"duty_cycle\": <long>,\n\
+        \                        \"phase_shift\": <long>,\n                    }\n\
+        \                }\n            }\n        }\n        where 'receiver_band',\
+        \ 'dishes' and 'sync_pps' are mandatory fields. when 'receiver_band'\n   \
+        \     is set to '5b', the 'band5_downconversion_subband or sub_band'field\
+        \ is mandatory.\n        The 'dishes' field is a list of dish names that the\
+        \ SPFRx should be configured for,\n        if 'all' is specified in the list,\
+        \ the SPFRx will be configured for all dishes.\n        "
+      doc_out: Uninitialised
+      dtype_in: DevString
+      dtype_out: DevVarLongStringArray
     - name: ConfigureBand1
       disp_level: OPERATOR
       doc_in: If the synchronise argument is True, the SPFRx FPGA is instructed to
@@ -108,12 +133,6 @@
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
-    - name: ExecutePendingOperations
-      disp_level: OPERATOR
-      doc_in: Uninitialised
-      doc_out: Uninitialised
-      dtype_in: DevVoid
-      dtype_out: DevVoid
     - name: FlushCommandQueue
       disp_level: OPERATOR
       doc_in: Uninitialised
@@ -331,6 +350,23 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: _lrcEvent
+      data_format: SPECTRUM
+      data_type: DevString
+      description: "\n        Read the long running commands events. Always returns\
+        \ an empty list.\n\n        :return: empty list.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: _lrcEvent
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: achievedPointing
       data_format: SPECTRUM
       data_type: DevDouble
@@ -425,10 +461,9 @@
     - name: adminMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Admin Mode of the device.\n\n        It may\
-        \ interpret the current device condition and condition of all managed\n  \
-        \       devices to set this. Most possibly an aggregate attribute.\n\n   \
-        \     :return: Admin Mode of the device\n        "
+      description: The Admin Mode of the device. It may interpret the current device
+        condition and condition of all managed devices to set this. Most possibly
+        an aggregate attribute.
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -447,15 +482,15 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: adminMode
-    - name: attenuationPolH
+    - name: attenuation1PolHX
       data_format: SCALAR
       data_type: DevDouble
-      description: Indicates the SPFRx attenuation in the horizontal signal chain
-        for the configuredband.
+      description: "The current attenuation value for attenuator 1 on the\n      \
+        \  H/X polarization."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
-      label: attenuationPolH
+      label: attenuation1PolHX
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
@@ -463,16 +498,16 @@
       min_value: Not specified
       standard_unit: No standard unit
       writable: READ_WRITE
-      writable_attr_name: attenuationPolH
-    - name: attenuationPolV
+      writable_attr_name: attenuation1PolHX
+    - name: attenuation1PolVY
       data_format: SCALAR
       data_type: DevDouble
-      description: Indicates the SPFRx attenuation in the vertical signal chain for
-        the configuredband.
+      description: "The current attenuation value for attenuator 1 on the\n      \
+        \  V/Y polarization."
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
-      label: attenuationPolV
+      label: attenuation1PolVY
       max_alarm: Not specified
       max_dim_x: 1
       max_value: Not specified
@@ -480,7 +515,75 @@
       min_value: Not specified
       standard_unit: No standard unit
       writable: READ_WRITE
-      writable_attr_name: attenuationPolV
+      writable_attr_name: attenuation1PolVY
+    - name: attenuation2PolHX
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "The current attenuation value for attenuator 2 on the\n      \
+        \  H/X polarization."
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: attenuation2PolHX
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: attenuation2PolHX
+    - name: attenuation2PolVY
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "The current attenuation value for attenuator 2 on the\n      \
+        \  V/Y polarization."
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: attenuation2PolVY
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: attenuation2PolVY
+    - name: attenuationPolHX
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "The current total attenuation value across both attenuators on\
+        \ the\n        H/X polarization."
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: attenuationPolHX
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: attenuationPolHX
+    - name: attenuationPolVY
+      data_format: SCALAR
+      data_type: DevDouble
+      description: "The current total attenuation value across both attenuators on\
+        \ the\n        V/Y polarization."
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: attenuationPolVY
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: attenuationPolVY
     - name: autoWindStowEnabled
       data_format: SCALAR
       data_type: DevBoolean
@@ -555,6 +658,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b1LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b1LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b1LnaHPowerState
     - name: b2CapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -578,6 +697,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b2LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b2LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b2LnaHPowerState
     - name: b3CapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -601,6 +736,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b3LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b3LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b3LnaHPowerState
     - name: b4CapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -624,6 +775,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b4LnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H & V polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b4LnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b4LnaHPowerState
     - name: b5aCapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -647,6 +814,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b5aLnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H & V polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b5aLnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b5aLnaHPowerState
     - name: b5bCapabilityState
       data_format: SCALAR
       data_type: DevEnum
@@ -670,6 +853,22 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: b5bLnaHPowerState
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: Status of the SPFC LNA H & V polarization power state.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: b5bLnaHPowerState
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: b5bLnaHPowerState
     - name: band0PointingModelParams
       data_format: SPECTRUM
       data_type: DevDouble
@@ -947,11 +1146,11 @@
     - name: commandedState
       data_format: SCALAR
       data_type: DevString
-      description: "\n        Read the last commanded operating state of the device.\n\
-        \n        Initial string is \"None\". Only other strings it can change to\
-        \ is \"OFF\",\n        \"STANDBY\" or \"ON\", following the start of the Off(),\
-        \ Standby(), On() or Reset()\n        long running commands.\n\n        :return:\
-        \ commanded operating state string.\n        "
+      description: The last commanded Operating State of the device. Initial string
+        is "None".  Only other strings it can change to is "OFF", "STANDBY" or "ON",
+        following the Off(), Standby() or On() commands. If the state transition commands
+        are long running commands the commanded state will only update when the long
+        running command starts executing.
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1011,12 +1210,10 @@
     - name: controlMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Control Mode of the device.\n\n        The\
-        \ control mode of the device are REMOTE, LOCAL\n        Tango Device accepts\
-        \ only from a \u2018local\u2019 client and ignores commands and\n        queries\
-        \ received from TM or any other \u2018remote\u2019 clients. The Local clients\n\
-        \        has to release LOCAL control before REMOTE clients can take control\
-        \ again.\n\n        :return: Control Mode of the device\n        "
+      description: "The control mode of the device are REMOTE, LOCAL Tango Device\
+        \ accepts only from a \u2018local\u2019 client and ignores commands and queries\
+        \ received from TM or any other \u2018remote\u2019 clients. The Local clients\
+        \ has to release LOCAL control before REMOTE clients can take control again."
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1214,70 +1411,6 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: dshPowerCurtailment
-    - name: elementAlarmAddress
-      data_format: SCALAR
-      data_type: DevString
-      description: FQDN of Element Alarm Handlers
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%s'
-      label: elementAlarmAddress
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
-    - name: elementDatabaseAddress
-      data_format: SCALAR
-      data_type: DevString
-      description: FQDN of Element Database device
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%s'
-      label: elementDatabaseAddress
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
-    - name: elementLoggerAddress
-      data_format: SCALAR
-      data_type: DevString
-      description: FQDN of Element Logger
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%s'
-      label: elementLoggerAddress
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
-    - name: elementTelStateAddress
-      data_format: SCALAR
-      data_type: DevString
-      description: FQDN of Element TelState device
-      disp_level: OPERATOR
-      display_unit: No display unit
-      format: '%s'
-      label: elementTelStateAddress
-      max_alarm: Not specified
-      max_dim_x: 1
-      max_value: Not specified
-      min_alarm: Not specified
-      min_value: Not specified
-      standard_unit: No standard unit
-      writable: READ
-      writable_attr_name: None
     - name: frequencyResponse
       data_format: IMAGE
       data_type: DevDouble
@@ -1298,10 +1431,9 @@
     - name: healthState
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Health State of the device.\n\n        It interprets\
-        \ the current device condition and condition of\n        all managed devices\
-        \ to set this. Most possibly an aggregate attribute.\n\n        :return: Health\
-        \ State of the device\n        "
+      description: 'Read the Health State of the device. It interprets the current
+        device condition and condition of all managed devices to set this. Most possibly
+        an aggregate attribute. '
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1355,6 +1487,23 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: ignoreSpfrx
+    - name: isKLocked
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: "\n            Check the SAT.RM module to see if\n            the\
+        \ k- value is locked. If not false is returned.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: isKLocked
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: kValue
       data_format: SCALAR
       data_type: DevLong64
@@ -1496,7 +1645,7 @@
       format: '%s'
       label: longRunningCommandIDsInQueue
       max_alarm: Not specified
-      max_dim_x: 65
+      max_dim_x: 66
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1515,7 +1664,7 @@
       format: '%s'
       label: longRunningCommandInProgress
       max_alarm: Not specified
-      max_dim_x: 1
+      max_dim_x: 2
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1535,7 +1684,7 @@
       format: '%s'
       label: longRunningCommandProgress
       max_alarm: Not specified
-      max_dim_x: 2
+      max_dim_x: 4
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1548,7 +1697,7 @@
       description: "\n        Read the result of the completed long running command.\n\
         \n        Reports unique_id, json-encoded result.\n        Clients can subscribe\
         \ to on_change event and wait for\n        the ID they are interested in.\n\
-        \n        :return: ID, result.\n        "
+        \n        :param attr: Tango attribute being read\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
@@ -1574,7 +1723,7 @@
       format: '%s'
       label: longRunningCommandStatus
       max_alarm: Not specified
-      max_dim_x: 130
+      max_dim_x: 132
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1585,16 +1734,82 @@
       data_format: SPECTRUM
       data_type: DevString
       description: "\n        Read the long running commands in the queue.\n\n   \
-        \      Keep track of which commands are that are currently known about.\n\
-        \         Entries are removed `self._command_tracker._removal_time` seconds\n\
-        \         after they have finished.\n\n        :param attr: Tango attribute\
+        \     Keep track of which commands are that are currently known about.\n \
+        \       Entries are removed `self._command_tracker._removal_time` seconds\n\
+        \        after they have finished.\n\n        :param attr: Tango attribute\
         \ being read\n        "
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%s'
       label: longRunningCommandsInQueue
       max_alarm: Not specified
-      max_dim_x: 65
+      max_dim_x: 66
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcExecuting
+      data_format: SPECTRUM
+      data_type: DevString
+      description: Expose a signal as a Tango attribute.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcExecuting
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcFinished
+      data_format: SPECTRUM
+      data_type: DevString
+      description: Expose a signal as a Tango attribute.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcFinished
+      max_alarm: Not specified
+      max_dim_x: 100
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcProtocolVersions
+      data_format: SPECTRUM
+      data_type: DevLong64
+      description: "\n        Return supported protocol versions.\n\n        :return:\
+        \ A tuple containing the lower and upper bounds of supported long running\n\
+        \            command protocol versions.\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%d'
+      label: lrcProtocolVersions
+      max_alarm: Not specified
+      max_dim_x: 2
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: lrcQueue
+      data_format: SPECTRUM
+      data_type: DevString
+      description: Expose a signal as a Tango attribute.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: lrcQueue
+      max_alarm: Not specified
+      max_dim_x: 32
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -1676,7 +1891,7 @@
       writable_attr_name: noiseDiodeMode
     - name: periodicNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevLong64
+      data_type: DevULong
       description: "\n            Periodic noise diode pars (units are in time quanta).\n\
         \n            [0]: period, [1]: duty cycle, [2]: phase shift\n\n         \
         \   Note: This attribute does not persist after a power cycle. A default value\
@@ -1809,7 +2024,7 @@
       writable_attr_name: programTrackTable
     - name: pseudoRandomNoiseDiodePars
       data_format: SPECTRUM
-      data_type: DevLong64
+      data_type: DevULong
       description: "\n            Pseudo random noise diode pars (units are in time\
         \ quanta).\n\n            [0]: binary polynomial, [1]: seed, [2]: dwell\n\n\
         \            Note: This attribute does not persist after a power cycle. A\
@@ -1827,6 +2042,108 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: pseudoRandomNoiseDiodePars
+    - name: rfTemperature
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the temperature of the B5DC RF Control Module (RFCM) RF Printed Circuit Board (PCB). Value is in degrees Celsius.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfTemperature
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmFrequency
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the current output frequency of the B5DC PLL in GHz. The default value is 11.1 GHz.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmFrequency
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmHAttenuation
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the current attenuation setting for the Horizontal (H) polarization on the B5DC RF Control Module (RFCM). Value is in dB.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmHAttenuation
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmPllLock
+      data_format: SCALAR
+      data_type: DevEnum
+      description: Reports the lock status of the B5DC RF Control Module (RFCM) PLL. Returns B5dcPllState enum indicating if locked or lock lost.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      enum_labels:
+      - LOCKED
+      - LOCKED_WITH_LOSS_DETECTED
+      - NOT_LOCKED
+      - NOT_LOCKED_WITH_LOSS_DETECTED
+      format: '%s'
+      label: rfcmPllLock
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmPsuPcbTemperature
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the temperature of the B5DC RF Control Module (RFCM) Power Supply Unit (PSU) PCB. Value is in degrees Celsius.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmPsuPcbTemperature
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: rfcmVAttenuation
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the current attenuation setting for the Vertical (V) polarization on the B5DC RF Control Module (RFCM). Value is in dB.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: rfcmVAttenuation
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+
     - name: scanID
       data_format: SCALAR
       data_type: DevString
@@ -1846,11 +2163,7 @@
     - name: simulationMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Simulation Mode of the device.\n\n        Some\
-        \ devices may implement\n        both modes, while others will have simulators\
-        \ that set simulationMode\n        to True while the real devices always set\
-        \ simulationMode to False.\n\n        :return: Simulation Mode of the device.\n\
-        \        "
+      description: When TRUE the device is using a simulator
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -1866,6 +2179,27 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: simulationMode
+    - name: spectralInversion
+      data_format: SCALAR
+      data_type: DevBoolean
+      description: "\n            Spectral inversion to correct the frequency sense\
+        \ of the currently\n            configured band with respect to the RF signal.\n\
+        \n            Logic 0: Output signal in the same frequency sense as input.\n\
+        \n            Logic 1: Output signal in the opposite frequency sense as input.\n\
+        \n            Setting this attribute to true will set the\n            spectrum\
+        \ to be flipped.\n\n        "
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: Not specified
+      label: spectralInversion
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ_WRITE
+      writable_attr_name: spectralInversion
     - name: spfConnectionState
       data_format: SCALAR
       data_type: DevEnum
@@ -1909,9 +2243,7 @@
     - name: testMode
       data_format: SCALAR
       data_type: DevEnum
-      description: "\n        Read the Test Mode of the device.\n\n        Either\
-        \ no test mode or an indication of the test mode.\n\n        :return: Test\
-        \ Mode of the device\n        "
+      description: If TEST the device is using testing logic
       disp_level: OPERATOR
       display_unit: No display unit
       enum_labels:
@@ -2026,6 +2358,39 @@
       standard_unit: No standard unit
       writable: READ_WRITE
       writable_attr_name: trackTableLoadMode
+    - name: vPolRfPowerIn
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the input RF power level for the Vertical (V) polarization measured at the B5DC RF Control Module (RFCM). Value is in dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: vPolRfPowerIn
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+    - name: vPolRfPowerOut
+      data_format: SCALAR
+      data_type: DevDouble
+      description: Reports the output RF power level for the Vertical (V) polarization measured at the B5DC RF Control Module (RFCM). Value is in dBm.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%6.2f'
+      label: vPolRfPowerOut
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
+
     - name: versionId
       data_format: SCALAR
       data_type: DevString
@@ -2101,16 +2466,19 @@
       writable: READ
       writable_attr_name: None
     properties:
+    - name: B5DCDeviceFqdn
     - name: DSDeviceFqdn
+    - name: DefaultActionTimeoutSeconds
+    - name: DefaultWatchdogTimeout
     - name: DishId
+    - name: GroupDefinitions
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
-    - name: MaintenanceModeActive
     - name: MaxCapabilities
+    - name: MeanWindSpeedThreshold
     - name: ReceptorNumber
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: __SubDevices
-    - name: polled_cmd
-
+    - name: WMSDeviceNames
+    - name: WindGustThreshold

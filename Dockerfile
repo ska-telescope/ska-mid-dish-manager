@@ -29,7 +29,7 @@ ENV PYTHONPATH="/app/src:app/.venv/lib/python3.10/site-packages/:${PYTHONPATH}"
 
 # Metadata labels
 LABEL int.skao.image.team="TEAM KAROO" \
-      int.skao.image.authors="samuel.twum@skao.int" \
+      int.skao.image.authors="TEAM KAROO" \
       int.skao.image.url="https://gitlab.com/ska-telescope/ska-mid-dish-manager" \
       description="Tango device which provides master control and rolled-up monitoring of dish" \
       license="BSD-3-Clause"

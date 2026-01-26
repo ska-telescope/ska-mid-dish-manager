@@ -6,6 +6,7 @@ class DishDevice(str, enum.Enum):
     SPF = "SPF"
     SPFRX = "SPFRX"
     WMS = "WMS"
+    B5DC = "B5DC"
 
 
 class DishMode(enum.IntEnum):

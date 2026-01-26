@@ -8,6 +8,7 @@ from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.constants import (
+    DEFAULT_B5DC_TRL,
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
@@ -64,16 +65,19 @@ class TestDishManagerVersioning:
         assert build_state_json["spfrx_device"]["address"] == DEFAULT_SPFRX_TRL
         assert build_state_json["spfc_device"]["version"] == ""
         assert build_state_json["spfc_device"]["address"] == DEFAULT_SPFC_TRL
+        assert build_state_json["b5dc_device"]["version"] == ""
+        assert build_state_json["b5dc_device"]["address"] == DEFAULT_B5DC_TRL
 
     @pytest.mark.parametrize(
         "device, build_state_key",
         [
             ("SPF", "spfc_device"),
             ("SPFRX", "spfrx_device"),
+            ("B5DC", "b5dc_device"),
         ],
     )
     def test_build_state_update_on_subdevice_connection(self, device: str, build_state_key: str):
-        """Test that spfc and spfrx build states of subdevices get updated when a subdevice
+        """Test that spfc, spfrx and b5dc build states of subdevices get updated when a subdevice
         establishes connection.
         """
         # configure a mock build state
