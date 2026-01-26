@@ -25,11 +25,11 @@ include = [
 requires-python = ">=3.10,<4.0"
 package-mode = false
 dependencies = [
-    "pytango==10.0.3",
+    "pytango==10.1.2",
     "numpy<2.0.0",
     "ska-control-model>=1.0.0",
     "ska-ser-logging>=0.4.1",
-    "ska-tango-base==1.4.0",
+    "ska-tango-base==1.4.1",
     "networkx==2.6.3",
     "rule-engine==3.5.0",
     "astropy>=6.0.1",
