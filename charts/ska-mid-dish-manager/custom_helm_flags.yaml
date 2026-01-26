@@ -34,12 +34,5 @@ ska-mid-dish-simulators:
   #     tag: 5.5.3-dev.cb7318790
   #     pullPolicy: IfNotPresent
 
-ska-mid-wms:
-  enabled: true
-
 ska-mid-dish-b5dc-proxy:
   enabled: true
-
-dishmanager:
-  wms:
-    station_ids: ["1"]
