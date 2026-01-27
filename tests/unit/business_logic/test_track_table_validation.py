@@ -10,8 +10,6 @@ from ska_mid_dish_manager.utils.input_validation import (
 )
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_tai_timestamp_from_unix_s
 
-MAX_TRACK_LOAD_TABLE_SAMPLES = 50
-
 
 @pytest.mark.unit
 class TestTrackLoadTableFormatting:

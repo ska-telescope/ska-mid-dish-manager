@@ -1236,7 +1236,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(float,),
-        max_dim_x=150,
+        max_dim_x=3000,
         access=AttrWriteType.READ_WRITE,
         doc="Timestamp of i-th coordinate in table (max 50 coordinates) given "
         "in milliseconds since TAI epoch, representing time at which "
