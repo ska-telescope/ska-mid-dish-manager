@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 import tango
 from ska_control_model import ResultCode, TaskStatus
+
 from tests.utils import generate_track_table
 
 
@@ -57,7 +58,7 @@ def test_max_track_table(dish_manager_resources, event_store_class):
     main_event_store.clear_queue()
 
     track_table = generate_track_table(
-        num_samples=1000, # max table size
+        num_samples=1000,  # max table size
         current_az=45,
         current_el=45,
         controller_current_time_tai=timestamp,
