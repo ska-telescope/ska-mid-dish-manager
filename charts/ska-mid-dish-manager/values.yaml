@@ -83,7 +83,7 @@ dishmanager:
     enabled: false
     fqdn: ""
     domain_name: "mid-dish"
-    family_name: "b5dc-proxy"
+    family_name: "b5dc-manager"
   
   watchdog:
     timeout_seconds: "0.0"  # Default is 0.0 (<= 0 means watchdog timer is disabled)
