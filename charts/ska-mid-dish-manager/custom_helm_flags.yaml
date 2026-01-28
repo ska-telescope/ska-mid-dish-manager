@@ -43,3 +43,8 @@ ska-mid-dish-b5dc-proxy:
 dishmanager:
   wms:
     station_ids: ["1"]
+  b5dcproxy:
+    enabled: true
+    fqdn: ""
+    domain_name: "mid-dish"
+    family_name: "b5dc-manager"

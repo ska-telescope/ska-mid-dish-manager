@@ -79,10 +79,11 @@ dishmanager:
     # Wind gust in m/s
     WindGustThreshold: "16.9"
   
-  b5dcproxy: 
+  b5dcproxy:
+    enabled: false
     fqdn: ""
     domain_name: "mid-dish"
-    family_name: "b5dc-manager"
+    family_name: "b5dc-proxy"
   
   watchdog:
     timeout_seconds: "0.0"  # Default is 0.0 (<= 0 means watchdog timer is disabled)

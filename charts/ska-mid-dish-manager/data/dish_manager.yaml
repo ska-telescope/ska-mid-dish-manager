@@ -56,10 +56,14 @@ server:
                     {{- end }}
                 - name: "B5DCDeviceFqdn"
                   values:
-                    {{- if $.Values.dishmanager.b5dcproxy.fqdn }}
+                    {{- if $.Values.dishmanager.b5dcproxy.enabled }}
+                      {{- if $.Values.dishmanager.b5dcproxy.fqdn }}
                     - "{{ $.Values.dishmanager.b5dcproxy.fqdn }}"
-                    {{- else }}
+                      {{- else }}
                     - "{{ $.Values.dishmanager.b5dcproxy.domain_name }}/{{ $.Values.dishmanager.b5dcproxy.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
+                      {{- end }}
+                    {{- else }}
+                    - ""
                     {{- end }}
                 - name: "DishId"
                   values:

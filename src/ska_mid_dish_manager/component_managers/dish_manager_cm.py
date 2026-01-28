@@ -320,7 +320,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
-            "WMS": WMSComponentManager(
+        }
+
+        # Enable WMS
+        if list(wms_device_names or []):
+            self.sub_component_managers["WMS"] = WMSComponentManager(
                 list(wms_device_names or []),
                 logger=logger,
                 component_state_callback=self._evaluate_wind_speed_averages,
@@ -330,8 +334,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 state_update_lock=self._state_update_lock,
                 meanwindspeed=-1,
                 windgust=-1,
-            ),
-            "B5DC": B5DCComponentManager(
+            )
+
+        # Enable B5DC
+        if b5dc_device_fqdn:
+            self.sub_component_managers["B5DC"] = B5DCComponentManager(
                 b5dc_device_fqdn,
                 logger=logger,
                 state_update_lock=self._state_update_lock,
@@ -352,8 +359,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 component_state_callback=partial(
                     self._sub_device_component_state_changed, DishDevice.B5DC
                 ),
-            ),
-        }
+            )
 
         self.direct_mapped_attrs = {
             "DS": [
