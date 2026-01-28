@@ -26,14 +26,6 @@ COPY --from=tools /usr/local/bin/wait-for-it.sh /usr/local/bin/wait-for-it.sh
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PYTHONPATH="/app/src:app/.venv/lib/python3.10/site-packages/:${PYTHONPATH}"
 
-# open telemetry environment variables
-ENV TANGO_TELEMETRY_ENABLE=on
-ENV TANGO_TELEMETRY_TRACES_EXPORTER=grpc
-# ENV TANGO_TELEMETRY_TRACES_ENDPOINT=grpc://test-signoz-otel-collector:4317
-ENV TANGO_TELEMETRY_TRACES_ENDPOINT=grpc://localhost:4317
-ENV TANGO_TELEMETRY_LOGS_EXPORTER=none
-
-
 # Metadata labels
 LABEL int.skao.image.team="TEAM KAROO" \
       int.skao.image.authors="TEAM KAROO" \
