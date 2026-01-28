@@ -290,7 +290,11 @@ class ActionHandler:
             report_awaited_attributes(self.progress_callback, awaited_attributes, awaited_values)
 
         deadline = time.time() + self.timeout_s
+        polls = 5  # number of times to read state from monitored attributes
+        interval = self.timeout_s / polls
+        next_poll = time.time()
         while deadline > time.time():
+            now = time.time()
             # Handle abort
             if task_abort_event.is_set():
                 self.logger.warning(f"Action '{self.action_name}' aborted.")
@@ -329,15 +333,18 @@ class ActionHandler:
             if self.waiting_callback:
                 self.waiting_callback()
 
-            task_abort_event.wait(timeout=1)
+            # poll monitored attributes less frequently to update component state
+            if now >= next_poll:
+                next_poll += interval
+                for cmd in self.fanned_out_commands:
+                    if not cmd.finished:
+                        if hasattr(cmd, "device_component_manager"):
+                            device_component_manager = getattr(cmd, "device_component_manager")
+                            device_component_manager.update_state_from_monitored_attributes(
+                                tuple(cmd.awaited_component_state.keys())
+                            )
 
-            for cmd in self.fanned_out_commands:
-                if not cmd.finished:
-                    if hasattr(cmd, "device_component_manager"):
-                        device_component_manager = getattr(cmd, "device_component_manager")
-                        device_component_manager.update_state_from_monitored_attributes(
-                            tuple(cmd.awaited_component_state.keys())
-                        )
+            task_abort_event.wait(timeout=1)
 
         # Handle timeout
         command_statuses = {
