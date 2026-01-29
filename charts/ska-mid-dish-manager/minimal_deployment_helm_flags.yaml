@@ -1,7 +1,6 @@
 global:
   minikube: true
   operator: true
-  dishes: ["099"]
 
 ska-mid-dish-ds-manager:
   enabled: true
