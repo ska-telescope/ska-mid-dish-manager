@@ -58,6 +58,7 @@ def test_maintenance_mode_cmds(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.transition
 @pytest.mark.acceptance
 def test_power_cycle_in_maintenance_mode(
     event_store_class: EventStore,
@@ -93,6 +94,7 @@ def test_power_cycle_in_maintenance_mode(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.transition
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_on_stow(
     event_store_class: EventStore,
@@ -125,6 +127,7 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.transition
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_not_on_stow(
     event_store_class: EventStore,
