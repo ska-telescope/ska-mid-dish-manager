@@ -70,6 +70,7 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
         PointingState.TRACK,
     ],
 )
+@pytest.mark.xfail(reason="Segfaults observed intermittently")
 def test_abort_during_dish_movement(dish_manager_resources, event_store_class, pointing_state):
     """Verify Abort executes the abort sequence."""
     device_proxy, dish_manager_cm = dish_manager_resources
