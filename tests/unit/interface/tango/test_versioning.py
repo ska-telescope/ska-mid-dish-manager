@@ -4,11 +4,11 @@ import json
 from unittest.mock import Mock, patch
 
 import pytest
+import tango
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.constants import (
-    DEFAULT_B5DC_TRL,
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
@@ -41,7 +41,13 @@ class TestDishManagerVersioning:
             ),
             patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
         ):
-            self.tango_context = DeviceTestContext(DishManager)
+
+            class PatchedDM(DishManager):
+                B5DCDeviceFqdn = tango.server.device_property(
+                    dtype=tango.DevVarStringArray, default_value="a/b/c"
+                )
+
+            self.tango_context = DeviceTestContext(PatchedDM)
             self.tango_context.start()
             self._dish_manager_proxy = self.tango_context.device
             class_instance = DishManager.instances.get(self._dish_manager_proxy.name())
@@ -66,7 +72,7 @@ class TestDishManagerVersioning:
         assert build_state_json["spfc_device"]["version"] == ""
         assert build_state_json["spfc_device"]["address"] == DEFAULT_SPFC_TRL
         assert build_state_json["b5dc_device"]["version"] == ""
-        assert build_state_json["b5dc_device"]["address"] == DEFAULT_B5DC_TRL
+        assert build_state_json["b5dc_device"]["address"] == "a/b/c"
 
     @pytest.mark.parametrize(
         "device, build_state_key",
