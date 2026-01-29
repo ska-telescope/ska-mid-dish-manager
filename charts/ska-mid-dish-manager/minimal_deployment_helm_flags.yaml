@@ -1,0 +1,35 @@
+global:
+  minikube: true
+  operator: true
+  dishes: ["099"]
+
+ska-mid-dish-ds-manager:
+  enabled: true
+
+ska-tango-base:
+  enabled: true
+
+ska-mid-dish-simulators:
+  enabled: true
+  deviceServers:
+    spfdevice:
+      enabled: true
+    spfrxdevice:
+      enabled: true
+  dsOpcuaSimulator:
+    enabled: true
+
+ska-mid-wms:
+  enabled: false
+
+ska-mid-dish-b5dc-proxy:
+  enabled: false
+
+dishmanager:
+  wms:
+    station_ids: []
+  b5dcproxy:
+    enabled: false
+    fqdn: ""
+    domain_name: "mid-dish"
+    family_name: "b5dc-manager"

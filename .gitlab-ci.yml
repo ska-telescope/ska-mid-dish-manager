@@ -91,3 +91,13 @@ k8s-test-runner-track-patterns:
   variables:
     K8S_TEST_RUNNER_MARK: "track_patterns"
     KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-track-patterns"
+
+k8s-test-runner-minimal-deployment:
+  extends: k8s-test-runner
+  allow_failure: true
+  variables:
+    K8S_TEST_RUNNER_MARK: "minimal_deployment"
+    KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-minimal"
+    VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
+    K8S_TEST_TEST_COMMAND: pytest --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --pointing-files-path=build/pointing tests/acceptance/transitions
+
