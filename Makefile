@@ -28,10 +28,10 @@ PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
 PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --pointing-files-path=build/pointing
 
-K8S_TEST_RUNNER_MARK ?= acceptance
+K8S_TEST_RUNNER_MARK ?= acceptance and (not transition)
 
 python-test: MARK = unit and (not forked)
-k8s-test-runner: MARK = $(K8S_TEST_RUNNER_MARK) and (not transition)
+k8s-test-runner: MARK = $(K8S_TEST_RUNNER_MARK)
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
 -include .make/python.mk
