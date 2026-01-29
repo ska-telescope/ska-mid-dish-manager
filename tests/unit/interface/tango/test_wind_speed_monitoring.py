@@ -32,7 +32,13 @@ def configure_mocks_for_dish_manager():
         ),
         mock.patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
     ):
-        tango_context = DeviceTestContext(DishManager)
+
+        class PatchedDM(DishManager):
+            WMSDeviceNames = tango.server.device_property(
+                dtype=tango.DevVarStringArray, default_value="a/b/c"
+            )
+
+        tango_context = DeviceTestContext(PatchedDM)
         tango_context.start()
         device_proxy = tango_context.device
 
