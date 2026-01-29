@@ -320,11 +320,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
-        }
-
-        # Enable WMS
-        if list(wms_device_names or []):
-            self.sub_component_managers["WMS"] = WMSComponentManager(
+            "WMS": WMSComponentManager(
                 list(wms_device_names or []),
                 logger=logger,
                 component_state_callback=self._evaluate_wind_speed_averages,
@@ -334,7 +330,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 state_update_lock=self._state_update_lock,
                 meanwindspeed=-1,
                 windgust=-1,
-            )
+            ),
+        }
 
         # Enable B5DC
         if b5dc_device_fqdn:
