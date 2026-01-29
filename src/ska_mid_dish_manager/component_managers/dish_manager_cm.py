@@ -119,6 +119,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Initialising dish manager dishMode with %s.", DishMode.MAINTENANCE)
             default_dish_mode = DishMode.MAINTENANCE
 
+        # Clean up WMSDeviceNames
+        if not wms_device_names:
+            wms_device_names = []
+        wms_device_names = [i for i in wms_device_names if i != ""]
+
         super().__init__(
             logger,
             *args,
@@ -320,7 +325,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
-            "WMS": WMSComponentManager(
+        }
+
+        # Enable WMS
+        if wms_device_names:
+            self.sub_component_managers["WMS"] = WMSComponentManager(
                 list(wms_device_names or []),
                 logger=logger,
                 component_state_callback=self._evaluate_wind_speed_averages,
@@ -330,8 +339,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 state_update_lock=self._state_update_lock,
                 meanwindspeed=-1,
                 windgust=-1,
-            ),
-        }
+            )
 
         # Enable B5DC
         if b5dc_device_fqdn:
@@ -498,8 +506,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if not self.is_device_ignored("SPFRX"):
             active_component_managers["SPFRX"] = self.sub_component_managers["SPFRX"]
-        if not self.is_device_ignored("B5DC"):
-            active_component_managers["B5DC"] = self.sub_component_managers["B5DC"]
+        if "B5DC" in self.sub_component_managers:
+            if not self.is_device_ignored("B5DC"):
+                active_component_managers["B5DC"] = self.sub_component_managers["B5DC"]
+
         return active_component_managers
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
@@ -1068,9 +1078,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if ignored:
                 if "B5DC" in self.sub_component_managers:
                     self.sub_component_managers["B5DC"].stop_communicating()
-            else:
+            elif "B5DC" in self.sub_component_managers:
                 self.sub_component_managers["B5DC"].start_communicating()
-
             if sync:
                 self.sync_component_states()
 
