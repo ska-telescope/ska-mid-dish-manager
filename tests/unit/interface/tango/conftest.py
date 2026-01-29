@@ -43,7 +43,7 @@ def dish_manager_resources():
         tango_context.start()
         device_proxy = tango_context.device
 
-        class_instance = DishManager.instances.get(device_proxy.name())
+        class_instance = PatchedDM.instances.get(device_proxy.name())
         dish_manager_cm = class_instance.component_manager
         ds_cm = dish_manager_cm.sub_component_managers["DS"]
         spf_cm = dish_manager_cm.sub_component_managers["SPF"]

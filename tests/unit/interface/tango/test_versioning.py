@@ -50,7 +50,7 @@ class TestDishManagerVersioning:
             self.tango_context = DeviceTestContext(PatchedDM)
             self.tango_context.start()
             self._dish_manager_proxy = self.tango_context.device
-            class_instance = DishManager.instances.get(self._dish_manager_proxy.name())
+            class_instance = PatchedDM.instances.get(self._dish_manager_proxy.name())
             self.dish_manager_cm = class_instance.component_manager
 
     def teardown_method(self):
