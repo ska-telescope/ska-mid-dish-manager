@@ -290,10 +290,7 @@ class ActionHandler:
             report_awaited_attributes(self.progress_callback, awaited_attributes, awaited_values)
 
         deadline = time.time() + self.timeout_s
-        poll_intervals = iter([0.70, 0.85, 1.00])
-        check_point = next(poll_intervals, None)
         while deadline > time.time():
-            now = time.time()
             # Handle abort
             if task_abort_event.is_set():
                 self.logger.warning(f"Action '{self.action_name}' aborted.")
@@ -332,20 +329,17 @@ class ActionHandler:
             if self.waiting_callback:
                 self.waiting_callback()
 
-            # poll monitored attributes less frequently to update component state
-            elapsed = self.timeout_s - (deadline - now)
-            percentage_progress = elapsed / self.timeout_s
-            if check_point is not None and percentage_progress >= check_point:
-                for cmd in self.fanned_out_commands:
-                    if not cmd.finished:
-                        if hasattr(cmd, "device_component_manager"):
-                            device_component_manager = getattr(cmd, "device_component_manager")
-                            device_component_manager.update_state_from_monitored_attributes(
-                                tuple(cmd.awaited_component_state.keys())
-                            )
-                check_point = next(poll_intervals, None)
-
             task_abort_event.wait(timeout=1)
+
+        # update the component state from an attribute read before giving up
+        # this is a fallback in case the change event subscriptions missed updates
+        for cmd in self.fanned_out_commands:
+            if not cmd.finished:
+                if hasattr(cmd, "device_component_manager"):
+                    device_component_manager = getattr(cmd, "device_component_manager")
+                    device_component_manager.update_state_from_monitored_attributes(
+                        tuple(cmd.awaited_component_state.keys())
+                    )
 
         # Handle timeout
         command_statuses = {
