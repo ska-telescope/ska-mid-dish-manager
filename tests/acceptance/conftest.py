@@ -28,7 +28,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     try:
         event_store.wait_for_value(tango.DevState.ON, timeout=120)
     except RuntimeError as e:
-        # report and continue but log the issue in case tests fail later
+        # continue with tests but log the issue in case tests fail later
         print(f"Dish manager not ready for tests: {e}")
 
 
@@ -113,12 +113,12 @@ def reset_dish_to_standby(
         pass
 
     if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
+        dish_manager_proxy.SetStandbyFPMode()
         try:
-            dish_manager_proxy.SetStandbyFPMode()
             dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=10)
         except RuntimeError:
             logger.debug("DishManager commands: %s", dish_manager_proxy.longrunningcommandstatus)
-            logger.debug("DSManager commands: %s", dish_manager_proxy.longrunningcommandstatus)
+            logger.debug("DSManager commands: %s", ds_device_proxy.longrunningcommandstatus)
             logger.debug("\n\nDM component state: %s\n\n", dish_manager_proxy.GetComponentStates())
             remove_subscriptions(subscriptions)
             raise
