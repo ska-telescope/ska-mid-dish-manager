@@ -3,8 +3,12 @@
 import logging
 
 import pytest
+import tango
 
-from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
+from ska_mid_dish_manager.models.constants import (
+    DEFAULT_ACTION_TIMEOUT_S,
+    DEFAULT_DISH_MANAGER_TRL,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
@@ -12,10 +16,22 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
-from tests.utils import remove_subscriptions, setup_subscriptions
+from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+
+def pytest_sessionstart(session: pytest.Session) -> None:
+    """Ensure dish manager is ready at the start of the tests."""
+    event_store = EventStore()
+    dish_manager = tango.DeviceProxy(DEFAULT_DISH_MANAGER_TRL)
+    dish_manager.subscribe_event("State", tango.EventType.CHANGE_EVENT, event_store)
+    try:
+        event_store.wait_for_value(tango.DevState.ON, timeout=120)
+    except RuntimeError as e:
+        # report and continue but log the issue in case tests fail later
+        print(f"Dish manager not ready for tests: {e}")
 
 
 @pytest.fixture
