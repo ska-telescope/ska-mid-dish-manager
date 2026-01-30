@@ -205,22 +205,16 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
         with tango.EnsureOmniThread():
             monitored_attribute_values = {}
-            for monitored_attribute in monitored_attributes:
-                attr = monitored_attribute.lower()
-                try:
-                    value = device_proxy.read_attribute(attr).value
-                except tango.DevFailed:
-                    self.logger.error(
-                        "Encountered an error retrieving the current value of %s from %s",
-                        attr,
-                        self._tango_device_fqdn,
-                    )
-                    continue
-
+            attrs_to_fetch = [
+                monitored_attribute.lower() for monitored_attribute in monitored_attributes
+            ]
+            read_results = device_proxy.read_attributes(attrs_to_fetch)
+            for read_result in read_results:
+                value = read_result.value
                 if isinstance(value, np.ndarray):
                     value = list(value)
 
-                monitored_attribute_values[attr] = value
+                monitored_attribute_values[read_result.name.lower()] = value
 
             self._update_component_state(**monitored_attribute_values)
 
