@@ -95,10 +95,10 @@ dev_pod:
 
 resources:
   limits:
-    cpu: 300m
+    cpu: 500m
     memory: 500Mi
   requests:
-    cpu: 100m
+    cpu: 300m
     memory: 375Mi
 
 deviceServers:
