@@ -290,9 +290,8 @@ class ActionHandler:
             report_awaited_attributes(self.progress_callback, awaited_attributes, awaited_values)
 
         deadline = time.time() + self.timeout_s
-        polls = 5  # number of times to read state from monitored attributes
-        interval = self.timeout_s / polls
-        next_poll = time.time()
+        poll_intervals = iter([0.70, 0.85, 1.00])
+        check_point = next(poll_intervals, None)
         while deadline > time.time():
             now = time.time()
             # Handle abort
@@ -311,7 +310,7 @@ class ActionHandler:
                 cmd.report_progress(task_callback)
 
             # Handle any failed fanned out command
-            if any([cmd.failed for cmd in self.fanned_out_commands]):
+            if any(cmd.failed for cmd in self.fanned_out_commands):
                 command_statuses = {
                     f"{sc.device}.{sc.command_name}": sc.status.name
                     for sc in self.fanned_out_commands
@@ -323,7 +322,7 @@ class ActionHandler:
                 return
 
             # Check if all commands have succeeded
-            if all([cmd.successful for cmd in self.fanned_out_commands]):
+            if all(cmd.successful for cmd in self.fanned_out_commands):
                 if self.awaited_component_state is None or check_component_state_matches_awaited(
                     self.component_state, self.awaited_component_state
                 ):
@@ -334,8 +333,9 @@ class ActionHandler:
                 self.waiting_callback()
 
             # poll monitored attributes less frequently to update component state
-            if now >= next_poll:
-                next_poll += interval
+            elapsed = self.timeout_s - (deadline - now)
+            percentage_progress = elapsed / self.timeout_s
+            if check_point is not None and percentage_progress >= check_point:
                 for cmd in self.fanned_out_commands:
                     if not cmd.finished:
                         if hasattr(cmd, "device_component_manager"):
@@ -343,6 +343,7 @@ class ActionHandler:
                             device_component_manager.update_state_from_monitored_attributes(
                                 tuple(cmd.awaited_component_state.keys())
                             )
+                check_point = next(poll_intervals, None)
 
             task_abort_event.wait(timeout=1)
 
