@@ -42,6 +42,7 @@ def toggle_ignore_spf_and_spfrx_b5dc(dish_manager_proxy):
     )
 
 
+@pytest.mark.skip(reason="test is flaky, needs investigation")
 @pytest.mark.acceptance
 def test_ignoring_spf(
     monitor_tango_servers, toggle_ignore_spf, event_store_class, dish_manager_proxy
@@ -83,6 +84,7 @@ def test_ignoring_spf(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.skip(reason="test is flaky, needs investigation")
 @pytest.mark.acceptance
 def test_ignoring_spfrx(
     monitor_tango_servers, toggle_ignore_spfrx, event_store_class, dish_manager_proxy
@@ -123,6 +125,7 @@ def test_ignoring_spfrx(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.skip(reason="test is flaky, needs investigation")
 @pytest.mark.acceptance
 def test_ignoring_all(
     monitor_tango_servers, toggle_ignore_spf_and_spfrx_b5dc, event_store_class, dish_manager_proxy

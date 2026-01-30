@@ -2201,6 +2201,7 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand5b")
 
+        # TODO resolve workaround for band 5b implementation
         self.logger.warning("ConfigureBand5b called, but we're configuring B1 until 5B is ready.")
         result_code, unique_id = handler(Band.B1, synchronise)
 

@@ -6,6 +6,15 @@ import tango
 from ska_mid_dish_manager.models.dish_enums import DscCmdAuthType, DscCtrlState
 
 
+@pytest.fixture(autouse=True)
+def restore_auth(event_store_class, ds_device_proxy):
+    yield
+    ds_device_proxy.TakeAuthority()
+    # wait 10s for the horn to go off
+    event_store = event_store_class()
+    event_store.get_queue_values(timeout=10)
+
+
 @pytest.mark.acceptance
 def test_dsccmdauth_and_dsccmdauth_attrs(
     monitor_tango_servers,

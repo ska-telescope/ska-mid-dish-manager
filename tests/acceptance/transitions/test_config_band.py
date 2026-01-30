@@ -79,7 +79,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         ("ConfigureBand3", Band.B3, "B3"),
         ("ConfigureBand4", Band.B4, "B4"),
         ("ConfigureBand5a", Band.B5a, "B5a"),
-        # Special case for 5b until we have a B5DC
+        # TODO B5DC is available, fix case for 5b
         ("ConfigureBand5b", Band.B1, "B1"),
         # End up in B2 again
         ("ConfigureBand2", Band.B2, "B2"),
@@ -109,9 +109,6 @@ def test_configure_band_b(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    main_event_store.clear_queue()
-    status_event_store.clear_queue()
-
     res = dish_manager_proxy.command_inout(band_request, True)
     assert res
     assert len(res) == 2
@@ -139,10 +136,6 @@ def test_configure_band_b(
     # in the event store.
     for message in expected_progress_updates:
         assert message in events_string
-
-    # Do it again to check result
-    result_event_store.clear_queue()
-    status_event_store.clear_queue()
 
     remove_subscriptions(subscriptions)
 
