@@ -200,25 +200,25 @@ class TangoDeviceComponentManager(BaseComponentManager):
         monitored_attributes = monitored_attributes or self._monitored_attributes
 
         with tango.EnsureOmniThread():
-            monitored_attribute_values = {}
-            for monitored_attribute in monitored_attributes:
-                attr = monitored_attribute.lower()
-                try:
-                    value = device_proxy.read_attribute(attr).value
-                except tango.DevFailed:
-                    self.logger.error(
-                        "Encountered an error retrieving the current value of %s from %s",
-                        attr,
-                        self._tango_device_fqdn,
-                    )
-                    continue
+            try:
+                attribute_values = device_proxy.read_attributes(monitored_attributes)
+            except tango.DevFailed:
+                self.logger.error(
+                    "Encountered an error retrieving the current values of %s from %s",
+                    monitored_attributes,
+                    self._tango_device_fqdn,
+                )
+                return
 
-                if isinstance(value, np.ndarray):
-                    value = list(value)
+        monitored_attribute_values = {}
+        for attr_value in attribute_values:
+            attr_name = attr_value.name.lower()
+            value = attr_value.value
+            if isinstance(value, np.ndarray):
+                value = list(value)
+            monitored_attribute_values[attr_name] = value
 
-                monitored_attribute_values[attr] = value
-
-            self._update_component_state(**monitored_attribute_values)
+        self._update_component_state(**monitored_attribute_values)
 
     @classmethod
     def _event_consumer(
