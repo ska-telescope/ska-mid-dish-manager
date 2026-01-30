@@ -124,9 +124,9 @@ def reset_dish_to_standby(
             result_events.wait_for_command_id(unique_id, timeout=30)
             dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     except RuntimeError:
-        # request FP mode and allow the test to continue
-        dish_manager_proxy.SetStandbyFPMode()
-        dish_mode_events.get_queue_values()
+        component_states = dish_manager_proxy.GetComponentStates()
+        dish_mode = dish_manager_proxy.read_attribute("dishMode").value
+        assert dish_mode == DishMode.STANDBY_FP, component_states
     finally:
         remove_subscriptions(subscriptions)
 
