@@ -259,7 +259,7 @@ def test_append_dvs_case(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.xxx
+@pytest.mark.acceptance
 def test_maximum_capacity(
     slew_dish_to_init,
     monitor_tango_servers,
