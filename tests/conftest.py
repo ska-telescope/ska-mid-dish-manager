@@ -41,6 +41,18 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     assert len(threads) == 1, "Unexpected threads remaining after tests"
 
 
+def pytest_sessionstart(session: pytest.Session) -> None:
+    """Ensure dish manager is ready at the start of the tests."""
+    event_store = EventStore()
+    dish_manager = tango.DeviceProxy(DEFAULT_DISH_MANAGER_TRL)
+    dish_manager.subscribe_event("State", tango.EventType.CHANGE_EVENT, event_store)
+    try:
+        event_store.wait_for_value(tango.DevState.ON, timeout=120)
+    except RuntimeError as e:
+        # report and continue but log the issue in case tests fail later
+        print(f"Dish manager not ready for tests: {e}")
+
+
 def pytest_addoption(parser):
     """Add additional options."""
     parser.addoption(
