@@ -6,12 +6,12 @@ global:
 ska-mid-dish-ds-manager:
   enabled: true
   # Override the image to use a specific version for testing
-  # dishstructuremanager:
-  #   image:
-  #     registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
-  #     image: ska-mid-dish-ds-manager
-  #     tag: 7.1.0-dev.c746b6e58
-  #     pullPolicy: IfNotPresent
+  dishstructuremanager:
+    image:
+      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
+      image: ska-mid-dish-ds-manager
+      tag: 7.1.0-dev.c746b6e58
+      pullPolicy: IfNotPresent
 
 ska-tango-base:
   enabled: true

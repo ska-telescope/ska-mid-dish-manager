@@ -8,9 +8,11 @@ import tango
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
     DEFAULT_DISH_MANAGER_TRL,
+    DEFAULT_DS_MANAGER_TRL,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
+    DscCmdAuthType,
     DSOperatingMode,
     DSPowerState,
 )
@@ -24,12 +26,18 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     """Ensure dish manager is ready at the start of the tests."""
     event_store = EventStore()
     dish_manager = tango.DeviceProxy(DEFAULT_DISH_MANAGER_TRL)
+    ds_manager = tango.DeviceProxy(DEFAULT_DS_MANAGER_TRL)
     dish_manager.subscribe_event("State", tango.EventType.CHANGE_EVENT, event_store)
     try:
         event_store.wait_for_value(tango.DevState.ON, timeout=120)
     except RuntimeError as e:
         # continue with tests but log the issue in case tests fail later
-        print(f"Dish manager not ready for tests: {e}")
+        logger.debug(f"Dish manager not ready for tests: {e}")
+    # if dish manager reports ON, it indicates that DS manager should also be RUNNING
+    if ds_manager.dscCmdAuth == DscCmdAuthType.NO_AUTHORITY:
+        ds_manager.TakeAuthority()
+        # wait 10s for the horn to go off
+        event_store.get_queue_values(timeout=10)
 
 
 @pytest.fixture
