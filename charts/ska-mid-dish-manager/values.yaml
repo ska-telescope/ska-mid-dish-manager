@@ -95,7 +95,7 @@ dev_pod:
 
 resources:
   limits:
-    cpu: 500m
+    cpu: 600m
     memory: 500Mi
   requests:
     cpu: 300m

@@ -27,7 +27,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     event_store = EventStore()
     dish_manager = tango.DeviceProxy(DEFAULT_DISH_MANAGER_TRL)
     ds_manager = tango.DeviceProxy(DEFAULT_DS_MANAGER_TRL)
-    dish_manager.subscribe_event("State", tango.EventType.CHANGE_EVENT, event_store)
+    event_id = dish_manager.subscribe_event("State", tango.EventType.CHANGE_EVENT, event_store)
     try:
         event_store.wait_for_value(tango.DevState.ON, timeout=120)
     except RuntimeError as e:
@@ -38,6 +38,8 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         ds_manager.TakeAuthority()
         # wait 10s for the horn to go off
         event_store.get_queue_values(timeout=10)
+
+    dish_manager.unsubscribe_event(event_id)
 
 
 @pytest.fixture
