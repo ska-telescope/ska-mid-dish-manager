@@ -803,6 +803,10 @@ class ConfigureBandAction(Action):
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
+
+            if receiver_band == "5b" and "B5DC" not in self.dish_manager_cm.sub_component_managers:
+                self.logger.info("No B5DC, nothing to do on it.")
+
             if receiver_band == "5b" and "B5DC" in self.dish_manager_cm.sub_component_managers:
                 b5dc_freq_enum = B5dcFrequency(int(sub_band))
 
