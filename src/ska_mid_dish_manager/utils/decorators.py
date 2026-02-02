@@ -8,6 +8,34 @@ from typing import Any, Callable
 from ska_control_model import CommunicationStatus
 
 
+def time_tango_write(attr_name: str, warn_threshold: float = 0.2):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            start = time.monotonic()
+            try:
+                return func(self, *args, **kwargs)
+            finally:
+                # using a timer that is not affected by system clock changes
+                duration = time.monotonic() - start
+                if duration > warn_threshold:
+                    self.logger.warning(
+                        "SLOW WRITE: %s took %.3f s",
+                        attr_name,
+                        duration,
+                    )
+                else:
+                    self.logger.debug(
+                        "WRITE: %s took %.3f s",
+                        attr_name,
+                        duration,
+                    )
+
+        return wrapper
+
+    return decorator
+
+
 def record_command(record_mode: bool = False) -> Callable:
     """Return a function that records the 'lastcommandinvoked' and or 'lastcommandedmode'
        before calling the command.
