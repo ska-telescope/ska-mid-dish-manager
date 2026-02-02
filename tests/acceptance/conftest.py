@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
-    """Ensure dish manager is ready at the start of the tests."""
+    """Ensure dish manager is fully initialised before running tests."""
     event_store = EventStore()
     dish_manager = tango.DeviceProxy(DEFAULT_DISH_MANAGER_TRL)
     ds_manager = tango.DeviceProxy(DEFAULT_DS_MANAGER_TRL)
@@ -33,7 +33,8 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     except RuntimeError as e:
         # continue with tests but log the issue in case tests fail later
         logger.debug(f"Dish manager not ready for tests: {e}")
-    # if dish manager reports ON, it indicates that DS manager should also be RUNNING
+
+    # take authority to prevent horn from blocking tests which require it
     if ds_manager.dscCmdAuth == DscCmdAuthType.NO_AUTHORITY:
         ds_manager.TakeAuthority()
         # wait 10s for the horn to go off
