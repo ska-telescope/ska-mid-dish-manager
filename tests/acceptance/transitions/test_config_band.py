@@ -1,7 +1,5 @@
 """Test ConfigureBand2."""
 
-import random
-
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
@@ -74,24 +72,28 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
 
 
 @pytest.mark.acceptance
-def test_configure_band_b(
-    monitor_tango_servers,
-    event_store_class,
-    dish_manager_proxy,
-):
-    """Test ConfigureBand."""
-    band_options = [
+@pytest.mark.parametrize(
+    ("band_request", "expected_band", "message_str"),
+    [
         ("ConfigureBand1", Band.B1, "B1"),
         ("ConfigureBand3", Band.B3, "B3"),
         ("ConfigureBand4", Band.B4, "B4"),
         ("ConfigureBand5a", Band.B5a, "B5a"),
         # TODO B5DC is available, fix case for 5b
         ("ConfigureBand5b", Band.B1, "B1"),
+        # End up in B2 again
         ("ConfigureBand2", Band.B2, "B2"),
-    ]
-
-    band_request, expected_band, message_str = random.choice(band_options)
-
+    ],
+)
+def test_configure_band_b(
+    band_request: str,
+    expected_band: Band,
+    message_str: str,
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+):
+    """Test ConfigureBand."""
     # Just skip the band we already are in
     if expected_band == dish_manager_proxy.configuredBand:
         pytest.skip(f"Already in band {expected_band}")
