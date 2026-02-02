@@ -10,6 +10,7 @@ import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
+from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S, DSC_MIN_POWER_LIMIT_KW
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -753,7 +754,7 @@ class ConfigureBandAction(Action):
     def __init__(
         self,
         logger: logging.Logger,
-        dish_manager_cm,
+        dish_manager_cm: DishManagerComponentManager,
         requested_cmd: str,
         band: Optional[Band] = None,
         synchronise: Optional[bool] = None,
@@ -802,7 +803,7 @@ class ConfigureBandAction(Action):
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
-            if receiver_band == "5b":
+            if receiver_band == "5b" and "B5DC" in self.dish_manager_cm.sub_component_managers:
                 b5dc_freq_enum = B5dcFrequency(int(sub_band))
 
                 b5dc_set_frequency_command = FannedOutSlowCommand(
