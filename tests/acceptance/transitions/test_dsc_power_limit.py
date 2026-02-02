@@ -61,11 +61,15 @@ def test_correct_power_limit_change(
         setup_subscriptions(ds_device_proxy, {"dscPowerLimitkW": ds_attribute_event_store})
     )
 
-    power_limit_list = [12.4, 14.3]
-    for proxy, power_limit in zip([ds_device_proxy, dish_manager_proxy], power_limit_list):
-        proxy.write_attribute("dscPowerLimitkW", power_limit)
-        ds_attribute_event_store.wait_for_value(power_limit, timeout=6)
-        dm_attribute_event_store.wait_for_value(power_limit, timeout=6)
+    # Change on DS Manager and check Dish Manager is updated
+    ds_device_proxy.write_attribute("dscPowerLimitkW", 12.4)
+    ds_attribute_event_store.wait_for_value(12.4, timeout=6)
+    dm_attribute_event_store.wait_for_value(12.4, timeout=6)
+    # Change on Dish Manager and check DS Manager is updated
+    dish_manager_proxy.write_attribute("dscPowerLimitkW", 14.3)
+    ds_attribute_event_store.wait_for_value(14.3, timeout=6)
+    dm_attribute_event_store.wait_for_value(14.3, timeout=6)
+
     remove_subscriptions(subscriptions)
 
 
