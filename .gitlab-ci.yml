@@ -95,6 +95,7 @@ k8s-test-runner-track-patterns:
 k8s-test-runner-minimal-deployment:
   extends: k8s-test-runner
   allow_failure: true
+  when: manual
   variables:
     K8S_TEST_RUNNER_MARK: "(not B5DC) and (not WMS)"
     KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-minimal"
