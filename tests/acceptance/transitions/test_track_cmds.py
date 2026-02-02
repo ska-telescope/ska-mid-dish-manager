@@ -61,7 +61,6 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     dish_manager_proxy.TrackStop()
 
 
-@pytest.mark.transition
 @pytest.mark.acceptance
 def test_track_and_track_stop_cmds(
     slew_dish_to_init,
@@ -177,7 +176,6 @@ def test_track_and_track_stop_cmds(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.transition
 @pytest.mark.acceptance
 def test_append_dvs_case(
     slew_dish_to_init,
@@ -261,7 +259,6 @@ def test_append_dvs_case(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.transition
 @pytest.mark.acceptance
 def test_maximum_capacity(
     slew_dish_to_init,
@@ -381,7 +378,6 @@ def test_maximum_capacity(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.transition
 @pytest.mark.acceptance
 def test_track_fails_when_track_called_late(
     monitor_tango_servers,
