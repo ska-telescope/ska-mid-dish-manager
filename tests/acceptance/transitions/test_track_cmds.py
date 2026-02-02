@@ -306,14 +306,14 @@ def test_maximum_capacity(
     track_delay = 90
     time_now = ds_device_proxy.GetCurrentTAIOffset()
     track_start_tai = time_now + track_delay
-    duration_per_block_s = 5
-    samples_per_block = 50
+    duration_per_block_s = 10
+    samples_per_block = 1000
     sample_spacing = duration_per_block_s / samples_per_block
-    # 50 samples covering 5 s is equivalent of a points spacing of
-    # 5 / 50 = 0.1s
+    # 1000 samples covering 10s is equivalent of a points spacing of
+    # 10 / 1000 = 0.01s
     # with a maximum table size of 10000
     # the total duration that can be capture in the track table is
-    # 10000 * 0.1 = 1000s or ~ 17 minutes
+    # 10000 * 0.1 = 100s or ~ 2 minutes
     track_table = generate_constant_table(
         track_start_tai, sample_spacing, samples_per_block, current_az, current_el
     )

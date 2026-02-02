@@ -6,6 +6,8 @@ import pytest
 import tango
 from ska_control_model import ResultCode, TaskStatus
 
+from tests.utils import generate_track_table
+
 
 @pytest.mark.unit
 @pytest.mark.forked
@@ -34,3 +36,35 @@ def test_reset_track_table(dish_manager_resources, event_store_class):
     assert all(device_proxy.programTrackTable == reset_point)
     assert result_code == ResultCode.OK
     assert message == "programTrackTable successfully reset"
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_max_track_table(dish_manager_resources, event_store_class):
+    """Test programTrackTable with a max sized table."""
+    device_proxy, dish_manager_cm = dish_manager_resources
+    main_event_store = event_store_class()
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    # update the execute_command mock to return IN_PROGRESS and a timestamp
+    timestamp = 1234567890.0
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, timestamp))
+
+    device_proxy.subscribe_event(
+        "programTrackTable",
+        tango.EventType.CHANGE_EVENT,
+        main_event_store,
+    )
+    # Clear out the queue to make sure we don't catch old events
+    main_event_store.clear_queue()
+
+    track_table = generate_track_table(
+        num_samples=1000,  # max table size
+        current_az=45,
+        current_el=45,
+        controller_current_time_tai=timestamp,
+    )
+
+    device_proxy.programTrackTable = track_table
+    main_event_store.wait_for_value(track_table)
+
+    assert all(device_proxy.programTrackTable == track_table)
