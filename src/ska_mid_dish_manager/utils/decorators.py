@@ -9,9 +9,9 @@ from ska_control_model import CommunicationStatus
 
 
 def time_tango_write(attr_name: str, warn_threshold: float = 0.2) -> Callable:
-    def decorator(func) -> Callable:
+    def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        def wrapper(self, *args, **kwargs) -> Any:
+        def wrapper(self, *args: Any, **kwargs: Any) -> Any:
             start = time.monotonic()
             try:
                 return func(self, *args, **kwargs)
