@@ -333,19 +333,19 @@ class ActionHandler:
 
         # update the component state from an attribute read before giving up
         # this is a fallback in case the change event subscriptions missed updates
-        # for cmd in self.fanned_out_commands:
-        #     if not cmd.finished:
-        #         if hasattr(cmd, "device_component_manager"):
-        #             device_component_manager = getattr(cmd, "device_component_manager")
-        #             device_component_manager.update_state_from_monitored_attributes(
-        #                 tuple(cmd.awaited_component_state.keys())
-        #             )
-        # if all([cmd.successful for cmd in self.fanned_out_commands]):
-        #     if self.awaited_component_state is None or check_component_state_matches_awaited(
-        #         self.component_state, self.awaited_component_state
-        #     ):
-        #         self._trigger_success(task_callback, task_abort_event, completed_response_msg)
-        #         return
+        for cmd in self.fanned_out_commands:
+            if not cmd.finished:
+                if hasattr(cmd, "device_component_manager"):
+                    device_component_manager = getattr(cmd, "device_component_manager")
+                    device_component_manager.update_state_from_monitored_attributes(
+                        tuple(cmd.awaited_component_state.keys())
+                    )
+        if all([cmd.successful for cmd in self.fanned_out_commands]):
+            if self.awaited_component_state is None or check_component_state_matches_awaited(
+                self.component_state, self.awaited_component_state
+            ):
+                self._trigger_success(task_callback, task_abort_event, completed_response_msg)
+                return
 
         # Handle timeout
         command_statuses = {
