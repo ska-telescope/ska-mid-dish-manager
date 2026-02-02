@@ -124,7 +124,6 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.xfail(reason="unstow is rejected")
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_not_on_stow(
     event_store_class: EventStore,
@@ -140,9 +139,9 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
     dish_manager_proxy.SetMaintenanceMode()
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
 
-    # unstow will be rejected unless the device has authority since the
-    # ds device no longer waits for horn to go off when auth is requested.
-    # so we need to take authority here and wait for the horn to go off
+    # unstow will be rejected unless the device has authority.
+    # since ds device no longer waits for horn to go off when auth is
+    # requested we need to take authority here and wait for the horn to go off
     ds_device_proxy.TakeAuthority()
     # wait 10s for the horn to go off
     mode_event_store.get_queue_values(timeout=10)

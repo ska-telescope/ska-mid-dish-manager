@@ -10,7 +10,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added in B5DC component manager.
 - Added in ignoreB5dc attribute to ignore B5DC state and quality changes.
 - Added ska-mid-dcp-lib v0.0.9 to the package dependencies.
-- Increase pod resource cpu limits to 600m and apply improvements code and acceptance tests.
+- Increased pod CPU resource limits to 600m and improved code quality and acceptance test reliability.
 
 Version 9.2.1
 *************
