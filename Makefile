@@ -9,6 +9,8 @@ CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
 # by defining them in the custom_helm_flags.yaml file
 VALUES_FILE ?= charts/ska-mid-dish-manager/custom_helm_flags.yaml
 
+KUBE_NAMESPACE="${KUBE_NAMESPACE}-$RANDOM"
+
 -include .make/base.mk
 
 #############################
