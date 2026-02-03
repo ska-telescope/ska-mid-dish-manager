@@ -53,7 +53,7 @@ python-do-lint:
 	exit $$rc
 
 ifdef CI_JOB_TOKEN
-KUBE_NAMESPACE="${KUBE_NAMESPACE}-$RANDOM"
+KUBE_NAMESPACE="$KUBE_NAMESPACE-$RANDOM"
 python-post-lint:
 	$(PYTHON_RUNNER) ruff check --output-format="junit" --output-file=build/reports/linting-ruff.xml
 	@make --no-print-directory join-lint-reports
