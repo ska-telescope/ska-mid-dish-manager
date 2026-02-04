@@ -2836,10 +2836,8 @@ description = "SKA Tango base classes"
 optional = false
 python-versions = ">=3.10.0,<4.0.0"
 groups = ["main"]
-files = [
-    {file = "ska_tango_base-1.4.1-py3-none-any.whl", hash = "sha256:a4bd3b685acd642ef66588cf986606d0cf8b6680cb4ae9290f87d505d58bd64d"},
-    {file = "ska_tango_base-1.4.1.tar.gz", hash = "sha256:67f4d1e0ce8271c2957b2a8694cc72391ef13d56949b9dd3ff12f29286473b62"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 debugpy = ">=1.6.2,<2.0.0"
@@ -2858,9 +2856,10 @@ transitions = ">=0.9.0,<0.10.0"
 telemetry = ["opentelemetry-exporter-otlp (>=1.29.0)", "opentelemetry-sdk (>=1.29.0)"]
 
 [package.source]
-type = "legacy"
-url = "https://artefact.skao.int/repository/pypi-internal/simple"
-reference = "ska-nexus"
+type = "git"
+url = "https://gitlab.com/ska-telescope/ska-tango-base.git"
+reference = "wom-1076-signal-bus-back-pressure"
+resolved_reference = "c58e72b8d18baf66389660b3613cc4808b6ed8a9"
 
 [[package]]
 name = "ska-tango-testing"
@@ -3539,4 +3538,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "b3abbe1d5a76d96d86789c30fa578956b22156caf1eb433028ec40e806c409ad"
+content-hash = "3e693ccc7cb12394dfbc2a06675c6d9be4e364ef0ca0f9324e2018124a93849e"
