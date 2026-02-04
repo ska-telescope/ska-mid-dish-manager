@@ -267,6 +267,8 @@ class EventStore:
             while True:
                 event = self._queue.get(timeout=timeout)
                 events.append(event)
+                if event.attr_value is None:
+                    continue
                 if condition(event.attr_value.value):
                     return True
         except queue.Empty as err:
@@ -472,6 +474,8 @@ class EventStore:
         try:
             while True:
                 event = self._queue.get(timeout=timeout)
+                if event.attr_value is None:
+                    continue
                 items.append((event.attr_value.name, event.attr_value.value))
         except queue.Empty:
             return items

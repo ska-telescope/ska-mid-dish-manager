@@ -24,15 +24,15 @@ def test_set_operate(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.ConfigureBand3(True)
-    band_event_store.wait_for_value(Band.B3, timeout=30)
+    dish_manager_proxy.ConfigureBand1(True)
+    band_event_store.wait_for_value(Band.B1, timeout=30)
 
     # Await auto transition to OPERATE following band config
     main_event_store.wait_for_value(DishMode.OPERATE)
 
     expected_progress_updates = [
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand3",
-        "ConfigureBand3 complete. Triggering on success action.",
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand1",
+        "ConfigureBand1 complete. Triggering on success action.",
         "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
         "Awaiting dishmode change to OPERATE",
         "SetOperateMode completed",
