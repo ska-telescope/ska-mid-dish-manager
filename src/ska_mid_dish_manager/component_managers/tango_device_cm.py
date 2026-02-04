@@ -1,6 +1,7 @@
 """Generic component manager for a subservient tango device."""
 
 import logging
+import time
 from queue import Empty, Queue
 from threading import Event, Thread
 from typing import Any, Callable, Optional, Tuple
@@ -76,6 +77,8 @@ class TangoDeviceComponentManager(BaseComponentManager):
         :param event_data: Tango event
         :type event_data: tango.EventData
         """
+        start_time = time.time()
+
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
         attr_name = event_data.attr_value.name.lower()
@@ -100,6 +103,14 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # the error events we got for the various attribute subscriptions.
         # update the communication state in case the error event callback flipped it
         self.sync_communication_to_valid_event(attr_name)
+
+        elapsed_time = time.time() - start_time
+        self.logger.debug(
+            "%s _update_state_from_event took %.4f seconds for attribute %s",
+            self._tango_device_fqdn,
+            elapsed_time,
+            attr_name,
+        )
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
         """Handle error events from attr subscription.
