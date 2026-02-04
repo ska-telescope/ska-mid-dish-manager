@@ -5,42 +5,16 @@ import logging
 import pytest
 import tango
 
-from ska_mid_dish_manager.models.constants import (
-    DEFAULT_ACTION_TIMEOUT_S,
-    DEFAULT_DISH_MANAGER_TRL,
-    DEFAULT_DS_MANAGER_TRL,
-)
+from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
-    DscCmdAuthType,
     DSOperatingMode,
     DSPowerState,
 )
-from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-
-def pytest_sessionstart(session: pytest.Session) -> None:
-    """Ensure dish manager is fully initialised before running tests."""
-    event_store = EventStore()
-    dish_manager = tango.DeviceProxy(DEFAULT_DISH_MANAGER_TRL)
-    ds_manager = tango.DeviceProxy(DEFAULT_DS_MANAGER_TRL)
-    event_id = dish_manager.subscribe_event("State", tango.EventType.CHANGE_EVENT, event_store)
-    try:
-        event_store.wait_for_value(tango.DevState.ON, timeout=120)
-    except RuntimeError as e:
-        # continue with tests but log the issue in case tests fail later
-        logger.debug(f"Dish manager not ready for tests: {e}")
-
-    # take authority to prevent horn from blocking tests which require it
-    if ds_manager.dscCmdAuth == DscCmdAuthType.NO_AUTHORITY:
-        ds_manager.TakeAuthority()
-        # wait 10s for the horn to go off
-        event_store.get_queue_values(timeout=10)
-
-    dish_manager.unsubscribe_event(event_id)
 
 
 @pytest.fixture
