@@ -62,7 +62,7 @@ def restore_auth(ds_device_proxy):
     yield
 
 
-@pytest.mark.xxx
+@pytest.mark.acceptance
 @pytest.mark.parametrize(
     "band_selection",
     [
