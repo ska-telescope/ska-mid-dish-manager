@@ -8,7 +8,7 @@ import tango
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
     DEFAULT_DISH_MANAGER_TRL,
-    DEFAULT_DS_MANAGER_TRL,
+    # DEFAULT_DS_MANAGER_TRL,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -25,7 +25,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     """Ensure dish manager is fully initialised before running tests."""
     event_store = EventStore()
     dish_manager = tango.DeviceProxy(DEFAULT_DISH_MANAGER_TRL)
-    ds_manager = tango.DeviceProxy(DEFAULT_DS_MANAGER_TRL)
+    # ds_manager = tango.DeviceProxy(DEFAULT_DS_MANAGER_TRL)
     event_id = dish_manager.subscribe_event("State", tango.EventType.CHANGE_EVENT, event_store)
     try:
         event_store.wait_for_value(tango.DevState.ON, timeout=120)
@@ -34,9 +34,12 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         logger.debug(f"Dish manager not ready for tests: {e}")
 
     # take authority to prevent horn from blocking tests which require it
-    ds_manager.TakeAuthority()
-    # wait 10s for the horn to go off
-    event_store.get_queue_values(timeout=10)
+    # try:
+    #     ds_manager.TakeAuthority()
+    # except tango.DevFailed as e:
+    #     pass
+    # # wait 10s for the horn to go off
+    # event_store.get_queue_values(timeout=10)
 
     dish_manager.unsubscribe_event(event_id)
 

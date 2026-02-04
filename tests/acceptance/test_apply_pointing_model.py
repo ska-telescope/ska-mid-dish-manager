@@ -9,6 +9,8 @@ import pytest
 import tango
 from ska_control_model import ResultCode
 
+from tests.utils import EventStore
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -51,7 +53,16 @@ def read_file_contents(
     return json.dumps(pointing_model_definition), pointing_model_definition
 
 
-@pytest.mark.acceptance
+@pytest.fixture(scope="module", autouse=True)
+def restore_auth(ds_device_proxy):
+    ds_device_proxy.TakeAuthority()
+    # wait for the horn to go off
+    event_store = EventStore()
+    event_store.get_queue_values(timeout=10)
+    yield
+
+
+@pytest.mark.xxx
 @pytest.mark.parametrize(
     "band_selection",
     [
