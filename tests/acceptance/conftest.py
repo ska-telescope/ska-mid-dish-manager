@@ -12,7 +12,6 @@ from ska_mid_dish_manager.models.constants import (
 )
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
-    DscCmdAuthType,
     DSOperatingMode,
     DSPowerState,
 )
@@ -35,10 +34,9 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         logger.debug(f"Dish manager not ready for tests: {e}")
 
     # take authority to prevent horn from blocking tests which require it
-    if ds_manager.dscCmdAuth == DscCmdAuthType.NO_AUTHORITY:
-        ds_manager.TakeAuthority()
-        # wait 10s for the horn to go off
-        event_store.get_queue_values(timeout=10)
+    ds_manager.TakeAuthority()
+    # wait 10s for the horn to go off
+    event_store.get_queue_values(timeout=10)
 
     dish_manager.unsubscribe_event(event_id)
 
