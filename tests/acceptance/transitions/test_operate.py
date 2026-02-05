@@ -18,7 +18,6 @@ def test_set_operate(
     status_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
-        "longRunningCommandResult": main_event_store,
         "configuredBand": band_event_store,
         "Status": status_event_store,
     }
