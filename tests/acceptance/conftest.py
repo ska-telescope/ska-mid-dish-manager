@@ -1,6 +1,7 @@
 """Fixtures for running ska-mid-dish-manager acceptance tests."""
 
 import logging
+import os
 
 import pytest
 import tango
@@ -11,7 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
 )
-from tests.utils import remove_subscriptions, setup_subscriptions
+from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup_subscriptions
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -41,6 +42,109 @@ def restore_action_timeout(dish_manager_proxy):
     """Ensure that attribute updates on spf is restored."""
     yield
     dish_manager_proxy.actionTimeoutSeconds = DEFAULT_ACTION_TIMEOUT_S
+
+
+@pytest.fixture(scope="package")
+def dish_manager_proxy(dish_manager_device_fqdn):
+    dev_proxy = tango.DeviceProxy(dish_manager_device_fqdn)
+    # increase client request timeout to 5 seconds
+    dev_proxy.set_timeout_millis(5000)
+    return dev_proxy
+
+
+@pytest.fixture(scope="package")
+def ds_device_proxy(ds_device_fqdn):
+    dev_proxy = tango.DeviceProxy(ds_device_fqdn)
+    # increase client request timeout to 5 seconds
+    dev_proxy.set_timeout_millis(5000)
+    return dev_proxy
+
+
+@pytest.fixture(scope="package")
+def b5dc_device_proxy(b5dc_device_fqdn):
+    dev_proxy = tango.DeviceProxy(b5dc_device_fqdn)
+    # increase client request timeout to 5 seconds
+    dev_proxy.set_timeout_millis(5000)
+    return dev_proxy
+
+
+@pytest.fixture(scope="package")
+def spf_device_proxy(spf_device_fqdn):
+    return tango.DeviceProxy(spf_device_fqdn)
+
+
+@pytest.fixture(scope="package")
+def spfrx_device_proxy(spfrx_device_fqdn):
+    return tango.DeviceProxy(spfrx_device_fqdn)
+
+
+@pytest.fixture(scope="package")
+def wms_device_proxy(wms_device_fqdn):
+    return tango.DeviceProxy(wms_device_fqdn)
+
+
+@pytest.fixture
+def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds_device_proxy):
+    event_files_dir = request.config.getoption("--event-storage-files-path")
+    if event_files_dir is None:
+        yield None
+        return
+
+    if not os.path.exists(event_files_dir):
+        os.makedirs(event_files_dir)
+
+    file_name = ".".join((f"events_{request.node.name}", "txt"))
+    file_path = os.path.join(event_files_dir, file_name)
+
+    dm_tracker = TrackedDevice(
+        dish_manager_proxy,
+        (
+            "dishmode",
+            "capturing",
+            "healthstate",
+            "pointingstate",
+            "b1capabilitystate",
+            "b2capabilitystate",
+            "b3capabilitystate",
+            "b4capabilitystate",
+            "b5acapabilitystate",
+            "b5bcapabilitystate",
+            "achievedtargetlock",
+            "dsccmdauth",
+            "dscctrlstate",
+            "configuretargetlock",
+            "achievedpointing",
+            "configuredband",
+            "spfconnectionstate",
+            "spfrxconnectionstate",
+            "dsconnectionstate",
+            "b5dcconnectionstate",
+            "longrunningcommandstatus",
+            "longrunningcommandresult",
+            "longrunningcommandprogress",
+        ),
+    )
+    ds_tracker = TrackedDevice(
+        ds_device_proxy,
+        (
+            "operatingMode",
+            "powerState",
+            "healthState",
+            "pointingState",
+            "indexerPosition",
+            "achievedPointing",
+            "achievedTargetLock",
+            "dscCmdAuth",
+            "dscCtrlState",
+            "configureTargetLock",
+        ),
+    )
+
+    event_printer = EventPrinter(file_path, (dm_tracker, ds_tracker))
+    with event_printer:
+        with open(file_path, "a", encoding="utf-8") as open_file:
+            open_file.write("\n\nEvents set up, test starting\n")
+        yield
 
 
 @pytest.fixture
