@@ -79,7 +79,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         ("ConfigureBand3", Band.B3, "B3"),
         ("ConfigureBand4", Band.B4, "B4"),
         ("ConfigureBand5a", Band.B5a, "B5a"),
-        # TODO B5DC is available, fix case for 5b
+        # Special case for 5b until we have a B5DC
         ("ConfigureBand5b", Band.B1, "B1"),
         # End up in B2 again
         ("ConfigureBand2", Band.B2, "B2"),
