@@ -34,12 +34,14 @@ ska-mid-dish-simulators:
   #     tag: 5.5.3-dev.cb7318790
   #     pullPolicy: IfNotPresent
 
-ska-mid-wms:
-  enabled: true
+# enable if you want to deploy the wms device and simulator
+# ska-mid-wms:
+#   enabled: true
 
 ska-mid-dish-b5dc-proxy:
   enabled: true
 
-dishmanager:
-  wms:
-    station_ids: ["1"]
+# enable if you want dish manager to monitor the weather station device
+# dishmanager:
+#   wms:
+#     station_ids: ["1"]
