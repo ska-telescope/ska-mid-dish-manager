@@ -8,26 +8,21 @@ from typing import Any, Callable
 from ska_control_model import CommunicationStatus
 
 
-def time_tango_write(attr_name: str, warn_threshold: float = 0.2) -> Callable:
+def time_tango_write() -> Callable:
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-            start = time.monotonic()
+            warn_threshold = 1
+            start = time.perf_counter()
             try:
                 return func(self, *args, **kwargs)
             finally:
                 # using a timer that is not affected by system clock changes
-                duration = time.monotonic() - start
+                duration = time.perf_counter() - start
                 if duration > warn_threshold:
                     self.logger.warning(
                         "SLOW WRITE: %s took %.3f s",
-                        attr_name,
-                        duration,
-                    )
-                else:
-                    self.logger.debug(
-                        "WRITE: %s took %.3f s",
-                        attr_name,
+                        func.__name__,
                         duration,
                     )
 
