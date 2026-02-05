@@ -28,7 +28,7 @@ def test_set_operate(
     band_event_store.wait_for_value(Band.B1, timeout=30)
 
     # Await auto transition to OPERATE following band config
-    main_event_store.wait_for_value(DishMode.OPERATE)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
 
     expected_progress_updates = [
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand1",
