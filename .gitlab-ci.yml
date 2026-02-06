@@ -63,8 +63,15 @@ mypy:
       src/ska_mid_dish_manager/models/dish_state_transition.py
   allow_failure: true
 
+# turn off the default k8s-test-runner job
+k8s-test-runner:
+  rules:
+    - when: never
+
 k8s-test-runner-fast:
   extends: k8s-test-runner
+  rules:
+    - when: always
   variables:
      K8S_TEST_RUNNER_MARK: "acceptance and fast"
      KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)-fast"
@@ -72,6 +79,8 @@ k8s-test-runner-fast:
 
 k8s-test-runner-slow:
   extends: k8s-test-runner
+  rules:
+    - when: always
   variables:
     K8S_TEST_RUNNER_MARK: "acceptance and slow"
     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)-slow"
@@ -81,16 +90,18 @@ k8s-test-runner-slow:
 k8s-test-runner-parallel:
   extends: k8s-test-runner
   parallel: 3
-  when: manual
   allow_failure: true
+  rules:
+    - when: manual
   variables:
     K8S_TEST_RUNNER_MARK: "acceptance"
     KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-$CI_NODE_INDEX"
 
 k8s-test-runner-track-patterns:
   extends: k8s-test-runner
-  when: manual
   allow_failure: true
+  rules:
+    - when: manual
   variables:
     K8S_TEST_RUNNER_MARK: "track_patterns"
     KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-track-patterns"

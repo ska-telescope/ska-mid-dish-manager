@@ -6,7 +6,8 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.slow
+# classifying as fast to balance the total run time across parallel jobs
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test ConfigureBand2."""
@@ -72,7 +73,8 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.slow
+# classifying as fast to balance the total run time across parallel jobs
+@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     ("band_request", "expected_band", "message_str"),
@@ -142,7 +144,8 @@ def test_configure_band_b(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.slow
+# classifying as fast to balance the total run time across parallel jobs
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_configure_band_2_from_stow(
     monitor_tango_servers,
@@ -210,7 +213,8 @@ def test_configure_band_2_from_stow(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.slow
+# classifying as fast to balance the total run time across parallel jobs
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_configure_band_json(
     monitor_tango_servers,

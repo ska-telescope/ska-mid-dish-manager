@@ -15,7 +15,8 @@ def restore_auth(event_store_class, ds_device_proxy):
     event_store.get_queue_values(timeout=10)
 
 
-@pytest.mark.slow
+# classifying as fast to balance the total run time across parallel jobs
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_dsccmdauth_and_dsccmdauth_attrs(
     monitor_tango_servers,

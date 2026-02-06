@@ -12,7 +12,8 @@ from ska_mid_dish_manager.models.dish_enums import DSOperatingMode, DSPowerState
 LOGGER = logging.getLogger(__name__)
 
 
-@pytest.mark.slow
+# classifying as fast to balance the total run time across parallel jobs
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates."""

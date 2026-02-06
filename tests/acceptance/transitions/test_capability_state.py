@@ -6,7 +6,8 @@ from ska_mid_dish_manager.models.dish_enums import Band, CapabilityStates, DishM
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.slow
+# classifying as fast to balance the total run time across parallel jobs
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test transition on CapabilityState b1."""
