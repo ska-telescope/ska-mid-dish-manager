@@ -10,7 +10,7 @@ ska-mid-dish-ds-manager:
   #   image:
   #     registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
   #     image: ska-mid-dish-ds-manager
-  #     tag: 7.1.0-dev.c746b6e58
+  #     tag: 7.0.4-dev.c1c8d2f3c
   #     pullPolicy: IfNotPresent
 
 ska-tango-base:
