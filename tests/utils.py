@@ -5,6 +5,7 @@ import queue
 import random
 import string
 import time
+from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
@@ -488,6 +489,54 @@ class EventStore:
         :type events: List[tango.EventData]
         """
         return [(event.attr_value.name, event.attr_value.value) for event in events]
+
+
+@dataclass
+class TrackedDevice:
+    """Class to group tracked device information."""
+
+    device_proxy: tango.DeviceProxy
+    attribute_names: Tuple[str]
+    subscription_ids: List[int] = field(default_factory=list)
+
+
+class EventPrinter:
+    """Class that writes to attribte changes to a file."""
+
+    def __init__(self, filename: str, tracked_devices: Tuple[TrackedDevice] = ()) -> None:
+        self.tracked_devices = tracked_devices
+        self.filename = filename
+
+    def __enter__(self):
+        for tracked_device in self.tracked_devices:
+            dp = tracked_device.device_proxy
+            for attr_name in tracked_device.attribute_names:
+                sub_id = dp.subscribe_event(attr_name, tango.EventType.CHANGE_EVENT, self)
+                tracked_device.subscription_ids.append(sub_id)
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        for tracked_device in self.tracked_devices:
+            try:
+                dp = tracked_device.device_proxy
+                for sub_id in tracked_device.subscription_ids:
+                    dp.unsubscribe_event(sub_id)
+            except tango.DevError:
+                pass
+
+    def push_event(self, ev: tango.EventData):
+        with open(self.filename, "a", encoding="utf-8") as open_file:
+            if ev.err:
+                err = ev.errors[0]
+                open_file.write(f"\nEvent Error {err.desc} {err.origin} {err.reason}")
+            else:
+                attr_name = ev.attr_name.split("/")[-1]
+                attr_value = ev.attr_value.value
+                if ev.attr_value.type == tango.CmdArgType.DevEnum:
+                    attr_value = ev.device.get_attribute_config(attr_name).enum_labels[attr_value]
+
+                open_file.write(
+                    (f"\nEvent\t{ev.reception_date}\t{ev.device}\t{attr_name}\t{attr_value}")
+                )
 
 
 def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx, ignore_b5dc):

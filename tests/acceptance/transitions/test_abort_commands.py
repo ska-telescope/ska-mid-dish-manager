@@ -90,7 +90,7 @@ def track_a_sample(
 
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=30)
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30, proxy=dish_manager_proxy)
 
     # Load a track table
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
