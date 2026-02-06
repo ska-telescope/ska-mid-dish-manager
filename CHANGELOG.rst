@@ -10,7 +10,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added in B5DC component manager.
 - Added in ignoreB5dc attribute to ignore B5DC state and quality changes.
 - Added ska-mid-dcp-lib v0.0.9 to the package dependencies.
-- Added in a decorator to log attribute write times.
+- Added in a decorator to log the duration of an attribute write.
 
 Version 9.2.1
 *************
