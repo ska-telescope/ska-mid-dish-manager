@@ -1264,13 +1264,13 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(float,),
-        max_dim_x=150,
+        max_dim_x=3000,
         access=AttrWriteType.READ_WRITE,
-        doc="Timestamp of i-th coordinate in table (max 50 coordinates) given "
+        doc="Timestamp of i-th coordinate in table (max 1000 coordinates) given "
         "in milliseconds since TAI epoch, representing time at which "
         "Dish should track i-th coordinate.\n Azimuth of i-th coordinate in "
-        "table (max 50 coordinates) given in degrees.\n Elevation of i-th "
-        "coordinate in table (max 50 coordinates) given in degrees",
+        "table (max 1000 points) given in degrees.\n Elevation of i-th "
+        "coordinate in table (max points coordinates) given in degrees",
     )
     def programTrackTable(self):
         """Returns the programTrackTable."""
