@@ -2256,7 +2256,8 @@ class DishManager(SKAController):
     @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @command(
-        dtype_in="SetOperateMode is a deprecated command, it is recommended to use ConfigureBand "
+        dtype_in=None,
+        doc_in="SetOperateMode is a deprecated command, it is recommended to use ConfigureBand "
         "or ConfigureBand<N> command instead to trigger the transition to OPERATE dish mode. ",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
