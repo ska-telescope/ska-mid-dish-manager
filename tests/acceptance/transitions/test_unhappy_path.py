@@ -11,8 +11,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-# classifying as fast to balance the total run time across parallel jobs
-@pytest.mark.fast
+@pytest.mark.transition
 @pytest.mark.acceptance
 def test_dish_handles_unhappy_path_in_command_execution(
     undo_raise_exceptions,

@@ -8,7 +8,6 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 IGNORE_ATTRIBUTES_LIST = ["lrcProtocolVersions", "_lrcEvent"]
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 def test_attribute_change_events(dish_manager_proxy):
     """Test all attributes have change events configured."""
@@ -33,7 +32,6 @@ def test_attribute_change_events(dish_manager_proxy):
     assert all_attr_ch_events_configured, err_msg
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 def test_attribute_archive_events(dish_manager_proxy):
     """Test all attributes have archive events configured."""

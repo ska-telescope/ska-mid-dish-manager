@@ -4,7 +4,6 @@ import pytest
 import tango
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "attribute",
@@ -30,7 +29,6 @@ def test_b5dc_attributes_are_readable_and_read_only(dish_manager_proxy, attribut
     assert attribute_value is not None
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "attr_name",

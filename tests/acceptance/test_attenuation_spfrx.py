@@ -7,7 +7,6 @@ import pytest
 import tango
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "tango_attribute",

@@ -9,7 +9,6 @@ import tango
 from ska_mid_dish_manager.models.constants import BAND_POINTING_MODEL_PARAMS_LENGTH
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "tango_attribute",
@@ -33,7 +32,6 @@ def test_read_band_static_pointing_model_parameters(
     assert band_pointing_model_params.dtype.name == "float64"  # type: ignore
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "tango_attribute",

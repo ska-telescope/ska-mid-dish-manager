@@ -18,7 +18,7 @@ def disable_watchdog(dish_manager_proxy):
     dish_manager_proxy.watchdogtimeout = 0.0
 
 
-@pytest.mark.slow
+@pytest.mark.movement
 @pytest.mark.acceptance
 def test_stow_on_timeout(event_store_class, dish_manager_proxy):
     """Test that expiry of watchdog timer invokes stowing of dish."""
@@ -51,7 +51,7 @@ def test_stow_on_timeout(event_store_class, dish_manager_proxy):
     dish_manager_proxy.unsubscribe_event(dish_mode_id)
 
 
-@pytest.mark.slow
+@pytest.mark.movement
 @pytest.mark.acceptance
 def test_watchdog_reset(event_store_class, dish_manager_proxy):
     """Test that ResetWatchdogTimer resets the watchdog timer."""
@@ -92,7 +92,7 @@ def test_watchdog_reset(event_store_class, dish_manager_proxy):
     dish_manager_proxy.unsubscribe_event(dish_mode_id)
 
 
-@pytest.mark.slow
+@pytest.mark.movement
 @pytest.mark.acceptance
 @pytest.mark.parametrize("disable_timeout", [0.0, -1.0])
 def test_disable_watchdog(event_store_class, dish_manager_proxy, disable_timeout):
@@ -130,7 +130,7 @@ def test_disable_watchdog(event_store_class, dish_manager_proxy, disable_timeout
     dish_manager_proxy.unsubscribe_event(dish_mode_id)
 
 
-@pytest.mark.slow
+@pytest.mark.movement
 @pytest.mark.acceptance
 def test_watchdog_repeat_stow_without_reset(event_store_class, dish_manager_proxy):
     """Test that the watchdog timer can repeatedly stow the dish without reset."""
@@ -168,7 +168,7 @@ def test_watchdog_repeat_stow_without_reset(event_store_class, dish_manager_prox
     dish_manager_proxy.unsubscribe_event(dish_mode_id)
 
 
-@pytest.mark.slow
+@pytest.mark.movement
 @pytest.mark.acceptance
 def test_attributes_pushed(event_store_class, dish_manager_proxy):
     """Test watchdog attributes are pushed."""

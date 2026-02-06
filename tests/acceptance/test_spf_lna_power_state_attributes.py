@@ -10,7 +10,6 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 def test_spf_lna_power_state_attributes_initial_values(
     dish_manager_proxy: tango.DeviceProxy,
@@ -27,7 +26,6 @@ def test_spf_lna_power_state_attributes_initial_values(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DeviceProxy) -> None:
     """Test the spf lna attribute configurations are read and write."""
@@ -40,7 +38,6 @@ def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DevicePr
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "attribute_name",
@@ -71,7 +68,6 @@ def test_spf_lna_power_state_rejects_attribute_writes(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "band, attribute_name",
@@ -116,7 +112,6 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
         remove_subscriptions(subscriptions)
 
 
-@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "attribute_name",

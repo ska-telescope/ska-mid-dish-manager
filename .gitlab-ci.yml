@@ -63,63 +63,52 @@ mypy:
       src/ska_mid_dish_manager/models/dish_state_transition.py
   allow_failure: true
 
-# turn off the default k8s-test-runner job
 k8s-test-runner:
-  rules:
-    - when: never
-
-k8s-test-runner-fast:
-  extends: k8s-test-runner
-  rules:
-    - when: always
   variables:
-     K8S_TEST_RUNNER_MARK: "acceptance and fast"
-     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)-fast"
+     K8S_TEST_RUNNER_MARK: "acceptance and not transition and not movement"
+     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
      VALUES_FILE: charts/ska-mid-dish-manager/custom_helm_flags.yaml
 
-k8s-test-runner-slow:
+k8s-test-runner-movement:
   extends: k8s-test-runner
-  rules:
-    - when: always
   variables:
-    K8S_TEST_RUNNER_MARK: "acceptance and slow"
-    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)-slow"
+    K8S_TEST_RUNNER_MARK: "acceptance and movement"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
     VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
 
-# run multiple acceptance tests in parallel
+k8s-test-runner-transition:
+  extends: k8s-test-runner
+  variables:
+    K8S_TEST_RUNNER_MARK: "acceptance and transition"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
+
+# runs multiple acceptance tests in parallel with minimal deployment
 k8s-test-runner-parallel:
   extends: k8s-test-runner
   parallel: 3
   allow_failure: true
-  rules:
-    - when: manual
+  when: manual
   variables:
     K8S_TEST_RUNNER_MARK: "acceptance"
-    KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-$CI_NODE_INDEX"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
 
 k8s-test-runner-track-patterns:
   extends: k8s-test-runner
   allow_failure: true
-  rules:
-    - when: manual
+  when: manual
   variables:
     K8S_TEST_RUNNER_MARK: "track_patterns"
-    KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-track-patterns"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
 
-stop-k8s-test-runner:
-  rules:
-    - when: never
-
-stop-k8s-test-runner-fast:
+stop-k8s-test-runner-movement:
   extends: stop-k8s-test-runner
-  rules:
-    - when: manual
   variables:
-    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)-fast"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
 
-stop-k8s-test-runner-slow:
+stop-k8s-test-runner-transition:
   extends: stop-k8s-test-runner
-  rules:
-    - when: manual
   variables:
-    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)-slow"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
