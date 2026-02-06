@@ -32,7 +32,8 @@ def test_initial_power_limit(
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
     """Tests the dscPowerLimitkW attribute inital value on DS and Dish Manager."""
-    initial_value = 10.0
+    # value is from the reset fixture
+    initial_value = 14.7
     assert (
         ds_device_proxy.read_attribute("dscPowerLimitkW").value
         == dish_manager_proxy.read_attribute("dscPowerLimitkW").value
@@ -65,6 +66,7 @@ def test_correct_power_limit_change(
         proxy.write_attribute("dscPowerLimitkW", power_limit)
         ds_attribute_event_store.wait_for_value(power_limit, timeout=6)
         dm_attribute_event_store.wait_for_value(power_limit, timeout=6)
+
     remove_subscriptions(subscriptions)
 
 
