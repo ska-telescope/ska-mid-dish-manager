@@ -6,6 +6,7 @@ import pytest
 import tango
 
 
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_set_kvalue(
     dish_manager_proxy: tango.DeviceProxy,

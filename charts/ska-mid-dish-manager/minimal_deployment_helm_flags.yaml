@@ -1,3 +1,4 @@
+# deploy only ds-manager, spfrx and spf sim with default instance 001
 global:
   minikube: true
   operator: true
@@ -18,16 +19,3 @@ ska-mid-dish-simulators:
   dsOpcuaSimulator:
     enabled: true
 
-ska-mid-wms:
-  enabled: false
-
-ska-mid-dish-b5dc-proxy:
-  enabled: false
-
-dishmanager:
-  wms:
-    station_ids: []
-  b5dcproxy:
-    fqdn: ""
-    domain_name: "mid-dish"
-    family_name: "b5dc-manager"

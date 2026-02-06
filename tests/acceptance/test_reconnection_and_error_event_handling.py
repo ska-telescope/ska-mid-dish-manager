@@ -9,6 +9,7 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.skip(reason="This test is flaky: needs investigation into events and timeouts")
+@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "family", ["ds-manager", "simulator-spfc", "simulator-spfrx", "b5dc-manager"]

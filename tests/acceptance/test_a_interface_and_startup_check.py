@@ -24,6 +24,7 @@ SPEC_URLS = {
 }
 
 
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_ska001_is_available(monitor_tango_servers, dish_manager_proxy):
     """Test that SKA001 is available."""
@@ -31,6 +32,7 @@ def test_ska001_is_available(monitor_tango_servers, dish_manager_proxy):
     assert dish_manager_proxy.State() in [DevState.ON, DevState.ALARM]
 
 
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_other_dish_instance_is_available():
     """Test that a different, arbitrary dish is available."""
@@ -39,6 +41,7 @@ def test_other_dish_instance_is_available():
     assert dev_proxy.State() in [DevState.ON, DevState.ALARM]
 
 
+@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_wide_spec(dish_manager_proxy):
@@ -51,6 +54,7 @@ def test_dish_manager_conforms_to_ska_wide_spec(dish_manager_proxy):
     assert not result
 
 
+@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.xfail(reason="Pending changes on telescope model to dtype_out")
 def test_dish_manager_conforms_to_dish_master_spec(dish_manager_proxy):
@@ -63,6 +67,7 @@ def test_dish_manager_conforms_to_dish_master_spec(dish_manager_proxy):
     assert not result
 
 
+@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_controller_spec(dish_manager_proxy):
@@ -75,6 +80,7 @@ def test_dish_manager_conforms_to_ska_controller_spec(dish_manager_proxy):
     assert not result
 
 
+@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.xfail
 def test_dish_manager_conforms_to_ska_tango_base_spec(dish_manager_proxy):

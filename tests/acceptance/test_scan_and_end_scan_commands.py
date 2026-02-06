@@ -5,6 +5,7 @@ import pytest
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     """Test Scan and EndScan command."""

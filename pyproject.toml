@@ -99,7 +99,8 @@ markers = [
     "acceptance",
     "stress",
     "track_patterns",
-    "transition",
+    "fast",
+    "slow",
 ]
 
 [tool.ruff]

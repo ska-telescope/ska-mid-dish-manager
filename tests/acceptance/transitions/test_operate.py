@@ -9,6 +9,7 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 @pytest.mark.xfail(
     reason="operate mode event is intermittently not being emitted, needs investigation"
 )
+@pytest.mark.slow
 @pytest.mark.acceptance
 def test_set_operate(
     monitor_tango_servers,

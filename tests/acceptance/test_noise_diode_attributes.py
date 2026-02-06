@@ -18,6 +18,7 @@ def reset_diode_params(dish_manager_proxy: tango.DeviceProxy):
     dish_manager_proxy.pseudoRandomNoiseDiodePars = np.array([0, 0, 0], dtype=np.uint32)
 
 
+@pytest.mark.fast
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     ("attribute, valid_write_value"),

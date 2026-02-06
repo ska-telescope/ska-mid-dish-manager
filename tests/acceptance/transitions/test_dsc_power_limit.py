@@ -26,6 +26,7 @@ def clean_up(
     dish_manager_proxy.unsubscribe_event(sub_id)
 
 
+@pytest.mark.slow
 @pytest.mark.acceptance
 def test_initial_power_limit(
     ds_device_proxy: tango.DeviceProxy,
@@ -41,6 +42,7 @@ def test_initial_power_limit(
     )
 
 
+@pytest.mark.slow
 @pytest.mark.acceptance
 def test_correct_power_limit_change(
     ds_device_proxy: tango.DeviceProxy,
@@ -70,6 +72,7 @@ def test_correct_power_limit_change(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.slow
 @pytest.mark.acceptance
 def test_incorrect_power_limit_change(
     ds_device_proxy: tango.DeviceProxy,
@@ -90,6 +93,7 @@ def test_incorrect_power_limit_change(
             assert ds_value == dish_value == DEFAULT_POWER_LIMIT
 
 
+@pytest.mark.slow
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     ("parameter", "allowed"),
@@ -132,6 +136,7 @@ def test_power_limit_change_set_power_mode(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.slow
 @pytest.mark.acceptance
 def test_fp_lp_power_limit_used(
     ds_device_proxy: tango.DeviceProxy,
@@ -174,6 +179,7 @@ def test_fp_lp_power_limit_used(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.slow
 @pytest.mark.acceptance
 def test_dsc_current_limit_used(
     ds_device_proxy: tango.DeviceProxy,

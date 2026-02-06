@@ -15,6 +15,8 @@ from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceP
 LOGGER = logging.getLogger(__name__)
 
 
+# TODO These tests are not marked with the acceptance marker,
+# so are not executed in CI,need to add the marker and make sure they run
 def test_device_monitor(monitor_tango_servers, caplog, spf_device_fqdn):
     """Device monitoring sanity check."""
     # TODO all the tests dont have a marker so are not executed, fix this

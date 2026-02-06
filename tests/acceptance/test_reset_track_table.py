@@ -6,6 +6,7 @@ from ska_mid_dish_manager.models.dish_enums import TrackTableLoadMode
 from tests.utils import generate_track_table, remove_subscriptions, setup_subscriptions
 
 
+@pytest.mark.fast
 @pytest.mark.acceptance
 def test_reset_track_table(event_store_class, dish_manager_proxy, ds_device_proxy) -> None:
     """Test ResetTrackTable."""
