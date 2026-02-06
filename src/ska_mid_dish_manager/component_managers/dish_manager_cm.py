@@ -96,7 +96,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         b5dc_device_fqdn: str,
         action_timeout_s: float,
         *args,
-        wms_device_names: Optional[List[str]] = None,
+        wms_device_names: List[str] = [],
         wind_stow_callback: Optional[Callable] = None,
         command_progress_callback: Optional[Callable] = None,
         **kwargs,
@@ -119,10 +119,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Initialising dish manager dishMode with %s.", DishMode.MAINTENANCE)
             default_dish_mode = DishMode.MAINTENANCE
 
-        # Clean up WMSDeviceNames
-        if not wms_device_names:
-            wms_device_names = []
-        wms_device_names = [i for i in wms_device_names if i != ""]
+        # clean up WMSDeviceNames
+        configured_wms_devices = list(wms_device_names) or []
+        # filter out empty strings from the list
+        configured_wms_devices = [instance for instance in configured_wms_devices if instance]
 
         super().__init__(
             logger,
@@ -328,9 +328,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         }
 
         # Enable WMS
-        if wms_device_names:
+        if configured_wms_devices:
             self.sub_component_managers["WMS"] = WMSComponentManager(
-                list(wms_device_names or []),
+                configured_wms_devices,
                 logger=logger,
                 component_state_callback=self._evaluate_wind_speed_averages,
                 communication_state_callback=partial(

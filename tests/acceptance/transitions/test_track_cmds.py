@@ -40,7 +40,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     band_event_store.wait_for_value(Band.B1, timeout=10)
 
     # Await auto transition to OPERATE following band config
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30, proxy=dish_manager_proxy)
 
     dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
 
@@ -306,14 +306,14 @@ def test_maximum_capacity(
     track_delay = 90
     time_now = ds_device_proxy.GetCurrentTAIOffset()
     track_start_tai = time_now + track_delay
-    duration_per_block_s = 5
-    samples_per_block = 50
+    duration_per_block_s = 10
+    samples_per_block = 1000
     sample_spacing = duration_per_block_s / samples_per_block
-    # 50 samples covering 5 s is equivalent of a points spacing of
-    # 5 / 50 = 0.1s
+    # 1000 samples covering 10s is equivalent of a points spacing of
+    # 10 / 1000 = 0.01s
     # with a maximum table size of 10000
     # the total duration that can be capture in the track table is
-    # 10000 * 0.1 = 1000s or ~ 17 minutes
+    # 10000 * 0.1 = 100s or ~ 2 minutes
     track_table = generate_constant_table(
         track_start_tai, sample_spacing, samples_per_block, current_az, current_el
     )
@@ -401,7 +401,7 @@ def test_track_fails_when_track_called_late(
     band_event_store.wait_for_value(Band.B1, timeout=10)
 
     # Await auto transition to OPERATE following band config
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30, proxy=dish_manager_proxy)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 

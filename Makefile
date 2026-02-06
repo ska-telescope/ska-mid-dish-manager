@@ -8,6 +8,7 @@ CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
 # values.yaml shall be used as the default and variables can be overridden by the user
 # by defining them in the custom_helm_flags.yaml file
 VALUES_FILE ?= charts/ska-mid-dish-manager/custom_helm_flags.yaml
+KUBE_NAMESPACE=ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)
 
 -include .make/base.mk
 
