@@ -24,6 +24,7 @@ from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
     SetMaintenanceModeAction,
+    SetOperateModeAction,
     SetStandbyFPModeAction,
     SetStandbyLPModeAction,
     SlewAction,
@@ -1235,6 +1236,38 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status, response = self.submit_task(
             TrackStopAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_track_stop_cmd_allowed,
+            task_callback=task_callback,
+        )
+        return status, response
+
+    @check_communicating
+    def set_operate_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        """Fanout commands to subdevices to set operate mode.
+
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :return: Result status and message
+        :rtype: Tuple[TaskStatus, str]
+        """
+
+        def _is_set_operate_cmd_allowed():
+            if self.component_state["dishmode"] != DishMode.STANDBY_FP:
+                msg = (
+                    "Set operate mode command rejected for current dishMode. "
+                    "Set operate mode command is allowed for dishMode STANDBY_FP"
+                )
+                report_task_progress(msg, self._command_progress_callback)
+                return False
+            return True
+
+        status, response = self.submit_task(
+            SetOperateModeAction(
+                self.logger,
+                self,
+            ).execute,
+            is_cmd_allowed=_is_set_operate_cmd_allowed,
             task_callback=task_callback,
         )
         return status, response
