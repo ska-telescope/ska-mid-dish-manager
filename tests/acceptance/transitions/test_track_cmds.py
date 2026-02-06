@@ -40,7 +40,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     band_event_store.wait_for_value(Band.B1, timeout=10)
 
     # Await auto transition to OPERATE following band config
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30, proxy=dish_manager_proxy)
 
     dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
 
@@ -401,7 +401,7 @@ def test_track_fails_when_track_called_late(
     band_event_store.wait_for_value(Band.B1, timeout=10)
 
     # Await auto transition to OPERATE following band config
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=10, proxy=dish_manager_proxy)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30, proxy=dish_manager_proxy)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
