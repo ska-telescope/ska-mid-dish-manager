@@ -1048,8 +1048,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Setting ignore SPF device as %s", ignored)
             self._update_component_state(ignorespf=ignored)
             if ignored:
-                if "SPF" in self.sub_component_managers:
-                    self.sub_component_managers["SPF"].stop_communicating()
+                self.sub_component_managers["SPF"].stop_communicating()
             else:
                 self.sub_component_managers["SPF"].start_communicating()
 
@@ -1062,8 +1061,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Setting ignore SPFRx device as %s", ignored)
             self._update_component_state(ignorespfrx=ignored)
             if ignored:
-                if "SPFRX" in self.sub_component_managers:
-                    self.sub_component_managers["SPFRX"].stop_communicating()
+                self.sub_component_managers["SPFRX"].stop_communicating()
             else:
                 self.sub_component_managers["SPFRX"].start_communicating()
 
@@ -1072,14 +1070,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_b5dc_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the B5DC device ignored boolean and update device communication."""
+        if "B5DC" not in self.sub_component_managers:
+            self.logger.debug("B5DC device is not monitored, cannot set ignored state.")
+            return
+
         if ignored != self.component_state["ignoreb5dc"]:
             self.logger.debug("Setting ignore B5DC device as %s", ignored)
             self._update_component_state(ignoreb5dc=ignored)
+
             if ignored:
-                if "B5DC" in self.sub_component_managers:
-                    self.sub_component_managers["B5DC"].stop_communicating()
-            elif "B5DC" in self.sub_component_managers:
+                self.sub_component_managers["B5DC"].stop_communicating()
+            else:
                 self.sub_component_managers["B5DC"].start_communicating()
+
             if sync:
                 self.sync_component_states()
 

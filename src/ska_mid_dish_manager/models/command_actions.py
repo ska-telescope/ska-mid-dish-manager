@@ -814,7 +814,10 @@ class ConfigureBandAction(Action):
             if receiver_band == "5b":
                 b5dc_manager = self.dish_manager_cm.sub_component_managers.get("B5DC")
                 if not b5dc_manager:
-                    self.logger.info("No B5DC, nothing to do.")
+                    self.logger.info(
+                        "Monitoring and control not set up for B5DC device,"
+                        " skipping frequency configuration."
+                    )
                 else:
                     b5dc_freq_enum = B5dcFrequency(int(sub_band))
                     b5dc_set_frequency_command = FannedOutSlowCommand(
