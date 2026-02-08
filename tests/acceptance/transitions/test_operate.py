@@ -6,7 +6,6 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-# classifying as fast to balance the total run time across parallel jobs
 @pytest.mark.xfail(
     reason="operate mode event is intermittently not being emitted, needs investigation"
 )

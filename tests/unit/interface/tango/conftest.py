@@ -3,7 +3,6 @@
 from unittest.mock import Mock, patch
 
 import pytest
-import tango
 from ska_control_model import CommunicationStatus, TaskStatus
 from tango.test_context import DeviceTestContext
 
@@ -24,34 +23,19 @@ def dish_manager_resources():
             "ska_mid_dish_manager.component_managers.tango_device_cm."
             "TangoDeviceComponentManager.start_communicating"
         ),
-        patch(
-            "ska_mid_dish_manager.component_managers.wms_cm."
-            "WMSComponentManager.start_communicating"
-        ),
         patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
     ):
-
-        class PatchedDM(DishManager):
-            B5DCDeviceFqdn = tango.server.device_property(
-                dtype=tango.DevVarStringArray, default_value="a/b/c"
-            )
-            WMSDeviceNames = tango.server.device_property(
-                dtype=tango.DevVarStringArray, default_value="a/b/c"
-            )
-
-        tango_context = DeviceTestContext(PatchedDM)
+        tango_context = DeviceTestContext(DishManager)
         tango_context.start()
         device_proxy = tango_context.device
 
-        class_instance = PatchedDM.instances.get(device_proxy.name())
+        class_instance = DishManager.instances.get(device_proxy.name())
         dish_manager_cm = class_instance.component_manager
         ds_cm = dish_manager_cm.sub_component_managers["DS"]
         spf_cm = dish_manager_cm.sub_component_managers["SPF"]
         spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
-        wms_cm = dish_manager_cm.sub_component_managers["WMS"]
-        b5dc_cm = dish_manager_cm.sub_component_managers["B5DC"]
         # trigger communication established on all sub components
-        for com_man in [ds_cm, spf_cm, spfrx_cm, wms_cm, b5dc_cm]:
+        for com_man in [ds_cm, spf_cm, spfrx_cm]:
             com_man._update_communication_state(
                 communication_state=CommunicationStatus.ESTABLISHED
             )

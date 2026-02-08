@@ -35,10 +35,6 @@ class TestDishManagerVersioning:
                 "ska_mid_dish_manager.component_managers.tango_device_cm."
                 "TangoDeviceComponentManager.start_communicating"
             ),
-            patch(
-                "ska_mid_dish_manager.component_managers.wms_cm."
-                "WMSComponentManager.start_communicating"
-            ),
             patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
         ):
 

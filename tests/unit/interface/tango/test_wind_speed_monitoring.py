@@ -42,7 +42,7 @@ def configure_mocks_for_dish_manager():
         tango_context.start()
         device_proxy = tango_context.device
 
-        class_instance = DishManager.instances.get(device_proxy.name())
+        class_instance = PatchedDM.instances.get(device_proxy.name())
         dish_manager_cm = class_instance.component_manager
         wms_cm = dish_manager_cm.sub_component_managers["WMS"]
         wms_cm._update_communication_state(CommunicationStatus.ESTABLISHED)

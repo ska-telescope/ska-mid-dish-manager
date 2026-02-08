@@ -34,7 +34,6 @@ from ska_mid_dish_manager.models.command_class import (
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
-    DEFAULT_B5DC_TRL,
     DEFAULT_DISH_ID,
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
@@ -89,7 +88,8 @@ class DishManager(SKAController):
     DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
-    B5DCDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_B5DC_TRL)
+    # B%DC device is not monitored by default, so default value is empty string
+    B5DCDeviceFqdn = device_property(dtype=str, default_value="")
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
     DefaultWatchdogTimeout = device_property(dtype=float, default_value=DEFAULT_WATCHDOG_TIMEOUT)
     # wms device names (e.g. ska-mid/weather-monitoring/1) to connect to
