@@ -43,7 +43,6 @@ from ska_mid_dish_manager.models.constants import (
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
-    BandInFocus,
     CapabilityStates,
     DishDevice,
     DishMode,
@@ -55,6 +54,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     NoiseDiodeMode,
     PointingState,
     PowerState,
+    SPFBandInFocus,
     SPFCapabilityStates,
     SPFOperatingMode,
     SPFPowerState,
@@ -234,7 +234,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 operatingmode=SPFOperatingMode.UNKNOWN,
                 powerstate=SPFPowerState.UNKNOWN,
                 healthstate=HealthState.UNKNOWN,
-                bandinfocus=BandInFocus.UNKNOWN,
+                bandinfocus=SPFBandInFocus.UNKNOWN,
                 b1capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b2capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b3capabilitystate=SPFCapabilityStates.UNAVAILABLE,
