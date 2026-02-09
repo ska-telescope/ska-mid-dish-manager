@@ -2,11 +2,13 @@
 
 import pytest
 import tango
+from ska_mid_dish_ds_manager.models.dish_enums import (
+    DSOperatingMode,
+    DSPowerState,
+)
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
-    DSOperatingMode,
-    DSPowerState,
     PowerState,
 )
 

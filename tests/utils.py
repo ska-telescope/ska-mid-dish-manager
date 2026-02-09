@@ -12,8 +12,11 @@ import numpy as np
 import tango
 from matplotlib import pyplot as plt
 from ska_control_model import CommunicationStatus
+from ska_mid_dish_ds_manager.models.dish_enums import (
+    PointingState,
+    TrackTableLoadMode,
+)
 
-from ska_mid_dish_manager.models.dish_enums import PointingState, TrackTableLoadMode
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
 MAX_ELEVATION = 85.0

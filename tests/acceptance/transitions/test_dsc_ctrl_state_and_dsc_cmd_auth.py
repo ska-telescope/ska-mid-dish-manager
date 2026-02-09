@@ -2,8 +2,10 @@
 
 import pytest
 import tango
-
-from ska_mid_dish_manager.models.dish_enums import DscCmdAuthType, DscCtrlState
+from ska_mid_dish_ds_manager.models.dish_enums import (
+    DscCmdAuthType,
+    DscCtrlState,
+)
 
 
 @pytest.fixture(autouse=True)

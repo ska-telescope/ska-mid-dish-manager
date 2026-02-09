@@ -5,12 +5,14 @@ from math import pi, sin
 
 import pytest
 import tango
+from ska_mid_dish_ds_manager.models.dish_enums import (
+    PointingState,
+    TrackTableLoadMode,
+)
 from ska_mid_dish_simulators.sim_enums import Band
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
-    PointingState,
-    TrackTableLoadMode,
 )
 from tests.utils import remove_subscriptions, setup_subscriptions
 

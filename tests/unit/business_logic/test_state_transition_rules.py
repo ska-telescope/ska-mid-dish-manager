@@ -2,6 +2,11 @@
 
 import pytest
 from ska_control_model import AdminMode, HealthState
+from ska_mid_dish_ds_manager.models.dish_enums import (
+    DSOperatingMode,
+    DSPowerState,
+    IndexerPosition,
+)
 from ska_mid_dish_simulators.sim_enums import (
     Band,
     SPFBandInFocus,
@@ -15,9 +20,6 @@ from ska_mid_dish_simulators.sim_enums import (
 from ska_mid_dish_manager.models.dish_enums import (
     CapabilityStates,
     DishMode,
-    DSOperatingMode,
-    DSPowerState,
-    IndexerPosition,
     PowerState,
 )
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition

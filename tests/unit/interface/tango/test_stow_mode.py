@@ -2,8 +2,9 @@
 
 import pytest
 import tango
-
-from ska_mid_dish_manager.models.dish_enums import DSOperatingMode
+from ska_mid_dish_ds_manager.models.dish_enums import (
+    DSOperatingMode,
+)
 
 
 @pytest.mark.unit

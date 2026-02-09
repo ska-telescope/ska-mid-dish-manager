@@ -4,15 +4,17 @@ from unittest.mock import Mock, patch
 
 import pytest
 from ska_control_model import CommunicationStatus, TaskStatus
-from tango.test_context import DeviceTestContext
-
-from ska_mid_dish_manager.devices.DishManagerDS import DishManager
-from ska_mid_dish_manager.models.dish_enums import (
+from ska_mid_dish_ds_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
+)
+from ska_mid_dish_simulators.sim_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from tango.test_context import DeviceTestContext
+
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 
 
 @pytest.fixture
