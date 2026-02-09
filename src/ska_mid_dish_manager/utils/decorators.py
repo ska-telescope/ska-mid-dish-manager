@@ -7,6 +7,30 @@ from typing import Any, Callable
 
 from ska_control_model import CommunicationStatus
 
+SLOW_WRITE_WARN_THRESHOLD_SECONDS = 0.5
+
+
+def time_tango_write() -> Callable:
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+            start = time.perf_counter()
+            try:
+                return func(self, *args, **kwargs)
+            finally:
+                # using a timer that is not affected by system clock changes
+                duration = time.perf_counter() - start
+                if duration > SLOW_WRITE_WARN_THRESHOLD_SECONDS:
+                    self.logger.warning(
+                        "SLOW WRITE: %s took %.3f s",
+                        func.__name__,
+                        duration,
+                    )
+
+        return wrapper
+
+    return decorator
+
 
 def record_command(record_mode: bool = False) -> Callable:
     """Return a function that records the 'lastcommandinvoked' and or 'lastcommandedmode'
