@@ -1839,6 +1839,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_h_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
         """Update HPolAttenuation on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set attenuation. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetHPolAttenuation", value)
         if task_status == TaskStatus.FAILED:
@@ -1847,6 +1853,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_v_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
         """Update VPolAttenuation on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set attenuation. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetVPolAttenuation", value)
         if task_status == TaskStatus.FAILED:
@@ -1855,8 +1867,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_frequency(self, value: int) -> Tuple[ResultCode, str]:
         """Update Frequency on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set frequency. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetFrequency", value)
         if task_status == TaskStatus.FAILED:
             return (ResultCode.FAILED, msg)
         return (ResultCode.OK, "Successfully updated Frequency on the B5DC proxy.")
+
+    def _check_b5dc_active(self) -> bool:
+        """Check if B5DC is active based on the current band and configuration."""
+        b5dc_manager = self.sub_component_managers.get("B5DC")
+        if not b5dc_manager:
+            self.logger.info("Monitoring and control not set up for B5DC device.")
+            return False
+        return True
