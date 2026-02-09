@@ -57,7 +57,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "dscCtrlState",
         )
 
-        monitored_attr_names = monitored_attr_names + tuple(DS_ERROR_STATUS_ATTRIBUTES)
+        monitored_attr_names = monitored_attr_names + tuple(DS_ERROR_STATUS_ATTRIBUTES.keys())
 
         super().__init__(
             tango_device_fqdn,

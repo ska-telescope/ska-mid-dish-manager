@@ -34,8 +34,8 @@ from ska_mid_dish_manager.models.command_actions import (
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
-    DSC_MIN_POWER_LIMIT_KW,
     DS_ERROR_STATUS_ATTRIBUTES,
+    DSC_MIN_POWER_LIMIT_KW,
     MAINTENANCE_MODE_ACTIVE_PROPERTY,
     MAINTENANCE_MODE_FALSE_VALUE,
     MAINTENANCE_MODE_TRUE_VALUE,
