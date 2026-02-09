@@ -1,0 +1,20 @@
+# deploy dish-manager with only ds-manager, spfrx and spf sim with default instance 001
+global:
+  minikube: true
+  operator: true
+
+ska-mid-dish-ds-manager:
+  enabled: true
+
+ska-tango-base:
+  enabled: true
+
+ska-mid-dish-simulators:
+  enabled: true
+  deviceServers:
+    spfdevice:
+      enabled: true
+    spfrxdevice:
+      enabled: true
+  dsOpcuaSimulator:
+    enabled: true

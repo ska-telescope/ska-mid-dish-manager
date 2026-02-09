@@ -23,10 +23,6 @@ def dish_manager_resources():
             "ska_mid_dish_manager.component_managers.tango_device_cm."
             "TangoDeviceComponentManager.start_communicating"
         ),
-        patch(
-            "ska_mid_dish_manager.component_managers.wms_cm."
-            "WMSComponentManager.start_communicating"
-        ),
         patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
     ):
         tango_context = DeviceTestContext(DishManager)
@@ -38,10 +34,8 @@ def dish_manager_resources():
         ds_cm = dish_manager_cm.sub_component_managers["DS"]
         spf_cm = dish_manager_cm.sub_component_managers["SPF"]
         spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
-        wms_cm = dish_manager_cm.sub_component_managers["WMS"]
-        b5dc_cm = dish_manager_cm.sub_component_managers["B5DC"]
         # trigger communication established on all sub components
-        for com_man in [ds_cm, spf_cm, spfrx_cm, wms_cm, b5dc_cm]:
+        for com_man in [ds_cm, spf_cm, spfrx_cm]:
             com_man._update_communication_state(
                 communication_state=CommunicationStatus.ESTABLISHED
             )
@@ -61,7 +55,6 @@ def dish_manager_resources():
             setattr(ds_cm, method_name, mock_method)
             setattr(spf_cm, method_name, mock_method)
             setattr(spfrx_cm, method_name, mock_method)
-            setattr(b5dc_cm, method_name, mock_method)
 
         # trigger transition to StandbyLP mode
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY)
