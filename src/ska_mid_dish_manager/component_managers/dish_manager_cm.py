@@ -7,7 +7,7 @@ import threading
 import time
 from functools import partial
 from threading import Lock
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -35,6 +35,7 @@ from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
     DSC_MIN_POWER_LIMIT_KW,
+    DS_ERROR_STATUS_ATTRIBUTES,
     MAINTENANCE_MODE_ACTIVE_PROPERTY,
     MAINTENANCE_MODE_FALSE_VALUE,
     MAINTENANCE_MODE_TRUE_VALUE,
@@ -199,6 +200,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b4lnahpowerstate=False,
             b5alnahpowerstate=False,
             b5blnahpowerstate=False,
+            dscerrorstatuses=self._aggregate_dsc_error_statuses({}),
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -1002,6 +1004,30 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     )
 
                 self._update_component_state(**{attr_lower: new_value})
+
+        # DS error status attributes
+        if any(key.lower() in kwargs for key in DS_ERROR_STATUS_ATTRIBUTES):
+            statuses = self._aggregate_dsc_error_statuses(ds_component_state)
+            self.logger.debug(
+                "Updating dscerrorstatuses with statuses: %s",
+                statuses,
+            )
+            self._update_component_state(dscerrorstatuses=statuses)
+
+    def _aggregate_dsc_error_statuses(self, ds_component_state: dict[str, Any]):
+        """Aggregate any error statuses from the DSC into one string."""
+        active_errors: list[str] = []
+
+        for key, description in DS_ERROR_STATUS_ATTRIBUTES.items():
+            comp_state_key = key.lower()
+            if ds_component_state.get(comp_state_key) is True:
+                active_errors.append(description)
+
+        if active_errors:
+            summary = "; ".join(active_errors)
+        else:
+            summary = "OK"
+        return summary
 
     # ----------------------------------------
     # Command object/ attribute write handlers

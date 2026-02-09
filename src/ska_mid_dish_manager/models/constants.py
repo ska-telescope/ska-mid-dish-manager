@@ -25,3 +25,26 @@ MAX_ELEVATION_SCIENCE = 85.0
 MIN_ELEVATION_SCIENCE = 15.0
 MAX_AZIMUTH = 270.0
 MIN_AZIMUTH = -270.0
+
+DS_ERROR_STATUS_ATTRIBUTES = {
+    "errAuthLost": "The actual control authority is not communicating",
+    "errAzimuth": "Azimuth Axis error",
+    "errCmd": "Command Arbiter error",
+    "errElevation": "Elevation Axis error",
+    "errFeedindexer": "FeedIndexer Axis error",
+    "errGeneral": "General error",
+    "errMngmnt": "Dish Management Controller error",
+    "errPoint": "Pointing Controller error",
+    "errPwr24VDC": "Power error on 24 VDC",
+    "errPwr400VAC": "Power error on 400 VAC",
+    "errPwr600VDC": "Power error on 600 VDC",
+    "errPwrMeterComms": "Comms lost to Power meter",
+    "errSafety": "Safety System Controller error",
+    "errStwPin": "StowPin Controller error",
+    "errTiltOneComms": "Comms lost to Tiltmeter One",
+    "errTiltOneIoUnit": "IO unit error Tiltmeter One",
+    "errTiltTwoComms": "Comms lost to Tiltmeter Two",
+    "errTiltTwoIounit": "IO unit error Tiltmeter Two",
+    "errTime": "Time Controller error",
+    "errTrack": "Tracking Controller error",
+}

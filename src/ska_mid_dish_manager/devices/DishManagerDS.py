@@ -456,6 +456,7 @@ class DishManager(SKAController):
                 "vpolrfpowerout": "vPolRfPowerOut",
                 "rftemperature": "rfTemperature",
                 "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
+                "dscerrorstatuses": "dscErrorStatuses",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -1985,6 +1986,16 @@ class DishManager(SKAController):
     def rfcmPsuPcbTemperature(self):
         """Return the temperature of the RFCM PSU PCB in deg."""
         return self.component_manager.component_state.get("rfcmpsupcbtemperature", 0.0)
+
+    @attribute(
+        dtype=str,
+        access=AttrWriteType.READ,
+        doc="Report the current DSC errors as a comma-delimited list. Reports 'OK' if no errors "
+        "are present.",
+    )
+    def dscErrorStatuses(self):
+        """Return the aggregated error statuses from the DSC."""
+        return self.component_manager.component_state.get("dscerrorstatuses", "")
 
     # --------
     # Commands
