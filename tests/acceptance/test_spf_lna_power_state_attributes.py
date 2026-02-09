@@ -44,10 +44,12 @@ def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DevicePr
     [
         "b1LnaHPowerState",
         "b2LnaHPowerState",
-        "b3LnaHPowerState",
-        "b4LnaHPowerState",
-        "b5aLnaHPowerState",
-        "b5bLnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
     ],
 )
 def test_spf_lna_power_state_rejects_attribute_writes(
@@ -74,10 +76,12 @@ def test_spf_lna_power_state_rejects_attribute_writes(
     [
         ("1", "b1LnaHPowerState"),
         ("2", "b2LnaHPowerState"),
-        ("3", "b3LnaHPowerState"),
-        ("4", "b4LnaHPowerState"),
-        ("5a", "b5aLnaHPowerState"),
-        ("5b", "b5bLnaHPowerState"),
+        ("1", "b1LnaVPowerState"),
+        ("2", "b2LnaVPowerState"),
+        ("3", "b3LnaPowerState"),
+        ("4", "b4LnaPowerState"),
+        ("5a", "b5aLnaPowerState"),
+        ("5b", "b5bLnaPowerState"),
     ],
 )
 def test_spf_lna_power_state_change_on_dishmode_operate(
@@ -118,10 +122,12 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     [
         "b1lnahpowerstate",
         "b2lnahpowerstate",
-        "b3lnahpowerstate",
-        "b4lnahpowerstate",
-        "b5alnahpowerstate",
-        "b5blnahpowerstate",
+        "b1lnavpowerstate",
+        "b2lnavpowerstate",
+        "b3lnapowerstate",
+        "b4lnapowerstate",
+        "b5alnapowerstate",
+        "b5blnapowerstate",
     ],
 )
 def test_spf_lna_power_state_change_on_dishmode_maintainance(

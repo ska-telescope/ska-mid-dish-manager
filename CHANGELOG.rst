@@ -10,6 +10,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added in B5DC component manager.
 - Added in ignoreB5dc attribute to ignore B5DC state and quality changes.
 - Added ska-mid-dcp-lib v0.0.9 to the package dependencies.
+- SPFC b<n>lnapowerstate attributes name fix, attribute naming is aligned to the ICD.
 
 Version 9.2.1
 *************

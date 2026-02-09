@@ -441,10 +441,12 @@ class DishManager(SKAController):
                 "actiontimeoutseconds": "actionTimeoutSeconds",
                 "b1lnahpowerstate": "b1LnaHPowerState",
                 "b2lnahpowerstate": "b2LnaHPowerState",
-                "b3lnahpowerstate": "b3LnaHPowerState",
-                "b4lnahpowerstate": "b4LnaHPowerState",
-                "b5alnahpowerstate": "b5aLnaHPowerState",
-                "b5blnahpowerstate": "b5bLnaHPowerState",
+                "b1lnavpowerstate": "b1LnaVPowerState",
+                "b2lnavpowerstate": "b2LnaVPowerState",
+                "b3lnapowerstate": "b3LnaPowerState",
+                "b4lnapowerstate": "b4LnaPowerState",
+                "b5alnapowerstate": "b5aLnaPowerState",
+                "b5blnapowerstate": "b5bLnaPowerState",
                 "rfcmfrequency": "rfcmFrequency",
                 "rfcmplllock": "rfcmPllLock",
                 "rfcmhattenuation": "rfcmHAttenuation",
@@ -1777,10 +1779,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPFC LNA H polarization power state.",
+        doc="Status of the Band 1 SPFC LNA H polarization power state.",
     )
     def b1LnaHPowerState(self):
-        """Return the SPFC LNA H polarization power state."""
+        """Return the Band 1 SPFC LNA H polarization power state."""
         return self.component_manager.component_state.get("b1lnahpowerstate", False)
 
     @b1LnaHPowerState.write
@@ -1794,10 +1796,10 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPFC LNA H polarization power state.",
+        doc="Status of the Band 2 SPFC LNA H polarization power state.",
     )
     def b2LnaHPowerState(self):
-        """Return the SPFC LNA H polarization power state."""
+        """Return the Band 2 SPFC LNA H polarization power state."""
         return self.component_manager.component_state.get("b2lnahpowerstate", False)
 
     @b2LnaHPowerState.write
@@ -1811,70 +1813,104 @@ class DishManager(SKAController):
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPFC LNA H polarization power state.",
+        doc="Status of the Band 1 SPFC LNA V polarization power state.",
     )
-    def b3LnaHPowerState(self):
-        """Return the SPFC LNA H & V polarization power state."""
-        return self.component_manager.component_state.get("b3lnahpowerstate", False)
+    def b1LnaVPowerState(self):
+        """Return the Band 1 SPFC LNA V polarization power state."""
+        return self.component_manager.component_state.get("b1lnavpowerstate", False)
 
-    @b3LnaHPowerState.write
-    def b3LnaHPowerState(self, value: bool):
-        """Sets b3LnaHPowerState."""
+    @b1LnaVPowerState.write
+    def b1LnaVPowerState(self, value: bool):
+        """Sets b1LnaVPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b3LnaHPowerState to, %s", value)
+        self.logger.debug("Set b1LnaVPowerState to, %s", value)
         self.component_manager.check_dish_mode_for_spfc_lna_power_state()
-        spf_com_man.write_attribute_value("b3LnaHPowerState", value)
+        spf_com_man.write_attribute_value("b1LnaVPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the Band 2 SPFC LNA V polarization power state.",
+    )
+    def b2LnaVPowerState(self):
+        """Return the Band 2 SPFC LNA V polarization power state."""
+        return self.component_manager.component_state.get("b2lnavpowerstate", False)
+
+    @b2LnaVPowerState.write
+    def b2LnaVPowerState(self, value: bool):
+        """Sets b2LnaVPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b2LnaVPowerState to, %s", value)
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
+        spf_com_man.write_attribute_value("b2LnaVPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the Band 3 SPFC LNA polarization power state.",
+    )
+    def b3LnaPowerState(self):
+        """Return the Band 3 SPFC LNA H & V polarization power state."""
+        return self.component_manager.component_state.get("b3lnapowerstate", False)
+
+    @b3LnaPowerState.write
+    def b3LnaPowerState(self, value: bool):
+        """Sets b3LnaPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b3LnaPowerState to, %s", value)
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
+        spf_com_man.write_attribute_value("b3LnaPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the Band 4 SPFC LNA H & V polarization power state.",
+    )
+    def b4LnaPowerState(self):
+        """Return the Band 4 SPFC LNA H & V polarization power state."""
+        return self.component_manager.component_state.get("b4lnapowerstate", False)
+
+    @b4LnaPowerState.write
+    def b4LnaPowerState(self, value: bool):
+        """Sets b4LnaPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b4LnaPowerState to, %s", value)
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
+        spf_com_man.write_attribute_value("b4LnaPowerState", value)
+
+    @attribute(
+        dtype=bool,
+        access=AttrWriteType.READ_WRITE,
+        doc="Status of the Band 5a SPFC LNA H & V polarization power state.",
+    )
+    def b5aLnaPowerState(self):
+        """Return the Band 5a SPFC LNA H polarization power state."""
+        return self.component_manager.component_state.get("b5alnapowerstate", False)
+
+    @b5aLnaPowerState.write
+    def b5aLnaPowerState(self, value: bool):
+        """Sets b5aLnaPowerState."""
+        spf_com_man = self.component_manager.sub_component_managers["SPF"]
+        self.logger.debug("Set b5aLnaPowerState to, %s", value)
+        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
+        spf_com_man.write_attribute_value("b5aLnaPowerState", value)
 
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
         doc="Status of the SPFC LNA H & V polarization power state.",
     )
-    def b4LnaHPowerState(self):
-        """Return the SPFC LNA H polarization power state."""
-        return self.component_manager.component_state.get("b4lnahpowerstate", False)
+    def b5bLnaPowerState(self):
+        """Return the Band 5b SPFC LNA H & V polarization power state."""
+        return self.component_manager.component_state.get("b5blnapowerstate", False)
 
-    @b4LnaHPowerState.write
-    def b4LnaHPowerState(self, value: bool):
-        """Sets b4LnaHPowerState."""
+    @b5bLnaPowerState.write
+    def b5bLnaPowerState(self, value: bool):
+        """Sets b5bLnaPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b4LnaHPowerState to, %s", value)
+        self.logger.debug("Set b5bLnaPowerState to, %s", value)
         self.component_manager.check_dish_mode_for_spfc_lna_power_state()
-        spf_com_man.write_attribute_value("b4LnaHPowerState", value)
-
-    @attribute(
-        dtype=bool,
-        access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPFC LNA H & V polarization power state.",
-    )
-    def b5aLnaHPowerState(self):
-        """Return the SPFC LNA H polarization power state."""
-        return self.component_manager.component_state.get("b5alnahpowerstate", False)
-
-    @b5aLnaHPowerState.write
-    def b5aLnaHPowerState(self, value: bool):
-        """Sets b5aLnaHPowerState."""
-        spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b5aLnaHPowerState to, %s", value)
-        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
-        spf_com_man.write_attribute_value("b5aLnaHPowerState", value)
-
-    @attribute(
-        dtype=bool,
-        access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPFC LNA H & V polarization power state.",
-    )
-    def b5bLnaHPowerState(self):
-        """Return the SPFC LNA H polarization power state."""
-        return self.component_manager.component_state.get("b5blnahpowerstate", False)
-
-    @b5bLnaHPowerState.write
-    def b5bLnaHPowerState(self, value: bool):
-        """Sets b5bLnaHPowerState."""
-        spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b5bLnaHPowerState to, %s", value)
-        self.component_manager.check_dish_mode_for_spfc_lna_power_state()
-        spf_com_man.write_attribute_value("b5bLnaHPowerState", value)
+        spf_com_man.write_attribute_value("b5bLnaPowerState", value)
 
     @attribute(
         dtype=float,
