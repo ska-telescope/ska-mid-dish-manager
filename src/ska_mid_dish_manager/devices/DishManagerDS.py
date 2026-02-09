@@ -15,13 +15,9 @@ from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
 from ska_mid_dish_ds_manager.models.dish_enums import (
-    CapabilityStates,
-    DishDevice,
-    DishMode,
     DscCmdAuthType,
     DscCtrlState,
     PointingState,
-    PowerState,
     TrackProgramMode,
     TrackTableLoadMode,
 )
@@ -59,6 +55,12 @@ from ska_mid_dish_manager.models.constants import (
     DSC_MIN_POWER_LIMIT_KW,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
     WIND_GUST_THRESHOLD_MPS,
+)
+from ska_mid_dish_manager.models.dish_enums import (
+    CapabilityStates,
+    DishDevice,
+    DishMode,
+    PowerState,
 )
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt

@@ -5,12 +5,14 @@ import os
 
 import pytest
 import tango
+from ska_mid_dish_ds_manager.models.dish_enums import (
+    DSOperatingMode,
+    DSPowerState,
+)
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
-    DSOperatingMode,
-    DSPowerState,
 )
 from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup_subscriptions
 
