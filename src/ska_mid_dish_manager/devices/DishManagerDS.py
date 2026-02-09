@@ -2315,8 +2315,8 @@ class DishManager(SKAController):
     def SetOperateMode(self) -> DevVarLongStringArrayType:
         """Deprecated command.
 
-        This command initiates the transition to OPERATE dish mode. This command is retained
-        to allow SKA Dish Proxy to trigger the transition to OPERATE dish mode as an alternative
+        This command initiates the transition to OPERATE dish mode. This command will trigger
+        the transition from STANDBY_FP to OPERATE dish mode as an alternative
         to using the ConfigureBand or ConfigureBand<N> command.
 
         :return: A tuple containing a return code and a string
