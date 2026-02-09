@@ -10,6 +10,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added in B5DC component manager.
 - Added in ignoreB5dc attribute to ignore B5DC state and quality changes.
 - Added ska-mid-dcp-lib v0.0.9 to the package dependencies.
+- Increased pod CPU resource limits to 600m and improved code quality and acceptance test reliability.
+- Upgraded ska-tango-base to v1.4.1
+- Added in a decorator to log the duration of an attribute write.
 
 Version 9.2.1
 *************

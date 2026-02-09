@@ -96,7 +96,7 @@ def test_configure_band_b(
     """Test ConfigureBand."""
     # Just skip the band we already are in
     if expected_band == dish_manager_proxy.configuredBand:
-        return
+        pytest.skip(f"Already in band {expected_band}")
 
     main_event_store = event_store_class()
     result_event_store = event_store_class()
@@ -108,9 +108,6 @@ def test_configure_band_b(
         "longRunningCommandResult": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-
-    main_event_store.clear_queue()
-    status_event_store.clear_queue()
 
     res = dish_manager_proxy.command_inout(band_request, True)
     assert res
@@ -139,10 +136,6 @@ def test_configure_band_b(
     # in the event store.
     for message in expected_progress_updates:
         assert message in events_string
-
-    # Do it again to check result
-    result_event_store.clear_queue()
-    status_event_store.clear_queue()
 
     remove_subscriptions(subscriptions)
 

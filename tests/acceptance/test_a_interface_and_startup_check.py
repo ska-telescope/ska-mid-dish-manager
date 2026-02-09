@@ -25,7 +25,7 @@ SPEC_URLS = {
 
 
 @pytest.mark.acceptance
-def test_ska001_is_available(monitor_tango_servers, reset_dish_to_standby, dish_manager_proxy):
+def test_ska001_is_available(monitor_tango_servers, dish_manager_proxy):
     """Test that SKA001 is available."""
     assert isinstance(dish_manager_proxy.ping(), int)
     assert dish_manager_proxy.State() in [DevState.ON, DevState.ALARM]

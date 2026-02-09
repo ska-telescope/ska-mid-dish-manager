@@ -97,7 +97,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         b5dc_device_fqdn: str,
         action_timeout_s: float,
         *args,
-        wms_device_names: Optional[List[str]] = None,
+        wms_device_names: List[str] = [],
         wind_stow_callback: Optional[Callable] = None,
         command_progress_callback: Optional[Callable] = None,
         **kwargs,
@@ -221,6 +221,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "MeanWindSpeedThreshold": default_mean_wind_speed_threshold,
         }
 
+        configured_wms_devices = list(wms_device_names) or []
+        # filter out empty strings from the list
+        configured_wms_devices = [instance for instance in configured_wms_devices if instance]
+
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
@@ -322,7 +326,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
             ),
             "WMS": WMSComponentManager(
-                list(wms_device_names or []),
+                configured_wms_devices,
                 logger=logger,
                 component_state_callback=self._evaluate_wind_speed_averages,
                 communication_state_callback=partial(

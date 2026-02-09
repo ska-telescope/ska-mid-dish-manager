@@ -205,9 +205,12 @@ class WMSComponentManager(BaseComponentManager):
             self._wind_speed_moving_average_period,
             self._wind_speed_buffer,
         )
-        _mean_wind_speed = sum(ws[1] for ws in self._wind_speed_buffer) / len(
-            self._wind_speed_buffer
-        )
+
+        valid_wind_speeds = [ws[1] for ws in self._wind_speed_buffer if ws[1] is not None]
+        try:
+            _mean_wind_speed = sum(valid_wind_speeds) / len(valid_wind_speeds)
+        except ZeroDivisionError:
+            _mean_wind_speed = 0.0
 
         return _mean_wind_speed
 

@@ -11,12 +11,10 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 @pytest.mark.acceptance
 def test_action_timeout(
-    reset_dish_to_standby,
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
     ds_device_proxy,
-    spf_device_proxy,
     toggle_skip_attributes,
     restore_action_timeout,
 ):
