@@ -72,7 +72,7 @@ k8s-test-runner:
 k8s-test-runner-movement:
   extends: k8s-test-runner
   variables:
-    K8S_TEST_RUNNER_MARK: "acceptance and movement"
+    K8S_TEST_RUNNER_MARK: "movement"
     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
     VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
 
