@@ -18,7 +18,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import calculate_slew_target, remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.transition
 @pytest.mark.acceptance
 def test_abort_commands(
     monitor_tango_servers,
@@ -141,7 +140,6 @@ def track_a_sample(
     yield
 
 
-@pytest.mark.transition
 @pytest.mark.acceptance
 def test_abort_commands_during_track(
     monitor_tango_servers,
@@ -169,7 +167,6 @@ def test_abort_commands_during_track(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.transition
 @pytest.mark.acceptance
 def test_abort_commands_during_slew(
     monitor_tango_servers,
@@ -212,7 +209,6 @@ def test_abort_commands_during_slew(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.transition
 @pytest.mark.acceptance
 def test_abort_commands_during_stow(
     monitor_tango_servers,

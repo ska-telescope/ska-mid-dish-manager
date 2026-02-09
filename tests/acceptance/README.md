@@ -3,8 +3,6 @@
 ### Test Independence
 - Each test runs independently without relying on execution order
 - Devices are automatically reset between transition tests via the `setup_and_teardown` fixture
-- Tests marked with `@pytest.mark.transition` and `@pytest.mark.movement` depend on the `setup_and_teardown` fixture and/or require time to reach the desired state
-- Other tests focus on event verification and attribute read/write operations
 
 ### Shared Resources
 - All tests use the same device proxy client (provided by a package-scoped fixture)

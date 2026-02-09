@@ -19,7 +19,6 @@ REQUESTED_AZIMUTH_VALUE = 100.0
 REQUESTED_ELEVATION_VALUE = 60.0
 
 
-@pytest.mark.transition
 @pytest.mark.acceptance
 def test_maintenance_mode_cmd(
     event_store_class: EventStore,

@@ -99,7 +99,6 @@ markers = [
     "acceptance",
     "stress",
     "track_patterns",
-    "transition",
     "movement",
 ]
 
