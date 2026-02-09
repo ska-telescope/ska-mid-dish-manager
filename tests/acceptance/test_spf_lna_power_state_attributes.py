@@ -23,7 +23,7 @@ def test_spf_lna_power_state_attributes_initial_values(
         h_state_name = f"{powerstate_band}LnaHPowerState"
         v_state_name = f"{powerstate_band}LnaVPowerState"
         assert h_state_name in attributes
-        assert v_state_name in attributes 
+        assert v_state_name in attributes
         assert dish_manager_proxy.read_attribute(h_state_name).value == init_value
         assert dish_manager_proxy.read_attribute(v_state_name).value == init_value
     for powerstate_band in ("b3", "b4", "b5a", "b5b"):
