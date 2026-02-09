@@ -29,7 +29,7 @@ class DSComponentManager(TangoDeviceComponentManager):
         component_state_callback: Optional[Callable] = None,
         **kwargs: Any,
     ):
-        monitored_attr_names = (
+        monitored_attr_names: tuple[str, ...] = (
             "operatingMode",
             "powerState",
             "healthState",
