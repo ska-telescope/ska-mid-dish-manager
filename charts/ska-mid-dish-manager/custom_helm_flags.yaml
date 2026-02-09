@@ -3,6 +3,9 @@ global:
   operator: true
   dishes: ["001", "MKT111"]
 
+ska-tango-base:
+  enabled: true
+
 ska-mid-dish-ds-manager:
   enabled: true
   # Override the image to use a specific version for testing
@@ -13,9 +16,6 @@ ska-mid-dish-ds-manager:
   #     tag: 7.0.4-dev.c1c8d2f3c
   #     pullPolicy: IfNotPresent
 
-ska-tango-base:
-  enabled: true
-
 ska-mid-dish-simulators:
   enabled: true
   deviceServers:
@@ -25,7 +25,6 @@ ska-mid-dish-simulators:
       enabled: true
   dsOpcuaSimulator:
     enabled: true
-
   # Override the image to use a specific version for testing
   # dishsimulators:
   #   image:
