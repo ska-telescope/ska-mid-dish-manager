@@ -1,8 +1,9 @@
 """Test Operate."""
 
 import pytest
+from ska_mid_dish_simulators.sim_enums import Band
 
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 

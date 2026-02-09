@@ -2,16 +2,18 @@
 
 import pytest
 import tango
+from ska_mid_dish_simulators.sim_enums import (
+    Band,
+    SPFBandInFocus,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 
 from ska_mid_dish_manager.models.dish_enums import (
-    Band,
     DishMode,
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
-    SPFBandInFocus,
-    SPFOperatingMode,
-    SPFRxOperatingMode,
 )
 
 

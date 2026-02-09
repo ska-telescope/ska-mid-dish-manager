@@ -5,13 +5,15 @@ from unittest.mock import Mock, patch
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
+from ska_mid_dish_simulators.sim_enums import (
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
-    SPFOperatingMode,
-    SPFRxOperatingMode,
 )
 
 

@@ -14,6 +14,11 @@ from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
+from ska_mid_dish_simulators.sim_enums import (
+    Band,
+    NoiseDiodeMode,
+    TrackInterpolationMode,
+)
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango import AttrQuality, AttrWriteType, DevState, DevULong, DevVarStringArray, DispLevel
@@ -45,16 +50,13 @@ from ska_mid_dish_manager.models.constants import (
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
-    Band,
     CapabilityStates,
     DishDevice,
     DishMode,
     DscCmdAuthType,
     DscCtrlState,
-    NoiseDiodeMode,
     PointingState,
     PowerState,
-    TrackInterpolationMode,
     TrackProgramMode,
     TrackTableLoadMode,
 )

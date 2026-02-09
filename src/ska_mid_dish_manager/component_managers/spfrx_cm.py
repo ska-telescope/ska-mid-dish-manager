@@ -6,9 +6,13 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import AdminMode, HealthState
+from ska_mid_dish_simulators.sim_enums import (
+    Band,
+    SPFRxCapabilityStates,
+    SPFRxOperatingMode,
+)
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
-from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
 
 
 class MonitorPing(threading.Thread):

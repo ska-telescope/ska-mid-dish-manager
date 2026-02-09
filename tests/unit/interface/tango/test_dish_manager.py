@@ -4,12 +4,14 @@ import json
 
 import pytest
 import tango
+from ska_mid_dish_simulators.sim_enums import (
+    SPFOperatingMode,
+)
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
     DSPowerState,
-    SPFOperatingMode,
 )
 
 

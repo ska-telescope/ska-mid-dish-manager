@@ -21,24 +21,6 @@ class DishMode(enum.IntEnum):
     UNKNOWN = 8
 
 
-class SPFOperatingMode(enum.IntEnum):
-    UNKNOWN = 0
-    STARTUP = 1
-    STANDBY_LP = 2
-    OPERATE = 3
-    MAINTENANCE = 4
-    ERROR = 5
-
-
-class SPFRxOperatingMode(enum.IntEnum):
-    # enums are from ICD
-    UNKNOWN = 0
-    STARTUP = 1
-    STANDBY = 2
-    OPERATE = 3
-    CONFIGURE = 4
-
-
 class DSOperatingMode(enum.IntEnum):
     # enums are from dish lmc
     UNKNOWN = 0
@@ -57,18 +39,6 @@ class PointingState(enum.IntEnum):
     UNKNOWN = 4
 
 
-class Band(enum.IntEnum):
-    NONE = 0
-    B1 = 1
-    B2 = 2
-    B3 = 3
-    B4 = 4
-    # pylint: disable=invalid-name
-    B5a = 5
-    B5b = 6
-    UNKNOWN = 7
-
-
 class IndexerPosition(enum.IntEnum):
     OPTICAL = 0
     B1 = 1
@@ -81,21 +51,6 @@ class IndexerPosition(enum.IntEnum):
     MOVING = 8
     UNKNOWN = 9
     ERROR = 10
-
-
-class SPFBandInFocus(enum.IntEnum):
-    UNKNOWN = 0
-    B1 = 1
-    B2 = 2
-    B3 = 3
-    B4 = 4
-    B5a = 5
-    B5b = 6
-
-
-class TrackInterpolationMode(enum.IntEnum):
-    NEWTON = 0
-    SPLINE = 1
 
 
 class TrackProgramMode(enum.IntEnum):
@@ -117,13 +72,6 @@ class PowerState(enum.IntEnum):
     FULL = 2
 
 
-class SPFPowerState(enum.IntEnum):
-    # enums are from ICD
-    UNKNOWN = 0
-    LOW_POWER = 1
-    FULL_POWER = 2
-
-
 class DSPowerState(enum.IntEnum):
     # TODO: Review enumeration, ICD has only 2 enums
     OFF = 0
@@ -140,29 +88,6 @@ class CapabilityStates(enum.IntEnum):
     OPERATE_DEGRADED = 3
     OPERATE_FULL = 4
     UNKNOWN = 5
-
-
-class SPFCapabilityStates(enum.IntEnum):
-    UNAVAILABLE = 0
-    STANDBY = 1
-    OPERATE_DEGRADED = 2
-    OPERATE_FULL = 3
-
-
-class SPFRxCapabilityStates(enum.IntEnum):
-    UNKNOWN = 0
-    UNAVAILABLE = 1
-    STANDBY = 2
-    CONFIGURE = 3
-    OPERATE = 4
-
-
-class NoiseDiodeMode(enum.IntEnum):
-    """SPFRx noise diode mode enums."""
-
-    OFF = 0
-    PERIODIC = 1
-    PSEUDO_RANDOM = 2
 
 
 class DscCmdAuthType(enum.IntEnum):

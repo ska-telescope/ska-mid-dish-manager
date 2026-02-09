@@ -7,6 +7,11 @@ from unittest import mock
 
 import pytest
 from ska_control_model import AdminMode, ResultCode, TaskStatus
+from ska_mid_dish_simulators.sim_enums import (
+    Band,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
@@ -14,13 +19,10 @@ from ska_mid_dish_manager.models.command_actions import (
     TrackLoadStaticOffAction,
 )
 from ska_mid_dish_manager.models.dish_enums import (
-    Band,
     DishMode,
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
-    SPFOperatingMode,
-    SPFRxOperatingMode,
 )
 from tests.utils import MethodCallsStore
 

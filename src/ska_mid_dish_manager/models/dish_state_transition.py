@@ -3,13 +3,15 @@
 from typing import Optional
 
 from ska_control_model import HealthState
+from ska_mid_dish_simulators.sim_enums import (
+    Band,
+    SPFBandInFocus,
+)
 
 from ska_mid_dish_manager.models.dish_enums import (
-    Band,
     CapabilityStates,
     DishMode,
     PowerState,
-    SPFBandInFocus,
 )
 from ska_mid_dish_manager.models.transition_rules import (
     band_focus_rules_all_devices,

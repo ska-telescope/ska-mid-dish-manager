@@ -5,14 +5,14 @@ from threading import Lock
 from typing import Any, Callable, Optional
 
 from ska_control_model import HealthState
-
-from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
-from ska_mid_dish_manager.models.dish_enums import (
+from ska_mid_dish_simulators.sim_enums import (
     SPFBandInFocus,
     SPFCapabilityStates,
     SPFOperatingMode,
     SPFPowerState,
 )
+
+from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 
 
 #  pylint: disable=missing-function-docstring, invalid-name, signature-differs

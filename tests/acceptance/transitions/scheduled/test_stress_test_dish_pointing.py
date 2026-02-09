@@ -6,9 +6,9 @@ import time
 import pytest
 import tango
 from pytest import approx
+from ska_mid_dish_simulators.sim_enums import Band
 
 from ska_mid_dish_manager.models.dish_enums import (
-    Band,
     DishMode,
     PointingState,
     TrackTableLoadMode,

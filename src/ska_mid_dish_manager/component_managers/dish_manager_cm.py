@@ -14,6 +14,17 @@ from ska_control_model import AdminMode, CommunicationStatus, HealthState, Resul
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
+from ska_mid_dish_simulators.sim_enums import (
+    Band,
+    NoiseDiodeMode,
+    SPFBandInFocus,
+    SPFCapabilityStates,
+    SPFOperatingMode,
+    SPFPowerState,
+    SPFRxCapabilityStates,
+    SPFRxOperatingMode,
+    TrackInterpolationMode,
+)
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.b5dc_cm import B5DCComponentManager
@@ -42,7 +53,6 @@ from ska_mid_dish_manager.models.constants import (
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
-    Band,
     CapabilityStates,
     DishDevice,
     DishMode,
@@ -51,16 +61,8 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
-    NoiseDiodeMode,
     PointingState,
     PowerState,
-    SPFBandInFocus,
-    SPFCapabilityStates,
-    SPFOperatingMode,
-    SPFPowerState,
-    SPFRxCapabilityStates,
-    SPFRxOperatingMode,
-    TrackInterpolationMode,
     TrackTableLoadMode,
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel

@@ -7,8 +7,9 @@ from typing import Any
 
 import pytest
 import tango
+from ska_mid_dish_simulators.sim_enums import Band
 
-from ska_mid_dish_manager.models.dish_enums import Band, DishMode
+from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.data import RADIAL_CSV_PATH, SPIRAL_CSV_PATH
 from tests.utils import (
     compare_trajectories,
