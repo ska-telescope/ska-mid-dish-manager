@@ -11,24 +11,30 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    [
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
+    ],
+)
 def test_spf_lna_power_state_attributes_initial_values(
     dish_manager_proxy: tango.DeviceProxy,
+    attribute_name: str,
 ) -> None:
     """Test the spf lna attribute initial values are correct."""
     attr_cb_mapping = {}
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     init_value = False
     attributes = dish_manager_proxy.get_attribute_list()
-    for powerstate_band in ("b1", "b2"):
-        h_state_name = f"{powerstate_band}LnaHPowerState"
-        v_state_name = f"{powerstate_band}LnaVPowerState"
-
-        assert dish_manager_proxy.read_attribute(h_state_name).value == init_value
-        assert dish_manager_proxy.read_attribute(v_state_name).value == init_value
-    for powerstate_band in ("b3", "b4", "b5a", "b5b"):
-        state_name = f"{powerstate_band}LnaPowerState"
-        assert state_name in attributes
-        assert dish_manager_proxy.read_attribute(state_name).value == init_value
+    assert attribute_name in attributes
+    assert dish_manager_proxy.read_attribute(attribute_name).value == init_value
     remove_subscriptions(subscriptions)
 
 
@@ -46,7 +52,9 @@ def test_spf_lna_power_state_attributes_initial_values(
         "b5bLnaPowerState",
     ],
 )
-def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DeviceProxy) -> None:
+def test_spf_lna_power_state_attributes_types(
+    dish_manager_proxy: tango.DeviceProxy, attribute_name: str
+) -> None:
     """Test the spf lna attribute configurations are read and write."""
     attr_cb_mapping = {}
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
