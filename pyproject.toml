@@ -22,7 +22,7 @@ packages = [
 include = [
     { path = 'tests'},
 ]
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.10,<3.13"
 package-mode = false
 
 [tool.poetry.dependencies]
@@ -36,6 +36,8 @@ rule-engine = "3.5.0"
 astropy = ">=6.0.1"
 typing-extensions = ">=4.3.0"
 ska-mid-dish-dcp-lib = "0.0.9"
+ska-mid-dish-ds-manager = { git = "https://gitlab.com/ska-telescope/ska-mid-dish-ds-manager.git", branch = "kar-2094-test-branch-tango-base-update"}
+ska-mid-dish-simulators = { git = "https://gitlab.com/ska-telescope/ska-mid-dish-simulators.git", branch = "kar-2094-test-branch-ska-tango-base-update"}
 
 [project.urls]
 Documentation = "https://developer.skao.int/projects/ska-mid-dish-manager/en/latest/?badge=latest"
