@@ -471,12 +471,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         event consumer thread is removed and recreated.
         """
         self._stop_event_consumer_thread()
-
-        self._event_consumer_thread = threading.Thread(
-            target=self.component_state_event_consumer,
-            name="componentstate.event_consumer_thread",
-        )
-        self._event_consumer_thread.start()
+        with tango.EnsureOmniThread():
+            self._event_consumer_thread = threading.Thread(
+                target=self.component_state_event_consumer,
+                name="componentstate.event_consumer_thread",
+            )
+            self._event_consumer_thread.start()
 
     def get_current_tai_offset_from_dsc_with_manual_fallback(self) -> float:
         """Try and get the TAI offset from the DSManager device.
