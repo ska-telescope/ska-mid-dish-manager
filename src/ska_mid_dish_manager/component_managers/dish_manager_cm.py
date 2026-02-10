@@ -6,6 +6,7 @@ import os
 import threading
 import time
 from functools import partial
+from queue import Empty, Queue
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -41,6 +42,7 @@ from ska_mid_dish_manager.models.constants import (
     MEAN_WIND_SPEED_THRESHOLD_MPS,
     WIND_GUST_THRESHOLD_MPS,
 )
+from ska_mid_dish_manager.models.data_classes import EventDataClass
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
@@ -105,6 +107,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger = logger
         self.tango_device_name = tango_device_name
         self._tango_db_accessor = TangoDbAccessor(logger, tango_device_name)
+        self._component_state_queue = Queue()
+        self._event_consumer_thread: Optional[threading.Thread] = None
         default_watchdog_timeout = kwargs.pop("default_watchdog_timeout", 0.0)
         default_mean_wind_speed_threshold = kwargs.pop(
             "default_mean_wind_speed_threshold", MEAN_WIND_SPEED_THRESHOLD_MPS
@@ -249,7 +253,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_device_communication_state_changed, DishDevice.SPF
                 ),
                 component_state_callback=partial(
-                    self._sub_device_component_state_changed, DishDevice.SPF
+                    self._update_component_state_event_queue, DishDevice.SPF
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
@@ -285,7 +289,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_device_communication_state_changed, DishDevice.DS
                 ),
                 component_state_callback=partial(
-                    self._sub_device_component_state_changed, DishDevice.DS
+                    self._update_component_state_event_queue, DishDevice.DS
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
@@ -317,7 +321,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_device_communication_state_changed, DishDevice.SPFRX
                 ),
                 component_state_callback=partial(
-                    self._sub_device_component_state_changed, DishDevice.SPFRX
+                    self._update_component_state_event_queue, DishDevice.SPFRX
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
@@ -356,7 +360,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_device_communication_state_changed, DishDevice.B5DC
                 ),
                 component_state_callback=partial(
-                    self._sub_device_component_state_changed, DishDevice.B5DC
+                    self._update_component_state_event_queue, DishDevice.B5DC
                 ),
             )
 
@@ -441,6 +445,39 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # --------------
     # Helper methods
     # --------------
+    def component_state_event_consumer(self):
+        """Consume the component state change events from the queue and push events."""
+        while not self._stop_event.is_set():
+            try:
+                event_data = self._component_state_queue.get(timeout=0.1)
+                device = event_data.device
+                new_sub_component_state = event_data.component_state
+                self._sub_device_component_state_changed(device, **new_sub_component_state)
+            except Empty:
+                continue
+            except Exception as err:
+                self.logger.error("Error in component state event consumer: %s", err)
+
+    def _stop_event_consumer_thread(self) -> None:
+        """Stop the event consumer thread if it is alive."""
+        if self._event_consumer_thread is not None and self._event_consumer_thread.is_alive():
+            self._event_consumer_thread.join()
+            self._component_state_queue = Queue()
+
+    def _start_event_consumer_thread(self) -> None:
+        """Start the event consumer thread.
+
+        This method is idempotent. When called the existing (if any)
+        event consumer thread is removed and recreated.
+        """
+        self._stop_event_consumer_thread()
+
+        self._event_consumer_thread = threading.Thread(
+            target=self.component_state_event_consumer,
+            name="componentstate.event_consumer_thread",
+        )
+        self._event_consumer_thread.start()
+
     def get_current_tai_offset_from_dsc_with_manual_fallback(self) -> float:
         """Try and get the TAI offset from the DSManager device.
         Or calulate it manually if that fails.
@@ -661,6 +698,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # Callbacks
     # ---------
 
+    def _update_component_state_event_queue(self, device, **new_sub_component_state):
+        """Push the event data to the change event queue."""
+        event_data = EventDataClass(device, new_sub_component_state)
+        self._component_state_queue.put(event_data)
+
     def _update_connection_state_attribute(
         self, device: str, connection_state: CommunicationStatus
     ):
@@ -709,9 +751,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug(
             "Communication state changed on %s device: %s.", device.name, communication_state
         )
-
-        # report the communication state of the sub device on the connectionState attribute
-        self._update_connection_state_attribute(device.name, communication_state)
+        self._update_component_state_event_queue(device, communicationstate=communication_state)
 
         active_sub_component_managers = self.get_active_sub_component_managers()
         sub_devices_communication_states = [
@@ -762,6 +802,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if "buildstate" in kwargs:
             self._build_state_callback(device, kwargs["buildstate"])
+
+        if "communicationstate" in kwargs:
+            self._update_connection_state_attribute(device.name, kwargs["communicationstate"])
 
         current_dish_mode = self.component_state["dishmode"]
         # Update dishMode if there are operatingmode, indexerposition or adminmode changes
@@ -1022,6 +1065,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if not self.is_device_ignored(device_name):
                     component_manager.start_communicating()
 
+        self._start_event_consumer_thread()
+
     def stop_communicating(self):
         """Disconnect from monitored devices and stop watchdog timer."""
         # Disable watchdog timer
@@ -1035,6 +1080,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if self.sub_component_managers:
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
+
+        self._stop_event_consumer_thread()
 
     def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPF device ignored boolean and update device communication."""
