@@ -231,7 +231,9 @@
       dtype_out: DevVarLongStringArray
     - name: SetOperateMode
       disp_level: OPERATOR
-      doc_in: Uninitialised
+      doc_in: 'SetOperateMode is a deprecated command, it is recommended to use ConfigureBand
+        or ConfigureBand<N> command instead to trigger the transition to OPERATE dish
+        mode. '
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
@@ -2610,5 +2612,5 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: __SubDevices
+    - name: WindGustThreshold
 

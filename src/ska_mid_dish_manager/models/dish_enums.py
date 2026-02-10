@@ -83,15 +83,6 @@ class IndexerPosition(enum.IntEnum):
     ERROR = 10
 
 
-class BandInFocus(enum.IntEnum):
-    UNKNOWN = 0
-    B1 = 1
-    B2 = 2
-    B3 = 3
-    B4 = 4
-    B5 = 5
-
-
 class SPFBandInFocus(enum.IntEnum):
     UNKNOWN = 0
     B1 = 1

@@ -5,11 +5,11 @@ import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
-    BandInFocus,
     DishMode,
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
+    SPFBandInFocus,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -67,7 +67,7 @@ def test_last_commanded_mode_attr_records_mode_transition_requests(
     device_proxy.SetOperateMode()
     # Set configuredBand and try again
     ds_cm._update_component_state(indexerposition=IndexerPosition.B1)
-    spf_cm._update_component_state(bandinfocus=BandInFocus.B1)
+    spf_cm._update_component_state(bandinfocus=SPFBandInFocus.B1)
     spfrx_cm._update_component_state(configuredband=Band.B1)
     # spfrx operating mode transitions to OPERATE after successful band configuration
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)

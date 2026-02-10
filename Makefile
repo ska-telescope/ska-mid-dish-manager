@@ -5,10 +5,6 @@ NAME=ska-mid-dish-manager
 VERSION=$(shell grep -e "^version = s*" pyproject.toml | cut -d = -f 2 | xargs)
 TANGO_HOST ?= tango-databaseds:10000  ## TANGO_HOST connection to the Tango DS
 CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
-# values.yaml shall be used as the default and variables can be overridden by the user
-# by defining them in the custom_helm_flags.yaml file
-VALUES_FILE ?= charts/ska-mid-dish-manager/custom_helm_flags.yaml
-KUBE_NAMESPACE=ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)
 
 -include .make/base.mk
 
@@ -28,8 +24,6 @@ PYTHON_LINE_LENGTH = 99
 PYTHON_VARS_BEFORE_PYTEST ?= PYTHONPATH=.:./src \
 							 TANGO_HOST=$(TANGO_HOST)
 PYTHON_VARS_AFTER_PYTEST ?= -m '$(MARK)' --json-report --json-report-file=build/report.json --junitxml=build/report.xml --event-storage-files-path="build/events" --pointing-files-path=build/pointing
-
-K8S_TEST_RUNNER_MARK ?= acceptance
 
 python-test: MARK = unit and (not forked)
 k8s-test-runner: MARK = $(K8S_TEST_RUNNER_MARK)

@@ -1,5 +1,6 @@
 """Tests dish manager component manager configureband command handler."""
 
+import logging
 from unittest.mock import Mock, patch
 
 import pytest
@@ -10,6 +11,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DSOperatingMode,
     IndexerPosition,
+    SPFBandInFocus,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -58,7 +60,8 @@ def test_configureband_handler(
 
     # check that the component state reports the requested command
     component_manager.sub_component_managers["SPF"]._update_component_state(
-        operatingmode=SPFOperatingMode.OPERATE
+        bandinfocus=SPFBandInFocus.B2,
+        operatingmode=SPFOperatingMode.OPERATE,
     )
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
         configuredband=Band.B2, operatingmode=SPFRxOperatingMode.OPERATE
@@ -66,7 +69,6 @@ def test_configureband_handler(
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B2, operatingmode=DSOperatingMode.POINT
     )
-    # component_manager._update_component_state(configuredband=Band.B2)
     component_state_cb.wait_for_value("configuredband", Band.B2)
 
     # wait a bit for the lrc updates to come through
@@ -459,7 +461,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         "Awaiting DS indexerposition change to B5b",
         "Awaiting SPFRX configuredband change to B5b",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
-        "B5DC.SetFrequency ignored",
+        "B5DC device is disabled. B5DC.SetFrequency ignored",
         "Awaiting configuredband change to B5b",
     ]
     progress_cb = callbacks["progress_cb"]
@@ -560,3 +562,61 @@ def test_configureband_invalid_receiver_band(
     )
     assert status == TaskStatus.FAILED
     assert "Invalid receiver band in JSON." in response
+
+
+@pytest.mark.unit
+@patch(
+    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
+    Mock(return_value=True),
+)
+def test_configureband_without_b5dc_component_manager(
+    caplog: pytest.LogCaptureFixture,
+    component_manager: DishManagerComponentManager,
+    callbacks: dict,
+) -> None:
+    """Verify behaviour when B5DC component manager is not present.
+
+    This test ensures that when the B5DC component manager is absent,
+    the ConfigureBand command still succeeds and a message is emitted
+    indicating that B5DC operations are skipped.
+
+    :param component_manager: the component manager under test
+    :param callbacks: a dictionary of mocks, passed as callbacks to
+        the command tracker under test
+    """
+    caplog.set_level(logging.DEBUG, logger=component_manager.logger.name)
+    # kill all attribute monitoring threads on the b5dc component
+    # manager to avoid thread check errors on session finish check
+    component_manager.set_b5dc_device_ignored(True, sync=False)
+    # remove the b5dc component manager to simulate it not being present
+    component_manager.sub_component_managers.pop("B5DC")
+
+    # attempt to set ignored state on b5dc and check log message is emitted
+    component_manager.set_b5dc_device_ignored(False, sync=False)
+    set_b5dc_device_ignored_log_message = "B5DC device is not monitored, cannot set ignored state."
+    assert set_b5dc_device_ignored_log_message in caplog.text
+
+    # attempt to configure band 5b with sub-band and check that the
+    # expected log message about skipping B5DC configuration is emitted
+    configure_json = """
+    {
+        "dish": {
+            "receiver_band": "5b",
+            "sub_band": "1",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ] }
+    }"""
+    component_manager.configure_band_with_json(configure_json, callbacks["task_cb"])
+
+    component_state_cb = callbacks["comp_state_cb"]
+    # wait a bit for the log message to come through
+    component_state_cb.get_queue_values(timeout=1)
+
+    assert (
+        "Monitoring and control not set up for B5DC device, skipping frequency configuration."
+        in caplog.text
+    )

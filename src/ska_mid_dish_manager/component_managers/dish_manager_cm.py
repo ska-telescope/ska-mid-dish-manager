@@ -24,6 +24,7 @@ from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
     SetMaintenanceModeAction,
+    SetOperateModeAction,
     SetStandbyFPModeAction,
     SetStandbyLPModeAction,
     SlewAction,
@@ -44,7 +45,6 @@ from ska_mid_dish_manager.models.constants import (
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
-    BandInFocus,
     CapabilityStates,
     DishDevice,
     DishMode,
@@ -56,6 +56,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     NoiseDiodeMode,
     PointingState,
     PowerState,
+    SPFBandInFocus,
     SPFCapabilityStates,
     SPFOperatingMode,
     SPFPowerState,
@@ -120,6 +121,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Initialising dish manager dishMode with %s.", DishMode.MAINTENANCE)
             default_dish_mode = DishMode.MAINTENANCE
 
+        # clean up WMSDeviceNames
+        configured_wms_devices = list(wms_device_names) or []
+        # filter out empty strings from the list
+        configured_wms_devices = [instance for instance in configured_wms_devices if instance]
+
         super().__init__(
             logger,
             *args,
@@ -134,11 +140,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b4capabilitystate=CapabilityStates.UNKNOWN,
             b5acapabilitystate=CapabilityStates.UNKNOWN,
             b5bcapabilitystate=CapabilityStates.UNKNOWN,
-            spfconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
-            spfrxconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
-            dsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
-            wmsconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
-            b5dcconnectionstate=CommunicationStatus.NOT_ESTABLISHED,
+            spfconnectionstate=CommunicationStatus.DISABLED,
+            spfrxconnectionstate=CommunicationStatus.DISABLED,
+            dsconnectionstate=CommunicationStatus.DISABLED,
+            wmsconnectionstate=CommunicationStatus.DISABLED,
+            b5dcconnectionstate=CommunicationStatus.DISABLED,
             band0pointingmodelparams=[],
             band1pointingmodelparams=[],
             band2pointingmodelparams=[],
@@ -222,10 +228,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "MeanWindSpeedThreshold": default_mean_wind_speed_threshold,
         }
 
-        configured_wms_devices = list(wms_device_names) or []
-        # filter out empty strings from the list
-        configured_wms_devices = [instance for instance in configured_wms_devices if instance]
-
         # SPF has to go first
         self.sub_component_managers = {
             "SPF": SPFComponentManager(
@@ -235,7 +237,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 operatingmode=SPFOperatingMode.UNKNOWN,
                 powerstate=SPFPowerState.UNKNOWN,
                 healthstate=HealthState.UNKNOWN,
-                bandinfocus=BandInFocus.UNKNOWN,
+                bandinfocus=SPFBandInFocus.UNKNOWN,
                 b1capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b2capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b3capabilitystate=SPFCapabilityStates.UNAVAILABLE,
@@ -326,7 +328,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ),
                 quality_state_callback=self._quality_state_callback,
             ),
-            "WMS": WMSComponentManager(
+        }
+
+        # Enable WMS
+        if configured_wms_devices:
+            self.sub_component_managers["WMS"] = WMSComponentManager(
                 configured_wms_devices,
                 logger=logger,
                 component_state_callback=self._evaluate_wind_speed_averages,
@@ -336,8 +342,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 state_update_lock=self._state_update_lock,
                 meanwindspeed=-1,
                 windgust=-1,
-            ),
-            "B5DC": B5DCComponentManager(
+            )
+
+        # Enable B5DC
+        if b5dc_device_fqdn:
+            self.sub_component_managers["B5DC"] = B5DCComponentManager(
                 b5dc_device_fqdn,
                 logger=logger,
                 state_update_lock=self._state_update_lock,
@@ -358,8 +367,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 component_state_callback=partial(
                     self._sub_device_component_state_changed, DishDevice.B5DC
                 ),
-            ),
-        }
+            )
 
         self.direct_mapped_attrs = {
             "DS": [
@@ -501,8 +509,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if not self.is_device_ignored("SPFRX"):
             active_component_managers["SPFRX"] = self.sub_component_managers["SPFRX"]
-        if not self.is_device_ignored("B5DC"):
-            active_component_managers["B5DC"] = self.sub_component_managers["B5DC"]
+        if "B5DC" in self.sub_component_managers:
+            if not self.is_device_ignored("B5DC"):
+                active_component_managers["B5DC"] = self.sub_component_managers["B5DC"]
+
         return active_component_managers
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
@@ -1065,8 +1075,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Setting ignore SPF device as %s", ignored)
             self._update_component_state(ignorespf=ignored)
             if ignored:
-                if "SPF" in self.sub_component_managers:
-                    self.sub_component_managers["SPF"].stop_communicating()
+                self.sub_component_managers["SPF"].stop_communicating()
             else:
                 self.sub_component_managers["SPF"].start_communicating()
 
@@ -1079,8 +1088,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Setting ignore SPFRx device as %s", ignored)
             self._update_component_state(ignorespfrx=ignored)
             if ignored:
-                if "SPFRX" in self.sub_component_managers:
-                    self.sub_component_managers["SPFRX"].stop_communicating()
+                self.sub_component_managers["SPFRX"].stop_communicating()
             else:
                 self.sub_component_managers["SPFRX"].start_communicating()
 
@@ -1089,12 +1097,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_b5dc_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the B5DC device ignored boolean and update device communication."""
+        if "B5DC" not in self.sub_component_managers:
+            self.logger.debug("B5DC device is not monitored, cannot set ignored state.")
+            return
+
         if ignored != self.component_state["ignoreb5dc"]:
             self.logger.debug("Setting ignore B5DC device as %s", ignored)
             self._update_component_state(ignoreb5dc=ignored)
+
             if ignored:
-                if "B5DC" in self.sub_component_managers:
-                    self.sub_component_managers["B5DC"].stop_communicating()
+                self.sub_component_managers["B5DC"].stop_communicating()
             else:
                 self.sub_component_managers["B5DC"].start_communicating()
 
@@ -1265,6 +1277,38 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status, response = self.submit_task(
             TrackStopAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_track_stop_cmd_allowed,
+            task_callback=task_callback,
+        )
+        return status, response
+
+    @check_communicating
+    def set_operate_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        """Fanout commands to subdevices to set operate mode.
+
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :return: Result status and message
+        :rtype: Tuple[TaskStatus, str]
+        """
+
+        def _is_set_operate_cmd_allowed():
+            if self.component_state["dishmode"] != DishMode.STANDBY_FP:
+                msg = (
+                    "Set operate mode command rejected for current dishMode. "
+                    "Set operate mode command is allowed for dishMode STANDBY_FP"
+                )
+                report_task_progress(msg, self._command_progress_callback)
+                return False
+            return True
+
+        status, response = self.submit_task(
+            SetOperateModeAction(
+                self.logger,
+                self,
+            ).execute,
+            is_cmd_allowed=_is_set_operate_cmd_allowed,
             task_callback=task_callback,
         )
         return status, response
@@ -1821,6 +1865,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_h_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
         """Update HPolAttenuation on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set attenuation. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetHPolAttenuation", value)
         if task_status == TaskStatus.FAILED:
@@ -1829,6 +1879,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_v_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
         """Update VPolAttenuation on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set attenuation. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetVPolAttenuation", value)
         if task_status == TaskStatus.FAILED:
@@ -1837,8 +1893,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_frequency(self, value: int) -> Tuple[ResultCode, str]:
         """Update Frequency on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set frequency. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetFrequency", value)
         if task_status == TaskStatus.FAILED:
             return (ResultCode.FAILED, msg)
         return (ResultCode.OK, "Successfully updated Frequency on the B5DC proxy.")
+
+    def _check_b5dc_active(self) -> bool:
+        """Check if B5DC is active based on the current band and configuration."""
+        b5dc_manager = self.sub_component_managers.get("B5DC")
+        if not b5dc_manager:
+            self.logger.info("Monitoring and control not set up for B5DC device.")
+            return False
+        return True

@@ -83,7 +83,7 @@ dishmanager:
     # Wind gust in m/s
     WindGustThreshold: "16.9"
   
-  b5dcproxy: 
+  b5dcproxy:
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "b5dc-manager"

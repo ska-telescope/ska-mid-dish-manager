@@ -810,21 +810,28 @@ class ConfigureBandAction(Action):
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
-            if receiver_band == "5b":
-                b5dc_freq_enum = B5dcFrequency(int(sub_band))
 
-                b5dc_set_frequency_command = FannedOutSlowCommand(
-                    logger=self.logger,
-                    device="B5DC",
-                    command_name="SetFrequency",
-                    device_component_manager=self.dish_manager_cm.sub_component_managers["B5DC"],
-                    command_argument=b5dc_freq_enum,
-                    awaited_component_state={
-                        "rfcmfrequency": b5dc_freq_enum.frequency_value_ghz()
-                    },
-                    progress_callback=self._progress_callback,
-                    is_device_ignored=self.dish_manager_cm.is_device_ignored("B5DC"),
-                )
+            if receiver_band == "5b":
+                b5dc_manager = self.dish_manager_cm.sub_component_managers.get("B5DC")
+                if not b5dc_manager:
+                    self.logger.info(
+                        "Monitoring and control not set up for B5DC device,"
+                        " skipping frequency configuration."
+                    )
+                else:
+                    b5dc_freq_enum = B5dcFrequency(int(sub_band))
+                    b5dc_set_frequency_command = FannedOutSlowCommand(
+                        logger=self.logger,
+                        device="B5DC",
+                        command_name="SetFrequency",
+                        device_component_manager=b5dc_manager,
+                        command_argument=b5dc_freq_enum,
+                        awaited_component_state={
+                            "rfcmfrequency": b5dc_freq_enum.frequency_value_ghz()
+                        },
+                        progress_callback=self._progress_callback,
+                        is_device_ignored=self.dish_manager_cm.is_device_ignored("B5DC"),
+                    )
         else:
             spfrx_configure_band_command = FannedOutSlowCommand(
                 logger=self.logger,
