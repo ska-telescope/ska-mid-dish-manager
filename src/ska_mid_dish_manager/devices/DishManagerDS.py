@@ -162,6 +162,7 @@ class DishManager(SKAController):
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
             ("EndScan", "end_scan"),
+            ("SetOperateMode", "set_operate_mode"),
         ]:
             self.register_command_object(
                 command_name,
@@ -2344,28 +2345,25 @@ class DishManager(SKAController):
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @command(
         dtype_in=None,
+        doc_in="SetOperateMode is a deprecated command, it is recommended to use ConfigureBand "
+        "or ConfigureBand<N> command instead to trigger the transition to OPERATE dish mode. ",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
     def SetOperateMode(self) -> DevVarLongStringArrayType:
         """Deprecated command.
 
-        This command was previously used to trigger the Dish to transition to the OPERATE Dish
-        Element Mode, however, this command has now been deprecated. To transition to OPERATE dish
-        mode the ConfigureBand<N> command should be used to configure a band, this will
-        automatically transition to OPERATE dish mode on successfull configuration.
+        This command initiates the transition to OPERATE dish mode. This command will trigger
+        the transition from STANDBY_FP to OPERATE dish mode as an alternative
+        to using the ConfigureBand or ConfigureBand<N> command.
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        return (
-            [ResultCode.REJECTED],
-            [
-                "SetOperateMode command is deprecated. To transition to OPERATE dish mode use the"
-                " ConfigureBand<N> command to configure a band, this will automatically transition"
-                " to OPERATE dish mode on successfull configuration."
-            ],
-        )
+        handler = self.get_command_object("SetOperateMode")
+
+        result_code, unique_id = handler()
+        return ([result_code], [unique_id])
 
     @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)

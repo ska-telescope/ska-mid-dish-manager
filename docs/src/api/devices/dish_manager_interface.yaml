@@ -231,7 +231,9 @@
       dtype_out: DevVarLongStringArray
     - name: SetOperateMode
       disp_level: OPERATOR
-      doc_in: Uninitialised
+      doc_in: 'SetOperateMode is a deprecated command, it is recommended to use ConfigureBand
+        or ConfigureBand<N> command instead to trigger the transition to OPERATE dish
+        mode. '
       doc_out: Uninitialised
       dtype_in: DevVoid
       dtype_out: DevVarLongStringArray
@@ -2151,14 +2153,14 @@
       description: "Timestamp of i-th coordinate in table (max 1000 coordinates) given\
         \ in milliseconds since TAI epoch, representing time at which Dish should\
         \ track i-th coordinate.\n Azimuth of i-th coordinate in table (max 1000 points)\
-        \ given in degrees.\n Elevation of i-th coordinate in table (max 1000 points)\
+        \ given in degrees.\n Elevation of i-th coordinate in table (max points coordinates)\
         \ given in degrees"
       disp_level: OPERATOR
       display_unit: No display unit
       format: '%6.2f'
       label: programTrackTable
       max_alarm: Not specified
-      max_dim_x: 150
+      max_dim_x: 3000
       max_value: Not specified
       min_alarm: Not specified
       min_value: Not specified
@@ -2629,7 +2631,5 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: WMSDeviceNames
     - name: WindGustThreshold
     - name: __SubDevices
-
