@@ -38,12 +38,11 @@ class TangoDeviceComponentManager(BaseComponentManager):
             attr.lower() for attr in quality_monitored_attributes
         )
         self._active_attr_event_subscriptions: set[str] = set()
-        self.logger = logger
         self._dp_factory_signal: Event = Event()
         self._event_consumer_thread: Optional[Thread] = None
         self._event_consumer_abort_event: Optional[Event] = None
 
-        self._device_proxy_factory = DeviceProxyManager(self.logger, self._dp_factory_signal)
+        self._device_proxy_factory = DeviceProxyManager(logger, self._dp_factory_signal)
         self._tango_device_monitor = TangoDeviceMonitor(
             self._tango_device_fqdn,
             self._device_proxy_factory,

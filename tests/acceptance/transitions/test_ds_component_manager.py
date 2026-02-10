@@ -1,7 +1,6 @@
 """Test DS component manager."""
 
 import logging
-from threading import Lock
 
 import pytest
 import tango
@@ -15,11 +14,9 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.acceptance
 def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates."""
-    state_update_lock = Lock()
     com_man = DSComponentManager(
         ds_device_fqdn,
         LOGGER,
-        state_update_lock,
         component_state_callback=component_state_store,
     )
     try:

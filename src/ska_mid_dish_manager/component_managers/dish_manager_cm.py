@@ -6,7 +6,6 @@ import os
 import threading
 import time
 from functools import partial
-from threading import Lock
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tango
@@ -214,7 +213,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
-        self._state_update_lock = Lock()
         self._stop_event = threading.Event()
         self.watchdog_timer = WatchdogTimer(
             callback_on_timeout=self._stow_on_watchdog_expiry,
@@ -231,7 +229,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "SPF": SPFComponentManager(
                 spf_device_fqdn,
                 logger,
-                self._state_update_lock,
                 operatingmode=SPFOperatingMode.UNKNOWN,
                 powerstate=SPFPowerState.UNKNOWN,
                 healthstate=HealthState.UNKNOWN,
@@ -259,7 +256,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "DS": DSComponentManager(
                 ds_device_fqdn,
                 logger,
-                self._state_update_lock,
                 healthstate=HealthState.UNKNOWN,
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=PointingState.UNKNOWN,
@@ -296,7 +292,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
                 logger,
-                self._state_update_lock,
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
                 datafibercheck=False,  # Maps to Dish Managers "capturing" attribute
@@ -337,7 +332,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 communication_state_callback=partial(
                     self._update_connection_state_attribute, DishDevice.WMS
                 ),
-                state_update_lock=self._state_update_lock,
                 meanwindspeed=-1,
                 windgust=-1,
             )
@@ -347,7 +341,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.sub_component_managers["B5DC"] = B5DCComponentManager(
                 b5dc_device_fqdn,
                 logger=logger,
-                state_update_lock=self._state_update_lock,
                 rfcmHAttenuation=0.0,
                 rfcmVAttenuation=0.0,
                 rfcmPllLock=B5dcPllState.NOT_LOCKED,

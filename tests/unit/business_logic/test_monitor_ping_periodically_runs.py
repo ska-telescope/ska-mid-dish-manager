@@ -20,11 +20,9 @@ def test_monitor_ping_is_executed_on_spfrx_while_communication_is_sought(patch_t
     """
     caplog.set_level(logging.DEBUG)
 
-    state_lock = threading.Lock()
     spfrx_cm = SPFRxComponentManager(
         "a/b/c",
         LOGGER,
-        state_lock,
     )
 
     # set up more mocks
