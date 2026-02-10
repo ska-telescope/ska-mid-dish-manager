@@ -24,6 +24,7 @@ from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
     SetMaintenanceModeAction,
+    SetOperateModeAction,
     SetStandbyFPModeAction,
     SetStandbyLPModeAction,
     SlewAction,
@@ -1255,6 +1256,38 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     @check_communicating
+    def set_operate_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        """Fanout commands to subdevices to set operate mode.
+
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :return: Result status and message
+        :rtype: Tuple[TaskStatus, str]
+        """
+
+        def _is_set_operate_cmd_allowed():
+            if self.component_state["dishmode"] != DishMode.STANDBY_FP:
+                msg = (
+                    "Set operate mode command rejected for current dishMode. "
+                    "Set operate mode command is allowed for dishMode STANDBY_FP"
+                )
+                report_task_progress(msg, self._command_progress_callback)
+                return False
+            return True
+
+        status, response = self.submit_task(
+            SetOperateModeAction(
+                self.logger,
+                self,
+            ).execute,
+            is_cmd_allowed=_is_set_operate_cmd_allowed,
+            task_callback=task_callback,
+        )
+        return status, response
+
+    @check_communicating
     def configure_band_cmd(
         self, band: Band, synchronise: bool, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1806,6 +1839,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_h_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
         """Update HPolAttenuation on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set attenuation. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetHPolAttenuation", value)
         if task_status == TaskStatus.FAILED:
@@ -1814,6 +1853,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_v_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
         """Update VPolAttenuation on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set attenuation. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetVPolAttenuation", value)
         if task_status == TaskStatus.FAILED:
@@ -1822,8 +1867,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_frequency(self, value: int) -> Tuple[ResultCode, str]:
         """Update Frequency on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set frequency. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetFrequency", value)
         if task_status == TaskStatus.FAILED:
             return (ResultCode.FAILED, msg)
         return (ResultCode.OK, "Successfully updated Frequency on the B5DC proxy.")
+
+    def _check_b5dc_active(self) -> bool:
+        """Check if B5DC is active based on the current band and configuration."""
+        b5dc_manager = self.sub_component_managers.get("B5DC")
+        if not b5dc_manager:
+            self.logger.info("Monitoring and control not set up for B5DC device.")
+            return False
+        return True
