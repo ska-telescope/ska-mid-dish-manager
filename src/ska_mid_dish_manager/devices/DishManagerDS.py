@@ -18,7 +18,6 @@ from ska_mid_dish_ds_manager.models.dish_enums import (
     DscCmdAuthType,
     DscCtrlState,
     PointingState,
-    TrackProgramMode,
     TrackTableLoadMode,
 )
 from ska_mid_dish_simulators.sim_enums import (
@@ -61,6 +60,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishDevice,
     DishMode,
     PowerState,
+    TrackProgramMode,
 )
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt

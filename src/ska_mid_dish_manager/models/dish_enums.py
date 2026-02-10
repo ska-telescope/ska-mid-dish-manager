@@ -46,3 +46,9 @@ class FannedOutCommandStatus(enum.IntEnum):
     TIMED_OUT = 3
     FAILED = 4
     IGNORED = 5
+
+
+class TrackProgramMode(enum.IntEnum):
+    TABLEA = 0
+    TABLEB = 1
+    POLY = 2
