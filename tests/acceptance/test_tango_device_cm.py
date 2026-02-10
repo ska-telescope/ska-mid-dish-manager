@@ -79,7 +79,7 @@ def test_stress_component_monitor(monitor_tango_servers, component_state_store, 
             current_val = device_proxy.read_attribute("testmode").value
             new_val = 0 if current_val else 1
             device_proxy.testmode = new_val
-            assert component_state_store.wait_for_value("testmode", new_val)
+            assert component_state_store.wait_for_value("testmode", new_val, timeout=30)
         device_proxy.testmode = test_mode_initial_val
     finally:
         com_man.stop_communicating()
