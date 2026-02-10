@@ -40,6 +40,7 @@ from ska_mid_dish_manager.models.constants import (
     MAINTENANCE_MODE_FALSE_VALUE,
     MAINTENANCE_MODE_TRUE_VALUE,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
+    TIME_BETWEEN_EVENT_PROCESSING_S,
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.data_classes import EventDataClass
@@ -457,8 +458,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 continue
             except Exception as err:
                 self.logger.error("Error in component state event consumer: %s", err)
-            # TIME_BETWEEN_EVENT_PROCESSING_S = 0.1
-            # self._stop_event.wait(TIME_BETWEEN_EVENT_PROCESSING_S)
+            self._stop_event.wait(TIME_BETWEEN_EVENT_PROCESSING_S)
 
     def _stop_event_consumer_thread(self) -> None:
         """Stop the event consumer thread if it is alive."""
