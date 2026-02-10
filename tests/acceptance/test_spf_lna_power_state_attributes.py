@@ -22,8 +22,7 @@ def test_spf_lna_power_state_attributes_initial_values(
     for powerstate_band in ("b1", "b2"):
         h_state_name = f"{powerstate_band}LnaHPowerState"
         v_state_name = f"{powerstate_band}LnaVPowerState"
-        assert h_state_name in attributes
-        assert v_state_name in attributes
+
         assert dish_manager_proxy.read_attribute(h_state_name).value == init_value
         assert dish_manager_proxy.read_attribute(v_state_name).value == init_value
     for powerstate_band in ("b3", "b4", "b5a", "b5b"):
@@ -34,14 +33,25 @@ def test_spf_lna_power_state_attributes_initial_values(
 
 
 @pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    [
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
+    ],
+)
 def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DeviceProxy) -> None:
     """Test the spf lna attribute configurations are read and write."""
     attr_cb_mapping = {}
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    for powerstate_band in ("b1", "b2", "b3", "b4", "b5a", "b5b"):
-        state_name = f"{powerstate_band}LnaHPowerState"
-        attribute_type = dish_manager_proxy.get_attribute_config(state_name).writable
-        assert attribute_type == AttrWriteType.READ_WRITE
+    attribute_type = dish_manager_proxy.get_attribute_config(attribute_name).writable
+    assert attribute_type == AttrWriteType.READ_WRITE
     remove_subscriptions(subscriptions)
 
 
