@@ -458,7 +458,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 continue
             except Exception as err:
                 self.logger.error("Error in component state event consumer: %s", err)
-            self._stop_event.wait(TIME_BETWEEN_EVENT_PROCESSING_S)
+            # self._stop_event.wait(TIME_BETWEEN_EVENT_PROCESSING_S)
 
     def _stop_event_consumer_thread(self) -> None:
         """Stop the event consumer thread if it is alive."""
