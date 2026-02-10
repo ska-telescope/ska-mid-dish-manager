@@ -31,6 +31,7 @@ def test_ska001_is_available(monitor_tango_servers, dish_manager_proxy):
     assert dish_manager_proxy.State() in [DevState.ON, DevState.ALARM]
 
 
+@pytest.mark.skip(reason="Deploying only SKA001 for now")
 @pytest.mark.acceptance
 def test_other_dish_instance_is_available():
     """Test that a different, arbitrary dish is available."""
