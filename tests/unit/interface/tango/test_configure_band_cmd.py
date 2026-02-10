@@ -5,11 +5,11 @@ import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
-    BandInFocus,
     DishMode,
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
+    SPFBandInFocus,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
@@ -82,7 +82,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     ds_cm._update_component_state(
         indexerposition=IndexerPosition[band_number], operatingmode=DSOperatingMode.POINT
     )
-    spf_cm._update_component_state(bandinfocus=BandInFocus[band_number])
+    spf_cm._update_component_state(bandinfocus=SPFBandInFocus[band_number])
 
     assert main_event_store.wait_for_command_id(unique_id, timeout=5)
     assert device_proxy.configuredBand == Band[band_number]

@@ -20,7 +20,7 @@ REQUESTED_ELEVATION_VALUE = 60.0
 
 
 @pytest.mark.acceptance
-def test_maintenance_mode_cmds(
+def test_maintenance_mode_cmd(
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
     ds_device_proxy: DeviceProxy,
@@ -33,6 +33,7 @@ def test_maintenance_mode_cmds(
     dsc_auth_event_store = event_store_class()
     spf_event_store = event_store_class()
     spfrx_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     subscriptions = {}
     subscriptions.update(setup_subscriptions(spf_device_proxy, {"operatingMode": spf_event_store}))
@@ -43,8 +44,12 @@ def test_maintenance_mode_cmds(
         "dscCmdAuth": dsc_auth_event_store,
         "operatingMode": dsc_event_store,
     }
+    dm_attr_cb_mapping = {
+        "dishMode": mode_event_store,
+        "Status": status_event_store,
+    }
     subscriptions.update(setup_subscriptions(ds_device_proxy, ds_attr_cb_mapping))
-    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": mode_event_store}))
+    subscriptions.update(setup_subscriptions(dish_manager_proxy, dm_attr_cb_mapping))
 
     dish_manager_proxy.SetMaintenanceMode()
 
@@ -54,9 +59,24 @@ def test_maintenance_mode_cmds(
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
     dsc_auth_event_store.wait_for_value(DscCmdAuthType.NO_AUTHORITY, timeout=30)
 
+    expected_progress_updates = [
+        "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode",
+        "Awaiting DS operatingmode change to STOW",
+        "Awaiting SPFRX operatingmode change to STANDBY",
+        "Awaiting SPF operatingmode change to MAINTENANCE",
+        "Awaiting dishmode change to STOW",
+        "SetMaintenanceMode completed",
+    ]
+    events = status_event_store.get_queue_events()
+    events_string = "".join([str(event.attr_value.value) for event in events])
+    # Check that all the expected progress messages appeared
+    for message in expected_progress_updates:
+        assert message in events_string
+
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.movement
 @pytest.mark.acceptance
 def test_power_cycle_in_maintenance_mode(
     event_store_class: EventStore,
@@ -92,6 +112,7 @@ def test_power_cycle_in_maintenance_mode(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.movement
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_on_stow(
     event_store_class: EventStore,
@@ -124,6 +145,7 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.movement
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_not_on_stow(
     event_store_class: EventStore,
@@ -139,8 +161,12 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
     dish_manager_proxy.SetMaintenanceMode()
     mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
 
-    # Unstow is a long running command on the DSManager so we don't need to increase our proxy
-    # timeout for the alarm horn. Stow will block the proxy if used.
+    # unstow will be rejected unless the device has authority.
+    # since ds device no longer waits for horn to go off when auth is
+    # requested we need to take authority here and wait for the horn to go off
+    ds_device_proxy.TakeAuthority()
+    # wait 10s for the horn to go off
+    mode_event_store.get_queue_values(timeout=10)
     ds_device_proxy.unstow()
     dsc_event_store.wait_for_value(DSOperatingMode.STANDBY, timeout=120)
     ds_device_proxy.slew([REQUESTED_AZIMUTH_VALUE, REQUESTED_ELEVATION_VALUE])

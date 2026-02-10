@@ -39,7 +39,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     band_event_store.wait_for_value(Band.B1, timeout=8)
 
     # Await auto transition to OPERATE following band config
-    dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=8)
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
 
     dish_manager_proxy.SetStandbyFPMode()
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=8)

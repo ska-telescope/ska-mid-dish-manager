@@ -100,6 +100,8 @@
                             "SPFRxDeviceFqdn": [
                                 "mid-dish/simulator-spfrx/SKA001"
                             ],
+                            "B5DCDeviceFqdn": [""],
+                            "WMSDeviceNames": [""],
                             "SkaLevel": [
                                 "1"
                             ]

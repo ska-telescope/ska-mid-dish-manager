@@ -46,23 +46,11 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
-
-# override k8s-test-runner to print helm flags
-k8s-test-runner:
-  before_script:
-    - echo "Helm values overrides:"
-    - cat charts/ska-mid-dish-manager/custom_helm_flags.yaml || echo "No custom_helm_flags file found."
-    - '[ -f .make/k8s.mk ] || (echo "File k8s.mk not included in Makefile; exit 1")'
-    - 'make help | grep k8s-test'
-    - make k8s-install-chart
-    - make k8s-wait
-
 python-test-forked:
   extends: python-test
   script:
     - make python-test-forked;
 
-#mypy job
 mypy:
   stage: lint
   script:
@@ -75,19 +63,40 @@ mypy:
       src/ska_mid_dish_manager/models/dish_state_transition.py
   allow_failure: true
 
-# create a job to run multiple k8s-test-runs
+k8s-test-runner:
+  variables:
+     K8S_TEST_RUNNER_MARK: "acceptance and not movement"
+     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+     VALUES_FILE: charts/ska-mid-dish-manager/custom_helm_flags.yaml
+
+k8s-test-runner-movement:
+  extends: k8s-test-runner
+  variables:
+    K8S_TEST_RUNNER_MARK: "movement"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
+
+# runs multiple acceptance tests in parallel with minimal deployment
 k8s-test-runner-parallel:
   extends: k8s-test-runner
   parallel: 3
-  when: manual
   allow_failure: true
+  when: manual
   variables:
-    KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-$CI_NODE_INDEX"
+    K8S_TEST_RUNNER_MARK: "acceptance"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
 
 k8s-test-runner-track-patterns:
   extends: k8s-test-runner
-  when: manual
   allow_failure: true
+  when: manual
   variables:
     K8S_TEST_RUNNER_MARK: "track_patterns"
-    KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-track-patterns"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
+
+stop-k8s-test-runner-movement:
+  extends: stop-k8s-test-runner
+  variables:
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"

@@ -13,8 +13,6 @@ from ska_control_model import CommunicationStatus
         ("DS", "dsConnectionState"),
         ("SPFRX", "spfrxConnectionState"),
         ("SPF", "spfConnectionState"),
-        ("WMS", "wmsConnectionState"),
-        ("B5DC", "b5dcConnectionState"),
     ],
 )
 def test_connection_state_attrs_mirror_communication_status(
@@ -39,3 +37,28 @@ def test_connection_state_attrs_mirror_communication_status(
 
     # We can now expect connectionState to transition to NOT_ESTABLISHED
     event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+@pytest.mark.parametrize(
+    "connection_state_attr",
+    [
+        "wmsConnectionState",
+        "b5dcConnectionState",
+    ],
+)
+def test_connection_state_attrs_on_devices_with_no_monitoring(
+    dish_manager_resources,
+    event_store_class,
+    connection_state_attr,
+):
+    device_proxy, _ = dish_manager_resources
+    event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        connection_state_attr,
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    event_store.wait_for_value(CommunicationStatus.DISABLED, timeout=10)

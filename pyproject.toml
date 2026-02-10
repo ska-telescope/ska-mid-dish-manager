@@ -24,18 +24,18 @@ include = [
 ]
 requires-python = ">=3.10,<4.0"
 package-mode = false
-dependencies = [
-    "pytango==10.0.3",
-    "numpy<2.0.0",
-    "ska-control-model>=1.0.0",
-    "ska-ser-logging>=0.4.1",
-    "ska-tango-base==1.4.0",
-    "networkx==2.6.3",
-    "rule-engine==3.5.0",
-    "astropy>=6.0.1",
-    "typing-extensions>=4.3.0",
-    "ska-mid-dish-dcp-lib==0.0.9"
-]
+
+[tool.poetry.dependencies]
+pytango = "10.0.3"
+numpy = "<2.0.0"
+ska-control-model = ">=1.0.0"
+ska-ser-logging = ">=0.4.1"
+ska-tango-base = { git = "https://gitlab.com/ska-telescope/ska-tango-base.git", branch = "main" }
+networkx = "2.6.3"
+rule-engine = "3.5.0"
+astropy = ">=6.0.1"
+typing-extensions = ">=4.3.0"
+ska-mid-dish-dcp-lib = "0.0.9"
 
 [project.urls]
 Documentation = "https://developer.skao.int/projects/ska-mid-dish-manager/en/latest/?badge=latest"
@@ -99,6 +99,7 @@ markers = [
     "acceptance",
     "stress",
     "track_patterns",
+    "movement",
 ]
 
 [tool.ruff]

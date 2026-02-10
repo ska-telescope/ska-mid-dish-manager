@@ -2148,10 +2148,10 @@
     - name: programTrackTable
       data_format: SPECTRUM
       data_type: DevDouble
-      description: "Timestamp of i-th coordinate in table (max 50 coordinates) given\
+      description: "Timestamp of i-th coordinate in table (max 1000 coordinates) given\
         \ in milliseconds since TAI epoch, representing time at which Dish should\
-        \ track i-th coordinate.\n Azimuth of i-th coordinate in table (max 50 coordinates)\
-        \ given in degrees.\n Elevation of i-th coordinate in table (max 50 coordinates)\
+        \ track i-th coordinate.\n Azimuth of i-th coordinate in table (max 1000 points)\
+        \ given in degrees.\n Elevation of i-th coordinate in table (max 1000 points)\
         \ given in degrees"
       disp_level: OPERATOR
       display_unit: No display unit
