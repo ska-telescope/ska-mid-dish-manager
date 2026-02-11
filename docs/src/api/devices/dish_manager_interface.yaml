@@ -1446,6 +1446,23 @@
       standard_unit: No standard unit
       writable: READ
       writable_attr_name: None
+    - name: dscErrorStatuses
+      data_format: SCALAR
+      data_type: DevString
+      description: Report the current DSC errors as a comma-delimited list. Reports
+        'OK' if no errors are present.
+      disp_level: OPERATOR
+      display_unit: No display unit
+      format: '%s'
+      label: dscErrorStatuses
+      max_alarm: Not specified
+      max_dim_x: 1
+      max_value: Not specified
+      min_alarm: Not specified
+      min_value: Not specified
+      standard_unit: No standard unit
+      writable: READ
+      writable_attr_name: None
     - name: dscPowerLimitKw
       data_format: SCALAR
       data_type: DevDouble
@@ -2617,16 +2634,12 @@
       writable: READ
       writable_attr_name: None
     properties:
-    - name: B5DCDeviceFqdn
     - name: DSDeviceFqdn
-    - name: DefaultActionTimeoutSeconds
-    - name: DefaultWatchdogTimeout
     - name: DishId
-    - name: GroupDefinitions
     - name: LoggingLevelDefault
     - name: LoggingTargetsDefault
+    - name: MaintenanceModeActive
     - name: MaxCapabilities
-    - name: MeanWindSpeedThreshold
     - name: ReceptorNumber
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
