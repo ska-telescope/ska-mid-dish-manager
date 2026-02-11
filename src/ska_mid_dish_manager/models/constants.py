@@ -42,7 +42,7 @@ DS_ERROR_STATUS_ATTRIBUTES = {
     "errTiltOneComms": "Comms lost to Tiltmeter One",
     "errTiltOneIoUnit": "IO unit error Tiltmeter One",
     "errTiltTwoComms": "Comms lost to Tiltmeter Two",
-    "errTiltTwoIounit": "IO unit error Tiltmeter Two",
+    "errTiltTwoIoUnit": "IO unit error Tiltmeter Two",
     "errTime": "Time Controller error",
     "errTrack": "Tracking Controller error",
 }
