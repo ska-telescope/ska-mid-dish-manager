@@ -5,7 +5,10 @@ from threading import Lock
 from typing import Any, Callable, Optional, Tuple
 
 from ska_control_model import HealthState, ResultCode, TaskStatus
-from ska_mid_dish_ds_manager.models.dish_enums import (
+
+from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
+from ska_mid_dish_manager.models.constants import DS_ERROR_STATUS_ATTRIBUTES
+from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
@@ -28,7 +31,7 @@ class DSComponentManager(TangoDeviceComponentManager):
         component_state_callback: Optional[Callable] = None,
         **kwargs: Any,
     ):
-        monitored_attr_names = (
+        monitored_attr_names: tuple[str, ...] = (
             "operatingMode",
             "powerState",
             "healthState",
@@ -55,6 +58,9 @@ class DSComponentManager(TangoDeviceComponentManager):
             "trackTableEndIndex",
             "dscCtrlState",
         )
+
+        monitored_attr_names = monitored_attr_names + tuple(DS_ERROR_STATUS_ATTRIBUTES.keys())
+
         super().__init__(
             tango_device_fqdn,
             logger,

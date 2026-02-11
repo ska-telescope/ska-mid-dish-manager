@@ -7,7 +7,7 @@ import threading
 import time
 from functools import partial
 from threading import Lock
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -44,6 +44,7 @@ from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
     SetMaintenanceModeAction,
+    SetOperateModeAction,
     SetStandbyFPModeAction,
     SetStandbyLPModeAction,
     SlewAction,
@@ -54,6 +55,7 @@ from ska_mid_dish_manager.models.command_actions import (
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
+    DS_ERROR_STATUS_ATTRIBUTES,
     DSC_MIN_POWER_LIMIT_KW,
     MAINTENANCE_MODE_ACTIVE_PROPERTY,
     MAINTENANCE_MODE_FALSE_VALUE,
@@ -204,10 +206,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             actiontimeoutseconds=action_timeout_s,
             b1lnahpowerstate=False,
             b2lnahpowerstate=False,
-            b3lnahpowerstate=False,
-            b4lnahpowerstate=False,
-            b5alnahpowerstate=False,
-            b5blnahpowerstate=False,
+            b1lnavpowerstate=False,
+            b2lnavpowerstate=False,
+            b3lnapowerstate=False,
+            b4lnapowerstate=False,
+            b5alnapowerstate=False,
+            b5blnapowerstate=False,
+            dscerrorstatuses=self._aggregate_dsc_error_statuses({}),
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -247,10 +252,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b1lnahpowerstate=False,
                 b2lnahpowerstate=False,
-                b3lnahpowerstate=False,
-                b4lnahpowerstate=False,
-                b5alnahpowerstate=False,
-                b5blnahpowerstate=False,
+                b1lnavpowerstate=False,
+                b2lnavpowerstate=False,
+                b3lnapowerstate=False,
+                b4lnapowerstate=False,
+                b5alnapowerstate=False,
+                b5blnapowerstate=False,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPF
                 ),
@@ -400,10 +407,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "SPF": [
                 "b1LnaHPowerState",
                 "b2LnaHPowerState",
-                "b3LnaHPowerState",
-                "b4LnaHPowerState",
-                "b5aLnaHPowerState",
-                "b5bLnaHPowerState",
+                "b1LnaVPowerState",
+                "b2LnaVPowerState",
+                "b3LnaPowerState",
+                "b4LnaPowerState",
+                "b5aLnaPowerState",
+                "b5bLnaPowerState",
             ],
             "B5DC": [
                 "rfcmPllLock",
@@ -1016,6 +1025,30 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 self._update_component_state(**{attr_lower: new_value})
 
+        # DS error status attributes
+        if any(key.lower() in kwargs for key in DS_ERROR_STATUS_ATTRIBUTES):
+            statuses = self._aggregate_dsc_error_statuses(ds_component_state)
+            self.logger.debug(
+                "Updating dscerrorstatuses with statuses: %s",
+                statuses,
+            )
+            self._update_component_state(dscerrorstatuses=statuses)
+
+    def _aggregate_dsc_error_statuses(self, ds_component_state: dict[str, Any]):
+        """Aggregate any error statuses from the DSC into one string."""
+        active_errors: list[str] = []
+
+        for key, description in DS_ERROR_STATUS_ATTRIBUTES.items():
+            comp_state_key = key.lower()
+            if ds_component_state.get(comp_state_key) is True:
+                active_errors.append(description)
+
+        if active_errors:
+            summary = "; ".join(active_errors)
+        else:
+            summary = "OK"
+        return summary
+
     # ----------------------------------------
     # Command object/ attribute write handlers
     # ----------------------------------------
@@ -1254,6 +1287,38 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status, response = self.submit_task(
             TrackStopAction(self.logger, self, self.get_action_timeout()).execute,
             is_cmd_allowed=_is_track_stop_cmd_allowed,
+            task_callback=task_callback,
+        )
+        return status, response
+
+    @check_communicating
+    def set_operate_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        """Fanout commands to subdevices to set operate mode.
+
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :return: Result status and message
+        :rtype: Tuple[TaskStatus, str]
+        """
+
+        def _is_set_operate_cmd_allowed():
+            if self.component_state["dishmode"] != DishMode.STANDBY_FP:
+                msg = (
+                    "Set operate mode command rejected for current dishMode. "
+                    "Set operate mode command is allowed for dishMode STANDBY_FP"
+                )
+                report_task_progress(msg, self._command_progress_callback)
+                return False
+            return True
+
+        status, response = self.submit_task(
+            SetOperateModeAction(
+                self.logger,
+                self,
+            ).execute,
+            is_cmd_allowed=_is_set_operate_cmd_allowed,
             task_callback=task_callback,
         )
         return status, response
@@ -1810,6 +1875,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_h_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
         """Update HPolAttenuation on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set attenuation. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetHPolAttenuation", value)
         if task_status == TaskStatus.FAILED:
@@ -1818,6 +1889,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_v_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
         """Update VPolAttenuation on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set attenuation. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetVPolAttenuation", value)
         if task_status == TaskStatus.FAILED:
@@ -1826,8 +1903,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_frequency(self, value: int) -> Tuple[ResultCode, str]:
         """Update Frequency on B5DC."""
+        if not self._check_b5dc_active():
+            return (
+                ResultCode.REJECTED,
+                "Cannot set frequency. Monitoring and control not set up for B5DC device.",
+            )
+
         b5dc_cm = self.sub_component_managers["B5DC"]
         task_status, msg = b5dc_cm.execute_command("SetFrequency", value)
         if task_status == TaskStatus.FAILED:
             return (ResultCode.FAILED, msg)
         return (ResultCode.OK, "Successfully updated Frequency on the B5DC proxy.")
+
+    def _check_b5dc_active(self) -> bool:
+        """Check if B5DC is active based on the current band and configuration."""
+        b5dc_manager = self.sub_component_managers.get("B5DC")
+        if not b5dc_manager:
+            self.logger.info("Monitoring and control not set up for B5DC device.")
+            return False
+        return True
