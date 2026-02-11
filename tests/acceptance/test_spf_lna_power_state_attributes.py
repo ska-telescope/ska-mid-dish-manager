@@ -11,30 +11,30 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    [
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
+    ],
+)
 def test_spf_lna_power_state_attributes_initial_values(
     dish_manager_proxy: tango.DeviceProxy,
+    attribute_name: str,
 ) -> None:
     """Test the spf lna attribute initial values are correct."""
     attr_cb_mapping = {}
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     init_value = False
     attributes = dish_manager_proxy.get_attribute_list()
-    for powerstate_band in ("b1", "b2", "b3", "b4", "b5a", "b5b"):
-        state_name = f"{powerstate_band}LnaHPowerState"
-        assert state_name in attributes
-        assert dish_manager_proxy.read_attribute(state_name).value == init_value
-    remove_subscriptions(subscriptions)
-
-
-@pytest.mark.acceptance
-def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DeviceProxy) -> None:
-    """Test the spf lna attribute configurations are read and write."""
-    attr_cb_mapping = {}
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    for powerstate_band in ("b1", "b2", "b3", "b4", "b5a", "b5b"):
-        state_name = f"{powerstate_band}LnaHPowerState"
-        attribute_type = dish_manager_proxy.get_attribute_config(state_name).writable
-        assert attribute_type == AttrWriteType.READ_WRITE
+    assert attribute_name in attributes
+    assert dish_manager_proxy.read_attribute(attribute_name).value == init_value
     remove_subscriptions(subscriptions)
 
 
@@ -44,10 +44,37 @@ def test_spf_lna_power_state_attributes_types(dish_manager_proxy: tango.DevicePr
     [
         "b1LnaHPowerState",
         "b2LnaHPowerState",
-        "b3LnaHPowerState",
-        "b4LnaHPowerState",
-        "b5aLnaHPowerState",
-        "b5bLnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
+    ],
+)
+def test_spf_lna_power_state_attributes_types(
+    dish_manager_proxy: tango.DeviceProxy, attribute_name: str
+) -> None:
+    """Test the spf lna attribute configurations are read and write."""
+    attr_cb_mapping = {}
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    attribute_type = dish_manager_proxy.get_attribute_config(attribute_name).writable
+    assert attribute_type == AttrWriteType.READ_WRITE
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    [
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
     ],
 )
 def test_spf_lna_power_state_rejects_attribute_writes(
@@ -74,10 +101,12 @@ def test_spf_lna_power_state_rejects_attribute_writes(
     [
         ("1", "b1LnaHPowerState"),
         ("2", "b2LnaHPowerState"),
-        ("3", "b3LnaHPowerState"),
-        ("4", "b4LnaHPowerState"),
-        ("5a", "b5aLnaHPowerState"),
-        ("5b", "b5bLnaHPowerState"),
+        ("1", "b1LnaVPowerState"),
+        ("2", "b2LnaVPowerState"),
+        ("3", "b3LnaPowerState"),
+        ("4", "b4LnaPowerState"),
+        ("5a", "b5aLnaPowerState"),
+        ("5b", "b5bLnaPowerState"),
     ],
 )
 def test_spf_lna_power_state_change_on_dishmode_operate(
@@ -118,10 +147,12 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     [
         "b1lnahpowerstate",
         "b2lnahpowerstate",
-        "b3lnahpowerstate",
-        "b4lnahpowerstate",
-        "b5alnahpowerstate",
-        "b5blnahpowerstate",
+        "b1lnavpowerstate",
+        "b2lnavpowerstate",
+        "b3lnapowerstate",
+        "b4lnapowerstate",
+        "b5alnapowerstate",
+        "b5blnapowerstate",
     ],
 )
 def test_spf_lna_power_state_change_on_dishmode_maintainance(

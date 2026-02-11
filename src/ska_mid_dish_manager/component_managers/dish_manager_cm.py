@@ -7,7 +7,7 @@ import threading
 import time
 from functools import partial
 from queue import Empty, Queue
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -35,6 +35,7 @@ from ska_mid_dish_manager.models.command_actions import (
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
+    DS_ERROR_STATUS_ATTRIBUTES,
     DSC_MIN_POWER_LIMIT_KW,
     MAINTENANCE_MODE_ACTIVE_PROPERTY,
     MAINTENANCE_MODE_FALSE_VALUE,
@@ -205,10 +206,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             actiontimeoutseconds=action_timeout_s,
             b1lnahpowerstate=False,
             b2lnahpowerstate=False,
-            b3lnahpowerstate=False,
-            b4lnahpowerstate=False,
-            b5alnahpowerstate=False,
-            b5blnahpowerstate=False,
+            b1lnavpowerstate=False,
+            b2lnavpowerstate=False,
+            b3lnapowerstate=False,
+            b4lnapowerstate=False,
+            b5alnapowerstate=False,
+            b5blnapowerstate=False,
+            dscerrorstatuses=self._aggregate_dsc_error_statuses({}),
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -246,10 +250,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5bcapabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b1lnahpowerstate=False,
                 b2lnahpowerstate=False,
-                b3lnahpowerstate=False,
-                b4lnahpowerstate=False,
-                b5alnahpowerstate=False,
-                b5blnahpowerstate=False,
+                b1lnavpowerstate=False,
+                b2lnavpowerstate=False,
+                b3lnapowerstate=False,
+                b4lnapowerstate=False,
+                b5alnapowerstate=False,
+                b5blnapowerstate=False,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPF
                 ),
@@ -395,10 +401,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "SPF": [
                 "b1LnaHPowerState",
                 "b2LnaHPowerState",
-                "b3LnaHPowerState",
-                "b4LnaHPowerState",
-                "b5aLnaHPowerState",
-                "b5bLnaHPowerState",
+                "b1LnaVPowerState",
+                "b2LnaVPowerState",
+                "b3LnaPowerState",
+                "b4LnaPowerState",
+                "b5aLnaPowerState",
+                "b5bLnaPowerState",
             ],
             "B5DC": [
                 "rfcmPllLock",
@@ -1050,6 +1058,30 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     )
 
                 self._update_component_state(**{attr_lower: new_value})
+
+        # DS error status attributes
+        if any(key.lower() in kwargs for key in DS_ERROR_STATUS_ATTRIBUTES):
+            statuses = self._aggregate_dsc_error_statuses(ds_component_state)
+            self.logger.debug(
+                "Updating dscerrorstatuses with statuses: %s",
+                statuses,
+            )
+            self._update_component_state(dscerrorstatuses=statuses)
+
+    def _aggregate_dsc_error_statuses(self, ds_component_state: dict[str, Any]):
+        """Aggregate any error statuses from the DSC into one string."""
+        active_errors: list[str] = []
+
+        for key, description in DS_ERROR_STATUS_ATTRIBUTES.items():
+            comp_state_key = key.lower()
+            if ds_component_state.get(comp_state_key) is True:
+                active_errors.append(description)
+
+        if active_errors:
+            summary = "; ".join(active_errors)
+        else:
+            summary = "OK"
+        return summary
 
     # ----------------------------------------
     # Command object/ attribute write handlers

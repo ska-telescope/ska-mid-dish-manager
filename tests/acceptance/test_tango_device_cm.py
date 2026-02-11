@@ -52,7 +52,7 @@ def test_tango_device_component_manager_state(
         assert com_man.communication_state == CommunicationStatus.DISABLED
 
 
-@pytest.mark.xfail(reason="fix later")
+@pytest.mark.xfail(reason="needs investigation")
 @pytest.mark.acceptance
 def test_stress_component_monitor(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates."""
