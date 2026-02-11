@@ -19,8 +19,6 @@ services:
     restart: unless-stopped
     command: >
       python /app/src/ska_mid_dish_simulators/devices/ds_opcua_server.py
-    volumes:
-      - ../../ska-mid-dish-simulators/src:/app/src
 
   dish-logger:
     platform: linux/amd64
@@ -83,8 +81,6 @@ services:
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
           sleep 5s &&\
           DSManager SKA001"
-    volumes:
-      - ../../ska-mid-dish-ds-manager/src:/app/src
 
   dish-manager:
     platform: linux/amd64
@@ -104,7 +100,7 @@ services:
     # To run DishManager, "DishManagerDS SKA001"
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
-          sleep 5s && DishManagerDS SKA001"
+          sleep infinity"
     volumes:
       - ../src:/app/src
 
