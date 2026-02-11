@@ -41,7 +41,6 @@ from ska_mid_dish_manager.models.constants import (
     MAINTENANCE_MODE_FALSE_VALUE,
     MAINTENANCE_MODE_TRUE_VALUE,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
-    TIME_BETWEEN_EVENT_PROCESSING_S,
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.data_classes import EventDataClass
