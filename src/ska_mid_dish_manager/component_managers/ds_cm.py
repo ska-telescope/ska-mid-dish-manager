@@ -5,15 +5,15 @@ from threading import Lock
 from typing import Any, Callable, Optional, Tuple
 
 from ska_control_model import HealthState, ResultCode, TaskStatus
-
-from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
-from ska_mid_dish_manager.models.constants import DS_ERROR_STATUS_ATTRIBUTES
 from ska_mid_dish_ds_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
     PointingState,
 )
+
+from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
+from ska_mid_dish_manager.models.constants import DS_ERROR_STATUS_ATTRIBUTES
 
 
 class DSComponentManager(TangoDeviceComponentManager):
