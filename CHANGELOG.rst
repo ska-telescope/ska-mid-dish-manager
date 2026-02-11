@@ -14,7 +14,7 @@ Version 9.3.0-rc.1
 - Added ska-mid-dcp-lib v0.0.9 to the package dependencies.
 - Addressed tango serialisation lock issue.
 
-  - Increased pod CPU resource limits to 600m and improved code quality and acceptance test reliability.
+  - Increased pod CPU resource limits to 3000m and requests to 1000m.
   - Added in a decorator to log the duration of an attribute write.
   - Upgraded ska-tango-base python package to install main branch with fixes.
 
