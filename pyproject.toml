@@ -100,6 +100,7 @@ markers = [
     "stress",
     "track_patterns",
     "movement",
+    "dish_modes",
 ]
 
 [tool.ruff]
