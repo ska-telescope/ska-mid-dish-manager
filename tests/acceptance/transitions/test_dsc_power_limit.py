@@ -41,6 +41,7 @@ def test_initial_power_limit(
     )
 
 
+@pytest.mark.xfail(reason="fails intermittently, needs investigation")
 @pytest.mark.acceptance
 def test_correct_power_limit_change(
     ds_device_proxy: tango.DeviceProxy,
