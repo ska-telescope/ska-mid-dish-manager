@@ -38,5 +38,5 @@ def test_attenuation_attrs(
     spfrx_device_proxy.write_attribute(tango_attribute, write_value)
 
     # Wait for the DishManager to receive the updated value
-    dm_event_store.wait_for_value(write_value, timeout=10)
+    dm_event_store.wait_for_value(write_value, timeout=30)
     dish_manager_proxy.unsubscribe_event(sub_id)

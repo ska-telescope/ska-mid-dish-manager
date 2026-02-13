@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Downgraded ska-tango-base to v1.3.2 and tango to v10.0.0 to address tango serialisation lock issue.
 
 Version 9.3.0-rc.1
 ******************
