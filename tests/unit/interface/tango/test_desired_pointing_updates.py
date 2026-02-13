@@ -1,5 +1,4 @@
-"""
-Test that the DishManager desiredPointing attribute is
+"""Test that the DishManager desiredPointing attribute is
 in sync with the DSManager desiredPointing attribute.
 """
 
@@ -7,16 +6,13 @@ import pytest
 import tango
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_desired_pointing_in_sync_with_dish_structure_pointing(
     dish_manager_resources,
     event_store_class,
 ):
-    """
-    Test desired pointing is in sync with dish structure pointing
-    """
+    """Test desired pointing is in sync with dish structure pointing."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
 

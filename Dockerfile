@@ -1,48 +1,34 @@
-ARG BUILD_IMAGE=artefact.skao.int/ska-build-python:0.1.1
-ARG BASE_IMAGE=artefact.skao.int/ska-tango-images-tango-python:0.1.0
-FROM $BUILD_IMAGE AS build
+FROM artefact.skao.int/ska-tango-images-tango-dsconfig:1.5.13 as tools
+FROM artefact.skao.int/ska-build-python:0.3.1 as build
 
-# Set up environment variables for Poetry and virtualenv configuration
-ENV VIRTUAL_ENV=/app \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1
+WORKDIR /app
+COPY pyproject.toml poetry.lock ./
 
-RUN set -xe; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends \
-        python3-venv; \
-    python3 -m venv $VIRTUAL_ENV; \
-    mkdir /build; \
-    ln -s $VIRTUAL_ENV /build/.venv
-ENV PATH=$VIRTUAL_ENV/bin:$PATH
+ENV POETRY_NO_INTERACTION=1
+ENV POETRY_VIRTUALENVS_IN_PROJECT=1
+ENV POETRY_VIRTUALENVS_CREATE=1
 
-WORKDIR /build
+RUN poetry install --no-root
 
-# Copy project dependency files
-COPY pyproject.toml poetry.lock* ./
+COPY src /app/src
+COPY README.md /app/README.md
+RUN poetry install --only-root
 
-# Install third-party dependencies from PyPI and CAR
-RUN poetry install --only main --no-root --no-directory
+FROM artefact.skao.int/ska-python:0.2.3
+WORKDIR /app
 
-# Copy the source code and install the application code
-COPY README.md ./
-COPY src ./src
-RUN pip install --no-deps .
+ENV VIRTUAL_ENV=/app/.venv
+COPY --from=build ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+COPY --from=build /app/src /app/src
+COPY --from=tools /usr/local/bin/retry /usr/local/bin/retry
+COPY --from=tools /usr/local/bin/wait-for-it.sh /usr/local/bin/wait-for-it.sh
 
-# We don't want to copy pip into the runtime image
-RUN pip uninstall -y pip
-
-# Use the base image for the final stage
-FROM $BASE_IMAGE
-
-ENV VIRTUAL_ENV=/app
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
-COPY --from=build $VIRTUAL_ENV $VIRTUAL_ENV
+ENV PYTHONPATH="/app/src:app/.venv/lib/python3.10/site-packages/:${PYTHONPATH}"
 
 # Metadata labels
 LABEL int.skao.image.team="TEAM KAROO" \
-      int.skao.image.authors="samuel.twum@skao.int" \
+      int.skao.image.authors="TEAM KAROO" \
       int.skao.image.url="https://gitlab.com/ska-telescope/ska-mid-dish-manager" \
       description="Tango device which provides master control and rolled-up monitoring of dish" \
       license="BSD-3-Clause"

@@ -1,66 +1,78 @@
 """Unit tests verifying model against dishMode transitions."""
 
-# pylint: disable=too-many-lines,missing-function-docstring,C0302
 import pytest
-from ska_control_model import HealthState
+from ska_control_model import AdminMode, HealthState
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     CapabilityStates,
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     IndexerPosition,
+    PowerState,
     SPFBandInFocus,
     SPFCapabilityStates,
     SPFOperatingMode,
+    SPFPowerState,
     SPFRxCapabilityStates,
     SPFRxOperatingMode,
 )
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 
-# pylint: disable=redefined-outer-name
 @pytest.fixture(scope="module")
 def state_transition():
-    """Instance of StateTransition"""
+    """Instance of StateTransition."""
     return StateTransition()
 
 
 # Order DS, SPF, SPFRX
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.STARTUP),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STARTUP,
         ),
         (
-            dict(indexerposition=IndexerPosition.MOVING),
+            dict(
+                indexerposition=IndexerPosition.MOVING,
+                powerstate=DSPowerState.LOW_POWER,
+                operatingmode=DSOperatingMode.STANDBY,
+            ),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.CONFIG,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW),
+            dict(operatingmode=DSOperatingMode.STOW, powerstate=DSPowerState.LOW_POWER),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             dict(operatingmode=SPFRxOperatingMode.CONFIGURE),
-            DishMode.CONFIG,
+            DishMode.STOW,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.MOVING,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.CONFIG,
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
@@ -68,7 +80,9 @@ def state_transition():
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
@@ -76,27 +90,41 @@ def state_transition():
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
-            dict(operatingmode=SPFRxOperatingMode.OPERATE),
+            dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STANDBY_FP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.POINT,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.OPERATE,
         ),
         # Any other random combo goes to UNKNOWN
         (
-            dict(operatingmode=DSOperatingMode.UNKNOWN, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.UNKNOWN,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.ERROR),
             dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
             DishMode.UNKNOWN,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STOW,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.ERROR),
             dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
             DishMode.STOW,
@@ -117,40 +145,35 @@ def test_compute_dish_mode(
 
 
 # Order DS, SPF, SPFRX
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
-            dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.MOVING,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             dict(operatingmode=SPFRxOperatingMode.CONFIGURE),
             DishMode.CONFIG,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
-            None,
-            dict(operatingmode=SPFRxOperatingMode.MAINTENANCE),
-            DishMode.MAINTENANCE,
-        ),
-        (
-            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.POINT,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
+            ),
             None,
             dict(operatingmode=SPFRxOperatingMode.OPERATE),
             DishMode.OPERATE,
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
-            ),
-            None,
-            dict(operatingmode=SPFRxOperatingMode.OPERATE),
-            DishMode.STANDBY_FP,
-        ),
-        (
-            dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             None,
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
@@ -158,26 +181,40 @@ def test_compute_dish_mode(
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             None,
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
-            DishMode.STANDBY_LP,
+            DishMode.STANDBY_FP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STOW,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
-            dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN, adminmode=AdminMode.ONLINE),
             DishMode.STOW,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STARTUP,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             dict(operatingmode=SPFRxOperatingMode.STANDBY),
             DishMode.STARTUP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.UNKNOWN, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.UNKNOWN,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             dict(operatingmode=SPFRxOperatingMode.UNKNOWN),
             DishMode.UNKNOWN,
@@ -198,32 +235,35 @@ def test_compute_dish_mode_ignoring_spf(
 
 
 # Order DS, SPF, SPFRX
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
-            dict(operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.MOVING,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             None,
             DishMode.CONFIG,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
-            dict(operatingmode=SPFOperatingMode.MAINTENANCE),
-            None,
-            DishMode.MAINTENANCE,
-        ),
-        (
-            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.POINT,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             None,
             DishMode.OPERATE,
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
             None,
@@ -231,21 +271,29 @@ def test_compute_dish_mode_ignoring_spf(
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.STANDBY_LP),
             None,
             DishMode.STANDBY_LP,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STOW,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             dict(operatingmode=SPFOperatingMode.ERROR),
             None,
             DishMode.STOW,
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.STARTUP),
             None,
@@ -267,26 +315,35 @@ def test_compute_dish_mode_ignoring_spfrx(
 
 
 # Order DS, SPF, SPFRX
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_mode"),
     [
         (
-            dict(indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.MOVING,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             None,
             DishMode.CONFIG,
         ),
         (
-            dict(operatingmode=DSOperatingMode.POINT, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.POINT,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             None,
             DishMode.OPERATE,
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_FP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STANDBY,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.FULL_POWER,
             ),
             None,
             None,
@@ -294,20 +351,20 @@ def test_compute_dish_mode_ignoring_spfrx(
         ),
         (
             dict(
-                operatingmode=DSOperatingMode.STANDBY_LP, indexerposition=IndexerPosition.UNKNOWN
+                operatingmode=DSOperatingMode.STOW,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
             ),
-            None,
-            None,
-            DishMode.STANDBY_LP,
-        ),
-        (
-            dict(operatingmode=DSOperatingMode.STOW, indexerposition=IndexerPosition.UNKNOWN),
             None,
             None,
             DishMode.STOW,
         ),
         (
-            dict(operatingmode=DSOperatingMode.STARTUP, indexerposition=IndexerPosition.UNKNOWN),
+            dict(
+                operatingmode=DSOperatingMode.STARTUP,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.LOW_POWER,
+            ),
             None,
             None,
             DishMode.STARTUP,
@@ -327,7 +384,6 @@ def test_compute_dish_mode_ignoring_spf_and_spfrx(
     assert expected_dish_mode == actual_dish_mode
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
@@ -413,7 +469,6 @@ def test_compute_dish_healthstate(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
@@ -511,7 +566,6 @@ def test_compute_dish_healthstate_ignoring_spf(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
@@ -609,7 +663,6 @@ def test_compute_dish_healthstate_ignoring_spfrx(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
@@ -653,7 +706,6 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
@@ -689,13 +741,13 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
             Band.B4,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5a),
             dict(bandinfocus=SPFBandInFocus.B5a),
             dict(configuredband=Band.B5a),
             Band.B5a,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5b),
             dict(bandinfocus=SPFBandInFocus.B5b),
             dict(configuredband=Band.B5b),
             Band.B5b,
@@ -727,7 +779,6 @@ def test_compute_configured_band(
     assert expected_band_number == actual_band_number
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
@@ -763,13 +814,13 @@ def test_compute_configured_band(
             Band.B4,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5a),
             None,
             dict(configuredband=Band.B5a),
             Band.B5a,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5b),
             None,
             dict(configuredband=Band.B5b),
             Band.B5b,
@@ -801,7 +852,6 @@ def test_compute_configured_band_ignoring_spf(
     assert expected_band_number == actual_band_number
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
@@ -831,13 +881,13 @@ def test_compute_configured_band_ignoring_spf(
             Band.B4,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5a),
             dict(bandinfocus=SPFBandInFocus.B5a),
             None,
             Band.B5a,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5b),
             dict(bandinfocus=SPFBandInFocus.B5b),
             None,
             Band.B5b,
@@ -869,7 +919,6 @@ def test_compute_configured_band_ignoring_spfrx(
     assert expected_band_number == actual_band_number
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
@@ -898,19 +947,18 @@ def test_compute_configured_band_ignoring_spfrx(
             None,
             Band.B4,
         ),
-        # TODO: Clarify SPF B5a or B5b given only DS.IndexerPosition.B5
-        # (
-        #     dict(indexerposition=IndexerPosition.B5),
-        #     None,
-        #     None,
-        #     Band.B5a,
-        # ),
-        # (
-        #     dict(indexerposition=IndexerPosition.B5),
-        #     None,
-        #     None,
-        #     Band.B5b,
-        # ),
+        (
+            dict(indexerposition=IndexerPosition.B5a),
+            None,
+            None,
+            Band.B5a,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B5b),
+            None,
+            None,
+            Band.B5b,
+        ),
         (
             dict(indexerposition=IndexerPosition.UNKNOWN),
             None,
@@ -932,7 +980,6 @@ def test_compute_configured_band_ignoring_spf_and_spfrx(
     assert expected_band_number == actual_band_number
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spfrx_comp_state, expected_band_number"),
@@ -958,12 +1005,12 @@ def test_compute_configured_band_ignoring_spf_and_spfrx(
             SPFBandInFocus.B4,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5a),
             dict(configuredband=Band.B5a),
             SPFBandInFocus.B5a,
         ),
         (
-            dict(indexerposition=IndexerPosition.B5),
+            dict(indexerposition=IndexerPosition.B5b),
             dict(configuredband=Band.B5b),
             SPFBandInFocus.B5b,
         ),
@@ -992,7 +1039,6 @@ def test_compute_spf_band_in_focus(
     assert expected_band_number == actual_band_number
 
 
-# pylint: disable=use-dict-literal
 @pytest.mark.unit
 @pytest.mark.parametrize(
     ("ds_comp_state, spfrx_comp_state, expected_band_number"),
@@ -1017,17 +1063,16 @@ def test_compute_spf_band_in_focus(
             None,
             SPFBandInFocus.B4,
         ),
-        # TODO: Clarify SPF B5a or B5b given only DS.IndexerPosition.B5
-        # (
-        #     dict(indexerposition=IndexerPosition.B5),
-        #     None,
-        #     SPFBandInFocus.B5a,
-        # ),
-        # (
-        #     dict(indexerposition=IndexerPosition.B5),
-        #     None,
-        #     SPFBandInFocus.B5b,
-        # ),
+        (
+            dict(indexerposition=IndexerPosition.B5a),
+            None,
+            SPFBandInFocus.B5a,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B5b),
+            None,
+            SPFBandInFocus.B5b,
+        ),
     ],
 )
 def test_compute_spf_band_in_focus_ignoring_spfrx(
@@ -1402,3 +1447,101 @@ def test_capability_state_rules_unknown(
         )
         == cap_state
     )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("ds_comp_state, spf_comp_state, expected_power_state"),
+    [
+        (
+            dict(powerstate=DSPowerState.UPS),
+            dict(powerstate=SPFPowerState.UNKNOWN),
+            PowerState.UPS,
+        ),
+        (
+            dict(powerstate=DSPowerState.OFF),
+            dict(powerstate=SPFPowerState.UNKNOWN),
+            PowerState.UPS,
+        ),
+        (
+            dict(powerstate=DSPowerState.LOW_POWER),
+            dict(powerstate=SPFPowerState.LOW_POWER),
+            PowerState.LOW,
+        ),
+        (
+            dict(powerstate=DSPowerState.UNKNOWN),
+            dict(powerstate=SPFPowerState.UNKNOWN),
+            PowerState.LOW,
+        ),
+        (
+            dict(powerstate=DSPowerState.LOW_POWER),
+            dict(powerstate=SPFPowerState.FULL_POWER),
+            PowerState.LOW,
+        ),
+        (
+            dict(powerstate=DSPowerState.FULL_POWER),
+            dict(powerstate=SPFPowerState.LOW_POWER),
+            PowerState.FULL,
+        ),
+        (
+            dict(powerstate=DSPowerState.FULL_POWER),
+            dict(powerstate=SPFPowerState.FULL_POWER),
+            PowerState.FULL,
+        ),
+    ],
+)
+def test_compute_power_state(
+    ds_comp_state,
+    spf_comp_state,
+    expected_power_state,
+    state_transition,
+):
+    actual_power_state = state_transition.compute_power_state(
+        ds_comp_state,
+        spf_comp_state,
+    )
+    assert expected_power_state == actual_power_state
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("ds_comp_state, spf_comp_state, expected_power_state"),
+    [
+        (
+            dict(powerstate=DSPowerState.UPS),
+            None,
+            PowerState.UPS,
+        ),
+        (
+            dict(powerstate=DSPowerState.OFF),
+            None,
+            PowerState.UPS,
+        ),
+        (
+            dict(powerstate=DSPowerState.LOW_POWER),
+            None,
+            PowerState.LOW,
+        ),
+        (
+            dict(powerstate=DSPowerState.UNKNOWN),
+            None,
+            PowerState.LOW,
+        ),
+        (
+            dict(powerstate=DSPowerState.FULL_POWER),
+            None,
+            PowerState.FULL,
+        ),
+    ],
+)
+def test_compute_power_state_ignoring_spf(
+    ds_comp_state,
+    spf_comp_state,
+    expected_power_state,
+    state_transition,
+):
+    actual_power_state = state_transition.compute_power_state(
+        ds_comp_state,
+        spf_comp_state,
+    )
+    assert expected_power_state == actual_power_state

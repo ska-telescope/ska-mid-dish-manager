@@ -1,6 +1,4 @@
-"""Tests dish manager component manager endscan command handler"""
-
-from unittest.mock import Mock, patch
+"""Tests dish manager component manager endscan command handler."""
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
@@ -9,16 +7,13 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
 
 
 @pytest.mark.unit
-@patch("json.dumps", Mock(return_value="mocked sub-device-command-ids"))
 def test_end_scan_handler(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of EndScan command handler.
+    """Verify behaviour of EndScan command handler.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -30,12 +25,8 @@ def test_end_scan_handler(
 
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
+        {"status": TaskStatus.IN_PROGRESS},
         {
-            "progress": "Clearing scanID",
-            "status": TaskStatus.IN_PROGRESS,
-        },
-        {
-            "progress": "EndScan completed",
             "status": TaskStatus.COMPLETED,
             "result": (ResultCode.OK, "EndScan completed"),
         },
@@ -47,5 +38,8 @@ def test_end_scan_handler(
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
 
+    progress_cb = callbacks["progress_cb"]
+    progress_cb.wait_for_args(("Clearing scanID",))
+    progress_cb.wait_for_args(("EndScan completed",))
     # check that the scan id is cleared
     assert component_manager.component_state["scanid"] == ""

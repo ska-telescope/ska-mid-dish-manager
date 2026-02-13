@@ -11,7 +11,6 @@ from tango import AttrQuality
 LOGGER = logging.getLogger(__name__)
 
 
-# pylint:disable=attribute-defined-outside-init
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -21,51 +20,49 @@ LOGGER = logging.getLogger(__name__)
             [
                 AttrQuality.ATTR_VALID,
                 AttrQuality.ATTR_INVALID,
-                AttrQuality.ATTR_CHANGING,
-                AttrQuality.ATTR_WARNING,
-                AttrQuality.ATTR_ALARM,
             ],
             2,
         )
     ),
 )
 def test_change(qual_before, qual_after, event_store_class, dish_manager_resources):
-    """Test the change events on the dish manager cm level"""
+    """Test the change events on the dish manager cm level."""
     device_proxy, dish_manager_cm = dish_manager_resources
     event_store = event_store_class()
     device_proxy.subscribe_event(
-        "attenuationPolV",
+        "attenuation1PolVY",
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
 
-    dish_manager_cm._quality_state_callback("attenuationpolv", qual_before)
+    dish_manager_cm._quality_state_callback("attenuation1polvy", qual_before)
     event_store.wait_for_quality(qual_before)
-    dish_manager_cm._quality_state_callback("attenuationpolv", qual_after)
+    dish_manager_cm._quality_state_callback("attenuation1polvy", qual_after)
     event_store.wait_for_quality(qual_after)
 
 
+@pytest.mark.forked
 def test_event_handling(event_store_class, dish_manager_resources):
-    """Test the change events on the tango device cm level"""
+    """Test the change events on the tango device cm level."""
     device_proxy, dish_manager_cm = dish_manager_resources
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     event_store = event_store_class()
     device_proxy.subscribe_event(
-        "attenuationPolV",
+        "attenuation1PolVY",
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
 
     valid_event = MagicMock()
     valid_event.attr_value = MagicMock()
-    valid_event.attr_value.name = "attenuationPolV"
+    valid_event.attr_value.name = "attenuation1PolVY"
     valid_event.attr_value.quality = AttrQuality.ATTR_VALID
     valid_event.attr_value.value = 1000
 
     invalid_event = MagicMock()
     invalid_event.attr_value = MagicMock()
-    invalid_event.attr_value.name = "attenuationPolV"
+    invalid_event.attr_value.name = "attenuation1PolVY"
     invalid_event.attr_value.quality = AttrQuality.ATTR_INVALID
     invalid_event.attr_value.value = None
 

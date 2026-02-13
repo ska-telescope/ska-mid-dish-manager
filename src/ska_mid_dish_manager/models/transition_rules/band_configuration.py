@@ -1,4 +1,4 @@
-"""Automatic transition rules for configuredBand"""
+"""Automatic transition rules for configuredBand."""
 
 import rule_engine
 
@@ -25,12 +25,12 @@ CONFIGURED_BAND_RULES_ALL_DEVICES = {
         "SPF.bandinfocus == 'SPFBandInFocus.B4'"
     ),
     "B5a": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and "
+        "DS.indexerposition  == 'IndexerPosition.B5a' and "
         "SPFRX.configuredband  == 'Band.B5a' and "
         "SPF.bandinfocus == 'SPFBandInFocus.B5a'"
     ),
     "B5b": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and "
+        "DS.indexerposition  == 'IndexerPosition.B5b' and "
         "SPFRX.configuredband  == 'Band.B5b' and "
         "SPF.bandinfocus == 'SPFBandInFocus.B5b'"
     ),
@@ -51,10 +51,10 @@ CONFIGURED_BAND_RULES_SPF_IGNORED = {
         "DS.indexerposition  == 'IndexerPosition.B4' and SPFRX.configuredband  == 'Band.B4'"
     ),
     "B5a": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and SPFRX.configuredband  == 'Band.B5a'"
+        "DS.indexerposition  == 'IndexerPosition.B5a' and SPFRX.configuredband  == 'Band.B5a'"
     ),
     "B5b": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and SPFRX.configuredband  == 'Band.B5b'"
+        "DS.indexerposition  == 'IndexerPosition.B5b' and SPFRX.configuredband  == 'Band.B5b'"
     ),
 }
 
@@ -72,12 +72,10 @@ CONFIGURED_BAND_RULES_SPFRX_IGNORED = {
         "DS.indexerposition  == 'IndexerPosition.B4' and SPF.bandinfocus == 'SPFBandInFocus.B4'"
     ),
     "B5a": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and "
-        "SPF.bandinfocus == 'SPFBandInFocus.B5a'"
+        "DS.indexerposition  == 'IndexerPosition.B5a' and SPF.bandinfocus == 'SPFBandInFocus.B5a'"
     ),
     "B5b": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and "
-        "SPF.bandinfocus == 'SPFBandInFocus.B5b'"
+        "DS.indexerposition  == 'IndexerPosition.B5b' and SPF.bandinfocus == 'SPFBandInFocus.B5b'"
     ),
 }
 
@@ -86,8 +84,8 @@ CONFIGURED_BAND_RULES_DS_ONLY = {
     "B2": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B2'"),
     "B3": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B3'"),
     "B4": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B4'"),
-    "B5a": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B5'"),
-    "B5b": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B5'"),
+    "B5a": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B5a'"),
+    "B5b": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B5b'"),
 }
 
 SPF_BAND_IN_FOCUS_RULES_ALL_DEVICES = {
@@ -104,10 +102,10 @@ SPF_BAND_IN_FOCUS_RULES_ALL_DEVICES = {
         "DS.indexerposition  == 'IndexerPosition.B4' and SPFRX.configuredband  == 'Band.B4'"
     ),
     "B5a": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and SPFRX.configuredband == 'Band.B5a'"
+        "DS.indexerposition  == 'IndexerPosition.B5a' and SPFRX.configuredband == 'Band.B5a'"
     ),
     "B5b": rule_engine.Rule(
-        "DS.indexerposition  == 'IndexerPosition.B5' and SPFRX.configuredband == 'Band.B5b'"
+        "DS.indexerposition  == 'IndexerPosition.B5b' and SPFRX.configuredband == 'Band.B5b'"
     ),
 }
 
@@ -116,6 +114,6 @@ SPF_BAND_IN_FOCUS_RULES_SPFRX_IGNORED = {
     "B2": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B2'"),
     "B3": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B3'"),
     "B4": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B4'"),
-    "B5a": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B5'"),
-    "B5b": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B5'"),
+    "B5a": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B5a'"),
+    "B5b": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B5b'"),
 }

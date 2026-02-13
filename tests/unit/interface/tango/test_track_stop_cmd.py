@@ -12,18 +12,16 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
     "current_pointing_state",
     [
         PointingState.READY,
-        PointingState.SLEW,
         PointingState.SCAN,
     ],
 )
-def test_track_stop_cmd_fails_when_pointing_state_is_not_track(
+def test_track_stop_cmd_fails_in_wrong_pointing_state(
     dish_manager_resources,
     event_store_class,
     current_pointing_state,
@@ -53,7 +51,6 @@ def test_track_stop_cmd_fails_when_pointing_state_is_not_track(
     lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
@@ -66,7 +63,7 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     main_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    status_event_store = event_store_class()
 
     attributes_to_subscribe_to = (
         "dishMode",
@@ -81,9 +78,9 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
         )
 
     device_proxy.subscribe_event(
-        "longRunningCommandProgress",
+        "Status",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        status_event_store,
     )
 
     # Force dishManager dishMode to go to OPERATE
@@ -120,18 +117,13 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
     main_event_store.wait_for_value(PointingState.READY)
 
     expected_progress_updates = [
-        "TrackStop called on DS, ID",
+        "Fanned out commands: DS.TrackStop",
         "Awaiting DS pointingstate change to READY",
         "TrackStop completed",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=20)
 
-    events_string = "".join([str(event) for event in events])
-
-    # Check that all the expected progress messages appeared
-    # in the event store
+    events_string = "".join([str(event.attr_value.value) for event in events])
     for message in expected_progress_updates:
         assert message in events_string

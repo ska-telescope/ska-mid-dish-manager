@@ -8,6 +8,238 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.3.0-rc.1
+******************
+- Added in ignoreB5dc attribute to ignore B5DC state and quality changes.
+- SPFC b<n>lnapowerstate attributes name fix, attribute naming is aligned to the ICD.
+- Added ska-mid-dcp-lib v0.0.9 to the package dependencies.
+- Addressed tango serialisation lock issue.
+
+  - Increased pod CPU resource limits to 3000m and requests to 2000m.
+  - Added in a decorator to log the duration of an attribute write.
+  - Upgraded ska-tango-base python package to install main branch with fixes.
+
+- Added in B5DC component manager.
+
+  - Monitoring and control is enabled only if the B5DC proxy is deployed.
+
+- Updated chart dependencies
+
+  - Upgraded ska-mid-dish-b5dc-proxy chart to v0.0.3
+  - Upgraded ska-mid-dish-simulators chart to v5.6.0
+
+
+Version 9.2.1
+*************
+- Improved handling and reporting of rejected commands when invalid inputs are provided.
+- Updated the ConfigureBand command JSON validation to check for `band5_downconversion_subband` and `sub_band` fields.
+
+  - This ensures compatibility with both the two JSON schema versions pending a decision.
+
+
+Version 9.2.1-rc.1
+******************
+- Improved handling and reporting of rejected commands when invalid inputs are provided.
+- Updated the ConfigureBand command JSON validation to check for `band5_downconversion_subband` instead of `sub_band`.
+
+Version 9.2.0
+*************
+- SPFC LNA powerstate attributes fix, now checks dish mode correctly before allowing write.
+- Added conversion of the ConfigureBand command JSON sub_band value from string to int before fanout to SPFRx.
+- Fixed data type of periodicNoiseDiodePars and pseudoRandomNoiseDiodePars attributes to match SPFRx hardware.
+- Removed restriction of reconfiguring band if already configured to that band.
+- Updated chart dependencies
+
+  - Upgraded ska-mid-dish-ds-manager chart to v7.1.0
+  - Upgraded ska-mid-dish-simulators chart to v5.5.3
+
+- Updated package dependencies
+
+  - Upgraded ska-tango-base to v1.4.0
+
+Version 9.1.1
+*************
+- Support numeric and prefixed dish IDs in Helm charts.
+
+Version 9.1.0
+*************
+- Updated progress messages to be sent on `Status` attribute instead of `longRunningCommandProgress` attribute.
+- Updated PyTango to v10.0.3
+- Updated `ska-tango-base` to use latest version limited to minor releases (<2.0.0).
+- Removed forked mark on acceptance tests; limited forked tests to tests that use DeviceTestContext.
+- Implemented ConfigureBand command that ingests a JSON string to configure bands on SPFRx.
+- Exposed SPF B<n>LNAPowerState attributes for bands 1 to 5b.
+- Updated chart dependencies
+
+  - Upgraded ska-tango-base chart to v1.0.5
+  - Upgraded ska-tango-util chart to v1.0.5
+
+Version 9.0.0
+*************
+- Update implementation to match new states & modes ICD rev 6
+
+  - SetMaintenanceMode command and associated Maintenance DishMode updated
+  - ConfigureBand<N> command will now transition to OPERATE Dish mode on successful configuration
+  - SetOperateMode command deprecated, use ConfigureBand<N> to transition to OPERATE Dish mode
+
+- Added a configurable timeout for long-running command executions.
+
+  - Defaults to 120 seconds and can be configured via helm value `dishmanager.actions.timeout_seconds`
+
+Version 8.5.1
+*************
+- Fixed CAR image path
+- Upgraded ska-mid-dish-ds-manager chart to v6.5.1
+- Upgraded ska-mid-dish-simulators chart to v5.4.2
+
+Version 8.5.0
+*************
+- Baseline release
+
+  - Maintains legacy States and Modes configurations.
+  - Applies fixes for issues identified during DVS testing for s-AIV.
+
+Version 8.4.7
+*************
+- Added `lastcommandinvoked` attribute
+- Reduced dish manager logs
+- Add handlers for configureBand<3, 4, 5a, 5b>
+
+  - NOTE: ConfigureBand5b will call ConfigureBand1 until we have a B5DC
+
+Version 8.4.5
+*************
+- Changed order of commands to dish structure manager on calling of Abort()
+- Upgraded ska-mid-dish-simulators chart to v5.4.0
+- Upgraded the ska-mid-dish-ds-manager chart to v6.4.1
+
+  - Dropped the archive rate for achievedPointing and currentPointing attributes
+  - Trimmed the logs
+  - Updated lastcommandupdate attribute format
+
+Version 8.4.4
+*************
+- Updated abort logic to not call TrackStop when in Stow.
+
+Version 8.4.3
+*************
+- Added ResetTrackTable command to clear entries in the controller track table buffer.
+- Added in attribute `lastCommandInvoked` to report the last command invoked on the dish manager.
+- Upgraded ska-mid-dish-simulators chart to v5.4.0.
+
+Version 8.4.2
+*************
+- Upgraded ska-mid-wms chart to v1.0.1
+- Upgraded ska-mid-dish-simulators chart to v5.0.1
+- Upgraded ska-mid-dish-ds-manger chart to v6.4.0
+- Added in a new attribute, dscCtrlState (DSC Control State), propagated from DSManager.
+
+Version 8.4.1
+*************
+- Upgraded ska-mid-dish-ds-manager chart to v6.3.1
+
+  - Fixed ska-mid-dish-ds-manager memory leak with an upgrade of PyTango to v10.0.3
+
+Version 8.4.0
+*************
+- Upgraded ska-mid-dish-ds-manager chart to v6.3.0
+
+Version 8.3.0
+*************
+- Added `dishmanager.wms.station_id` helm value to build up `wmsDeviceNames` property for WMS component manager.
+- Updated `ska-mid-dish-ds-manger` chart to v6.2.0.
+
+
+Version 8.2.0
+*************
+- Added docker compose deployment for local development.
+
+Version 8.1.0
+*************
+- Added new attribute `dscCmdAuth` that holds who has authority.
+- Upgraded ska-mid-dish-ds-manager chart to v6.1.0.
+
+Version 8.0.0
+*************
+- Added functionality to stow dish when watchdog timer is enabled and the timer expires.
+
+  - Added new command `ResetWatchdogTimer()` to reset the watchdog timer.
+  - Added new attribute `watchdogtimeout` to enable or disable the watchdog timer.
+  - Added new attribute `lastwatchdogreset` to report the last time the watchdog timer was reset.
+
+- Extended interface to expose monitoring points for mean wind speed and wind gust.
+
+  - Added new attribute `autoWindStowEnabled` to enable or disable reaction to strong winds.
+  - Added new attribute `meanWindSpeed` to report the average wind speed of the last 10 minutes.
+  - Added new attribute `windGust` to report the max wind speed of the last 3 seconds.
+
+- Upgraded ska-mid-wms sub chart to v1.0.0
+
+Version 7.5.0
+*************
+- Added connection workaround for SPFRx attributes that have invalid quality on startup
+- Partial SetMaintenanceMode implementation. It may not work as expected until SPFRx implements the changes to adminMode
+- Add test_track_pattern acceptance test to run tracking test with track table input from csv files
+
+  - Add manual job (k8s-test-runner-track-patterns) to gitlab pipeline to run test_track_pattern acceptance test
+
+- Updated periodicNoiseDiodePars and pseudoRandomNoiseDiodePars to be DevVarLong64Array - (DevLong64,)
+- Upgraded ska-mid-dish-simulators chart to v4.5.1
+- Upgraded ska-mid-dish-ds-manager chart to v6.0.0
+
+Version 7.4.0
+*************
+- Added SetMaintenanceMode implementation logic to dish manager component manager
+- Upgraded ska-mid-dish-simulators chart to v4.4.3
+- Upgraded ska-mid-dish-ds-manager chart to v5.0.0
+- Upgraded ska-tango-util to v0.4.21
+- Upgraded ska-tango-base to v0.4.21
+
+Version 7.3.0
+*************
+- Upgraded ska-mid-dish-simulators chart to v4.4.2
+
+  - Removed intermediate `READY` PointingState to align with PLC and resolve SKB-768
+  
+- Upgraded ska-mid-dish-ds-manager chart to v4.2.1
+- Upgraded ska-tango-util to v0.4.19
+- Upgraded ska-tango-base to v0.4.19
+- Updated build state logic to update `buildState` on connection of subservient devices
+
+Version 7.2.1
+*************
+- Updated `Abort` to handle dish slew movement
+- Upgraded ska-mid-dish-simulators chart to v4.4.1
+- Updated `versionID` to report the package version of the dish manager
+- Extended functionality to handle `powerState` attribute updates
+- Upgraded ska-mid-dish-ds-manager chart to v4.2.0
+
+Version 7.2.0
+*************
+- Use TAIoffset as reported by DSManager when validating track table and for testing
+- Upgraded ska-mid-dish-simulators chart to v4.4.0
+- Upgraded ska-mid-dish-ds-manager chart to v4.1.0
+
+Version 7.1.0
+*************
+- Upgraded ska-tango-util to v0.4.18
+- Upgraded ska-tango-base to v0.4.18
+- Upgraded ska-mid-dish-ds-manager chart to v4.0.0
+- Block clients from sending commands when the dish state is DISABLED
+
+  - `StartCommunication` should be called before any other command
+
+Version 7.0.1
+*************
+- Address SKB-809:
+
+  - DishLMC warns client when command is issued during lost communication to a component and continues anyway.
+  - Device State reports ALARM when communication is lost.
+
+- Device State reports ON when device is started.
+- Periodic calls to `MonitorPing` on SPFRx is handled by component manager instead of polled command.
+- Upgraded ska-mid-dish-ds-manager chart to v3.1.2
+
 Version 7.0.0
 *************
 - Updated ska-mid-dish-simulators to v4.3.0
@@ -37,7 +269,7 @@ Version 6.0.1
 
 Version 6.0.0
 *************
-- Added unit and range verification checks to `ApplyPointingModel`command
+- Added unit and range verification checks to `ApplyPointingModel` command
 - Added in Read/Write dscPowerLimitKw attribute to be used when SetStandbyFPMode, SetStandbyLPMode and Slew are invoked.
 - Upgraded ska-mid-dish-ds-manager chart to v3.0.0
 - Upgraded ska-mid-dish-simulators to v4.2.1

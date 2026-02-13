@@ -1,0 +1,181 @@
+"""SPFCLnaHPowerState checks."""
+
+from typing import Any
+
+import pytest
+import tango
+from tango import AttrWriteType
+
+from ska_mid_dish_manager.models.dish_enums import DishMode
+from tests.utils import remove_subscriptions, setup_subscriptions
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    [
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
+    ],
+)
+def test_spf_lna_power_state_attributes_initial_values(
+    dish_manager_proxy: tango.DeviceProxy,
+    attribute_name: str,
+) -> None:
+    """Test the spf lna attribute initial values are correct."""
+    attr_cb_mapping = {}
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    init_value = False
+    attributes = dish_manager_proxy.get_attribute_list()
+    assert attribute_name in attributes
+    assert dish_manager_proxy.read_attribute(attribute_name).value == init_value
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    [
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
+    ],
+)
+def test_spf_lna_power_state_attributes_types(
+    dish_manager_proxy: tango.DeviceProxy, attribute_name: str
+) -> None:
+    """Test the spf lna attribute configurations are read and write."""
+    attr_cb_mapping = {}
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    attribute_type = dish_manager_proxy.get_attribute_config(attribute_name).writable
+    assert attribute_type == AttrWriteType.READ_WRITE
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    [
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
+    ],
+)
+def test_spf_lna_power_state_rejects_attribute_writes(
+    attribute_name: str,
+    dish_manager_proxy: tango.DeviceProxy,
+) -> None:
+    """Test that SPF Lna Power State change is rejected when dishmode either not in operate
+    or maintainance.
+    """
+    attr_cb_mapping = {}
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    err_msg = "Cannot change LNA power state while dish is not in operate or maintanance mode."
+    assert dish_manager_proxy.read_attribute("dishMode").value == DishMode.STANDBY_LP
+    with pytest.raises(tango.DevFailed) as exc_info:
+        dish_manager_proxy.write_attribute(attribute_name, True)
+    err_desc = exc_info.value.args[0].desc
+    assert err_msg in err_desc
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "band, attribute_name",
+    [
+        ("1", "b1LnaHPowerState"),
+        ("2", "b2LnaHPowerState"),
+        ("1", "b1LnaVPowerState"),
+        ("2", "b2LnaVPowerState"),
+        ("3", "b3LnaPowerState"),
+        ("4", "b4LnaPowerState"),
+        ("5a", "b5aLnaPowerState"),
+        ("5b", "b5bLnaPowerState"),
+    ],
+)
+def test_spf_lna_power_state_change_on_dishmode_operate(
+    band: str,
+    attribute_name: str,
+    dish_manager_proxy: tango.DeviceProxy,
+    event_store_class: Any,
+) -> None:
+    """Test that SPF Lna Power State change updates when dishmode is in operate."""
+    dm_event_store = event_store_class()
+    spf_lna_power_state_attr_event_store = event_store_class()
+    attr_cb_mapping = {
+        "dishMode": dm_event_store,
+        attribute_name: spf_lna_power_state_attr_event_store,
+    }
+
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+
+    try:
+        if dish_manager_proxy.dishMode != DishMode.OPERATE:
+            configure_band_cmd = getattr(dish_manager_proxy, f"ConfigureBand{band}")
+            configure_band_cmd(True)
+            dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
+        # Setting LNA power state to False as a precondition for the test to check change event
+        dish_manager_proxy.write_attribute(attribute_name, False)
+        dish_manager_proxy.write_attribute(attribute_name, True)
+        spf_lna_power_state_attr_event_store.wait_for_value(
+            True, timeout=30, proxy=dish_manager_proxy
+        )
+
+    finally:
+        remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "attribute_name",
+    [
+        "b1lnahpowerstate",
+        "b2lnahpowerstate",
+        "b1lnavpowerstate",
+        "b2lnavpowerstate",
+        "b3lnapowerstate",
+        "b4lnapowerstate",
+        "b5alnapowerstate",
+        "b5blnapowerstate",
+    ],
+)
+def test_spf_lna_power_state_change_on_dishmode_maintainance(
+    attribute_name: str,
+    dish_manager_proxy: tango.DeviceProxy,
+    event_store_class: Any,
+) -> None:
+    """Test that SPF Lna Power State change updates when dishmode is in maintainance."""
+    dm_event_store = event_store_class()
+    spf_lna_power_state_attr_event_store = event_store_class()
+
+    attr_cb_mapping = {
+        "dishMode": dm_event_store,
+        attribute_name: spf_lna_power_state_attr_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    try:
+        if dish_manager_proxy.dishmode != DishMode.MAINTENANCE:
+            dish_manager_proxy.SetMaintenanceMode()
+            dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=90)
+        # Setting LNA power state to False as a precondition for the test to check change event
+        dish_manager_proxy.write_attribute(attribute_name, False)
+        dish_manager_proxy.write_attribute(attribute_name, True)
+        spf_lna_power_state_attr_event_store.wait_for_value(True, timeout=30)
+    finally:
+        remove_subscriptions(subscriptions)

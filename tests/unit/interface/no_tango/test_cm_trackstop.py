@@ -1,6 +1,4 @@
-"""Tests dish manager component manager trackstop command handler"""
-
-from unittest.mock import Mock, patch
+"""Tests dish manager component manager trackstop command handler."""
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
@@ -10,17 +8,13 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 
 
 @pytest.mark.unit
-@patch("json.dumps", Mock(return_value="mocked sub-device-command-ids"))
 def test_track_stop_handler(
     component_manager: DishManagerComponentManager,
-    mock_command_tracker: Mock,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of TrackStop command handler.
+    """Verify behaviour of TrackStop command handler.
 
     :param component_manager: the component manager under test
-    :param mock_command_tracker: a representing the command tracker class
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -39,10 +33,6 @@ def test_track_stop_handler(
     expected_call_kwargs = (
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
-        {"progress": f"TrackStop called on DS, ID {mock_command_tracker.new_command()}"},
-        {"progress": "Awaiting DS pointingstate change to READY"},
-        {"progress": "Commands: mocked sub-device-command-ids"},
-        {"progress": "Awaiting pointingstate change to READY"},
     )
 
     # check that the initial lrc updates come through
@@ -51,7 +41,20 @@ def test_track_stop_handler(
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
 
+    progress_cb = callbacks["progress_cb"]
+    expected_progress_updates = [
+        "Awaiting DS pointingstate change to READY",
+        "Fanned out commands: DS.TrackStop",
+        "Awaiting pointingstate change to READY",
+    ]
+    progress_updates = progress_cb.get_args_queue()
+    for msg in expected_progress_updates:
+        assert (msg,) in progress_updates
+
     # check that the component state reports the requested command
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        pointingstate=PointingState.READY
+    )
     component_manager._update_component_state(pointingstate=PointingState.READY)
     component_state_cb.wait_for_value("pointingstate", PointingState.READY)
 
@@ -60,7 +63,7 @@ def test_track_stop_handler(
     # check that the final lrc updates come through
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
-        progress="TrackStop completed",
         status=TaskStatus.COMPLETED,
         result=(ResultCode.OK, "TrackStop completed"),
     )
+    progress_cb.wait_for_args(("TrackStop completed",))

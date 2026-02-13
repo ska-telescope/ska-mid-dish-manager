@@ -48,7 +48,7 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 7.0.0
+    tag: 9.3.0-rc.1
     pullPolicy: IfNotPresent
 
   # Setting fqdn assumes you are only deploying one Dish Manager
@@ -71,18 +71,55 @@ dishmanager:
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"
 
+  wms:
+    # device server instances (empty list disables monitoring on WMS devices)
+    station_ids: []
+    # Wind speed in m/s
+    MeanWindSpeedThreshold: "11.1"
+    # Wind gust in m/s
+    WindGustThreshold: "16.9"
+  
+  b5dcproxy:
+    fqdn: ""
+    domain_name: "mid-dish"
+    family_name: "b5dc-manager"
+  
+  watchdog:
+    timeout_seconds: "0.0"  # Default is 0.0 (<= 0 means watchdog timer is disabled)
+
+  actions:
+    timeout_seconds: "120.0"  # Default is 120s (<= 0 means the actions will not wait for anything)
+
 dev_pod:
   enabled: false
 
 resources:
   limits:
-    cpu: 300m
+    cpu: 3000m
     memory: 500Mi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 2000m
+    memory: 375Mi
 
 deviceServers:
   dishmanager:
     file: "data/dish_manager.yaml"
     enabled: true
+
+ska-mid-wms:
+  enabled: false
+  ska-tango-base:
+    enabled: false
+    itango:
+      enabled: false
+  deviceServers:
+    wms:
+      enabled: true
+      station_ids: ["1"]
+      modbus_server_hostnames: ["wms-sim-1"]
+      modbus_server_ports: ["1502"]
+  simulator:
+    enabled: true
+
+ska-mid-dish-b5dc-proxy:
+  enabled: false

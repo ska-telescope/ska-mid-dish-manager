@@ -1,4 +1,4 @@
-"""Tests dish manager component manager unhappy paths for command handlers"""
+"""Tests dish manager component manager unhappy paths for command handlers."""
 
 import pytest
 from ska_control_model import TaskStatus
@@ -11,8 +11,7 @@ def test_slew_with_invalid_input(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of Slew command using invalid input.
+    """Verify behaviour of Slew command using invalid input.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -28,8 +27,7 @@ def test_track_load_static_off_with_invalid_input(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """
-    Verify behaviour of Trackloadoffstatic command using invalid input.
+    """Verify behaviour of Trackloadoffstatic command using invalid input.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -46,8 +44,7 @@ def test_track_load_static_off_with_invalid_input(
 def test_periodic_noise_diode_pars_with_invalid_input(
     component_manager: DishManagerComponentManager,
 ) -> None:
-    """
-    Verify behaviour of set_periodic_noise_diode_pars command using invalid input.
+    """Verify behaviour of set_periodic_noise_diode_pars command using invalid input.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -61,8 +58,7 @@ def test_periodic_noise_diode_pars_with_invalid_input(
 def test_periodic_noise_diode_pars_with_invalid_states(
     component_manager: DishManagerComponentManager,
 ) -> None:
-    """
-    Verify behaviour of set_periodic_noise_diode_pars command with invalid states.
+    """Verify behaviour of set_periodic_noise_diode_pars command with invalid states.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -71,18 +67,17 @@ def test_periodic_noise_diode_pars_with_invalid_states(
     with pytest.raises(
         AssertionError,
         match="Cannot write to periodicNoiseDiodePars."
-        " Device is not in STANDBY or MAINTENANCE state."
+        " Device is not in STANDBY state."
         " Current state: UNKNOWN",
     ):
-        component_manager.set_periodic_noise_diode_pars([1.0, 2.0, 3.0])
+        component_manager.set_periodic_noise_diode_pars([1, 2, 3])
 
 
 @pytest.mark.unit
 def test_pseudo_random_noise_diode_pars_with_invalid_input(
     component_manager: DishManagerComponentManager,
 ) -> None:
-    """
-    Verify behaviour of set_pseudo_random_noise_diode_pars command using invalid input.
+    """Verify behaviour of set_pseudo_random_noise_diode_pars command using invalid input.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -96,8 +91,7 @@ def test_pseudo_random_noise_diode_pars_with_invalid_input(
 def test_pseudo_random_noise_diode_pars_with_invalid_states(
     component_manager: DishManagerComponentManager,
 ) -> None:
-    """
-    Verify behaviour of set_periodic_noise_diode_pars command with invalid states.
+    """Verify behaviour of set_periodic_noise_diode_pars command with invalid states.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -106,7 +100,7 @@ def test_pseudo_random_noise_diode_pars_with_invalid_states(
     with pytest.raises(
         AssertionError,
         match="Cannot write to pseudoRandomNoiseDiodePars."
-        " Device is not in STANDBY or MAINTENANCE state."
+        " Device is not in STANDBY state."
         " Current state: UNKNOWN",
     ):
-        component_manager.set_pseudo_random_noise_diode_pars([1.0, 2.0, 3.0])
+        component_manager.set_pseudo_random_noise_diode_pars([1, 2, 3])

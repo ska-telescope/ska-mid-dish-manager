@@ -105,14 +105,13 @@ Event subscription will be used to monitor progress on the dishMode and configur
 +=====================+========================================+
 || SetStandbyLPMode   || dishMode                              |
 || SetStandbyFPMode   ||                                       |
-|| SetOperateMode     ||                                       |
 +---------------------+----------------------------------------+
 || SetStowMode        || dishMode, desiredPointing,            |
 || SetMaintenanceMode || achievedPointing                      |
 +---------------------+----------------------------------------+
 || ConfigureBand      || configuredBand                        |
 || [1,2,3,4,,5a,5b]   || dishMode (transient change to CONFIG  |
-||                    || and back to previous mode)            |
+||                    || and then to OPERATE)                  |
 +---------------------+----------------------------------------+
 | SetKValue           | kValue                                 |
 +---------------------+----------------------------------------+

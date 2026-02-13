@@ -8,6 +8,10 @@ The `command fanout page`_ details the Dish component level flow of commands, sh
 its pre-condition, triggers (command fan-out) and post condition. The reported value is an aggregation
 of values from the sub component determined by a :doc:`list of transition rules <../../api/models/transition_rules/index>`.
 
+.. note::
+
+   **MAINTENANCE mode is not computed from aggregating operating modes it is commanded on dish manager.**
+
 Command Execution (ADR-93 not considered)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In a naive example, the fan-out only considers the sub-components which have the mapped commands from

@@ -2,10 +2,9 @@
 
 import pytest
 import tango
-from ska_control_model import CommunicationStatus, HealthState
+from ska_control_model import CommunicationStatus
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -30,7 +29,7 @@ def test_connection_state_attrs_mirror_communication_status(
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
-    event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
+    event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=10)
 
     # Force communication_state to NOT_ESTABLISHED
     sub_component_manager = dish_manager_cm.sub_component_managers[sub_device]
@@ -38,4 +37,28 @@ def test_connection_state_attrs_mirror_communication_status(
 
     # We can now expect connectionState to transition to NOT_ESTABLISHED
     event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
-    assert device_proxy.healthState == HealthState.UNKNOWN
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+@pytest.mark.parametrize(
+    "connection_state_attr",
+    [
+        "wmsConnectionState",
+        "b5dcConnectionState",
+    ],
+)
+def test_connection_state_attrs_on_devices_with_no_monitoring(
+    dish_manager_resources,
+    event_store_class,
+    connection_state_attr,
+):
+    device_proxy, _ = dish_manager_resources
+    event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        connection_state_attr,
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    event_store.wait_for_value(CommunicationStatus.DISABLED, timeout=10)

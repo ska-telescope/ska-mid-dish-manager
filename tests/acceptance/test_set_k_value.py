@@ -7,7 +7,6 @@ import tango
 
 
 @pytest.mark.acceptance
-@pytest.mark.forked
 def test_set_kvalue(
     dish_manager_proxy: tango.DeviceProxy,
     spfrx_device_proxy: tango.DeviceProxy,
@@ -20,8 +19,14 @@ def test_set_kvalue(
     dm_event_store = event_store_class()
     spfrx_event_store = event_store_class()
 
-    spfrx_device_proxy.subscribe_event("kValue", tango.EventType.CHANGE_EVENT, spfrx_event_store)
+    sub_id = spfrx_device_proxy.subscribe_event(
+        "kValue", tango.EventType.CHANGE_EVENT, spfrx_event_store
+    )
     spfrx_event_store.wait_for_value(k_value, timeout=7)
+    spfrx_device_proxy.unsubscribe_event(sub_id)
 
-    dish_manager_proxy.subscribe_event("kValue", tango.EventType.CHANGE_EVENT, dm_event_store)
+    sub_id = dish_manager_proxy.subscribe_event(
+        "kValue", tango.EventType.CHANGE_EVENT, dm_event_store
+    )
     dm_event_store.wait_for_value(k_value, timeout=7)
+    dish_manager_proxy.unsubscribe_event(sub_id)

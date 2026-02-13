@@ -1,13 +1,11 @@
 """Unit tests verifying model against dishMode transitions."""
 
-# pylint: disable=too-many-lines
 import pytest
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
 
-# pylint: disable=missing-function-docstring, redefined-outer-name
 @pytest.fixture(scope="module")
 def dish_mode_model():
     return DishModeModel()
@@ -15,9 +13,9 @@ def dish_mode_model():
 
 @pytest.mark.unit
 def test_model_node_matches_dish_mode_enums(dish_mode_model):
-    assert dish_mode_model.dishmode_graph.number_of_nodes() == len(
-        DishMode
-    ), "Nodes on DishMode model are not equal to DishMode enums"
+    assert dish_mode_model.dishmode_graph.number_of_nodes() == len(DishMode), (
+        "Nodes on DishMode model are not equal to DishMode enums"
+    )
 
     for dish_mode_enum in DishMode:
         assert dish_mode_enum.name in dish_mode_model.dishmode_graph.nodes
@@ -27,56 +25,93 @@ def test_model_node_matches_dish_mode_enums(dish_mode_model):
 @pytest.mark.parametrize(
     "current_mode,requested_command,expected_response",
     [
-        ("STANDBY_LP", "SetStandbyFPMode", True),
-        ("MAINTENANCE", "SetStandbyFPMode", True),
-        ("OPERATE", "SetStandbyFPMode", True),
-        ("STOW", "SetStandbyFPMode", True),
-        ("STANDBY_FP", "SetStandbyFPMode", False),
-        ("STARTUP", "SetStandbyFPMode", False),
         ("SHUTDOWN", "SetStandbyFPMode", False),
-        ("STOW", "SetStowMode", False),
-        ("STANDBY_FP", "SetStowMode", True),
-        ("STANDBY_LP", "SetStowMode", True),
-        ("MAINTENANCE", "SetStowMode", True),
-        ("OPERATE", "SetStowMode", True),
-        ("STARTUP", "SetStowMode", True),
-        ("CONFIG", "SetStowMode", True),
         ("SHUTDOWN", "SetStowMode", True),
-        ("STANDBY_FP", "SetOperateMode", True),
-        ("OPERATE", "SetOperateMode", False),
-        ("STANDBY_LP", "SetOperateMode", False),
-        ("STARTUP", "SetOperateMode", False),
-        ("STOW", "SetOperateMode", False),
-        ("SHUTDOWN", "SetOperateMode", False),
-        ("MAINTENANCE", "SetOperateMode", False),
-        ("MAINTENANCE", "SetStandbyLPMode", True),
-        ("STANDBY_FP", "SetStandbyLPMode", True),
-        ("STANDBY_LP", "SetStandbyLPMode", False),
-        ("STOW", "SetStandbyLPMode", True),
         ("SHUTDOWN", "SetStandbyLPMode", False),
+        ("SHUTDOWN", "ConfigureBand1", False),
+        ("SHUTDOWN", "ConfigureBand2", False),
+        ("SHUTDOWN", "ConfigureBand3", False),
+        ("SHUTDOWN", "ConfigureBand4", False),
+        ("SHUTDOWN", "ConfigureBand5a", False),
+        ("SHUTDOWN", "ConfigureBand5b", False),
+        ("SHUTDOWN", "ConfigureBand", False),
+        ("STARTUP", "SetStandbyFPMode", False),
+        ("STARTUP", "SetStowMode", True),
         ("STARTUP", "SetStandbyLPMode", False),
-        ("CONFIG", "SetStandbyLPMode", False),
-        ("OPERATE", "SetStandbyLPMode", False),
-        ("STANDBY_FP", "SetMaintenanceMode", True),
-        ("MAINTENANCE", "SetMaintenanceMode", False),
+        ("STARTUP", "SetMaintenanceMode", True),
+        ("STARTUP", "ConfigureBand1", False),
+        ("STARTUP", "ConfigureBand2", False),
+        ("STARTUP", "ConfigureBand3", False),
+        ("STARTUP", "ConfigureBand4", False),
+        ("STARTUP", "ConfigureBand5a", False),
+        ("STARTUP", "ConfigureBand5b", False),
+        ("STARTUP", "ConfigureBand", False),
+        ("STANDBY_LP", "SetStandbyFPMode", True),
+        ("STANDBY_LP", "SetStowMode", True),
+        ("STANDBY_LP", "SetStandbyLPMode", False),
         ("STANDBY_LP", "SetMaintenanceMode", True),
-        ("OPERATE", "SetMaintenanceMode", False),
-        ("CONFIG", "SetMaintenanceMode", False),
-        ("STOW", "SetMaintenanceMode", False),
-        ("STARTUP", "SetMaintenanceMode", False),
-        ("SHUTDOWN", "SetMaintenanceMode", False),
+        ("STANDBY_LP", "ConfigureBand1", True),
+        ("STANDBY_LP", "ConfigureBand2", True),
+        ("STANDBY_LP", "ConfigureBand3", True),
+        ("STANDBY_LP", "ConfigureBand4", True),
+        ("STANDBY_LP", "ConfigureBand5a", True),
+        ("STANDBY_LP", "ConfigureBand5b", True),
+        ("STANDBY_LP", "ConfigureBand", True),
+        ("STANDBY_FP", "SetStandbyFPMode", False),
+        ("STANDBY_FP", "SetStowMode", True),
+        ("STANDBY_FP", "SetStandbyLPMode", True),
+        ("STANDBY_FP", "SetMaintenanceMode", True),
         ("STANDBY_FP", "ConfigureBand1", True),
         ("STANDBY_FP", "ConfigureBand2", True),
         ("STANDBY_FP", "ConfigureBand3", True),
         ("STANDBY_FP", "ConfigureBand4", True),
         ("STANDBY_FP", "ConfigureBand5a", True),
         ("STANDBY_FP", "ConfigureBand5b", True),
+        ("STANDBY_FP", "ConfigureBand", True),
+        ("MAINTENANCE", "SetStandbyFPMode", False),
+        ("MAINTENANCE", "SetStowMode", True),
+        ("MAINTENANCE", "SetStandbyLPMode", False),
+        ("MAINTENANCE", "SetMaintenanceMode", False),
+        ("MAINTENANCE", "ConfigureBand1", False),
+        ("MAINTENANCE", "ConfigureBand2", False),
+        ("MAINTENANCE", "ConfigureBand3", False),
+        ("MAINTENANCE", "ConfigureBand4", False),
+        ("MAINTENANCE", "ConfigureBand5a", False),
+        ("MAINTENANCE", "ConfigureBand5b", False),
+        ("MAINTENANCE", "ConfigureBand", False),
+        ("STOW", "SetStandbyFPMode", True),
+        ("STOW", "SetStowMode", False),
+        ("STOW", "SetStandbyLPMode", True),
+        ("STOW", "SetMaintenanceMode", True),
+        ("STOW", "ConfigureBand1", True),
+        ("STOW", "ConfigureBand2", True),
+        ("STOW", "ConfigureBand3", True),
+        ("STOW", "ConfigureBand4", True),
+        ("STOW", "ConfigureBand5a", True),
+        ("STOW", "ConfigureBand5b", True),
+        ("STOW", "ConfigureBand", True),
+        ("CONFIG", "SetStowMode", True),
+        ("CONFIG", "SetStandbyLPMode", False),  # Only auto transition allowed
+        ("CONFIG", "SetMaintenanceMode", True),
+        ("CONFIG", "SetStandbyFPMode", False),  # Only auto transition allowed
+        ("CONFIG", "ConfigureBand1", False),
+        ("CONFIG", "ConfigureBand2", False),
+        ("CONFIG", "ConfigureBand3", False),
+        ("CONFIG", "ConfigureBand4", False),
+        ("CONFIG", "ConfigureBand5a", False),
+        ("CONFIG", "ConfigureBand5b", False),
+        ("CONFIG", "ConfigureBand", False),
+        ("OPERATE", "SetStandbyFPMode", True),
+        ("OPERATE", "SetStowMode", True),
+        ("OPERATE", "SetStandbyLPMode", True),
+        ("OPERATE", "SetMaintenanceMode", True),
         ("OPERATE", "ConfigureBand1", True),
         ("OPERATE", "ConfigureBand2", True),
         ("OPERATE", "ConfigureBand3", True),
         ("OPERATE", "ConfigureBand4", True),
         ("OPERATE", "ConfigureBand5a", True),
         ("OPERATE", "ConfigureBand5b", True),
+        ("OPERATE", "ConfigureBand", True),
     ],
 )
 def test_model_dish_mode_transition_accuracy(

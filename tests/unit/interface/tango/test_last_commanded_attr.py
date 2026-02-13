@@ -1,20 +1,20 @@
-"""Unit tests for tracking lastCommandedMode attribute updates"""
+"""Unit tests for tracking lastCommandedMode attribute updates."""
 
 import pytest
 import tango
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
-    BandInFocus,
     DishMode,
     DSOperatingMode,
+    DSPowerState,
     IndexerPosition,
+    SPFBandInFocus,
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
 
 
-# pylint: disable=missing-function-docstring, protected-access
 @pytest.mark.unit
 @pytest.mark.forked
 def test_last_commanded_mode_attr_records_mode_transition_requests(
@@ -48,7 +48,9 @@ def test_last_commanded_mode_attr_records_mode_transition_requests(
     )
     # Force dishManager dishMode to go to STANDBY_FP
     device_proxy.SetStandbyFPMode()
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY_FP)
+    ds_cm._update_component_state(
+        operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
+    )
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     main_event_store.wait_for_value(DishMode.STANDBY_FP)
 
@@ -65,7 +67,7 @@ def test_last_commanded_mode_attr_records_mode_transition_requests(
     device_proxy.SetOperateMode()
     # Set configuredBand and try again
     ds_cm._update_component_state(indexerposition=IndexerPosition.B1)
-    spf_cm._update_component_state(bandinfocus=BandInFocus.B1)
+    spf_cm._update_component_state(bandinfocus=SPFBandInFocus.B1)
     spfrx_cm._update_component_state(configuredband=Band.B1)
     # spfrx operating mode transitions to OPERATE after successful band configuration
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)

@@ -1,14 +1,15 @@
-"""Test dish manager handles and publishes change events on attribute quality update"""
+"""Test dish manager handles and publishes change events on attribute quality update."""
 
 import itertools
 
 import pytest
-import tango
 from tango import AttrQuality
 
-from tests.utils import EventStore
+from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
 
 
+@pytest.mark.skip(reason="It was never enabled - fix in a separate MR")
+@pytest.mark.acceptance
 @pytest.mark.parametrize(
     "qual_before,qual_after",
     list(
@@ -22,30 +23,30 @@ from tests.utils import EventStore
             ],
             2,
         )
-    )[
-        :10
-    ],  # Just the first 10 for now
+    )[:10],  # Just the first 10 for now
 )
 def test_transitions(dish_manager_proxy, spfrx_device_proxy, qual_before, qual_after):
     """Test quality of dishmanager exposed attribute mirrors the quality of the underlying
-    subservient device attribute"""
+    subservient device attribute.
+    """
     dm_event_store = EventStore()
     spfrx_event_store = EventStore()
-
-    dish_manager_proxy.subscribe_event(
-        "attenuationPolV",
-        tango.EventType.CHANGE_EVENT,
-        dm_event_store,
+    spfrx_subsciptions = setup_subscriptions(
+        spfrx_device_proxy, {"attenuation1PolVY": spfrx_event_store}
     )
-    spfrx_device_proxy.subscribe_event(
-        "attenuationPolV",
-        tango.EventType.CHANGE_EVENT,
-        spfrx_event_store,
+    dm_subscriptions = setup_subscriptions(
+        dish_manager_proxy, {"attenuation1PolVY": dm_event_store}
     )
-    spfrx_device_proxy.SetAttenuationPolVQuality(qual_before)
-    spfrx_event_store.wait_for_quality(qual_before)
-    dm_event_store.wait_for_quality(qual_before)
 
-    spfrx_device_proxy.SetAttenuationPolVQuality(qual_after)
-    spfrx_event_store.wait_for_quality(qual_after)
-    dm_event_store.wait_for_quality(qual_after)
+    # Setting up subscriptions to the attrs forces them to be VALID,
+    # therefore set them invalid
+    spfrx_device_proxy.SetAttenuation1PolVYQuality(AttrQuality.ATTR_INVALID)
+    spfrx_event_store.wait_for_quality(AttrQuality.ATTR_INVALID)
+    dm_event_store.wait_for_quality(AttrQuality.ATTR_INVALID)
+
+    spfrx_device_proxy.SetAttenuation1PolVYQuality(AttrQuality.ATTR_VALID)
+    spfrx_event_store.wait_for_quality(AttrQuality.ATTR_VALID)
+    dm_event_store.wait_for_quality(AttrQuality.ATTR_VALID)
+
+    remove_subscriptions(spfrx_subsciptions)
+    remove_subscriptions(dm_subscriptions)

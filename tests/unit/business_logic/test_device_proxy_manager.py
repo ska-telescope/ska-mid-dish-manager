@@ -15,10 +15,10 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
 class TestDeviceProxyManager:
-    """Tests for DeviceProxyManager"""
+    """Tests for DeviceProxyManager."""
 
     def setup_method(self):
-        """Set up context"""
+        """Set up context."""
         self.signal = Event()
         self.dev_factory = DeviceProxyManager(LOGGER, self.signal)
 
@@ -55,7 +55,7 @@ class TestDeviceProxyManager:
             )
 
     def test_device_proxy_creation_retry_is_stopped_by_event_signal(self, patch_dp, caplog):
-        """Test dp creation and reconnection retry can be cancelled"""
+        """Test dp creation and reconnection retry can be cancelled."""
         caplog.set_level(logging.DEBUG)
 
         trl = "a/device/address"

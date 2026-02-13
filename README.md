@@ -66,20 +66,18 @@ kubectl create namespace dish-manager
 ```
 
 ```bash
-$ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
---set global.minikube=true \
---set global.operator=true \
---set global.dishes="{001,002}" \ # number of instances to deploy; if not specified defaults to 001
---set ska-mid-dish-simulators.enabled=true \
---set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
---set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
---set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
---set ska-mid-dish-ds-manager.enabled=true
+$ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager -f charts/ska-mid-dish-manager/custom_helm_flags.yaml
 ```
 
-`ska-tango-base` is not deployed by default, to deploy it add the `--set` below:
+`ska-tango-base` is disabled in the default ``values.yaml``. It can be enabled by either:
+```bash
+# editing your custom yaml (already set to true in custom_helm_flags.yaml)
+ska-tango-base:
+  enabled: true
+```
 
 ```bash
+# or passing it as an extra argument to helm
 --set ska-tango-base.enabled=true
 ```
 
@@ -89,16 +87,23 @@ $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
 
 ```bash
 $ helm upgrade --install dev charts/ska-mid-dish-manager -n dish-manager \
---set global.minikube=true \
---set global.operator=true \
---set global.dishes={001,002} \ # number of instances to deploy; if not specified defaults to 001
+-f charts/ska-mid-dish-manager/custom_helm_flags.yaml \
 --set dev_pod.enabled=true \ # enable devpod for development
 --set deviceServers.dishmanager.enabled=false \ # disable dishmanager to use devpod
---set ska-mid-dish-simulators.enabled=true \
---set ska-mid-dish-simulators.dsOpcuaSimulator.enabled=true \
---set ska-mid-dish-simulators.deviceServers.spfdevice.enabled=true \
---set ska-mid-dish-simulators.deviceServers.spfrxdevice.enabled=true \
---set ska-mid-dish-ds-manager.enabled=true
+```
+
+### **Note**
+The Helm charts now support both numeric and prefixed dish identifiers.
+
+If you pass **numeric values** (e.g., `001`, `002`), the charts will automatically prefix them with SKA, resulting in Tango device names such as:
+
+```bash
+mid-dish/dish-manager/SKA001
+```
+
+If you pass **prefixed IDs** (e.g., `SKA001`, `MKT001`), the charts will use them as-is:
+```bash
+mid-dish/dish-manager/MKT001
 ```
 
 - Then start DishManager in the commandline
@@ -120,15 +125,16 @@ make docs-build html
 Use the code below to generate the mode transition graph:
 
 ```python
-from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
-from  matplotlib import pyplot as plt
 import networkx as nx
+import matplotlib.pyplot as plt
+from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
-model = DishModeModel()
-# create a matplotlib axis object
-ax = plt.subplot(121)
+dm_graph = DishModeModel().dishmode_graph
 
-# draw the transitions
-nx.draw(model.dishmode_graph, ax=axis, with_labels=True, font_weight='bold')
+pos = nx.spring_layout(dm_graph)
+
+nx.draw_networkx_labels(dm_graph, pos)
+nx.draw_networkx_edges(dm_graph, pos)
+
 plt.show()
 ```

@@ -16,7 +16,9 @@ class DeviceInfoDataClass:
 class DmBuildStateDataClass:
     """Format of build state of dish manager and subcomponents."""
 
+    last_updated: Optional[str] = ""
     dish_manager_version: Optional[str] = ""
     ds_manager_device: Optional[DeviceInfoDataClass] = None
     spfrx_device: Optional[DeviceInfoDataClass] = None
     spfc_device: Optional[DeviceInfoDataClass] = None
+    b5dc_device: Optional[DeviceInfoDataClass] = None

@@ -1,4 +1,4 @@
-"""Specialization for SPF functionality"""
+"""Specialization for SPF functionality."""
 
 import logging
 from threading import Lock
@@ -17,7 +17,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 #  pylint: disable=missing-function-docstring, invalid-name, signature-differs
 class SPFComponentManager(TangoDeviceComponentManager):
-    """Specialization for SPF functionality"""
+    """Specialization for SPF functionality."""
 
     def __init__(
         self,
@@ -27,7 +27,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
         *args: Any,
         communication_state_callback: Optional[Callable] = None,
         component_state_callback: Optional[Callable] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         monitored_attr_names = (
             "operatingMode",
@@ -40,6 +40,14 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b4CapabilityState",
             "b5aCapabilityState",
             "b5bCapabilityState",
+            "b1LnaVPowerState",
+            "b2LnaVPowerState",
+            "b1LnaHPowerState",
+            "b2LnaHPowerState",
+            "b3LnaPowerState",
+            "b4LnaPowerState",
+            "b5aLnaPowerState",
+            "b5bLnaPowerState",
         )
         super().__init__(
             tango_device_fqdn,
@@ -48,14 +56,13 @@ class SPFComponentManager(TangoDeviceComponentManager):
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
-            **kwargs
+            **kwargs,
         )
         self._communication_state_lock = state_update_lock
         self._component_state_lock = state_update_lock
 
     def _update_component_state(self, **kwargs: Any) -> None:
-        """Update the int we get from the event to the Enum"""
-
+        """Update the int we get from the event to the Enum."""
         enum_conversion = {
             "operatingmode": SPFOperatingMode,
             "powerstate": SPFPowerState,
@@ -73,19 +80,3 @@ class SPFComponentManager(TangoDeviceComponentManager):
                 kwargs[attr] = enum_(kwargs[attr])
 
         super()._update_component_state(**kwargs)
-
-    # pylint: disable=missing-function-docstring, invalid-name
-    def on(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def off(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def reset(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError
-
-    # pylint: disable=missing-function-docstring
-    def standby(self, task_callback: Callable = None) -> Any:  # type: ignore
-        raise NotImplementedError

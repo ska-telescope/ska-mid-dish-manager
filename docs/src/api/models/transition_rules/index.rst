@@ -11,3 +11,4 @@ Transition Rules
    Capability State<capability_state>
    Dish Mode<dish_mode>
    Health State <health_state>
+   Power State<power_state>

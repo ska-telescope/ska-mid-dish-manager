@@ -7,5 +7,5 @@ Developer Guide
 
    Design<dish_manager_design>
    Command Fan-out <command_fanout/index>
-   Component Managers<component_managers>
+   Component Managers<component_managers/index>
    Testing<testing>

@@ -1,20 +1,33 @@
-""""Custom command classes for commands requiring overrides to do()."""
+"""Custom command classes for commands requiring overrides to do()."""
 
 import functools
 import logging
-import warnings
 from typing import Any, Optional
 
 from ska_control_model import ResultCode, TaskStatus
-from ska_tango_base.commands import FastCommand, SubmittedSlowCommand
+from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
 
 
-class AbortCommand(SubmittedSlowCommand):
+class AbortCommand(SlowCommand):
     """A custom class for Abort Command."""
 
-    def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+    def __init__(
+        self, command_tracker, component_manager, callback, logger: logging.Logger | None = None
+    ) -> None:
+        """Initialise a new AbortCommand instance.
+
+        :param command_tracker: the device's command tracker
+        :param component_manager: the device's component manager
+        :param callback: callback to be called when this command
+            starts and finishes
+        :param logger: a logger for this command object to use
         """
-        Stateless hook for command functionality.
+        self._command_tracker = command_tracker
+        self._component_manager = component_manager
+        super().__init__(callback=callback, logger=logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Stateless hook for command functionality.
 
         :param args: positional args to the component manager method
         :param kwargs: keyword args to the component manager method
@@ -24,54 +37,9 @@ class AbortCommand(SubmittedSlowCommand):
             the command has been accepted) or an informational message
             (if the command was rejected)
         """
-        command_id = self._command_tracker.new_command(
-            self._command_name, completed_callback=self._completed
-        )
-        method = getattr(self._component_manager, self._method_name)
-        status, message = method(
-            *args,
+        command_id = self._command_tracker.new_command("Abort", completed_callback=self._completed)
+        status, message = self._component_manager.abort(
             functools.partial(self._command_tracker.update_command_info, command_id),
-            **kwargs,
-        )
-
-        if status == TaskStatus.IN_PROGRESS:
-            return ResultCode.STARTED, command_id
-        if status == TaskStatus.REJECTED:
-            return ResultCode.REJECTED, command_id
-        return (
-            ResultCode.FAILED,
-            f"{status.name} was returned by command method with message: {message}",
-        )
-
-
-class AbortCommandsDeprecatedCommand(SubmittedSlowCommand):
-    """A custom class for AbortCommands Command."""
-
-    def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """
-        Stateless hook for command functionality.
-
-        :param args: positional args to the component manager method
-        :param kwargs: keyword args to the component manager method
-
-        :return: A tuple containing the result code (e.g. STARTED)
-            and a string message containing a command_id (if
-            the command has been accepted) or an informational message
-            (if the command was rejected)
-        """
-        warnings.warn(
-            "AbortCommands is deprecated, use Abort instead. "
-            "Issuing Abort sequence for requested command.",
-            DeprecationWarning,
-        )
-        command_id = self._command_tracker.new_command(
-            self._command_name, completed_callback=self._completed
-        )
-        method = getattr(self._component_manager, self._method_name)
-        status, message = method(
-            *args,
-            functools.partial(self._command_tracker.update_command_info, command_id),
-            **kwargs,
         )
 
         if status == TaskStatus.IN_PROGRESS:
@@ -88,8 +56,7 @@ class ApplyPointingModelCommand(FastCommand):
     """Class for handling band pointing parameters given a JSON input."""
 
     def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
-        """
-        Initialise a new ApplyPointingModelCommand instance.
+        """Initialise a new ApplyPointingModelCommand instance.
 
         :param component_manager: the device to which this command belongs.
         :param logger: a logger for this command to use.
@@ -98,8 +65,7 @@ class ApplyPointingModelCommand(FastCommand):
         super().__init__(logger)
 
     def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """
-        Implement ApplyPointingModel command functionality.
+        """Implement ApplyPointingModel command functionality.
 
         :param args: JSON object with a schema similar to this::
 
@@ -132,8 +98,7 @@ class SetKValueCommand(FastCommand):
     """Class for handling the SetKValue command."""
 
     def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
-        """
-        Initialise a new SetKValueCommand instance.
+        """Initialise a new SetKValueCommand instance.
 
         :param component_manager: the device to which this command belongs.
         :param logger: a logger for this command to use.
@@ -142,8 +107,7 @@ class SetKValueCommand(FastCommand):
         super().__init__(logger)
 
     def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """
-        Implement SetKValue command functionality.
+        """Implement SetKValue command functionality.
 
         :param args: k value.
         :return: A tuple containing a return code and a string
@@ -153,12 +117,101 @@ class SetKValueCommand(FastCommand):
         return self._component_manager.set_kvalue(*args)
 
 
+class SetFrequencyCommand(FastCommand):
+    """Class for handling the SetFrequency command."""
+
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
+        """Initialise a new SetFrequency instance.
+
+        :param component_manager: the device to which this command belongs.
+        :param logger: a logger for this command to use.
+        """
+        self._component_manager = component_manager
+        super().__init__(logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Implement SetFrequency command functionality.
+
+        :param args:  PLL output frequency (GHz)
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return self._component_manager.set_frequency(*args)
+
+
+class SetVPolAttenuationCommand(FastCommand):
+    """Class for handling the SetVPolAttenuation command."""
+
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
+        """Initialise a new SetVPolAttenuation instance.
+
+        :param component_manager: the device to which this command belongs.
+        :param logger: a logger for this command to use.
+        """
+        self._component_manager = component_manager
+        super().__init__(logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Implement SetVPolAttenuation command functionality.
+
+        :param args: RFCM V-polarization attenuation value (dB)
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return self._component_manager.set_v_pol_attenuation(*args)
+
+
+class SetHPolAttenuationCommand(FastCommand):
+    """Class for handling the SetHPolAttenuation command."""
+
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
+        """Initialise a new SetHPolAttenuation instance.
+
+        :param component_manager: the device to which this command belongs.
+        :param logger: a logger for this command to use.
+        """
+        self._component_manager = component_manager
+        super().__init__(logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Implement SetHPolAttenuation command functionality.
+
+        :param args: RFCM H-polarization attenuation value (dB)
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        return self._component_manager.set_h_pol_attenuation(*args)
+
+
+class ResetTrackTableCommand(FastCommand):
+    """Class for handling the ResetTrackTable command."""
+
+    def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
+        """Initialise a new ResetTrackTableCommand instance.
+
+        :param component_manager: the device to which this command belongs.
+        :param logger: a logger for this command to use.
+        """
+        self._component_manager = component_manager
+        super().__init__(logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Implement ResetTrackTable command functionality.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
+        """
+        return self._component_manager.reset_track_table(*args)
+
+
 class StowCommand(SubmittedSlowCommand):
     """A custom class for Stow Command."""
 
     def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """
-        Stateless hook for command functionality.
+        """Stateless hook for command functionality.
 
         :param args: positional args to the component manager method
         :param kwargs: keyword args to the component manager method
@@ -180,6 +233,11 @@ class StowCommand(SubmittedSlowCommand):
         # dont return the command id to the client
         if status == TaskStatus.COMPLETED:
             return ResultCode.STARTED, "Stow called on Dish Structure, monitor dishmode for STOW"
+        elif status == TaskStatus.IN_PROGRESS:
+            return (
+                ResultCode.STARTED,
+                "Stow will be called on Dish Structure, monitor dishmode for STOW",
+            )
         return (
             ResultCode.FAILED,
             f"{status.name} was returned by command method with message: {message}",

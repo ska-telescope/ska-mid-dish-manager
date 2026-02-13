@@ -1,16 +1,14 @@
-"""
-This model enforces the legal transitions when a command is triggered. It assesses the current
+"""This model enforces the legal transitions when a command is triggered. It assesses the current
 state of the device to decide if the requested state is a nearby node to allow or reject a command.
 """
 
 import typing
-
-# pylint: disable=too-few-public-methods
 from typing import Any, Callable
 
 import networkx as nx
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.utils.action_helpers import report_task_progress
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -19,6 +17,7 @@ CONFIG_COMMANDS = (
     "ConfigureBand4",
     "ConfigureBand5a",
     "ConfigureBand5b",
+    "ConfigureBand",
 )
 
 DISH_MODE_NODES = (
@@ -35,7 +34,7 @@ DISH_MODE_NODES = (
 
 
 class DishModeModel:
-    """A representation of the mode transition diagram"""
+    """Representation of the mode transition diagram, depicting commanded transitions."""
 
     def __init__(self) -> None:
         self.dishmode_graph = self._build_model()
@@ -46,38 +45,24 @@ class DishModeModel:
         for node in DISH_MODE_NODES:
             dishmode_graph.add_node(node)
 
-        # From Shutdown mode
-        dishmode_graph.add_edge("SHUTDOWN", "STARTUP")
-
-        # From Startup to other modes
-        dishmode_graph.add_edge("STARTUP", "STANDBY_LP")
-
         # From Standby_LP to other modes
         dishmode_graph.add_edge("STANDBY_LP", "STANDBY_FP", commands=["SetStandbyFPMode"])
-        dishmode_graph.add_edge("STANDBY_LP", "MAINTENANCE", commands=["SetMaintenanceMode"])
+        dishmode_graph.add_edge("STANDBY_LP", "CONFIG", commands=CONFIG_COMMANDS)
 
         # From Standby_FP to other modes
         dishmode_graph.add_edge("STANDBY_FP", "STANDBY_LP", commands=["SetStandbyLPMode"])
         dishmode_graph.add_edge("STANDBY_FP", "CONFIG", commands=CONFIG_COMMANDS)
-        dishmode_graph.add_edge("STANDBY_FP", "OPERATE", commands=["SetOperateMode"])
-        dishmode_graph.add_edge("STANDBY_FP", "MAINTENANCE", commands=["SetMaintenanceMode"])
 
         # From Operate to other modes
         dishmode_graph.add_edge("OPERATE", "STANDBY_FP", commands=["SetStandbyFPMode"])
+        dishmode_graph.add_edge("OPERATE", "STANDBY_LP", commands=["SetStandbyLPMode"])
         dishmode_graph.add_edge("OPERATE", "CONFIG", commands=CONFIG_COMMANDS)
-
-        # From Config to other modes
-        dishmode_graph.add_edge("CONFIG", "STANDBY_FP")
-        dishmode_graph.add_edge("CONFIG", "OPERATE")
-        # config to stow is covered in "any mode to stow" but that
-        # transition must be triggered by the SetStowMode cmd
-        # However, CONFIG to STOW can also be an automatic transition
-        dishmode_graph.add_edge("CONFIG", "STOW")
 
         # From Stow to other modes
         dishmode_graph.add_edge("STOW", "STANDBY_FP", commands=["SetStandbyFPMode"])
         dishmode_graph.add_edge("STOW", "STANDBY_LP", commands=["SetStandbyLPMode"])
         dishmode_graph.add_edge("STOW", "CONFIG", commands=CONFIG_COMMANDS)
+        dishmode_graph.add_edge("STOW", "MAINTENANCE", commands=["SetMaintenanceMode"])
 
         # From any mode to Stow
         for node in DISH_MODE_NODES:
@@ -86,18 +71,12 @@ class DishModeModel:
             dishmode_graph.add_edge(node, "STOW", commands=["SetStowMode"])
 
         # From any mode to Shutdown
+        # TODO: The shutdown command is not currently defined. Add it here
+        # once implemented
         for node in DISH_MODE_NODES:
             if node == "SHUTDOWN":
                 continue
             dishmode_graph.add_edge(node, "SHUTDOWN")
-
-        # From Maintenance to other modes
-        dishmode_graph.add_edge(
-            "MAINTENANCE",
-            "STANDBY_LP",
-            commands=["SetStandbyLPMode"],
-        )
-        dishmode_graph.add_edge("MAINTENANCE", "STANDBY_FP", commands=["SetStandbyFPMode"])
 
         return dishmode_graph
 
@@ -107,10 +86,9 @@ class DishModeModel:
         cmd_name: str,
         dish_mode: str | None = None,
         component_manager: Any | None = None,
-        task_callback: Callable | None = None,
+        progress_callback: Callable | None = None,
     ) -> bool:
-        """
-        Determine if requested tango command is allowed based on current dish mode
+        """Determine if requested tango command is allowed based on current dish mode.
 
         This method is used by the executor to evaluate the command pre-condition after it's
         taken off the queue. To ensure the evaluation is always performed using an updated
@@ -124,7 +102,7 @@ class DishModeModel:
         :param cmd_name: the requested command
         :param dish_mode: the current dishMode reported by the component state
         :param component_manager: the component manager containing the component state
-        :param task_callback: callback to update the command info
+        :param progress_callback: progress_callback function to report progress
 
         :raises TypeError: when no dish_mode or component_manager is provided to function call
 
@@ -139,6 +117,11 @@ class DishModeModel:
                 "is_command_allowed() requires either the dish_mode or"
                 " the component_manager to be specified"
             ) from exc
+
+        # For a call to SetMaintenanceMode, the command is allowed regardless of the current
+        # dish mode. SetMaintenanceMode should not be allowed in Maintenance dish mode
+        if cmd_name == "SetMaintenanceMode" and not current_dish_mode == "MAINTENANCE":
+            return True
 
         allowed_commands = []
         for from_node, to_node in self.dishmode_graph.edges(current_dish_mode):
@@ -158,7 +141,6 @@ class DishModeModel:
             logger = component_manager.logger
             logger.debug(msg)
 
-        if task_callback:
-            task_callback(progress=msg)  # status and result are handled in executor
+        report_task_progress(msg, progress_callback)
 
         return False

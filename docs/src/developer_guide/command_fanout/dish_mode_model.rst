@@ -13,11 +13,8 @@ The ``DishModeModel`` is an abstraction of the allowed states from a current sta
   :height: 400
   :alt: Dish Mode Transitions
 
-.. note::
-  OFF is no longer a mode transitioned from.
-
 The image below shows ALL the possible mode transitions generated from the ``DishModeModel``
-(see README on how to generate the graph).
+(see README on how to generate the graph or use the python notebook at docs/src/generate_dish_mode_state_graph.ipynb).
 
 .. image:: ../../images/DishModeTransitionGenerated.png
   :width: 60%

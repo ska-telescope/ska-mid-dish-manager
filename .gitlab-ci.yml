@@ -1,7 +1,7 @@
 # GitLab CI in conjunction with GitLab Runner can use Docker Engine to test and build any application.
 # Docker, when used with GitLab CI, runs each job in a separate and isolated container using the predefined image that is set up in .gitlab-ci.yml.
 # In this case we use the latest python docker image to build and test this project.
-image: $SKA_K8S_TOOLS_DOCKER_BUILDER_IMAGE
+image: $SKA_K8S_TOOLS_BUILD_DEPLOY
 
 variables:
   CHARTS_TO_PUBLISH: ska-mid-dish-manager
@@ -46,7 +46,11 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
-#mypy job
+python-test-forked:
+  extends: python-test
+  script:
+    - make python-test-forked;
+
 mypy:
   stage: lint
   script:
@@ -59,12 +63,44 @@ mypy:
       src/ska_mid_dish_manager/models/dish_state_transition.py
   allow_failure: true
 
+k8s-test-runner:
+  variables:
+     K8S_TEST_RUNNER_MARK: "acceptance and not movement"
+     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+     VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
 
-# create a job to run multiple k8s-test-runs
+k8s-test-runner-movement:
+  extends: k8s-test-runner
+  variables:
+    K8S_TEST_RUNNER_MARK: "movement"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
+  environment:
+    name: test/$CI_COMMIT_REF_SLUG
+    on_stop: stop-k8s-test-runner-movement
+    auto_stop_in: 1 minute
+
+# runs multiple acceptance tests in parallel with minimal deployment
 k8s-test-runner-parallel:
   extends: k8s-test-runner
   parallel: 3
-  when: manual
   allow_failure: true
+  when: manual
   variables:
-    KUBE_NAMESPACE: "ci-$CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA-$CI_NODE_INDEX"
+    K8S_TEST_RUNNER_MARK: "acceptance"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
+
+k8s-test-runner-track-patterns:
+  extends: k8s-test-runner
+  allow_failure: true
+  when: manual
+  variables:
+    K8S_TEST_RUNNER_MARK: "track_patterns"
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
+
+stop-k8s-test-runner-movement:
+  extends: stop-k8s-test-runner
+  variables:
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"

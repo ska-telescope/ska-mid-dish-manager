@@ -1,20 +1,23 @@
-name: "dishmanager-{{.Release.Name}}"
+name: "dishmanager-{{ .Release.Name }}"
 function: telescope-monitoring
 domain: general-monitoring
 command: "DishManagerDS"
 server:
   name: "DishManagerDS"
   instances:
-  {{- range  .Values.coalesced_dishes }}
-    - name: "{{ . }}"
+  {{- range .Values.coalesced_dishes }}
+    {{- $dish := . | trim }}
+    {{- $dishLower := $dish | lower }}
+    {{- $receptorNumber := regexReplaceAll "[^0-9]" $dish "" }}
+    - name: "{{ $dishLower }}"
       classes:
         - name: "DishManager"
           devices:
-            - name: "mid-dish/dish-manager/SKA{{ printf "%01s" ( . | toString ) }}"
+            - name: "mid-dish/dish-manager/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
               properties:
                 - name: "ReceptorNumber"
                   values:
-                    - "{{ printf "%01s" . }}"
+                    - "{{ $receptorNumber }}"
                 - name: "SkaLevel"
                   values:
                     - "1"
@@ -32,45 +35,76 @@ server:
                     - ""
                 - name: "DSDeviceFqdn"
                   values:
-    {{ if $.Values.dishmanager.ds.fqdn }}
-                    - "{{ $.Values.dishmanager.ds.fqdn}}"
-    {{ else }}
-                    - "{{ $.Values.dishmanager.ds.domain_name }}/{{ $.Values.dishmanager.ds.family_name }}/SKA{{ printf "%01s" . }}"
-    {{ end }}
+                    {{- if $.Values.dishmanager.ds.fqdn }}
+                    - "{{ $.Values.dishmanager.ds.fqdn }}"
+                    {{- else }}
+                    - "{{ $.Values.dishmanager.ds.domain_name }}/{{ $.Values.dishmanager.ds.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
+                    {{- end }}
                 - name: "SPFDeviceFqdn"
                   values:
-    {{ if $.Values.dishmanager.spf.fqdn }}
-                    - "{{ $.Values.dishmanager.spf.fqdn}}"
-    {{ else }}
-                    - "{{ $.Values.dishmanager.spf.domain_name }}/{{ $.Values.dishmanager.spf.family_name }}/SKA{{ printf "%01s" . }}"
-    {{ end }}
+                    {{- if $.Values.dishmanager.spf.fqdn }}
+                    - "{{ $.Values.dishmanager.spf.fqdn }}"
+                    {{- else }}
+                    - "{{ $.Values.dishmanager.spf.domain_name }}/{{ $.Values.dishmanager.spf.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
+                    {{- end }}
                 - name: "SPFRxDeviceFqdn"
                   values:
-    {{ if $.Values.dishmanager.spfrx.fqdn }}
-                    - "{{ $.Values.dishmanager.spfrx.fqdn}}"
-    {{ else }}
-                    - "{{ $.Values.dishmanager.spfrx.domain_name }}/{{ $.Values.dishmanager.spfrx.family_name }}/SKA{{ printf "%01s" . }}"
-    {{ end }}
+                    {{- if $.Values.dishmanager.spfrx.fqdn }}
+                    - "{{ $.Values.dishmanager.spfrx.fqdn }}"
+                    {{- else }}
+                    - "{{ $.Values.dishmanager.spfrx.domain_name }}/{{ $.Values.dishmanager.spfrx.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
+                    {{- end }}
+                - name: "B5DCDeviceFqdn"
+                  values:
+                    {{- if (index $.Values "ska-mid-dish-b5dc-proxy").enabled }}
+                      {{- if $.Values.dishmanager.b5dcproxy.fqdn }}
+                    - "{{ $.Values.dishmanager.b5dcproxy.fqdn }}"
+                      {{- else }}
+                    - "{{ $.Values.dishmanager.b5dcproxy.domain_name }}/{{ $.Values.dishmanager.b5dcproxy.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
+                      {{- end }}
+                    {{- else }}
+                    - ""
+                    {{- end }}
                 - name: "DishId"
                   values:
-                    - "SKA{{ printf "%01s" . }}"
-
+                    - "{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dish | upper }}{{ end }}"
+                - name: "DefaultWatchdogTimeout"
+                  values:
+                    - "{{ $.Values.dishmanager.watchdog.timeout_seconds }}"
+                - name: "MeanWindSpeedThreshold"
+                  values:
+                    - "{{ $.Values.dishmanager.wms.MeanWindSpeedThreshold }}"
+                - name: "WindGustThreshold"
+                  values:
+                    - "{{ $.Values.dishmanager.wms.WindGustThreshold }}"
+                - name: "WMSDeviceNames"
+                  {{ if eq (len $.Values.dishmanager.wms.station_ids) 0 }}
+                  values: []
+                  {{ else }}
+                  values:
+                    {{- range $.Values.dishmanager.wms.station_ids }}
+                    - "ska-mid/weather-monitoring/{{ . }}"
+                    {{- end }}
+                  {{- end }}
+                - name: "DefaultActionTimeoutSeconds"
+                  values:
+                    - "{{ $.Values.dishmanager.actions.timeout_seconds }}"
               attribute_properties:
-              - attribute: "ignoreSpf"
-                properties:
-                  - name: "__value"
-                    values:
-                      - "{{ $.Values.dishmanager.spf.ignored}}"
-              - attribute: "ignoreSpfrx"
-                properties:
-                  - name: "__value"
-                    values:
-                      - "{{ $.Values.dishmanager.spfrx.ignored}}"
+                - attribute: "ignoreSpf"
+                  properties:
+                    - name: "__value"
+                      values:
+                        - "{{ $.Values.dishmanager.spf.ignored }}"
+                - attribute: "ignoreSpfrx"
+                  properties:
+                    - name: "__value"
+                      values:
+                        - "{{ $.Values.dishmanager.spfrx.ignored }}"
   {{- end }}
 depends_on:
   - device: sys/database/2
 image:
-  registry: "{{.Values.dishmanager.image.registry}}"
-  image: "{{.Values.dishmanager.image.image}}"
-  tag: "{{.Values.dishmanager.image.tag}}"
-  pullPolicy: "{{.Values.dishmanager.image.pullPolicy}}"
+  registry: "{{ .Values.dishmanager.image.registry }}"
+  image: "{{ .Values.dishmanager.image.image }}"
+  tag: "{{ .Values.dishmanager.image.tag }}"
+  pullPolicy: "{{ .Values.dishmanager.image.pullPolicy }}"

@@ -1,6 +1,7 @@
 """Release information for ska-mid-dish-manager Python Package."""
 
 import json
+import time
 from dataclasses import asdict
 from importlib.metadata import PackageNotFoundError, version
 
@@ -12,26 +13,41 @@ BAD_JSON_FORMAT_VERSION = "Bad JSON formatting."
 BUILD_STATE_SPACING = 4
 
 
+def get_time_in_human_readable_format(timestamp) -> str:
+    """Get time in human readable format."""
+    return time.strftime("%d-%m-%Y %H:%M:%S", time.localtime(timestamp))
+
+
 class ReleaseInfo:
     """Class containing version release information."""
 
     def __init__(
-        self, ds_manager_address: str = "", spfc_address: str = "", spfrx_address: str = ""
+        self,
+        timestamp: float = time.time(),
+        ds_manager_address: str = "",
+        spfc_address: str = "",
+        spfrx_address: str = "",
+        b5dc_address: str = "",
     ) -> None:
+        self._timestamp = get_time_in_human_readable_format(timestamp)
         self._ds_manager_device_info = DeviceInfoDataClass(ds_manager_address)
         self._spfrx_device_info = DeviceInfoDataClass(spfrx_address)
         self._spfc_device_info = DeviceInfoDataClass(spfc_address)
+        self.b5dc_device_info = DeviceInfoDataClass(b5dc_address)
         self._build_state = DmBuildStateDataClass(
+            last_updated=self._timestamp,
             dish_manager_version=self.get_dish_manager_release_version(),
             ds_manager_device=self._ds_manager_device_info,
             spfrx_device=self._spfrx_device_info,
             spfc_device=self._spfc_device_info,
+            b5dc_device=self.b5dc_device_info,
         )
 
         self._device_to_update_method_map = {
             DishDevice.DS: self._update_ds_manager_version,
             DishDevice.SPF: self._update_spfc_version,
             DishDevice.SPFRX: self._update_spfrx_version,
+            DishDevice.B5DC: self._update_b5dc_version,
         }
 
     def get_build_state(self) -> str:
@@ -60,6 +76,10 @@ class ReleaseInfo:
     def _update_spfrx_version(self, spfrx_version: str) -> None:
         """Update SPFRx version information."""
         self._build_state.spfrx_device.version = spfrx_version
+
+    def _update_b5dc_version(self, b5dc_version: str) -> None:
+        """Update B5DC version information."""
+        self.b5dc_device_info.version = b5dc_version
 
     @staticmethod
     def get_dish_manager_release_version() -> str:

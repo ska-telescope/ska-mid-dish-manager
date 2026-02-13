@@ -3,10 +3,10 @@ from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
-from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
+from ska_control_model import CommunicationStatus, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from tests.utils import ComponentStateStore
+from tests.utils import ComponentStateStore, MethodCallsStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,35 +26,38 @@ def callbacks() -> dict:
         "comm_state_cb": MagicMock(),
         "comp_state_cb": ComponentStateStore(),
         "task_cb": MagicMock(),
+        "progress_cb": MethodCallsStore(),
     }
 
 
 @pytest.fixture()
 def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Generator:
-    """
-    Fixture that returns the component manager under test.
+    """Fixture that returns the component manager under test.
 
     :param callbacks: a dictionary of mocks passed as callbacks
 
     :return: the component manager under test
     """
-
-    def _simulate_lrc_callbacks(*args, **kwargs):
-        task_callback = args[-1]
-        task_callback(status=TaskStatus.IN_PROGRESS)
-        task_callback(status=TaskStatus.COMPLETED, result=(ResultCode.OK, str(None)))
-        return TaskStatus.QUEUED, "message"
-
-    def _simulate_execute_command(*args):
-        return [[ResultCode.OK], [f"{args[0]} completed"]]
-
-    with patch.multiple(
-        "ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceComponentManager",
-        read_attribute_value=MagicMock(),
-        write_attribute_value=MagicMock(),
-        update_state_from_monitored_attributes=MagicMock(),
-        execute_command=MagicMock(side_effect=_simulate_execute_command),
-        run_device_command=MagicMock(side_effect=_simulate_lrc_callbacks),
+    with (
+        patch.multiple(
+            "ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceComponentManager",
+            read_attribute_value=MagicMock(),
+            write_attribute_value=MagicMock(),
+            update_state_from_monitored_attributes=MagicMock(),
+            execute_command=MagicMock(
+                side_effect=lambda command_name, command_arg: (
+                    TaskStatus.IN_PROGRESS,
+                    f"{command_name} successfully executed",
+                )
+            ),
+        ),
+        patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager"),
+        patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"),
+        patch.multiple(
+            "ska_mid_dish_manager.utils.schedulers.WatchdogTimer",
+            disable=MagicMock(),
+        ),
+        patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
     ):
         dish_manager_cm = DishManagerComponentManager(
             LOGGER,
@@ -65,10 +68,20 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             "sub-device-1",
             "sub-device-2",
             "sub-device-3",
+            "sub-device-4",
+            action_timeout_s=120,
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
+            command_progress_callback=callbacks["progress_cb"],
         )
-        # all the command handlers are decorated with check_communicating
-        # transition communication to the component as ESTABLISHED
-        dish_manager_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
+        dish_manager_cm.start_communicating()
+        # since the devices are mocks, no change events
+        # will be emitted to transition the state to ESTABLISHED
+        for sub_component_manager in dish_manager_cm.sub_component_managers.values():
+            sub_component_manager._update_communication_state(CommunicationStatus.ESTABLISHED)
+
         yield dish_manager_cm
+
+        # cleanup resources
+        dish_manager_cm.stop_communicating()
+        dish_manager_cm._task_executor.abort()
