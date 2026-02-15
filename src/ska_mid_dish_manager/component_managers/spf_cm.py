@@ -5,7 +5,7 @@ from threading import Lock
 from typing import Any, Callable, Optional
 
 from ska_control_model import HealthState
-from ska_mid_dish_simulators.sim_enums import (
+from ska_mid_dish_utils.sim_enums import (
     SPFBandInFocus,
     SPFCapabilityStates,
     SPFOperatingMode,
