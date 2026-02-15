@@ -25,6 +25,12 @@ from ska_mid_dish_simulators.sim_enums import (
     NoiseDiodeMode,
     TrackInterpolationMode,
 )
+from ska_mid_dish_utils.models.dish_enums import (
+    CapabilityStates,
+    DishDevice,
+    DishMode,
+    PowerState,
+)
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango import AttrQuality, AttrWriteType, DevState, DevULong, DevVarStringArray, DispLevel
@@ -56,10 +62,6 @@ from ska_mid_dish_manager.models.constants import (
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
-    CapabilityStates,
-    DishDevice,
-    DishMode,
-    PowerState,
     TrackProgramMode,
 )
 from ska_mid_dish_manager.release import ReleaseInfo
