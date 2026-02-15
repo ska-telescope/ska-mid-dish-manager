@@ -14,11 +14,11 @@ from ska_mid_dish_simulators.sim_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
-
-from ska_mid_dish_manager.models.command_actions import SetStandbyLPModeAction
-from ska_mid_dish_manager.models.dish_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
     DishMode,
 )
+
+from ska_mid_dish_manager.models.command_actions import SetStandbyLPModeAction
 from tests.utils import MethodCallsStore
 
 LOGGER = logging.getLogger(__name__)

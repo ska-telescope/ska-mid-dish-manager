@@ -11,8 +11,7 @@ from ska_mid_dish_simulators.sim_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
-
-from ska_mid_dish_manager.models.dish_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
     DishMode,
 )
 

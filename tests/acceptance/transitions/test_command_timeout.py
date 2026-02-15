@@ -3,9 +3,9 @@
 import time
 
 import pytest
+from ska_mid_dish_utils.models.dish_enums import DishMode
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
-from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 

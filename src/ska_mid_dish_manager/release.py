@@ -5,8 +5,9 @@ import time
 from dataclasses import asdict
 from importlib.metadata import PackageNotFoundError, version
 
+from ska_mid_dish_utils.models.dish_enums import DishDevice
+
 from ska_mid_dish_manager.models.data_classes import DeviceInfoDataClass, DmBuildStateDataClass
-from ska_mid_dish_manager.models.dish_enums import DishDevice
 
 DISH_MANAGER_PACKAGE_NAME = "ska_mid_dish_manager"
 BAD_JSON_FORMAT_VERSION = "Bad JSON formatting."

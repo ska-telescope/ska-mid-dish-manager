@@ -1,8 +1,8 @@
 """Test that DS goes into STOW and dishManager reports it."""
 
 import pytest
+from ska_mid_dish_utils.models.dish_enums import DishMode
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 

@@ -6,8 +6,8 @@ from importlib.metadata import PackageNotFoundError
 from unittest.mock import Mock, patch
 
 import pytest
+from ska_mid_dish_utils.models.dish_enums import DishDevice
 
-from ska_mid_dish_manager.models.dish_enums import DishDevice
 from ska_mid_dish_manager.release import (
     BAD_JSON_FORMAT_VERSION,
     DISH_MANAGER_PACKAGE_NAME,

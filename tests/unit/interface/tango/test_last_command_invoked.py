@@ -9,8 +9,7 @@ from ska_mid_dish_ds_manager.models.dish_enums import (
 from ska_mid_dish_simulators.sim_enums import (
     SPFOperatingMode,
 )
-
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_utils.models.dish_enums import DishMode
 
 
 @pytest.mark.unit

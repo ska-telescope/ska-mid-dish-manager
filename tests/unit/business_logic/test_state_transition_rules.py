@@ -16,12 +16,12 @@ from ska_mid_dish_simulators.sim_enums import (
     SPFRxCapabilityStates,
     SPFRxOperatingMode,
 )
-
-from ska_mid_dish_manager.models.dish_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
     CapabilityStates,
     DishMode,
     PowerState,
 )
+
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 
 

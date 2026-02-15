@@ -8,6 +8,9 @@ from ska_mid_dish_ds_manager.models.dish_enums import (
 from ska_mid_dish_simulators.sim_enums import (
     Band,
 )
+from ska_mid_dish_utils.models.dish_enums import (
+    DishMode,
+)
 
 from ska_mid_dish_manager.models.constants import (
     MAX_AZIMUTH,
@@ -15,9 +18,6 @@ from ska_mid_dish_manager.models.constants import (
     MIN_AZIMUTH,
     MIN_ELEVATION_SCIENCE,
     STOW_ELEVATION_DEGREES,
-)
-from ska_mid_dish_manager.models.dish_enums import (
-    DishMode,
 )
 from tests.utils import calculate_slew_target, remove_subscriptions, setup_subscriptions
 

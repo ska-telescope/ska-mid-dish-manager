@@ -1,8 +1,8 @@
 """Test StandbyFP."""
 
 import pytest
+from ska_mid_dish_utils.models.dish_enums import DishMode, PowerState
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, PowerState
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 

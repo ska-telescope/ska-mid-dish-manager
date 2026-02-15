@@ -11,12 +11,12 @@ from ska_mid_dish_simulators.sim_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from ska_mid_dish_utils.models.dish_enums import (
+    DishMode,
+)
 from tango import DevFailed, DeviceProxy
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
-from ska_mid_dish_manager.models.dish_enums import (
-    DishMode,
-)
 from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
 
 REQUESTED_AZIMUTH_VALUE = 100.0

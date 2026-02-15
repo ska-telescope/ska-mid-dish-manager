@@ -6,9 +6,9 @@ import time
 from typing import Any, Callable, Optional
 
 from ska_control_model import TaskStatus
+from ska_mid_dish_utils.models.dish_enums import FannedOutCommandStatus
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
-from ska_mid_dish_manager.models.dish_enums import FannedOutCommandStatus
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
     report_awaited_attributes,

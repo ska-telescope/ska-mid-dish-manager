@@ -7,12 +7,12 @@ from ska_mid_dish_simulators.sim_enums import (
     Band,
     SPFBandInFocus,
 )
-
-from ska_mid_dish_manager.models.dish_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
     CapabilityStates,
     DishMode,
     PowerState,
 )
+
 from ska_mid_dish_manager.models.transition_rules import (
     band_focus_rules_all_devices,
     band_focus_rules_spfrx_ignored,

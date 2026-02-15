@@ -6,9 +6,9 @@ from threading import Event
 from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
+from ska_mid_dish_utils.models.dish_enums import DishMode
 
 from ska_mid_dish_manager.models.command_actions import SetStandbyFPModeAction, TrackStopAction
-from ska_mid_dish_manager.models.dish_enums import DishMode
 from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
 
 

@@ -1,8 +1,8 @@
 """Unit tests verifying model against dishMode transitions."""
 
 import pytest
+from ska_mid_dish_utils.models.dish_enums import DishMode
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
 

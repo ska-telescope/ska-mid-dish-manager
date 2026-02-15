@@ -34,6 +34,12 @@ from ska_mid_dish_simulators.sim_enums import (
     SPFRxOperatingMode,
     TrackInterpolationMode,
 )
+from ska_mid_dish_utils.models.dish_enums import (
+    CapabilityStates,
+    DishDevice,
+    DishMode,
+    PowerState,
+)
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.b5dc_cm import B5DCComponentManager
@@ -62,12 +68,6 @@ from ska_mid_dish_manager.models.constants import (
     MAINTENANCE_MODE_TRUE_VALUE,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
     WIND_GUST_THRESHOLD_MPS,
-)
-from ska_mid_dish_manager.models.dish_enums import (
-    CapabilityStates,
-    DishDevice,
-    DishMode,
-    PowerState,
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition

@@ -20,11 +20,11 @@ from ska_mid_dish_simulators.sim_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
-
-from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S, DSC_MIN_POWER_LIMIT_KW
-from ska_mid_dish_manager.models.dish_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
     DishMode,
 )
+
+from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S, DSC_MIN_POWER_LIMIT_KW
 from ska_mid_dish_manager.models.fanned_out_command import FannedOutCommand, FannedOutSlowCommand
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,

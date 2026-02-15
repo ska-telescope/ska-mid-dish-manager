@@ -3,8 +3,8 @@
 import pytest
 import tango
 from ska_control_model import ResultCode
+from ska_mid_dish_utils.models.dish_enums import DishMode
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 ELEV_MECHANICAL_LIMIT_MAX = 85.0
