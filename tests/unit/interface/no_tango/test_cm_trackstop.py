@@ -2,10 +2,7 @@
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
-from ska_mid_dish_ds_manager.models.dish_enums import (
-    PointingState,
-)
-from ska_mid_dish_utils.models.dish_enums import DishMode
+from ska_mid_dish_utils.models.dish_enums import DishMode, PointingState
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 

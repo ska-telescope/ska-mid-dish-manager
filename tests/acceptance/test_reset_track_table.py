@@ -1,7 +1,7 @@
 """Test ResetTrackTable on dish manager."""
 
 import pytest
-from ska_mid_dish_ds_manager.models.dish_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
     TrackTableLoadMode,
 )
 

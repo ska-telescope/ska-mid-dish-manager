@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 import tango
-from ska_mid_dish_ds_manager.models.dish_enums import PointingState
+from ska_mid_dish_utils.models.dish_enums import PointingState
 
 from tests.utils import calculate_slew_target, remove_subscriptions, setup_subscriptions
 

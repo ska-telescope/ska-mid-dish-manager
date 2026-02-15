@@ -1,15 +1,11 @@
 """Test Abort."""
 
 import pytest
-from ska_mid_dish_ds_manager.models.dish_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
+    Band,
+    DishMode,
     PointingState,
     TrackTableLoadMode,
-)
-from ska_mid_dish_simulators.sim_enums import (
-    Band,
-)
-from ska_mid_dish_utils.models.dish_enums import (
-    DishMode,
 )
 
 from ska_mid_dish_manager.models.constants import (

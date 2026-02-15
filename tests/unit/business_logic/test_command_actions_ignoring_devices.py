@@ -6,16 +6,12 @@ from unittest import mock
 
 import pytest
 from ska_control_model import AdminMode
-from ska_mid_dish_ds_manager.models.dish_enums import (
-    DSOperatingMode,
-    DSPowerState,
-)
-from ska_mid_dish_simulators.sim_enums import (
-    SPFOperatingMode,
-    SPFRxOperatingMode,
-)
 from ska_mid_dish_utils.models.dish_enums import (
     DishMode,
+    DSOperatingMode,
+    DSPowerState,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
 )
 
 from ska_mid_dish_manager.models.command_actions import SetStandbyLPModeAction

@@ -14,18 +14,19 @@ from ska_control_model import AdminMode, CommunicationStatus, HealthState, Resul
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
-from ska_mid_dish_ds_manager.models.dish_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
+    Band,
+    CapabilityStates,
+    DishDevice,
+    DishMode,
     DscCmdAuthType,
     DscCtrlState,
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
-    PointingState,
-    TrackTableLoadMode,
-)
-from ska_mid_dish_simulators.sim_enums import (
-    Band,
     NoiseDiodeMode,
+    PointingState,
+    PowerState,
     SPFBandInFocus,
     SPFCapabilityStates,
     SPFOperatingMode,
@@ -33,12 +34,7 @@ from ska_mid_dish_simulators.sim_enums import (
     SPFRxCapabilityStates,
     SPFRxOperatingMode,
     TrackInterpolationMode,
-)
-from ska_mid_dish_utils.models.dish_enums import (
-    CapabilityStates,
-    DishDevice,
-    DishMode,
-    PowerState,
+    TrackTableLoadMode,
 )
 from ska_tango_base.executor import TaskExecutorComponentManager
 

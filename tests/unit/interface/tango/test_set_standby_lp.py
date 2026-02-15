@@ -3,18 +3,14 @@
 import pytest
 import tango
 from ska_control_model import ResultCode
-from ska_mid_dish_ds_manager.models.dish_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
+    DishMode,
     DSOperatingMode,
     DSPowerState,
-)
-from ska_mid_dish_simulators.sim_enums import (
+    PowerState,
     SPFOperatingMode,
     SPFPowerState,
     SPFRxOperatingMode,
-)
-from ska_mid_dish_utils.models.dish_enums import (
-    DishMode,
-    PowerState,
 )
 
 

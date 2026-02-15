@@ -9,19 +9,15 @@ from typing import Any, Callable, List, Optional
 import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
-from ska_mid_dish_ds_manager.models.dish_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
+    Band,
+    DishMode,
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
     PointingState,
-)
-from ska_mid_dish_simulators.sim_enums import (
-    Band,
     SPFOperatingMode,
     SPFRxOperatingMode,
-)
-from ska_mid_dish_utils.models.dish_enums import (
-    DishMode,
 )
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S, DSC_MIN_POWER_LIMIT_KW

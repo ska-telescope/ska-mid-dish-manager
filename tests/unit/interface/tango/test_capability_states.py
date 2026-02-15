@@ -2,17 +2,13 @@
 
 import pytest
 import tango
-from ska_mid_dish_ds_manager.models.dish_enums import (
-    DSOperatingMode,
-    IndexerPosition,
-)
-from ska_mid_dish_simulators.sim_enums import (
-    SPFCapabilityStates,
-    SPFRxCapabilityStates,
-)
 from ska_mid_dish_utils.models.dish_enums import (
     CapabilityStates,
     DishMode,
+    DSOperatingMode,
+    IndexerPosition,
+    SPFCapabilityStates,
+    SPFRxCapabilityStates,
 )
 
 

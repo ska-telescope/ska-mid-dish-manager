@@ -3,16 +3,12 @@
 import time
 
 import pytest
-from ska_mid_dish_ds_manager.models.dish_enums import (
-    DscCmdAuthType,
-    DSOperatingMode,
-)
-from ska_mid_dish_simulators.sim_enums import (
-    SPFOperatingMode,
-    SPFRxOperatingMode,
-)
 from ska_mid_dish_utils.models.dish_enums import (
     DishMode,
+    DscCmdAuthType,
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
 )
 from tango import DevFailed, DeviceProxy
 
