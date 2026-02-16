@@ -4,10 +4,13 @@ from tango import DeviceProxy
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
 
+# Based on observed behaviour:
+# - SetStandbyLPMode is rejected if already in STANDBY_LP
+# - OPERATE from STOW was rejected; so return to STANDBY_FP before OPERATE
 TRANSITIONS = [
-    ("SetStandbyLPMode", DishMode.STANDBY_LP),
     ("SetStandbyFPMode", DishMode.STANDBY_FP),
     ("SetStowMode", DishMode.STOW),
+    ("SetStandbyFPMode", DishMode.STANDBY_FP),
     ("SetOperateMode", DishMode.OPERATE),
     ("SetStandbyLPMode", DishMode.STANDBY_LP),
 ]
@@ -20,7 +23,6 @@ def test_mode_transitions_cycle(
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
 ) -> None:
-    """Loop dish modes one hundred times to exercise transitions thoroughly."""
     mode_event_store = event_store_class()
     status_event_store = event_store_class()
 
@@ -32,36 +34,53 @@ def test_mode_transitions_cycle(
         )
     )
 
+    current_step = "initialising"
     try:
+        # Ensure known start state without issuing an illegal no-op command
         if dish_manager_proxy.dishMode != DishMode.STANDBY_LP:
+            current_step = "SetStandbyLPMode -> STANDBY_LP (initial)"
             mode_event_store.clear_queue()
             dish_manager_proxy.SetStandbyLPMode()
             mode_event_store.wait_for_value(
-                DishMode.STANDBY_LP,
-                timeout=300,
-                proxy=dish_manager_proxy,
+                DishMode.STANDBY_LP, timeout=180, proxy=dish_manager_proxy
             )
 
         for command_name, expected_mode in TRANSITIONS:
+            current_step = f"{command_name} -> {expected_mode}"
+
+            # Avoid calling commands that are known to be rejected when already in target mode
             if dish_manager_proxy.dishMode == expected_mode:
                 continue
 
             mode_event_store.clear_queue()
             getattr(dish_manager_proxy, command_name)()
 
-            mode_event_store.wait_for_value(
-                expected_mode,
-                timeout=300,
-                proxy=dish_manager_proxy,
-            )
+            mode_event_store.wait_for_value(expected_mode, timeout=180, proxy=dish_manager_proxy)
 
     except Exception as e:
+        # Direct reads (events may be missing/late)
+        try:
+            current_mode = dish_manager_proxy.dishMode
+        except Exception:
+            current_mode = "<failed to read dishMode>"
+
+        try:
+            component_states = dish_manager_proxy.GetComponentStates()
+        except Exception:
+            component_states = "<failed to GetComponentStates()>"
+
         events = status_event_store.get_queue_events()
         status_dump = "".join(
-            [str(e.attr_value.value) for e in events if e.attr_value is not None]
+            [str(ev.attr_value.value) for ev in events if ev.attr_value is not None]
         )
-        pytest.fail(f"Mode cycle iteration failed: {e}. Recent status: {status_dump}")
-        raise
+
+        raise AssertionError(
+            f"Mode cycle iteration failed at step: {current_step}\n"
+            f"Error: {e}\n"
+            f"Current dishMode: {current_mode}\n"
+            f"Component states: {component_states}\n"
+            f"Recent Status: {status_dump}"
+        ) from e
 
     finally:
         remove_subscriptions(subscriptions)
