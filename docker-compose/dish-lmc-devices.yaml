@@ -52,7 +52,7 @@ services:
 
   spf-simulator:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-simulators:5.5.3
+    image: artefact.skao.int/ska-mid-dish-simulators:5.6.2
     container_name: spf-simulator
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
