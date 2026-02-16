@@ -8,6 +8,21 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.3.0-rc.2
+******************
+- Fix error status node name (errTiltTwoIounit to errTiltTwoIoUnit)
+
+- Upgraded ska-mid-dish-ds-manager to v8.0.3
+  - Resolve segmentation fault caused by pushing an event with ATTR_INVALID -> ATTR_VALID transition
+  - Fix late-binding closure behaviour for error status attributes fget
+
+- Upgraded ska-mid-dish-simulators to v5.6.2.
+  - Fixed simulator to align the dscstate with the PLC regarding activating/deactiving state.
+  - Reduced the servo position frequency updates by a factor of 4.
+
+- Downgraded ska-tango-base to v1.3.2 and tango to v10.0.0 to address tango serialisation lock issue.
+
+
 Version 9.3.0-rc.1
 ******************
 - Added in ignoreB5dc attribute to ignore B5DC state and quality changes.

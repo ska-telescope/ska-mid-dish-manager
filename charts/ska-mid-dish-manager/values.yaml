@@ -15,7 +15,7 @@ ska-mid-dish-ds-manager:
     image:
       registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager/
       image: ska-mid-dish-ds-manager
-      tag: 7.1.0-dev.cca0a2c7e
+      tag: 7.1.0-dev.ce7e76e1a
       pullPolicy: IfNotPresent
 
 
@@ -62,7 +62,7 @@ dishmanager:
   image:
     registry: artefact.skao.int
     image: ska-mid-dish-manager
-    tag: 9.3.0-rc.1
+    tag: 9.3.0-rc.2
     pullPolicy: IfNotPresent
 
   # Setting fqdn assumes you are only deploying one Dish Manager

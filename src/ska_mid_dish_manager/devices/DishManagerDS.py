@@ -478,6 +478,11 @@ class DishManager(SKAController):
                 "versionId",
                 "loggingLevel",
                 "loggingTargets",
+                # remove element attrs for higher version of base classes
+                "elementLoggerAddress",
+                "elementAlarmAddress",
+                "elementTelStateAddress",
+                "elementDatabaseAddress",
             ):
                 device.set_change_event(attr, True, False)
                 device.set_archive_event(attr, True, False)
@@ -2081,8 +2086,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=str,
         access=AttrWriteType.READ,
-        doc="Report the current DSC errors as a comma-delimited list. Reports 'OK' if no errors "
-        "are present.",
+        doc="Report the current DSC errors as a semicolon-delimited list. Reports 'OK' if no "
+        "errors are present.",
     )
     def dscErrorStatuses(self):
         """Return the aggregated error statuses from the DSC."""

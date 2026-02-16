@@ -3481,13 +3481,13 @@ develop = false
 astropy = ">=6.0.1"
 asyncua = ">=1.1.5"
 itango = ">=0.3.0"
-pytango = ">=9.5,<11"
+pytango = "10.0.0"
 
 [package.source]
 type = "git"
 url = "https://gitlab.com/ska-telescope/ska-mid-dish-utils.git"
 reference = "kar-2094-central-enums"
-resolved_reference = "c25b5af7c7df0e1812ecc4cd94767ebef6a95e5a"
+resolved_reference = "f1b4bb6130652a90bba98bb489010e87e392aa60"
 
 [[package]]
 name = "ska-ser-logging"

@@ -1449,7 +1449,7 @@
     - name: dscErrorStatuses
       data_format: SCALAR
       data_type: DevString
-      description: Report the current DSC errors as a comma-delimited list. Reports
+      description: Report the current DSC errors as a semicolon-delimited list. Reports
         'OK' if no errors are present.
       disp_level: OPERATOR
       display_unit: No display unit
@@ -2634,6 +2634,7 @@
       writable: READ
       writable_attr_name: None
     properties:
+    - name: B5DCDeviceFqdn
     - name: DSDeviceFqdn
     - name: DishId
     - name: LoggingLevelDefault
@@ -2644,5 +2645,6 @@
     - name: SPFDeviceFqdn
     - name: SPFRxDeviceFqdn
     - name: SkaLevel
-    - name: WindGustThreshold
+    - name: WMSDeviceNames
     - name: __SubDevices
+
