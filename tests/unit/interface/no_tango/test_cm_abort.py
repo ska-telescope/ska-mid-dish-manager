@@ -70,6 +70,8 @@ def test_abort_handler(
 
     expected_call_kwargs = (
         {"status": TaskStatus.IN_PROGRESS},
+        # TODO remove extra status check for higher version of base classes
+        {"status": TaskStatus.IN_PROGRESS},
         {
             "status": TaskStatus.ABORTED,
             "result": (ResultCode.ABORTED, "SetStandbyLPMode aborted"),
