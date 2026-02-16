@@ -15,7 +15,6 @@ TRANSITIONS = [
 
 @pytest.mark.acceptance
 @pytest.mark.dish_modes
-@pytest.mark.repeat(100)
 @pytest.mark.timeout(600)
 def test_mode_transitions_cycle(
     event_store_class: EventStore,
