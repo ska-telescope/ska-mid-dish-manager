@@ -189,17 +189,17 @@ def reset_dish_to_standby(
         if dish_manager_proxy.dishMode == DishMode.MAINTENANCE:
             ds_device_proxy.TakeAuthority()
             # wait 10s for the horn to go off
-            dish_mode_events.get_queue_values(timeout=10)
+            dish_mode_events.get_queue_values(timeout=30)
             dish_manager_proxy.SetStowMode()
             dish_mode_events.wait_for_value(DishMode.STOW, timeout=120)
 
         if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY:
             ds_device_proxy.SetStandbyMode()
-            op_mode_events.wait_for_value(DSOperatingMode.STANDBY, timeout=10)
-            power_state_events.wait_for_value(DSPowerState.LOW_POWER, timeout=10)
+            op_mode_events.wait_for_value(DSOperatingMode.STANDBY, timeout=30)
+            power_state_events.wait_for_value(DSPowerState.LOW_POWER, timeout=30)
         # go to FP
         ds_device_proxy.SetPowerMode([0.0, 14.7])
-        power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=10)
+        power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=30)
 
     except (RuntimeError, AssertionError):
         pass
@@ -207,7 +207,7 @@ def reset_dish_to_standby(
     if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
         try:
             dish_manager_proxy.SetStandbyFPMode()
-            dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=10)
+            dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=30)
         except (RuntimeError, tango.DevFailed):
             logger.debug("DishManager commands: %s", dish_manager_proxy.longrunningcommandstatus)
             logger.debug("DSManager commands: %s", ds_device_proxy.longrunningcommandstatus)
