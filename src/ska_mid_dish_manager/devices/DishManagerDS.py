@@ -2079,8 +2079,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=str,
         access=AttrWriteType.READ,
-        doc="Report the current DSC errors as a comma-delimited list. Reports 'OK' if no errors "
-        "are present.",
+        doc="Report the current DSC errors as a semicolon-delimited list. Reports 'OK' if no "
+        "errors are present.",
     )
     def dscErrorStatuses(self):
         """Return the aggregated error statuses from the DSC."""
