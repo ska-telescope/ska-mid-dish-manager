@@ -67,7 +67,7 @@ services:
 
   ds-manager:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-ds-manager:8.0.2
+    image: artefact.skao.int/ska-mid-dish-ds-manager:8.0.3
     container_name: ds-manager
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
