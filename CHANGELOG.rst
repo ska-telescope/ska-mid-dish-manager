@@ -7,13 +7,6 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Downgraded ska-tango-base to v1.3.2 and tango to v10.0.0 to address tango serialisation lock issue.
-- Updated chart dependencies
-
-  - Upgraded ska-mid-dish-ds-manager chart to v8.0.3
-  - Upgraded ska-mid-dish-simulators chart to v5.6.2
-  - Upgraded ska-tango-util chart to v1.0.6
-  - Upgraded ska-tango-base chart to v1.0.6
 
 Version 9.3.0-rc.2
 ******************
@@ -26,6 +19,14 @@ Version 9.3.0-rc.2
 - Upgraded ska-mid-dish-simulators to v5.6.2.
   - Fixed simulator to align the dscstate with the PLC regarding activating/deactiving state.
   - Reduced the servo position frequency updates by a factor of 4.
+
+- Downgraded ska-tango-base to v1.3.2 and tango to v10.0.0 to address tango serialisation lock issue.
+- Updated chart dependencies
+
+  - Upgraded ska-mid-dish-ds-manager chart to v8.0.3
+  - Upgraded ska-mid-dish-simulators chart to v5.6.2
+  - Upgraded ska-tango-util chart to v1.0.6
+  - Upgraded ska-tango-base chart to v1.0.6
 
 
 Version 9.3.0-rc.1
