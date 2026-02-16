@@ -4,12 +4,10 @@ from typing import Optional
 
 from ska_control_model import HealthState
 from ska_mid_dish_utils.models.dish_enums import (
+    Band,
     CapabilityStates,
     DishMode,
     PowerState,
-)
-from ska_mid_dish_utils.sim_enums import (
-    Band,
     SPFBandInFocus,
 )
 

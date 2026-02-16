@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 import tango
-from ska_mid_dish_utils.sim_enums import Band, DishMode
+from ska_mid_dish_utils.models.e import Band, DishMode
 
 from tests.data import RADIAL_CSV_PATH, SPIRAL_CSV_PATH
 from tests.utils import (

@@ -6,7 +6,7 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import AdminMode, HealthState
-from ska_mid_dish_utils.sim_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
     Band,
     SPFRxCapabilityStates,
     SPFRxOperatingMode,

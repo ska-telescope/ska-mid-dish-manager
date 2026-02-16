@@ -1,7 +1,7 @@
 """Test ignoring subservient devices."""
 
 import pytest
-from ska_mid_dish_utils.sim_enums import Band
+from ska_mid_dish_utils.models.dish_enums import Band
 
 from tests.utils import remove_subscriptions, set_ignored_devices, setup_subscriptions
 

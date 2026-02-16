@@ -1,7 +1,12 @@
 """Test dish unhappy path."""
 
 import pytest
-from ska_mid_dish_utils.sim_enums import Band, DishMode, SPFOperatingMode, SPFRxOperatingMode
+from ska_mid_dish_utils.models.dish_enums import (
+    Band,
+    DishMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 
 from tests.utils import remove_subscriptions, setup_subscriptions
 

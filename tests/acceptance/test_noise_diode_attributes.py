@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 import pytest
 import tango
-from ska_mid_dish_utils.sim_enums import (
+from ska_mid_dish_utils.models.dish_enums import (
     NoiseDiodeMode,
 )
 
