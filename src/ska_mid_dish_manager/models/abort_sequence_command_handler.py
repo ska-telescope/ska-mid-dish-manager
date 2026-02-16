@@ -82,6 +82,7 @@ class Abort:
         self, task_abort_event: Event = Event(), task_callback: Optional[Callable] = None
     ):
         update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
+        task_abort_event.set()
 
         # the order the commands are run is important: so that the plc is not interrupted
         # mid way through a command. for e.g. dont call a lrc followed by a fast command
