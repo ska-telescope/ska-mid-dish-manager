@@ -51,7 +51,7 @@ def test_mode_transitions_cycle(
 
             mode_event_store.wait_for_value(
                 expected_mode,
-                timeout=900,
+                timeout=300,
                 proxy=dish_manager_proxy,
             )
 
