@@ -1,4 +1,6 @@
-# This test transitions through DishMode values in a loop to stress transitions.
+# This test has the purpose of transitioning through each DishMode on a loop.
+# The idea is to continue cycling for as long as possible (up to an hour based
+# on Gitlab CI Runner limitations) to limit test the transition capability.
 
 import json
 
@@ -17,12 +19,9 @@ def _make_configure_json(band: str) -> str:
             "spfrx_processing_parameters": [{"dishes": ["all"], "sync_pps": True}],
         }
     }
-    # Compact + deterministic; Tango expects a DevString
     return json.dumps(payload, separators=(",", ":"), sort_keys=True)
 
 
-# Keep the transition order your senior specified.
-# ConfigureBand needs a DevString argument, so we model it as (cmd, expected_mode, arg_factory)
 TRANSITIONS = [
     ("SetStandbyFPMode", DishMode.STANDBY_FP, None),
     ("SetStowMode", DishMode.STOW, None),
@@ -39,6 +38,7 @@ TRANSITIONS = [
 @pytest.mark.dish_modes
 # @pytest.mark.repeat(100)
 def test_mode_transitions_cycle(
+    request: pytest.FixtureRequest,
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
 ) -> None:
@@ -52,22 +52,23 @@ def test_mode_transitions_cycle(
 
     current_step = "initialising"
     try:
-        # Ensure known start state without issuing an illegal no-op command
         if dish_manager_proxy.dishMode != DishMode.STANDBY_LP:
             current_step = "SetStandbyLPMode -> STANDBY_LP (initial)"
             mode_event_store.clear_queue()
             dish_manager_proxy.command_inout("SetStandbyLPMode")
-            mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=180, proxy=dish_manager_proxy)
+            mode_event_store.wait_for_value(
+                DishMode.STANDBY_LP,
+                timeout=180,
+                proxy=dish_manager_proxy,
+            )
 
-        # Pick a band per pytest-repeat iteration (covers multiple repeats deterministically)
-        # 1..5 cycle (adjust if you want 5a/5b etc., but those are typically different commands)
-        repeat_i = getattr(request.node, "execution_count", 0) if "request" in globals() else 0  # safe fallback
+        # pytest-repeat sets execution_count on the node; default 0 if not repeating
+        repeat_i = getattr(request.node, "execution_count", 0)
         band = str((repeat_i % 5) + 1)
 
         for command_name, expected_mode, arg_factory in TRANSITIONS:
             current_step = f"{command_name} -> {expected_mode.name}"
 
-            # Avoid calling commands that are known to be rejected when already in target mode
             if dish_manager_proxy.dishMode == expected_mode:
                 continue
 
@@ -78,10 +79,13 @@ def test_mode_transitions_cycle(
             else:
                 dish_manager_proxy.command_inout(command_name, arg_factory(band))
 
-            mode_event_store.wait_for_value(expected_mode, timeout=180, proxy=dish_manager_proxy)
+            mode_event_store.wait_for_value(
+                expected_mode,
+                timeout=180,
+                proxy=dish_manager_proxy,
+            )
 
     except Exception as e:
-        # Keep rich debug for CI failures
         try:
             current_mode = dish_manager_proxy.dishMode
         except Exception:
