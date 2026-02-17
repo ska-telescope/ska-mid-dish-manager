@@ -67,7 +67,7 @@ def test_mode_transitions_cycle(
             if len(step) == 2:
                 command_name, expected_mode = step
                 cmd_arg = None
-            else: 
+            else:
                 command_name, expected_mode, cmd_arg = step
 
             current_step = f"{command_name} -> {expected_mode.name}"
