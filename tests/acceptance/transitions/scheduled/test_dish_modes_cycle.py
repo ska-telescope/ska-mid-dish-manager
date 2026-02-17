@@ -1,18 +1,15 @@
-# This test has the purpose of transitioning through each DishMode on a loop.
-# The idea is to continue cycling for as long as possible (up to an hour based
-# on Gitlab CI Runner limitations) to limit test the transition capability.
+# This test transitions through DishModes in a loop to soak-test transitions.
 
 import json
 
 import pytest
 from tango import DeviceProxy
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
 
 
 def _make_configure_json(band: str) -> str:
-    """Return a DevString JSON payload for ConfigureBand."""
     payload = {
         "dish": {
             "receiver_band": str(band),
@@ -28,7 +25,7 @@ TRANSITIONS = [
     ("SetMaintenanceMode", DishMode.MAINTENANCE, None),
     ("SetStowMode", DishMode.STOW, None),
     ("SetStandbyFPMode", DishMode.STANDBY_FP, None),
-    ("ConfigureBand", DishMode.CONFIG, _make_configure_json),
+    ("ConfigureBand", None, _make_configure_json),
     ("SetOperateMode", DishMode.OPERATE, None),
     ("SetStandbyLPMode", DishMode.STANDBY_LP, None),
 ]
@@ -44,10 +41,15 @@ def test_mode_transitions_cycle(
 ) -> None:
     mode_event_store = event_store_class()
     status_event_store = event_store_class()
+    band_event_store = event_store_class()
 
     subscriptions = setup_subscriptions(
         dish_manager_proxy,
-        {"dishMode": mode_event_store, "Status": status_event_store},
+        {
+            "dishMode": mode_event_store,
+            "Status": status_event_store,
+            "configuredband": band_event_store,
+        },
     )
 
     current_step = "initialising"
@@ -62,22 +64,34 @@ def test_mode_transitions_cycle(
                 proxy=dish_manager_proxy,
             )
 
-        # pytest-repeat sets execution_count on the node; default 0 if not repeating
         repeat_i = getattr(request.node, "execution_count", 0)
         band = str((repeat_i % 5) + 1)
+        expected_band = getattr(Band, f"B{band}")
 
         for command_name, expected_mode, arg_factory in TRANSITIONS:
-            current_step = f"{command_name} -> {expected_mode.name}"
+            if command_name == "ConfigureBand":
+                current_step = f"{command_name} -> configuredband={expected_band.name}"
+            else:
+                current_step = f"{command_name} -> {expected_mode.name}"
 
-            if dish_manager_proxy.dishMode == expected_mode:
+            if expected_mode is not None and dish_manager_proxy.dishMode == expected_mode:
                 continue
 
             mode_event_store.clear_queue()
+            band_event_store.clear_queue()
 
             if arg_factory is None:
                 dish_manager_proxy.command_inout(command_name)
             else:
                 dish_manager_proxy.command_inout(command_name, arg_factory(band))
+
+            if command_name == "ConfigureBand":
+                band_event_store.wait_for_value(
+                    expected_band,
+                    timeout=180,
+                    proxy=dish_manager_proxy,
+                )
+                continue
 
             mode_event_store.wait_for_value(
                 expected_mode,
