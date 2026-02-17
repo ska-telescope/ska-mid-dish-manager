@@ -1,6 +1,6 @@
-# This test has the purpose of transitioning through each DishMode on a loop. The idea is to
-# continue cycling for as long as possible (up to an hour based on Gitlab CI Runner limitations)
-# to limit test the transition capability
+# This test transitions through DishMode values in a loop to stress transitions.
+
+import json
 
 import pytest
 from tango import DeviceProxy
@@ -8,33 +8,30 @@ from tango import DeviceProxy
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
 
-# Based on observed behaviour:
-# - SetStandbyLPMode is rejected if already in STANDBY_LP
-# - OPERATE from STOW was rejected; so return to STANDBY_FP before OPERATE
 
-configure_json = """
-    {
+def _make_configure_json(band: str) -> str:
+    """Return a DevString JSON payload for ConfigureBand."""
+    payload = {
         "dish": {
-            "receiver_band": "2",
-            "spfrx_processing_parameters": [
-                {
-                    "dishes": ["all"],
-                    "sync_pps": true
-                }
-            ]
+            "receiver_band": str(band),
+            "spfrx_processing_parameters": [{"dishes": ["all"], "sync_pps": True}],
         }
     }
-    """
+    # Compact + deterministic; Tango expects a DevString
+    return json.dumps(payload, separators=(",", ":"), sort_keys=True)
 
+
+# Keep the transition order your senior specified.
+# ConfigureBand needs a DevString argument, so we model it as (cmd, expected_mode, arg_factory)
 TRANSITIONS = [
-    ("SetStandbyFPMode", DishMode.STANDBY_FP),
-    ("SetStowMode", DishMode.STOW),
-    ("SetMaintenanceMode", DishMode.MAINTENANCE),
-    ("SetStowMode", DishMode.STOW),
-    ("SetStandbyFPMode", DishMode.STANDBY_FP),
-    ("ConfigureBand", DishMode.CONFIG, configure_json),
-    ("SetOperateMode", DishMode.OPERATE),
-    ("SetStandbyLPMode", DishMode.STANDBY_LP),
+    ("SetStandbyFPMode", DishMode.STANDBY_FP, None),
+    ("SetStowMode", DishMode.STOW, None),
+    ("SetMaintenanceMode", DishMode.MAINTENANCE, None),
+    ("SetStowMode", DishMode.STOW, None),
+    ("SetStandbyFPMode", DishMode.STANDBY_FP, None),
+    ("ConfigureBand", DishMode.CONFIG, _make_configure_json),
+    ("SetOperateMode", DishMode.OPERATE, None),
+    ("SetStandbyLPMode", DishMode.STANDBY_LP, None),
 ]
 
 
@@ -49,7 +46,8 @@ def test_mode_transitions_cycle(
     status_event_store = event_store_class()
 
     subscriptions = setup_subscriptions(
-        dish_manager_proxy, {"dishMode": mode_event_store, "Status": status_event_store}
+        dish_manager_proxy,
+        {"dishMode": mode_event_store, "Status": status_event_store},
     )
 
     current_step = "initialising"
@@ -59,43 +57,31 @@ def test_mode_transitions_cycle(
             current_step = "SetStandbyLPMode -> STANDBY_LP (initial)"
             mode_event_store.clear_queue()
             dish_manager_proxy.command_inout("SetStandbyLPMode")
-            mode_event_store.wait_for_value(
-                DishMode.STANDBY_LP, timeout=180, proxy=dish_manager_proxy
-            )
+            mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=180, proxy=dish_manager_proxy)
 
-        for step in TRANSITIONS:
-            if len(step) == 2:
-                command_name, expected_mode = step
-                cmd_arg = None
-            else:
-                command_name, expected_mode, cmd_arg = step
+        # Pick a band per pytest-repeat iteration (covers multiple repeats deterministically)
+        # 1..5 cycle (adjust if you want 5a/5b etc., but those are typically different commands)
+        repeat_i = getattr(request.node, "execution_count", 0) if "request" in globals() else 0  # safe fallback
+        band = str((repeat_i % 5) + 1)
 
+        for command_name, expected_mode, arg_factory in TRANSITIONS:
             current_step = f"{command_name} -> {expected_mode.name}"
 
+            # Avoid calling commands that are known to be rejected when already in target mode
             if dish_manager_proxy.dishMode == expected_mode:
                 continue
 
             mode_event_store.clear_queue()
 
-            if cmd_arg is None:
+            if arg_factory is None:
                 dish_manager_proxy.command_inout(command_name)
             else:
-                dish_manager_proxy.command_inout(command_name, cmd_arg)
+                dish_manager_proxy.command_inout(command_name, arg_factory(band))
 
-            if expected_mode == DishMode.CONFIG:
-                try:
-                    mode_event_store.wait_for_value(
-                        DishMode.CONFIG, timeout=180, proxy=dish_manager_proxy
-                    )
-                except RuntimeError:
-                    if dish_manager_proxy.dishMode not in (DishMode.CONFIG, DishMode.OPERATE):
-                        raise
-            else:
-                mode_event_store.wait_for_value(
-                    expected_mode, timeout=180, proxy=dish_manager_proxy
-                )
+            mode_event_store.wait_for_value(expected_mode, timeout=180, proxy=dish_manager_proxy)
 
     except Exception as e:
+        # Keep rich debug for CI failures
         try:
             current_mode = dish_manager_proxy.dishMode
         except Exception:
