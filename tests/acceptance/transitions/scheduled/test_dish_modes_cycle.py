@@ -1,3 +1,4 @@
+# A test that cycles through the dish mode transitions up to one hundred times
 import itertools
 import json
 
