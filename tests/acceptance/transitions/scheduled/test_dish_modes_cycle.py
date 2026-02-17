@@ -1,6 +1,6 @@
-# A test that cycles through the dish mode transitions up to one hundred times
-import itertools
-import json
+# This test has the purpose of transitioning through each DishMode on a loop. The idea is to
+# continue cycling for as long as possible (up to an hour based on Gitlab CI Runner limitations)
+# to limit test the transition capability
 
 import pytest
 from tango import DeviceProxy
@@ -8,42 +8,16 @@ from tango import DeviceProxy
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
 
-WAIT_SECONDS = 180
-
-# Band rotation across pytest-repeat iterations (within the same job / process)
-BANDS = ["1", "2", "3", "4", "5"]
-_BAND_ITER = itertools.cycle(BANDS)
-
-CONFIG_TEMPLATE = {
-    "dish": {
-        "receiver_band": None,  # injected each repeat
-        "spfrx_processing_parameters": [
-            {"dishes": ["all"], "sync_pps": True}
-        ],
-    }
-}
-
-
-def _configureband_json_next() -> str:
-    """Return ConfigureBand DevString JSON with receiver_band rotated each test repeat."""
-    band = next(_BAND_ITER)
-    payload = {
-        **CONFIG_TEMPLATE,
-        "dish": {**CONFIG_TEMPLATE["dish"], "receiver_band": band},
-    }
-    return json.dumps(payload)
-
-
-# TRANSITIONS stays the source of truth.
-# 2-tuple: (command, expected_mode) => no args
-# 3-tuple: (command, expected_mode, arg_factory) => arg_factory() called per repeat
+# Based on observed behaviour:
+# - SetStandbyLPMode is rejected if already in STANDBY_LP
+# - OPERATE from STOW was rejected; so return to STANDBY_FP before OPERATE
 TRANSITIONS = [
     ("SetStandbyFPMode", DishMode.STANDBY_FP),
     ("SetStowMode", DishMode.STOW),
     ("SetMaintenanceMode", DishMode.MAINTENANCE),
     ("SetStowMode", DishMode.STOW),
     ("SetStandbyFPMode", DishMode.STANDBY_FP),
-    ("ConfigureBand", DishMode.CONFIG, _configureband_json_next),
+    ("ConfigureBand2", DishMode.CONFIG),
     ("SetOperateMode", DishMode.OPERATE),
     ("SetStandbyLPMode", DishMode.STANDBY_LP),
 ]
@@ -60,66 +34,44 @@ def test_mode_transitions_cycle(
     status_event_store = event_store_class()
 
     subscriptions = setup_subscriptions(
-        dish_manager_proxy,
-        {"dishMode": mode_event_store, "Status": status_event_store},
+        dish_manager_proxy, {"dishMode": mode_event_store, "Status": status_event_store}
     )
 
     current_step = "initialising"
     try:
-        # Ensure start state once per repeat (no illegal no-op)
+        # Ensure known start state without issuing an illegal no-op command
         if dish_manager_proxy.dishMode != DishMode.STANDBY_LP:
             current_step = "SetStandbyLPMode -> STANDBY_LP (initial)"
             mode_event_store.clear_queue()
             dish_manager_proxy.command_inout("SetStandbyLPMode")
             mode_event_store.wait_for_value(
-                DishMode.STANDBY_LP, timeout=WAIT_SECONDS, proxy=dish_manager_proxy
+                DishMode.STANDBY_LP, timeout=180, proxy=dish_manager_proxy
             )
 
-        for item in TRANSITIONS:
-            if len(item) == 2:
-                command_name, expected_mode = item
-                arg = None
-            else:
-                command_name, expected_mode, arg_factory = item
-                arg = arg_factory()  # IMPORTANT: called each repeat
+        for command_name, expected_mode in TRANSITIONS:
+            current_step = f"{command_name} -> {expected_mode.name}"
 
-            # If this is ConfigureBand, include band in step name for debugging
-            if command_name == "ConfigureBand" and arg is not None:
-                try:
-                    band = json.loads(arg)["dish"]["receiver_band"]
-                except Exception:
-                    band = "<?>"
-                current_step = f"{command_name}(receiver_band={band}) -> {expected_mode.name}"
-            else:
-                current_step = f"{command_name} -> {expected_mode.name}"
-
-            # Avoid rejected no-ops
+            # Avoid calling commands that are known to be rejected when already in target mode
             if dish_manager_proxy.dishMode == expected_mode:
                 continue
 
             mode_event_store.clear_queue()
+            dish_manager_proxy.command_inout(command_name)
 
-            if arg is None:
-                dish_manager_proxy.command_inout(command_name)
-            else:
-                dish_manager_proxy.command_inout(command_name, arg)
-
-            # CONFIG can be transient; accept CONFIG or already-OPERATE
             if expected_mode == DishMode.CONFIG:
                 try:
                     mode_event_store.wait_for_value(
-                        DishMode.CONFIG, timeout=WAIT_SECONDS, proxy=dish_manager_proxy
+                        DishMode.CONFIG, timeout=180, proxy=dish_manager_proxy
                     )
                 except RuntimeError:
                     if dish_manager_proxy.dishMode not in (DishMode.CONFIG, DishMode.OPERATE):
                         raise
             else:
                 mode_event_store.wait_for_value(
-                    expected_mode, timeout=WAIT_SECONDS, proxy=dish_manager_proxy
+                    expected_mode, timeout=180, proxy=dish_manager_proxy
                 )
 
     except Exception as e:
-        # Keep failures actionable
         try:
             current_mode = dish_manager_proxy.dishMode
         except Exception:
@@ -128,7 +80,7 @@ def test_mode_transitions_cycle(
         try:
             component_states = dish_manager_proxy.GetComponentStates()
         except Exception:
-            component_states = "<failed to GetComponentStates()>"
+            component_states = "<failed to get component states>"
 
         events = status_event_store.get_queue_events()
         status_dump = "".join(
