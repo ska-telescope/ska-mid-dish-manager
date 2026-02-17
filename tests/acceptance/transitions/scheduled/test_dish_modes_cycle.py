@@ -63,15 +63,24 @@ def test_mode_transitions_cycle(
                 DishMode.STANDBY_LP, timeout=180, proxy=dish_manager_proxy
             )
 
-        for command_name, expected_mode in TRANSITIONS:
+        for step in TRANSITIONS:
+            if len(step) == 2:
+                command_name, expected_mode = step
+                cmd_arg = None
+            else: 
+                command_name, expected_mode, cmd_arg = step
+
             current_step = f"{command_name} -> {expected_mode.name}"
 
-            # Avoid calling commands that are known to be rejected when already in target mode
             if dish_manager_proxy.dishMode == expected_mode:
                 continue
 
             mode_event_store.clear_queue()
-            dish_manager_proxy.command_inout(command_name)
+
+            if cmd_arg is None:
+                dish_manager_proxy.command_inout(command_name)
+            else:
+                dish_manager_proxy.command_inout(command_name, cmd_arg)
 
             if expected_mode == DishMode.CONFIG:
                 try:
