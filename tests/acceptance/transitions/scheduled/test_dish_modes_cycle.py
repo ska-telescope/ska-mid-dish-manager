@@ -11,13 +11,28 @@ from tests.utils import EventStore, remove_subscriptions, setup_subscriptions
 # Based on observed behaviour:
 # - SetStandbyLPMode is rejected if already in STANDBY_LP
 # - OPERATE from STOW was rejected; so return to STANDBY_FP before OPERATE
+
+configure_json = """
+    {
+        "dish": {
+            "receiver_band": "2",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+        }
+    }
+    """
+
 TRANSITIONS = [
     ("SetStandbyFPMode", DishMode.STANDBY_FP),
     ("SetStowMode", DishMode.STOW),
     ("SetMaintenanceMode", DishMode.MAINTENANCE),
     ("SetStowMode", DishMode.STOW),
     ("SetStandbyFPMode", DishMode.STANDBY_FP),
-    ("ConfigureBand2", DishMode.CONFIG),
+    ("ConfigureBand", DishMode.CONFIG, configure_json),
     ("SetOperateMode", DishMode.OPERATE),
     ("SetStandbyLPMode", DishMode.STANDBY_LP),
 ]
