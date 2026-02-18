@@ -31,7 +31,7 @@ def _extract_command_response(command_response: Any, command_name: str) -> tuple
 
     try:
         return int(code_container[0]), str(value_container[0])
-    except Exception as err:  
+    except Exception as err:
         raise RuntimeError(f"Could not parse {command_name} response: {command_response}") from err
 
 
@@ -145,7 +145,7 @@ def _run_mode_transition(
                 return
             _wait_for_mode(dish_manager_proxy, mode_event_store, expected_mode)
             return
-        except Exception as err:  
+        except Exception as err:
             last_error = err
             if attempt == retries:
                 break
@@ -177,11 +177,12 @@ def _setup_subscriptions_with_retry(
                     "longRunningCommandResult": result_event_store,
                 },
             )
-        except Exception as err:  
+        except Exception as err:
             last_error = err
             time.sleep(SUBSCRIPTION_RETRY_DELAY_SECONDS)
 
     raise RuntimeError("Failed to subscribe to dish manager events before timeout") from last_error
+
 
 @pytest.mark.dish_modes
 @pytest.mark.repeat(10)
