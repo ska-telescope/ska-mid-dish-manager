@@ -186,6 +186,7 @@ def _setup_subscriptions_with_retry(
 
 @pytest.mark.acceptance
 @pytest.mark.dish_modes
+@pytest.mark.repeat(6)
 def test_mode_transitions_cycle(
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
