@@ -5,6 +5,7 @@ import time
 from typing import Any, Callable
 
 import pytest
+from ska_control_model import ResultCode
 from tango import DeviceProxy
 
 from ska_mid_dish_manager.models.dish_enums import DishMode
@@ -14,20 +15,46 @@ STEP_TIMEOUT = 180
 LRC_TIMEOUT = 360
 MIN_ACTION_TIMEOUT_SECONDS = 300.0
 RETRY_DELAY_SECONDS = 5
+COMMANDS_WITHOUT_LRC_RESULT = {"SetStowMode"}
 
 
-def _extract_command_id(command_response: Any, command_name: str) -> str:
-    """Extract long running command id from a Tango command response."""
+def _extract_command_response(command_response: Any, command_name: str) -> tuple[int, str]:
+    """Extract immediate result code and response value from Tango command response."""
     if (
         isinstance(command_response, (list, tuple))
         and len(command_response) == 2
+        and isinstance(command_response[0], (list, tuple))
+        and len(command_response[0]) > 0
         and isinstance(command_response[1], (list, tuple))
         and len(command_response[1]) > 0
     ):
-        return str(command_response[1][0])
+        return int(command_response[0][0]), str(command_response[1][0])
+
     raise RuntimeError(
-        f"Could not extract command id from {command_name} response: {command_response}"
+        f"Could not parse {command_name} response: {command_response}"
     )
+
+
+def _assert_initial_command_response_ok(result_code: int, command_name: str) -> None:
+    """Validate the command's immediate return code."""
+    try:
+        result_code_enum = ResultCode(result_code)
+    except ValueError as err:
+        raise RuntimeError(
+            f"{command_name} returned unknown result code [{result_code}]"
+        ) from err
+
+    failure_codes = {
+        ResultCode.FAILED,
+        ResultCode.REJECTED,
+    }
+    for maybe_failure in ("NOT_ALLOWED", "ABORTED"):
+        maybe_value = getattr(ResultCode, maybe_failure, None)
+        if maybe_value is not None:
+            failure_codes.add(maybe_value)
+
+    if result_code_enum in failure_codes:
+        raise RuntimeError(f"{command_name} was not accepted (result={result_code_enum.name})")
 
 
 def _wait_for_lrc_result(
@@ -85,7 +112,13 @@ def _run_lrc_and_expect_success(
     """Execute an LRC command and require successful completion."""
     result_event_store.clear_queue()
     command_response = command_call()
-    command_id = _extract_command_id(command_response, command_name)
+    result_code, command_value = _extract_command_response(command_response, command_name)
+    _assert_initial_command_response_ok(result_code, command_name)
+
+    if command_name in COMMANDS_WITHOUT_LRC_RESULT:
+        return
+
+    command_id = command_value
     result_code, result_message = _wait_for_lrc_result(
         result_event_store, command_id, command_name
     )
@@ -110,6 +143,8 @@ def _run_mode_transition(
         try:
             mode_event_store.clear_queue()
             _run_lrc_and_expect_success(result_event_store, command_call, command_name)
+            if dish_manager_proxy.dishMode == expected_mode:
+                return
             _wait_for_mode(dish_manager_proxy, mode_event_store, expected_mode)
             return
         except Exception as err:  # noqa: BLE001
@@ -233,7 +268,7 @@ def test_mode_transitions_cycle(
         mode_event_store.clear_queue()
         result_event_store.clear_queue()
         configure_response = dish_manager_proxy.ConfigureBand1(True)
-        configure_id = _extract_command_id(configure_response, "ConfigureBand1")
+        _, configure_id = _extract_command_response(configure_response, "ConfigureBand1")
         _wait_for_mode(dish_manager_proxy, mode_event_store, DishMode.CONFIG)
         _wait_for_mode(dish_manager_proxy, mode_event_store, DishMode.OPERATE)
         configure_code, configure_message = _wait_for_lrc_result(
