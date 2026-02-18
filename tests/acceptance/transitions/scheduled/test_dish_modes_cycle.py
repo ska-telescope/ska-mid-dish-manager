@@ -22,17 +22,17 @@ COMMANDS_WITHOUT_LRC_RESULT = {"SetStowMode"}
 
 def _extract_command_response(command_response: Any, command_name: str) -> tuple[int, str]:
     """Extract immediate result code and response value from Tango command response."""
-    if (
-        isinstance(command_response, (list, tuple))
-        and len(command_response) == 2
-        and isinstance(command_response[0], (list, tuple))
-        and len(command_response[0]) > 0
-        and isinstance(command_response[1], (list, tuple))
-        and len(command_response[1]) > 0
-    ):
-        return int(command_response[0][0]), str(command_response[1][0])
+    if not isinstance(command_response, (list, tuple)) or len(command_response) != 2:
+        raise RuntimeError(f"Could not parse {command_name} response: {command_response}")
 
-    raise RuntimeError(f"Could not parse {command_name} response: {command_response}")
+    code_container, value_container = command_response
+    if isinstance(code_container, (str, bytes)) or isinstance(value_container, (str, bytes)):
+        raise RuntimeError(f"Could not parse {command_name} response: {command_response}")
+
+    try:
+        return int(code_container[0]), str(value_container[0])
+    except Exception as err:  # noqa: BLE001
+        raise RuntimeError(f"Could not parse {command_name} response: {command_response}") from err
 
 
 def _assert_initial_command_response_ok(result_code: int, command_name: str) -> None:
