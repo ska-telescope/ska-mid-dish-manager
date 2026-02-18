@@ -15,6 +15,8 @@ STEP_TIMEOUT = 180
 LRC_TIMEOUT = 360
 MIN_ACTION_TIMEOUT_SECONDS = 300.0
 RETRY_DELAY_SECONDS = 5
+SUBSCRIPTION_SETUP_TIMEOUT = 120
+SUBSCRIPTION_RETRY_DELAY_SECONDS = 2
 COMMANDS_WITHOUT_LRC_RESULT = {"SetStowMode"}
 
 
@@ -154,6 +156,34 @@ def _run_mode_transition(
     ) from last_error
 
 
+def _setup_subscriptions_with_retry(
+    dish_manager_proxy: DeviceProxy,
+    mode_event_store: EventStore,
+    status_event_store: EventStore,
+    result_event_store: EventStore,
+):
+    """Retry event subscriptions while the Tango event channel becomes available."""
+    deadline = time.time() + SUBSCRIPTION_SETUP_TIMEOUT
+    last_error: Exception | None = None
+    while time.time() < deadline:
+        try:
+            # Force a device read first so a down device fails fast before subscriptions.
+            _ = dish_manager_proxy.dishMode
+            return setup_subscriptions(
+                dish_manager_proxy,
+                {
+                    "dishMode": mode_event_store,
+                    "Status": status_event_store,
+                    "longRunningCommandResult": result_event_store,
+                },
+            )
+        except Exception as err:  # noqa: BLE001
+            last_error = err
+            time.sleep(SUBSCRIPTION_RETRY_DELAY_SECONDS)
+
+    raise RuntimeError("Failed to subscribe to dish manager events before timeout") from last_error
+
+
 @pytest.mark.acceptance
 @pytest.mark.dish_modes
 def test_mode_transitions_cycle(
@@ -170,18 +200,18 @@ def test_mode_transitions_cycle(
     status_event_store = event_store_class()
     result_event_store = event_store_class()
 
-    subscriptions = setup_subscriptions(
-        dish_manager_proxy,
-        {
-            "dishMode": mode_event_store,
-            "Status": status_event_store,
-            "longRunningCommandResult": result_event_store,
-        },
-    )
+    subscriptions = {}
 
     current_step = "initialising"
     original_action_timeout = None
     try:
+        subscriptions = _setup_subscriptions_with_retry(
+            dish_manager_proxy,
+            mode_event_store,
+            status_event_store,
+            result_event_store,
+        )
+
         original_action_timeout = float(dish_manager_proxy.actionTimeoutSeconds)
         if original_action_timeout < MIN_ACTION_TIMEOUT_SECONDS:
             dish_manager_proxy.actionTimeoutSeconds = MIN_ACTION_TIMEOUT_SECONDS
