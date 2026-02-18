@@ -207,7 +207,7 @@ def reset_dish_to_standby(
     if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
         try:
             dish_manager_proxy.SetStandbyFPMode()
-            dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+            dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
         except (RuntimeError, tango.DevFailed):
             logger.debug("DishManager commands: %s", dish_manager_proxy.longrunningcommandstatus)
             logger.debug("DSManager commands: %s", ds_device_proxy.longrunningcommandstatus)
