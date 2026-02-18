@@ -30,9 +30,7 @@ def _extract_command_response(command_response: Any, command_name: str) -> tuple
     ):
         return int(command_response[0][0]), str(command_response[1][0])
 
-    raise RuntimeError(
-        f"Could not parse {command_name} response: {command_response}"
-    )
+    raise RuntimeError(f"Could not parse {command_name} response: {command_response}")
 
 
 def _assert_initial_command_response_ok(result_code: int, command_name: str) -> None:
@@ -40,9 +38,7 @@ def _assert_initial_command_response_ok(result_code: int, command_name: str) -> 
     try:
         result_code_enum = ResultCode(result_code)
     except ValueError as err:
-        raise RuntimeError(
-            f"{command_name} returned unknown result code [{result_code}]"
-        ) from err
+        raise RuntimeError(f"{command_name} returned unknown result code [{result_code}]") from err
 
     failure_codes = {
         ResultCode.FAILED,
