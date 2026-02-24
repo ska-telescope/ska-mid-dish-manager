@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.3.1
+*************
+- Removed the workaround to cast a string to an int for the band5 downconversion subband field when passing to SPFRx (updated in SPFRx v2.1)
+
 Version 9.3.0-rc.2
 ******************
 - Fix error status node name (errTiltTwoIounit to errTiltTwoIoUnit)
