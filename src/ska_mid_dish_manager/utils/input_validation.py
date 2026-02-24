@@ -52,9 +52,9 @@ def validate_configure_band_input(data: str) -> dict:
 
         if b5dc_sub_band:
             # TODO: remove segment below after decision about JSON schema is finalised
-            # Convert the subband from str type to int type and remove band5_downconversion_subband
+            # Remove band5_downconversion_subband
             # field to maintain compatibility with SPFRx firmware
-            data_json["dish"]["sub_band"] = int(b5dc_sub_band)
+            data_json["dish"]["sub_band"] = b5dc_sub_band
             if "band5_downconversion_subband" in data_json["dish"]:
                 data_json["dish"].pop("band5_downconversion_subband")
 
