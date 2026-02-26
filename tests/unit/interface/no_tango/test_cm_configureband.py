@@ -389,7 +389,7 @@ def test_configureband_5b_with_subband(
         operatingmode=SPFOperatingMode.OPERATE
     )
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        configuredband=Band.B5b, operatingmode=SPFRxOperatingMode.OPERATE
+        configuredband=Band.B1, operatingmode=SPFRxOperatingMode.OPERATE
     )
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B5b, operatingmode=DSOperatingMode.POINT
@@ -473,7 +473,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         operatingmode=SPFOperatingMode.OPERATE
     )
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        configuredband=Band.B5b, operatingmode=SPFRxOperatingMode.OPERATE
+        configuredband=Band.B1, operatingmode=SPFRxOperatingMode.OPERATE
     )
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B5b, operatingmode=DSOperatingMode.POINT
