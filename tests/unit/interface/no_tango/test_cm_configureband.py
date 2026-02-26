@@ -375,7 +375,7 @@ def test_configureband_5b_with_subband(
 
     msgs = [
         "Awaiting DS indexerposition change to B5b",
-        "Awaiting SPFRX configuredband change to B5b",
+        "Awaiting SPFRX configuredband change to B1",
         f"Awaiting B5DC rfcmfrequency change to {sub_band_frequency}",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand, B5DC.SetFrequency",
         "Awaiting configuredband change to B5b",
@@ -459,7 +459,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         assert kwargs == expected_call_kwargs[count]
     msgs = [
         "Awaiting DS indexerposition change to B5b",
-        "Awaiting SPFRX configuredband change to B5b",
+        "Awaiting SPFRX configuredband change to B1",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
         "B5DC device is disabled. B5DC.SetFrequency ignored",
         "Awaiting configuredband change to B5b",
