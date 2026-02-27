@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.3.0-rc.5
+******************
+- Fixed WMS device monitoring helm flag logic to correctly enable/disable monitoring.
+
 Version 9.3.0-rc.4
 ******************
 - Updated band B5b condition for configureBand command fanned out to SPFRx to check for Band1 (ADR-102).

@@ -84,7 +84,7 @@ services:
 
   dish-manager:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-manager:9.3.0-rc.4
+    image: artefact.skao.int/ska-mid-dish-manager:9.3.0-rc.5
     container_name: dish-manager
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -106,7 +106,7 @@ services:
 
   dev-pod:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-manager:9.3.0-rc.4
+    image: artefact.skao.int/ska-mid-dish-manager:9.3.0-rc.5
     container_name: dev-pod
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped

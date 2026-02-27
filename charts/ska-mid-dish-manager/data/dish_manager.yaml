@@ -79,12 +79,12 @@ server:
                     - "{{ $.Values.dishmanager.wms.WindGustThreshold }}"
                 - name: "WMSDeviceNames"
                   {{- if $.Values.dishmanager.wms.monitoring }}
-                  values: []
-                  {{ else }}
                   values:
                     {{- range $.Values.dishmanager.wms.station_ids }}
                     - "ska-mid/weather-monitoring/{{ . }}"
                     {{- end }}
+                  {{ else }}
+                  values: []
                   {{- end }}
                 - name: "DefaultActionTimeoutSeconds"
                   values:
