@@ -55,6 +55,7 @@ dishmanager:
   # with custom sub devices addresses
   # Otherwise device names will follow "mid-dish/<family_name>/ska0<N>" for N dishes
   spf:
+    # if true will set the ignoreSpf memorised attribute to True and not account for spf state in aggregation logic
     ignored: False
     fqdn: ""
     domain_name: "mid-dish"
@@ -66,13 +67,16 @@ dishmanager:
     family_name: "ds-manager"
 
   spfrx:
+    # if true will set the ignoreSpfrx memorised attribute to True and not account for spfrx state in aggregation logic
     ignored: False
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"
 
   wms:
-    # device server instances (empty list disables monitoring on WMS devices)
+    # if True will set the WMSDeviceNames property to the station ids provided and set up monitoring to weather station(s)
+    monitoring: False
+    # device server instances
     station_ids: []
     # Wind speed in m/s
     MeanWindSpeedThreshold: "11.1"
@@ -80,6 +84,8 @@ dishmanager:
     WindGustThreshold: "16.9"
   
   b5dcproxy:
+    # if True will set the B5DCDeviceFqdn property to the provided fqdn or generated one and set up monitoring to B5DC proxy
+    monitoring: False
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "b5dc-manager"
