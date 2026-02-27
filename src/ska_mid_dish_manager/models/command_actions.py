@@ -844,14 +844,17 @@ class ConfigureBandAction(Action):
 
         else:
             spfrx_awaited_band = self.band
+            spfrx_requested_cmd = self.requested_cmd
             if self.band == Band.B5b:
+                # send B1 to SPFRx if the requested band is B5b for the old interface
+                spfrx_requested_cmd = "ConfigureBand1"
                 # await for band B1 to be configured on SPFRx if the requested band is B5b
                 spfrx_awaited_band = Band.B1
 
             spfrx_configure_band_command = FannedOutSlowCommand(
                 logger=self.logger,
                 device="SPFRX",
-                command_name=self.requested_cmd,
+                command_name=spfrx_requested_cmd,
                 device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
                 command_argument=self.synchronise,
                 awaited_component_state={"configuredband": spfrx_awaited_band},
