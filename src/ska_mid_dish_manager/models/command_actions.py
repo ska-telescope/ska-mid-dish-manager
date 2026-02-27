@@ -803,7 +803,7 @@ class ConfigureBandAction(Action):
 
             if receiver_band == "5b":
                 # NOTE according to ADR-102 dish lmc should send B1 to SPFRx if the receiver band
-                # is B5b SPFRx firmware is handling this mapping internally. So no need to send B1
+                # is B5b. SPFRx firmware is handling this mapping internally, so no need to send B1
                 # to SPFRx from dish manager. Keep an eye on SPFRx firmware releases in case this
                 # changes and we need to add mapping in dish manager as well.
 
