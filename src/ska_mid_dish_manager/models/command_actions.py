@@ -798,17 +798,18 @@ class ConfigureBandAction(Action):
             sub_band = dish_data.get("sub_band")
             # Override band and indexer_enum if json data is provided
             self.band = Band[f"B{receiver_band}"]
+            spfrx_awaited_band = self.band
             self.indexer_enum = IndexerPosition[f"B{receiver_band}"]
 
-            # NOTE according to ADR-102 dish lmc should send B1 to SPFRx if the receiver band
-            # is B5b SPFRx firmware is handling this mapping internally. So no need to send B1
-            # to SPFRx from dish manager. Keep an eye on SPFRx firmware releases in case this
-            # changes and we need to add mapping in dish manager as well.
-
-            # await for B1 band to be configured on SPFRx if the requested band is B5b
-            spfrx_band_arg = Band.B1 if self.band == Band.B5b else self.band
-
             if receiver_band == "5b":
+                # NOTE according to ADR-102 dish lmc should send B1 to SPFRx if the receiver band
+                # is B5b SPFRx firmware is handling this mapping internally. So no need to send B1
+                # to SPFRx from dish manager. Keep an eye on SPFRx firmware releases in case this
+                # changes and we need to add mapping in dish manager as well.
+
+                # await for B1 band to be configured on SPFRx if the requested band is B5b
+                spfrx_awaited_band = Band.B1
+
                 b5dc_manager = self.dish_manager_cm.sub_component_managers.get("B5DC")
                 if not b5dc_manager:
                     self.logger.info(
@@ -836,26 +837,24 @@ class ConfigureBandAction(Action):
                 command_name=self.requested_cmd,
                 device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
                 command_argument=self.data,
-                awaited_component_state={"configuredband": spfrx_band_arg},
+                awaited_component_state={"configuredband": spfrx_awaited_band},
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
 
         else:
-            # NOTE according to ADR-102 dish lmc should send B1 to SPFRx if the receiver band
-            # is B5b SPFRx firmware is handling this mapping internally. So no need to send B1
-            # to SPFRx from dish manager. Keep an eye on SPFRx firmware releases in case this
-            # changes and we need to add mapping in dish manager as well.
+            spfrx_awaited_band = self.band
+            if self.band == Band.B5b:
+                # await for band B1 to be configured on SPFRx if the requested band is B5b
+                spfrx_awaited_band = Band.B1
 
-            # await for B1 band to be configured on SPFRx if the requested band is B5b
-            spfrx_band_arg = Band.B1 if self.band == Band.B5b else self.band
             spfrx_configure_band_command = FannedOutSlowCommand(
                 logger=self.logger,
                 device="SPFRX",
                 command_name=self.requested_cmd,
                 device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
                 command_argument=self.synchronise,
-                awaited_component_state={"configuredband": spfrx_band_arg},
+                awaited_component_state={"configuredband": spfrx_awaited_band},
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
