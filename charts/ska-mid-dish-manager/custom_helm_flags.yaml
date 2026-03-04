@@ -41,4 +41,7 @@ ska-mid-dish-b5dc-proxy:
 
 dishmanager:
   wms:
+    monitoring: true
     station_ids: ["1"]
+  b5dcproxy:
+    monitoring: true

@@ -8,6 +8,22 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.3.0-rc.5
+******************
+- Fixed WMS device monitoring helm flag logic to correctly enable/disable monitoring.
+
+Version 9.3.0-rc.4
+******************
+- Updated band B5b condition for configureBand command fanned out to SPFRx to check for Band1 (ADR-102).
+- Added new helm flag to enable/disable monitoring of B5DC device and WMS device.
+
+  - `--set dishmanager.b5dcproxy.monitoring=True` (defaults to False)
+  - `--set dishmanager.wms.monitoring=True` (defaults to False)
+
+Version 9.3.0-rc.3
+******************
+- Removed the workaround to cast a string to an int for the band5 downconversion subband field when passing to SPFRx (updated in SPFRx v2.1)
+
 Version 9.3.0-rc.2
 ******************
 - Fix error status node name (errTiltTwoIounit to errTiltTwoIoUnit)

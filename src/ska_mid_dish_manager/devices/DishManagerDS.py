@@ -2305,9 +2305,7 @@ class DishManager(SKAController):
         mode OPERATE.
         """
         handler = self.get_command_object("ConfigureBand5b")
-
-        self.logger.warning("ConfigureBand5b called, but we're configuring B1 until 5B is ready.")
-        result_code, unique_id = handler(Band.B1, synchronise)
+        result_code, unique_id = handler(Band.B5b, synchronise)
 
         return ([result_code], [unique_id])
 
