@@ -104,6 +104,7 @@ markers = [
 ]
 log_cli = true
 log_cli_level = "DEBUG"
+log_level = "DEBUG"
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
