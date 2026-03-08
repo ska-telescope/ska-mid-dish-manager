@@ -63,7 +63,7 @@ This can be run in an isolated environment (virtual environment, docker containe
 
       .. code-block:: rst
 
-        $ python DishManagerDS.py SKA001 -v4 -nodb -host 127.0.0.1 -port 23456 -dlist mid-dish/dish-manager/SKA001
+        $ python DishManager.py SKA001 -v4 -nodb -host 127.0.0.1 -port 23456 -dlist mid-dish/dish-manager/SKA001
 
    .. tab:: dish manager (with simulators/ds-manager)
 
@@ -79,13 +79,13 @@ This can be run in an isolated environment (virtual environment, docker containe
 
         `deploy DishManager (this will require updating fqdn property values to point to addresses for the sub devices)`
         `keep the simulators and DSManager running while continuously re-running DishManager to test new changes`
-        $ python DishManagerDS.py SKA001 -v4 -nodb -host 127.0.0.1 -port 23456 -dlist mid-dish/dish-manager/SKA001
+        $ python DishManager.py SKA001 -v4 -nodb -host 127.0.0.1 -port 23456 -dlist mid-dish/dish-manager/SKA001
 
 .. tip:: Device server can be deployed directly from docker image as:
 
    .. code-block:: rst
 
-     $ docker run -p 45450:45450 -it <image-name:tag>  /usr/bin/python3 /app/src/ska_mid_dish_manager/devices/DishManagerDS.py SKA001 -v4 -nodb -port 45450 -dlist mid-dish/dish-manager/SKA001
+     $ docker run -p 45450:45450 -it <image-name:tag>  /usr/bin/python3 /app/src/ska_mid_dish_manager/devices/DishManager.py SKA001 -v4 -nodb -port 45450 -dlist mid-dish/dish-manager/SKA001
 
 Deploy DishManager with DB
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

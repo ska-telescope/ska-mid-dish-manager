@@ -18,7 +18,7 @@ docs-pre-build:
 	@if [ -v CI_JOB_TOKEN ]; then \
 		poetry install --only-root; \
 	fi
-	tangodocgen --auto -o docs/src/api
+	tangodocgen --auto -o docs/src/api/devices
 endif
 
 #############################

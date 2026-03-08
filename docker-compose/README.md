@@ -27,7 +27,7 @@ Connect to the `dish-manager` pod and start the `DishManager` service
 ```bash
 docker exec -it dish-manager  /bin/bash
 root@ec80dc9c6d05:/app#
-root@ec80dc9c6d05:/app# DishManagerDS SKA001
+root@ec80dc9c6d05:/app# DishManager SKA001
 1|2025-08-01T08:12:10.931Z|INFO|MainThread|set_logging_level|base_device.py#1010|tango-device:mid-dish/dish-manager/SKA001|Logging level set to LoggingLevel.DEBUG on Python and Tango loggers
 1|2025-08-01T08:12:10.932Z|INFO|MainThread|update_logging_handlers|logging.py#380|tango-device:mid-dish/dish-manager/SKA001|Logging targets set to ['tango::logger']
 1|2025-08-01T08:12:10.937Z|DEBUG|MainThread|_init_logging|base_device.py#418|tango-device:mid-dish/dish-manager/SKA001|Logger initialised

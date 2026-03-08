@@ -109,7 +109,7 @@ mid-dish/dish-manager/MKT001
 - Then start DishManager in the commandline
 
 ```
-/usr/bin/python3 /app/src/ska_mid_dish_manager/devices/DishManagerDS.py 01
+/usr/bin/python3 /app/src/ska_mid_dish_manager/devices/DishManager.py 01
 ```
 For dish mananager example usage, consult the [user guide](https://developer.skao.int/projects/ska-mid-dish-manager/en/latest/user_guide/index.html) in the docs.
 
