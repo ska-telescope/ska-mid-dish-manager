@@ -71,7 +71,7 @@
                 }
             }
         },
-        "DishManager": {
+        "DishManagerDS": {
             "SKA001": {
                 "DishManager": {
                     "mid-dish/dish-manager/SKA001": {

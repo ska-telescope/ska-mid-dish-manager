@@ -97,7 +97,7 @@ services:
       - spfrx-simulator
     environment:
       - TANGO_HOST=${TANGO_HOST}
-    # To run DishManager, "DishManager SKA001"
+    # To run DishManager, "DishManagerDS SKA001"
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
           sleep infinity"

@@ -214,7 +214,7 @@ source = ["ska_mid_dish_manager"]
 [tool.coverage.report]
 show_missing = false
 
-[tool.tangodifdoc.DishManager.properties]
+[tool.tangodifdoc.DishManagerDS.properties]
 ReceptorNumber = "001"
 SkaLevel = 1
 LoggingTargetsDefault = "tango::logger"
