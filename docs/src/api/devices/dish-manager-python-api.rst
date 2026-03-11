@@ -2,5 +2,5 @@
 DishManager Python API
 ======================
 
-.. automodule:: ska_mid_dish_manager.devices.DishManager
+.. automodule:: ska_mid_dish_manager.devices.DishManagerDS
    :members:
