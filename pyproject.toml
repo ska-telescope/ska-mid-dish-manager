@@ -42,7 +42,7 @@ Documentation = "https://developer.skao.int/projects/ska-mid-dish-manager/en/lat
 Repository = "https://gitlab.com/ska-telescope/ska-mid-dish-manager"
 
 [project.scripts]
-DishManager = 'ska_mid_dish_manager.devices.DishManager:main'
+DishManagerDS = 'ska_mid_dish_manager.devices.DishManagerDS:main'
 
 [[tool.poetry.source]]
 name = "ska-nexus"
