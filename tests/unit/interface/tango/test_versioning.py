@@ -7,7 +7,7 @@ import pytest
 import tango
 from tango.test_context import DeviceTestContext
 
-from ska_mid_dish_manager.devices.DishManager import DishManager
+from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
