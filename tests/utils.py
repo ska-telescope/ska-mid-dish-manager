@@ -336,7 +336,6 @@ class EventStore:
         except queue.Empty as err:
             raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
 
-    ####
     def wait_for_finished_command_result(
         self, command_id: str, command_result: str, timeout: int = 3
     ):
@@ -378,8 +377,6 @@ class EventStore:
             raise RuntimeError(
                 f"A result was received from [{command_id}] however it was not the awaited result"
             ) from err
-
-    ####
 
     def wait_for_command_id(self, command_id: str, timeout: int = 3):
         """Wait for a long running command to complete.

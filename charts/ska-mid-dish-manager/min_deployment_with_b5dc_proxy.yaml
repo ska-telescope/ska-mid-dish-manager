@@ -1,4 +1,4 @@
-# deploy dish-manager with only ds-manager, spfrx and spf sim with default instance 001
+# deploy dish-manager with only ds-manager, spfrx, spf, b5dc proxy and sims with default instance 001
 global:
   minikube: true
   operator: true
@@ -39,3 +39,7 @@ ska-mid-dish-dcp-lib:
   enabled: true
   b5dcSimulator:
     enabled: true
+
+dishmanager:
+  b5dcproxy:
+      monitoring: true
