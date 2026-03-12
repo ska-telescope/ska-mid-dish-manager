@@ -23,6 +23,7 @@ those sub-element devices.
    User Guide<user_guide/index>
    API<api/index>
    CHANGELOG<CHANGELOG>
+   Modules<modules>
 
 
 Indices and tables

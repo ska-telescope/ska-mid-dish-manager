@@ -19,6 +19,7 @@ docs-pre-build:
 		poetry install --only-root; \
 	fi
 	tangodocgen --auto -o docs/src/api/devices
+	sphinx-apidoc -o docs/src/modules src/
 endif
 
 #############################
