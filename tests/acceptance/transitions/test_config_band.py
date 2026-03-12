@@ -331,7 +331,7 @@ def test_configure_band_json_with_b5dc_fanout(
     dm_attr_cb_mapping = {
         "dishMode": main_event_store,
         "configuredBand": main_event_store,
-        "Status": status_event_store,  # TODO: Add lrc status checks
+        "Status": status_event_store,
         "lrcFinished": result_event_store,
     }
 
@@ -345,9 +345,7 @@ def test_configure_band_json_with_b5dc_fanout(
         b5dc_device_proxy, {"rfcmFrequency": b5dc_subband_evt_store}
     )
 
-    # First assert that the configured band is not 5b and the
-    # configured subband on the b5dc is not B5dcFrequency.F_11_1_GHZ
-
+    # Ensure configuredBand is not B5b
     json_payload_1 = """
     {
         "dish": {
@@ -361,7 +359,6 @@ def test_configure_band_json_with_b5dc_fanout(
         }
     }
     """
-    # Ensure configuredBand is not B5b
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_1)
     result_event_store.wait_for_finished_command_result(
         unique_id, "[0, 'SetOperateMode completed']", timeout=60
@@ -406,6 +403,23 @@ def test_configure_band_json_with_b5dc_fanout(
     assert b5dc_subband_evt_store.wait_for_value(
         B5dcFrequency(B5DC_11_1_GHZ_INDEX).frequency_value_ghz(), 30
     )
+
+    expected_status_updates = [
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand, B5DC.SetFrequency",
+        "Awaiting DS indexerposition change to B5b",
+        "Awaiting SPFRX configuredband change to B1",
+        "Awaiting B5DC rfcmfrequency change to 11.1",
+        "Awaiting configuredband change to B5b",
+        "DS indexerposition changed to B5b",
+        "SPFRX configuredband changed to B1",
+        "B5DC rfcmfrequency changed to 11.1",
+    ]
+
+    events = status_event_store.get_queue_values(timeout=0)
+
+    events_string = "".join([str(attr_value) for _, attr_value in events])
+    for message in expected_status_updates:
+        assert message in events_string
 
     remove_subscriptions(b5dc_subband_sub)
     remove_subscriptions(subscriptions)
