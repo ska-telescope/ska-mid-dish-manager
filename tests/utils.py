@@ -1,5 +1,6 @@
 """General utils for test devices."""
 
+import json
 import math
 import queue
 import random
@@ -334,6 +335,51 @@ class EventStore:
                     return True
         except queue.Empty as err:
             raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
+
+    ####
+    def wait_for_finished_command_result(
+        self, command_id: str, command_result: str, timeout: int = 3
+    ):
+        """Wait for an expected lrcFinished result.
+
+        Wait `timeout` seconds for each fetch.
+
+        :param command_id: The long running command ID
+        :type command_id: str
+        :param command_result: The expected result as a string
+        :type command_result: str
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If none are found
+        :return: The result of the long running command
+        :rtype: str
+        """
+        result_from_id = False
+        try:
+            while True:
+                event = self._queue.get(timeout=timeout)
+                if not event.attr_value:
+                    continue
+                if not isinstance(event.attr_value.value, tuple) or not event.attr_value.value:
+                    continue
+                # If the event is a tuple, pick the last dict of the tuple
+                # and check whether the result is the expected one from the
+                # expected UID
+                last_result = json.loads(event.attr_value.value[-1])
+                recieved_res = str(last_result["result"])
+
+                if last_result["uid"] == command_id:
+                    result_from_id = True
+                    if recieved_res == command_result:
+                        return True
+        except queue.Empty as err:
+            if not result_from_id:
+                raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
+            raise RuntimeError(
+                f"A result was received from [{command_id}] however it was not the awaited result"
+            ) from err
+
+    ####
 
     def wait_for_command_id(self, command_id: str, timeout: int = 3):
         """Wait for a long running command to complete.
