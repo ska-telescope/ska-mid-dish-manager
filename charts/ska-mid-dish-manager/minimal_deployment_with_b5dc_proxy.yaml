@@ -25,12 +25,6 @@ ska-mid-dish-simulators:
       enabled: true
   dsOpcuaSimulator:
     enabled: true
-  dishsimulators:
-    image:
-      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-simulators
-      image: ska-mid-dish-simulators
-      tag: 5.6.3-dev.c90db7227
-      pullPolicy: IfNotPresent
 
 ska-mid-dish-b5dc-proxy:
   enabled: true
