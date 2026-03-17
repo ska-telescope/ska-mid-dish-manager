@@ -14,7 +14,7 @@ COPY src /app/src
 COPY README.md /app/README.md
 RUN poetry install --only-root
 
-FROM artefact.skao.int/ska-python:0.2.3
+FROM artefact.skao.int/ska-python:0.2.5
 WORKDIR /app
 
 ENV VIRTUAL_ENV=/app/.venv
