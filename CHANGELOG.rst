@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.3.0
+*************
+- See RCs for details
+
 Version 9.3.0-rc.5
 ******************
 - Fixed WMS device monitoring helm flag logic to correctly enable/disable monitoring.
