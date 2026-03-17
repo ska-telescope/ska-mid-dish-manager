@@ -931,7 +931,7 @@ class ConfigureBandActionSequence(Action):
         """Execute the defined action."""
         current_dish_mode = self.dish_manager_cm._component_state["dishmode"]
 
-        # Step 2: Operate mode action (final step)
+        # Step 3: Operate mode action (final step)
         operate_action = SetOperateModeAction(
             logger=self.logger,
             dish_manager_cm=self.dish_manager_cm,
@@ -943,7 +943,7 @@ class ConfigureBandActionSequence(Action):
 
         final_action = operate_action if current_dish_mode != DishMode.STOW else None
 
-        # Step 1: Configure band action
+        # Step 2: Configure band action
         configure_action = ConfigureBandAction(
             logger=self.logger,
             dish_manager_cm=self.dish_manager_cm,
@@ -956,7 +956,31 @@ class ConfigureBandActionSequence(Action):
             timeout_s=self.timeout_s,
         )
 
-        # Step 0: Pre-action if we need LP -> FP
+        # Step 0 :apply appropriate pointing models before configuring the band
+
+        try:
+            data_json = json.loads(self.data)
+            dish_data = data_json.get("dish")
+            band = dish_data.get("receiver_band")
+            band_pointing_model_param_name = f"band{band}pointingmodelparams"
+            pointingmodel_values = self.dish_manager_cm.component_state[
+                band_pointing_model_param_name
+            ]
+            self.dish_manager_cm.update_pointing_model_params(
+                band_pointing_model_param_name, pointingmodel_values
+            )
+            self.logger.info(f"Pointing model for band {band} has been successfully applied on DS")
+
+        except (tango.DevFailed, ValueError) as err:
+            self.logger.error("Failed to apply pointing model")
+            update_task_status(
+                task_callback,
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, "Apply pointing model failed"),
+            )
+            return TaskStatus.FAILED, str(err)
+
+        # Step 1: Pre-action if we need LP -> FP
         if current_dish_mode == DishMode.STANDBY_LP:
             pre_action = SetStandbyFPModeAction(
                 logger=self.logger,
@@ -966,7 +990,6 @@ class ConfigureBandActionSequence(Action):
                 timeout_s=self.timeout_s,
             )
             return pre_action.execute(task_callback, task_abort_event, completed_response_msg)
-
         # If no LP -> FP transition is needed then start with ConfigureBand
         return configure_action.execute(task_callback, task_abort_event, completed_response_msg)
 
