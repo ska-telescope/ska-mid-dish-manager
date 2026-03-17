@@ -755,6 +755,45 @@ class TrackStopAction(Action):
         )
 
 
+def apply_pointing_model(
+    band_param_name: str,
+    band_name: str,
+    task_callback,
+    logger: logging.Logger,
+    dish_manager_cm,
+):
+    """Apply pointing model parameters for a given band if they exist and are not all zeros.
+
+    Args:
+        band_param_name: The key in component_state for this band.
+        band_name: Name/identifier of the band (for logging).
+        task_callback: Callback to update task status on failure.
+        logger: Logger instance for info/debug/error messages.
+        dish_manager_cm: Component manager with component_state and update_pointing_model_params().
+
+    Returns:
+        TaskStatus.FAILED and error string if an error occurs, otherwise None.
+
+    """
+    try:
+        values = dish_manager_cm.component_state[band_param_name]
+
+        if values and not all(v == 0.0 for v in values):
+            dish_manager_cm.update_pointing_model_params(band_param_name, values)
+            logger.info(f"Pointing model for band {band_name} applied successfully")
+        else:
+            logger.debug(f"Skipped applying pointing model for band {band_name}")
+
+    except (tango.DevFailed, ValueError) as err:
+        logger.error(f"Failed to apply pointing model for band {band_name}: {err}")
+        update_task_status(
+            task_callback,
+            status=TaskStatus.FAILED,
+            result=(ResultCode.FAILED, "Apply pointing model failed"),
+        )
+        return TaskStatus.FAILED, str(err)
+
+
 class ConfigureBandAction(Action):
     """Configure band on DS and SPFRx."""
 
@@ -957,34 +996,39 @@ class ConfigureBandActionSequence(Action):
         )
 
         # Step 0 :apply appropriate pointing models before configuring the band
-        try:
-            data_json = json.loads(self.data)
-            dish_data = data_json.get("dish")
-            band = dish_data.get("receiver_band")
-            band_pointing_model_param_name = f"band{band}pointingmodelparams"
-            pointingmodel_values = self.dish_manager_cm.component_state[
-                band_pointing_model_param_name
-            ]
-            # Apply pointing models only if they have been set
-            if pointingmodel_values and not all(v == 0.0 for v in pointingmodel_values):
-                self.dish_manager_cm.update_pointing_model_params(
-                    band_pointing_model_param_name, pointingmodel_values
-                )
-                self.logger.info(
-                    f"Pointing model for band {band} has been successfully applied on DS"
-                )
+        # Case for Json arg configureband command
+        if self.data:
+            try:
+                data_json = json.loads(self.data)
+                dish_data = data_json.get("dish", {})
+                band_name = dish_data.get("receiver_band")
+                band_param_name = f"band{band_name}pointingmodelparams"
 
-            else:
-                self.logger.debug(f"Skipped applying model band for {band} on DS")
+                result = apply_pointing_model(
+                    band_param_name, band_name, task_callback, self.logger, self.dish_manager_cm
+                )
+                if result:
+                    return result
 
-        except (tango.DevFailed, ValueError) as err:
-            self.logger.error("Failed to apply pointing model")
-            update_task_status(
-                task_callback,
-                status=TaskStatus.FAILED,
-                result=(ResultCode.FAILED, "Apply pointing model failed"),
+            except ValueError as err:
+                self.logger.error(f"Invalid JSON: {err}")
+                update_task_status(
+                    task_callback,
+                    status=TaskStatus.FAILED,
+                    result=(ResultCode.FAILED, "Invalid JSON in configureband command"),
+                )
+                return TaskStatus.FAILED, str(err)
+
+        else:
+            # Case for Non json arg configureband commands
+            band_name = str(self.band.value)
+            band_param_name = f"band{band_name}pointingmodelparams"
+
+            result = apply_pointing_model(
+                band_param_name, band_name, task_callback, self.logger, self.dish_manager_cm
             )
-            return TaskStatus.FAILED, str(err)
+            if result:
+                return result
 
         # Step 1: Pre-action if we need LP -> FP
         if current_dish_mode == DishMode.STANDBY_LP:
