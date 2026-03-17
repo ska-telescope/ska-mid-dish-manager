@@ -1021,7 +1021,12 @@ class ConfigureBandActionSequence(Action):
 
         else:
             # Case for Non json arg configureband commands
-            band_name = str(self.band.value)
+            if self.band in [Band.B5a, Band.B5b]:
+                enum_name = self.band.name
+                # band name become '5a' or '5b'
+                band_name = enum_name[1:]
+            else:
+                band_name = str(self.band.value)
             band_param_name = f"band{band_name}pointingmodelparams"
 
             result = apply_pointing_model(
