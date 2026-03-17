@@ -966,16 +966,16 @@ class ConfigureBandActionSequence(Action):
                 band_pointing_model_param_name
             ]
             # Apply pointing models only if they have been set
-            if not any(pointingmodel_values):
-                self.logger.debug(f"Skipped applying model band for {band} on DS")
-
-            else:
+            if pointingmodel_values and not all(v == 0.0 for v in pointingmodel_values):
                 self.dish_manager_cm.update_pointing_model_params(
                     band_pointing_model_param_name, pointingmodel_values
                 )
                 self.logger.info(
                     f"Pointing model for band {band} has been successfully applied on DS"
                 )
+
+            else:
+                self.logger.debug(f"Skipped applying model band for {band} on DS")
 
         except (tango.DevFailed, ValueError) as err:
             self.logger.error("Failed to apply pointing model")
