@@ -6,10 +6,6 @@ from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
-B5DC_11_1_GHZ_INDEX = 1
-B5DC_13_2_GHZ_INDEX = 2
-B5DC_13_86_GHZ_INDEX = 3
-
 
 @pytest.mark.acceptance
 def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager_proxy):
@@ -316,7 +312,7 @@ def test_configure_band_json(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.acceptance
+@pytest.mark.acceptance_incl_b5dc
 def test_configure_band_json_with_b5dc_fanout(
     monitor_tango_servers,
     event_store_class,
@@ -349,7 +345,7 @@ def test_configure_band_json_with_b5dc_fanout(
     json_payload_1 = """
     {
         "dish": {
-            "receiver_band": "1",
+            "receiver_band": "2",
             "spfrx_processing_parameters": [
                 {
                     "dishes": ["all"],
@@ -363,19 +359,17 @@ def test_configure_band_json_with_b5dc_fanout(
     result_event_store.wait_for_finished_command_result(
         unique_id, "[0, 'SetOperateMode completed']", timeout=60
     )
-    assert dish_manager_proxy.configuredBand == Band.B1
+    assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     # Ensure B5dc proxy sub band is not 11.1GHz
     current_sub_band = b5dc_device_proxy.rfcmFrequency
-    if current_sub_band == B5dcFrequency(B5DC_11_1_GHZ_INDEX).frequency_value_ghz():
-        b5dc_device_proxy.SetFrequency(B5DC_13_2_GHZ_INDEX)
+    if current_sub_band == B5dcFrequency.F_11_1_GHZ.frequency_value_ghz():
+        b5dc_device_proxy.SetFrequency(B5dcFrequency.F_13_2_GHZ)
 
         # Increased timeout period to account for the polling
         # loop refreshing the b5dc attribute values
-        b5dc_subband_evt_store.wait_for_value(
-            B5dcFrequency(B5DC_13_2_GHZ_INDEX).frequency_value_ghz(), 30
-        )
+        b5dc_subband_evt_store.wait_for_value(B5dcFrequency.F_13_2_GHZ.frequency_value_ghz(), 30)
 
     main_event_store.clear_queue()
     b5dc_subband_evt_store.clear_queue()
@@ -401,7 +395,7 @@ def test_configure_band_json_with_b5dc_fanout(
     assert dish_manager_proxy.configuredBand == Band.B5b
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
     assert b5dc_subband_evt_store.wait_for_value(
-        B5dcFrequency(B5DC_11_1_GHZ_INDEX).frequency_value_ghz(), 30
+        B5dcFrequency.F_11_1_GHZ.frequency_value_ghz(), 30
     )
 
     expected_status_updates = [
