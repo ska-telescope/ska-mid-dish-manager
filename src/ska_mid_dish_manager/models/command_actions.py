@@ -957,26 +957,31 @@ class ConfigureBandActionSequence(Action):
         )
 
         # Step 0 :apply appropriate pointing models before configuring the band
-        band_pointing_model_param_name = f'band{band}pointingmodelparams'
-        pointingmodel_values = self.dish_manager_cm.component_state[band_pointing_model_param_name]
-        # Apply pointing models only if they have been set
-        if not any(pointingmodel_values):
-
-            try:
-                data_json = json.loads(self.data)
-                dish_data = data_json.get("dish")
-                band = dish_data.get("receiver_band")
-
-                self.dish_manager_cm.update_pointing_model_params(band_pointing_model_param_name, pointingmodel_values)
-                self.logger.info(f"Pointing model for band {band} has been successfully applied on DS")
-
-            except (tango.DevFailed, ValueError) as err:
-                self.logger.error(f"Failed to apply pointing model")
-                update_task_status(
-                    task_callback,
-                    status=TaskStatus.FAILED,
-                    result=(ResultCode.FAILED, f"Apply pointing model failed"),
+        try:
+            data_json = json.loads(self.data)
+            dish_data = data_json.get("dish")
+            band = dish_data.get("receiver_band")
+            band_pointing_model_param_name = f"band{band}pointingmodelparams"
+            pointingmodel_values = self.dish_manager_cm.component_state[
+                band_pointing_model_param_name
+            ]
+            # Apply pointing models only if they have been set
+            if not any(pointingmodel_values):
+                self.dish_manager_cm.update_pointing_model_params(
+                    band_pointing_model_param_name, pointingmodel_values
                 )
+                self.logger.info(
+                    f"Pointing model for band {band} has been successfully applied on DS"
+                )
+            else:
+                self.logger.debug(f"Skipped applying modelband {band} on DS")
+        except (tango.DevFailed, ValueError) as err:
+            self.logger.error("Failed to apply pointing model")
+            update_task_status(
+                task_callback,
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, "Apply pointing model failed"),
+            )
             return TaskStatus.FAILED, str(err)
 
         # Step 1: Pre-action if we need LP -> FP
