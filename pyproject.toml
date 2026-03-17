@@ -43,6 +43,7 @@ Repository = "https://gitlab.com/ska-telescope/ska-mid-dish-manager"
 
 [project.scripts]
 DishManagerDS = 'ska_mid_dish_manager.devices.DishManagerDS:main'
+DishManager = 'ska_mid_dish_manager.devices.DishManagerDS:main' # Workaround for tangodocgen
 
 [[tool.poetry.source]]
 name = "ska-nexus"
@@ -88,6 +89,7 @@ sphinx-tabs = "*"
 sphinx-autodoc-typehints = "*"
 sphinxcontrib-plantuml = "*"
 typing_extensions = "*"
+ska-tango-difdoc = "^0.2.0"
 
 [tool.pytest.ini_options]
 testpaths = "tests"
@@ -101,6 +103,8 @@ markers = [
     "track_patterns",
     "movement",
 ]
+log_cli = true  # show logs if test fails
+log_cli_level = "DEBUG"
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
@@ -210,6 +214,24 @@ source = ["ska_mid_dish_manager"]
 
 [tool.coverage.report]
 show_missing = false
+
+[tool.tangodifdoc.DishManager.properties]
+ReceptorNumber = "001"
+SkaLevel = 1
+LoggingTargetsDefault = "tango::logger"
+LoggingLevelDefault = 5
+MaxCapabilities = "BANDS:6"
+GroupDefinitions = ""
+DSDeviceFqdn = "a/b/c"
+SPFDeviceFqdn = "a/b/c"
+SPFRxDeviceFqdn = "a/b/c"
+B5DCDeviceFqdn = "a/b/c"
+DishId = "SKA001"
+DefaultWatchdogTimeout = 0
+MeanWindSpeedThreshold = 11
+WindGustThreshold = 16
+WMSDeviceNames = []
+DefaultActionTimeoutSeconds = 120
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

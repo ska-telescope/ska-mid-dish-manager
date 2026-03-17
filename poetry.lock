@@ -1653,7 +1653,7 @@ version = "1.26.4"
 description = "Fundamental package for array computing in Python"
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "dev"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "numpy-1.26.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:9ff0f4f29c51e2803569d7a51c2304de5554655a60c5d776e35b4a41413830d0"},
     {file = "numpy-1.26.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:2e4ee3380d6de9c9ec04745830fd9e2eccb3e6cf790d39d7b98ffd19b0dd754a"},
@@ -1935,7 +1935,7 @@ version = "7.2.2"
 description = "Cross-platform lib for process and system monitoring."
 optional = false
 python-versions = ">=3.6"
-groups = ["main", "dev"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "psutil-7.2.2-cp313-cp313t-macosx_10_13_x86_64.whl", hash = "sha256:2edccc433cbfa046b980b0df0171cd25bcaeb3a68fe9022db0979e7aa74a826b"},
     {file = "psutil-7.2.2-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:e78c8603dcd9a04c7364f1a3e670cea95d51ee865e4efb3556a3a63adef958ea"},
@@ -2201,7 +2201,7 @@ version = "10.0.0"
 description = "Python bindings for the cppTango library; part of the Tango Distributed Control System toolkit"
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "dev"]
+groups = ["main", "dev", "docs"]
 files = [
     {file = "pytango-10.0.0-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:d1eba7f79f2af9d38de7fa6ee27adb383399f95753f878b0a906208cf7e070be"},
     {file = "pytango-10.0.0-cp310-cp310-macosx_12_0_x86_64.whl", hash = "sha256:db4667ced54604002e7c83bb261621c17834fe326b9594d2216da64ded78dcae"},
@@ -2900,6 +2900,27 @@ url = "https://artefact.skao.int/repository/pypi-internal/simple"
 reference = "ska-nexus"
 
 [[package]]
+name = "ska-tango-difdoc"
+version = "0.2.0"
+description = "SKA Tango Device Interface Documentation Generator"
+optional = false
+python-versions = ">=3.10.0,<4.0.0"
+groups = ["docs"]
+files = [
+    {file = "ska_tango_difdoc-0.2.0-py3-none-any.whl", hash = "sha256:7f12a1b0306da4e1193562e951a71599f6f6b1121d229fcb25d9849b77cb2202"},
+    {file = "ska_tango_difdoc-0.2.0.tar.gz", hash = "sha256:22afcfafdd9614983846c40a66b649309c37bc4ca8d73a2a85878b3b4e344a4e"},
+]
+
+[package.dependencies]
+pytango = ">=9.4.2,<9.5.1 || >9.5.1,<11.0.0"
+tomli = ">=2.0.0,<3.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://artefact.skao.int/repository/pypi-internal/simple"
+reference = "ska-nexus"
+
+[[package]]
 name = "ska-tango-testing"
 version = "0.8.0"
 description = "Test harness for testing SKA Tango devices"
@@ -3302,8 +3323,7 @@ version = "2.4.0"
 description = "A lil' TOML parser"
 optional = false
 python-versions = ">=3.8"
-groups = ["dev"]
-markers = "python_version == \"3.10\""
+groups = ["dev", "docs"]
 files = [
     {file = "tomli-2.4.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:b5ef256a3fd497d4973c11bf142e9ed78b150d36f5773f1ca6088c230ffc5867"},
     {file = "tomli-2.4.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:5572e41282d5268eb09a697c89a7bee84fae66511f87533a6f88bd2f7b652da9"},
@@ -3353,6 +3373,7 @@ files = [
     {file = "tomli-2.4.0-py3-none-any.whl", hash = "sha256:1f776e7d669ebceb01dee46484485f43a4048746235e683bcdffacdf1fb4785a"},
     {file = "tomli-2.4.0.tar.gz", hash = "sha256:aa89c3f6c277dd275d8e243ad24f3b5e701491a860d5121f2cdd399fbb31fc9c"},
 ]
+markers = {dev = "python_version == \"3.10\""}
 
 [package.source]
 type = "legacy"
@@ -3581,4 +3602,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "61abf37303e82c6665d32648e99e5870290c239ddf7dbc4bf8e7207798338d5e"
+content-hash = "18a9afd97e38344d6f682b6ee167a6d59f0d33fcc00f23307ede570d1998a00a"
