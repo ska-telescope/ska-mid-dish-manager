@@ -23,7 +23,9 @@ from ska_mid_dish_manager.models.dish_enums import (
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
+@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
 def test_configureband_handler(
+    mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
@@ -35,6 +37,8 @@ def test_configureband_handler(
     """
     component_state_cb = callbacks["comp_state_cb"]
     component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
+    mock_apply_pointing_model.return_value = None
+
     component_manager.configure_band_cmd(Band.B2, True, callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
@@ -83,13 +87,18 @@ def test_configureband_handler(
     )
     progress_cb.wait_for_args(("SetOperateMode completed",))
 
+    # Verify apply_pointing_model was called
+    mock_apply_pointing_model.assert_called_once()
+
 
 @pytest.mark.unit
 @patch(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
+@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
 def test_configureband_json_handler_happy(
+    mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
@@ -114,6 +123,7 @@ def test_configureband_json_handler_happy(
     }
     """
     component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
+    mock_apply_pointing_model.return_value = None
     status, response = component_manager.configure_band_with_json(
         configure_json, callbacks["task_cb"]
     )
@@ -166,6 +176,9 @@ def test_configureband_json_handler_happy(
         result=(ResultCode.OK, "SetOperateMode completed"),
     )
     progress_cb.wait_for_args(("SetOperateMode completed",))
+
+    # Verify apply_pointing_model was called
+    mock_apply_pointing_model.assert_called_once()
 
 
 @pytest.mark.unit
@@ -623,77 +636,6 @@ def test_configureband_without_b5dc_component_manager(
     assert (
         "Monitoring and control not set up for B5DC device, skipping frequency configuration."
         in caplog.text
-    )
-
-
-@pytest.mark.unit
-@patch(
-    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
-    Mock(return_value=True),
-)
-@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
-def test_configureband_handler_with_mocked_pointing_model(
-    mock_apply_pointing_model,
-    component_manager: DishManagerComponentManager,
-    callbacks: dict,
-):
-    component_manager.component_state["band1pointingmodelparams"] = [1.8] * 18
-    # Prevent the real function from executing
-    mock_apply_pointing_model.return_value = None
-
-    component_manager.configure_band_cmd(Band.B1, True, callbacks["task_cb"])
-
-    # verify that apply_pointing_model was called correctly
-    mock_apply_pointing_model.assert_called_once_with(
-        "band1pointingmodelparams",
-        "1",
-        callbacks["task_cb"],
-        component_manager.logger,
-        component_manager,
-    )
-
-
-@pytest.mark.unit
-@patch(
-    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
-    Mock(return_value=True),
-)
-@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
-def test_configureband_json_handler_happy_with_mocked_pointing_model(
-    mock_apply_pointing_model,
-    component_manager: "DishManagerComponentManager",
-    callbacks: dict,
-):
-    """Verify ConfigureBand with valid JSON calls
-    apply_pointing_model without actually executing it.
-    """
-    component_manager.component_state["band1pointingmodelparams"] = [1.5] * 18
-
-    configure_json = """
-    {
-        "dish": {
-            "receiver_band": "1",
-            "spfrx_processing_parameters": [
-                {
-                    "dishes": ["all"],
-                    "sync_pps": true
-                }
-            ]
-        }
-    }
-    """
-    # Prevent the real function from executing
-    mock_apply_pointing_model.return_value = None
-
-    component_manager.configure_band_with_json(configure_json, callbacks["task_cb"])
-
-    # Verify apply_pointing_model was called
-    mock_apply_pointing_model.assert_called_once_with(
-        "band1pointingmodelparams",
-        "1",
-        callbacks["task_cb"],
-        component_manager.logger,
-        component_manager,
     )
 
 
