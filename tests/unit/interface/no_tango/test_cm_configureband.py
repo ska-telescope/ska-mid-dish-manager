@@ -7,6 +7,7 @@ import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.models.command_actions import apply_pointing_model
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DSOperatingMode,
@@ -22,17 +23,21 @@ from ska_mid_dish_manager.models.dish_enums import (
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
+@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
 def test_configureband_handler(
+    mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """Verify behaviour of ConfigureBand[x] command handler.
+    """Verify behaviour of ConfigureBand[x] command handler and
+    verify pointing model is applied.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
     component_state_cb = callbacks["comp_state_cb"]
+    component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
     component_manager.configure_band_cmd(Band.B2, True, callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
@@ -47,6 +52,15 @@ def test_configureband_handler(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    # Verify apply_pointing_model was called
+    mock_apply_pointing_model.assert_called_once_with(
+        "band2pointingmodelparams",
+        "2",
+        callbacks["task_cb"],
+        component_manager.logger,
+        component_manager,
+    )
 
     msgs = [
         "Awaiting DS indexerposition change to B2",
@@ -87,11 +101,14 @@ def test_configureband_handler(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
+@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
 def test_configureband_json_handler_happy(
+    mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
-    """Verify behaviour of ConfigureBand for json happy case.
+    """Verify behaviour of ConfigureBand for json happy case
+    and verify pointing model is applied when JSON is valid.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -111,13 +128,24 @@ def test_configureband_json_handler_happy(
         }
     }
     """
-
+    component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
     status, response = component_manager.configure_band_with_json(
         configure_json, callbacks["task_cb"]
     )
     assert status == TaskStatus.QUEUED
     assert "Task queued" in response
+
+    # Verify apply_pointing_model was called
+    mock_apply_pointing_model.assert_called_once_with(
+        "band2pointingmodelparams",
+        "2",
+        callbacks["task_cb"],
+        component_manager.logger,
+        component_manager,
+    )
+
     # wait a bit for the lrc updates to come through
+
     component_state_cb.get_queue_values()
 
     expected_call_kwargs = (
@@ -620,3 +648,42 @@ def test_configureband_without_b5dc_component_manager(
         "Monitoring and control not set up for B5DC device, skipping frequency configuration."
         in caplog.text
     )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "pointing_values, should_skip",
+    [
+        ([1.1] * 18, False),
+        ([], True),
+        ([0.0] * 18, True),
+    ],
+)
+def test_apply_pointing_model_behavior(caplog, pointing_values, should_skip):
+    """Test apply_pointing_model function directly.
+
+    - skips applying pointing model if values are empty or all zeros
+    - applies otherwise
+    """
+    caplog.set_level("DEBUG")
+    mock_logger = Mock()
+    mock_cm = Mock()
+    mock_task_cb = Mock()
+    band_name = "2"
+    band_param_name = "band2pointingmodelparams"
+
+    mock_cm.component_state = {band_param_name: pointing_values}
+
+    apply_pointing_model(band_param_name, band_name, mock_task_cb, mock_logger, mock_cm)
+
+    if should_skip:
+        # Should skip: result is None, log contains skip message
+        assert "Skipped applying model" in [
+            call.args[0] for call in mock_logger.debug.call_args_list
+        ]
+    else:
+        # Should apply: update_pointing_model_params is called
+        mock_cm.update_pointing_model_params.assert_called_once_with(
+            band_param_name, pointing_values
+        )
+        assert "successfully applied" in [call.args[0] for call in mock_logger.info.call_args_list]
