@@ -637,7 +637,7 @@ def test_configureband_handler_with_mocked_pointing_model(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ):
-    component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
+    component_manager.component_state["band1pointingmodelparams"] = [1.8] * 18
 
     component_manager.configure_band_cmd(Band.B1, True, callbacks["task_cb"])
 
@@ -665,7 +665,7 @@ def test_configureband_json_handler_happy_with_mocked_pointing_model(
     """Verify ConfigureBand with valid JSON calls
     apply_pointing_model without actually executing it.
     """
-    component_manager.component_state["band2pointingmodelparams"] = [1.5] * 18
+    component_manager.component_state["band1pointingmodelparams"] = [1.5] * 18
 
     configure_json = """
     {
