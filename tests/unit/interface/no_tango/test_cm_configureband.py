@@ -638,6 +638,8 @@ def test_configureband_handler_with_mocked_pointing_model(
     callbacks: dict,
 ):
     component_manager.component_state["band1pointingmodelparams"] = [1.8] * 18
+    # Prevent the real function from executing
+    mock_apply_pointing_model.return_value = None
 
     component_manager.configure_band_cmd(Band.B1, True, callbacks["task_cb"])
 
@@ -680,6 +682,8 @@ def test_configureband_json_handler_happy_with_mocked_pointing_model(
         }
     }
     """
+    # Prevent the real function from executing
+    mock_apply_pointing_model.return_value = None
 
     component_manager.configure_band_with_json(configure_json, callbacks["task_cb"])
 
