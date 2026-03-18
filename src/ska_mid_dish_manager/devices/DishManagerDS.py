@@ -2159,8 +2159,10 @@ class DishManager(SKAController):
         """Configure band according to JSON string supplied.
 
         This command triggers the Dish to transition to the CONFIG Dish
-        Element Mode, and returns to the caller.
-
+        Element Mode,re-apply the last updated
+        band<n>pointingmodelparams ,and returns to the caller.
+        Note: The pointingModelParams will not be re-applied if the last updated
+        values are zero-padded.
         :return: A tuple containing a return code and a string
             message indicating status.
         """
@@ -2182,9 +2184,12 @@ class DishManager(SKAController):
     def ConfigureBand1(self, synchronise) -> DevVarLongStringArrayType:
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
-        operate in frequency band 1. On completion of the band
+        operate in frequency band 1 and re-apply the last updated
+        band1pointingmodelparams. On completion of the band
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
+        Note: The pointingModelParams will not be re-applied if the last updated
+        values are zero-padded.
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -2209,9 +2214,12 @@ class DishManager(SKAController):
 
         This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
-        operate in frequency band 2. On completion of the band
+        operate in frequency band 2 and re-apply the last updated
+        band2pointingmodelparams. On completion of the band
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
+        Note: The pointingModelParams will not be re-applied if the last updated
+        values are zero-padded.
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -2234,9 +2242,12 @@ class DishManager(SKAController):
     def ConfigureBand3(self, synchronise):  # pylint: disable=unused-argument
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
-        operate in frequency band 3. On completion of the band
+        operate in frequency band 3 and re-apply the last updated
+        band2pointingmodelparams. On completion of the band
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
+        Note: The pointingModelParams will not be re-applied if the last updated
+        values are zero-padded.
         """
         handler = self.get_command_object("ConfigureBand3")
 
@@ -2256,9 +2267,12 @@ class DishManager(SKAController):
     def ConfigureBand4(self, synchronise):  # pylint: disable=unused-argument
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
-        operate in frequency band 4. On completion of the band
+        operate in frequency band 4 and re-apply the last updated
+        band4pointingmodelparams. On completion of the band
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
+        Note: The pointingModelParams will not be re-applied if the last updated
+        values are zero-padded.
         """
         handler = self.get_command_object("ConfigureBand4")
 
@@ -2278,9 +2292,12 @@ class DishManager(SKAController):
     def ConfigureBand5a(self, synchronise):  # pylint: disable=unused-argument
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
-        operate in frequency band 5a. On completion of the band
+        operate in frequency band 5a and re-apply the last updated
+        band5apointingmodelparams. On completion of the band
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
+        Note: The pointingModelParams will not be re-applied if the last updated
+        values are zero-padded.
         """
         handler = self.get_command_object("ConfigureBand5a")
 
@@ -2300,9 +2317,12 @@ class DishManager(SKAController):
     def ConfigureBand5b(self, synchronise):  # pylint: disable=unused-argument
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, and returns to the caller. To configure the Dish to
-        operate in frequency band 5b. On completion of the band
+        operate in frequency band 5b and re-apply the last updated
+        band5bpointingmodelparams. On completion of the band
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
+        Note: The pointingModelParams will not be re-applied if the last updated
+        values are zero-padded.
         """
         handler = self.get_command_object("ConfigureBand5b")
         result_code, unique_id = handler(Band.B5b, synchronise)
