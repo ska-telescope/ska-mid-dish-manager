@@ -53,15 +53,6 @@ def test_configureband_handler(
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
 
-    # Verify apply_pointing_model was called
-    mock_apply_pointing_model.assert_called_once_with(
-        "band2pointingmodelparams",
-        "2",
-        callbacks["task_cb"],
-        component_manager.logger,
-        component_manager,
-    )
-
     msgs = [
         "Awaiting DS indexerposition change to B2",
         "Awaiting SPFRX configuredband change to B2",
@@ -72,6 +63,14 @@ def test_configureband_handler(
     for msg in msgs:
         progress_cb.wait_for_args((msg,))
 
+    # Verify apply_pointing_model was called
+    mock_apply_pointing_model.assert_called_once_with(
+        "band2pointingmodelparams",
+        "2",
+        callbacks["task_cb"],
+        component_manager.logger,
+        component_manager,
+    )
     # check that the component state reports the requested command
     component_manager.sub_component_managers["SPF"]._update_component_state(
         bandinfocus=SPFBandInFocus.B2,
@@ -135,15 +134,6 @@ def test_configureband_json_handler_happy(
     assert status == TaskStatus.QUEUED
     assert "Task queued" in response
 
-    # Verify apply_pointing_model was called
-    mock_apply_pointing_model.assert_called_once_with(
-        "band2pointingmodelparams",
-        "2",
-        callbacks["task_cb"],
-        component_manager.logger,
-        component_manager,
-    )
-
     # wait a bit for the lrc updates to come through
 
     component_state_cb.get_queue_values()
@@ -168,6 +158,15 @@ def test_configureband_json_handler_happy(
     progress_cb = callbacks["progress_cb"]
     for msg in msgs:
         progress_cb.wait_for_args((msg,))
+
+    # Verify apply_pointing_model was called
+    mock_apply_pointing_model.assert_called_once_with(
+        "band2pointingmodelparams",
+        "2",
+        callbacks["task_cb"],
+        component_manager.logger,
+        component_manager,
+    )
 
     # check that the component state reports the requested command
     component_manager.sub_component_managers["SPF"]._update_component_state(
@@ -676,14 +675,15 @@ def test_apply_pointing_model_behavior(caplog, pointing_values, should_skip):
 
     apply_pointing_model(band_param_name, band_name, mock_task_cb, mock_logger, mock_cm)
 
+    debug_msgs = [call.args[0] for call in mock_logger.debug.call_args_list]
+
     if should_skip:
-        # Should skip: result is None, log contains skip message
-        assert "Skipped applying model" in [
-            call.args[0] for call in mock_logger.debug.call_args_list
-        ]
+        # nothing applied, logs contain skip message
+        assert any("Skipped applying pointing model" in msg for msg in debug_msgs)
+        mock_cm.update_pointing_model_params.assert_not_called()
     else:
-        # Should apply: update_pointing_model_params is called
+        # update_pointing_model_params called, log contains success
         mock_cm.update_pointing_model_params.assert_called_once_with(
             band_param_name, pointing_values
         )
-        assert "successfully applied" in [call.args[0] for call in mock_logger.info.call_args_list]
+        assert any("applied successfully" in msg for msg in debug_msgs)

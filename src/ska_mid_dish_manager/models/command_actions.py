@@ -780,7 +780,7 @@ def apply_pointing_model(
 
         if values and not all(v == 0.0 for v in values):
             dish_manager_cm.update_pointing_model_params(band_param_name, values)
-            logger.info(f"Pointing model for band {band_name} applied successfully")
+            logger.debug(f"Pointing model for band {band_name} applied successfully")
         else:
             logger.debug(f"Skipped applying pointing model for band {band_name}")
 
@@ -1023,7 +1023,7 @@ class ConfigureBandActionSequence(Action):
             # Case for Non json arg configureband commands
             if self.band in [Band.B5a, Band.B5b]:
                 enum_name = self.band.name
-                # band name become '5a' or '5b'
+                # Band name becomes '5a' or '5b'
                 band_name = enum_name[1:]
             else:
                 band_name = str(self.band.value)
