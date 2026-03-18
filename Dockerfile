@@ -2,6 +2,7 @@ FROM artefact.skao.int/ska-tango-images-tango-dsconfig:1.8.7 as tools
 FROM artefact.skao.int/ska-build-python:0.3.3 as build
 
 WORKDIR /app
+
 COPY pyproject.toml poetry.lock ./
 
 ENV POETRY_NO_INTERACTION=1
