@@ -1010,7 +1010,7 @@ class ConfigureBandActionSequence(Action):
                 if result:
                     return result
 
-            except ValueError as err:
+            except json.JSONDecodeError as err:
                 self.logger.error(f"Invalid JSON: {err}")
                 update_task_status(
                     task_callback,
