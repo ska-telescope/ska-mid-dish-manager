@@ -778,7 +778,7 @@ def apply_pointing_model(
     try:
         values = dish_manager_cm.component_state[band_param_name]
 
-        if values and not all(v == 0.0 for v in values):
+        if values:
             dish_manager_cm.update_pointing_model_params(band_param_name, values)
             logger.debug(f"Pointing model for band {band_name} applied successfully")
         else:

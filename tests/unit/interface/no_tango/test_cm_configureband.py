@@ -644,8 +644,8 @@ def test_configureband_without_b5dc_component_manager(
     "pointing_values, should_skip",
     [
         ([1.1] * 18, False),
+        ([0.0] * 18, False),
         ([], True),
-        ([0.0] * 18, True),
     ],
 )
 def test_apply_pointing_model_behavior(caplog, pointing_values, should_skip):
