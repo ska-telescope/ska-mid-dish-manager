@@ -14,7 +14,7 @@ Explore DishManager Interface from Client
 A tango device proxy will be used to drive control and perform monitoring
 on the deployed server. From the client, the DishManager device server interface
 can be explored using tango attributes, properties and commands. The detailed interface
-can be found in the :doc:`API section <../api/devices/dish_manager_interface>`.
+can be found in the :doc:`API section <../api/devices/dish-manager-device>`.
 
 **Explore Attributes and Commands**
 

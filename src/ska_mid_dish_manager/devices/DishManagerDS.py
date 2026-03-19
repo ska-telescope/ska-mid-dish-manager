@@ -2337,7 +2337,12 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @command(dtype_in=str, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=str,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="DishManager records the scanID for an ongoing scan.",
+    )
     def Scan(self, scanid) -> DevVarLongStringArrayType:
         """The Dish records the scanID for an ongoing scan.
 
@@ -2350,7 +2355,12 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="This command clears out the scanID from DishManager.",
+    )
     def EndScan(self) -> DevVarLongStringArrayType:
         """This command clears out the scan_id."""
         handler = self.get_command_object("EndScan")
@@ -2360,7 +2370,12 @@ class DishManager(SKAController):
 
     @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @command(dtype_in=None, dtype_out="DevVarLongStringArray", display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="This command triggers the Dish to transition to the MAINTENANCE Dishmode.",
+    )
     def SetMaintenanceMode(self) -> DevVarLongStringArrayType:
         """This command triggers the Dish to transition to the MAINTENANCE
         Dish Element Mode, and returns to the caller. To go into a state
@@ -2405,6 +2420,7 @@ class DishManager(SKAController):
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
+        doc_in="This command triggers the Dish to transition to the STANDBY‐LP Dishmode.",
     )
     def SetStandbyLPMode(self) -> DevVarLongStringArrayType:
         """Implemented as a Long Running Command.
@@ -2436,6 +2452,7 @@ class DishManager(SKAController):
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
+        doc_in="This command triggers the Dish to transition to the STANDBY‐FP Dishmode.",
     )
     def SetStandbyFPMode(self) -> DevVarLongStringArrayType:
         """Implemented as a Long Running Command.
@@ -2459,6 +2476,7 @@ class DishManager(SKAController):
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
+        doc_in="This command triggers the Dish to transition to STOW.",
     )
     @requires_component_manager
     def SetStowMode(self) -> DevVarLongStringArrayType:
@@ -2486,7 +2504,7 @@ class DishManager(SKAController):
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @command(
         dtype_in="DevVarFloatArray",
-        doc_in="[0]: Azimuth\n[1]: Elevation",
+        doc_in="Slew to Az/EL: [0]: Azimuth\n[1]: Elevation",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
@@ -2504,7 +2522,9 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @command(
+        dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR, doc_in="Not Implemented."
+    )
     def Synchronise(self):
         """Reset configured band sample counters. Command only valid in
         SPFRx OPERATE mode.
@@ -2517,6 +2537,7 @@ class DishManager(SKAController):
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
+        doc_in="Executes TrackStart on the DSC.",
     )
     def Track(self) -> DevVarLongStringArrayType:
         """Implemented as a Long Running Command.
@@ -2551,6 +2572,7 @@ class DishManager(SKAController):
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
+        doc_in="Executes TrackStop on the DSC.",
     )
     def TrackStop(self) -> DevVarLongStringArrayType:
         """Implemented as a Long Running Command.
@@ -2602,6 +2624,7 @@ class DishManager(SKAController):
         dtype_in="DevLong64",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
+        doc_in="Set the K value on the SPFRx.",
     )
     def SetKValue(self, value) -> DevVarLongStringArrayType:
         """This command sets the kValue on SPFRx.
@@ -2762,6 +2785,9 @@ class DishManager(SKAController):
         dtype_in=None,
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
+        doc_in=(
+            "Sync each subservient device componentstate with the dish manager component state."
+        ),
     )
     def SyncComponentStates(self) -> None:
         """Sync each subservient device component state with its tango device
@@ -2830,28 +2856,28 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @command(dtype_out="DevVarLongStringArray")
+    @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def On(self) -> DevVarLongStringArrayType:
         """The On command inherited from base classes."""
         raise NotImplementedError("DishManager does not implement the On command.")
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @command(dtype_out="DevVarLongStringArray")
+    @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def Off(self) -> DevVarLongStringArrayType:
         """The Off command inherited from base classes."""
         raise NotImplementedError("DishManager does not implement the Off command.")
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @command(dtype_out="DevVarLongStringArray")
+    @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def Standby(self) -> DevVarLongStringArrayType:
         """The Standby command inherited from base classes."""
         raise NotImplementedError("DishManager does not implement the Standby command.")
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @command(dtype_out="DevVarLongStringArray")
+    @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def Reset(self) -> DevVarLongStringArrayType:
         """The Reset command inherited from base classes."""
         raise NotImplementedError("DishManager does not implement the Reset command.")

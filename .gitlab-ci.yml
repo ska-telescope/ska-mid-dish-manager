@@ -6,6 +6,7 @@ image: $SKA_K8S_TOOLS_BUILD_DEPLOY
 variables:
   CHARTS_TO_PUBLISH: ska-mid-dish-manager
   GIT_SUBMODULE_STRATEGY: recursive
+  POETRY_DOCS_INSTALL_GROUPS: main,docs
 
 stages:
   - lint
