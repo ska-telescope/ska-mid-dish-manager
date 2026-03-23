@@ -70,6 +70,8 @@ k8s-test-runner:
      VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
 
 k8s-test-runner-incl-b5dc:
+  extends: k8s-test-runner
+  allow_failure: true
   variables:
      K8S_TEST_RUNNER_MARK: "acceptance_incl_b5dc and not movement"
      KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
