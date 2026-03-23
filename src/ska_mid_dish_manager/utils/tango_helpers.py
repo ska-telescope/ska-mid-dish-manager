@@ -12,7 +12,15 @@ class TangoDbAccessor:
     def __init__(self, logger: logging.Logger, tango_device_name: str):
         self._logger = logger
         self._tango_device_name = tango_device_name
-        self._database = tango.Database()
+        try:
+            self._database = tango.Database()
+        except tango.DevFailed as err:
+            err_description = "".join([str(arg.desc) for arg in err.args])
+            self._logger.error("Failed to connect to TangoDB: %s", err_description)
+            # TODO handle case where tango db is a file
+            # Question: does the tango.Database() api handle
+            # file-based databases or only a SQL database?
+            self._database = None
 
     def get_device_property_value(self, property_name: str) -> Optional[List[str]]:
         """Read device property value from TangoDB.
@@ -31,6 +39,8 @@ class TangoDbAccessor:
             return property_values
         except tango.DevFailed as e:
             self._logger.error("Failed to read property %s: %s", property_name, e)
+        except AttributeError:
+            self._logger.error("Database connection is not available")
         return None
 
     def set_device_property_value(self, property_name: str, value: str) -> None:
@@ -46,3 +56,5 @@ class TangoDbAccessor:
             self._database.put_device_property(self._tango_device_name, {property_name: value})
         except tango.DevFailed as e:
             self._logger.error("Failed to set property %s: %s", property_name, e)
+        except AttributeError:
+            self._logger.error("Database connection is not available")
