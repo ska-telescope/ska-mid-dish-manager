@@ -782,7 +782,9 @@ def apply_pointing_model(
             dish_manager_cm.update_pointing_model_params(band_param_name, values)
             logger.debug(f"Pointing model for band {band_name} applied successfully")
         else:
-            logger.debug(f"Skipped applying pointing model for band {band_name}")
+            logger.debug(
+                f"Skipped applying pointing model for band {band_name} due to invalid params: []"
+            )
 
     except (tango.DevFailed, ValueError) as err:
         logger.error(f"Failed to apply pointing model for band {band_name}: {err}")
