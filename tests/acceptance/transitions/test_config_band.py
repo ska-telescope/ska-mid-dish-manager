@@ -1,6 +1,7 @@
 """Test ConfigureBand2."""
 
 import pytest
+from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
@@ -308,4 +309,111 @@ def test_configure_band_json(
     for message in expected_progress_updates:
         assert message in events_string
 
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance_incl_b5dc
+def test_configure_band_json_with_b5dc_fanout(
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+    b5dc_device_proxy,
+):
+    """Test ConfigureBand with receiver band 5b and sub band configuration."""
+    main_event_store = event_store_class()
+    result_event_store = event_store_class()
+    status_event_store = event_store_class()
+
+    dm_attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "configuredBand": main_event_store,
+        "Status": status_event_store,
+        "lrcFinished": result_event_store,
+    }
+
+    # Setup Dish Manager subscriptions
+    subscriptions = setup_subscriptions(dish_manager_proxy, dm_attr_cb_mapping)
+
+    # Setup B5DC proxy subscription to subband attr
+    b5dc_subband_evt_store = event_store_class()
+
+    b5dc_subband_sub = setup_subscriptions(
+        b5dc_device_proxy, {"rfcmFrequency": b5dc_subband_evt_store}
+    )
+
+    # Ensure configuredBand is not B5b
+    json_payload_1 = """
+    {
+        "dish": {
+            "receiver_band": "2",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+        }
+    }
+    """
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_1)
+    result_event_store.wait_for_finished_command_result(
+        unique_id, "[0, 'SetOperateMode completed']", timeout=60
+    )
+    assert dish_manager_proxy.configuredBand == Band.B2
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+
+    # Ensure B5dc proxy sub band is not 11.1GHz
+    current_sub_band = b5dc_device_proxy.rfcmFrequency
+    if current_sub_band == B5dcFrequency.F_11_1_GHZ.frequency_value_ghz():
+        b5dc_device_proxy.SetFrequency(B5dcFrequency.F_13_2_GHZ)
+
+        # Increased timeout period to account for the polling
+        # loop refreshing the b5dc attribute values
+        b5dc_subband_evt_store.wait_for_value(B5dcFrequency.F_13_2_GHZ.frequency_value_ghz(), 30)
+
+    main_event_store.clear_queue()
+    b5dc_subband_evt_store.clear_queue()
+
+    json_payload_with_sub_band = """
+    {
+        "dish": {
+            "receiver_band": "5b",
+            "sub_band": "1",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+        }
+    }
+    """
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_with_sub_band)
+    result_event_store.wait_for_finished_command_result(
+        unique_id, "[0, 'SetOperateMode completed']", timeout=60
+    )
+    assert dish_manager_proxy.configuredBand == Band.B5b
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    assert b5dc_subband_evt_store.wait_for_value(
+        B5dcFrequency.F_11_1_GHZ.frequency_value_ghz(), 30
+    )
+
+    expected_status_updates = [
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand, B5DC.SetFrequency",
+        "Awaiting DS indexerposition change to B5b",
+        "Awaiting SPFRX configuredband change to B1",
+        "Awaiting B5DC rfcmfrequency change to 11.1",
+        "Awaiting configuredband change to B5b",
+        "DS indexerposition changed to B5b",
+        "SPFRX configuredband changed to B1",
+        "B5DC rfcmfrequency changed to 11.1",
+    ]
+
+    events = status_event_store.get_queue_values(timeout=0)
+
+    events_string = "".join([str(attr_value) for _, attr_value in events])
+    for message in expected_status_updates:
+        assert message in events_string
+
+    remove_subscriptions(b5dc_subband_sub)
     remove_subscriptions(subscriptions)

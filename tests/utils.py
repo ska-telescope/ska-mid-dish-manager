@@ -1,11 +1,13 @@
 """General utils for test devices."""
 
+import json
 import math
 import queue
 import random
 import string
 import time
 from dataclasses import dataclass, field
+from json.decoder import JSONDecodeError
 from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
@@ -334,6 +336,58 @@ class EventStore:
                     return True
         except queue.Empty as err:
             raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
+
+    def wait_for_finished_command_result(
+        self, command_id: str, command_result: str, timeout: int = 3
+    ):
+        """Wait for an expected lrcFinished result.
+
+        MUST be used against the attribute lrcFinished
+
+        Wait `timeout` seconds for each fetch.
+
+        :param command_id: The long running command ID
+        :type command_id: str
+        :param command_result: The expected result as a string
+        :type command_result: str
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If none are found
+        :return: The result of the long running command
+        :rtype: str
+        """
+        result_from_id = False
+        try:
+            while True:
+                event = self._queue.get(timeout=timeout)
+                if not event.attr_value:
+                    continue
+                # Ensure that the event picked off the queue is a tuple as expected
+                # from attribute "lrcFinished", and that the tuple is not empty before
+                # attempting to pick off the latest lrcFinished results from the tuple
+                if not isinstance(event.attr_value.value, tuple) or not event.attr_value.value:
+                    continue
+                last_result = json.loads(event.attr_value.value[-1])
+                recieved_result = str(last_result["result"])
+
+                if last_result["uid"] == command_id:
+                    result_from_id = True
+                    if recieved_result == command_result:
+                        return True
+                    continue
+        except queue.Empty as err:
+            if not result_from_id:
+                raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
+            raise RuntimeError(
+                f"A result was received from [{command_id}] however it was not the awaited result"
+            ) from err
+        except JSONDecodeError:
+            raise RuntimeError(
+                "Failed to parse event data while awaiting result"
+                f" for [{command_id}]\n. Please ensure that this helper function"
+                " is being used to wait for results on the attribute"
+                ' "lrcFinished".'
+            )
 
     def wait_for_command_id(self, command_id: str, timeout: int = 3):
         """Wait for a long running command to complete.
