@@ -1090,7 +1090,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if set(upper_cased_device_names).issubset(set(sub_device_names)):
             # Stop communcating and clean up subscriptions and threads
             for name in upper_cased_device_names:
-                self.sub_component_managers[name].stop_communicating()
+                try:
+                    self.sub_component_managers[name].stop_communicating()
+                except Exception as err:
+                    self.logger.error("Stop communication command failed !! , err : %s", err)
+                    raise err
 
             threads = threading.enumerate()
 
@@ -1105,7 +1109,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
             # Start communicating again
             for name in upper_cased_device_names:
-                self.sub_component_managers[name].start_communicating()
+                try:
+                    self.sub_component_managers[name].start_communicating()
+                except Exception as err:
+                    self.logger.error("start communication command failed !! , err : %s", err)
+                    raise err
 
             threads = threading.enumerate()
 
