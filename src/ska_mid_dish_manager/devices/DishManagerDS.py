@@ -24,6 +24,7 @@ from ska_mid_dish_manager.models.abort_sequence_command_handler import Abort
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
     ApplyPointingModelCommand,
+    ResetSubsConnectionsCommand,
     ResetTrackTableCommand,
     SetFrequencyCommand,
     SetHPolAttenuationCommand,
@@ -237,6 +238,10 @@ class DishManager(SKAController):
         self.register_command_object(
             "SetVPolAttenuation",
             SetVPolAttenuationCommand(self.component_manager, self.logger),
+        )
+        self.register_command_object(
+            "ResetSubsConnections",
+            ResetSubsConnectionsCommand(self.component_manager, self.logger),
         )
 
     # ---------
@@ -2621,6 +2626,23 @@ class DishManager(SKAController):
         doc_in="Set the K value on the SPFRx.",
     )
     def SetKValue(self, value) -> DevVarLongStringArrayType:
+        """This command sets the kValue on SPFRx.
+        Note that it will only take effect after
+        SPFRx has been restarted.
+        """
+        handler = self.get_command_object("SetKValue")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @command(
+        dtype_in="DevVarStringArray",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="Reset the connection value on the SPFRx.",
+    )
+    def ResetSubsConnectionss(self, value) -> DevVarLongStringArrayType:
         """This command sets the kValue on SPFRx.
         Note that it will only take effect after
         SPFRx has been restarted.

@@ -1075,6 +1075,35 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
 
+    def reset_subservient_dev_connections(self, device_names: list[str]) -> Tuple[ResultCode, str]:
+        """Reset connections between dish manager and subservient devices."""
+        if not device_names:
+            err_msg = "[device_names] cannot be an empty list"
+            self.logger.error(err_msg)
+            raise ValueError(err_msg)
+
+        self.logger.debug("Resetting connection for devices [%s].", device_names)
+
+        # Stop communicating to given devices
+        for name in device_names:
+            self.sub_component_managers[name.upper()].stop_communicating()
+
+        threads = threading.enumerate()
+
+        for t in threads:
+            self.logger.debug(
+                "  - %s (Alive: %s, ident=%s, daemon=%s)", t.name, t.is_alive(), t.ident, t.daemon
+            )
+
+        # start communicating
+        # for name in device_names:
+        # self.sub_component_managers[name.upper()].start_communicating()
+
+        return (ResultCode.OK, "Connections have been reset")
+
+        # if task_status == TaskStatus.FAILED:
+        # return (ResultCode.FAILED, msg)
+
     def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPF device ignored boolean and update device communication."""
         if ignored != self.component_state["ignorespf"]:
