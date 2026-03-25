@@ -105,7 +105,7 @@ markers = [
     "acceptance_incl_b5dc",
 ]
 log_cli = true  # show logs if test fails
-log_cli_level = "DEBUG"
+log_cli_level = "INFO"
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
