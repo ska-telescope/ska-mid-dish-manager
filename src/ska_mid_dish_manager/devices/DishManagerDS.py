@@ -24,13 +24,13 @@ from ska_mid_dish_manager.models.abort_sequence_command_handler import Abort
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
     ApplyPointingModelCommand,
-    ResetSubsConnectionsCommand,
     ResetTrackTableCommand,
     SetFrequencyCommand,
     SetHPolAttenuationCommand,
     SetKValueCommand,
     SetVPolAttenuationCommand,
     StowCommand,
+    ResetSubsConnectionsCommand,
 )
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
@@ -243,6 +243,7 @@ class DishManager(SKAController):
             "ResetSubsConnections",
             ResetSubsConnectionsCommand(self.component_manager, self.logger),
         )
+        
 
     # ---------
     # Callbacks
@@ -2633,6 +2634,7 @@ class DishManager(SKAController):
         handler = self.get_command_object("SetKValue")
         return_code, message = handler(value)
         return ([return_code], [message])
+    
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -2640,14 +2642,11 @@ class DishManager(SKAController):
         dtype_in="DevVarStringArray",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
-        doc_in="Reset the connection value on the SPFRx.",
+        doc_in="Reset the connections to sub devices.",
     )
-    def ResetSubsConnectionss(self, value) -> DevVarLongStringArrayType:
-        """This command sets the kValue on SPFRx.
-        Note that it will only take effect after
-        SPFRx has been restarted.
-        """
-        handler = self.get_command_object("SetKValue")
+    def ResetSubsConnections(self, value) -> DevVarLongStringArrayType:
+        """This command Reset the connections to sub devices."""
+        handler = self.get_command_object("ResetSubsConnections")
         return_code, message = handler(value)
         return ([return_code], [message])
 
