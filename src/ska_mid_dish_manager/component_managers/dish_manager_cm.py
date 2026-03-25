@@ -1085,15 +1085,43 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Resetting connection for devices [%s].", device_names)
 
         # Stop communicating to given devices
-        for name in device_names:
-            self.sub_component_managers[name.upper()].stop_communicating()
+        sub_device_names = ["SPF", "SPFRX", "DS", "B5DC"]
+        upper_cased_device_names = [name.upper() for name in device_names]
+        if set(upper_cased_device_names).issubset(set(sub_device_names)):
+            # Stop communcating and clean up subscriptions and threads
+            for name in upper_cased_device_names:
+                self.sub_component_managers[name].stop_communicating()
 
-        threads = threading.enumerate()
+            threads = threading.enumerate()
 
-        for t in threads:
-            self.logger.debug(
-                "  - %s (Alive: %s, ident=%s, daemon=%s)", t.name, t.is_alive(), t.ident, t.daemon
-            )
+            for t in threads:
+                self.logger.debug(
+                    "  - %s (Alive: %s, ident=%s, daemon=%s)",
+                    t.name,
+                    t.is_alive(),
+                    t.ident,
+                    t.daemon,
+                )
+
+            # Start communicating again
+            for name in upper_cased_device_names:
+                self.sub_component_managers[name].start_communicating()
+
+            threads = threading.enumerate()
+
+            for t in threads:
+                self.logger.debug(
+                    "  - %s (Alive: %s, ident=%s, daemon=%s)",
+                    t.name,
+                    t.is_alive(),
+                    t.ident,
+                    t.daemon,
+                )
+
+        else:
+            err_msg = "Incorrect input, list only accept SPF, SPFRX, DS, B5DC"
+            self.logger.error(err_msg)
+            raise ValueError(err_msg)
 
         # start communicating
         # for name in device_names:
@@ -1596,6 +1624,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         Note that it will only take effect after
         SPFRx has been restarted.
         """
+        threads = threading.enumerate()
+
+        for t in threads:
+            self.logger.debug(
+                "  - %s (Alive: %s, ident=%s, daemon=%s)", t.name, t.is_alive(), t.ident, t.daemon
+            )
         spfrx_cm = self.sub_component_managers["SPFRX"]
         task_status, msg = spfrx_cm.execute_command("SetKValue", k_value)
         if task_status == TaskStatus.FAILED:
