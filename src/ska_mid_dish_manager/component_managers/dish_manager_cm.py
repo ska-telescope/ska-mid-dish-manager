@@ -1086,15 +1086,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Stop communicating to given devices
         sub_device_names = ["SPF", "SPFRX", "DS", "B5DC"]
+        non_ignorable_device = "DS"
         upper_cased_device_names = [name.upper() for name in device_names]
         if set(upper_cased_device_names).issubset(set(sub_device_names)):
             # Stop communcating and clean up subscriptions and threads
             for name in upper_cased_device_names:
-                try:
-                    self.sub_component_managers[name].stop_communicating()
-                except Exception as err:
-                    self.logger.error("Stop communication command failed !! , err : %s", err)
-                    raise err
+                # Don't allow reconnection for ignored devices
+                if name is not non_ignorable_device:
+                    if self.component_state[f"ignore{name.lower()}"]:
+                        self.logger.error("Reconnection denied ,device %s is ignored", name)
+                        raise ValueError("Reconnection denied ,device %s is ignored", name)
+                    else:
+                        try:
+                            self.sub_component_managers[name].stop_communicating()
+                        except Exception as err:
+                            self.logger.error(
+                                "Stop communication command failed !! , err : %s", err
+                            )
+                            raise err
 
             threads = threading.enumerate()
 
@@ -1135,7 +1144,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # for name in device_names:
         # self.sub_component_managers[name.upper()].start_communicating()
 
-        return (ResultCode.OK, "Connections have been reset")
+        return (ResultCode.OK, "Re-connection(s) have been intiated successfully")
 
         # if task_status == TaskStatus.FAILED:
         # return (ResultCode.FAILED, msg)
