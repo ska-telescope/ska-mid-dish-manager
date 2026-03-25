@@ -131,6 +131,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         if dev_error.reason == "API_EventTimeout":
             try:
                 self._active_attr_event_subscriptions.remove(attr_name)
+                # Trigger ping loop
             except KeyError:
                 pass
 
