@@ -7,6 +7,7 @@ import time
 import pytest
 
 from ska_mid_dish_manager.models.constants import (
+    DEFAULT_B5DC_PROXY_TRL,
     DEFAULT_DISH_MANAGER_TRL,
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
@@ -83,3 +84,8 @@ def spf_device_fqdn():
 @pytest.fixture(scope="session")
 def spfrx_device_fqdn():
     return DEFAULT_SPFRX_TRL
+
+
+@pytest.fixture(scope="session")
+def b5dc_device_fqdn():
+    return DEFAULT_B5DC_PROXY_TRL

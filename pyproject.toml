@@ -102,6 +102,7 @@ markers = [
     "stress",
     "track_patterns",
     "movement",
+    "acceptance_incl_b5dc",
 ]
 log_cli = true  # show logs if test fails
 log_cli_level = "DEBUG"
