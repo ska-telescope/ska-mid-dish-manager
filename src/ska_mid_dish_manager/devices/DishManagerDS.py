@@ -116,18 +116,13 @@ class DishManager(SKAController):
         default_value=DEFAULT_ACTION_TIMEOUT_S,
     )
 
-    def init_device(self):
-        """Initializes the device."""
-        super().init_device()
-        self._configure_additional_user_tags_for_logging()
-        self.logger.info("Yash testing init_device.", extra=OPERATOR_TAG)
-
     def create_component_manager(self) -> DishManagerComponentManager:
         """Create the component manager for DishManager.
 
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
         """
+        self._configure_additional_user_tags_for_logging()
         self.logger.info("Yash testing create_component_manager.", extra=OPERATOR_TAG)
         return DishManagerComponentManager(
             self.logger,
