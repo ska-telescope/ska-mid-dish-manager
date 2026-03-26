@@ -122,7 +122,7 @@ class DishManager(SKAController):
         :rtype: DishManagerComponentManager
         """
         self.override_log_filter()
-        self.logger.info("Device initialized successfully.", extra={"tags": "user:aiv"})
+        self.logger.info("Device initialized successfully.", extra={"user": "operator"})
 
         return DishManagerComponentManager(
             self.logger,
@@ -526,26 +526,21 @@ class DishManager(SKAController):
             return (ResultCode(result_code), message)
 
     def override_log_filter(self):
-        # Remove existing filters
-        for filt in list(self.logger.filters):
-            self.logger.removeFilter(filt)
+        # # Remove existing filters
+        # for filt in list(self.logger.filters):
+        #     self.logger.removeFilter(filt)
 
-        class TangoDeviceTagsFilter(logging.Filter):
-            """Filter that adds tango device name to the emitted record."""
-
-            def __init__(self, device_name: str):
-                super().__init__()
-                self._device_tag = f"tango-device:{device_name}"
+        class UserTagsFilter(logging.Filter):
+            """Filter to add user tags to log records."""
 
             def filter(self, record: logging.LogRecord) -> bool:
-                existing = getattr(record, "tags", "")
+                existing = getattr(record, "user", "")
                 if existing:
-                    record.tags = f"{self._device_tag},{existing}"
-                else:
-                    record.tags = self._device_tag
+                    record.tags = f"{existing}"
+
                 return True
 
-        self.logger.addFilter(TangoDeviceTagsFilter(self.get_name()))
+        self.logger.addFilter(UserTagsFilter(self.get_name()))
 
     # ----------
     # Attributes
