@@ -1097,18 +1097,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 # Don't allow reconnection for ignored devices
                 # DS cannot be ignored
-                if name != "DS":
-                    if self.component_state[f"ignore{name.lower()}"]:
+
+                try:
+                    if name != "DS" and self.component_state[f"ignore{name.lower()}"]:
                         self.logger.error("Reconnection denied ,device %s is ignored", name)
-                        raise ValueError(f"Reconnection denied, device {name} is ignored")
-                    else:
-                        try:
-                            self.sub_component_managers[name].stop_communicating()
-                        except Exception as err:
-                            self.logger.error(
-                                "Stop communication command failed !! , err : %s", err
-                            )
-                            raise err
+                        return (
+                            ResultCode.FAILED,
+                            f"Reconnection denied, device {name} is ignored",
+                        )
+
+                    self.sub_component_managers[name].stop_communicating()
+                except Exception as err:
+                    self.logger.error("Stop communication command failed !! , err : %s", err)
+                    raise err
 
             threads = threading.enumerate()
 
@@ -1128,17 +1129,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 except Exception as err:
                     self.logger.error("start communication command failed !! , err : %s", err)
                     raise err
-
-            threads = threading.enumerate()
-
-            for t in threads:
-                self.logger.debug(
-                    "  - %s (Alive: %s, ident=%s, daemon=%s)",
-                    t.name,
-                    t.is_alive(),
-                    t.ident,
-                    t.daemon,
-                )
 
         else:
             err_msg = "Incorrect input, list only accept SPF, SPFRX, DS, B5DC"
