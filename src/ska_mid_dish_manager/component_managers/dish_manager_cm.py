@@ -1100,7 +1100,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if name != "DS":
                     if self.component_state[f"ignore{name.lower()}"]:
                         self.logger.error("Reconnection denied ,device %s is ignored", name)
-                        raise ValueError("Reconnection denied ,device %s is ignored", name)
+                        raise ValueError(f"Reconnection denied, device {name} is ignored")
                     else:
                         try:
                             self.sub_component_managers[name].stop_communicating()
@@ -1145,14 +1145,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.error(err_msg)
             raise ValueError(err_msg)
 
-        # start communicating
-        # for name in device_names:
-        # self.sub_component_managers[name.upper()].start_communicating()
-
         return (ResultCode.OK, "Re-connection(s) have been intiated successfully")
-
-        # if task_status == TaskStatus.FAILED:
-        # return (ResultCode.FAILED, msg)
 
     def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPF device ignored boolean and update device communication."""
