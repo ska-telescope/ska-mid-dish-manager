@@ -121,6 +121,9 @@ class DishManager(SKAController):
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
         """
+        self.override_log_filter()
+        self.logger.info("Device initialized successfully.", extra={"tags": "user:aiv"})
+
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
@@ -518,9 +521,7 @@ class DishManager(SKAController):
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
-            self.override_log_filter()
             device.op_state_model.perform_action("component_on")
-            self.logger.info("Device initialized successfully.", extra={"tags": "user:aiv"})
             device.component_manager.start_communicating()
             return (ResultCode(result_code), message)
 
