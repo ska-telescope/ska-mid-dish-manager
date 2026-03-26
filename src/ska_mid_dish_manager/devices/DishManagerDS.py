@@ -536,7 +536,7 @@ class DishManager(SKAController):
             def filter(self, record: logging.LogRecord) -> bool:
                 user_type = getattr(record, "user", "")
                 if user_type:
-                    record.tags += f"{self._device_tag},user:{user_type}"
+                    record.tags += f",user:{user_type}"
 
                 return True
 
