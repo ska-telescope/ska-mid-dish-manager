@@ -534,13 +534,13 @@ class DishManager(SKAController):
             """Filter to add user tags to log records."""
 
             def filter(self, record: logging.LogRecord) -> bool:
-                existing = getattr(record, "user", "")
-                if existing:
-                    record.tags = f"{existing}"
+                user_type = getattr(record, "user", "")
+                if user_type:
+                    record.tags += f"{self._device_tag},user:{user_type}"
 
                 return True
 
-        self.logger.addFilter(UserTagsFilter(self.get_name()))
+        self.logger.addFilter(UserTagsFilter())
 
     # ----------
     # Attributes
