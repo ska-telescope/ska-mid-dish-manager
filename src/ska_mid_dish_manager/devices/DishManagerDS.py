@@ -612,7 +612,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=CommunicationStatus,
         access=AttrWriteType.READ,
-        doc="Return the status of the connection of the DSManager device to the dish controller."
+        doc="Return the status of the connection of the DSManager device to the dish controller.",
     )
     def dscConnectionState(self) -> CommunicationStatus:
         """Return the status of the connection of the DSManager device to the dish controller."""
