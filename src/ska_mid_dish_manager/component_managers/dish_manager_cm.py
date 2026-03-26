@@ -1086,16 +1086,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Stop communicating to given devices
         sub_device_names = ["SPF", "SPFRX", "DS", "B5DC"]
-        non_ignorable_device = "DS"
         upper_cased_device_names = [name.upper() for name in device_names]
         if set(upper_cased_device_names).issubset(set(sub_device_names)):
             # Stop communcating and clean up subscriptions and threads
             for name in upper_cased_device_names:
+                # Ignore B5DC if not monitored.
+                if name == "B5DC" and not self._check_b5dc_active():
+                    self.logger.error("Reconnection denied, B5DC device is not monitored")
+                    raise ValueError("Reconnection denied, B5DC device is not monitored")
+
                 # Don't allow reconnection for ignored devices
-                if name.upper() == "B5DC" and name.upper() not in self.sub_component_managers:
-                    self.logger.error("Reconnection denied, B5DC B5DC device is not monitored")
-                    raise ValueError("Reconnection denied, B5DC B5DC device is not monitored")
-                if name is not non_ignorable_device:
+                # DS cannot be ignored
+                if name != "DS":
                     if self.component_state[f"ignore{name.lower()}"]:
                         self.logger.error("Reconnection denied ,device %s is ignored", name)
                         raise ValueError("Reconnection denied ,device %s is ignored", name)
