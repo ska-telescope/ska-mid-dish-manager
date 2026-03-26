@@ -43,6 +43,7 @@ from ska_mid_dish_manager.models.constants import (
     DSC_MAX_POWER_LIMIT_KW,
     DSC_MIN_POWER_LIMIT_KW,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
+    OPERATOR_TAG,
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
@@ -121,9 +122,6 @@ class DishManager(SKAController):
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
         """
-        self.override_log_filter()
-        self.logger.info("Device initialized successfully.", extra={"user": "operator"})
-
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
@@ -521,14 +519,14 @@ class DishManager(SKAController):
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
+            self._configure_additional_user_tags_for_logging()
+            self.logger.info("Device initialized successfully.", extra=OPERATOR_TAG)
             device.op_state_model.perform_action("component_on")
             device.component_manager.start_communicating()
             return (ResultCode(result_code), message)
 
-    def override_log_filter(self):
-        # # Remove existing filters
-        # for filt in list(self.logger.filters):
-        #     self.logger.removeFilter(filt)
+    def _configure_additional_user_tags_for_logging(self):
+        """Append user tags to log records."""
 
         class UserTagsFilter(logging.Filter):
             """Filter to add user tags to log records."""
