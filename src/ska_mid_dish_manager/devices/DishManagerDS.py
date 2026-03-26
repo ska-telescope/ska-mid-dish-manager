@@ -122,6 +122,7 @@ class DishManager(SKAController):
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
         """
+        self._configure_additional_user_tags_for_logging()
         self.logger.info("Yash testing stages.", extra=OPERATOR_TAG)
         return DishManagerComponentManager(
             self.logger,
@@ -520,8 +521,8 @@ class DishManager(SKAController):
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
-            device._configure_additional_user_tags_for_logging()
-            device.logger.info("Device initialized successfully.", extra=OPERATOR_TAG)
+            # device._configure_additional_user_tags_for_logging()
+            # device.logger.info("Device initialized successfully.", extra=OPERATOR_TAG)
             device.op_state_model.perform_action("component_on")
             device.component_manager.start_communicating()
             return (ResultCode(result_code), message)
