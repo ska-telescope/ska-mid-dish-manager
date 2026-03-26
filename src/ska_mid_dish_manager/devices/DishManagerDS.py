@@ -5,6 +5,7 @@ and the subservient devices
 """
 
 import json
+import logging
 import weakref
 from datetime import datetime
 from functools import reduce
@@ -517,9 +518,33 @@ class DishManager(SKAController):
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
+            self.override_log_filter()
             device.op_state_model.perform_action("component_on")
+            self.logger.info("Device initialized successfully.", extra={"tags": "user:aiv"})
             device.component_manager.start_communicating()
             return (ResultCode(result_code), message)
+
+    def override_log_filter(self):
+        # Remove existing filters
+        for filt in list(self.logger.filters):
+            self.logger.removeFilter(filt)
+
+        class TangoDeviceTagsFilter(logging.Filter):
+            """Filter that adds tango device name to the emitted record."""
+
+            def __init__(self, device_name: str):
+                super().__init__()
+                self._device_tag = f"tango-device:{device_name}"
+
+            def filter(self, record: logging.LogRecord) -> bool:
+                existing = getattr(record, "tags", "")
+                if existing:
+                    record.tags = f"{self._device_tag},{existing}"
+                else:
+                    record.tags = self._device_tag
+                return True
+
+        self.logger.addFilter(TangoDeviceTagsFilter(self.get_name()))
 
     # ----------
     # Attributes

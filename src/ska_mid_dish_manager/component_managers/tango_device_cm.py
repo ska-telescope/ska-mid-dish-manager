@@ -160,6 +160,11 @@ class TangoDeviceComponentManager(BaseComponentManager):
         currently_synced = monitored_attrs == self._active_attr_event_subscriptions
 
         if not previously_synced and currently_synced:
+            self.logger.info(
+                "Attribute name [%s] is now valid, communication with [%s] is established",
+                event_attr_name,
+                self._tango_device_fqdn,
+            )
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
             self._fetch_build_state_information()
 
