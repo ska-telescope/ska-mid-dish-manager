@@ -12,6 +12,7 @@ from ska_tango_base.base import BaseComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
+from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 from ska_mid_dish_manager.utils.decorators import check_communicating
 
 
@@ -379,7 +380,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
     def start_communicating(self) -> None:
         """Establish communication with the device."""
-        self.logger.info(f"Establish communication with {self._tango_device_fqdn}")
+        self.logger.info(
+            f"Establish communication with {self._tango_device_fqdn}", extra=OPERATOR_TAG
+        )
         self._dp_factory_signal.clear()
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._tango_device_monitor.monitor()
@@ -387,7 +390,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
     def stop_communicating(self) -> None:
         """Stop communication with the device."""
-        self.logger.info(f"Stop communication with {self._tango_device_fqdn}")
+        self.logger.info(f"Stop communication with {self._tango_device_fqdn}", extra=OPERATOR_TAG)
         self._dp_factory_signal.set()
         self._tango_device_monitor.stop_monitoring()
         self._active_attr_event_subscriptions.clear()

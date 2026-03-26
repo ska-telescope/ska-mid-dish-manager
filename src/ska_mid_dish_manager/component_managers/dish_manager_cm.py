@@ -41,6 +41,7 @@ from ska_mid_dish_manager.models.constants import (
     MAINTENANCE_MODE_FALSE_VALUE,
     MAINTENANCE_MODE_TRUE_VALUE,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
+    OPERATOR_TAG,
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
@@ -637,7 +638,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return
 
         retry_interval = 0.1
-        self.logger.info(f"{trigger_source} transitioning dish to STOW.")
+        self.logger.info(f"{trigger_source} transitioning dish to STOW.", extra=OPERATOR_TAG)
 
         while not self._stop_event.is_set():
             wind_stow_id = self._command_tracker.new_command(
@@ -721,8 +722,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         the subservient devices. DishManager reflects this in its connection
         status attributes.
         """
-        self.logger.debug(
-            "Communication state changed on %s device: %s.", device.name, communication_state
+        self.logger.info(
+            "Communication state changed on %s device: %s.",
+            device.name,
+            communication_state,
+            extra=OPERATOR_TAG,
         )
 
         # report the communication state of the sub device on the connectionState attribute
@@ -769,9 +773,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ds_component_state,
                 spf_component_state if not self.is_device_ignored("SPF") else None,
             )
-            self.logger.debug(
+            self.logger.info(
                 ("Updating dish manager powerState with: [%s]."),
                 new_power_state,
+                extra=OPERATOR_TAG,
             )
             self._update_component_state(powerstate=new_power_state)
 
@@ -799,7 +804,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if current_dish_mode == DishMode.STOW and new_dish_mode != DishMode.STOW:
                     self._reenable_watchdog_timer()
 
-                self.logger.debug(
+                self.logger.info(
                     (
                         "Updating dish manager dishMode with: [%s]. "
                         "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s], "
@@ -810,6 +815,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     spf_component_state["operatingmode"],
                     spfrx_component_state["operatingmode"],
                     spfrx_component_state["adminmode"],
+                    extra=OPERATOR_TAG,
                 )
                 self._update_component_state(dishmode=new_dish_mode)
 
@@ -1415,7 +1421,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if self.component_state["dishmode"] != DishMode.MAINTENANCE:
             return
 
-        self.logger.debug("Exiting maintenance mode.")
+        self.logger.info("Exiting maintenance mode.", extra=OPERATOR_TAG)
         # Set the MaintenanceModeActive property to false
         self._set_maintenance_mode_inactive()
         # Recompute the dish mode
@@ -1427,7 +1433,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
             spf_component_state if not self.is_device_ignored("SPF") else None,
         )
-        self.logger.debug("Updating dish manager dishmode to %s.", new_dish_mode)
+        self.logger.info(
+            "Updating dish manager dishmode to %s.", new_dish_mode, extra=OPERATOR_TAG
+        )
         self._update_component_state(dishmode=new_dish_mode)
 
     def set_stow_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
@@ -1452,7 +1460,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _stow_on_watchdog_expiry(self) -> None:
         """Stow the dish on watchdog expiry and restart timer if still enabled."""
-        self.logger.info("Watchdog timer has expired.")
+        self.logger.info("Watchdog timer has expired.", extra=OPERATOR_TAG)
         self._execute_stow_command("HeartbeatStow")
 
     def _reenable_watchdog_timer(self) -> None:
