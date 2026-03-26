@@ -11,32 +11,37 @@ from ska_control_model import ResultCode
     "expected_output",
     [
         (
-            ["SD", "PFS", "SRRFRX"],
-            (ResultCode.FAILED, "Invalid device name: SD. Valid device names are: DS, SPF, SPFRX"),
+            "SD",
+            "PFS",
+            "SRRFRX",
+            (
+                ResultCode.FAILED,
+                "Invalid device name: SD. Valid device names are: DS, SPF, SPFRX",
+            ),
         ),
         (
-            ["111"],
+            "111",
             (
                 ResultCode.FAILED,
                 "Invalid device name: 111. Valid device names are: DS, SPF, SPFRX",
             ),
         ),
         (
-            ["SPFC"],
+            "SPFC",
             (
                 ResultCode.FAILED,
                 "Invalid device name: SPFC. Valid device names are: DS, SPF, SPFRX",
             ),
         ),
         (
-            ["SPFRx"],
+            "SPFRx",
             (
                 ResultCode.FAILED,
                 "Invalid device name: SPFRx. Valid device names are: DS, SPF, SPFRX",
             ),
         ),
         (
-            ["INVALID_DEVICE"],
+            "INVALID_DEVICE",
             (
                 ResultCode.FAILED,
                 "Invalid device name: INVALID_DEVICE. Valid device names are: DS, SPF, SPFRX",
@@ -51,7 +56,7 @@ def test_reset_subs_connection_invalid_device_names(
     exception when invalid device names are passed.
     """
     device_proxy, dish_manager_cm = dish_manager_resources
-    result = device_proxy.ResetSubsConnections(device_names)
+    result = device_proxy.ResetSubsConnections([device_names])
     assert result == expected_output
 
 
