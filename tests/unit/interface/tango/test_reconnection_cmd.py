@@ -1,7 +1,7 @@
 """Test that the DishManager ResetSubsconnection attribute."""
 
 import pytest
-from ska_control_mode import ResultCode
+from ska_control_model import ResultCode
 
 
 @pytest.mark.unit
