@@ -777,11 +777,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ds_component_state,
                 spf_component_state if not self.is_device_ignored("SPF") else None,
             )
-            self.logger.info(
-                ("Updating dish manager powerState with: [%s]."),
-                new_power_state,
-                extra=OPERATOR_TAG,
-            )
+            if new_power_state != self.component_state["powerstate"]:
+                self.logger.info(
+                    "Updating dish manager powerState to %s.",
+                    new_power_state.name,
+                    extra=OPERATOR_TAG,
+                )
             self._update_component_state(powerstate=new_power_state)
 
         if "buildstate" in kwargs:
@@ -810,15 +811,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 self.logger.info(
                     (
-                        "Updating dish manager dishMode with: [%s]. "
-                        "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s], "
-                        "SPFRX adminMode [%s]."
+                        "Updating dish manager dishMode to %s. "
+                        "Sub-components operatingMode: DS [%s], SPF [%s], SPFRX [%s]."
                     ),
-                    new_dish_mode,
-                    ds_component_state["operatingmode"],
-                    spf_component_state["operatingmode"],
-                    spfrx_component_state["operatingmode"],
-                    spfrx_component_state["adminmode"],
+                    new_dish_mode.name,
+                    ds_component_state["operatingmode"].name,
+                    spf_component_state["operatingmode"].name,
+                    spfrx_component_state["operatingmode"].name,
                     extra=OPERATOR_TAG,
                 )
                 self._update_component_state(dishmode=new_dish_mode)
