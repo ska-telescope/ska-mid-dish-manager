@@ -113,7 +113,8 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
         self.sync_communication_to_valid_event(attr_name)
 
-    def _verifying_device_connection(self):
+    def _verifying_device_connection(self) -> None:
+        """Verifies if a device is connected to Dish Manager."""
         delay = 5
         state = ""
 
