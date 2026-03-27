@@ -809,17 +809,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if current_dish_mode == DishMode.STOW and new_dish_mode != DishMode.STOW:
                     self._reenable_watchdog_timer()
 
-                self.logger.info(
-                    (
-                        "Updating dish manager dishMode to %s. "
-                        "Sub-components operatingMode: DS [%s], SPF [%s], SPFRX [%s]."
-                    ),
-                    new_dish_mode.name,
-                    ds_component_state["operatingmode"].name,
-                    spf_component_state["operatingmode"].name,
-                    spfrx_component_state["operatingmode"].name,
-                    extra=OPERATOR_TAG,
-                )
+                if new_dish_mode != current_dish_mode:
+                    self.logger.info(
+                        (
+                            "Updating dish manager dishMode to %s. "
+                            "Sub-components operatingMode: DS [%s], SPF [%s], SPFRX [%s]."
+                        ),
+                        new_dish_mode.name,
+                        ds_component_state["operatingmode"].name,
+                        spf_component_state["operatingmode"].name,
+                        spfrx_component_state["operatingmode"].name,
+                        extra=OPERATOR_TAG,
+                    )
                 self._update_component_state(dishmode=new_dish_mode)
 
         if "healthstate" in kwargs:

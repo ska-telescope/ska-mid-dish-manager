@@ -221,7 +221,7 @@ class ActionHandler:
 
         if self.action_on_success:
             msg = f"{self.action_name} complete. Triggering on success action."
-            self.logger.info(msg, extra=OPERATOR_TAG)
+            self.logger.debug(msg)
             report_task_progress(msg, self.progress_callback)
             self.action_on_success.execute(task_callback, task_abort_event)
         else:
