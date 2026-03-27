@@ -12,6 +12,11 @@ from mock import MagicMock
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
+from ska_mid_dish_manager.models.constants import (
+    DEFAULT_DS_MANAGER_TRL,
+    DEFAULT_SPFC_TRL,
+    DEFAULT_SPFRX_TRL,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -143,9 +148,9 @@ def test_connection_error(caplog):
 @pytest.mark.parametrize(
     ("device_fqdn", "subs"),
     [
-        ("mid-dish/simulator-spf/ska001", ["powerState", "healthState"]),
-        ("mid-dish/simulator-spfrx/ska001", ["kValue", "operatingMode"]),
-        ("mid-dish/ds-manager/ska001", ["achievedTargetLock", "powerState"]),
+        (DEFAULT_SPFC_TRL, ["powerState", "healthState"]),
+        (DEFAULT_SPFRX_TRL, ["kValue", "operatingMode"]),
+        (DEFAULT_DS_MANAGER_TRL, ["achievedTargetLock", "powerState"]),
     ],
 )
 def test_device_stop_monitor(caplog, device_fqdn, subs):
