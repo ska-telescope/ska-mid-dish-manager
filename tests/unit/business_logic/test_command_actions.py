@@ -182,7 +182,7 @@ class TestCommandActions:
         result_calls = []
         progress_updates = []
 
-        def progress_callback(msg):
+        def progress_callback(msg, user_operator=True):
             progress_updates.append(msg)
             if "Awaiting configuredband change to B2" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -332,7 +332,7 @@ class TestCommandActions:
             assert msg in progress_updates
 
         assert len(result_calls) == 1
-        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
+        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed.")
 
     @pytest.mark.unit
     def test_configure_band_sequence_from_lp(self):
@@ -421,4 +421,4 @@ class TestCommandActions:
             assert msg in progress_updates
 
         assert len(result_calls) == 1
-        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
+        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed.")
