@@ -3,7 +3,6 @@
 import logging
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
 from queue import Empty, Queue
 from threading import Event, Lock, Thread
 from typing import Any, Callable, Optional, Tuple
