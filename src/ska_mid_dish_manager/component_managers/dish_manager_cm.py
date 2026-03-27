@@ -119,7 +119,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         default_dish_mode = DishMode.UNKNOWN
         # Check tangodb whether maintenance mode is active
         if self._is_maintenance_mode_active():
-            self.logger.debug("Initialising dish manager dishMode with %s.", DishMode.MAINTENANCE)
+            self.logger.info(
+                "Initialising dish manager dishMode with %s.",
+                DishMode.MAINTENANCE,
+                extra=OPERATOR_TAG,
+            )
             default_dish_mode = DishMode.MAINTENANCE
 
         # clean up WMSDeviceNames
