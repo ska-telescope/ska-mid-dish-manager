@@ -21,7 +21,8 @@ def disable_threads(self, cm):
 
 
 @pytest.mark.unit
-def test_verification_process_starts_once(caplog: pytest.LogCaptureFixture):
+@mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
+def test_verification_process_starts_once(patched_dp, caplog: pytest.LogCaptureFixture):
     """Check that verification process starts only once on multiple timeouts."""
     caplog.set_level(logging.DEBUG)
 
@@ -63,7 +64,8 @@ def test_verification_process_starts_once(caplog: pytest.LogCaptureFixture):
 
 
 @pytest.mark.unit
-def test_valid_event_stops_verification(caplog: pytest.LogCaptureFixture):
+@mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
+def test_valid_event_stops_verification(patched_dp, caplog: pytest.LogCaptureFixture):
     """Check that valid event stops verification process."""
     caplog.set_level(logging.DEBUG)
 
@@ -93,7 +95,8 @@ def test_valid_event_stops_verification(caplog: pytest.LogCaptureFixture):
 
 
 @pytest.mark.unit
-def test_verification_success(caplog: pytest.LogCaptureFixture):
+@mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
+def test_verification_success(patched_dp, caplog: pytest.LogCaptureFixture):
     """Check that verification sets state to ESTABLISHED when device responds."""
     caplog.set_level(logging.DEBUG)
 
@@ -132,7 +135,8 @@ def test_verification_success(caplog: pytest.LogCaptureFixture):
 
 
 @pytest.mark.unit
-def test_verification_failure(caplog: pytest.LogCaptureFixture):
+@mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
+def test_verification_failure(patched_dp, caplog: pytest.LogCaptureFixture):
     """Check that verification sets NOT_ESTABLISHED on failure."""
     caplog.set_level(logging.DEBUG)
 
