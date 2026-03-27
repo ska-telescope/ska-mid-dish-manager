@@ -216,7 +216,7 @@ class ActionHandler:
             "{action_name} completed".
         :type completed_response_msg: str
         """
-        final_message = completed_response_msg or f"{self.action_name} completed"
+        final_message = completed_response_msg or f"{self.action_name} completed."
         self.logger.info(final_message, extra=OPERATOR_TAG)
 
         if self.action_on_success:
