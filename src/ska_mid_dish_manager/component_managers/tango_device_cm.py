@@ -380,17 +380,19 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
     def start_communicating(self) -> None:
         """Establish communication with the device."""
+        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self.logger.info(
-            f"Establish communication with {self._tango_device_fqdn}", extra=OPERATOR_TAG
+            f"Establishing communication with {self._tango_device_fqdn}", extra=OPERATOR_TAG
         )
         self._dp_factory_signal.clear()
-        self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         self._tango_device_monitor.monitor()
         self._start_event_consumer_thread()
 
     def stop_communicating(self) -> None:
         """Stop communication with the device."""
-        self.logger.info(f"Stop communication with {self._tango_device_fqdn}", extra=OPERATOR_TAG)
+        self.logger.info(
+            f"Stopping communication with {self._tango_device_fqdn}", extra=OPERATOR_TAG
+        )
         self._dp_factory_signal.set()
         self._tango_device_monitor.stop_monitoring()
         self._active_attr_event_subscriptions.clear()

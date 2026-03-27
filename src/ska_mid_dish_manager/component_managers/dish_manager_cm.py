@@ -727,9 +727,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status attributes.
         """
         self.logger.info(
-            "Communication state changed on %s device: %s.",
+            "Communication state changed on %s device to %s.",
             device.name,
-            communication_state,
+            communication_state.name,
             extra=OPERATOR_TAG,
         )
 
