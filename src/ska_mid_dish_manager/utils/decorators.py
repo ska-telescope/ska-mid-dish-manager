@@ -148,12 +148,19 @@ def log_tango_command() -> Callable:
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             logger = getattr(self, "logger", None)
             if logger:
-                logger.info(
-                    "Tango command %s called with args=%s",
-                    func.__name__,
-                    args,
-                    extra=OPERATOR_TAG,
-                )
+                if args:
+                    logger.info(
+                        "Tango command %s called with param %s",
+                        func.__name__,
+                        args,
+                        extra=OPERATOR_TAG,
+                    )
+                else:
+                    logger.info(
+                        "Tango command %s called",
+                        func.__name__,
+                        extra=OPERATOR_TAG,
+                    )
             return func(self, *args, **kwargs)
 
         return wrapper
@@ -174,7 +181,7 @@ def log_tango_attr_write() -> Callable:
             logger = getattr(self, "logger", None)
             if logger:
                 logger.info(
-                    "Tango attribute write called on %s with args=%s",
+                    "Tango attribute write called on %s with param %s",
                     func.__name__,
                     args,
                     extra=OPERATOR_TAG,

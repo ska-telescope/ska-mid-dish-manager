@@ -845,7 +845,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             pointing_state = ds_component_state["pointingstate"]
             if pointing_state != self.component_state["pointingstate"]:
                 self.logger.info(
-                    "Updating dish manager pointingState with: [%s].",
+                    "Updating dish manager pointingState to %s.",
                     pointing_state.name,
                     extra=OPERATOR_TAG,
                 )

@@ -262,14 +262,14 @@ class DishManager(SKAController):
         try:
             self._build_state = self._release_info.update_build_state(device, build_state)
             self.logger.info(
-                "Updated build state information for [%s] device: %s",
+                "Updated build state information for %s device: %s.",
                 device.value,
                 build_state,
                 extra=OPERATOR_TAG,
             )
         except AttributeError:
             self.logger.warning(
-                "Failed to update build state information for [%s] device.",
+                "Failed to update build state information for %s device.",
                 device.value,
                 extra=OPERATOR_TAG,
             )
