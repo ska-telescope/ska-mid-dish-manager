@@ -4,7 +4,7 @@ import pytest
 from ska_control_model import ResultCode
 
 
-#@pytest.mark.unit
+# @pytest.mark.unit
 @pytest.mark.xfail(reason="Still working on the command logic")
 @pytest.mark.parametrize(
     "device_names",
@@ -60,7 +60,7 @@ def test_reset_subs_connection_invalid_device_names(
     assert result == expected_output
 
 
-#@pytest.mark.unit
+# @pytest.mark.unit
 @pytest.mark.xfail(reason="Still working on the command logic")
 def test_reset_subs_connection_valid_device_names(dish_manager_resources, event_store_class):
     """Test that ResetSubsConnection command resets the connections
@@ -71,7 +71,7 @@ def test_reset_subs_connection_valid_device_names(dish_manager_resources, event_
     assert result == (ResultCode.OK, "Re-connection(s) have been intiated successfully")
 
 
-#@pytest.mark.unit
+# @pytest.mark.unit
 @pytest.mark.xfail(reason="Still working on the command logic")
 def test_reset_subs_connection_no_device_names_input(dish_manager_resources, event_store_class):
     """Test that ResetSubsConnection command raises an exception
@@ -82,7 +82,7 @@ def test_reset_subs_connection_no_device_names_input(dish_manager_resources, eve
     assert result == (ValueError, "[device_names] cannot be an empty list")
 
 
-#@pytest.mark.unit
+# @pytest.mark.unit
 @pytest.mark.xfail(reason="Still working on the command logic")
 @pytest.mark.parametrize(
     "device_name, expected_result",
