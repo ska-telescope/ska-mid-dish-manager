@@ -136,8 +136,8 @@ def requires_component_manager(func: Any) -> Any:
     return _wrapper
 
 
-def log_tango_command_call() -> Callable:
-    """Log Tango command call details with operator tag.
+def log_tango_command() -> Callable:
+    """Log Tango command details with operator tag.
 
     This decorator logs the command name and arguments using the device logger
     so logs can be filtered downstream via the operator tag.
@@ -148,21 +148,37 @@ def log_tango_command_call() -> Callable:
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             logger = getattr(self, "logger", None)
             if logger:
-                if kwargs:
-                    logger.info(
-                        "Tango command called: %s args=%s kwargs=%s",
-                        func.__name__,
-                        args,
-                        kwargs,
-                        extra=OPERATOR_TAG,
-                    )
-                else:
-                    logger.info(
-                        "Tango command called: %s args=%s",
-                        func.__name__,
-                        args,
-                        extra=OPERATOR_TAG,
-                    )
+                logger.info(
+                    "Tango command %s called with args=%s",
+                    func.__name__,
+                    args,
+                    extra=OPERATOR_TAG,
+                )
+            return func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def log_tango_attr_write() -> Callable:
+    """Log Tango attribute write details with operator tag.
+
+    This decorator logs the attribute name and value using the device logger
+    so logs can be filtered downstream via the operator tag.
+    """
+
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+            logger = getattr(self, "logger", None)
+            if logger:
+                logger.info(
+                    "Tango attribute write called on %s with args=%s",
+                    func.__name__,
+                    args,
+                    extra=OPERATOR_TAG,
+                )
             return func(self, *args, **kwargs)
 
         return wrapper

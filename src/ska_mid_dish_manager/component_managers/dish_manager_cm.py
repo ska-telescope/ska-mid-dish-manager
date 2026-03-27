@@ -843,10 +843,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if "pointingstate" in kwargs:
             pointing_state = ds_component_state["pointingstate"]
-            self.logger.debug(
-                ("Updating dish manager pointingState with: [%s]."),
-                pointing_state,
-            )
+            if pointing_state != self.component_state["pointingstate"]:
+                self.logger.info(
+                    "Updating dish manager pointingState with: [%s].",
+                    pointing_state.name,
+                    extra=OPERATOR_TAG,
+                )
             self._update_component_state(pointingstate=ds_component_state["pointingstate"])
 
         if "dscpowerlimitkw" in kwargs:
