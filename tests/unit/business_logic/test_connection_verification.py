@@ -13,6 +13,13 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 LOGGER = logging.getLogger(__name__)
 
 
+def disable_threads(self, cm):
+    # Disable threads
+    cm._start_event_consumer_thread = mock.MagicMock()
+    cm._tango_device_monitor = mock.MagicMock()
+    cm._executor = mock.MagicMock()
+
+
 @pytest.mark.unit
 def test_verification_process_starts_once(caplog: pytest.LogCaptureFixture):
     """Check that verification process starts only once on multiple timeouts."""
@@ -24,9 +31,7 @@ def test_verification_process_starts_once(caplog: pytest.LogCaptureFixture):
         LOGGER,
         (),
     )
-
-    # Mock executor - no thread will run
-    cm._executor = mock.MagicMock()
+    disable_threads(cm)
 
     # Set the initial state to a known value
     cm._verifying_connection = False
@@ -69,6 +74,7 @@ def test_valid_event_stops_verification(caplog: pytest.LogCaptureFixture):
         (),
     )
 
+    disable_threads(cm)
     # Set the initial state to a known value
     cm._verifying_connection = True
 
@@ -98,8 +104,7 @@ def test_verification_success(caplog: pytest.LogCaptureFixture):
         (),
     )
 
-    # Mock executor - no thread will run
-    cm._executor = mock.MagicMock()
+    disable_threads(cm)
 
     # Set the initial state to a known value
     cm._verifying_connection = True
@@ -131,8 +136,7 @@ def test_verification_failure(caplog: pytest.LogCaptureFixture):
         (),
     )
 
-    # Mock executor - no thread will run _verifying_device_connection()
-    cm._executor = mock.MagicMock()
+    disable_threads(cm)
 
     # Set to True so that the loop can run in
     cm._verifying_connection = True
