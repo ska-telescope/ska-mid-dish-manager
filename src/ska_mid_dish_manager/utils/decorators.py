@@ -150,14 +150,14 @@ def log_tango_command() -> Callable:
             if logger:
                 if args:
                     logger.info(
-                        "Tango command %s called with param %s",
+                        "Tango command %s called with param %s.",
                         func.__name__,
                         args,
                         extra=OPERATOR_TAG,
                     )
                 else:
                     logger.info(
-                        "Tango command %s called",
+                        "Tango command %s called.",
                         func.__name__,
                         extra=OPERATOR_TAG,
                     )
@@ -181,7 +181,7 @@ def log_tango_attr_write() -> Callable:
             logger = getattr(self, "logger", None)
             if logger:
                 logger.info(
-                    "Tango attribute write called on %s with param %s",
+                    "Tango attribute write called on %s with param %s.",
                     func.__name__,
                     args,
                     extra=OPERATOR_TAG,
