@@ -31,7 +31,7 @@ def test_reset_connection_cmd(
     spf_connection_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=6)
     spfrx_connection_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=6)
 
-    dish_manager_proxy.ResetConnections(["DS", "SPF", "SPFRX"])
+    dish_manager_proxy.ResetSubsConnections(["DS", "SPF", "SPFRX"])
 
     ds_connection_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=30)
     spf_connection_state_event_store.wait_for_value(
