@@ -260,7 +260,7 @@ class TestCommandActions:
         result_calls = []
         progress_updates = []
 
-        def progress_callback(msg):
+        def progress_callback(msg, user_operator=True):
             progress_updates.append(msg)
             if "Awaiting configuredband change to B2" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -341,7 +341,7 @@ class TestCommandActions:
         result_calls = []
         progress_updates = []
 
-        def progress_callback(msg):
+        def progress_callback(msg, user_operator=True):
             progress_updates.append(msg)
             if "Awaiting dishmode change to STANDBY_FP" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
