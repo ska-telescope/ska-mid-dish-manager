@@ -247,10 +247,13 @@ class DishManager(SKAController):
     # Callbacks
     # ---------
 
-    def _update_status(self, status: str) -> None:
+    def _update_status(self, status: str, user_operator=True) -> None:
         """Update the status of the device."""
         self.set_status(status)
-        self.logger.info(status, extra=OPERATOR_TAG)
+        if user_operator:
+            self.logger.info(status, extra=OPERATOR_TAG)
+        else:
+            self.logger.debug(status)
         self.push_change_event("status")
 
     def _update_version_of_subdevice_on_success(self, device: DishDevice, build_state: str):
