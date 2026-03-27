@@ -55,9 +55,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
         )
 
         # Allows only one thread to work on a device at a time to prevent race conditions
-        self._recovery_lock = Lock()
+        self._verifying_connection_lock = Lock()
         # Thread control flag
-        self._recovering = False
+        self._verifying_connection = False
         self._executor = ThreadPoolExecutor(max_workers=1)
 
         # make sure everything monitored is in the component state
@@ -107,26 +107,26 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # when the error events stop, tango emits a valid event for all
         # the error events we got for the various attribute subscriptions.
         # update the communication state in case the error event callback flipped it
-        if self._recovering:
-            self.logger.debug("Valid event received, stopping recovery process")
-            self._recovering = False
+        if self._verifying_connection:
+            self.logger.debug("Valid event received, stopping verification process")
+            self._verifying_connection = False
 
         self.sync_communication_to_valid_event(attr_name)
 
-    def _recover_device(self):
+    def _verifying_device_connection(self):
         delay = 5
         state = ""
 
         # Only run if a connection verification is needed
-        while self._recovering:
+        while self._verifying_connection:
             try:
                 # Check the state of the device to verify connectivity
                 state = self.read_attribute_value("state")
                 self.logger.debug(f"The current state of {self._tango_device_fqdn} is {state}.")
                 # If the read is successful - device is connected
                 self._update_communication_state(CommunicationStatus.ESTABLISHED)
-                # Break the recovery verification cycle
-                self._recovering = False
+                # Break the verification cycle
+                self._verifying_connection = False
 
             except tango.DevFailed:
                 self.logger.debug(f"The current state of {self._tango_device_fqdn} is {state}.")
@@ -173,13 +173,13 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 pass
 
             # Aquire and then release the lock after completion.
-            with self._recovery_lock:
+            with self._verifying_connection_lock:
                 # If Dish Manager is not currently trying to verify the device's connection.
-                if not self._recovering:
-                    # Set _recovery_lock to True to indicate recovery has now been initiated.
-                    self._recovery = True
-                    # Begin the recovery checks.
-                    self._executor.submit(self._recover_device)
+                if not self._verifying_connection:
+                    # Set flag to True to indicate verification has now been initiated.
+                    self._verifying_connection = True
+                    # Begin the verifying checks.
+                    self._executor.submit(self._verifying_device_connection)
 
     # --------------
     # helper methods
@@ -433,6 +433,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._active_attr_event_subscriptions.clear()
         self._stop_event_consumer_thread()
         self._events_queue.queue.clear()
-        self._recovering = False
+        self._verifying_connection = False
         self._executor.shutdown(wait=False)
         self._update_communication_state(CommunicationStatus.DISABLED)
