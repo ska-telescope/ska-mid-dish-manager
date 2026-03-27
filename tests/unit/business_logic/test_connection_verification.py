@@ -1,6 +1,7 @@
 """Test verifiying connection logic."""
 
 import logging
+import threading
 
 import mock
 import pytest
@@ -17,8 +18,6 @@ def disable_threads(self, cm):
     # Disable threads
     cm._start_event_consumer_thread = mock.MagicMock()
     cm._tango_device_monitor = mock.MagicMock()
-    cm._executor = mock.MagicMock()
-
 
 @pytest.mark.unit
 def test_verification_process_starts_once(caplog: pytest.LogCaptureFixture):
@@ -116,12 +115,19 @@ def test_verification_success(caplog: pytest.LogCaptureFixture):
     # Forces an exception so the loop stops when time.sleep is hit
     # during verification check.
     with mock.patch("time.sleep", return_value=None):
-        cm._verifying_device_connection()
+        stop_event = threading.Event()
+        cm._verifying_device_connection(stop_event)
 
     # Assert that the _update_communication_state was called once
     cm._update_communication_state.assert_called_with(CommunicationStatus.ESTABLISHED)
 
     assert cm._verifying_connection is False
+
+    # Clean up.
+    if hasattr(cm, "_verification_stop_event"):
+        cm._verification_stop_event.set()
+    if hasattr(cm, "_verification_thread"):
+        cm._verification_thread.join()
 
 
 @pytest.mark.unit
@@ -149,7 +155,8 @@ def test_verification_failure(caplog: pytest.LogCaptureFixture):
     # during verification check.
     with mock.patch("time.sleep", side_effect=Exception("stop")):
         try:
-            cm._verifying_device_connection()
+            stop_event = threading.Event()
+            cm._verifying_device_connection(stop_event)
         except Exception:
             pass
 
@@ -157,3 +164,9 @@ def test_verification_failure(caplog: pytest.LogCaptureFixture):
     cm._update_communication_state.assert_called_with(CommunicationStatus.NOT_ESTABLISHED)
 
     assert cm._verifying_connection is True
+
+    # Clean up
+    if hasattr(cm, "_verification_stop_event"):
+        cm._verification_stop_event.set()
+    if hasattr(cm, "_verification_thread"):
+        cm._verification_thread.join()

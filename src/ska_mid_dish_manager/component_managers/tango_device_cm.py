@@ -1,6 +1,7 @@
 """Generic component manager for a subservient tango device."""
 
 import logging
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from queue import Empty, Queue
@@ -58,7 +59,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._verifying_connection_lock = Lock()
         # Thread control flag
         self._verifying_connection = False
-        self._executor = ThreadPoolExecutor(max_workers=1)
 
         # make sure everything monitored is in the component state
         attr_names_lower = map(lambda x: x.lower(), monitored_attributes)
@@ -113,13 +113,13 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
         self.sync_communication_to_valid_event(attr_name)
 
-    def _verifying_device_connection(self) -> None:
+    def _verifying_device_connection(self,stop_event:Event) -> None:
         """Verifies if a device is connected to Dish Manager."""
         delay = 5
         state = ""
 
         # Only run if a connection verification is needed
-        while self._verifying_connection:
+        while not stop_event.is_set():
             try:
                 # Check the state of the device to verify connectivity
                 state = self.read_attribute_value("state")
@@ -127,7 +127,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 # If the read is successful - device is connected
                 self._update_communication_state(CommunicationStatus.ESTABLISHED)
                 # Break the verification cycle
-                self._verifying_connection = False
+                stop_event.set()
 
             except tango.DevFailed:
                 self.logger.debug(f"The current state of {self._tango_device_fqdn} is {state}.")
@@ -173,14 +173,19 @@ class TangoDeviceComponentManager(BaseComponentManager):
             except KeyError:
                 pass
 
-            # Aquire and then release the lock after completion.
+            # Avoid multiple threads starting verification
             with self._verifying_connection_lock:
-                # If Dish Manager is not currently trying to verify the device's connection.
                 if not self._verifying_connection:
-                    # Set flag to True to indicate verification has now been initiated.
                     self._verifying_connection = True
-                    # Begin the verifying checks.
-                    self._executor.submit(self._verifying_device_connection)
+                    # Create a stop event for the thread
+                    self._verification_stop_event = threading.Event()
+                    # Start the verification thread
+                    self._verification_thread = threading.Thread(
+                        target=self._verifying_device_connection,
+                        args=(self._verification_stop_event,),
+                        name=f"{self._tango_device_fqdn}.verification_thread",
+                    )
+                    self._verification_thread.start()
 
     # --------------
     # helper methods
