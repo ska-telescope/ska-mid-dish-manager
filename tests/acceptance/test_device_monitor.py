@@ -166,6 +166,7 @@ def test_device_stop_monitor(caplog, device_fqdn, subs):
     threads_names = [t.name for t in threads]
 
     assert "MainThread" in threads_names
+    device_fqdn = device_fqdn.replace("-", "_").replace("/", ".")
     assert f"{device_fqdn}.attribute_subscription_thread" in threads_names
 
     tdm.stop_monitoring()
