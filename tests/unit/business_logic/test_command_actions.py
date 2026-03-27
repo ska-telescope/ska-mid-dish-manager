@@ -107,7 +107,7 @@ class TestCommandActions:
             "SPF operatingmode changed to STANDBY_LP",
             "SPFRX operatingmode changed to STANDBY",
             "DS operatingmode changed to STANDBY",
-            "SetStandbyLPMode completed",
+            "SetStandbyLPMode completed.",
         ]
 
         progress_updates = self.progress_callback.get_args_queue()
@@ -140,7 +140,7 @@ class TestCommandActions:
             # Changes
             "DS actstaticoffsetvaluexel changed to 1",
             "DS actstaticoffsetvalueel changed to 1",
-            "TrackLoadStaticOff completed",
+            "TrackLoadStaticOff completed.",
         ]
 
         progress_updates = self.progress_callback.get_args_queue()
@@ -243,7 +243,7 @@ class TestCommandActions:
             "SPF.SetOperateMode completed",
             "DS operatingmode changed to POINT",
             "DS.SetPointMode completed",
-            "SetOperateMode completed",
+            "SetOperateMode completed.",
         ]
 
         for msg in expected_progress_updates:
@@ -325,7 +325,7 @@ class TestCommandActions:
             "SPF.SetOperateMode completed",
             "DS operatingmode changed to POINT",
             "DS.SetPointMode completed",
-            "SetOperateMode completed",
+            "SetOperateMode completed.",
         ]
 
         for msg in expected_progress_updates:
@@ -414,7 +414,7 @@ class TestCommandActions:
             "SPF.SetOperateMode completed",
             "DS operatingmode changed to POINT",
             "DS.SetPointMode completed",
-            "SetOperateMode completed",
+            "SetOperateMode completed.",
         ]
 
         for msg in expected_progress_updates:

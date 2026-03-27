@@ -97,7 +97,7 @@ class TestCommandActionsIgnoringDevices:
         expected_progress_updates = [
             "Fanned out commands: SPFRX.SetStandbyMode, DS.SetStandbyMode",
             "Awaiting dishmode change to STANDBY_LP",
-            "SetStandbyLPMode completed",
+            "SetStandbyLPMode completed.",
         ]
 
         for msg in expected_progress_updates:
@@ -123,7 +123,7 @@ class TestCommandActionsIgnoringDevices:
         expected_progress_updates = [
             "Fanned out commands: SPF.SetStandbyLPMode, DS.SetStandbyMode",
             "Awaiting dishmode change to STANDBY_LP",
-            "SetStandbyLPMode completed",
+            "SetStandbyLPMode completed.",
         ]
 
         for msg in expected_progress_updates:
@@ -150,7 +150,7 @@ class TestCommandActionsIgnoringDevices:
         expected_progress_updates = [
             "Fanned out commands: DS.SetStandbyMode",
             "Awaiting dishmode change to STANDBY_LP",
-            "SetStandbyLPMode completed",
+            "SetStandbyLPMode completed.",
         ]
 
         for msg in expected_progress_updates:
