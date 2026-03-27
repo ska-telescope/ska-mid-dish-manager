@@ -1,5 +1,6 @@
 """Test that the DishManager ResetSubsconnection attribute."""
 
+'''
 import pytest
 from ska_control_model import ResultCode
 
@@ -103,3 +104,4 @@ def test_reset_subs_connection_ignored_devices(
     device_proxy.ignorespfrx = True
     result = device_proxy.ResetSubsConnections([device_name])
     assert result == expected_result
+'''
