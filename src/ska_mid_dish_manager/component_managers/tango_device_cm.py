@@ -453,5 +453,4 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._stop_event_consumer_thread()
         self._stop_event_verfication_thread()
         self._events_queue.queue.clear()
-        self._stop_verifying_event.set()
         self._update_communication_state(CommunicationStatus.DISABLED)
