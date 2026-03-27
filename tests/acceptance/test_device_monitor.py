@@ -1,6 +1,7 @@
 """Test device Monitor."""
 
 import logging
+import threading
 from functools import partial
 from queue import Empty, Queue
 from threading import Event
@@ -136,3 +137,34 @@ def test_connection_error(caplog):
     all_logs = [record.message for record in caplog.records]
     for i in range(0, 2):
         assert f"Cannot connect to fake_device try number {i}" in all_logs
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize(
+    ("device_fqdn", "subs"),
+    [
+        ("mid-dish/simulator-spf/ska001", ["powerState", "healthState"]),
+        ("mid-dish/simulator-spfrx/ska001", ["kValue", "operatingMode"]),
+        ("mid-dish/ds-manager/ska001", ["achievedTargetLock", "powerState"]),
+    ],
+)
+def test_device_stop_monitor(caplog, device_fqdn, subs):
+    """Test that the stop monitoring for devices monitor clears threads."""
+    caplog.set_level(logging.DEBUG)
+    event_queue = Queue()
+    device_proxy_factory = DeviceProxyManager(LOGGER, Event())
+    tdm = TangoDeviceMonitor(device_fqdn, device_proxy_factory, subs, event_queue, LOGGER)
+    tdm.monitor()
+    _ = event_queue.get(timeout=5)
+    threads = threading.enumerate()
+    assert len(threads) == 2  # (subscription thread, main thread)
+    threads_names = [t.name for t in threads]
+
+    assert "MainThread" in threads_names
+    assert f"{device_fqdn}.attribute_subscription_thread" in threads_names
+
+    tdm.stop_monitoring()
+
+    threads = threading.enumerate()
+    assert len(threads) == 1  # (main thread)
+    assert threads[0].name == "MainThread"
