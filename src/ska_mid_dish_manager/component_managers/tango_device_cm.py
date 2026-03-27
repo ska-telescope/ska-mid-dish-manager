@@ -1,8 +1,10 @@
 """Generic component manager for a subservient tango device."""
 
 import logging
+import time
+from concurrent.futures import ThreadPoolExecutor
 from queue import Empty, Queue
-from threading import Event, Thread
+from threading import Event, Lock, Thread
 from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
@@ -52,6 +54,12 @@ class TangoDeviceComponentManager(BaseComponentManager):
             logger,
         )
 
+        # Allows only one thread to work on a device at a time to prevent race conditions
+        self._recovery_lock = Lock()
+        # Thread control flag
+        self._recovering = False
+        self._executor = ThreadPoolExecutor(max_workers=1)
+
         # make sure everything monitored is in the component state
         attr_names_lower = map(lambda x: x.lower(), monitored_attributes)
         attrs_to_be_added = set(attr_names_lower).difference(kwargs.keys())
@@ -99,7 +107,31 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # when the error events stop, tango emits a valid event for all
         # the error events we got for the various attribute subscriptions.
         # update the communication state in case the error event callback flipped it
+        if self._recovering:
+            self.logger.debug("Valid event received, stopping recovery process")
+            self._recovering = False
+
         self.sync_communication_to_valid_event(attr_name)
+
+    def _recover_device(self):
+        delay = 5
+        state = ""
+
+        # Only run if a connection verification is needed
+        while self._recovering:
+            try:
+                # Check the state of the device to verify connectivity
+                state = self.read_attribute_value("state")
+                self.logger.debug(f"The current state of {self._tango_device_fqdn} is {state}.")
+                # If the read is successful - device is connected
+                self._update_communication_state(CommunicationStatus.ESTABLISHED)
+                # Break the recovery verification cycle
+                self._recovering = False
+
+            except tango.DevFailed:
+                self.logger.debug(f"The current state of {self._tango_device_fqdn} is {state}.")
+                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+                time.sleep(delay)
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
         """Handle error events from attr subscription.
@@ -129,13 +161,25 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # be further actioned after logging.
         dev_error = errors[0]
         if dev_error.reason == "API_EventTimeout":
+            # log the error
+            self.logger.debug(
+                "API_EventTimeout has occurred, verifying if Dish Manager"
+                " is still connected to %s",
+                self._tango_device_fqdn,
+            )
             try:
                 self._active_attr_event_subscriptions.remove(attr_name)
-                # Trigger ping loop
             except KeyError:
                 pass
 
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+            # Aquire and then release the lock after completion.
+            with self._recovery_lock:
+                # If Dish Manager is not currently trying to verify the device's connection.
+                if not self._recovering:
+                    # Set _recovery_lock to True to indicate recovery has now been initiated.
+                    self._recovery = True
+                    # Begin the recovery checks.
+                    self._executor.submit(self._recover_device)
 
     # --------------
     # helper methods
@@ -241,7 +285,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
                 if error:
                     if error_event_cb:
-                        error_event_cb(event_data)
+                        error_event_cb(event_data)  # calls _handle_error_events
                     continue
                 valid_event_cb(event_data)
             except Empty:
@@ -389,4 +433,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._active_attr_event_subscriptions.clear()
         self._stop_event_consumer_thread()
         self._events_queue.queue.clear()
+        self._recovering = False
+        self._executor.shutdown(wait=False)
         self._update_communication_state(CommunicationStatus.DISABLED)
