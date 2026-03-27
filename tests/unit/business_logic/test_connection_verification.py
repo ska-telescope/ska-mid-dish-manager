@@ -19,6 +19,7 @@ def disable_threads(self, cm):
     cm._start_event_consumer_thread = mock.MagicMock()
     cm._tango_device_monitor = mock.MagicMock()
 
+
 @pytest.mark.unit
 def test_verification_process_starts_once(caplog: pytest.LogCaptureFixture):
     """Check that verification process starts only once on multiple timeouts."""
