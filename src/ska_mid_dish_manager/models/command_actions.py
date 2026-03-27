@@ -264,8 +264,7 @@ class ActionHandler:
         ]
         fanned_out_commands_str = ", ".join(fanned_out_commands) if fanned_out_commands else "None"
         self.logger.info(
-            f"Starting Action '{self.action_name}'. "
-            f"Fanning out {fanned_out_commands_str} commands.",
+            f"Starting Action {self.action_name}. Fanning out {fanned_out_commands_str} commands.",
             extra=OPERATOR_TAG,
         )
 
