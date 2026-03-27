@@ -250,7 +250,7 @@ class TestCommandActions:
             assert msg in progress_updates
 
         assert len(result_calls) == 1
-        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
+        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed.")
 
     @pytest.mark.unit
     def test_configure_band_sequence_with_json_from_fp(self):
