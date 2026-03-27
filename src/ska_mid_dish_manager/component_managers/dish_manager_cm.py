@@ -534,9 +534,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         attr_property = database.get_device_attribute_property(
             self.tango_device_name, attribute_name
         )
-        attr_property_value = attr_property[attribute_name]
-        if len(attr_property_value) > 0:  # If the returned dict is not empty
-            return attr_property_value["__value"][0]
+
+        try:
+            attr_property_value = attr_property[attribute_name]
+            # Try "__value", the default and "attribute_name", like ignoreSpf which someone may
+            # have entered themselves
+            for valid_key in ["__value", attribute_name]:
+                if valid_key in attr_property_value:
+                    return attr_property_value[valid_key][0]
+        except (KeyError, IndexError):
+            self.logger.exception("Error reading attribute from DB")
         return None
 
     def _is_maintenance_mode_active(self) -> bool:
