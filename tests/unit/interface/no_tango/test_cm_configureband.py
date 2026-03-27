@@ -83,9 +83,9 @@ def test_configureband_handler(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed",))
+    progress_cb.wait_for_args(("SetOperateMode completed.",))
 
     # Verify apply_pointing_model was called
     mock_apply_pointing_model.assert_called_once()
@@ -173,9 +173,9 @@ def test_configureband_json_handler_happy(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed",))
+    progress_cb.wait_for_args(("SetOperateMode completed.",))
 
     # Verify apply_pointing_model was called
     mock_apply_pointing_model.assert_called_once()
@@ -424,9 +424,9 @@ def test_configureband_5b_with_subband(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed",))
+    progress_cb.wait_for_args(("SetOperateMode completed.",))
 
 
 def test_configureband_5b_with_subband_ignore_b5dc(

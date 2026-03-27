@@ -37,7 +37,7 @@ def test_track_load_static_off_handler(
         {"status": TaskStatus.IN_PROGRESS},
         {
             "status": TaskStatus.COMPLETED,
-            "result": (ResultCode.OK, "TrackLoadStaticOff completed"),
+            "result": (ResultCode.OK, "TrackLoadStaticOff completed."),
         },
     )
 
@@ -53,7 +53,7 @@ def test_track_load_static_off_handler(
         "Awaiting DS actstaticoffsetvaluexel, actstaticoffsetvalueel change to 1.0, 2.0",
         "Fanned out commands: DS.TrackLoadStaticOff",
         "Awaiting actstaticoffsetvaluexel, actstaticoffsetvalueel change to 1.0, 2.0",
-        "TrackLoadStaticOff completed",
+        "TrackLoadStaticOff completed.",
     ]
     for message in expected_progress_messages:
         assert (message,) in progress_messages
