@@ -14,29 +14,29 @@ LOGGER = logging.getLogger(__name__)
 # --- Helper function to disable threads ---
 def disable_threads(cm):
     """Disable all background threads and join them if already started."""
-    # # Stop the event consumer and monitor threads
-    # if hasattr(cm, "_start_event_consumer_thread") and cm._start_event_consumer_thread:
-    #     cm._start_event_consumer_thread = mock.MagicMock()
-    # if hasattr(cm, "_tango_device_monitor") and cm._tango_device_monitor:
-    #     cm._tango_device_monitor = mock.MagicMock()
-
-    # # Stop attribute subscription thread if it exists
-    # if hasattr(cm, "_attribute_subscription_thread") and cm._attribute_subscription_thread:
-    #     if hasattr(cm, "_attribute_subscription_stop_event"):
-    #         cm._attribute_subscription_stop_event.set()
-    #     cm._attribute_subscription_thread.join(timeout=1)
-
-    # # Stop event consumer thread if it exists
-    # if hasattr(cm, "_event_consumer_thread") and cm._event_consumer_thread:
-    #     if hasattr(cm, "_event_consumer_stop_event"):
-    #         cm._event_consumer_stop_event.set()
-    #     cm._event_consumer_thread.join(timeout=1)
+    # Stop the event consumer and monitor threads
+    if hasattr(cm, "_start_event_consumer_thread") and cm._start_event_consumer_thread:
+        cm._start_event_consumer_thread = mock.MagicMock()
+    if hasattr(cm, "_tango_device_monitor") and cm._tango_device_monitor:
+        cm._tango_device_monitor = mock.MagicMock()
 
     # Stop attribute subscription thread if it exists
-    # if hasattr(cm, "_verification_thread") and cm._verification_thread:
-    #      if hasattr(cm, "_attribute_subscription_stop_event"):
-    #          cm._stop_verifying_event.set()
-    #      cm._verification_thread.join(timeout=1)
+    if hasattr(cm, "_attribute_subscription_thread") and cm._attribute_subscription_thread:
+        if hasattr(cm, "_attribute_subscription_stop_event"):
+            cm._attribute_subscription_stop_event.set()
+        cm._attribute_subscription_thread.join(timeout=1)
+
+    # Stop event consumer thread if it exists
+    if hasattr(cm, "_event_consumer_thread") and cm._event_consumer_thread:
+        if hasattr(cm, "_event_consumer_stop_event"):
+            cm._event_consumer_stop_event.set()
+        cm._event_consumer_thread.join(timeout=1)
+
+    # Stop attribute subscription thread if it exists
+    if hasattr(cm, "_verification_thread") and cm._verification_thread:
+        if hasattr(cm, "_attribute_subscription_stop_event"):
+            cm._stop_verifying_event.set()
+        cm._verification_thread.join(timeout=1)
     pass
 
 
