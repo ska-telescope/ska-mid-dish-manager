@@ -188,7 +188,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
                         daemon=True,
                     )
                     t.start()
-                    t.join()
 
     # --------------
     # helper methods
