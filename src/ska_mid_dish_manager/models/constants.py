@@ -47,3 +47,5 @@ DS_ERROR_STATUS_ATTRIBUTES = {
     "errTime": "Time Controller error",
     "errTrack": "Tracking Controller error",
 }
+
+OPERATOR_TAG = {"user": "operator"}

@@ -34,7 +34,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     main_event_store.wait_for_value(Band.B2, timeout=30)
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
@@ -157,7 +157,7 @@ def test_configure_band_2_from_stow(
     # make sure configuredBand is not B2
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B1
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
@@ -174,7 +174,7 @@ def test_configure_band_2_from_stow(
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "ConfigureBand2 completed"]', timeout=30
+        unique_id, '[0, "ConfigureBand2 completed."]', timeout=30
     )
     main_event_store.wait_for_value(Band.B2, timeout=30)
 
@@ -237,7 +237,7 @@ def test_configure_band_json(
     # make sure configuredBand is not B2
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_1)
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B1
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
@@ -260,7 +260,7 @@ def test_configure_band_json(
     """
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
@@ -290,7 +290,7 @@ def test_configure_band_json(
     # but does not set the indexer position again.
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
@@ -357,7 +357,7 @@ def test_configure_band_json_with_b5dc_fanout(
     """
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_1)
     result_event_store.wait_for_finished_command_result(
-        unique_id, "[0, 'SetOperateMode completed']", timeout=60
+        unique_id, "[0, 'SetOperateMode completed.']", timeout=60
     )
     assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
@@ -390,7 +390,7 @@ def test_configure_band_json_with_b5dc_fanout(
     """
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_with_sub_band)
     result_event_store.wait_for_finished_command_result(
-        unique_id, "[0, 'SetOperateMode completed']", timeout=60
+        unique_id, "[0, 'SetOperateMode completed.']", timeout=60
     )
     assert dish_manager_proxy.configuredBand == Band.B5b
     assert dish_manager_proxy.dishMode == DishMode.OPERATE

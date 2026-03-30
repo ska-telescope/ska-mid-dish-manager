@@ -107,7 +107,7 @@ class TestCommandActions:
             "SPF operatingmode changed to STANDBY_LP",
             "SPFRX operatingmode changed to STANDBY",
             "DS operatingmode changed to STANDBY",
-            "SetStandbyLPMode completed",
+            "SetStandbyLPMode completed.",
         ]
 
         progress_updates = self.progress_callback.get_args_queue()
@@ -140,7 +140,7 @@ class TestCommandActions:
             # Changes
             "DS actstaticoffsetvaluexel changed to 1",
             "DS actstaticoffsetvalueel changed to 1",
-            "TrackLoadStaticOff completed",
+            "TrackLoadStaticOff completed.",
         ]
 
         progress_updates = self.progress_callback.get_args_queue()
@@ -182,7 +182,7 @@ class TestCommandActions:
         result_calls = []
         progress_updates = []
 
-        def progress_callback(msg):
+        def progress_callback(msg, user_operator=True):
             progress_updates.append(msg)
             if "Awaiting configuredband change to B2" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -243,14 +243,14 @@ class TestCommandActions:
             "SPF.SetOperateMode completed",
             "DS operatingmode changed to POINT",
             "DS.SetPointMode completed",
-            "SetOperateMode completed",
+            "SetOperateMode completed.",
         ]
 
         for msg in expected_progress_updates:
             assert msg in progress_updates
 
         assert len(result_calls) == 1
-        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
+        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed.")
 
     @pytest.mark.unit
     def test_configure_band_sequence_with_json_from_fp(self):
@@ -260,7 +260,7 @@ class TestCommandActions:
         result_calls = []
         progress_updates = []
 
-        def progress_callback(msg):
+        def progress_callback(msg, user_operator=True):
             progress_updates.append(msg)
             if "Awaiting configuredband change to B2" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -325,14 +325,14 @@ class TestCommandActions:
             "SPF.SetOperateMode completed",
             "DS operatingmode changed to POINT",
             "DS.SetPointMode completed",
-            "SetOperateMode completed",
+            "SetOperateMode completed.",
         ]
 
         for msg in expected_progress_updates:
             assert msg in progress_updates
 
         assert len(result_calls) == 1
-        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
+        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed.")
 
     @pytest.mark.unit
     def test_configure_band_sequence_from_lp(self):
@@ -341,7 +341,7 @@ class TestCommandActions:
         result_calls = []
         progress_updates = []
 
-        def progress_callback(msg):
+        def progress_callback(msg, user_operator=True):
             progress_updates.append(msg)
             if "Awaiting dishmode change to STANDBY_FP" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -414,11 +414,11 @@ class TestCommandActions:
             "SPF.SetOperateMode completed",
             "DS operatingmode changed to POINT",
             "DS.SetPointMode completed",
-            "SetOperateMode completed",
+            "SetOperateMode completed.",
         ]
 
         for msg in expected_progress_updates:
             assert msg in progress_updates
 
         assert len(result_calls) == 1
-        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed")
+        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed.")

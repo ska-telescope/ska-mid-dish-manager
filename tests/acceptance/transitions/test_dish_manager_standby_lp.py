@@ -25,7 +25,7 @@ def test_standby_lp_transition(monitor_tango_servers, event_store_class, dish_ma
     expected_progress_updates = [
         "Fanned out commands: SPF.SetStandbyLPMode, SPFRX.SetStandbyMode, DS.SetStandbyMode",
         "Awaiting dishmode change to STANDBY_LP",
-        "SetStandbyLPMode completed",
+        "SetStandbyLPMode completed.",
     ]
 
     events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
