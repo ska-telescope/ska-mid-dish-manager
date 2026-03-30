@@ -171,16 +171,18 @@ class TangoDeviceMonitor:
             and self._exit_thread_event is not None
             and self._attribute_subscription_thread.is_alive()
         ):
-            # Stop any existing thread handling attribute event subscriptions
             self._exit_thread_event.set()
             self._attribute_subscription_thread.join()
             self._logger.info("Stopped monitoring thread on %s", self._tango_fqdn)
-            # undo subscriptions and inform client we have no comms to the device
-            if self._subscription_tracker.subscribed_attrs:
-                device_proxy = self._device_proxy_factory(self._tango_fqdn)
-                self._subscription_tracker.clear_subscriptions(device_proxy)
 
-            self._device_proxy_factory.factory_reset()
+        if self._subscription_tracker.subscribed_attrs:
+            device_proxy = self._device_proxy_factory(self._tango_fqdn)
+            self._subscription_tracker.clear_subscriptions(device_proxy)
+
+        self._device_proxy_factory.factory_reset()
+
+        self._attribute_subscription_thread = None
+        self._exit_thread_event = None
 
     def _verify_connection_up(
         self, on_verified_callback: Callable, exit_thread_event: Event

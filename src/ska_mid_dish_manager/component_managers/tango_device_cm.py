@@ -2,7 +2,6 @@
 
 import logging
 import threading
-import time
 from queue import Empty, Queue
 from threading import Event, Lock, Thread
 from typing import Any, Callable, Optional, Tuple
@@ -59,7 +58,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # Thread control flag
         self._verifying_connection = False
         self._verification_thread: Optional[Thread] = None
-        self._stop_verifying_event: Optional[Thread] = None
+        self._stop_verifying_event: Optional[Event] = None
 
         # make sure everything monitored is in the component state
         attr_names_lower = map(lambda x: x.lower(), monitored_attributes)
@@ -132,12 +131,12 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 self._update_communication_state(CommunicationStatus.ESTABLISHED)
                 # Break the verification cycle
                 self._verifying_connection = False
-                self.stop_verifying_event.set()
+                self._stop_verifying_event.set()
 
             except tango.DevFailed:
                 self.logger.debug(f"The current state of {self._tango_device_fqdn} is {state}.")
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                time.sleep(delay)
+                stop_verifying_event.wait(delay)
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
         """Handle error events from attr subscription.
@@ -183,12 +182,13 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 if not self._verifying_connection:
                     self._verifying_connection = True
                     self._stop_verifying_event = threading.Event()
-                    self._verification_thread = threading.Thread(
+                    t = self._verification_thread = threading.Thread(
                         target=self._verifying_device_connection,
                         args=(self._stop_verifying_event,),
-                        name=f"{self._tango_device_fqdn}.verification_thread",
+                        daemon=True,
                     )
-                    self._verification_thread.start()
+                    t.start()
+                    t.join()
 
     # --------------
     # helper methods
@@ -312,6 +312,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
     def _stop_event_verfication_thread(self) -> None:
         """Stop the connection verification thread if it is alive."""
+        # Stop verification thread
         if (
             self._verification_thread is not None
             and self._stop_verifying_event is not None
@@ -319,6 +320,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
         ):
             self._stop_verifying_event.set()
             self._verification_thread.join()
+
+        self._verification_thread = None
+        self._stop_verifying_event = None
 
     def _start_event_consumer_thread(self) -> None:
         """Start the event consumer thread.
@@ -450,7 +454,8 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._dp_factory_signal.set()
         self._tango_device_monitor.stop_monitoring()
         self._active_attr_event_subscriptions.clear()
-        self._stop_event_consumer_thread()
+
         self._stop_event_verfication_thread()
+        self._stop_event_consumer_thread()
         self._events_queue.queue.clear()
         self._update_communication_state(CommunicationStatus.DISABLED)
