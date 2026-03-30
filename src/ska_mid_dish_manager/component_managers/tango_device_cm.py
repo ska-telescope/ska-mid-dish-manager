@@ -274,56 +274,41 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
         self._update_component_state(**monitored_attribute_values)
 
+    @classmethod
+    def _event_consumer(
+        cls,
+        event_queue: Queue,
+        valid_event_cb: Callable,
+        task_abort_event: Optional[Event] = None,
+        error_event_cb: Optional[Callable] = None,  # type: ignore
+    ) -> None:
+        while task_abort_event and not task_abort_event.is_set():
+            try:
+                event_data = event_queue.get(timeout=0.1)
+                error = event_data.err
+                # If a tango error has been flagged, due to an invalid attribute, do not
+                # interpret it as communication error.
+                if error and event_data.attr_value:
+                    if event_data.attr_value.quality == tango.AttrQuality.ATTR_INVALID:
+                        error = False
 
-@classmethod
-def _event_consumer(
-    cls,
-    event_queue: Queue,
-    valid_event_cb: Callable,
-    task_abort_event: Optional[Event] = None,
-    error_event_cb: Optional[Callable] = None,
-) -> None:
-    while task_abort_event and not task_abort_event.is_set():
-        try:
-            event_data = event_queue.get(timeout=0.1)
-            if event_data is None:
-                break
-
-            error = event_data.err
-
-            # If a tango error has been flagged, due to an invalid attribute, do not
-            # interpret it as communication error.
-            if error and event_data.attr_value:
-                if event_data.attr_value.quality == tango.AttrQuality.ATTR_INVALID:
-                    error = False
-
-            if error:
-                if error_event_cb:
-                    error_event_cb(event_data)
-                continue
-
-            valid_event_cb(event_data)
-
-        except Empty:
-            pass
+                if error:
+                    if error_event_cb:
+                        error_event_cb(event_data)  # calls _handle_error_events
+                    continue
+                valid_event_cb(event_data)
+            except Empty:
+                pass
 
     def _stop_event_consumer_thread(self) -> None:
         """Stop the event consumer thread if it is alive."""
         if (
             self._event_consumer_thread is not None
             and self._event_consumer_abort_event is not None
+            and self._event_consumer_thread.is_alive()
         ):
-            # Signal thread to stop
             self._event_consumer_abort_event.set()
-
-            # Wake up the thread if it's blocked on queue.get()
-            self._events_queue.put(None)
-
-            # Wait for it to finish
-            self._event_consumer_thread.join(timeout=2)
-
-        self._event_consumer_thread = None
-        self._event_consumer_abort_event = None
+            self._event_consumer_thread.join()
 
     def _stop_event_verfication_thread(self) -> None:
         """Stop the connection verification thread if it is alive."""
@@ -466,11 +451,21 @@ def _event_consumer(
     def stop_communicating(self) -> None:
         """Stop communication with the device."""
         self.logger.info(f"Stop communication with {self._tango_device_fqdn}")
+
         self._dp_factory_signal.set()
+
+        # Stop monitor thread first (it may still be pushing events)
         self._tango_device_monitor.stop_monitoring()
+
         self._active_attr_event_subscriptions.clear()
 
+        # Stop verification thread
         self._stop_event_verfication_thread()
+
+        # Stop event consumer thread (this will inject sentinel + join)
         self._stop_event_consumer_thread()
+
+        # ONLY clear AFTER thread has exited
         self._events_queue.queue.clear()
+
         self._update_communication_state(CommunicationStatus.DISABLED)
