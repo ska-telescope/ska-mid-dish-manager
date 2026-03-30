@@ -113,8 +113,6 @@ class WMSComponentManager(BaseComponentManager):
 
         self._wms_device_group.add(self._wms_device_names, timeout_ms=GROUP_REQUEST_TIMEOUT_MS)
 
-        if self.executor is None:
-            self.executor = ThreadPoolExecutor(max_workers=1)
         _wms_monitoring_started_future = self.executor.submit(self._start_monitoring)
         _wms_monitoring_started_future.add_done_callback(self._run_wms_group_polling)
 
@@ -135,7 +133,7 @@ class WMSComponentManager(BaseComponentManager):
         self._stop_monitoring_flag.set()
 
         self.executor.shutdown(wait=True, cancel_futures=True)
-        self.executor = None
+        self.executor = ThreadPoolExecutor(max_workers=1)
 
         self._wind_speed_buffer.clear()
         self._wind_gust_buffer.clear()
