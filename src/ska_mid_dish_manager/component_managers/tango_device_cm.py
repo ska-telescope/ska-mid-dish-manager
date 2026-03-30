@@ -107,8 +107,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # when the error events stop, tango emits a valid event for all
         # the error events we got for the various attribute subscriptions.
         # update the communication state in case the error event callback flipped it
-        if self._verifying_connection:
+        if self._verifying_connection and self._stop_verifying_event:
             self.logger.debug("Valid event received, stopping verification process")
+            self._stop_verifying_event.set()
             self._verifying_connection = False
 
         self.sync_communication_to_valid_event(attr_name)
@@ -283,7 +284,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
     ) -> None:
         while task_abort_event and not task_abort_event.is_set():
             try:
-                event_data = event_queue.get(timeout=1)
+                event_data = event_queue.get(timeout=0.1)
                 error = event_data.err
                 # If a tango error has been flagged, due to an invalid attribute, do not
                 # interpret it as communication error.
@@ -304,10 +305,12 @@ class TangoDeviceComponentManager(BaseComponentManager):
         if (
             self._event_consumer_thread is not None
             and self._event_consumer_abort_event is not None
-            and self._event_consumer_thread.is_alive()
         ):
             self._event_consumer_abort_event.set()
-            self._event_consumer_thread.join()
+            self._event_consumer_thread.join(timeout=2)
+
+        self._event_consumer_thread = None
+        self._event_consumer_abort_event = None
 
     def _stop_event_verfication_thread(self) -> None:
         """Stop the connection verification thread if it is alive."""
