@@ -15,16 +15,15 @@ LOGGER = logging.getLogger(__name__)
 @pytest.fixture
 def cm():
     cm = TangoDeviceComponentManager("a/b/c", LOGGER, ())
+    cm._verifying_device_connection = mock.MagicMock()
     yield cm
     cm.stop_communicating()
 
 
-@pytest.mark.unit
 def test_verification_process_starts_once(cm, caplog):
     caplog.set_level(logging.DEBUG)
 
     cm._verifying_connection = False
-    cm._verifying_device_connection = mock.MagicMock()
 
     event = mock.MagicMock()
     event.attr_name = "mock_attr"
@@ -36,18 +35,21 @@ def test_verification_process_starts_once(cm, caplog):
     cm._active_attr_event_subscriptions = {"mock_attr"}
 
     cm._handle_error_events(event)
+    first_thread = cm._verification_thread
+
     cm._handle_error_events(event)
 
     assert cm._verifying_connection is True
+    assert cm._verification_thread is first_thread
     assert "verifying if Dish Manager is still connected" in caplog.text
 
 
-@pytest.mark.unit
 def test_valid_event_stops_verification(cm, caplog):
     caplog.set_level(logging.DEBUG)
 
     cm._verifying_connection = True
-    cm._stop_verifying_event = threading.Event()  # 👈 important fix
+    cm._stop_verifying_event = threading.Event()
+    cm._verification_thread = mock.MagicMock()
 
     event = mock.MagicMock()
     event.attr_value.name = "dishmode"
