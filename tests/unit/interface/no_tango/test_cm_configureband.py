@@ -83,9 +83,9 @@ def test_configureband_handler(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed",))
+    progress_cb.wait_for_args(("SetOperateMode completed.",))
 
     # Verify apply_pointing_model was called
     mock_apply_pointing_model.assert_called_once()
@@ -173,9 +173,9 @@ def test_configureband_json_handler_happy(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed",))
+    progress_cb.wait_for_args(("SetOperateMode completed.",))
 
     # Verify apply_pointing_model was called
     mock_apply_pointing_model.assert_called_once()
@@ -424,9 +424,9 @@ def test_configureband_5b_with_subband(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed",))
+    progress_cb.wait_for_args(("SetOperateMode completed.",))
 
 
 def test_configureband_5b_with_subband_ignore_b5dc(
@@ -665,15 +665,15 @@ def test_apply_pointing_model_behavior(caplog, pointing_values, should_skip):
 
     apply_pointing_model(band_param_name, band_name, mock_task_cb, mock_logger, mock_cm)
 
-    debug_msgs = [call.args[0] for call in mock_logger.debug.call_args_list]
+    info_msgs = [call.args[0] for call in mock_logger.info.call_args_list]
 
     if should_skip:
         # nothing applied, logs contain skip message
-        assert any("Skipped applying pointing model" in msg for msg in debug_msgs)
+        assert any("Skipped applying pointing model" in msg for msg in info_msgs)
         mock_cm.update_pointing_model_params.assert_not_called()
     else:
         # update_pointing_model_params called, log contains success
         mock_cm.update_pointing_model_params.assert_called_once_with(
             band_param_name, pointing_values
         )
-        assert any("applied successfully" in msg for msg in debug_msgs)
+        assert any("applied successfully" in msg for msg in info_msgs)
