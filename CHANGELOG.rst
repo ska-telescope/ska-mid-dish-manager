@@ -9,6 +9,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - Updated ConfigureBand commands to automatically apply pointing models upon execution
 - Resolved SKB-1267
+- Added tag user=operator to INFO logs for filtering operator related logs. 
 
 Version 9.3.0
 *************

@@ -41,6 +41,64 @@ def test_connection_state_attrs_mirror_communication_status(
 
 @pytest.mark.unit
 @pytest.mark.forked
+def test_dsc_connection_state_attr_updates(
+    dish_manager_resources,
+    event_store_class,
+):
+    """Test dscConnectionState updates when DS connectionState updates."""
+    device_proxy, dish_manager_cm = dish_manager_resources
+    ds_event_store = event_store_class()
+    dsc_event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "dsConnectionState",
+        tango.EventType.CHANGE_EVENT,
+        ds_event_store,
+    )
+
+    device_proxy.subscribe_event(
+        "dscConnectionState",
+        tango.EventType.CHANGE_EVENT,
+        dsc_event_store,
+    )
+    ds_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=10)
+    dsc_event_store.wait_for_value(CommunicationStatus.DISABLED, timeout=10)
+
+    # Force ds connectionstate to ESTABLISHED
+    sub_component_manager = dish_manager_cm.sub_component_managers["DS"]
+    sub_component_manager._update_component_state(connectionstate=CommunicationStatus.ESTABLISHED)
+
+    # We can now expect dscConnectionState to transition to ESTABLISHED
+    dsc_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=10)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_dsc_connection_state_attr_updates_when_ds_connection_lost(
+    dish_manager_resources,
+    event_store_class,
+):
+    """Test dscConnectionState updates when ds communication is lost."""
+    device_proxy, dish_manager_cm = dish_manager_resources
+    event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "dscConnectionState",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
+    event_store.wait_for_value(CommunicationStatus.DISABLED, timeout=10)
+
+    # Force communication_state to NOT_ESTABLISHED
+    sub_component_manager = dish_manager_cm.sub_component_managers["DS"]
+    sub_component_manager._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
+    # We can now expect dscConnectionState to transition to NOT_ESTABLISHED
+    event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     "connection_state_attr",
     [
