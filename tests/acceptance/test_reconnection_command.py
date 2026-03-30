@@ -10,7 +10,6 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance
-@pytest.mark.xfail(reason="Still working on the command logic")
 def test_reset_connection_cmd(
     dish_manager_proxy: tango.DeviceProxy, event_store_class: Any
 ) -> None:
