@@ -244,6 +244,17 @@ class DishManager(SKAController):
             SetVPolAttenuationCommand(self.component_manager, self.logger),
         )
 
+    def delete_device(self):
+        """Override delete_device to stop communication with sub-devices before deletion."""
+        self.logger.info(
+            "DishManager device is being deleted. Stopping communication with sub-devices.",
+            extra=OPERATOR_TAG,
+        )
+        if self.component_manager:
+            self.component_manager.stop_communicating()
+
+        return super().delete_device()
+
     # ---------
     # Callbacks
     # ---------
