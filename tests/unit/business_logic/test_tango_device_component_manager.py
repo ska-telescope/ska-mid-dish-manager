@@ -16,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def comm_state_callback(signal: threading.Event, communication_state: CommunicationStatus):
-    pass
+    signal.set()
 
 
 def construct_mock_valid_event_data(attr_name: str) -> tango.EventData:
@@ -100,6 +100,7 @@ def test_happy_path(patched_tango, caplog):
     tc_manager._events_queue.put(mock_some_attr_event_data)
 
     # wait a bit for the state to change
+    communication_state_changed.clear()
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
@@ -133,6 +134,7 @@ def test_connection_with_invalid_attr(patched_tango, caplog):
     tc_manager._events_queue.put(mock_some_attr_event_data)
 
     # wait a bit for the state to change
+    communication_state_changed.clear()
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
@@ -208,6 +210,7 @@ def test_device_goes_away(patch_dp, caplog):
     tc_manager._events_queue.put(mock_some_attr_event_data)
     tc_manager._events_queue.put(mock_some_other_attr_event_data)
     # wait a bit for the state to change
+    communication_state_changed.clear()
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
@@ -218,6 +221,7 @@ def test_device_goes_away(patch_dp, caplog):
     # Trigger a failure event
     tc_manager._events_queue.put(mock_some_attr_error_event_data)
     # wait a bit for the state to change
+    communication_state_changed.clear()
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
@@ -228,14 +232,14 @@ def test_device_goes_away(patch_dp, caplog):
     # Trigger a failure event
     tc_manager._events_queue.put(mock_some_attr_error_event_data)
     # wait a bit for the state to change
-    communication_state_changed.wait(timeout=5)
-    # assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
-
-    tc_manager._update_communication_state.assert_called_with(CommunicationStatus.NOT_ESTABLISHED)
+    communication_state_changed.clear()
+    communication_state_changed.wait(timeout=1)
+    assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
 
     # trigger a valid event
     tc_manager._events_queue.put(mock_some_attr_event_data)
     # wait a bit for the state to change
+    communication_state_changed.clear()
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
