@@ -1,12 +1,9 @@
 """Test verifiying connection logic."""
 
 import logging
-import threading
 
 import mock
 import pytest
-from tango import DevFailed, DevError
-from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import DishMode
@@ -126,7 +123,7 @@ def test_valid_event_stops_verification(caplog: pytest.LogCaptureFixture):
 #     stop_event = mock.MagicMock()
 #     stop_event.is_set.side_effect = [False, True]
 #     stop_event.set = mock.MagicMock()
-#     # mock successful read 
+#     # mock successful read
 #     cm.read_attribute_value = mock.Mock(return_value="DevState.ON")
 #     cm._verifying_device_connection(stop_event)
 
