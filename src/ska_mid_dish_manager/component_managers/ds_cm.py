@@ -4,7 +4,7 @@ import logging
 from threading import Lock
 from typing import Any, Callable, Optional, Tuple
 
-from ska_control_model import HealthState, ResultCode, TaskStatus
+from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.constants import DS_ERROR_STATUS_ATTRIBUTES
@@ -55,6 +55,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "trackTableCurrentIndex",
             "trackTableEndIndex",
             "dscCtrlState",
+            "connectionState",
         )
 
         monitored_attr_names = monitored_attr_names + tuple(DS_ERROR_STATUS_ATTRIBUTES.keys())
@@ -85,6 +86,18 @@ class DSComponentManager(TangoDeviceComponentManager):
                 kwargs[attr] = enum_(kwargs[attr])
 
         super()._update_component_state(**kwargs)
+
+    def _update_communication_state(self, communication_state: CommunicationStatus) -> None:
+        """Update dsc connection state if connection to ds is lost."""
+        super()._update_communication_state(communication_state)
+
+        if self._communication_state in [
+            CommunicationStatus.NOT_ESTABLISHED,
+            CommunicationStatus.DISABLED,
+        ]:
+            # If the connection to DSManager is NOT_ESTABLISHED or DISABLED then update
+            # the dscconnectionstate to match
+            self._update_component_state(connectionstate=self._communication_state)
 
     def _interpret_command_reply(self, command_name: str, reply: Any) -> Tuple[TaskStatus, Any]:
         """Override default interpretation to handle DS specific reply format."""

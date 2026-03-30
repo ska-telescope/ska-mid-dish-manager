@@ -209,6 +209,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b5alnapowerstate=False,
             b5blnapowerstate=False,
             dscerrorstatuses=self._aggregate_dsc_error_statuses({}),
+            dscconnectionstate=CommunicationStatus.DISABLED,
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -291,6 +292,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 tracktablecurrentindex=0,
                 tracktableendindex=0,
                 dscctrlstate=DscCtrlState.NO_AUTHORITY,
+                connectionstate=CommunicationStatus.DISABLED,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.DS
                 ),
@@ -1029,6 +1031,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 statuses,
             )
             self._update_component_state(dscerrorstatuses=statuses)
+
+        # DS connectionState attribute
+        if device == DishDevice.DS and "connectionstate" in kwargs:
+            dscconnectionstate = kwargs["connectionstate"]
+            self.logger.debug(
+                "Updating dscconnectionstate with state: %s",
+                dscconnectionstate,
+            )
+            self._update_component_state(dscconnectionstate=dscconnectionstate)
 
     def _aggregate_dsc_error_statuses(self, ds_component_state: dict[str, Any]):
         """Aggregate any error statuses from the DSC into one string."""
