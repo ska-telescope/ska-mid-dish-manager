@@ -74,19 +74,18 @@ def test_valid_event_stops_verification(cm, caplog):
 
 @pytest.mark.unit
 def test_verification_success(cm_no_vdc, caplog):
-    """Check that verification sets state to ESTABLISHED when device responds."""
     caplog.set_level(logging.DEBUG)
-
-    cm_no_vdc = TangoDeviceComponentManager("a/b/c", LOGGER, ())
 
     cm_no_vdc._verifying_connection = True
     cm_no_vdc._update_communication_state = mock.MagicMock()
 
     stop_event = mock.MagicMock()
-    stop_event.is_set.side_effect = False
-    stop_event.set = mock.MagicMock()
-    # mock successful read
+    stop_event.is_set.side_effect = [False, True]
+
+    cm_no_vdc._stop_verifying_event = mock.MagicMock()
+
     cm_no_vdc.read_attribute_value = mock.Mock(return_value="DevState.ON")
+
     cm_no_vdc._verifying_device_connection(stop_event)
 
     cm_no_vdc._update_communication_state.assert_called_with(CommunicationStatus.ESTABLISHED)
@@ -105,8 +104,9 @@ def test_verification_failure(cm_no_vdc, caplog):
     cm_no_vdc._update_communication_state = mock.MagicMock()
 
     stop_event = mock.MagicMock()
-    stop_event.is_set.return_value = [False, True]
+    stop_event.is_set.side_effect = [False, True]
     stop_event.wait = mock.MagicMock()
+    stop_event.set = mock.MagicMock()
 
     cm_no_vdc.read_attribute_value = mock.Mock(side_effect=tango.DevFailed())
 

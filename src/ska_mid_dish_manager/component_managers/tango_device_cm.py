@@ -132,7 +132,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 self._update_communication_state(CommunicationStatus.ESTABLISHED)
                 # Break the verification cycle
                 self._verifying_connection = False
-                self._stop_verifying_event.set()
+                stop_verifying_event.set()
 
             except (tango.DevFailed, ConnectionError):
                 self.logger.debug(f"The current state of {self._tango_device_fqdn} is {state}.")
@@ -348,19 +348,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._event_consumer_thread.name = f"{formatted_fqdn}.event_consumer_thread"
         self._event_consumer_thread.start()
 
-    def _start_verfication_thread(self) -> None:
-        """Start thread."""
-        self._stop_event_verfication_thread()
-
-        self._stop_verifying_event = Event()
-        self._verification_thread = Thread(
-            target=self._verifying_connection,
-            args=[
-                self._stop_verifying_event,
-            ],
-        )
-        self._event_consumer_thread.start()
-
     def _interpret_command_reply(self, command_name: str, reply: Any) -> Tuple[TaskStatus, Any]:
         """Default interpretation: return IN_PROGRESS and the reply."""
         reply = reply or f"{command_name} successfully executed"
@@ -469,4 +456,5 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._tango_device_monitor.stop_monitoring()
         self._active_attr_event_subscriptions.clear()
         self._stop_event_consumer_thread()
+        self._events_queue.queue.clear()
         self._update_communication_state(CommunicationStatus.DISABLED)
