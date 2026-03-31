@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Verification check added to handle communication status updates when an API_EventTimeout error is received.
 
 Version 9.3.0-rc.2
 ******************
