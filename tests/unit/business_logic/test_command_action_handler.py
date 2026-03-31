@@ -325,7 +325,6 @@ class TestActionHandler:
             target=trigger_abort_later,
             args=(5,),
             daemon=True,
-            name=f"{self._tango_device_fqdn}-abort-thread",
         )
         abort_thread.start()
 
