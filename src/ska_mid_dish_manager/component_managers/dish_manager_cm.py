@@ -1111,17 +1111,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self.logger.error("Stop communication command failed !! , err : %s", err)
                     raise err
 
-            threads = threading.enumerate()
-
-            for t in threads:
-                self.logger.debug(
-                    "  - %s (Alive: %s, ident=%s, daemon=%s)",
-                    t.name,
-                    t.is_alive(),
-                    t.ident,
-                    t.daemon,
-                )
-
             # Start communicating again
             for name in upper_cased_device_names:
                 try:
