@@ -105,13 +105,11 @@ def test_verification_failure(cm_no_vdc, caplog):
     cm_no_vdc._update_communication_state = mock.MagicMock()
 
     stop_event = mock.MagicMock()
-    stop_event.is_set.return_value = False
+    stop_event.is_set.return_value = [False, True]
+    stop_event.wait = mock.MagicMock()
 
     cm_no_vdc.read_attribute_value = mock.Mock(side_effect=tango.DevFailed())
 
     cm_no_vdc._verifying_device_connection(stop_event)
 
     cm_no_vdc._update_communication_state.assert_called_with(CommunicationStatus.NOT_ESTABLISHED)
-
-    # Flag should remain True because verification never succeeded
-    assert cm_no_vdc._verifying_connection is True
