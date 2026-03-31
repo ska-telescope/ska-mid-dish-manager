@@ -108,10 +108,10 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # when the error events stop, tango emits a valid event for all
         # the error events we got for the various attribute subscriptions.
         # update the communication state in case the error event callback flipped it
-        if self._verifying_connection and self._stop_verifying_event:
-            self.logger.debug("Valid event received, stopping verification process")
-            self._stop_verifying_event.set()
-            self._verifying_connection = False
+        # if self._verifying_connection and self._stop_verifying_event:
+        #     self.logger.debug("Valid event received, stopping verification process")
+        #     self._stop_verifying_event.set()
+        #     self._verifying_connection = False
 
         self.sync_communication_to_valid_event(attr_name)
 
@@ -217,7 +217,12 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._active_attr_event_subscriptions.add(event_attr_name)
         currently_synced = monitored_attrs == self._active_attr_event_subscriptions
 
-        if not previously_synced and currently_synced:
+        if not previously_synced and currently_synced and not self._verifying_connection:
+            self.logger.info(
+                "Attribute name [%s] is now valid, communication with [%s] is established",
+                event_attr_name,
+                self._tango_device_fqdn,
+            )
             self._update_communication_state(CommunicationStatus.ESTABLISHED)
             self._fetch_build_state_information()
 
