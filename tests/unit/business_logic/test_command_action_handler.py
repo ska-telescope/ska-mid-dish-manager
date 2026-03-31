@@ -70,7 +70,7 @@ class TestActionHandler:
         expected_progress_updates = [
             "Awaiting attr change to True",
             "DeviceX.CommandX completed",
-            "HandlerX completed",
+            "HandlerX completed.",
         ]
         progress_updates = progress_callback.get_args_queue()
         for msg in expected_progress_updates:
@@ -274,7 +274,7 @@ class TestActionHandler:
             "Awaiting attr change to True",
             "DeviceX attr changed to True",
             "DeviceX.CommandX completed",
-            "HandlerX completed",
+            "HandlerX completed.",
         ]
         task_abort_event = Event()
         handler.execute(self.my_task_callback, task_abort_event)

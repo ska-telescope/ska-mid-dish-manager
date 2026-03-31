@@ -1,6 +1,7 @@
 """Unit tests checking DishManager behaviour."""
 
 import json
+from unittest.mock import Mock
 
 import pytest
 import tango
@@ -53,6 +54,16 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     # ('1659015778.0797186_172264627776495_DS_SetStandbyFPMode', '[0, "result"]'))
     command_name = event_value[0].split("_")[-1]
     assert command_name == "SetStandbyFPMode"
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_dish_manager_init(dish_manager_resources):
+    """Test that Init calls stop_communicating on the main component manager."""
+    device_proxy, dish_manager_cm = dish_manager_resources
+    dish_manager_cm.stop_communicating = Mock()
+    device_proxy.Init()
+    dish_manager_cm.stop_communicating.assert_called_once()
 
 
 @pytest.mark.unit

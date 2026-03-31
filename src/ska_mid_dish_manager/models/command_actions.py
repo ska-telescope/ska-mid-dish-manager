@@ -10,7 +10,11 @@ import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
-from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S, DSC_MIN_POWER_LIMIT_KW
+from ska_mid_dish_manager.models.constants import (
+    DEFAULT_ACTION_TIMEOUT_S,
+    DSC_MIN_POWER_LIMIT_KW,
+    OPERATOR_TAG,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
@@ -212,8 +216,8 @@ class ActionHandler:
             "{action_name} completed".
         :type completed_response_msg: str
         """
-        final_message = completed_response_msg or f"{self.action_name} completed"
-        self.logger.debug(final_message)
+        final_message = completed_response_msg or f"{self.action_name} completed."
+        self.logger.info(final_message, extra=OPERATOR_TAG)
 
         if self.action_on_success:
             msg = f"{self.action_name} complete. Triggering on success action."
@@ -242,7 +246,7 @@ class ActionHandler:
         :type completed_response_msg: str
         """
         if task_abort_event.is_set():
-            self.logger.warning(f"Action '{self.action_name}' aborted.")
+            self.logger.warning(f"Action '{self.action_name}' aborted.", extra=OPERATOR_TAG)
             report_task_progress(f"{self.action_name} aborted", self.progress_callback)
             update_task_status(
                 task_callback,
@@ -252,9 +256,16 @@ class ActionHandler:
             return
 
         update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
-        self.logger.debug(
-            f"Starting Action '{self.action_name}' with {len(self.fanned_out_commands)} fanned-out"
-            " commands."
+
+        fanned_out_commands = [
+            f"{cmd.device}.{cmd.command_name}"
+            for cmd in self.fanned_out_commands
+            if not getattr(cmd, "is_device_ignored", False)
+        ]
+        fanned_out_commands_str = ", ".join(fanned_out_commands) if fanned_out_commands else "None"
+        self.logger.info(
+            f"Starting Action {self.action_name}. Fanning out {fanned_out_commands_str} commands.",
+            extra=OPERATOR_TAG,
         )
 
         # Fan-out: Dispatch all fanned-out commands
@@ -268,13 +279,8 @@ class ActionHandler:
                 )
                 return
 
-        fanned_out_commands = [
-            f"{cmd.device}.{cmd.command_name}"
-            for cmd in self.fanned_out_commands
-            if not getattr(cmd, "is_device_ignored", False)
-        ]
         report_task_progress(
-            f"Fanned out commands: {', '.join(fanned_out_commands)}", self.progress_callback
+            f"Fanned out commands: {fanned_out_commands_str}", self.progress_callback
         )
 
         # If we're not waiting for anything, finish up
@@ -293,7 +299,7 @@ class ActionHandler:
         while deadline > time.time():
             # Handle abort
             if task_abort_event.is_set():
-                self.logger.warning(f"Action '{self.action_name}' aborted.")
+                self.logger.warning(f"Action '{self.action_name}' aborted.", extra=OPERATOR_TAG)
                 report_task_progress(f"{self.action_name} aborted", self.progress_callback)
                 update_task_status(
                     task_callback,
@@ -780,14 +786,19 @@ def apply_pointing_model(
 
         if values:
             dish_manager_cm.update_pointing_model_params(band_param_name, values)
-            logger.debug(f"Pointing model for band {band_name} applied successfully")
+            logger.info(
+                f"Pointing model for band {band_name} applied successfully", extra=OPERATOR_TAG
+            )
         else:
-            logger.debug(
-                f"Skipped applying pointing model for band {band_name} due to invalid params: []"
+            logger.info(
+                f"Skipped applying pointing model for band {band_name} due to invalid params: []",
+                extra=OPERATOR_TAG,
             )
 
     except (tango.DevFailed, ValueError) as err:
-        logger.error(f"Failed to apply pointing model for band {band_name}: {err}")
+        logger.error(
+            f"Failed to apply pointing model for band {band_name}: {err}", extra=OPERATOR_TAG
+        )
         update_task_status(
             task_callback,
             status=TaskStatus.FAILED,
@@ -855,7 +866,8 @@ class ConfigureBandAction(Action):
                 if not b5dc_manager:
                     self.logger.info(
                         "Monitoring and control not set up for B5DC device,"
-                        " skipping frequency configuration."
+                        " skipping frequency configuration.",
+                        extra=OPERATOR_TAG,
                     )
                 else:
                     b5dc_freq_enum = B5dcFrequency(int(sub_band))
@@ -1013,7 +1025,7 @@ class ConfigureBandActionSequence(Action):
                     return result
 
             except (json.JSONDecodeError, ValueError) as err:
-                self.logger.error(f"Invalid JSON: {err}")
+                self.logger.error(f"Invalid JSON: {err}", extra=OPERATOR_TAG)
                 update_task_status(
                     task_callback,
                     status=TaskStatus.FAILED,

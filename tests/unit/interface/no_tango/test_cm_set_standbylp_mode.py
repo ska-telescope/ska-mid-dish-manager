@@ -76,6 +76,6 @@ def test_set_standbylp_handler(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetStandbyLPMode completed"),
+        result=(ResultCode.OK, "SetStandbyLPMode completed."),
     )
-    progress_cb.wait_for_args(("SetStandbyLPMode completed",))
+    progress_cb.wait_for_args(("SetStandbyLPMode completed.",))
