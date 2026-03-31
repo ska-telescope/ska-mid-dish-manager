@@ -1,4 +1,4 @@
-"""Test that the DishManager ResetSubsconnection attribute."""
+"""Test that the DishManager ResetSubsconnection command."""
 
 import pytest
 import tango
@@ -81,7 +81,7 @@ def test_reset_subs_connection_no_device_names_input(dish_manager_resources, eve
 def test_reset_subs_connection_ignored_devices(
     dish_manager_resources, event_store_class, device_name, expected_result
 ):
-    """Test that ResetSubsConnection command raises an exception
+    """Test that ResetSubsConnection command fails
     when a sub device is ignored.
     """
     ignore_dev_event_store = event_store_class()
@@ -101,3 +101,19 @@ def test_reset_subs_connection_ignored_devices(
     device_proxy.write_attribute(ignore_attr_name, False)
     ignore_dev_event_store.wait_for_value(False)
     device_proxy.unsubscribe_event(event_id)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_reset_subs_connection_ignore_b5dc_when_not_monitored(
+    dish_manager_resources,
+):
+    """Test that ResetSubsConnection command raises an exception
+    when B5DC is not monitored.
+    """
+    device_proxy, _ = dish_manager_resources
+
+    with pytest.raises(tango.DevFailed) as err:
+        device_proxy.ResetSubsConnections(["B5DC"])
+
+    assert "Reconnection denied, B5DC device is not monitored" in str(err.value)
