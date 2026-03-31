@@ -222,8 +222,9 @@ def test_device_goes_away(patch_dp, caplog):
     tc_manager._events_queue.put(mock_some_attr_error_event_data)
 
     tc_manager._verifying_device_connection = mock.MagicMock(
-        side_effect=lambda stop_event: tc_manager._update_communication_state(
-            CommunicationStatus.NOT_ESTABLISHED
+        side_effect=lambda stop_event: (
+            tc_manager._update_communication_state(CommunicationStatus.NOT_ESTABLISHED),
+            setattr(tc_manager, "_verifying_connection", False),
         )
     )
     # wait a bit for the state to change
