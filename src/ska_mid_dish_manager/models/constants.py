@@ -23,6 +23,8 @@ MAX_ELEVATION_SCIENCE = 85.0
 MIN_ELEVATION_SCIENCE = 15.0
 MAX_AZIMUTH = 270.0
 MIN_AZIMUTH = -270.0
+PRE_VERIFY_WAIT = 2.0
+VERIFY_WAIT = 5.0
 
 DS_ERROR_STATUS_ATTRIBUTES = {
     "errAuthLost": "The actual control authority is not communicating",

@@ -321,7 +321,12 @@ class TestActionHandler:
             task_abort_event.set()
 
         # Start a thread which will abort the action after 5 seconds
-        abort_thread = threading.Thread(target=trigger_abort_later, args=(5,), daemon=True)
+        abort_thread = threading.Thread(
+            target=trigger_abort_later,
+            args=(5,),
+            daemon=True,
+            name=f"{self._tango_device_fqdn}-abort-thread",
+        )
         abort_thread.start()
 
         handler.execute(self.my_task_callback, task_abort_event)

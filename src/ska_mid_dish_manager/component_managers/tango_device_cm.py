@@ -13,6 +13,7 @@ from ska_tango_base.base import BaseComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
+from ska_mid_dish_manager.models.constants import POST_VERIFY_WAIT, PRE_VERIFY_WAIT
 from ska_mid_dish_manager.utils.decorators import check_communicating
 
 
@@ -54,9 +55,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
         )
 
         # Allows only one thread to work on a device at a time to prevent race conditions
-        self._verifying_connection_lock = Lock()
+        self._verifying_connection_lock: Lock = Lock()
         # Thread control flag
-        self._verifying_connection = False
+        self._verifying_connection: bool = False
         self._verification_thread: Optional[Thread] = None
         self._stop_verifying_event: Optional[Event] = None
 
@@ -119,10 +120,10 @@ class TangoDeviceComponentManager(BaseComponentManager):
         stop_verifying_event: Event,
     ) -> None:
         """Verifies if a device is connected to Dish Manager."""
-        delay = 5
         state = ""
 
         # Only run if a connection verification is needed
+        stop_verifying_event.wait(PRE_VERIFY_WAIT)
         while not stop_verifying_event.is_set():
             try:
                 # Check the state of the device to verify connectivity
@@ -130,14 +131,16 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 self.logger.debug(f"The current state of {self._tango_device_fqdn} is {state}.")
                 # If the read is successful - device is connected
                 self._update_communication_state(CommunicationStatus.ESTABLISHED)
+                self._fetch_build_state_information()
                 # Break the verification cycle
                 self._verifying_connection = False
                 stop_verifying_event.set()
+                break
 
             except (tango.DevFailed, ConnectionError):
-                self.logger.debug(f"The current state of {self._tango_device_fqdn} is {state}.")
+                self.logger.debug(f"Attempt to read state from {self._tango_device_fqdn} failed.")
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-                stop_verifying_event.wait(delay)
+                stop_verifying_event.wait(POST_VERIFY_WAIT)
 
     def _handle_error_events(self, event_data: tango.EventData) -> None:
         """Handle error events from attr subscription.
@@ -183,12 +186,13 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 if not self._verifying_connection:
                     self._verifying_connection = True
                     self._stop_verifying_event = threading.Event()
-                    t = self._verification_thread = threading.Thread(
+                    self._verification_thread = threading.Thread(
                         target=self._verifying_device_connection,
                         args=(self._stop_verifying_event,),
                         daemon=True,
+                        name=f"{self._tango_device_fqdn}-connection-verification-thread",
                     )
-                    t.start()
+                    self._verification_thread.start()
 
     # --------------
     # helper methods
@@ -284,7 +288,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
     ) -> None:
         while task_abort_event and not task_abort_event.is_set():
             try:
-                event_data = event_queue.get(timeout=0.1)
+                event_data = event_queue.get(timeout=1)
                 error = event_data.err
                 # If a tango error has been flagged, due to an invalid attribute, do not
                 # interpret it as communication error.
