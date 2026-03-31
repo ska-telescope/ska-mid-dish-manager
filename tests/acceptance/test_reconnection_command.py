@@ -28,6 +28,12 @@ def test_reset_connection_cmd(
 
     dish_manager_proxy.ResetSubsConnections(["DS", "SPF", "SPFRX"])
 
+    # Stop_communicating sets connection state to disabled
+    ds_connection_state_event_store.wait_for_value(CommunicationStatus.DISABLED, timeout=30)
+    spf_connection_state_event_store.wait_for_value(CommunicationStatus.DISABLED, timeout=30)
+    spfrx_connection_state_event_store.wait_for_value(CommunicationStatus.DISABLED, timeout=30)
+    # Start_communicating sets connection state to not_established
+    # and it the connectionstate is updated automatically to established
     ds_connection_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=30)
     spf_connection_state_event_store.wait_for_value(
         CommunicationStatus.NOT_ESTABLISHED, timeout=30
