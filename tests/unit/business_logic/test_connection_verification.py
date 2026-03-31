@@ -5,6 +5,8 @@ import threading
 
 import mock
 import pytest
+import tango
+from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import DishMode
@@ -16,6 +18,13 @@ LOGGER = logging.getLogger(__name__)
 def cm():
     cm = TangoDeviceComponentManager("a/b/c", LOGGER, ())
     cm._verifying_device_connection = mock.MagicMock()
+    yield cm
+    cm.stop_communicating()
+
+
+@pytest.fixture
+def cm_no_vdc():
+    cm = TangoDeviceComponentManager("a/b/c", LOGGER, ())
     yield cm
     cm.stop_communicating()
 
@@ -63,50 +72,46 @@ def test_valid_event_stops_verification(cm, caplog):
     assert cm._verifying_connection is False
 
 
-# @pytest.mark.unit
-# def test_verification_success(caplog: pytest.LogCaptureFixture):
-#     """Check that verification sets state to ESTABLISHED when device responds."""
-#     caplog.set_level(logging.DEBUG)
+@pytest.mark.unit
+def test_verification_success(cm_no_vdc, caplog):
+    """Check that verification sets state to ESTABLISHED when device responds."""
+    caplog.set_level(logging.DEBUG)
 
-#     cm = TangoDeviceComponentManager("a/b/c", LOGGER, ())
-#     disable_threads(cm)
+    cm_no_vdc = TangoDeviceComponentManager("a/b/c", LOGGER, ())
 
-#     cm._verifying_connection = True
-#     cm._update_communication_state = mock.MagicMock()
+    cm_no_vdc._verifying_connection = True
+    cm_no_vdc._update_communication_state = mock.MagicMock()
 
-#     stop_event = mock.MagicMock()
-#     stop_event.is_set.side_effect = [False, True]
-#     stop_event.set = mock.MagicMock()
-#     # mock successful read
-#     cm.read_attribute_value = mock.Mock(return_value="DevState.ON")
-#     cm._verifying_device_connection(stop_event)
+    stop_event = mock.MagicMock()
+    stop_event.is_set.side_effect = False
+    stop_event.set = mock.MagicMock()
+    # mock successful read
+    cm_no_vdc.read_attribute_value = mock.Mock(return_value="DevState.ON")
+    cm_no_vdc._verifying_device_connection(stop_event)
 
-#     cm._update_communication_state.assert_called_with(CommunicationStatus.ESTABLISHED)
+    cm_no_vdc._update_communication_state.assert_called_with(CommunicationStatus.ESTABLISHED)
 
-#     assert cm._verifying_connection is False
-
-
-# @pytest.mark.unit
-# def test_verification_failure(caplog: pytest.LogCaptureFixture):
-#     """Check that verification sets NOT_ESTABLISHED on failure."""
-#     caplog.set_level(logging.DEBUG)
-
-#     cm = TangoDeviceComponentManager("a/b/c", LOGGER, ())
-#     disable_threads(cm)
-
-#     cm._verifying_connection = True
-#     cm._update_communication_state = mock.MagicMock()
-
-#     stop_event = mock.MagicMock()
-#     stop_event.is_set.return_value = False
-
-#     cm.read_attribute_value = mock.Mock(
-#     side_effect=DevFailed())
+    assert cm_no_vdc._verifying_connection is False
 
 
-#     cm._verifying_device_connection(stop_event)
+@pytest.mark.unit
+def test_verification_failure(cm_no_vdc, caplog):
+    """Check that verification sets NOT_ESTABLISHED on failure."""
+    caplog.set_level(logging.DEBUG)
 
-#     cm._update_communication_state.assert_called_with(CommunicationStatus.NOT_ESTABLISHED)
+    cm_no_vdc = TangoDeviceComponentManager("a/b/c", LOGGER, ())
 
-#     # Flag should remain True because verification never succeeded
-#     assert cm._verifying_connection is True
+    cm_no_vdc._verifying_connection = True
+    cm_no_vdc._update_communication_state = mock.MagicMock()
+
+    stop_event = mock.MagicMock()
+    stop_event.is_set.return_value = False
+
+    cm_no_vdc.read_attribute_value = mock.Mock(side_effect=tango.DevFailed())
+
+    cm_no_vdc._verifying_device_connection(stop_event)
+
+    cm_no_vdc._update_communication_state.assert_called_with(CommunicationStatus.NOT_ESTABLISHED)
+
+    # Flag should remain True because verification never succeeded
+    assert cm_no_vdc._verifying_connection is True
