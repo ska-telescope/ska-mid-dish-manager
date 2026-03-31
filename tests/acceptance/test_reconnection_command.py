@@ -26,10 +26,6 @@ def test_reset_connection_cmd(
 
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    #ds_connection_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=20)
-    #spf_connection_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=20)
-    #spfrx_connection_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=20)
-
     dish_manager_proxy.ResetSubsConnections(["DS", "SPF", "SPFRX"])
 
     ds_connection_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=30)
