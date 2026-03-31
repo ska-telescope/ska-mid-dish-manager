@@ -41,9 +41,7 @@ def test_reset_subs_connection_invalid_device_names(dish_manager_resources, inva
         ["DS", "SPF", "SPFRX"],
     ],
 )
-def test_reset_subs_connection_valid_device_names(
-    dish_manager_resources, event_store_class, valid_dev_names
-):
+def test_reset_subs_connection_valid_device_names(dish_manager_resources, valid_dev_names):
     """Test that ResetSubsConnection command resets the connections
     when valid device names are passed.
     """
@@ -57,7 +55,7 @@ def test_reset_subs_connection_valid_device_names(
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_reset_subs_connection_no_device_names_input(dish_manager_resources, event_store_class):
+def test_reset_subs_connection_no_device_names_input(dish_manager_resources):
     """Test that ResetSubsConnection command raises an exception
     when no device names are passed.
     """

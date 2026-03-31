@@ -154,7 +154,7 @@ def test_connection_error(caplog):
     ],
 )
 def test_device_stop_monitor(caplog, device_fqdn, subs):
-    """Test that the stop monitoring for devices monitor clears threads."""
+    """Test that the stop_monitoring() for devices monitor clears threads."""
     caplog.set_level(logging.DEBUG)
     event_queue = Queue()
     device_proxy_factory = DeviceProxyManager(LOGGER, Event())
