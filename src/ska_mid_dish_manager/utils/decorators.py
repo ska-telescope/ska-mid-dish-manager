@@ -7,6 +7,8 @@ from typing import Any, Callable
 
 from ska_control_model import CommunicationStatus
 
+from ska_mid_dish_manager.models.constants import OPERATOR_TAG
+
 SLOW_WRITE_WARN_THRESHOLD_SECONDS = 0.5
 
 
@@ -128,7 +130,64 @@ def requires_component_manager(func: Any) -> Any:
         msg = "Component manager not initialized."
         logger = getattr(self, "logger", None)
         if logger:
-            logger.error(msg)
+            logger.error(msg, extra=OPERATOR_TAG)
         raise RuntimeError(msg)
 
     return _wrapper
+
+
+def log_tango_command() -> Callable:
+    """Log Tango command details with operator tag.
+
+    This decorator logs the command name and arguments using the device logger
+    so logs can be filtered downstream via the operator tag.
+    """
+
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+            logger = getattr(self, "logger", None)
+            if logger:
+                if args:
+                    logger.info(
+                        "Tango command %s called with param %s.",
+                        func.__name__,
+                        args,
+                        extra=OPERATOR_TAG,
+                    )
+                else:
+                    logger.info(
+                        "Tango command %s called.",
+                        func.__name__,
+                        extra=OPERATOR_TAG,
+                    )
+            return func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def log_tango_attr_write() -> Callable:
+    """Log Tango attribute write details with operator tag.
+
+    This decorator logs the attribute name and value using the device logger
+    so logs can be filtered downstream via the operator tag.
+    """
+
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+            logger = getattr(self, "logger", None)
+            if logger:
+                logger.info(
+                    "Tango attribute write called on %s with param %s.",
+                    func.__name__,
+                    args,
+                    extra=OPERATOR_TAG,
+                )
+            return func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator

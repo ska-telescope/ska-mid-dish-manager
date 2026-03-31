@@ -5,6 +5,7 @@ and the subservient devices
 """
 
 import json
+import logging
 import weakref
 from datetime import datetime
 from functools import reduce
@@ -42,6 +43,7 @@ from ska_mid_dish_manager.models.constants import (
     DSC_MAX_POWER_LIMIT_KW,
     DSC_MIN_POWER_LIMIT_KW,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
+    OPERATOR_TAG,
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
@@ -61,6 +63,8 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
 from ska_mid_dish_manager.utils.decorators import (
+    log_tango_attr_write,
+    log_tango_command,
     record_command,
     requires_component_manager,
     time_tango_write,
@@ -120,6 +124,7 @@ class DishManager(SKAController):
         :return: Instance of DishManagerComponentManager
         :rtype: DishManagerComponentManager
         """
+        self._configure_additional_user_tags_for_logging()
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
@@ -239,23 +244,45 @@ class DishManager(SKAController):
             SetVPolAttenuationCommand(self.component_manager, self.logger),
         )
 
+    def delete_device(self):
+        """Override delete_device to stop communication with sub-devices before deletion."""
+        self.logger.info(
+            "DishManager device is being deleted. Stopping communication with sub-devices.",
+            extra=OPERATOR_TAG,
+        )
+        if self.component_manager:
+            self.component_manager.stop_communicating()
+
+        return super().delete_device()
+
     # ---------
     # Callbacks
     # ---------
 
-    def _update_status(self, status: str) -> None:
+    def _update_status(self, status: str, user_operator=True) -> None:
         """Update the status of the device."""
         self.set_status(status)
-        self.logger.debug(status)
+        if user_operator:
+            self.logger.info(status, extra=OPERATOR_TAG)
+        else:
+            self.logger.debug(status)
         self.push_change_event("status")
 
     def _update_version_of_subdevice_on_success(self, device: DishDevice, build_state: str):
         """Update the version information of subdevice if connection is successful."""
         try:
             self._build_state = self._release_info.update_build_state(device, build_state)
+            self.logger.info(
+                "Updated build state information for %s device: %s.",
+                device.value,
+                build_state,
+                extra=OPERATOR_TAG,
+            )
         except AttributeError:
             self.logger.warning(
-                "Failed to update build state information for [%s] device.", device.value
+                "Failed to update build state information for %s device.",
+                device.value,
+                extra=OPERATOR_TAG,
             )
 
     def _attr_quality_state_changed(
@@ -425,6 +452,7 @@ class DishManager(SKAController):
                 "dsconnectionstate": "dsConnectionState",
                 "wmsconnectionstate": "wmsConnectionState",
                 "b5dcconnectionstate": "b5dcConnectionState",
+                "dscconnectionstate": "dscConnectionState",
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
@@ -517,9 +545,25 @@ class DishManager(SKAController):
 
             device.instances[device.get_name()] = device
             (result_code, message) = super().do()
+            self.logger.info("Device Initialization: %s", result_code.name, extra=OPERATOR_TAG)
             device.op_state_model.perform_action("component_on")
             device.component_manager.start_communicating()
             return (ResultCode(result_code), message)
+
+    def _configure_additional_user_tags_for_logging(self):
+        """Append user tags to log records."""
+
+        class UserTagsFilter(logging.Filter):
+            """Filter to add user tags to log records."""
+
+            def filter(self, record: logging.LogRecord) -> bool:
+                user_type = getattr(record, "user", "")
+                if user_type:
+                    record.tags += f",user:{user_type}"
+
+                return True
+
+        self.logger.addFilter(UserTagsFilter())
 
     # ----------
     # Attributes
@@ -609,6 +653,17 @@ class DishManager(SKAController):
         )
 
     @attribute(
+        dtype=CommunicationStatus,
+        access=AttrWriteType.READ,
+        doc="Return the status of the connection of the DSManager device to the dish controller.",
+    )
+    def dscConnectionState(self) -> CommunicationStatus:
+        """Return the status of the connection of the DSManager device to the dish controller."""
+        return self.component_manager.component_state.get(
+            "dscconnectionstate", CommunicationStatus.NOT_ESTABLISHED
+        )
+
+    @attribute(
         max_dim_x=3,
         dtype=(float,),
         doc="[0] Timestamp\n[1] Azimuth\n[2] Elevation",
@@ -668,16 +723,12 @@ class DishManager(SKAController):
 
     @attenuation1PolHX.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def attenuation1PolHX(self, value):
         """Set the attenuation Pol H/X for attenuator 1."""
-        self.logger.debug("attenuation1PolHX write method called with param %s", value)
-
-        if hasattr(self, "component_manager"):
-            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            spfrx_com_man.write_attribute_value("attenuation1PolHX", value)
-        else:
-            self.logger.warning("No component manager to write attenuation1PolHX yet")
-            raise RuntimeError("Failed to write to attenuation1PolHX on DishManager")
+        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_com_man.write_attribute_value("attenuation1PolHX", value)
 
     @attribute(
         dtype=float,
@@ -691,16 +742,12 @@ class DishManager(SKAController):
 
     @attenuation1PolVY.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def attenuation1PolVY(self, value):
         """Set the attenuation Pol V/Y for attenuator 1."""
-        self.logger.debug("attenuation1PolVY write method called with param %s", value)
-
-        if hasattr(self, "component_manager"):
-            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            spfrx_com_man.write_attribute_value("attenuation1PolVY", value)
-        else:
-            self.logger.warning("No component manager to write attenuation1PolVY yet")
-            raise RuntimeError("Failed to write to attenuation1PolVY on DishManager")
+        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_com_man.write_attribute_value("attenuation1PolVY", value)
 
     @attribute(
         dtype=float,
@@ -714,16 +761,12 @@ class DishManager(SKAController):
 
     @attenuation2PolHX.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def attenuation2PolHX(self, value):
         """Set the attenuation Pol H/X for attenuator 2."""
-        self.logger.debug("attenuation2PolHX write method called with param %s", value)
-
-        if hasattr(self, "component_manager"):
-            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            spfrx_com_man.write_attribute_value("attenuation2PolHX", value)
-        else:
-            self.logger.warning("No component manager to write attenuation2PolHX yet")
-            raise RuntimeError("Failed to write to attenuation2PolHX on DishManager")
+        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_com_man.write_attribute_value("attenuation2PolHX", value)
 
     @attribute(
         dtype=float,
@@ -737,16 +780,12 @@ class DishManager(SKAController):
 
     @attenuation2PolVY.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def attenuation2PolVY(self, value):
         """Set the attenuation Pol V/Y for attenuator 2."""
-        self.logger.debug("attenuation2PolVY write method called with param %s", value)
-
-        if hasattr(self, "component_manager"):
-            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            spfrx_com_man.write_attribute_value("attenuation2PolVY", value)
-        else:
-            self.logger.warning("No component manager to write attenuation2PolVY yet")
-            raise RuntimeError("Failed to write to attenuation2PolVY on DishManager")
+        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_com_man.write_attribute_value("attenuation2PolVY", value)
 
     @attribute(
         dtype=float,
@@ -760,16 +799,12 @@ class DishManager(SKAController):
 
     @attenuationPolHX.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def attenuationPolHX(self, value):
         """Set the total attenuation Pol H/X."""
-        self.logger.debug("attenuationPolHX write method called with param %s", value)
-
-        if hasattr(self, "component_manager"):
-            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            spfrx_com_man.write_attribute_value("attenuationPolHX", value)
-        else:
-            self.logger.warning("No component manager to write attenuationPolHX yet")
-            raise RuntimeError("Failed to write to attenuationPolHX on DishManager")
+        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_com_man.write_attribute_value("attenuationPolHX", value)
 
     @attribute(
         dtype=float,
@@ -783,16 +818,12 @@ class DishManager(SKAController):
 
     @attenuationPolVY.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def attenuationPolVY(self, value):
         """Set the total attenuation Pol V/Y."""
-        self.logger.debug("attenuationPolVY write method called with param %s", value)
-
-        if hasattr(self, "component_manager"):
-            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            spfrx_com_man.write_attribute_value("attenuationPolVY", value)
-        else:
-            self.logger.warning("No component manager to write attenuationPolVY yet")
-            raise RuntimeError("Failed to write to attenuationPolVY on DishManager")
+        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_com_man.write_attribute_value("attenuationPolVY", value)
 
     @attribute(
         dtype=int,
@@ -850,15 +881,11 @@ class DishManager(SKAController):
 
     @band0PointingModelParams.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def band0PointingModelParams(self, value):
         """Set the band0PointingModelParams."""
-        self.logger.debug("band0PointingModelParams write method called with params %s", value)
-
-        if hasattr(self, "component_manager"):
-            self.component_manager.update_pointing_model_params("band0PointingModelParams", value)
-        else:
-            self.logger.warning("No component manager to write band0PointingModelParams yet")
-            raise RuntimeError("Failed to write to band0PointingModelParams on DishManager")
+        self.component_manager.update_pointing_model_params("band0PointingModelParams", value)
 
     @attribute(
         dtype=(float,),
@@ -881,15 +908,11 @@ class DishManager(SKAController):
 
     @band1PointingModelParams.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def band1PointingModelParams(self, value):
         """Set the band1PointingModelParams."""
-        self.logger.debug("band1PointingModelParams write method called with params %s", value)
-
-        if hasattr(self, "component_manager"):
-            self.component_manager.update_pointing_model_params("band1PointingModelParams", value)
-        else:
-            self.logger.warning("No component manager to write band1PointingModelParams yet")
-            raise RuntimeError("Failed to write to band1PointingModelParams on DishManager")
+        self.component_manager.update_pointing_model_params("band1PointingModelParams", value)
 
     @attribute(
         dtype=(float,),
@@ -912,15 +935,11 @@ class DishManager(SKAController):
 
     @band2PointingModelParams.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def band2PointingModelParams(self, value):
         """Set the band2PointingModelParams."""
-        self.logger.debug("band2PointingModelParams write method called with params %s", value)
-
-        if hasattr(self, "component_manager"):
-            self.component_manager.update_pointing_model_params("band2PointingModelParams", value)
-        else:
-            self.logger.warning("No component manager to write band2PointingModelParams yet")
-            raise RuntimeError("Failed to write to band2PointingModelParams on DishManager")
+        self.component_manager.update_pointing_model_params("band2PointingModelParams", value)
 
     @attribute(
         dtype=(float,),
@@ -943,15 +962,11 @@ class DishManager(SKAController):
 
     @band3PointingModelParams.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def band3PointingModelParams(self, value):
         """Set the band3PointingModelParams."""
-        self.logger.debug("band3PointingModelParams write method called with params %s", value)
-
-        if hasattr(self, "component_manager"):
-            self.component_manager.update_pointing_model_params("band3PointingModelParams", value)
-        else:
-            self.logger.warning("No component manager to write band3PointingModelParams yet")
-            raise RuntimeError("Failed to write to band3PointingModelParams on DishManager")
+        self.component_manager.update_pointing_model_params("band3PointingModelParams", value)
 
     @attribute(
         dtype=(float,),
@@ -974,15 +989,11 @@ class DishManager(SKAController):
 
     @band4PointingModelParams.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def band4PointingModelParams(self, value):
         """Set the band4PointingModelParams."""
-        self.logger.debug("band4PointingModelParams write method called with params %s", value)
-
-        if hasattr(self, "component_manager"):
-            self.component_manager.update_pointing_model_params("band4PointingModelParams", value)
-        else:
-            self.logger.warning("No component manager to write band4PointingModelParams yet")
-            raise RuntimeError("Failed to write to band4PointingModelParams on DishManager")
+        self.component_manager.update_pointing_model_params("band4PointingModelParams", value)
 
     @attribute(
         dtype=(float,),
@@ -997,14 +1008,11 @@ class DishManager(SKAController):
 
     @band5aPointingModelParams.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def band5aPointingModelParams(self, value):
         """Set the band5aPointingModelParams."""
-        self.logger.debug("band5aPointingModelParams write method called with params %s", value)
-        if hasattr(self, "component_manager"):
-            self.component_manager.update_pointing_model_params("band5aPointingModelParams", value)
-        else:
-            self.logger.warning("No component manager to write band5aPointingModelParams yet")
-            raise RuntimeError("Failed to write to band5aPointingModelParams on DishManager")
+        self.component_manager.update_pointing_model_params("band5aPointingModelParams", value)
 
     @attribute(
         dtype=(float,),
@@ -1019,15 +1027,11 @@ class DishManager(SKAController):
 
     @band5bPointingModelParams.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def band5bPointingModelParams(self, value):
         """Set the band5bPointingModelParams."""
-        self.logger.debug("band5bPointingModelParams write method called with params %s", value)
-
-        if hasattr(self, "component_manager"):
-            self.component_manager.update_pointing_model_params("band5bPointingModelParams", value)
-        else:
-            self.logger.warning("No component manager to write band5bPointingModelParams yet")
-            raise RuntimeError("Failed to write to band5bPointingModelParams on DishManager")
+        self.component_manager.update_pointing_model_params("band5bPointingModelParams", value)
 
     @attribute(
         dtype=float,
@@ -1040,6 +1044,7 @@ class DishManager(SKAController):
 
     @band1SamplerFrequency.write
     @time_tango_write()
+    @log_tango_attr_write()
     def band1SamplerFrequency(self, value):
         """Set the band1SamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
@@ -1058,6 +1063,7 @@ class DishManager(SKAController):
 
     @band2SamplerFrequency.write
     @time_tango_write()
+    @log_tango_attr_write()
     def band2SamplerFrequency(self, value):
         """Set the band2SamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
@@ -1076,6 +1082,7 @@ class DishManager(SKAController):
 
     @band3SamplerFrequency.write
     @time_tango_write()
+    @log_tango_attr_write()
     def band3SamplerFrequency(self, value):
         """Set the band3SamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
@@ -1094,6 +1101,7 @@ class DishManager(SKAController):
 
     @band4SamplerFrequency.write
     @time_tango_write()
+    @log_tango_attr_write()
     def band4SamplerFrequency(self, value):
         """Set the band4SamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
@@ -1112,6 +1120,7 @@ class DishManager(SKAController):
 
     @band5aSamplerFrequency.write
     @time_tango_write()
+    @log_tango_attr_write()
     def band5aSamplerFrequency(self, value):
         """Set the band5aSamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
@@ -1130,6 +1139,7 @@ class DishManager(SKAController):
 
     @band5bSamplerFrequency.write
     @time_tango_write()
+    @log_tango_attr_write()
     def band5bSamplerFrequency(self, value):
         """Set the band5bSamplerFrequency."""
         # pylint: disable=attribute-defined-outside-init
@@ -1165,6 +1175,7 @@ class DishManager(SKAController):
 
     @configureTargetLock.write
     @time_tango_write()
+    @log_tango_attr_write()
     def configureTargetLock(self, value):
         """Set the configureTargetLock."""
         # pylint: disable=attribute-defined-outside-init
@@ -1215,6 +1226,7 @@ class DishManager(SKAController):
 
     @dshMaxShortTermPower.write
     @time_tango_write()
+    @log_tango_attr_write()
     def dshMaxShortTermPower(self, value):
         """Set the dshMaxShortTermPower."""
         # pylint: disable=attribute-defined-outside-init
@@ -1240,6 +1252,7 @@ class DishManager(SKAController):
 
     @dshPowerCurtailment.write
     @time_tango_write()
+    @log_tango_attr_write()
     def dshPowerCurtailment(self, value):
         """Set the dshPowerCurtailment."""
         # pylint: disable=attribute-defined-outside-init
@@ -1259,6 +1272,7 @@ class DishManager(SKAController):
 
     @noiseDiodeConfig.write
     @time_tango_write()
+    @log_tango_attr_write()
     def noiseDiodeConfig(self, value):
         """Set the noiseDiodeConfig."""
         # pylint: disable=attribute-defined-outside-init
@@ -1287,6 +1301,7 @@ class DishManager(SKAController):
 
     @programTrackTable.write
     @time_tango_write()
+    @log_tango_attr_write()
     def programTrackTable(self, table):
         """Set the programTrackTable."""
         # pylint: disable=attribute-defined-outside-init
@@ -1301,7 +1316,7 @@ class DishManager(SKAController):
                 TRACK_LOAD_FUTURE_THRESHOLD_SEC,
             )
         except TrackTableTimestampError as te:
-            self.logger.warning("Track table timestamp warning: %s", te)
+            self.logger.warning("Track table timestamp warning: %s", te, extra=OPERATOR_TAG)
         except ValueError as ve:
             raise ve
 
@@ -1342,6 +1357,7 @@ class DishManager(SKAController):
 
     @polyTrack.write
     @time_tango_write()
+    @log_tango_attr_write()
     def polyTrack(self, value):
         """Set the polyTrack."""
         # pylint: disable=attribute-defined-outside-init
@@ -1365,6 +1381,7 @@ class DishManager(SKAController):
 
     @trackInterpolationMode.write
     @time_tango_write()
+    @log_tango_attr_write()
     def trackInterpolationMode(self, value):
         """Set the trackInterpolationMode."""
         self.component_manager.set_track_interpolation_mode(value)
@@ -1382,6 +1399,7 @@ class DishManager(SKAController):
 
     @trackProgramMode.write
     @time_tango_write()
+    @log_tango_attr_write()
     def trackProgramMode(self, value):
         """Set the trackProgramMode."""
         # pylint: disable=attribute-defined-outside-init
@@ -1405,6 +1423,7 @@ class DishManager(SKAController):
 
     @trackTableLoadMode.write
     @time_tango_write()
+    @log_tango_attr_write()
     def trackTableLoadMode(self, value):
         """Set the trackTableLoadMode."""
         # pylint: disable=attribute-defined-outside-init
@@ -1489,6 +1508,8 @@ class DishManager(SKAController):
 
     @scanID.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def scanID(self, scanid):
         """Sets the scanID."""
         self.component_manager._update_component_state(scanid=scanid)
@@ -1507,9 +1528,10 @@ class DishManager(SKAController):
 
     @ignoreSpf.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def ignoreSpf(self, value):
         """Sets ignoreSpf."""
-        self.logger.debug("Write to ignoreSpf, %s", value)
         self.component_manager.set_spf_device_ignored(value)
 
     @attribute(
@@ -1526,9 +1548,10 @@ class DishManager(SKAController):
 
     @ignoreSpfrx.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def ignoreSpfrx(self, value):
         """Sets ignoreSpfrx."""
-        self.logger.debug("Write to ignoreSpfrx, %s", value)
         self.component_manager.set_spfrx_device_ignored(value)
 
     @attribute(
@@ -1544,9 +1567,11 @@ class DishManager(SKAController):
         return self.component_manager.component_state.get("ignoreb5dc", False)
 
     @ignoreB5dc.write
+    @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def ignoreB5dc(self, value):
         """Sets ignoreB5dc."""
-        self.logger.debug("Write to ignoreB5dc, %s", value)
         self.component_manager.set_b5dc_device_ignored(value)
 
     @attribute(
@@ -1563,11 +1588,12 @@ class DishManager(SKAController):
     )
     def noiseDiodeMode(self):
         """Returns the noise diode mode."""
-        self.logger.debug("Read noiseDiodeMode")
         return self.component_manager.component_state.get("noisediodemode", NoiseDiodeMode.OFF)
 
     @noiseDiodeMode.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def noiseDiodeMode(self, mode: NoiseDiodeMode):
         """Set the device noise diode mode."""
         self.component_manager.set_noise_diode_mode(mode)
@@ -1587,11 +1613,12 @@ class DishManager(SKAController):
     )
     def periodicNoiseDiodePars(self):
         """Returns the device periodic noise diode pars."""
-        self.logger.debug("Read periodicNoiseDiodePars")
         return self.component_manager.component_state.get("periodicnoisediodepars", [])
 
     @periodicNoiseDiodePars.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def periodicNoiseDiodePars(self, values):
         """Set the device periodic noise diode pars."""
         self.component_manager.set_periodic_noise_diode_pars(values)
@@ -1611,11 +1638,12 @@ class DishManager(SKAController):
     )
     def pseudoRandomNoiseDiodePars(self):
         """Returns the device pseudo random noise diode pars."""
-        self.logger.debug("Read noiseDiodeMode")
         return self.component_manager.component_state.get("pseudorandomnoisediodepars", [])
 
     @pseudoRandomNoiseDiodePars.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def pseudoRandomNoiseDiodePars(self, values):
         """Set the device pseudo random noise diode pars."""
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
@@ -1630,7 +1658,6 @@ class DishManager(SKAController):
     )
     def isKLocked(self):
         """Returns the status of the SPFRx isKLocked attribute."""
-        self.logger.debug("Read isKLocked")
         return self.component_manager.component_state.get("isklocked", False)
 
     @attribute(
@@ -1651,21 +1678,16 @@ class DishManager(SKAController):
     )
     def spectralInversion(self):
         """Returns the status of the SPFRx spectralInversion attribute."""
-        self.logger.debug("Read spectralInversion")
         return self.component_manager.component_state.get("spectralinversion", False)
 
     @spectralInversion.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def spectralInversion(self, value):
         """Set the status of the SPFRx spectralInversion attribute."""
-        self.logger.debug("spectralInversion write method called with param %s", value)
-
-        if hasattr(self, "component_manager"):
-            spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-            spfrx_com_man.write_attribute_value("spectralInversion", value)
-        else:
-            self.logger.warning("No component manager to write spectralInversion yet")
-            raise RuntimeError("Failed to write to spectralInversion on DishManager")
+        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+        spfrx_com_man.write_attribute_value("spectralInversion", value)
 
     @attribute(
         dtype=str,
@@ -1699,6 +1721,8 @@ class DishManager(SKAController):
 
     @dscPowerLimitKw.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def dscPowerLimitKw(self, value):
         """Sets the DSC Power Limit (Kw)."""
         # pylint: disable=attribute-defined-outside-init
@@ -1735,6 +1759,7 @@ class DishManager(SKAController):
 
     @watchdogTimeout.write
     @time_tango_write()
+    @log_tango_attr_write()
     @requires_component_manager
     def watchdogTimeout(self, value):
         """Writes watchdogTimeout."""
@@ -1784,9 +1809,10 @@ class DishManager(SKAController):
 
     @autoWindStowEnabled.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def autoWindStowEnabled(self, enabled: bool):
         """Flag to toggle the auto wind stow on or off."""
-        self.logger.debug("autoWindStowEnabled updated to, %s", enabled)
         self.component_manager._update_component_state(autowindstowenabled=enabled)
         # if flag is disabled mid operation, the device might stay
         # in ALARM forever, the wind_stow_active flag should be unset
@@ -1822,9 +1848,10 @@ class DishManager(SKAController):
 
     @actionTimeoutSeconds.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def actionTimeoutSeconds(self, value):
         """Sets actionTimeoutSeconds."""
-        self.logger.debug("Write to actionTimeoutSeconds, %s", value)
         self.component_manager.set_action_timeout(value)
 
     @attribute(
@@ -1838,10 +1865,11 @@ class DishManager(SKAController):
 
     @b1LnaHPowerState.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def b1LnaHPowerState(self, value: bool):
         """Sets b1LnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b1LnaHPowerState to, %s", value)
         self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b1LnaHPowerState", value)
 
@@ -1856,10 +1884,11 @@ class DishManager(SKAController):
 
     @b2LnaHPowerState.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def b2LnaHPowerState(self, value: bool):
         """Sets b2LnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b2LnaHPowerState to, %s", value)
         self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b2LnaHPowerState", value)
 
@@ -1874,10 +1903,11 @@ class DishManager(SKAController):
 
     @b1LnaVPowerState.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def b1LnaVPowerState(self, value: bool):
         """Sets b1LnaVPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b1LnaVPowerState to, %s", value)
         self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b1LnaVPowerState", value)
 
@@ -1892,10 +1922,11 @@ class DishManager(SKAController):
 
     @b2LnaVPowerState.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def b2LnaVPowerState(self, value: bool):
         """Sets b2LnaVPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b2LnaVPowerState to, %s", value)
         self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b2LnaVPowerState", value)
 
@@ -1910,10 +1941,11 @@ class DishManager(SKAController):
 
     @b3LnaPowerState.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def b3LnaPowerState(self, value: bool):
         """Sets b3LnaPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b3LnaPowerState to, %s", value)
         self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b3LnaPowerState", value)
 
@@ -1928,10 +1960,11 @@ class DishManager(SKAController):
 
     @b4LnaPowerState.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def b4LnaPowerState(self, value: bool):
         """Sets b4LnaPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b4LnaPowerState to, %s", value)
         self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b4LnaPowerState", value)
 
@@ -1946,10 +1979,11 @@ class DishManager(SKAController):
 
     @b5aLnaPowerState.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def b5aLnaPowerState(self, value: bool):
         """Sets b5aLnaPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b5aLnaPowerState to, %s", value)
         self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b5aLnaPowerState", value)
 
@@ -1964,10 +1998,11 @@ class DishManager(SKAController):
 
     @b5bLnaPowerState.write
     @time_tango_write()
+    @log_tango_attr_write()
+    @requires_component_manager
     def b5bLnaPowerState(self, value: bool):
         """Sets b5bLnaPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
-        self.logger.debug("Set b5bLnaPowerState to, %s", value)
         self.component_manager.check_dish_mode_for_spfc_lna_power_state()
         spf_com_man.write_attribute_value("b5bLnaPowerState", value)
 
@@ -2096,6 +2131,7 @@ class DishManager(SKAController):
     # --------
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         doc_in="Abort currently executing long running command on "
         "DishManager including stopping dish movement and transitioning "
@@ -2116,6 +2152,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in="DevString",
         doc_in="""The command accepts a JSON string containing data to configure the SPFRx.
@@ -2173,6 +2210,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
@@ -2200,6 +2238,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
@@ -2229,6 +2268,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
@@ -2253,6 +2293,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
@@ -2277,6 +2318,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
@@ -2301,6 +2343,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
@@ -2324,6 +2367,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
+    @log_tango_command()
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def FlushCommandQueue(self):
         """Flushes the queue of time stamped commands."""
@@ -2331,6 +2375,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=str,
         dtype_out="DevVarLongStringArray",
@@ -2349,6 +2394,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
@@ -2364,6 +2410,7 @@ class DishManager(SKAController):
 
     @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
@@ -2386,6 +2433,7 @@ class DishManager(SKAController):
 
     @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         doc_in="SetOperateMode is a deprecated command, it is recommended to use ConfigureBand "
@@ -2410,6 +2458,7 @@ class DishManager(SKAController):
 
     @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
@@ -2442,6 +2491,7 @@ class DishManager(SKAController):
 
     @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
@@ -2466,6 +2516,7 @@ class DishManager(SKAController):
 
     @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
@@ -2496,6 +2547,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in="DevVarFloatArray",
         doc_in="Slew to Az/EL: [0]: Azimuth\n[1]: Elevation",
@@ -2516,6 +2568,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
+    @log_tango_command()
     @command(
         dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR, doc_in="Not Implemented."
     )
@@ -2527,6 +2580,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
@@ -2562,6 +2616,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
@@ -2584,6 +2639,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(  # type: ignore[misc]
         dtype_in=(float,),
         dtype_out="DevVarLongStringArray",
@@ -2614,6 +2670,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in="DevLong64",
         dtype_out="DevVarLongStringArray",
@@ -2631,6 +2688,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",
@@ -2649,6 +2707,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",
@@ -2666,6 +2725,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",
@@ -2681,6 +2741,7 @@ class DishManager(SKAController):
         return_code, message = handler(value)
         return ([return_code], [message])
 
+    @log_tango_command()
     @command(
         dtype_in="DevString",
         doc_in="""The command accepts a JSON input (value) containing data to update a particular
@@ -2727,6 +2788,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         doc_in="Stops communication with subdevices and stops the watchdog timer, "
@@ -2740,6 +2802,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         doc_in="Starts communication with subdevices and starts the watchdog timer, "
@@ -2753,6 +2816,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         dtype_out=str,
@@ -2775,6 +2839,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         dtype_out=None,
@@ -2792,6 +2857,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2826,6 +2892,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=False, show_kwargs=False, show_ret=True)
+    @log_tango_command()
     @command(
         dtype_in=None,
         doc_in="""This command resets the program track table on the controller""",
@@ -2850,6 +2917,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def On(self) -> DevVarLongStringArrayType:
         """The On command inherited from base classes."""
@@ -2857,6 +2925,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def Off(self) -> DevVarLongStringArrayType:
         """The Off command inherited from base classes."""
@@ -2864,6 +2933,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def Standby(self) -> DevVarLongStringArrayType:
         """The Standby command inherited from base classes."""
@@ -2871,6 +2941,7 @@ class DishManager(SKAController):
 
     @record_command(False)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
     @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def Reset(self) -> DevVarLongStringArrayType:
         """The Reset command inherited from base classes."""

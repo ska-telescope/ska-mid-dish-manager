@@ -41,6 +41,7 @@ from ska_mid_dish_manager.models.constants import (
     MAINTENANCE_MODE_FALSE_VALUE,
     MAINTENANCE_MODE_TRUE_VALUE,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
+    OPERATOR_TAG,
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
@@ -118,7 +119,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         default_dish_mode = DishMode.UNKNOWN
         # Check tangodb whether maintenance mode is active
         if self._is_maintenance_mode_active():
-            self.logger.debug("Initialising dish manager dishMode with %s.", DishMode.MAINTENANCE)
+            self.logger.info(
+                "Initialising dish manager dishMode with %s.",
+                DishMode.MAINTENANCE,
+                extra=OPERATOR_TAG,
+            )
             default_dish_mode = DishMode.MAINTENANCE
 
         # clean up WMSDeviceNames
@@ -209,6 +214,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b5alnapowerstate=False,
             b5blnapowerstate=False,
             dscerrorstatuses=self._aggregate_dsc_error_statuses({}),
+            dscconnectionstate=CommunicationStatus.DISABLED,
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -291,6 +297,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 tracktablecurrentindex=0,
                 tracktableendindex=0,
                 dscctrlstate=DscCtrlState.NO_AUTHORITY,
+                connectionstate=CommunicationStatus.DISABLED,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.DS
                 ),
@@ -534,9 +541,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         attr_property = database.get_device_attribute_property(
             self.tango_device_name, attribute_name
         )
-        attr_property_value = attr_property[attribute_name]
-        if len(attr_property_value) > 0:  # If the returned dict is not empty
-            return attr_property_value["__value"][0]
+
+        try:
+            attr_property_value = attr_property[attribute_name]
+            # Try "__value", the default and "attribute_name", like ignoreSpf which someone may
+            # have entered themselves
+            for valid_key in ["__value", attribute_name]:
+                if valid_key in attr_property_value:
+                    return attr_property_value[valid_key][0]
+        except (KeyError, IndexError):
+            self.logger.exception("Error reading attribute from DB")
         return None
 
     def _is_maintenance_mode_active(self) -> bool:
@@ -637,7 +651,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return
 
         retry_interval = 0.1
-        self.logger.info(f"{trigger_source} transitioning dish to STOW.")
+        self.logger.info(f"{trigger_source} transitioning dish to STOW.", extra=OPERATOR_TAG)
 
         while not self._stop_event.is_set():
             wind_stow_id = self._command_tracker.new_command(
@@ -721,8 +735,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         the subservient devices. DishManager reflects this in its connection
         status attributes.
         """
-        self.logger.debug(
-            "Communication state changed on %s device: %s.", device.name, communication_state
+        self.logger.info(
+            "Communication state changed on %s device to %s.",
+            device.name,
+            communication_state.name,
+            extra=OPERATOR_TAG,
         )
 
         # report the communication state of the sub device on the connectionState attribute
@@ -769,10 +786,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 ds_component_state,
                 spf_component_state if not self.is_device_ignored("SPF") else None,
             )
-            self.logger.debug(
-                ("Updating dish manager powerState with: [%s]."),
-                new_power_state,
-            )
+            if new_power_state != self.component_state["powerstate"]:
+                self.logger.info(
+                    "Updating dish manager powerState to %s.",
+                    new_power_state.name,
+                    extra=OPERATOR_TAG,
+                )
             self._update_component_state(powerstate=new_power_state)
 
         if "buildstate" in kwargs:
@@ -799,18 +818,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 if current_dish_mode == DishMode.STOW and new_dish_mode != DishMode.STOW:
                     self._reenable_watchdog_timer()
 
-                self.logger.debug(
-                    (
-                        "Updating dish manager dishMode with: [%s]. "
-                        "Sub-components operatingMode DS [%s], SPF [%s], SPFRX [%s], "
-                        "SPFRX adminMode [%s]."
-                    ),
-                    new_dish_mode,
-                    ds_component_state["operatingmode"],
-                    spf_component_state["operatingmode"],
-                    spfrx_component_state["operatingmode"],
-                    spfrx_component_state["adminmode"],
-                )
+                if new_dish_mode != current_dish_mode:
+                    self.logger.info(
+                        (
+                            "Updating dish manager dishMode to %s. "
+                            "Sub-components operatingMode: DS [%s], SPF [%s], SPFRX [%s]."
+                        ),
+                        new_dish_mode.name,
+                        ds_component_state["operatingmode"].name,
+                        spf_component_state["operatingmode"].name,
+                        spfrx_component_state["operatingmode"].name,
+                        extra=OPERATOR_TAG,
+                    )
                 self._update_component_state(dishmode=new_dish_mode)
 
         if "healthstate" in kwargs:
@@ -833,10 +852,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if "pointingstate" in kwargs:
             pointing_state = ds_component_state["pointingstate"]
-            self.logger.debug(
-                ("Updating dish manager pointingState with: [%s]."),
-                pointing_state,
-            )
+            if pointing_state != self.component_state["pointingstate"]:
+                self.logger.info(
+                    "Updating dish manager pointingState to %s.",
+                    pointing_state.name,
+                    extra=OPERATOR_TAG,
+                )
             self._update_component_state(pointingstate=ds_component_state["pointingstate"])
 
         if "dscpowerlimitkw" in kwargs:
@@ -1029,6 +1050,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 statuses,
             )
             self._update_component_state(dscerrorstatuses=statuses)
+
+        # DS connectionState attribute
+        if device == DishDevice.DS and "connectionstate" in kwargs:
+            dscconnectionstate = kwargs["connectionstate"]
+            self.logger.debug(
+                "Updating dscconnectionstate with state: %s",
+                dscconnectionstate,
+            )
+            self._update_component_state(dscconnectionstate=dscconnectionstate)
 
     def _aggregate_dsc_error_statuses(self, ds_component_state: dict[str, Any]):
         """Aggregate any error statuses from the DSC into one string."""
@@ -1415,7 +1445,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if self.component_state["dishmode"] != DishMode.MAINTENANCE:
             return
 
-        self.logger.debug("Exiting maintenance mode.")
+        self.logger.info("Exiting maintenance mode.", extra=OPERATOR_TAG)
         # Set the MaintenanceModeActive property to false
         self._set_maintenance_mode_inactive()
         # Recompute the dish mode
@@ -1427,7 +1457,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
             spf_component_state if not self.is_device_ignored("SPF") else None,
         )
-        self.logger.debug("Updating dish manager dishmode to %s.", new_dish_mode)
+        self.logger.info(
+            "Updating dish manager dishmode to %s.", new_dish_mode, extra=OPERATOR_TAG
+        )
         self._update_component_state(dishmode=new_dish_mode)
 
     def set_stow_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
@@ -1452,7 +1484,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _stow_on_watchdog_expiry(self) -> None:
         """Stow the dish on watchdog expiry and restart timer if still enabled."""
-        self.logger.info("Watchdog timer has expired.")
+        self.logger.info("Watchdog timer has expired.", extra=OPERATOR_TAG)
         self._execute_stow_command("HeartbeatStow")
 
     def _reenable_watchdog_timer(self) -> None:

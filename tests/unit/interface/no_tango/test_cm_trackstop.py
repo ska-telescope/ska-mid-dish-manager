@@ -64,6 +64,6 @@ def test_track_stop_handler(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "TrackStop completed"),
+        result=(ResultCode.OK, "TrackStop completed."),
     )
-    progress_cb.wait_for_args(("TrackStop completed",))
+    progress_cb.wait_for_args(("TrackStop completed.",))
