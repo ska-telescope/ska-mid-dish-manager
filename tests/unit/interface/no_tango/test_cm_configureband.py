@@ -7,6 +7,7 @@ import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.models.command_actions import apply_pointing_model
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DSOperatingMode,
@@ -22,7 +23,9 @@ from ska_mid_dish_manager.models.dish_enums import (
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
+@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
 def test_configureband_handler(
+    mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
@@ -33,6 +36,9 @@ def test_configureband_handler(
         the command tracker under test
     """
     component_state_cb = callbacks["comp_state_cb"]
+    component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
+    mock_apply_pointing_model.return_value = None
+
     component_manager.configure_band_cmd(Band.B2, True, callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
@@ -77,9 +83,12 @@ def test_configureband_handler(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed",))
+    progress_cb.wait_for_args(("SetOperateMode completed.",))
+
+    # Verify apply_pointing_model was called
+    mock_apply_pointing_model.assert_called_once()
 
 
 @pytest.mark.unit
@@ -87,7 +96,9 @@ def test_configureband_handler(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
+@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
 def test_configureband_json_handler_happy(
+    mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
@@ -111,13 +122,16 @@ def test_configureband_json_handler_happy(
         }
     }
     """
-
+    component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
+    mock_apply_pointing_model.return_value = None
     status, response = component_manager.configure_band_with_json(
         configure_json, callbacks["task_cb"]
     )
     assert status == TaskStatus.QUEUED
     assert "Task queued" in response
+
     # wait a bit for the lrc updates to come through
+
     component_state_cb.get_queue_values()
 
     expected_call_kwargs = (
@@ -159,9 +173,12 @@ def test_configureband_json_handler_happy(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed",))
+    progress_cb.wait_for_args(("SetOperateMode completed.",))
+
+    # Verify apply_pointing_model was called
+    mock_apply_pointing_model.assert_called_once()
 
 
 @pytest.mark.unit
@@ -375,7 +392,7 @@ def test_configureband_5b_with_subband(
 
     msgs = [
         "Awaiting DS indexerposition change to B5b",
-        "Awaiting SPFRX configuredband change to B5b",
+        "Awaiting SPFRX configuredband change to B1",
         f"Awaiting B5DC rfcmfrequency change to {sub_band_frequency}",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand, B5DC.SetFrequency",
         "Awaiting configuredband change to B5b",
@@ -389,7 +406,7 @@ def test_configureband_5b_with_subband(
         operatingmode=SPFOperatingMode.OPERATE
     )
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        configuredband=Band.B5b, operatingmode=SPFRxOperatingMode.OPERATE
+        configuredband=Band.B1, operatingmode=SPFRxOperatingMode.OPERATE
     )
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B5b, operatingmode=DSOperatingMode.POINT
@@ -407,9 +424,9 @@ def test_configureband_5b_with_subband(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed",))
+    progress_cb.wait_for_args(("SetOperateMode completed.",))
 
 
 def test_configureband_5b_with_subband_ignore_b5dc(
@@ -459,7 +476,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         assert kwargs == expected_call_kwargs[count]
     msgs = [
         "Awaiting DS indexerposition change to B5b",
-        "Awaiting SPFRX configuredband change to B5b",
+        "Awaiting SPFRX configuredband change to B1",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
         "B5DC device is disabled. B5DC.SetFrequency ignored",
         "Awaiting configuredband change to B5b",
@@ -473,7 +490,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         operatingmode=SPFOperatingMode.OPERATE
     )
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        configuredband=Band.B5b, operatingmode=SPFRxOperatingMode.OPERATE
+        configuredband=Band.B1, operatingmode=SPFRxOperatingMode.OPERATE
     )
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B5b, operatingmode=DSOperatingMode.POINT
@@ -620,3 +637,43 @@ def test_configureband_without_b5dc_component_manager(
         "Monitoring and control not set up for B5DC device, skipping frequency configuration."
         in caplog.text
     )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "pointing_values, should_skip",
+    [
+        ([1.1] * 18, False),
+        ([0.0] * 18, False),
+        ([], True),
+    ],
+)
+def test_apply_pointing_model_behavior(caplog, pointing_values, should_skip):
+    """Test apply_pointing_model function directly.
+
+    - skips applying pointing model if values are empty or all zeros
+    - applies otherwise
+    """
+    caplog.set_level("DEBUG")
+    mock_logger = Mock()
+    mock_cm = Mock()
+    mock_task_cb = Mock()
+    band_name = "2"
+    band_param_name = "band2pointingmodelparams"
+
+    mock_cm.component_state = {band_param_name: pointing_values}
+
+    apply_pointing_model(band_param_name, band_name, mock_task_cb, mock_logger, mock_cm)
+
+    info_msgs = [call.args[0] for call in mock_logger.info.call_args_list]
+
+    if should_skip:
+        # nothing applied, logs contain skip message
+        assert any("Skipped applying pointing model" in msg for msg in info_msgs)
+        mock_cm.update_pointing_model_params.assert_not_called()
+    else:
+        # update_pointing_model_params called, log contains success
+        mock_cm.update_pointing_model_params.assert_called_once_with(
+            band_param_name, pointing_values
+        )
+        assert any("applied successfully" in msg for msg in info_msgs)

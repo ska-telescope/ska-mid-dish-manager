@@ -5,6 +5,7 @@ DEFAULT_DISH_MANAGER_TRL = "mid-dish/dish-manager/SKA001"
 DEFAULT_DS_MANAGER_TRL = "mid-dish/ds-manager/SKA001"
 DEFAULT_SPFC_TRL = "mid-dish/simulator-spfc/SKA001"
 DEFAULT_SPFRX_TRL = "mid-dish/simulator-spfrx/SKA001"
+DEFAULT_B5DC_PROXY_TRL = "mid-dish/b5dc-manager/SKA001"
 DEFAULT_WATCHDOG_TIMEOUT = 0.0
 MAINTENANCE_MODE_ACTIVE_PROPERTY = "MaintenanceModeActive"
 MAINTENANCE_MODE_TRUE_VALUE = "true"
@@ -48,3 +49,5 @@ DS_ERROR_STATUS_ATTRIBUTES = {
     "errTime": "Time Controller error",
     "errTrack": "Tracking Controller error",
 }
+
+OPERATOR_TAG = {"user": "operator"}

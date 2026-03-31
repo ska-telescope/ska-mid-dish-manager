@@ -749,7 +749,7 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
         (
             dict(indexerposition=IndexerPosition.B5b),
             dict(bandinfocus=SPFBandInFocus.B5b),
-            dict(configuredband=Band.B5b),
+            dict(configuredband=Band.B1),
             Band.B5b,
         ),
         (
@@ -822,7 +822,7 @@ def test_compute_configured_band(
         (
             dict(indexerposition=IndexerPosition.B5b),
             None,
-            dict(configuredband=Band.B5b),
+            dict(configuredband=Band.B1),
             Band.B5b,
         ),
         (
@@ -1011,7 +1011,7 @@ def test_compute_configured_band_ignoring_spf_and_spfrx(
         ),
         (
             dict(indexerposition=IndexerPosition.B5b),
-            dict(configuredband=Band.B5b),
+            dict(configuredband=Band.B1),
             SPFBandInFocus.B5b,
         ),
         (

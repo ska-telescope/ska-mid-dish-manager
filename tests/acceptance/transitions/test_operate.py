@@ -82,7 +82,7 @@ def test_set_operate_from_standbyfp(
     # Test direct SetOperateMode command from STANDBY_FP
     [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "SetOperateMode completed"]', timeout=30
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
 

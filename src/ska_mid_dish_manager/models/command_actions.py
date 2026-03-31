@@ -10,7 +10,11 @@ import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
-from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S, DSC_MIN_POWER_LIMIT_KW
+from ska_mid_dish_manager.models.constants import (
+    DEFAULT_ACTION_TIMEOUT_S,
+    DSC_MIN_POWER_LIMIT_KW,
+    OPERATOR_TAG,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
@@ -212,8 +216,8 @@ class ActionHandler:
             "{action_name} completed".
         :type completed_response_msg: str
         """
-        final_message = completed_response_msg or f"{self.action_name} completed"
-        self.logger.debug(final_message)
+        final_message = completed_response_msg or f"{self.action_name} completed."
+        self.logger.info(final_message, extra=OPERATOR_TAG)
 
         if self.action_on_success:
             msg = f"{self.action_name} complete. Triggering on success action."
@@ -242,7 +246,7 @@ class ActionHandler:
         :type completed_response_msg: str
         """
         if task_abort_event.is_set():
-            self.logger.warning(f"Action '{self.action_name}' aborted.")
+            self.logger.warning(f"Action '{self.action_name}' aborted.", extra=OPERATOR_TAG)
             report_task_progress(f"{self.action_name} aborted", self.progress_callback)
             update_task_status(
                 task_callback,
@@ -252,9 +256,16 @@ class ActionHandler:
             return
 
         update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
-        self.logger.debug(
-            f"Starting Action '{self.action_name}' with {len(self.fanned_out_commands)} fanned-out"
-            " commands."
+
+        fanned_out_commands = [
+            f"{cmd.device}.{cmd.command_name}"
+            for cmd in self.fanned_out_commands
+            if not getattr(cmd, "is_device_ignored", False)
+        ]
+        fanned_out_commands_str = ", ".join(fanned_out_commands) if fanned_out_commands else "None"
+        self.logger.info(
+            f"Starting Action {self.action_name}. Fanning out {fanned_out_commands_str} commands.",
+            extra=OPERATOR_TAG,
         )
 
         # Fan-out: Dispatch all fanned-out commands
@@ -268,13 +279,8 @@ class ActionHandler:
                 )
                 return
 
-        fanned_out_commands = [
-            f"{cmd.device}.{cmd.command_name}"
-            for cmd in self.fanned_out_commands
-            if not getattr(cmd, "is_device_ignored", False)
-        ]
         report_task_progress(
-            f"Fanned out commands: {', '.join(fanned_out_commands)}", self.progress_callback
+            f"Fanned out commands: {fanned_out_commands_str}", self.progress_callback
         )
 
         # If we're not waiting for anything, finish up
@@ -293,7 +299,7 @@ class ActionHandler:
         while deadline > time.time():
             # Handle abort
             if task_abort_event.is_set():
-                self.logger.warning(f"Action '{self.action_name}' aborted.")
+                self.logger.warning(f"Action '{self.action_name}' aborted.", extra=OPERATOR_TAG)
                 report_task_progress(f"{self.action_name} aborted", self.progress_callback)
                 update_task_status(
                     task_callback,
@@ -755,6 +761,52 @@ class TrackStopAction(Action):
         )
 
 
+def apply_pointing_model(
+    band_param_name: str,
+    band_name: str,
+    task_callback,
+    logger: logging.Logger,
+    dish_manager_cm,
+):
+    """Apply pointing model parameters for a given band if they exist and are not all zeros.
+
+    Args:
+        band_param_name: The key in component_state for this band.
+        band_name: Name/identifier of the band (for logging).
+        task_callback: Callback to update task status on failure.
+        logger: Logger instance for info/debug/error messages.
+        dish_manager_cm: Component manager with component_state and update_pointing_model_params().
+
+    Returns:
+        TaskStatus.FAILED and error string if an error occurs, otherwise None.
+
+    """
+    try:
+        values = dish_manager_cm.component_state[band_param_name]
+
+        if values:
+            dish_manager_cm.update_pointing_model_params(band_param_name, values)
+            logger.info(
+                f"Pointing model for band {band_name} applied successfully", extra=OPERATOR_TAG
+            )
+        else:
+            logger.info(
+                f"Skipped applying pointing model for band {band_name} due to invalid params: []",
+                extra=OPERATOR_TAG,
+            )
+
+    except (tango.DevFailed, ValueError) as err:
+        logger.error(
+            f"Failed to apply pointing model for band {band_name}: {err}", extra=OPERATOR_TAG
+        )
+        update_task_status(
+            task_callback,
+            status=TaskStatus.FAILED,
+            result=(ResultCode.FAILED, "Apply pointing model failed"),
+        )
+        return TaskStatus.FAILED, str(err)
+
+
 class ConfigureBandAction(Action):
     """Configure band on DS and SPFRx."""
 
@@ -798,25 +850,24 @@ class ConfigureBandAction(Action):
             sub_band = dish_data.get("sub_band")
             # Override band and indexer_enum if json data is provided
             self.band = Band[f"B{receiver_band}"]
+            spfrx_awaited_band = self.band
             self.indexer_enum = IndexerPosition[f"B{receiver_band}"]
 
-            spfrx_configure_band_command = FannedOutSlowCommand(
-                logger=self.logger,
-                device="SPFRX",
-                command_name=self.requested_cmd,
-                device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
-                command_argument=self.data,
-                awaited_component_state={"configuredband": self.band},
-                progress_callback=self._progress_callback,
-                is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
-            )
-
             if receiver_band == "5b":
+                # NOTE according to ADR-102 dish lmc should send B1 to SPFRx if the receiver band
+                # is B5b. SPFRx firmware is handling this mapping internally, so no need to send B1
+                # to SPFRx from dish manager. Keep an eye on SPFRx firmware releases in case this
+                # changes and we need to add mapping in dish manager as well.
+
+                # await for B1 band to be configured on SPFRx if the requested band is B5b
+                spfrx_awaited_band = Band.B1
+
                 b5dc_manager = self.dish_manager_cm.sub_component_managers.get("B5DC")
                 if not b5dc_manager:
                     self.logger.info(
                         "Monitoring and control not set up for B5DC device,"
-                        " skipping frequency configuration."
+                        " skipping frequency configuration.",
+                        extra=OPERATOR_TAG,
                     )
                 else:
                     b5dc_freq_enum = B5dcFrequency(int(sub_band))
@@ -832,14 +883,34 @@ class ConfigureBandAction(Action):
                         progress_callback=self._progress_callback,
                         is_device_ignored=self.dish_manager_cm.is_device_ignored("B5DC"),
                     )
-        else:
+
             spfrx_configure_band_command = FannedOutSlowCommand(
                 logger=self.logger,
                 device="SPFRX",
                 command_name=self.requested_cmd,
                 device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
+                command_argument=self.data,
+                awaited_component_state={"configuredband": spfrx_awaited_band},
+                progress_callback=self._progress_callback,
+                is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
+            )
+
+        else:
+            spfrx_awaited_band = self.band
+            spfrx_requested_cmd = self.requested_cmd
+            if self.band == Band.B5b:
+                # send B1 to SPFRx if the requested band is B5b for the old interface
+                spfrx_requested_cmd = "ConfigureBand1"
+                # await for band B1 to be configured on SPFRx if the requested band is B5b
+                spfrx_awaited_band = Band.B1
+
+            spfrx_configure_band_command = FannedOutSlowCommand(
+                logger=self.logger,
+                device="SPFRX",
+                command_name=spfrx_requested_cmd,
+                device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
                 command_argument=self.synchronise,
-                awaited_component_state={"configuredband": self.band},
+                awaited_component_state={"configuredband": spfrx_awaited_band},
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
@@ -913,7 +984,7 @@ class ConfigureBandActionSequence(Action):
         """Execute the defined action."""
         current_dish_mode = self.dish_manager_cm._component_state["dishmode"]
 
-        # Step 2: Operate mode action (final step)
+        # Step 3: Operate mode action (final step)
         operate_action = SetOperateModeAction(
             logger=self.logger,
             dish_manager_cm=self.dish_manager_cm,
@@ -925,7 +996,7 @@ class ConfigureBandActionSequence(Action):
 
         final_action = operate_action if current_dish_mode != DishMode.STOW else None
 
-        # Step 1: Configure band action
+        # Step 2: Configure band action
         configure_action = ConfigureBandAction(
             logger=self.logger,
             dish_manager_cm=self.dish_manager_cm,
@@ -938,7 +1009,47 @@ class ConfigureBandActionSequence(Action):
             timeout_s=self.timeout_s,
         )
 
-        # Step 0: Pre-action if we need LP -> FP
+        # Step 0 :apply appropriate pointing models before configuring the band
+        # Case for Json arg configureband command
+        if self.data:
+            try:
+                data_json = json.loads(self.data)
+                dish_data = data_json.get("dish", {})
+                band_name = dish_data.get("receiver_band")
+                band_param_name = f"band{band_name}pointingmodelparams"
+
+                result = apply_pointing_model(
+                    band_param_name, band_name, task_callback, self.logger, self.dish_manager_cm
+                )
+                if result:
+                    return result
+
+            except (json.JSONDecodeError, ValueError) as err:
+                self.logger.error(f"Invalid JSON: {err}", extra=OPERATOR_TAG)
+                update_task_status(
+                    task_callback,
+                    status=TaskStatus.FAILED,
+                    result=(ResultCode.FAILED, "Invalid JSON in configureband command"),
+                )
+                return TaskStatus.FAILED, str(err)
+
+        else:
+            # Case for Non json arg configureband commands
+            if self.band in [Band.B5a, Band.B5b]:
+                enum_name = self.band.name
+                # Band name becomes '5a' or '5b'
+                band_name = enum_name[1:]
+            else:
+                band_name = str(self.band.value)
+            band_param_name = f"band{band_name}pointingmodelparams"
+
+            result = apply_pointing_model(
+                band_param_name, band_name, task_callback, self.logger, self.dish_manager_cm
+            )
+            if result:
+                return result
+
+        # Step 1: Pre-action if we need LP -> FP
         if current_dish_mode == DishMode.STANDBY_LP:
             pre_action = SetStandbyFPModeAction(
                 logger=self.logger,
@@ -948,7 +1059,6 @@ class ConfigureBandActionSequence(Action):
                 timeout_s=self.timeout_s,
             )
             return pre_action.execute(task_callback, task_abort_event, completed_response_msg)
-
         # If no LP -> FP transition is needed then start with ConfigureBand
         return configure_action.execute(task_callback, task_abort_event, completed_response_msg)
 

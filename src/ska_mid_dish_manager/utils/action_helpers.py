@@ -22,11 +22,13 @@ def update_task_status(task_callback: Optional[Callable], **task_statuses: Any) 
 
 
 def report_task_progress(
-    progress_msg: str, command_progress_callback: Optional[Callable] = None
+    progress_msg: str,
+    command_progress_callback: Optional[Callable] = None,
+    user_operator: bool = False,
 ) -> None:
     """Wraps the command progress callback to update device status."""
     if command_progress_callback:
-        command_progress_callback(progress_msg)
+        command_progress_callback(progress_msg, user_operator=user_operator)
 
 
 def convert_enums_to_names(values: list[Any]) -> list[str]:
