@@ -220,28 +220,34 @@ def test_device_goes_away(patch_dp, caplog):
     )
     # Trigger a failure event
     tc_manager._events_queue.put(mock_some_attr_error_event_data)
+
+    tc_manager._verifying_device_connection = mock.MagicMock(
+        side_effect=lambda stop_event: tc_manager._update_communication_state(
+            CommunicationStatus.NOT_ESTABLISHED
+        )
+    )
     # wait a bit for the state to change
     communication_state_changed.clear()
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
-    # # Set up an error mock event (API_EventTimeout)
-    # mock_some_attr_error_event_data = construct_mock_error_event_data(
-    #     "some_attr", "API_EventTimeout"
-    # )
-    # # Trigger a failure event
-    # tc_manager._events_queue.put(mock_some_attr_error_event_data)
-    # # wait a bit for the state to change
-    # communication_state_changed.clear()
-    # communication_state_changed.wait(timeout=1)
-    # assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
+    # Set up an error mock event (API_EventTimeout)
+    mock_some_attr_error_event_data = construct_mock_error_event_data(
+        "some_attr", "API_EventTimeout"
+    )
+    # Trigger a failure event
+    tc_manager._events_queue.put(mock_some_attr_error_event_data)
+    # wait a bit for the state to change
+    communication_state_changed.clear()
+    communication_state_changed.wait(timeout=1)
+    assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
 
-    # # trigger a valid event
-    # tc_manager._events_queue.put(mock_some_attr_event_data)
-    # # wait a bit for the state to change
-    # communication_state_changed.clear()
-    # communication_state_changed.wait(timeout=1)
-    # assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
+    # trigger a valid event
+    tc_manager._events_queue.put(mock_some_attr_event_data)
+    # wait a bit for the state to change
+    communication_state_changed.clear()
+    communication_state_changed.wait(timeout=1)
+    assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # clean up afterwards
     # TODO this should be a finalizer
