@@ -1124,7 +1124,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.error(err_msg)
             raise ValueError(err_msg)
 
-        return (ResultCode.OK, "Re-connection(s) have been intiated successfully")
+        return ResultCode.OK, "Re-connection(s) have been initiated successfully"
 
     def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPF device ignored boolean and update device communication."""

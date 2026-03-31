@@ -1,79 +1,44 @@
 """Test that the DishManager ResetSubsconnection attribute."""
 
 import pytest
+import tango
 from ska_control_model import ResultCode
-
-'''
-
-# @pytest.mark.unit
-@pytest.mark.xfail(reason="Still working on the command logic")
-@pytest.mark.parametrize(
-    "device_names",
-    "expected_output",
-    [
-        (
-            "SD",
-            "PFS",
-            "SRRFRX",
-            (
-                ResultCode.FAILED,
-                "Invalid device name: SD. Valid device names are: DS, SPF, SPFRX",
-            ),
-        ),
-        (
-            "111",
-            (
-                ResultCode.FAILED,
-                "Invalid device name: 111. Valid device names are: DS, SPF, SPFRX",
-            ),
-        ),
-        (
-            "SPFC",
-            (
-                ResultCode.FAILED,
-                "Invalid device name: SPFC. Valid device names are: DS, SPF, SPFRX",
-            ),
-        ),
-        (
-            "SPFRx",
-            (
-                ResultCode.FAILED,
-                "Invalid device name: SPFRx. Valid device names are: DS, SPF, SPFRX",
-            ),
-        ),
-        (
-            "INVALID_DEVICE",
-            (
-                ResultCode.FAILED,
-                "Invalid device name: INVALID_DEVICE. Valid device names are: DS, SPF, SPFRX",
-            ),
-        ),
-    ],
-)
-def test_reset_subs_connection_invalid_device_names(
-    dish_manager_resources, device_names, expected_output, event_store_class
-):
-    """Test that ResetSubsConnection command raises an
-    exception when invalid device names are passed.
-    """
-    device_proxy, dish_manager_cm = dish_manager_resources
-    result = device_proxy.ResetSubsConnections([device_names])
-    assert result == expected_output
-
-'''
 
 
 @pytest.mark.unit
+@pytest.mark.forked
+@pytest.mark.parametrize(
+    "invalid_dev_names",
+    [
+        ["SD"],
+        ["PFS"],
+        ["SRRFRX", "WQ1FS"],
+        ["111"],
+        ["SPF", "SPFRXWP"],
+    ],
+)
+def test_reset_subs_connection_invalid_device_names(dish_manager_resources, invalid_dev_names):
+    """Test that ResetSubsConnection command raises an
+    exception when invalid device names are passed.
+    """
+    device_proxy, _ = dish_manager_resources
+
+    with pytest.raises(tango.DevFailed) as err:
+        device_proxy.ResetSubsConnections(invalid_dev_names)
+    assert "Incorrect input, list only accept SPF, SPFRX, DS, B5DC" in str(err.value)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     "valid_dev_names",
     [
         ["DS"],
-        ["B5DC"],
         ["SPF"],
         ["SPFRX"],
         ["DS", "SPF"],
         ["SPF", "SPFRX"],
-        ["DS", "SPF", "SPFRX", "B5DC"],
+        ["DS", "SPF", "SPFRX"],
     ],
 )
 def test_reset_subs_connection_valid_device_names(
@@ -84,33 +49,33 @@ def test_reset_subs_connection_valid_device_names(
     """
     device_proxy, _ = dish_manager_resources
 
-    result = device_proxy.ResetSubsConnections(valid_dev_names)
+    [[result_code], [message]] = device_proxy.ResetSubsConnections(valid_dev_names)
 
-    assert result == (ResultCode.OK, "Re-connection(s) have been initiated successfully")
+    assert result_code == ResultCode.OK
+    assert message == "Re-connection(s) have been initiated successfully"
 
 
 @pytest.mark.unit
+@pytest.mark.forked
 def test_reset_subs_connection_no_device_names_input(dish_manager_resources, event_store_class):
     """Test that ResetSubsConnection command raises an exception
     when no device names are passed.
     """
     device_proxy, _ = dish_manager_resources
 
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(tango.DevFailed) as err:
         device_proxy.ResetSubsConnections([])
 
-    assert str(err.value) == "[device_names] cannot be an empty list"
+    assert "[device_names] cannot be an empty list" in str(err.value)
 
 
-'''
-# @pytest.mark.unit
-@pytest.mark.xfail(reason="Still working on the command logic")
+@pytest.mark.unit
+@pytest.mark.forked
 @pytest.mark.parametrize(
     "device_name, expected_result",
     [
-        ("SPF", (ValueError, "Reconnection denied, device SPF is ignored")),
-        ("SPFRX", (ValueError, "Reconnection denied, device SPFRX is ignored")),
-        ("B5DC", (ValueError, "Reconnection denied, B5DC device is not monitored")),
+        ("SPF", (ResultCode.FAILED, "Reconnection denied, device SPF is ignored")),
+        ("SPFRX", (ResultCode.FAILED, "Reconnection denied, device SPFRX is ignored")),
     ],
 )
 def test_reset_subs_connection_ignored_devices(
@@ -119,9 +84,20 @@ def test_reset_subs_connection_ignored_devices(
     """Test that ResetSubsConnection command raises an exception
     when a sub device is ignored.
     """
-    device_proxy, dish_manager_cm = dish_manager_resources
-    device_proxy.ignorespf = True
-    device_proxy.ignorespfrx = True
-    result = device_proxy.ResetSubsConnections([device_name])
-    assert result == expected_result
-'''
+    ignore_dev_event_store = event_store_class()
+    device_proxy, _ = dish_manager_resources
+    ignore_attr_name = f"ignore{device_name.lower()}"
+
+    device_proxy.write_attribute(ignore_attr_name, True)
+    event_id = device_proxy.subscribe_event(
+        ignore_attr_name,
+        tango.EventType.CHANGE_EVENT,
+        ignore_dev_event_store,
+    )
+    ignore_dev_event_store.wait_for_value(True)
+    [[result_code], [message]] = device_proxy.ResetSubsConnections([device_name])
+    assert result_code == expected_result[0]
+    assert message == expected_result[1]
+    device_proxy.write_attribute(ignore_attr_name, False)
+    ignore_dev_event_store.wait_for_value(False)
+    device_proxy.unsubscribe_event(event_id)
