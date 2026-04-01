@@ -3,6 +3,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
+import tango
 from ska_control_model import CommunicationStatus, TaskStatus
 from tango.test_context import DeviceTestContext
 
@@ -25,12 +26,20 @@ def dish_manager_resources():
         ),
         patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
     ):
-        tango_context = DeviceTestContext(DishManager)
+
+        class PatchedDM(DishManager):
+            B5DCDeviceFqdn = tango.server.device_property(
+                dtype=tango.DevVarStringArray, default_value="a/b/c"
+            )
+
+        tango_context = DeviceTestContext(PatchedDM)
+
         tango_context.start()
         device_proxy = tango_context.device
 
         class_instance = DishManager.instances.get(device_proxy.name())
         dish_manager_cm = class_instance.component_manager
+
         ds_cm = dish_manager_cm.sub_component_managers["DS"]
         spf_cm = dish_manager_cm.sub_component_managers["SPF"]
         spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]

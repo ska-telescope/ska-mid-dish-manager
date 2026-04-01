@@ -96,7 +96,7 @@ class DishManager(SKAController):
     DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
-    # B%DC device is not monitored by default, so default value is empty string
+    # B5DC device is not monitored by default, so default value is empty string
     B5DCDeviceFqdn = device_property(dtype=str, default_value="")
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
     DefaultWatchdogTimeout = device_property(dtype=float, default_value=DEFAULT_WATCHDOG_TIMEOUT)
