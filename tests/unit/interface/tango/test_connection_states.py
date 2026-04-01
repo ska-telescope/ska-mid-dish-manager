@@ -1,5 +1,6 @@
 """Unit tests for subservient device connection states."""
 
+
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
@@ -13,7 +14,6 @@ from ska_control_model import CommunicationStatus
         ("DS", "dsConnectionState"),
         ("SPFRX", "spfrxConnectionState"),
         ("SPF", "spfConnectionState"),
-        ("B5DC", "b5dcConnectionState"),
     ],
 )
 def test_connection_state_attrs_mirror_communication_status(

@@ -45,6 +45,11 @@ def dish_manager_resources():
         spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
         b5dc_cm = dish_manager_cm.sub_component_managers["B5DC"]
 
+        # Mock the underlying to B5dc server connection state to init to NOT_ESTABLISHED
+        setattr(
+            b5dc_cm, "read_attribute_value", Mock(return_value=CommunicationStatus.NOT_ESTABLISHED)
+        )
+
         # trigger communication established on all sub components
         for com_man in [ds_cm, spf_cm, spfrx_cm, b5dc_cm]:
             com_man._update_communication_state(
