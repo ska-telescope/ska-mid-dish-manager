@@ -12,6 +12,8 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "dev_name",
+    # b5dc is included here since dish manager doesn't
+    # monitor it on the pipeline.
     ["spf", "spfrx", "ds"],
 )
 def test_reset_connection_cmd(
