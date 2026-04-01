@@ -1132,17 +1132,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 raise ValueError("Reconnection denied, B5DC device is not monitored")
 
             # The client shouldn't be able to reset connection of ignored devices
-            if (
-                upper_cased_device_name != "DS"
-                and self.component_state[f"ignore{upper_cased_device_name.lower()}"]
-            ):
+            if upper_cased_device_name != "DS" and self.is_device_ignored(upper_cased_device_name):
                 self.logger.error(
                     "Reconnection denied, device %s is ignored",
                     upper_cased_device_name,
                     extra=OPERATOR_TAG,
                 )
                 raise ValueError(
-                    f"Reconnection denied, device {upper_cased_device_name} is ignored"
+                    f"Reconnection denied, device {upper_cased_device_name} is ignored."
+                    f"Set ignore{device_name} to True in order to force reconnection"
                 )
 
             # Start and stop the communication
