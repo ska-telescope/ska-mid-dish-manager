@@ -233,7 +233,7 @@ class EventStore:
                 if event.attr_value is None:
                     continue
                 if isinstance(event.attr_value.value, np.ndarray):
-                    if event.attr_value.value.to_list() == value:
+                    if event.attr_value.value.tolist() == value:
                         return True
                     if (event.attr_value.value == value).all():
                         return True
