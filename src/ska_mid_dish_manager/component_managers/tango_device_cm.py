@@ -110,6 +110,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         """
         # Error events come through with attr_name being the full TRL so extract just the attribute
         # name to match what is added in _update_state_from_event
+        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         attr_name = event_data.attr_name.split("/")[-1].lower()
         errors = event_data.errors
 
@@ -134,8 +135,18 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 self._active_attr_event_subscriptions.remove(attr_name)
             except KeyError:
                 pass
-
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+            try:
+                self.device_proxy.ping()
+            except tango.DevFailed:
+                dev_name = device_proxy.dev_name()
+                self.logger.error(
+                    "Failed to ping device proxy: %s after an %s error. Communication Status"
+                    " degraded to 'Not Established'.",
+                    dev_name,
+                    dev_error.reason,
+                    extra=OPERATOR_TAG,
+                )
+                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
     # --------------
     # helper methods
@@ -156,11 +167,10 @@ class TangoDeviceComponentManager(BaseComponentManager):
     def sync_communication_to_valid_event(self, event_attr_name: str) -> None:
         """Sync communication state with valid events from monitored attributes."""
         monitored_attrs = set(self._monitored_attributes)
-        previously_synced = monitored_attrs == self._active_attr_event_subscriptions
-        self._active_attr_event_subscriptions.add(event_attr_name)
-        currently_synced = monitored_attrs == self._active_attr_event_subscriptions
+        current_subscriptions = self._active_attr_event_subscriptions
+        added_subscription = current_subscriptions.add(event_attr_name)
 
-        if not previously_synced and currently_synced:
+        if event_attr_name in monitored_attrs and len(added_subscription) > current_subscriptions:
             self.logger.info(
                 "Attribute name [%s] is now valid, communication with [%s] is established",
                 event_attr_name,
