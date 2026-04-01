@@ -44,7 +44,7 @@ The following sub-devices are supported:
 - ``B5DC``
 
 
-Example usage (tango)
+Example usage (itango)
 ----------------------
 
 .. code-block:: python
