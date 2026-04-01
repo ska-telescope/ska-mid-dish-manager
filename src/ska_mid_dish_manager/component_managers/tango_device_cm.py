@@ -167,7 +167,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
     def sync_communication_to_valid_event(self, event_attr_name: str) -> None:
         """Sync communication state with valid events from monitored attributes."""
         monitored_attrs = set(self._monitored_attributes)
-        previous_subscriptions = self._active_attr_event_subscriptions
+        previous_subscriptions = set(self._active_attr_event_subscriptions)
         current_subscriptions = self._active_attr_event_subscriptions
         current_subscriptions.add(event_attr_name)
 
