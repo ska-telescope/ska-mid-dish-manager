@@ -492,6 +492,7 @@ class DishManager(SKAController):
                 "rftemperature": "rfTemperature",
                 "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
                 "dscerrorstatuses": "dscErrorStatuses",
+                "healthinfo": "healthInfo",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -2125,6 +2126,15 @@ class DishManager(SKAController):
     def dscErrorStatuses(self):
         """Return the aggregated error statuses from the DSC."""
         return self.component_manager.component_state.get("dscerrorstatuses", "")
+
+    @attribute(
+        dtype=[str],
+        access=AttrWriteType.READ,
+        doc="Report the reason for healthstate failures.",
+    )
+    def healthInfo(self):
+        """Report the reason for healthstate failures."""
+        return self.component_manager.component_state.get("healthinfo", [])
 
     # --------
     # Commands

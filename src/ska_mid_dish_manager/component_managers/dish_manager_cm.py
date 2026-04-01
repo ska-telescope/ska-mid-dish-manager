@@ -215,6 +215,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b5blnapowerstate=False,
             dscerrorstatuses=self._aggregate_dsc_error_statuses({}),
             dscconnectionstate=CommunicationStatus.DISABLED,
+            healthinfo=[],
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -849,6 +850,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spfrx_component_state["healthstate"],
             )
             self._update_component_state(healthstate=new_health_state)
+
+            new_health_info = self.generate_healthinfo()
+            self._update_component_state(healthinfo=new_health_info)
 
         if "pointingstate" in kwargs:
             pointing_state = ds_component_state["pointingstate"]
@@ -1950,3 +1954,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.info("Monitoring and control not set up for B5DC device.")
             return False
         return True
+
+    def generate_healthinfo(self) -> List[str]:
+        """Report the reason for healthstate failures.
+
+        TODO work out how to get the actual reasons.
+        """
+        health_info = []
+        for com_man in self.sub_component_managers.values():
+            if com_man.component_state.get("healthstate") == HealthState.FAILED:
+                health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
+            if com_man.component_state.get("healthstate") == HealthState.DEGRADED:
+                health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]')
+        return health_info
