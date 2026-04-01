@@ -1,6 +1,7 @@
 """Test device Monitor."""
 
 import logging
+import threading
 from functools import partial
 from queue import Empty, Queue
 from threading import Event
@@ -11,6 +12,11 @@ from mock import MagicMock
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
+from ska_mid_dish_manager.models.constants import (
+    DEFAULT_DS_MANAGER_TRL,
+    DEFAULT_SPFC_TRL,
+    DEFAULT_SPFRX_TRL,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -136,3 +142,35 @@ def test_connection_error(caplog):
     all_logs = [record.message for record in caplog.records]
     for i in range(0, 2):
         assert f"Cannot connect to fake_device try number {i}" in all_logs
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize(
+    ("device_fqdn", "subs"),
+    [
+        (DEFAULT_SPFC_TRL, ["powerState", "healthState"]),
+        (DEFAULT_SPFRX_TRL, ["kValue", "operatingMode"]),
+        (DEFAULT_DS_MANAGER_TRL, ["achievedTargetLock", "powerState"]),
+    ],
+)
+def test_device_stop_monitor(caplog, device_fqdn, subs):
+    """Test that the stop_monitoring() for devices monitor clears threads."""
+    caplog.set_level(logging.DEBUG)
+    event_queue = Queue()
+    device_proxy_factory = DeviceProxyManager(LOGGER, Event())
+    tdm = TangoDeviceMonitor(device_fqdn, device_proxy_factory, subs, event_queue, LOGGER)
+    tdm.monitor()
+    _ = event_queue.get(timeout=5)
+    threads = threading.enumerate()
+    assert len(threads) == 2  # (subscription thread, main thread)
+    threads_names = [t.name for t in threads]
+
+    assert "MainThread" in threads_names
+    device_fqdn = device_fqdn.replace("-", "_").replace("/", ".")
+    assert f"{device_fqdn}.attribute_subscription_thread" in threads_names
+
+    tdm.stop_monitoring()
+
+    threads = threading.enumerate()
+    assert len(threads) == 1  # (main thread)
+    assert threads[0].name == "MainThread"
