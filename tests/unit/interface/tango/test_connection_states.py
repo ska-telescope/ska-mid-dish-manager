@@ -1,6 +1,5 @@
 """Unit tests for subservient device connection states."""
 
-
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
