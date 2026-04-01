@@ -117,11 +117,11 @@ class SetKValueCommand(FastCommand):
         return self._component_manager.set_kvalue(*args)
 
 
-class ResetSubsConnectionsCommand(FastCommand):
-    """Class for handling the ResetSubsConnection command."""
+class ResetComponentConnectionCommand(FastCommand):
+    """Class for handling the ResetComponentConnection command."""
 
     def __init__(self, component_manager, logger: Optional[logging.Logger] = None) -> None:
-        """Initialise a new ResetSubsConnectionCommand instance.
+        """Initialise a new ResetComponentConnectionCommand instance.
 
         :param component_manager: the device to which this command belongs.
         :param logger: a logger for this command to use.
@@ -130,7 +130,7 @@ class ResetSubsConnectionsCommand(FastCommand):
         super().__init__(logger)
 
     def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
-        """Implement ResetSubsConnection command functionality.
+        """Implement ResetComponentConnection command functionality.
 
         :param args: list of Subservient device names.
         :return: A tuple containing a return code and a string

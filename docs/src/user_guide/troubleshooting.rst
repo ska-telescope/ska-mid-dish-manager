@@ -16,14 +16,14 @@ with ``user=operator``. In Kibana, one can filter for operator logs by using the
 **Tango command to force reconnection**
 
 If communication with one or more sub-devices is lost or becomes unstable, operators can 
-manually trigger a reconnection using the ``ResetSubsConnections`` Tango command.
+manually trigger a reconnection using the ``ResetComponentConnection`` Tango command.
 
 Command
 -------
 
 .. code-block:: none
 
-   ResetSubsConnections(device_names: DevVarStringArray)
+   ResetComponentConnection(device_name: DevString)
 
 
 Description
@@ -49,4 +49,4 @@ Example usage (tango)
 
 .. code-block:: python
 
-   device_proxy.ResetSubsConnections(["SPF", "SPFRX"])
+   device_proxy.ResetComponentConnection("SPF")

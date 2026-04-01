@@ -25,7 +25,7 @@ from ska_mid_dish_manager.models.abort_sequence_command_handler import Abort
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
     ApplyPointingModelCommand,
-    ResetSubsConnectionsCommand,
+    ResetComponentConnectionCommand,
     ResetTrackTableCommand,
     SetFrequencyCommand,
     SetHPolAttenuationCommand,
@@ -245,8 +245,8 @@ class DishManager(SKAController):
             SetVPolAttenuationCommand(self.component_manager, self.logger),
         )
         self.register_command_object(
-            "ResetSubsConnections",
-            ResetSubsConnectionsCommand(self.component_manager, self.logger),
+            "ResetComponentConnection",
+            ResetComponentConnectionCommand(self.component_manager, self.logger),
         )
 
     def delete_device(self):
@@ -2695,14 +2695,17 @@ class DishManager(SKAController):
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
-        dtype_in="DevVarStringArray",
+        dtype_in="DevString",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
-        doc_in="Reset the connections to sub devices.",
+        doc_in="""Reset connections between the Dish Manager and a sub-device.
+
+        :param device_name: sub-device to reconnect [SPF, SPFRX, DS, B5DC]
+        """,
     )
-    def ResetSubsConnections(self, value) -> DevVarLongStringArrayType:
+    def ResetComponentConnection(self, value) -> DevVarLongStringArrayType:
         """This command Reset the connections to sub devices."""
-        handler = self.get_command_object("ResetSubsConnections")
+        handler = self.get_command_object("ResetComponentConnection")
         return_code, message = handler(value)
         return ([return_code], [message])
 

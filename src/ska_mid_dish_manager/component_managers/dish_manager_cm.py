@@ -1105,66 +1105,59 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
 
-    def reset_subservient_dev_connections(self, device_names: list[str]) -> Tuple[ResultCode, str]:
+    def reset_subservient_dev_connections(self, device_name: str) -> Tuple[ResultCode, str]:
         """Reset connections between dish manager and subservient devices."""
-        if not device_names:
-            err_msg = "[device_names] cannot be an empty list"
+        if not device_name:
+            err_msg = "device name cannot be an empty string"
             self.logger.error(err_msg, extra=OPERATOR_TAG)
             raise ValueError(err_msg)
 
-        self.logger.debug(
-            "Resetting connection for devices [%s].", device_names, extra=OPERATOR_TAG
-        )
-
-        # Stop communicating to given devices
-        sub_device_names = ["SPF", "SPFRX", "DS", "B5DC"]
-        upper_cased_device_names = [name.upper() for name in device_names]
-        if set(upper_cased_device_names).issubset(set(sub_device_names)):
-            # Stop communcating and clean up subscriptions and threads
-            for name in upper_cased_device_names:
-                # Ignore B5DC if not monitored.
-                if name == "B5DC" and not self._check_b5dc_active():
-                    self.logger.error(
-                        "Reconnection denied, B5DC device is not monitored", extra=OPERATOR_TAG
-                    )
-                    raise ValueError("Reconnection denied, B5DC device is not monitored")
-
-                # Don't allow reconnection for ignored devices
-                # DS cannot be ignored
-
-                try:
-                    if name != "DS" and self.component_state[f"ignore{name.lower()}"]:
-                        self.logger.error(
-                            "Reconnection denied ,device %s is ignored", name, extra=OPERATOR_TAG
-                        )
-                        return (
-                            ResultCode.FAILED,
-                            f"Reconnection denied, device {name} is ignored",
-                        )
-
-                    self.sub_component_managers[name].stop_communicating()
-                except Exception as err:
-                    self.logger.error(
-                        "Stop communication command failed !! , err : %s", err, extra=OPERATOR_TAG
-                    )
-                    raise err
-
-            # Start communicating again
-            for name in upper_cased_device_names:
-                try:
-                    self.sub_component_managers[name].start_communicating()
-                except Exception as err:
-                    self.logger.error(
-                        "start communication command failed !! , err : %s", err, extra=OPERATOR_TAG
-                    )
-                    raise err
+        upper_cased_device_name = device_name.upper()
+        component_device_names = ["SPF", "SPFRX", "DS", "B5DC"]
+        if upper_cased_device_name not in component_device_names:
+            err_msg = "Incorrect input, command only accept SPF, SPFRX, DS, B5DC"
+            self.logger.error(err_msg, extra=OPERATOR_TAG)
+            raise ValueError(err_msg)
 
         else:
-            err_msg = "Incorrect input, list only accept SPF, SPFRX, DS, B5DC"
-            self.logger.error(err_msg, extra=OPERATOR_TAG)
-            raise ValueError(err_msg)
+            self.logger.debug(
+                "Resetting connection for device [%s].", device_name, extra=OPERATOR_TAG
+            )
 
-        return ResultCode.OK, "Re-connection(s) have been initiated successfully"
+            # B5DC proxy connection can be restarted only if monitored
+            if upper_cased_device_name == "B5DC" and not self._check_b5dc_active():
+                self.logger.warning(
+                    "Reconnection denied, B5DC device is not monitored", extra=OPERATOR_TAG
+                )
+                raise ValueError("Reconnection denied, B5DC device is not monitored")
+
+            # The client shouldn't be able to reset connection of ignored devices
+            if (
+                upper_cased_device_name != "DS"
+                and self.component_state[f"ignore{upper_cased_device_name.lower()}"]
+            ):
+                self.logger.error(
+                    "Reconnection denied, device %s is ignored",
+                    upper_cased_device_name,
+                    extra=OPERATOR_TAG,
+                )
+                raise ValueError(
+                    f"Reconnection denied, device {upper_cased_device_name} is ignored"
+                )
+
+            # Start and stop the communication
+            try:
+                self.sub_component_managers[upper_cased_device_name].stop_communicating()
+                self.sub_component_managers[upper_cased_device_name].start_communicating()
+                return ResultCode.OK, "Resetting connection is successful"
+
+            except Exception as err:
+                self.logger.error(
+                    "Stop/Start communication command failed !! , err : %s",
+                    err,
+                    extra=OPERATOR_TAG,
+                )
+                raise err
 
     def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPF device ignored boolean and update device communication."""
