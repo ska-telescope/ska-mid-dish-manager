@@ -1653,12 +1653,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         Note that it will only take effect after
         SPFRx has been restarted.
         """
-        threads = threading.enumerate()
-
-        for t in threads:
-            self.logger.debug(
-                "  - %s (Alive: %s, ident=%s, daemon=%s)", t.name, t.is_alive(), t.ident, t.daemon
-            )
         spfrx_cm = self.sub_component_managers["SPFRX"]
         task_status, msg = spfrx_cm.execute_command("SetKValue", k_value)
         if task_status == TaskStatus.FAILED:
