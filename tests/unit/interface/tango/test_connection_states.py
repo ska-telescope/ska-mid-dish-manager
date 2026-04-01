@@ -129,7 +129,7 @@ def test_b5dc_server_connection_state_attr_updates(
     dish_manager_resources,
     event_store_class,
 ):
-    """Test b5dcServerConnectionState updates when DS connectionState updates."""
+    """Test b5dcServerConnectionState updates when B5dc proxy connectionState updates."""
     device_proxy, dish_manager_cm = dish_manager_resources
     b5_conn_state_event_store = event_store_class()
     b5_server_conn_event_store = event_store_class()
@@ -151,7 +151,7 @@ def test_b5dc_server_connection_state_attr_updates(
 
     # Force B5dc Server connectionstate to ESTABLISHED, and update the B5dc proxy
     # connection state, asserting that the server state mirrors the forced server
-    # ESTABLISHED connection state
+    # ESTABLISHED connection state on sync
     b5dc_cm = dish_manager_cm.sub_component_managers["B5DC"]
     setattr(b5dc_cm, "read_attribute_value", Mock(return_value=CommunicationStatus.ESTABLISHED))
     b5dc_cm._update_component_state(connectionstate=CommunicationStatus.ESTABLISHED)

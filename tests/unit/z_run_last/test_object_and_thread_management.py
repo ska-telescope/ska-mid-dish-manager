@@ -23,7 +23,6 @@ def force_gc_on_weak_ref(weak_ref: weakref.ref) -> None:
         gc.collect()
 
 
-@pytest.mark.skip
 @pytest.mark.unit
 @pytest.mark.forked
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango.DeviceProxy")
