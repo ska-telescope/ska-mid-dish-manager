@@ -9,7 +9,7 @@ import logging
 import weakref
 from datetime import datetime
 from functools import reduce
-from typing import List, Optional, Tuple
+from typing import List, Literal, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
@@ -2703,7 +2703,9 @@ class DishManager(SKAController):
         :param device_name: sub-device to reconnect [SPF, SPFRX, DS, B5DC]
         """,
     )
-    def ResetComponentConnection(self, value) -> DevVarLongStringArrayType:
+    def ResetComponentConnection(
+        self, value: Literal["DS", "SPF", "SPFRX", "B5DC"]
+    ) -> DevVarLongStringArrayType:
         """This command Reset the connections to sub devices."""
         handler = self.get_command_object("ResetComponentConnection")
         return_code, message = handler(value)
