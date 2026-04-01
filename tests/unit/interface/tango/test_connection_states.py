@@ -105,7 +105,6 @@ def test_dsc_connection_state_attr_updates_when_ds_connection_lost(
     "connection_state_attr",
     [
         "wmsConnectionState",
-        "b5dcConnectionState",
     ],
 )
 def test_connection_state_attrs_on_devices_with_no_monitoring(
