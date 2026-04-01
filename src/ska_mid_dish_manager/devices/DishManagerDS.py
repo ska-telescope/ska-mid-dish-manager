@@ -2691,7 +2691,7 @@ class DishManager(SKAController):
         return_code, message = handler(value)
         return ([return_code], [message])
 
-    @record_command(False)
+    @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(

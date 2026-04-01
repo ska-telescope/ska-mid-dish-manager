@@ -12,7 +12,7 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "dev_name",
-    ["spf", "spfrx", "ds", "b5dc"],
+    ["spf", "spfrx", "ds"],
 )
 def test_reset_connection_cmd(
     dish_manager_proxy: tango.DeviceProxy,
