@@ -11,6 +11,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Resolved SKB-1267
 - Added tag user=operator to INFO logs for filtering operator related logs. 
 - Addressed the cleanup of allocated resources when Init() is called.
+- Added in supplementary verification ping when an API_TimeEvent error is received before setting the devices CommunicationStatus.
 - Added a tango command to force reconnection on dish manager's subservient devices.
 
 Version 9.3.0
