@@ -236,7 +236,7 @@ def test_device_goes_away(patch_dp, caplog):
 
     # trigger a valid event
     tc_manager._events_queue.put(mock_some_attr_event_data)
-    tc_manager.device_proxy.ping.return_value = None
+    tc_manager.device_proxy.ping.return_value = 5
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
