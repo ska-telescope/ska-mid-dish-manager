@@ -131,7 +131,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         dev_error = errors[0]
         if dev_error.reason == "API_EventTimeout":
             # Important: _device_proxy_factory performs retries to check device liveness.
-            # This operation can be expensive, so it is only triggered only for
+            # This operation can be expensive, so it is only triggered for
             # API_EventTimeout errors.
             device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
             try:
