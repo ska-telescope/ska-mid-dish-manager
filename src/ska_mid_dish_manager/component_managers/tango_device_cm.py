@@ -139,7 +139,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 self.device_proxy.ping()
             except tango.DevFailed:
                 dev_name = device_proxy.dev_name()
-                self.logger.error(
+                self.logger.exception(
                     "Failed to ping device proxy: %s after an %s error. Communication Status"
                     " degraded to 'Not Established'.",
                     dev_name,
