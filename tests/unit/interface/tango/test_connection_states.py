@@ -162,11 +162,11 @@ def test_b5dc_server_connection_state_attr_updates(
 @pytest.mark.unit
 @pytest.mark.forked
 def test_b5dc_server_connection_state_attr_updates_when_b5dc_proxy_connection_lost(
-    dish_manager_resources,
+    dish_manager_resources_with_b5dc_monitoring,
     event_store_class,
 ):
     """Test b5dcServerConnectionState updates when B5dc proxy communication is lost."""
-    device_proxy, dish_manager_cm = dish_manager_resources
+    device_proxy, dish_manager_cm = dish_manager_resources_with_b5dc_monitoring
     b5_conn_state_event_store = event_store_class()
     b5_server_conn_event_store = event_store_class()
 
