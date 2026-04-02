@@ -110,7 +110,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
         """
         # Error events come through with attr_name being the full TRL so extract just the attribute
         # name to match what is added in _update_state_from_event
-        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         attr_name = event_data.attr_name.split("/")[-1].lower()
         errors = event_data.errors
 
@@ -131,6 +130,10 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # be further actioned after logging.
         dev_error = errors[0]
         if dev_error.reason == "API_EventTimeout":
+            # Important: _device_proxy_factory performs retries to check device liveness.
+            # This operation can be expensive, so it is only triggered only for
+            # API_EventTimeout errors.
+            device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
             try:
                 self._active_attr_event_subscriptions.remove(attr_name)
             except KeyError:
