@@ -9,7 +9,7 @@ import logging
 import weakref
 from datetime import datetime
 from functools import reduce
-from typing import List, Optional, Tuple
+from typing import List, Literal, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
@@ -25,6 +25,7 @@ from ska_mid_dish_manager.models.abort_sequence_command_handler import Abort
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
     ApplyPointingModelCommand,
+    ResetComponentConnectionCommand,
     ResetTrackTableCommand,
     SetFrequencyCommand,
     SetHPolAttenuationCommand,
@@ -242,6 +243,10 @@ class DishManager(SKAController):
         self.register_command_object(
             "SetVPolAttenuation",
             SetVPolAttenuationCommand(self.component_manager, self.logger),
+        )
+        self.register_command_object(
+            "ResetComponentConnection",
+            ResetComponentConnectionCommand(self.component_manager, self.logger),
         )
 
     def delete_device(self):
@@ -2686,9 +2691,28 @@ class DishManager(SKAController):
         return_code, message = handler(value)
         return ([return_code], [message])
 
-    @record_command(False)
+    @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
+    @command(
+        dtype_in="DevString",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="""Reset connections between the Dish Manager and a sub-device.
+
+        :param device_name: sub-device to reconnect [SPF, SPFRX, DS, B5DC]
+        """,
+    )
+    def ResetComponentConnection(
+        self, value: Literal["DS", "SPF", "SPFRX", "B5DC"]
+    ) -> DevVarLongStringArrayType:
+        """This command Reset the connections to sub devices."""
+        handler = self.get_command_object("ResetComponentConnection")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",

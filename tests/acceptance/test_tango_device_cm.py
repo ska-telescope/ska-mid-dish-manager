@@ -1,6 +1,7 @@
 """Tango device component manager tests."""
 
 import logging
+import threading
 
 import pytest
 import tango
@@ -8,6 +9,11 @@ from ska_control_model import CommunicationStatus
 from ska_tango_testing.mock import MockCallable
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
+from ska_mid_dish_manager.models.constants import (
+    DEFAULT_DS_MANAGER_TRL,
+    DEFAULT_SPFC_TRL,
+    DEFAULT_SPFRX_TRL,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -81,3 +87,44 @@ def test_stress_component_monitor(monitor_tango_servers, component_state_store, 
         device_proxy.testmode = test_mode_initial_val
     finally:
         com_man.stop_communicating()
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize(
+    ("device_fqdn", "subscribed_attrs"),
+    [
+        (DEFAULT_SPFC_TRL, ("b1LnaHPowerState", "operatingMode")),
+        (DEFAULT_SPFRX_TRL, ("configuredBand", "operatingMode")),
+        (DEFAULT_DS_MANAGER_TRL, ("achievedTargetLock", "powerState")),
+    ],
+)
+@pytest.mark.acceptance
+def test_tango_device_component_manager_threads_management(
+    component_state_store, device_fqdn, subscribed_attrs
+):
+    """Test tango_device component mananger clears threads as expected."""
+    mock_callable = MockCallable(timeout=5)
+    com_man = TangoDeviceComponentManager(
+        device_fqdn,
+        LOGGER,
+        subscribed_attrs,
+        component_state_callback=component_state_store,
+        communication_state_callback=mock_callable,
+    )
+    com_man.start_communicating()
+
+    threads = threading.enumerate()
+
+    assert len(threads) == 3  # (Subscription thread, Consumer thread,main thread)
+    threads_names = [t.name for t in threads]
+
+    assert "MainThread" in threads_names
+    device_fqdn = device_fqdn.replace("-", "_").replace("/", ".")
+    assert f"{device_fqdn}.attribute_subscription_thread" in threads_names
+    assert f"{device_fqdn}.event_consumer_thread" in threads_names
+
+    com_man.stop_communicating()
+
+    threads = threading.enumerate()
+    assert len(threads) == 1  # (main thread)
+    assert threads[0].name == "MainThread"
