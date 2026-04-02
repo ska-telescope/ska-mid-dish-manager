@@ -216,6 +216,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dscerrorstatuses=self._aggregate_dsc_error_statuses({}),
             dscconnectionstate=CommunicationStatus.DISABLED,
             b5dcserverconnectionstate=CommunicationStatus.DISABLED,
+            healthinfo=[],
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -852,6 +853,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             self._update_component_state(healthstate=new_health_state)
 
+            new_health_info = self.generate_healthinfo()
+            self._update_component_state(healthinfo=new_health_info)
+
         if "pointingstate" in kwargs:
             pointing_state = ds_component_state["pointingstate"]
             if pointing_state != self.component_state["pointingstate"]:
@@ -1115,6 +1119,55 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if self.sub_component_managers:
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
+
+    def reset_subservient_dev_connections(self, device_name: str) -> Tuple[ResultCode, str]:
+        """Reset connections between dish manager and subservient devices."""
+        if not device_name:
+            err_msg = "device name cannot be an empty string"
+            self.logger.error(err_msg, extra=OPERATOR_TAG)
+            raise ValueError(err_msg)
+
+        upper_cased_device_name = device_name.upper()
+        component_device_names = ["SPF", "SPFRX", "DS", "B5DC"]
+        if upper_cased_device_name not in component_device_names:
+            err_msg = "Incorrect input, command only accept SPF, SPFRX, DS, B5DC"
+            self.logger.error(err_msg, extra=OPERATOR_TAG)
+            raise ValueError(err_msg)
+
+        self.logger.debug("Resetting connection for device [%s].", device_name, extra=OPERATOR_TAG)
+
+        # B5DC proxy connection can be restarted only if monitored
+        if upper_cased_device_name == "B5DC" and not self._check_b5dc_active():
+            self.logger.warning(
+                "Reconnection denied, B5DC device is not monitored", extra=OPERATOR_TAG
+            )
+            raise ValueError("Reconnection denied, B5DC device is not monitored")
+
+        # The client shouldn't be able to reset connection of ignored devices
+        if upper_cased_device_name != "DS" and self.is_device_ignored(upper_cased_device_name):
+            self.logger.error(
+                "Reconnection denied, device %s is ignored",
+                upper_cased_device_name,
+                extra=OPERATOR_TAG,
+            )
+            raise ValueError(
+                f"Reconnection denied, device {upper_cased_device_name} is ignored."
+                f"Set ignore{device_name} to True in order to force reconnection"
+            )
+
+        # Start and stop the communication
+        try:
+            self.sub_component_managers[upper_cased_device_name].stop_communicating()
+            self.sub_component_managers[upper_cased_device_name].start_communicating()
+            return ResultCode.OK, "Resetting connection is successful"
+
+        except Exception as excep:
+            self.logger.exception(
+                "Stop/Start communication command failed !! , err : %s",
+                excep,
+                extra=OPERATOR_TAG,
+            )
+            ResultCode.FAILED, f"Failed to reconnect {upper_cased_device_name}: {excep}"
 
     def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPF device ignored boolean and update device communication."""
@@ -1961,3 +2014,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.info("Monitoring and control not set up for B5DC device.")
             return False
         return True
+
+    def generate_healthinfo(self) -> List[str]:
+        """Report the reason for healthstate failures.
+
+        TODO work out how to get the actual reasons.
+        """
+        health_info = []
+        for com_man in self.sub_component_managers.values():
+            if com_man.component_state.get("healthstate") == HealthState.FAILED:
+                health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
+            if com_man.component_state.get("healthstate") == HealthState.DEGRADED:
+                health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]')
+        return health_info

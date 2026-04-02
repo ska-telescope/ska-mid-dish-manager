@@ -12,6 +12,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added tag user=operator to INFO logs for filtering operator related logs. 
 - Addressed the cleanup of allocated resources when Init() is called.
 - Added new b5dcServerConnectionState attribute to reflect the state of connectivity to the B5dc component
+- Added a tango command to force reconnection on dish manager's subservient devices.
 
 Version 9.3.0
 *************
