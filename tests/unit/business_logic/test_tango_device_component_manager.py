@@ -192,6 +192,8 @@ def test_device_goes_away(patch_dp, caplog):
         LOGGER,
         ("some_Attr", "some_other_attr"),
     )
+    mock_device = patch_dp.return_value
+    tc_manager.device_proxy = mock_device
 
     # configure mock and start communication
     tc_manager._fetch_build_state_information = mock.MagicMock(name="mock_build_state")
@@ -225,6 +227,7 @@ def test_device_goes_away(patch_dp, caplog):
     mock_some_attr_error_event_data = construct_mock_error_event_data(
         "some_attr", "API_EventTimeout"
     )
+    tc_manager.device_proxy.ping.side_effect = tango.DevFailed()
     # Trigger a failure event
     tc_manager._events_queue.put(mock_some_attr_error_event_data)
     # wait a bit for the state to change
@@ -233,6 +236,7 @@ def test_device_goes_away(patch_dp, caplog):
 
     # trigger a valid event
     tc_manager._events_queue.put(mock_some_attr_event_data)
+    tc_manager.device_proxy.ping.return_value = 5
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
