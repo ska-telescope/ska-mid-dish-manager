@@ -126,11 +126,11 @@ def test_connection_state_attrs_on_devices_with_no_monitoring(
 @pytest.mark.unit
 @pytest.mark.forked
 def test_b5dc_server_connection_state_attr_updates(
-    dish_manager_resources,
+    dish_manager_resources_with_b5dc_monitoring,
     event_store_class,
 ):
     """Test b5dcServerConnectionState updates when B5dc proxy connectionState updates."""
-    device_proxy, dish_manager_cm = dish_manager_resources
+    device_proxy, dish_manager_cm = dish_manager_resources_with_b5dc_monitoring
     b5_conn_state_event_store = event_store_class()
     b5_server_conn_event_store = event_store_class()
 
