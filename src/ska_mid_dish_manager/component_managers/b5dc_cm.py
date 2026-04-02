@@ -81,4 +81,4 @@ class B5DCComponentManager(TangoDeviceComponentManager):
                 on_dev_connection_state = self.read_attribute_value("connectionState")
                 self._update_component_state(connectionstate=on_dev_connection_state)
             except tango.DevFailed:
-                self.logger.warning("Failed to read and synchronize B5dc connectionState")
+                self.logger.warning("Failed to read and synchronize B5dc server connectionState")
