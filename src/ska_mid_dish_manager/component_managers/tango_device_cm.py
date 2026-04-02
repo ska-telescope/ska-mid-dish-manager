@@ -136,7 +136,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
             except KeyError:
                 pass
             try:
-                self.device_proxy.ping()
+                device_proxy.ping()
             except tango.DevFailed:
                 dev_name = device_proxy.dev_name()
                 self.logger.exception(
