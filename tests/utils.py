@@ -237,8 +237,6 @@ class EventStore:
                         return True
                     if np.isclose(event.attr_value.value, value).all():
                         return True
-                    if event.attr_value.value.tolist() == value:
-                        return True
                     continue
                 if event.attr_value.value != value:
                     continue
