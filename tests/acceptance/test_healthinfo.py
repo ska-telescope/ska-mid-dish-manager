@@ -12,8 +12,6 @@ def test_healthinfo(dish_manager_proxy, spfrx_device_proxy, event_store_class):
     sub_id = dish_manager_proxy.subscribe_event(
         "healthInfo", tango.EventType.CHANGE_EVENT, event_store
     )
-    event_store.clear_queue()
-
     spfrx_device_proxy.write_attribute("healthState", HealthState.OK)
     event_store.wait_for_value((), timeout=10)
     spfrx_device_proxy.write_attribute("healthState", HealthState.FAILED)
