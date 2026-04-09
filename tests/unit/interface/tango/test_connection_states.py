@@ -1,5 +1,7 @@
 """Unit tests for subservient device connection states."""
 
+from unittest.mock import Mock
+
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
@@ -103,7 +105,6 @@ def test_dsc_connection_state_attr_updates_when_ds_connection_lost(
     "connection_state_attr",
     [
         "wmsConnectionState",
-        "b5dcConnectionState",
     ],
 )
 def test_connection_state_attrs_on_devices_with_no_monitoring(
@@ -120,3 +121,72 @@ def test_connection_state_attrs_on_devices_with_no_monitoring(
         event_store,
     )
     event_store.wait_for_value(CommunicationStatus.DISABLED, timeout=10)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_b5dc_server_connection_state_attr_updates(
+    dish_manager_resources_with_b5dc_monitoring,
+    event_store_class,
+):
+    """Test b5dcServerConnectionState updates when B5dc proxy connectionState updates."""
+    device_proxy, dish_manager_cm = dish_manager_resources_with_b5dc_monitoring
+    b5_conn_state_event_store = event_store_class()
+    b5_server_conn_event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "b5dcConnectionState",
+        tango.EventType.CHANGE_EVENT,
+        b5_conn_state_event_store,
+    )
+
+    device_proxy.subscribe_event(
+        "b5dcServerConnectionState",
+        tango.EventType.CHANGE_EVENT,
+        b5_server_conn_event_store,
+    )
+
+    b5_conn_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=10)
+    b5_server_conn_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=10)
+
+    # Force B5dc Server connectionstate to ESTABLISHED, and update the B5dc proxy
+    # connection state, asserting that the server state mirrors the forced server
+    # ESTABLISHED connection state on sync
+    b5dc_cm = dish_manager_cm.sub_component_managers["B5DC"]
+    setattr(b5dc_cm, "read_attribute_value", Mock(return_value=CommunicationStatus.ESTABLISHED))
+    b5dc_cm._update_component_state(connectionstate=CommunicationStatus.ESTABLISHED)
+
+    b5_server_conn_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=10)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_b5dc_server_connection_state_attr_updates_when_b5dc_proxy_connection_lost(
+    dish_manager_resources_with_b5dc_monitoring,
+    event_store_class,
+):
+    """Test b5dcServerConnectionState updates when B5dc proxy communication is lost."""
+    device_proxy, dish_manager_cm = dish_manager_resources_with_b5dc_monitoring
+    b5_conn_state_event_store = event_store_class()
+    b5_server_conn_event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "b5dcConnectionState",
+        tango.EventType.CHANGE_EVENT,
+        b5_conn_state_event_store,
+    )
+    b5_conn_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=10)
+
+    device_proxy.subscribe_event(
+        "b5dcServerConnectionState",
+        tango.EventType.CHANGE_EVENT,
+        b5_server_conn_event_store,
+    )
+
+    assert device_proxy.b5dcServerConnectionState == CommunicationStatus.NOT_ESTABLISHED
+
+    # Force B5dc proxy state communication_state to DISABLED
+    sub_component_manager = dish_manager_cm.sub_component_managers["B5DC"]
+    sub_component_manager._update_communication_state(CommunicationStatus.DISABLED)
+
+    b5_server_conn_event_store.wait_for_value(CommunicationStatus.DISABLED)

@@ -9,7 +9,7 @@ import logging
 import weakref
 from datetime import datetime
 from functools import reduce
-from typing import List, Optional, Tuple
+from typing import List, Literal, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
@@ -25,6 +25,7 @@ from ska_mid_dish_manager.models.abort_sequence_command_handler import Abort
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
     ApplyPointingModelCommand,
+    ResetComponentConnectionCommand,
     ResetTrackTableCommand,
     SetFrequencyCommand,
     SetHPolAttenuationCommand,
@@ -96,7 +97,7 @@ class DishManager(SKAController):
     DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
-    # B%DC device is not monitored by default, so default value is empty string
+    # B5DC device is not monitored by default, so default value is empty string
     B5DCDeviceFqdn = device_property(dtype=str, default_value="")
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
     DefaultWatchdogTimeout = device_property(dtype=float, default_value=DEFAULT_WATCHDOG_TIMEOUT)
@@ -242,6 +243,10 @@ class DishManager(SKAController):
         self.register_command_object(
             "SetVPolAttenuation",
             SetVPolAttenuationCommand(self.component_manager, self.logger),
+        )
+        self.register_command_object(
+            "ResetComponentConnection",
+            ResetComponentConnectionCommand(self.component_manager, self.logger),
         )
 
     def delete_device(self):
@@ -453,6 +458,7 @@ class DishManager(SKAController):
                 "wmsconnectionstate": "wmsConnectionState",
                 "b5dcconnectionstate": "b5dcConnectionState",
                 "dscconnectionstate": "dscConnectionState",
+                "b5dcserverconnectionstate": "b5dcServerConnectionState",
                 "noisediodemode": "noiseDiodeMode",
                 "periodicnoisediodepars": "periodicNoiseDiodePars",
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
@@ -492,6 +498,7 @@ class DishManager(SKAController):
                 "rftemperature": "rfTemperature",
                 "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
                 "dscerrorstatuses": "dscErrorStatuses",
+                "healthinfo": "healthInfo",
             }
             for attr in device._component_state_attr_map.values():
                 device.set_change_event(attr, True, False)
@@ -661,6 +668,17 @@ class DishManager(SKAController):
         """Return the status of the connection of the DSManager device to the dish controller."""
         return self.component_manager.component_state.get(
             "dscconnectionstate", CommunicationStatus.NOT_ESTABLISHED
+        )
+
+    @attribute(
+        dtype=CommunicationStatus,
+        access=AttrWriteType.READ,
+        doc="Return the status of the connection of the B5dc Proxy device to the B5dc server.",
+    )
+    def b5dcServerConnectionState(self) -> CommunicationStatus:
+        """Return the status of the connection of the B5dc Proxy device to the B5dc server."""
+        return self.component_manager.component_state.get(
+            "b5dcserverconnectionstate", CommunicationStatus.NOT_ESTABLISHED
         )
 
     @attribute(
@@ -2126,6 +2144,15 @@ class DishManager(SKAController):
         """Return the aggregated error statuses from the DSC."""
         return self.component_manager.component_state.get("dscerrorstatuses", "")
 
+    @attribute(
+        dtype=[str],
+        access=AttrWriteType.READ,
+        doc="Report the reason for healthstate failures.",
+    )
+    def healthInfo(self):
+        """Report the reason for healthstate failures."""
+        return self.component_manager.component_state.get("healthinfo", [])
+
     # --------
     # Commands
     # --------
@@ -2686,9 +2713,28 @@ class DishManager(SKAController):
         return_code, message = handler(value)
         return ([return_code], [message])
 
-    @record_command(False)
+    @record_command(True)
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
+    @command(
+        dtype_in="DevString",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="""Reset connections between the Dish Manager and a sub-device.
+
+        :param device_name: sub-device to reconnect [SPF, SPFRX, DS, B5DC]
+        """,
+    )
+    def ResetComponentConnection(
+        self, value: Literal["DS", "SPF", "SPFRX", "B5DC"]
+    ) -> DevVarLongStringArrayType:
+        """This command Reset the connections to sub devices."""
+        handler = self.get_command_object("ResetComponentConnection")
+        return_code, message = handler(value)
+        return ([return_code], [message])
+
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",
