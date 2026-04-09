@@ -491,16 +491,25 @@ class SetStandbyFPModeAction(Action):
             device="DS",
             command_name="SetPowerMode",
             command_argument=[False, dsc_power_limit],
-            device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
+            device_component_manager=dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"powerstate": DSPowerState.FULL_POWER},
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
-
+        spf_set_operate_mode = FannedOutSlowCommand(
+            logger=self.logger,
+            device="SPF",
+            command_name="SetOperateMode",
+            command_argument=None,
+            device_component_manager=self.dish_manager_cm.sub_component_managers["SPF"],
+            awaited_component_state={"operatingmode": SPFOperatingMode.OPERATE},
+            progress_callback=self._progress_callback,
+            is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
+        )
         self._handler = ActionHandler(
             self.logger,
             "SetStandbyFPMode",
-            [ds_set_standby_mode, ds_set_full_power_mode],
+            [ds_set_standby_mode, ds_set_full_power_mode, spf_set_operate_mode],
             # use _dish_manager_cm._component_state to pass the dict by reference
             # _dish_manager_cm.component_state will use the tango base property which will do a
             # deep copy
