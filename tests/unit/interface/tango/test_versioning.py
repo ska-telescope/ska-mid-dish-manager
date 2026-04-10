@@ -68,7 +68,7 @@ class TestDishManagerVersioning:
         assert build_state_json["spfc_device"]["version"] == ""
         assert build_state_json["spfc_device"]["address"] == DEFAULT_SPFC_TRL
         assert build_state_json["b5dc_device"]["version"] == ""
-        assert build_state_json["b5dc_device"]["address"] == "a/b/c"
+        assert build_state_json["b5dc_device"]["address"] == ["a/b/c"]
 
     @pytest.mark.parametrize(
         "device, build_state_key",
