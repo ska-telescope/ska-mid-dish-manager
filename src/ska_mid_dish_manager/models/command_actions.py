@@ -85,7 +85,7 @@ class Action(ABC):
         :raises NotImplementedError: If no handler has been assigned by the subclass.
         """
         if self._handler is None:
-            raise NotImplementedError("Action does not have a handler")
+            raise NotImplementedError(f"Action {self.__class__} does not have a handler")
         return self._handler
 
     def execute(
@@ -748,17 +748,13 @@ class TrackStopAction(Action):
             self.logger,
             "TrackStop",
             [ds_command],
-            # use _dish_manager_cm._component_state to pass the dict by reference
-            # _dish_manager_cm.component_state will use the tango base property which will do a
-            # deep copy
             component_state=self.dish_manager_cm._component_state,
-            awaited_component_state={"pointingstate": PointingState.READY},
             action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
             progress_callback=self._progress_callback,
-            timeout_s=timeout_s,
         )
+        self.completed_message = "TrackStop Completed on DSC"
 
 
 def apply_pointing_model(
@@ -1178,3 +1174,157 @@ class TrackLoadStaticOffAction(Action):
             progress_callback=self._progress_callback,
             timeout_s=timeout_s,
         )
+
+
+# self._component_manager._end_scan(task_abort_event)
+
+
+class EndScanAction(Action):
+    """Reset the scan ID."""
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        dish_manager_cm,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
+        action_on_success: Optional["Action"] = None,
+        action_on_failure: Optional["Action"] = None,
+        waiting_callback: Optional[Callable] = None,
+    ):
+        """:param logger: Logger instance.
+        :type logger: logging.Logger
+        :param dish_manager_cm: The DishManagerComponentManager instance.
+        :type dish_manager_cm: DishManagerComponentManager
+        :param action_on_success: Optional Action to execute automatically if this action succeeds.
+        :type action_on_success: Optional[Action]
+        :param action_on_failure: Optional Action to execute automatically if this action fails.
+        :type action_on_failure: Optional[Action]
+        :param waiting_callback: Optional callback executed periodically while waiting on commands.
+        :type waiting_callback: Optional[Callable]
+        """
+        super().__init__(
+            logger,
+            dish_manager_cm,
+            timeout_s,
+            action_on_success,
+            action_on_failure,
+            waiting_callback,
+        )
+        self.completed_message = "The scan ID has been cleared."
+
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
+        if not task_abort_event.is_set():
+            self.logger.info("Resetting the Scan ID")
+            self.dish_manager_cm._update_component_state(scanid="")
+            if self.action_on_success:
+                self.action_on_success.execute(task_callback, task_abort_event)
+
+
+class ResetTrackTableAction(Action):
+    """Reset the DSC track table."""
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        dish_manager_cm,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
+        action_on_success: Optional["Action"] = None,
+        action_on_failure: Optional["Action"] = None,
+        waiting_callback: Optional[Callable] = None,
+    ):
+        """:param logger: Logger instance.
+        :type logger: logging.Logger
+        :param dish_manager_cm: The DishManagerComponentManager instance.
+        :type dish_manager_cm: DishManagerComponentManager
+        :param action_on_success: Optional Action to execute automatically if this action succeeds.
+        :type action_on_success: Optional[Action]
+        :param action_on_failure: Optional Action to execute automatically if this action fails.
+        :type action_on_failure: Optional[Action]
+        :param waiting_callback: Optional callback executed periodically while waiting on commands.
+        :type waiting_callback: Optional[Callable]
+        """
+        super().__init__(
+            logger,
+            dish_manager_cm,
+            timeout_s,
+            action_on_success,
+            action_on_failure,
+            waiting_callback,
+        )
+        self.completed_message = "The DSC track table has been reset."
+
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
+        if not task_abort_event.is_set():
+            self.logger.info("Clearing the track table.")
+            result_code, msg = self.dish_manager_cm.reset_track_table()
+            if result_code == ResultCode.FAILED:
+                self.logger.error(f"abort-sequence: ResetTrackTable failed: {msg}")
+                update_task_status(
+                    task_callback,
+                    status=TaskStatus.FAILED,
+                    result=(ResultCode.FAILED, f"Resetting the track table failed: {msg}"),
+                )
+            else:
+                self.logger.info(f"Clearing the track table OK {result_code}, {msg}")
+            if self.action_on_success:
+                self.action_on_success.execute(task_callback, task_abort_event)
+
+
+class AbortSequence(Action):
+    """Sequence to stop dish movement.
+
+    Reset the track table and then clear the scan_id
+    """
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        dish_manager_cm,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
+        action_on_success: Optional["Action"] = None,
+        action_on_failure: Optional["Action"] = None,
+        waiting_callback: Optional[Callable] = None,
+    ):
+        super().__init__(
+            logger,
+            dish_manager_cm,
+            timeout_s,
+            action_on_success,
+            action_on_failure,
+            waiting_callback,
+        )
+        self.completed_message = "Abort sequence completed."
+
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
+        """Execute the abort sequence."""
+        end_scan_action = EndScanAction(
+            self.logger,
+            self.dish_manager_cm,
+            self.timeout_s,
+            self.action_on_success,
+            self.action_on_failure,
+            self.waiting_callback,
+        )
+
+        reset_track_table_action = ResetTrackTableAction(
+            self.logger,
+            self.dish_manager_cm,
+            self.timeout_s,
+            action_on_success=end_scan_action,
+            waiting_callback=self.waiting_callback,
+        )
+
+        track_stop_action = TrackStopAction(
+            self.logger,
+            self.dish_manager_cm,
+            self.timeout_s,
+            action_on_success=reset_track_table_action,
+            waiting_callback=self.waiting_callback,
+        )
+        if not task_abort_event.is_set():
+            track_stop_action.execute(task_callback, task_abort_event, completed_response_msg)
+            update_task_status(
+                task_callback,
+                status=TaskStatus.COMPLETED,
+                result=(ResultCode.OK, self.completed_message),
+            )

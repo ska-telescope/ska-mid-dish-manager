@@ -234,14 +234,14 @@ class EventStore:
                     continue
                 if isinstance(event.attr_value.value, np.ndarray):
                     if (event.attr_value.value == value).all():
-                        return True
+                        return event
                     if np.isclose(event.attr_value.value, value).all():
-                        return True
+                        return event
                     continue
                 if event.attr_value.value != value:
                     continue
                 if event.attr_value.value == value:
-                    return True
+                    return event
         except queue.Empty as err:
             ev_vals = self.extract_event_values(events)
             if proxy:
@@ -543,6 +543,40 @@ class EventStore:
         :type events: List[tango.EventData]
         """
         return [(event.attr_value.name, event.attr_value.value) for event in events]
+
+    def wait_for_lrcvalue(self, command_id: str, timeout: int = 3) -> Dict:
+        """Wait for a long running command to get to lrc[Executing/Finished/Queue]
+        depending on which subscription you passed in.
+
+        Wait `timeout` seconds for each fetch.
+
+        :param command_id: The long running command ID
+        :type command_id: str
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If none are found
+        :return: The result of the lrc
+        :rtype: dict
+        """
+        events = []
+        try:
+            while True:
+                event = self._queue.get(timeout=timeout)
+                events.append(event)
+                if not event.attr_value:
+                    continue
+                if not isinstance(event.attr_value.value, tuple):
+                    continue
+                for result in event.attr_value.value:
+                    result_dict = json.loads(result)
+                    if result_dict["uid"] == command_id:
+                        return result_dict
+        except queue.Empty as err:
+            event_info = [(event.attr_value.name, event.attr_value.value) for event in events]
+            raise RuntimeError(
+                f"Never got an lrcfinished from command [{command_id}],",
+                f" but got [{event_info}]",
+            ) from err
 
 
 @dataclass

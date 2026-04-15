@@ -22,6 +22,7 @@ from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
+    AbortSequence,
     ConfigureBandActionSequence,
     SetMaintenanceModeAction,
     SetOperateModeAction,
@@ -1918,20 +1919,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
             return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
 
-        cmds_in_progress = self.get_currently_executing_lrcs()
-        if cmds_in_progress:
-            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
-                self.logger.error("Abort rejected: there is an ongoing abort sequence.")
-                update_task_status(
-                    task_callback,
-                    status=TaskStatus.REJECTED,
-                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
-                )
-                return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
+        status, response = self.submit_task(
+            AbortSequence(self.logger, self, "Abort").execute,
+            is_cmd_allowed=None,
+            task_callback=task_callback,
+        )
 
-        self.logger.debug("Aborting LRCs from Abort sequence")
-        self.abort_tasks(task_callback=task_callback)
-        return TaskStatus.IN_PROGRESS, "Abort sequence has started"
+        return status, response
 
     def set_dsc_power_limit_kw(self, power_limit: float) -> Tuple[ResultCode, str]:
         """Set the DSC Power Limit kW on the DS."""
