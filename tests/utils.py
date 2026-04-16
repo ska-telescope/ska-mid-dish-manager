@@ -544,14 +544,16 @@ class EventStore:
         """
         return [(event.attr_value.name, event.attr_value.value) for event in events]
 
-    def wait_for_lrcvalue(self, command_id: str, timeout: int = 3) -> Dict:
+    def wait_for_lrcvalue(self, key: str, value: any, timeout: int = 3) -> Dict:
         """Wait for a long running command to get to lrc[Executing/Finished/Queue]
         depending on which subscription you passed in.
 
         Wait `timeout` seconds for each fetch.
 
-        :param command_id: The long running command ID
-        :type command_id: str
+        :param key: The key in the lrc value
+        :type key: str
+        :param value: The value in the lrc value
+        :type value: Any
         :param timeout: the get timeout, defaults to 3
         :type timeout: int, optional
         :raises RuntimeError: If none are found
@@ -569,12 +571,12 @@ class EventStore:
                     continue
                 for result in event.attr_value.value:
                     result_dict = json.loads(result)
-                    if result_dict["uid"] == command_id:
+                    if result_dict[key] == value:
                         return result_dict
         except queue.Empty as err:
             event_info = [(event.attr_value.name, event.attr_value.value) for event in events]
             raise RuntimeError(
-                f"Never got an lrcfinished from command [{command_id}],",
+                f"Never got an lrc key {key} with value {value},",
                 f" but got [{event_info}]",
             ) from err
 
