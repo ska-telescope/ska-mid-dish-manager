@@ -234,14 +234,14 @@ class EventStore:
                     continue
                 if isinstance(event.attr_value.value, np.ndarray):
                     if (event.attr_value.value == value).all():
-                        return event
+                        return True
                     if np.isclose(event.attr_value.value, value).all():
-                        return event
+                        return True
                     continue
                 if event.attr_value.value != value:
                     continue
                 if event.attr_value.value == value:
-                    return event
+                    return True
         except queue.Empty as err:
             ev_vals = self.extract_event_values(events)
             if proxy:
@@ -569,6 +569,7 @@ class EventStore:
                     continue
                 for result in event.attr_value.value:
                     result_dict = json.loads(result)
+                    print("BBBBBBBB", result_dict["uid"])
                     if result_dict["uid"] == command_id:
                         return result_dict
         except queue.Empty as err:

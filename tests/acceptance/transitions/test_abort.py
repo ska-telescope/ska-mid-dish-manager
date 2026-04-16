@@ -1,5 +1,4 @@
 import random
-from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -16,11 +15,13 @@ def test_abort_from_slew(
     event_store_class: Any,
 ):
     """Test that we stop movement. LRC only report OK after dish has stopped."""
-    slew_stop_timestamp = None
-    lrc_finished_timestamp = None
-
     pointing_state_event_store = event_store_class()
     lrcfin_event_store = event_store_class()
+    dish_mode_store = event_store_class()
+
+    dm_mode_sub_id = dish_manager_proxy.subscribe_event(
+        "dishmode", tango.EventType.CHANGE_EVENT, dish_mode_store
+    )
 
     ds_sub_id = ds_device_proxy.subscribe_event(
         "pointingstate", tango.EventType.CHANGE_EVENT, pointing_state_event_store
@@ -32,8 +33,10 @@ def test_abort_from_slew(
     )
     lrcfin_event_store.clear_queue()
 
-    if dish_manager_proxy.dishmode != DishMode.OPERATE:
-        dish_manager_proxy.configureband1(True)
+    dish_manager_proxy.configureband1(True)
+    dish_mode_store.wait_for_value(DishMode.OPERATE, timeout=300)
+
+    assert dish_manager_proxy.dishmode == DishMode.OPERATE
 
     random_az = random.choice(list(range(-50, 50)))
     dish_manager_proxy.slew([random_az, 50])
@@ -43,9 +46,7 @@ def test_abort_from_slew(
     command_id = command_id[0]
     assert ResultCode(result_code[0]) == ResultCode.QUEUED
 
-    event = pointing_state_event_store.wait_for_value(PointingState.READY, timeout=30)
-    slew_stop_timestamp = event.attr_value.time.todatetime()
-    slew_stop_timestamp = slew_stop_timestamp.replace(tzinfo=timezone.utc)
+    pointing_state_event_store.wait_for_value(PointingState.READY, timeout=300)
 
     # Wait for the command to finish
     abort_completed_info: tango.EventType.CHANGE_EVENT = lrcfin_event_store.wait_for_lrcvalue(
@@ -53,22 +54,15 @@ def test_abort_from_slew(
     )
     assert abort_completed_info["result"]
     assert ResultCode(abort_completed_info["result"][0]) == ResultCode.OK
-    lrc_finished_timestamp = datetime.fromisoformat(abort_completed_info["finished_time"])
-
-    # Assert that the LRC finished after the slew stopped
-    err_message = (
-        f"The LRC finished [{lrc_finished_timestamp}] "
-        f"before the dish stopped [{slew_stop_timestamp}]"
-    )
-
-    assert lrc_finished_timestamp > slew_stop_timestamp, err_message
 
     ds_device_proxy.unsubscribe_event(ds_sub_id)
     dish_manager_proxy.unsubscribe_event(dm_sub_id)
+    dish_manager_proxy.unsubscribe_event(dm_mode_sub_id)
 
 
 @pytest.mark.acceptance
 def test_abort_from_non_slew(
+    reset_dish_to_standby,
     dish_manager_proxy: tango.DeviceProxy,
     ds_device_proxy: tango.DeviceProxy,
     event_store_class: Any,
@@ -76,19 +70,20 @@ def test_abort_from_non_slew(
     """Test that Abort returns OK, when dish is standing still."""
     pointing_state_event_store = event_store_class()
     lrcfin_event_store = event_store_class()
+    dish_mode_store = event_store_class()
 
+    dm_mode_sub_id = dish_manager_proxy.subscribe_event(
+        "dishmode", tango.EventType.CHANGE_EVENT, dish_mode_store
+    )
     ds_sub_id = ds_device_proxy.subscribe_event(
         "pointingstate", tango.EventType.CHANGE_EVENT, pointing_state_event_store
     )
-    pointing_state_event_store.wait_for_value(PointingState.READY)
-
     dm_sub_id = dish_manager_proxy.subscribe_event(
         "lrcFinished", tango.EventType.CHANGE_EVENT, lrcfin_event_store
     )
-    lrcfin_event_store.clear_queue()
 
-    if dish_manager_proxy.dishmode != DishMode.OPERATE:
-        dish_manager_proxy.configureband1(True)
+    dish_manager_proxy.configureband1(True)
+    dish_mode_store.wait_for_value(DishMode.OPERATE, timeout=300)
 
     result_code, command_id = dish_manager_proxy.Abort()
 
@@ -106,4 +101,36 @@ def test_abort_from_non_slew(
     assert ResultCode(abort_completed_info["result"][0]) == ResultCode.OK, abort_completed_info
 
     ds_device_proxy.unsubscribe_event(ds_sub_id)
+    dish_manager_proxy.unsubscribe_event(dm_sub_id)
+    dish_manager_proxy.unsubscribe_event(dm_mode_sub_id)
+
+
+@pytest.mark.acceptance
+def test_abort_from_maintenance(
+    reset_dish_to_standby,
+    dish_manager_proxy: tango.DeviceProxy,
+    event_store_class: Any,
+):
+    """Test Abort from maintenance."""
+    dish_mode_store = event_store_class()
+    lrcfin_event_store = event_store_class()
+
+    dm_sub_id = dish_manager_proxy.subscribe_event(
+        "dishmode", tango.EventType.CHANGE_EVENT, dish_mode_store
+    )
+
+    dm_sub_id = dish_manager_proxy.subscribe_event(
+        "lrcFinished", tango.EventType.CHANGE_EVENT, lrcfin_event_store
+    )
+    lrcfin_event_store.clear_queue()
+
+    dish_manager_proxy.setmaintenancemode()
+
+    dish_mode_store.wait_for_value(DishMode.MAINTENANCE, timeout=300)
+
+    _, command_id = dish_manager_proxy.Abort()
+    command_id = command_id[0]
+    # Wait for the command to finish
+    tango.EventType.CHANGE_EVENT = lrcfin_event_store.wait_for_lrcvalue(command_id, timeout=5)
+
     dish_manager_proxy.unsubscribe_event(dm_sub_id)

@@ -223,3 +223,47 @@ class FannedOutSlowCommand(FannedOutCommand):
         if task_status == TaskStatus.FAILED:
             raise RuntimeError(msg)
         return task_status, msg
+
+
+class DishManagerCMMethod(FannedOutCommand):
+    def __init__(
+        self,
+        logger,
+        method,
+        component_state,
+        command_args=(),
+        command_kwargs={},
+        awaited_component_state={},
+        timeout_s=0,
+    ):
+        self.command_args = command_args
+        self.command_kwargs = command_kwargs
+        super().__init__(
+            logger,
+            "DishManager",
+            str(method),
+            method,
+            component_state,
+            None,
+            awaited_component_state,
+            timeout_s,
+        )
+
+    def execute(self, task_callback) -> None:
+        """Execute the command."""
+        self.logger.debug(
+            (
+                f"Executing {self.command_name} with args {self.command_args} "
+                f"and kwargs. {self.command_kwargs}"
+            )
+        )
+        self._status = FannedOutCommandStatus.RUNNING
+        self.start_time = time.time()
+
+        try:
+            res = self.command(*self.command_args, **self.command_kwargs)
+            self.cmd_response = res
+        except Exception as e:
+            self.logger.exception(f"FannedOutCommand '{self.command_name}' failed to execute: {e}")
+            self._status = FannedOutCommandStatus.FAILED
+            self.cmd_response = f"{e}"
