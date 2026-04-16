@@ -14,7 +14,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added new b5dcServerConnectionState attribute to reflect the state of connectivity to the B5dc component
 - Added in supplementary verification ping when an API_TimeEvent error is received before setting the devices CommunicationStatus.
 - Added a tango command to force reconnection on dish manager's subservient devices.
-- Extendend the SetStandbyFPModeAction to fan out SetOperateMode to the SPF device  
+- Extended the SetStandbyFPModeAction to fan out the SetOperateMode command to the SPF device  
 
 Version 9.3.0
 *************

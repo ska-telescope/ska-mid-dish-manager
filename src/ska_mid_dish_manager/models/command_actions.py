@@ -491,7 +491,7 @@ class SetStandbyFPModeAction(Action):
             device="DS",
             command_name="SetPowerMode",
             command_argument=[False, dsc_power_limit],
-            device_component_manager=dish_manager_cm.sub_component_managers["DS"],
+            device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"powerstate": DSPowerState.FULL_POWER},
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
