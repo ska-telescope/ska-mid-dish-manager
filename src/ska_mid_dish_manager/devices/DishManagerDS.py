@@ -21,7 +21,9 @@ from tango import AttrQuality, AttrWriteType, DevState, DevULong, DevVarStringAr
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.models.abort_sequence_command_handler import Abort
 from ska_mid_dish_manager.models.command_class import (
+    AbortCommand,
     ApplyPointingModelCommand,
     ResetComponentConnectionCommand,
     ResetTrackTableCommand,
@@ -208,13 +210,24 @@ class DishManager(SKAController):
         )
 
         self.register_command_object(
-            "Abort",
+            "AbortScan",
             SubmittedSlowCommand(
-                "Abort",
+                "AbortScan",
                 self._command_tracker,
                 self.component_manager,
-                "abort",
+                "abort_scan",
                 callback=None,
+                logger=self.logger,
+            ),
+        )
+
+        abort_sequence_handler = Abort(self.component_manager, self._command_tracker, self.logger)
+        self.register_command_object(
+            "Abort",
+            AbortCommand(
+                self._command_tracker,
+                self.component_manager,
+                callback=abort_sequence_handler,
                 logger=self.logger,
             ),
         )
@@ -2173,6 +2186,25 @@ class DishManager(SKAController):
             information purpose only.
         """
         handler = self.get_command_object("Abort")
+        (return_code, message) = handler()
+        return ([return_code], [message])
+
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
+    @command(
+        doc_in="Abort dish movement and clear out the scan id.",
+        display_level=DispLevel.OPERATOR,
+        dtype_out="DevVarLongStringArray",
+    )
+    def AbortScan(self) -> DevVarLongStringArrayType:
+        """Empty out long running commands in queue.
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        handler = self.get_command_object("AbortScan")
         (return_code, message) = handler()
         return ([return_code], [message])
 

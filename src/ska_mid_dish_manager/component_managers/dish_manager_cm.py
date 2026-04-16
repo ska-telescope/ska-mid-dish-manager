@@ -1917,6 +1917,32 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
             self.abort_tasks(task_callback=task_callback)
             self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
+            return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
+
+        cmds_in_progress = self.get_currently_executing_lrcs()
+        if cmds_in_progress:
+            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
+                self.logger.error("Abort rejected: there is an ongoing abort sequence.")
+                update_task_status(
+                    task_callback,
+                    status=TaskStatus.REJECTED,
+                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
+                )
+                return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
+
+        self.logger.debug("Aborting LRCs from Abort sequence")
+        self.abort_tasks(task_callback=task_callback)
+        return TaskStatus.IN_PROGRESS, "Abort sequence has started"
+
+    @check_communicating
+    def abort_scan(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        """Issue abort sequence.
+
+        :param task_callback: Callback for task status updates
+        """
+        if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
+            self.abort_tasks(task_callback=task_callback)
+            self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
             return TaskStatus.QUEUED, "Aborting tasks"
 
         status, response = self.submit_task(

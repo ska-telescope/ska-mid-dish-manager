@@ -9,7 +9,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 
 
 @pytest.mark.acceptance
-def test_abort_from_slew(
+def test_abort_scan_from_slew(
     dish_manager_proxy: tango.DeviceProxy,
     ds_device_proxy: tango.DeviceProxy,
     event_store_class: Any,
@@ -42,7 +42,7 @@ def test_abort_from_slew(
     dish_manager_proxy.slew([random_az, 50])
     pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=30)
 
-    result_code, command_id = dish_manager_proxy.Abort()
+    result_code, command_id = dish_manager_proxy.AbortScan()
     command_id = command_id[0]
     assert ResultCode(result_code[0]) == ResultCode.QUEUED
 
@@ -61,7 +61,7 @@ def test_abort_from_slew(
 
 
 @pytest.mark.acceptance
-def test_abort_from_non_slew(
+def test_abort_scan_from_non_slew(
     reset_dish_to_standby,
     dish_manager_proxy: tango.DeviceProxy,
     ds_device_proxy: tango.DeviceProxy,
@@ -85,7 +85,7 @@ def test_abort_from_non_slew(
     dish_manager_proxy.configureband1(True)
     dish_mode_store.wait_for_value(DishMode.OPERATE, timeout=300)
 
-    result_code, command_id = dish_manager_proxy.Abort()
+    result_code, command_id = dish_manager_proxy.AbortScan()
 
     command_id = command_id[0]
     assert ResultCode(result_code[0]) == ResultCode.QUEUED, [
@@ -106,7 +106,7 @@ def test_abort_from_non_slew(
 
 
 @pytest.mark.acceptance
-def test_abort_from_maintenance(
+def test_abort_scan_from_maintenance(
     reset_dish_to_standby,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
@@ -128,7 +128,7 @@ def test_abort_from_maintenance(
 
     dish_mode_store.wait_for_value(DishMode.MAINTENANCE, timeout=300)
 
-    _, command_id = dish_manager_proxy.Abort()
+    _, command_id = dish_manager_proxy.AbortScan()
     command_id = command_id[0]
     # Wait for the command to finish
     tango.EventType.CHANGE_EVENT = lrcfin_event_store.wait_for_lrcvalue(command_id, timeout=5)
