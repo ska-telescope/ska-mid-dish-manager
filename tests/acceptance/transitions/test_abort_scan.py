@@ -134,6 +134,6 @@ def test_abort_scan_from_maintenance(
     _, command_id = dish_manager_proxy.AbortScan()
     command_id = command_id[0]
     # Wait for the command to finish
-    tango.EventType.CHANGE_EVENT = lrcfin_event_store.wait_for_lrcvalue(command_id, timeout=5)
+    lrcfin_event_store.wait_for_lrcvalue(command_id, timeout=5)
 
     dish_manager_proxy.unsubscribe_event(dm_sub_id)
