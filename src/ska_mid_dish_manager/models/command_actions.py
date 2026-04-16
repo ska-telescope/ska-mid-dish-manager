@@ -425,13 +425,17 @@ class TrackStopAction(Action):
             self.logger,
             "TrackStop",
             [ds_command],
+            # use _dish_manager_cm._component_state to pass the dict by reference
+            # _dish_manager_cm.component_state will use the tango base property which will do a
+            # deep copy
             component_state=self.dish_manager_cm._component_state,
+            awaited_component_state={"pointingstate": PointingState.READY},
             action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
             progress_callback=self._progress_callback,
+            timeout_s=timeout_s,
         )
-        self.completed_message = "TrackStop Completed on DSC"
 
 
 def apply_pointing_model(
