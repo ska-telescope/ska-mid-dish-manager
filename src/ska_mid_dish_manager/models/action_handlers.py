@@ -1,4 +1,4 @@
-"""Module containing the fanned out command actions."""
+"""Module containing the action handlers."""
 
 import logging
 import time
@@ -436,34 +436,33 @@ class SequentialActionHandler(ActionHandler):
 
                 cmd.report_progress(task_callback)
 
-                if cmd.failed:
-                    message = (
-                        f"Action '{self.action_name}' failed. "
-                        f"{cmd.command_name} on device {cmd.device} failed."
-                    )
-                    self._trigger_failure(task_callback, task_abort_event, message)
-                    return
-
-                if cmd.successful:
+                if cmd.failed or cmd.successful:
                     break
-                else:
-                    task_abort_event.wait(timeout=1)
+                task_abort_event.wait(timeout=1)
+
+            if cmd.failed:
+                message = (
+                    f"Action '{self.action_name}' failed. "
+                    f"{cmd.command_name} on device {cmd.device} failed."
+                )
+                self._trigger_failure(task_callback, task_abort_event, message)
+                return
 
             if cmd.successful:
                 report_task_progress(
                     f"{self.action_name}: {cmd.command_name} on device {cmd.device} completed",
                     self.progress_callback,
                 )
-            else:
-                update_task_status(
-                    task_callback,
-                    status=TaskStatus.FAILED,
-                    result=(
-                        ResultCode.FAILED,
-                        f"{self.action_name}: {cmd.command_name} on device {cmd.device} timed out",
-                    ),
-                )
-                return
+                continue
+
+            update_task_status(
+                task_callback,
+                status=TaskStatus.FAILED,
+                result=(
+                    ResultCode.FAILED,
+                    f"{self.action_name}: {cmd.command_name} on device {cmd.device} timed out",
+                ),
+            )
 
         self._trigger_success(task_callback, task_abort_event, completed_response_msg)
         return
