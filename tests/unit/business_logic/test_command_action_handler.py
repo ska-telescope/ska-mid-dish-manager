@@ -7,7 +7,8 @@ from threading import Event
 
 import pytest
 
-from ska_mid_dish_manager.models.command_actions import ActionHandler, FannedOutCommand
+from ska_mid_dish_manager.models.command_actions import ActionHandler
+from ska_mid_dish_manager.models.fanned_out_command import FannedOutCommand
 from tests.utils import MethodCallsStore
 
 LOGGER = logging.getLogger(__name__)
