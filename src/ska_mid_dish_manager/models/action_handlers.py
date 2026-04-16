@@ -350,10 +350,13 @@ class ActionHandler:
 
 
 class SequentialActionHandler(ActionHandler):
+    """Action handler that executes the FannedOutCommands in sequence."""
+
     def execute(
         self, task_callback: Callable, task_abort_event: Any, completed_response_msg: str = ""
     ):
-        """Execute all fanned-out commands associated with this action and track progress.
+        """Execute all fanned-out commands associated with this action in order.
+
 
         :param task_callback: Callback function used for reporting.
         :type task_callback: Callable
@@ -439,14 +442,6 @@ class SequentialActionHandler(ActionHandler):
                         f"{cmd.command_name} on device {cmd.device} failed."
                     )
                     self._trigger_failure(task_callback, task_abort_event, message)
-                    update_task_status(
-                        task_callback,
-                        status=TaskStatus.FAILED,
-                        result=(
-                            ResultCode.FAILED,
-                            f"{self.action_name}: {cmd.command_name} on {cmd.device} failed",
-                        ),
-                    )
                     return
 
                 if cmd.successful:

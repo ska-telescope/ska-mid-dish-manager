@@ -226,6 +226,12 @@ class FannedOutSlowCommand(FannedOutCommand):
 
 
 class DishManagerCMMethod(FannedOutCommand):
+    """Class that executes the method, args and kwargs passed to it.
+
+    This class specifically handles the case where the method responds with a result or raises
+    an exception.
+    """
+
     def __init__(
         self,
         logger,
@@ -271,6 +277,12 @@ class DishManagerCMMethod(FannedOutCommand):
 
 
 class DishManagerCMMethodCallBack(FannedOutCommand):
+    """Class that executes the method, args and kwargs passed to it.
+
+    This class specifically handles the case where the task_callback is used to
+    track method result.
+    """
+
     def __init__(
         self,
         logger,
@@ -326,6 +338,11 @@ class DishManagerCMMethodCallBack(FannedOutCommand):
 
 
 class DishManagerCMMethodResultCode(FannedOutCommand):
+    """Class that executes the method, args and kwargs passed to it.
+
+    This class specifically handles the case where method responds with a ResultCode immediately.
+    """
+
     def __init__(
         self,
         logger,
