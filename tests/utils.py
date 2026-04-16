@@ -569,7 +569,6 @@ class EventStore:
                     continue
                 for result in event.attr_value.value:
                     result_dict = json.loads(result)
-                    print("BBBBBBBB", result_dict["uid"])
                     if result_dict["uid"] == command_id:
                         return result_dict
         except queue.Empty as err:

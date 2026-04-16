@@ -30,6 +30,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.fanned_out_command import (
     DishManagerCMMethod,
+    DishManagerCMMethodResultCode,
     FannedOutSlowCommand,
 )
 from ska_mid_dish_manager.utils.action_helpers import (
@@ -975,24 +976,28 @@ class AbortScanSequence(Action):
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
             awaited_component_state={"pointingstate": PointingState.READY},
             progress_callback=self._progress_callback,
+            timeout_s=DEFAULT_ACTION_TIMEOUT_S,
         )
 
-        reset_track_table = DishManagerCMMethod(
+        reset_track_table = DishManagerCMMethodResultCode(
             logger,
             dish_manager_cm.reset_track_table,
             self.dish_manager_cm._component_state,
+            timeout_s=DEFAULT_ACTION_TIMEOUT_S,
         )
 
-        abort_lrc_command = DishManagerCMMethod(
+        reset_scan_id = DishManagerCMMethod(
             logger,
-            dish_manager_cm.abort_tasks,
+            dish_manager_cm._update_component_state,
             self.dish_manager_cm._component_state,
+            command_kwargs={"scanid": ""},
+            timeout_s=DEFAULT_ACTION_TIMEOUT_S,
         )
 
         self._handler = SequentialActionHandler(
             logger=self.logger,
             action_name="Abort LRC Tasks",
-            fanned_out_commands=[abort_lrc_command, reset_track_table, ds_command],
+            fanned_out_commands=[reset_scan_id, reset_track_table, ds_command],
             component_state=self.dish_manager_cm._component_state,
             awaited_component_state={},
             action_on_success=action_on_success,

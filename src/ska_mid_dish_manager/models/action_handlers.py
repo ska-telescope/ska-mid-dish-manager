@@ -399,7 +399,9 @@ class SequentialActionHandler(ActionHandler):
                 )
                 return
 
-            report_task_progress(f"Running command: {cmd}", self.progress_callback)
+            report_task_progress(
+                f"Running {cmd.command_name} on device {cmd.device}", self.progress_callback
+            )
 
             if cmd.timeout_s <= 0:
                 report_task_progress(
@@ -448,23 +450,25 @@ class SequentialActionHandler(ActionHandler):
                     return
 
                 if cmd.successful:
-                    report_task_progress(
-                        f"{self.action_name}: {cmd.command_name} on device {cmd.device} completed",
-                        self.progress_callback,
-                    )
+                    break
                 else:
                     task_abort_event.wait(timeout=1)
 
-            # Timed out
-            update_task_status(
-                task_callback,
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    f"{self.action_name}: {cmd.command_name} on device {cmd.device} timed out",
-                ),
-            )
-            return
+            if cmd.successful:
+                report_task_progress(
+                    f"{self.action_name}: {cmd.command_name} on device {cmd.device} completed",
+                    self.progress_callback,
+                )
+            else:
+                update_task_status(
+                    task_callback,
+                    status=TaskStatus.FAILED,
+                    result=(
+                        ResultCode.FAILED,
+                        f"{self.action_name}: {cmd.command_name} on device {cmd.device} timed out",
+                    ),
+                )
+                return
 
         self._trigger_success(task_callback, task_abort_event, completed_response_msg)
         return

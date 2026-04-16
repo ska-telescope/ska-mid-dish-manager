@@ -5,7 +5,7 @@ import logging
 import time
 from typing import Any, Callable, Optional
 
-from ska_control_model import TaskStatus
+from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import FannedOutCommandStatus
@@ -259,10 +259,114 @@ class DishManagerCMMethod(FannedOutCommand):
         )
         self._status = FannedOutCommandStatus.RUNNING
         self.start_time = time.time()
-
         try:
             res = self.command(*self.command_args, **self.command_kwargs)
+            self.logger.debug(f"Result: {res}")
             self.cmd_response = res
+            self._status = FannedOutCommandStatus.COMPLETED
+        except Exception as e:
+            self.logger.exception(f"FannedOutCommand '{self.command_name}' failed to execute: {e}")
+            self._status = FannedOutCommandStatus.FAILED
+            self.cmd_response = f"{e}"
+
+
+class DishManagerCMMethodCallBack(FannedOutCommand):
+    def __init__(
+        self,
+        logger,
+        method,
+        component_state,
+        command_args=(),
+        command_kwargs={},
+        awaited_component_state={},
+        timeout_s=0,
+    ):
+        self.command_args = command_args
+        self.command_kwargs = command_kwargs
+        super().__init__(
+            logger,
+            "DishManager",
+            str(method),
+            method,
+            component_state,
+            None,
+            awaited_component_state,
+            timeout_s,
+        )
+
+    def _task_callback(self, *args, **kwargs):
+        """Update the status from the callback."""
+        status = kwargs.get("status", None)
+        if status:
+            if status == TaskStatus.COMPLETED:
+                self._status = FannedOutCommandStatus.COMPLETED
+            if status == TaskStatus.FAILED:
+                self._status = FannedOutCommandStatus.FAILED
+
+    def execute(self, task_callback) -> None:
+        """Execute the command."""
+        self._status = FannedOutCommandStatus.RUNNING
+        self.start_time = time.time()
+        self.command_args = list(self.command_args)
+        self.command_args.insert(0, self._task_callback)
+        try:
+            self.logger.debug(
+                (
+                    f"Executing {self.command_name} with args {self.command_args} "
+                    f"and kwargs. {self.command_kwargs}"
+                )
+            )
+            res = self.command(*self.command_args, **self.command_kwargs)
+            self.logger.debug(f"Result: {res}")
+            self.cmd_response = res
+        except Exception as e:
+            self.logger.exception(f"FannedOutCommand '{self.command_name}' failed to execute: {e}")
+            self._status = FannedOutCommandStatus.FAILED
+            self.cmd_response = f"{e}"
+
+
+class DishManagerCMMethodResultCode(FannedOutCommand):
+    def __init__(
+        self,
+        logger,
+        method,
+        component_state,
+        command_args=(),
+        command_kwargs={},
+        awaited_component_state={},
+        timeout_s=0,
+    ):
+        self.command_args = command_args
+        self.command_kwargs = command_kwargs
+        super().__init__(
+            logger,
+            "DishManager",
+            str(method),
+            method,
+            component_state,
+            None,
+            awaited_component_state,
+            timeout_s,
+        )
+
+    def execute(self, task_callback) -> None:
+        """Execute the command."""
+        self._status = FannedOutCommandStatus.RUNNING
+        self.start_time = time.time()
+        try:
+            self.logger.debug(
+                (
+                    f"Executing {self.command_name} with args {self.command_args} "
+                    f"and kwargs. {self.command_kwargs}"
+                )
+            )
+            result_code, message = self.command(*self.command_args, **self.command_kwargs)
+            self.logger.debug(f"Result: {result_code}, Message: {message}")
+            self.cmd_response = result_code
+            if result_code == ResultCode.OK:
+                self._status = FannedOutCommandStatus.COMPLETED
+            if result_code == ResultCode.FAILED:
+                self._status = FannedOutCommandStatus.FAILED
         except Exception as e:
             self.logger.exception(f"FannedOutCommand '{self.command_name}' failed to execute: {e}")
             self._status = FannedOutCommandStatus.FAILED
