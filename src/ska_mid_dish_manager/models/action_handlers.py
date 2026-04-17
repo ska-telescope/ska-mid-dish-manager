@@ -463,6 +463,7 @@ class SequentialActionHandler(ActionHandler):
                     f"{self.action_name}: {cmd.command_name} on device {cmd.device} timed out",
                 ),
             )
+            return
 
         self._trigger_success(task_callback, task_abort_event, completed_response_msg)
         return
