@@ -2198,7 +2198,11 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
     )
     def AbortScan(self) -> DevVarLongStringArrayType:
-        """Empty out long running commands in queue.
+        """Stop activities related to a scan.
+
+        - Stop dish movement
+        - Reset the track table
+        - Clear out the scan ID
 
         :return: A tuple containing a return code and a string
             message indicating status. The message is for

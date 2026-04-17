@@ -312,8 +312,10 @@ class DishManagerCMMethodCallBack(FannedOutCommand):
         if status:
             if status == TaskStatus.COMPLETED:
                 self._status = FannedOutCommandStatus.COMPLETED
-            if status == TaskStatus.FAILED:
+            if status in (TaskStatus.FAILED, TaskStatus.ABORTED, TaskStatus.NOT_FOUND):
                 self._status = FannedOutCommandStatus.FAILED
+            if status in (TaskStatus.QUEUED, TaskStatus.STAGING, TaskStatus.IN_PROGRESS):
+                self._status = FannedOutCommandStatus.RUNNING
 
     def execute(self, task_callback) -> None:
         """Execute the command."""
@@ -380,9 +382,12 @@ class DishManagerCMMethodResultCode(FannedOutCommand):
             result_code, message = self.command(*self.command_args, **self.command_kwargs)
             self.logger.debug(f"Result: {result_code}, Message: {message}")
             self.cmd_response = result_code
+            # For DishManagerCMMethodResultCode, we expect an immediate response.
+            # Any response that gets queued/aborted/etc is considered failed.
+            # In those cases use another Action.
             if result_code == ResultCode.OK:
                 self._status = FannedOutCommandStatus.COMPLETED
-            if result_code == ResultCode.FAILED:
+            else:
                 self._status = FannedOutCommandStatus.FAILED
         except Exception as e:
             self.logger.exception(f"FannedOutCommand '{self.command_name}' failed to execute: {e}")
