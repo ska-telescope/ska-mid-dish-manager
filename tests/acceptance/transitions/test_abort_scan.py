@@ -85,6 +85,7 @@ def test_abort_scan_from_non_slew(
         "lrcFinished", tango.EventType.CHANGE_EVENT, lrcfin_event_store
     )
 
+    dish_manager_proxy.scanID = "1234"
     dish_manager_proxy.configureband1(True)
     dish_mode_store.wait_for_value(DishMode.OPERATE, timeout=300)
 
@@ -102,6 +103,7 @@ def test_abort_scan_from_non_slew(
     )
     assert abort_completed_info["result"]
     assert ResultCode(abort_completed_info["result"][0]) == ResultCode.OK, abort_completed_info
+    assert dish_manager_proxy.scanID == ""
 
     ds_device_proxy.unsubscribe_event(ds_sub_id)
     dish_manager_proxy.unsubscribe_event(dm_sub_id)
