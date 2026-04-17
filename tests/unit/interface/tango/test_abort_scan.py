@@ -154,3 +154,45 @@ def test_abort_fails_on_dsc_error(dish_manager_resources, event_store_class, cap
         assert details["result"][1] == "Abort LRC Tasks failed"
     assert "Traceback" in caplog.text
     assert "Dish Error" in caplog.text
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_timeout(dish_manager_resources, event_store_class):
+    """Verify Abort executes the abort sequence."""
+    device_proxy, dish_manager_cm = dish_manager_resources
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
+    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
+
+    # update the execute_command mock to return IN_PROGRESS and a timestamp
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
+
+    dish_mode_event_store = event_store_class()
+    lrcfinished_event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        dish_mode_event_store,
+    )
+
+    device_proxy.subscribe_event(
+        "lrcfinished",
+        tango.EventType.CHANGE_EVENT,
+        lrcfinished_event_store,
+    )
+
+    # Force dishManager dishMode to go to OPERATE
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE)
+
+    # Abort the LRC
+    [[_], [command_id]] = device_proxy.AbortScan()
+    # Not updating the pointingstate, causing timeout on TrackStop
+
+    details = lrcfinished_event_store.wait_for_lrcvalue(key="uid", value=command_id, timeout=150)
+    assert details["result"][0] == ResultCode.FAILED
+    assert details["result"][1] == "Abort LRC Tasks: TrackStop on device DS timed out"
