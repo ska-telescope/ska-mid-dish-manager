@@ -209,6 +209,18 @@ class DishManager(SKAController):
             ),
         )
 
+        self.register_command_object(
+            "AbortScan",
+            SubmittedSlowCommand(
+                "AbortScan",
+                self._command_tracker,
+                self.component_manager,
+                "abort_scan",
+                callback=None,
+                logger=self.logger,
+            ),
+        )
+
         abort_sequence_handler = Abort(self.component_manager, self._command_tracker, self.logger)
         self.register_command_object(
             "Abort",
@@ -2174,6 +2186,29 @@ class DishManager(SKAController):
             information purpose only.
         """
         handler = self.get_command_object("Abort")
+        (return_code, message) = handler()
+        return ([return_code], [message])
+
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
+    @command(
+        doc_in="Abort dish movement and clear out the scan id.",
+        display_level=DispLevel.OPERATOR,
+        dtype_out="DevVarLongStringArray",
+    )
+    def AbortScan(self) -> DevVarLongStringArrayType:
+        """Stop activities related to a scan.
+
+        - Stop dish movement
+        - Reset the track table
+        - Clear out the scan ID
+
+        :return: A tuple containing a return code and a string
+            message indicating status. The message is for
+            information purpose only.
+        """
+        handler = self.get_command_object("AbortScan")
         (return_code, message) = handler()
         return ([return_code], [message])
 

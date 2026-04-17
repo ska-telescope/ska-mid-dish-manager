@@ -544,6 +544,42 @@ class EventStore:
         """
         return [(event.attr_value.name, event.attr_value.value) for event in events]
 
+    def wait_for_lrcvalue(self, key: str, value: any, timeout: int = 3) -> Dict:
+        """Wait for a long running command to get to lrc[Executing/Finished/Queue]
+        depending on which subscription you passed in.
+
+        Wait `timeout` seconds for each fetch.
+
+        :param key: The key in the lrc value
+        :type key: str
+        :param value: The value in the lrc value
+        :type value: Any
+        :param timeout: the get timeout, defaults to 3
+        :type timeout: int, optional
+        :raises RuntimeError: If none are found
+        :return: The result of the lrc
+        :rtype: dict
+        """
+        events = []
+        try:
+            while True:
+                event = self._queue.get(timeout=timeout)
+                events.append(event)
+                if not event.attr_value:
+                    continue
+                if not isinstance(event.attr_value.value, tuple):
+                    continue
+                for result in event.attr_value.value:
+                    result_dict = json.loads(result)
+                    if result_dict[key] == value:
+                        return result_dict
+        except queue.Empty as err:
+            event_info = [(event.attr_value.name, event.attr_value.value) for event in events]
+            raise RuntimeError(
+                f"Never got an lrc key {key} with value {value},",
+                f" but got [{event_info}]",
+            ) from err
+
 
 @dataclass
 class TrackedDevice:

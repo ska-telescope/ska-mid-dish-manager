@@ -5,7 +5,10 @@ import logging
 from typing import Any, Optional
 
 from ska_control_model import ResultCode, TaskStatus
+from ska_tango_base.base import CommandTracker
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
+
+from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 
 
 class AbortCommand(SlowCommand):
@@ -22,8 +25,8 @@ class AbortCommand(SlowCommand):
             starts and finishes
         :param logger: a logger for this command object to use
         """
-        self._command_tracker = command_tracker
-        self._component_manager = component_manager
+        self._command_tracker: CommandTracker = command_tracker
+        self._component_manager: DishManagerComponentManager = component_manager
         super().__init__(callback=callback, logger=logger)
 
     def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
