@@ -7,13 +7,34 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 9.4.0-rc.1
+******************
 - Updated ConfigureBand commands to automatically apply pointing models upon execution
 - Resolved SKB-1267
+- Mitigated SKB-1240, SKB-1239, SKB-1198
+  - We cannot resolve the root cause, but we added an additional check to see if the device we connected responds to a ping.
+  - See https://jira.skatelescope.org/browse/SPRTS-906 for further comments.
 - Added tag user=operator to INFO logs for filtering operator related logs. 
 - Addressed the cleanup of allocated resources when Init() is called.
 - Added new b5dcServerConnectionState attribute to reflect the state of connectivity to the B5dc component
 - Added in supplementary verification ping when an API_TimeEvent error is received before setting the devices CommunicationStatus.
 - Added a tango command to force reconnection on dish manager's subservient devices.
+
+- Upgraded ska-mid-dish-b5dc-proxy chart to v0.1.0
+
+  - Changed the b5dc endpoint variable in the deviceservers and values yaml files from `b5dcproxy.fqdns` to `b5dcproxy.endpoints`.
+  - Improved reconnection logic to handle protocol timeout after defined threshold.
+  - Improved documentation styling.
+
+- Upgraded ska-mid-dish-ds-manager to v8.0.4
+
+  - Upgraded sculib to v1.1.2 to handle disconnect gracefully.
+  - Improved documentation styling.
+
+- Upgraded ska-mid-dish-simulators to v5.7.0.
+
+  - Improved documentation styling.
 
 Version 9.3.0
 *************
