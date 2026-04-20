@@ -45,7 +45,7 @@ def test_track_stop_handler(
     expected_progress_updates = [
         "Awaiting DS pointingstate change to READY",
         "Fanned out commands: DS.TrackStop",
-        "Awaiting DS pointingstate change to READY",
+        "Awaiting pointingstate change to READY",
     ]
     progress_updates = progress_cb.get_args_queue()
     for msg in expected_progress_updates:
