@@ -1,7 +1,7 @@
 global:
   minikube: true
   operator: true
-  dishes: ["001"]
+  dishes: ["001", "MKT111"]
 
 ska-tango-base:
   enabled: true
