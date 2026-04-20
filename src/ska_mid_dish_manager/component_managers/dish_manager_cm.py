@@ -435,7 +435,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "vPolRfPowerOut",
             ],
         }
-        
+
         # Trigger initial Astropy import to avoid first-call latency later
         get_current_tai_timestamp_from_unix_time()
 
