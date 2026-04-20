@@ -14,10 +14,6 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added new b5dcServerConnectionState attribute to reflect the state of connectivity to the B5dc component
 - Added in supplementary verification ping when an API_TimeEvent error is received before setting the devices CommunicationStatus.
 - Added a tango command to force reconnection on dish manager's subservient devices.
-- Added new `AbortScan` command that can be used between observations to reset for the next one.
-  - Clears out the ScanID
-  - Stops dish movement
-  - Resets the track table
 
 Version 9.3.0
 *************
