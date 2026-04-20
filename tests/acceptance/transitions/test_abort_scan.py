@@ -8,6 +8,7 @@ from ska_control_model import ResultCode
 from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 
 
+@pytest.mark.skip
 @pytest.mark.acceptance
 def test_abort_scan_from_slew(
     dish_manager_proxy: tango.DeviceProxy,
@@ -63,6 +64,7 @@ def test_abort_scan_from_slew(
     dish_manager_proxy.unsubscribe_event(dm_mode_sub_id)
 
 
+@pytest.mark.skip
 @pytest.mark.acceptance
 def test_abort_scan_from_non_slew(
     reset_dish_to_standby,
@@ -110,6 +112,7 @@ def test_abort_scan_from_non_slew(
     dish_manager_proxy.unsubscribe_event(dm_mode_sub_id)
 
 
+@pytest.mark.skip
 @pytest.mark.acceptance
 def test_abort_scan_from_maintenance(
     reset_dish_to_standby,

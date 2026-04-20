@@ -17,10 +17,6 @@ Version 10.0.0-rc.1
 - Added new b5dcServerConnectionState attribute to reflect the state of connectivity to the B5dc component
 - Added in supplementary verification ping when an API_TimeEvent error is received before setting the devices CommunicationStatus.
 - Added a tango command to force reconnection on dish manager's subservient devices.
-- Added new `AbortScan` command that can be used between observations to reset for the next one.
-  - Clears out the ScanID
-  - Stops dish movement
-  - Resets the track table
 
 - Upgraded ska-mid-dish-b5dc-proxy chart to v0.1.0
 
