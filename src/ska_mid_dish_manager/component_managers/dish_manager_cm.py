@@ -22,6 +22,7 @@ from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
+    AbortScanSequence,
     ConfigureBandActionSequence,
     SetMaintenanceModeAction,
     SetOperateModeAction,
@@ -1932,6 +1933,24 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Aborting LRCs from Abort sequence")
         self.abort_tasks(task_callback=task_callback)
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
+
+    @check_communicating
+    def abort_scan(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        """Issue abort sequence.
+
+        :param task_callback: Callback for task status updates
+        """
+        if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
+            self.abort_tasks(task_callback=task_callback)
+            self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
+            return TaskStatus.QUEUED, "Aborting tasks"
+
+        status, response = self.submit_task(
+            AbortScanSequence(self.logger, self).execute,
+            is_cmd_allowed=None,
+            task_callback=task_callback,
+        )
+        return status, response
 
     def set_dsc_power_limit_kw(self, power_limit: float) -> Tuple[ResultCode, str]:
         """Set the DSC Power Limit kW on the DS."""
