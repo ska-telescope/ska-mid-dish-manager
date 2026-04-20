@@ -12,9 +12,12 @@ Version 9.4.0-rc.1
 ******************
 - Updated ConfigureBand commands to automatically apply pointing models upon execution
 - Resolved SKB-1267
+
 - Mitigated SKB-1240, SKB-1239, SKB-1198
+
   - We cannot resolve the root cause, but we added an additional check to see if the device we connected responds to a ping.
   - See https://jira.skatelescope.org/browse/SPRTS-906 for further comments.
+
 - Added tag user=operator to INFO logs for filtering operator related logs. 
 - Addressed the cleanup of allocated resources when Init() is called.
 - Added new b5dcServerConnectionState attribute to reflect the state of connectivity to the B5dc component
