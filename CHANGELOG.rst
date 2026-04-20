@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 10.0.0-rc.1
+*******************
 - Updated ConfigureBand commands to automatically apply pointing models upon execution
 - Resolved SKB-1267
 - Added tag user=operator to INFO logs for filtering operator related logs. 
@@ -18,6 +21,21 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
   - Clears out the ScanID
   - Stops dish movement
   - Resets the track table
+
+- Upgraded ska-mid-dish-b5dc-proxy chart to v0.1.0
+
+  - Changed the b5dc endpoint variable in the deviceservers and values yaml files from `b5dcproxy.fqdns` to `b5dcproxy.endpoints`.
+  - Improved reconnection logic to handle protocol timeout after defined threshold.
+  - Improved documentation styling.
+
+- Upgraded ska-mid-dish-ds-manager to v8.0.4
+
+  - Upgraded sculib to v1.1.2 to handle disconnect gracefully.
+  - Improved documentation styling.
+
+- Upgraded ska-mid-dish-simulators to v5.7.0.
+
+  - Improved documentation styling.
 
 Version 9.3.0
 *************
