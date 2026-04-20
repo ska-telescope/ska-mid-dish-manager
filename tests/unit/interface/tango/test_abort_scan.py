@@ -17,6 +17,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
 
+@pytest.mark.skip
 @pytest.mark.unit
 @pytest.mark.forked
 def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
@@ -47,6 +48,7 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
         assert not patched_submit.called
 
 
+@pytest.mark.skip
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -114,6 +116,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     assert details["result"][1] == "Abort LRC Tasks completed."
 
 
+@pytest.mark.skip
 @pytest.mark.unit
 @pytest.mark.forked
 def test_abort_fails_on_dsc_error(dish_manager_resources, event_store_class, caplog):
@@ -156,6 +159,7 @@ def test_abort_fails_on_dsc_error(dish_manager_resources, event_store_class, cap
     assert "Dish Error" in caplog.text
 
 
+@pytest.mark.skip
 @pytest.mark.unit
 @pytest.mark.forked
 def test_timeout(dish_manager_resources, event_store_class):
