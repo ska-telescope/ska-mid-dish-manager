@@ -6,6 +6,7 @@ import time
 from typing import Any, Callable
 
 from ska_control_model import CommunicationStatus
+from tango import AttrQuality, DeviceAttribute, EventData
 
 from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 
@@ -46,15 +47,25 @@ def record_command(record_mode: bool = False) -> Callable:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             device_instance = args[0]
             component_manager = device_instance.component_manager
+            ds_component_manager = component_manager.sub_component_managers["DS"]
             command_and_time = (str(time.time()), func.__name__)
+
+            lastcommandinvoked_ev = EventData()
+            lastcommandinvoked_ev.attr_value = DeviceAttribute()
+            lastcommandinvoked_ev.attr_value.name = "lastcommandinvoked"
+            lastcommandinvoked_ev.attr_value.value = command_and_time
+            lastcommandinvoked_ev.attr_value.quality = AttrQuality.ATTR_VALID
+            ds_component_manager._events_queue.put_nowait(lastcommandinvoked_ev)
+
             # record both if True
             if record_mode:
-                component_manager._update_component_state(
-                    lastcommandinvoked=command_and_time,
-                    lastcommandedmode=command_and_time,
-                )
-            else:
-                component_manager._update_component_state(lastcommandinvoked=command_and_time)
+                lastcommandedmode_ev = EventData()
+                lastcommandedmode_ev.attr_value = DeviceAttribute()
+                lastcommandedmode_ev.attr_value.name = "lastcommandedmode"
+                lastcommandedmode_ev.attr_value.value = command_and_time
+                lastcommandedmode_ev.attr_value.quality = AttrQuality.ATTR_VALID
+                ds_component_manager._events_queue.put_nowait(lastcommandedmode_ev)
+
             return func(*args, **kwargs)
 
         return wrapper

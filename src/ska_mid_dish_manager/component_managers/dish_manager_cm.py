@@ -293,6 +293,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band4pointingmodelparams=[],
                 band5apointingmodelparams=[],
                 band5bpointingmodelparams=[],
+                lastcommandedmode=("0.0", ""),
+                lastcommandinvoked=("0.0", ""),
                 dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
                 actstaticoffsetvaluexel=None,
@@ -784,6 +786,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_component_state = self.sub_component_managers["DS"].component_state
         spf_component_state = self.sub_component_managers["SPF"].component_state
         spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
+
+        if "lastcommandedmode" in kwargs:
+            self._update_component_state(lastcommandedmode=kwargs["lastcommandedmode"])
+
+        if "lastcommandinvoked" in kwargs:
+            self._update_component_state(lastcommandinvoked=kwargs["lastcommandinvoked"])
 
         if "powerstate" in kwargs:
             new_power_state = self._state_transition.compute_power_state(
