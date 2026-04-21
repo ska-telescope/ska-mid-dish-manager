@@ -47,6 +47,10 @@ def record_command(record_mode: bool = False) -> Callable:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             device_instance = args[0]
             component_manager = device_instance.component_manager
+
+            # Using the DS component manager event queue to record lastcommandinvoked
+            # and lastcommandedmode changes so that we do not block on
+            # self._component_state_update
             ds_component_manager = component_manager.sub_component_managers["DS"]
             command_and_time = (str(time.time()), func.__name__)
 

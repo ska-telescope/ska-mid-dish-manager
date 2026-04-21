@@ -293,6 +293,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band4pointingmodelparams=[],
                 band5apointingmodelparams=[],
                 band5bpointingmodelparams=[],
+                # Using the event queue from DSC to record
+                # lastcommandedmode and lastcommandinvoked
                 lastcommandedmode=("0.0", ""),
                 lastcommandinvoked=("0.0", ""),
                 dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
