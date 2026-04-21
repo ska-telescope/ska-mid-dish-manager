@@ -436,6 +436,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
+        # Trigger initial Astropy import to avoid first-call latency later
+        get_current_tai_timestamp_from_unix_time()
+
     @property
     def wind_stow_active(self) -> bool:
         """Indicates whether the dish has been automatically stowed due to strong winds."""
