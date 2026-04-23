@@ -919,3 +919,49 @@ class AbortScanSequence(Action):
             progress_callback=self._progress_callback,
             timeout_s=timeout_s,
         )
+
+
+class InterlockAckAction(Action):
+    """Acknowledge Interlock on DSC."""
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        dish_manager_cm,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
+        action_on_success: Optional["Action"] = None,
+        action_on_failure: Optional["Action"] = None,
+        waiting_callback: Optional[Callable] = None,
+    ):
+        super().__init__(
+            logger,
+            dish_manager_cm,
+            timeout_s,
+            action_on_success,
+            action_on_failure,
+            waiting_callback,
+        )
+        ds_command = FannedOutSlowCommand(
+            logger=self.logger,
+            device="DS",
+            command_name="InterLockAck",
+            device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
+            awaited_component_state={},
+            progress_callback=self._progress_callback,
+        )
+
+        self._handler = ActionHandler(
+            self.logger,
+            "InterLockAck",
+            [ds_command],
+            # use _dish_manager_cm._component_state to pass the dict by reference
+            # _dish_manager_cm.component_state will use the tango base property which will do a
+            # deep copy
+            component_state=self.dish_manager_cm._component_state,
+            awaited_component_state={},
+            action_on_success=self.action_on_success,
+            action_on_failure=self.action_on_failure,
+            waiting_callback=self.waiting_callback,
+            progress_callback=self._progress_callback,
+            timeout_s=timeout_s,
+        )

@@ -24,6 +24,7 @@ from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
     AbortScanSequence,
     ConfigureBandActionSequence,
+    InterlockAckAction,
     SetMaintenanceModeAction,
     SetOperateModeAction,
     SetStandbyFPModeAction,
@@ -2049,3 +2050,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             if com_man.component_state.get("healthstate") == HealthState.DEGRADED:
                 health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]')
         return health_info
+
+    @check_communicating
+    def interlock_acknowledge(
+        self, task_callback: Optional[Callable] = None
+    ) -> Tuple[TaskStatus, str]:
+        """Acknowledge the interlock on the DSC."""
+        status, response = self.submit_task(
+            InterlockAckAction(self.logger, self, self.get_action_timeout()).execute,
+            is_cmd_allowed=None,
+            task_callback=task_callback,
+        )
+        return status, response

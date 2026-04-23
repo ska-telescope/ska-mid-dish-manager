@@ -169,6 +169,7 @@ class DishManager(SKAController):
             ("TrackLoadStaticOff", "track_load_static_off"),
             ("EndScan", "end_scan"),
             ("SetOperateMode", "set_operate_mode"),
+            ("InterlockAck", "interlock_acknowledge"),
         ]:
             self.register_command_object(
                 command_name,
@@ -3027,6 +3028,26 @@ class DishManager(SKAController):
     def Reset(self) -> DevVarLongStringArrayType:
         """The Reset command inherited from base classes."""
         raise NotImplementedError("DishManager does not implement the Reset command.")
+
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
+    @command(  # type: ignore[misc]
+        dtype_out="DevVarLongStringArray",
+        doc_in=(
+            "Clear the interlock status once interlocks or E-Stops have been"
+            " cleared on the dish structure controller"
+        ),
+    )
+    def InterlockAck(self: "DishManager") -> DevVarLongStringArrayType:
+        """Clear the interlock status once interlocks or E-Stops have been cleared on the DSC.
+
+        :return: A tuple containing a return code and a string
+            message indicating status.
+        """
+        handler = self.get_command_object("InterlockAck")
+        result_code, unique_id = handler()
+        return ([result_code], [unique_id])
 
 
 def main(args=None, **kwargs):
