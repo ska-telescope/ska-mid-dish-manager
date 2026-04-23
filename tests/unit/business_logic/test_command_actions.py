@@ -386,14 +386,17 @@ class TestCommandActions:
 
         expected_progress_updates = [
             # First SetStandbyFPMode
-            "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
+            "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode, SPF.SetOperateMode",
             "Awaiting DS operatingmode change to STANDBY",
             "Awaiting DS powerstate change to FULL_POWER",
+            "Awaiting SPF operatingmode change to OPERATE",
             "Awaiting dishmode change to STANDBY_FP",
             "DS operatingmode changed to STANDBY",
             "DS.SetStandbyMode completed",
             "DS powerstate changed to FULL_POWER",
             "DS.SetPowerMode completed",
+            "SPF operatingmode changed to OPERATE",
+            "SPF.SetOperateMode completed",
             "SetStandbyFPMode complete. Triggering on success action.",
             # Then ConfigureBand2
             "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
