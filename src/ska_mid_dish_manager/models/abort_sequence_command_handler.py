@@ -17,14 +17,15 @@ class Abort:
 
     def __init__(self, component_manager: Any, command_tracker: Any, logger: logging.Logger):
         self.logger = logger
+        self.command_id = None
         self._component_manager = component_manager
         self._command_tracker = command_tracker
         self._progress_callback = component_manager._command_progress_callback
 
     def __call__(self, triggered_from_invoked: bool) -> None:
         if not triggered_from_invoked:
-            command_id = self._command_tracker.new_command("Abort")
-            task_callback = partial(self._command_tracker.update_command_info, command_id)
+            self.command_id = self.command_id or self._command_tracker.new_command("Abort")
+            task_callback = partial(self._command_tracker.update_command_info, self.command_id)
             self.abort(task_callback=task_callback)
 
     def _dummy_task_cb(self, *args, **kwargs):

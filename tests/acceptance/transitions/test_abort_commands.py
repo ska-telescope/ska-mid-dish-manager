@@ -56,7 +56,9 @@ def test_abort_commands(
     # Abort the LRC
     [[_], [unique_id]] = dish_manager_proxy.Abort()
     # Confirm Dish Manager aborted the request on the Configure action
-    result_event_store.wait_for_command_result(unique_id, '[0, "Abort completed OK"]', timeout=30)
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "Abort sequence completed"]', timeout=30
+    )
     status_event_store.wait_for_progress_update("SetOperateMode aborted", timeout=30)
 
     # Confirm that abort finished and the queue is cleared
@@ -159,7 +161,9 @@ def test_abort_commands_during_track(
 
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
-    result_event_store.wait_for_command_result(unique_id, '[0, "Abort completed OK"]', timeout=30)
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "Abort sequence completed"]', timeout=30
+    )
 
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
@@ -196,7 +200,9 @@ def test_abort_commands_during_slew(
 
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
-    result_event_store.wait_for_command_result(unique_id, '[0, "Abort completed OK"]', timeout=30)
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "Abort sequence completed"]', timeout=30
+    )
 
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     # Check that the dish is in standby FP mode
@@ -242,7 +248,9 @@ def test_abort_commands_during_stow(
 
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
-    result_event_store.wait_for_command_result(unique_id, '[0, "Abort completed OK"]', timeout=30)
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "Abort sequence completed"]', timeout=30
+    )
 
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     # Check that the dish is in standby FP mode

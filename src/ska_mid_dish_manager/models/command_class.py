@@ -27,6 +27,7 @@ class AbortCommand(SlowCommand):
         """
         self._command_tracker: CommandTracker = command_tracker
         self._component_manager: DishManagerComponentManager = component_manager
+        # _callback is an instance of Abort in abort_sequence_command_handler.py
         super().__init__(callback=callback, logger=logger)
 
     def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
@@ -40,15 +41,22 @@ class AbortCommand(SlowCommand):
             the command has been accepted) or an informational message
             (if the command was rejected)
         """
-        command_id = self._command_tracker.new_command("Abort", completed_callback=self._completed)
-        status, message = self._component_manager.abort(
-            functools.partial(self._command_tracker.update_command_info, command_id),
+        abort_sequence_command_id = self._command_tracker.new_command("Abort")
+        # replace the command_id in the callback with the abort_sequence_command_id
+        # so that clients tracking the long running command result receive updates
+        # only when the abort sequence command completes.
+        self._callback.command_id = abort_sequence_command_id
+        abort_task_command_id = self._command_tracker.new_command(
+            "cancel-lrcs", completed_callback=self._completed
         )
 
+        status, message = self._component_manager.abort(
+            functools.partial(self._command_tracker.update_command_info, abort_task_command_id),
+        )
         if status == TaskStatus.IN_PROGRESS:
-            return ResultCode.STARTED, command_id
+            return ResultCode.STARTED, abort_sequence_command_id
         if status == TaskStatus.REJECTED:
-            return ResultCode.REJECTED, command_id
+            return ResultCode.REJECTED, abort_sequence_command_id
         return (
             ResultCode.FAILED,
             f"{status.name} was returned by command method with message: {message}",

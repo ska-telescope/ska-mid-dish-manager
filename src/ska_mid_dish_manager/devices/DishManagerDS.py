@@ -221,6 +221,7 @@ class DishManager(SKAController):
         #     ),
         # )
 
+        # abort_sequence_handler is executed after base class `abort_task` completes
         abort_sequence_handler = Abort(self.component_manager, self._command_tracker, self.logger)
         self.register_command_object(
             "Abort",
