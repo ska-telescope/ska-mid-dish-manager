@@ -549,7 +549,7 @@ class ConfigureBandAction(Action):
                     )
                 else:
                     b5dc_freq_enum = B5dcFrequency(int(sub_band))
-                    b5dc_set_frequency_command = FannedOutTangoCommand(
+                    b5dc_set_frequency_command = FannedOutTangoLongRunningCommand(
                         logger=self.logger,
                         device="B5DC",
                         command_name="SetFrequency",
