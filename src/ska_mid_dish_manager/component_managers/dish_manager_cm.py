@@ -1172,7 +1172,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 excep,
                 extra=OPERATOR_TAG,
             )
-            ResultCode.FAILED, f"Failed to reconnect {upper_cased_device_name}: {excep}"
+            return ResultCode.FAILED, f"Failed to reconnect {upper_cased_device_name}: {excep}"
 
     def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPF device ignored boolean and update device communication."""

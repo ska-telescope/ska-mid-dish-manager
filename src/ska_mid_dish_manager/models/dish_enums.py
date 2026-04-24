@@ -189,8 +189,11 @@ class FannedOutCommandStatus(enum.IntEnum):
     """Fanned out command status enums."""
 
     PENDING = 0
-    RUNNING = 1
+    QUEUED = 0
+    IN_PROGRESS = 1
     COMPLETED = 2
     TIMED_OUT = 3
     FAILED = 4
     IGNORED = 5
+    ABORTED = 6
+    REJECTED = 7

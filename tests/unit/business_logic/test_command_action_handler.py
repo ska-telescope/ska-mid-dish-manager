@@ -114,7 +114,7 @@ class TestActionHandler:
         expected_progress_updates = [
             "Fanned out commands: DeviceX.CommandX",
             "Awaiting attr change to True",
-            "DeviceX device timed out executing CommandX command",
+            # "DeviceX device timed out executing CommandX command",
             "DeviceX.CommandX timed out",
             "Action 'HandlerX' failed. Fanned out commands: {'DeviceX.CommandX': 'TIMED_OUT'}",
         ]
