@@ -141,3 +141,68 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     # Confirm that abort cleared the command queue
     cmds_in_queue_store.wait_for_value((), timeout=30)
     assert device_proxy.dishMode == DishMode.STANDBY_FP
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_abort_sends_lrc_update_after_abort_sequence_finishes(
+    dish_manager_resources, event_store_class
+):
+    """Verify Abort sends LRC update after abort sequence finishes."""
+    device_proxy, dish_manager_cm = dish_manager_resources
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
+    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
+
+    # update the execute_command mock to return IN_PROGRESS and a timestamp
+    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
+
+    dish_mode_event_store = event_store_class()
+    lrc_result_event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "dishMode",
+        tango.EventType.CHANGE_EVENT,
+        dish_mode_event_store,
+    )
+
+    device_proxy.subscribe_event(
+        "longRunningCommandResult",
+        tango.EventType.CHANGE_EVENT,
+        lrc_result_event_store,
+    )
+
+    # Force dishManager dishMode to go to OPERATE
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE)
+
+    # update the pointingState to simulate a dish movement
+    ds_cm._update_component_state(pointingstate=PointingState.SLEW)
+
+    # Abort the LRC
+    [[result_code], [abort_unique_id]] = device_proxy.Abort()
+    assert result_code == ResultCode.STARTED
+    assert device_proxy.dishMode == DishMode.OPERATE
+
+    # check that no update has been sent to the lrc_result while abort sequence is still running
+    with pytest.raises(RuntimeError):
+        lrc_result_event_store.wait_for_command_id(abort_unique_id, timeout=5)
+
+    command_status = device_proxy.CheckLongRunningCommandStatus(abort_unique_id)
+    assert command_status == "IN_PROGRESS"
+
+    ds_cm._update_component_state(
+        **{
+            "pointingstate": PointingState.READY,
+            "operatingmode": DSOperatingMode.STANDBY,
+            "powerstate": DSPowerState.FULL_POWER,
+        }
+    )
+
+    # check that an update has been sent to the lrc_result only after abort sequence finished
+    assert lrc_result_event_store.wait_for_command_id(abort_unique_id, timeout=5)
+    command_status = device_proxy.CheckLongRunningCommandStatus(abort_unique_id)
+    assert command_status == "COMPLETED"
+    assert device_proxy.dishMode == DishMode.STANDBY_FP

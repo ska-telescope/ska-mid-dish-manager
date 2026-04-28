@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.4.0-rc.3
+******************
+- `longRunningCommandResult` is updated only after the Abort command execution has completed.
+
 Version 9.4.0-rc.2
 ******************
 - Bump DSManager chart to 8.0.5
