@@ -22,10 +22,10 @@ Client -> DishManager: SetStandbyFPMode()
       DishManager --> Client: Change event with progress (progress updates)
       note left of DishManager: Signifies the command called on each device \nInitiates command on the devices.\nReports command completed.
       == Await State Transitions ==
-      note over DM, SPFRX: DishManager monitors sub-component attributes via events
-      DM -> DM : wait for DS operatingMode == STANDBY
-      DM -> DM : wait for DS powerState == FULL_POWER
-      DM -> DM : wait for SPF operatingMode == OPERATE
+      note over DishManager, SPFRX: DishManager monitors sub-component attributes via events
+      DishManager -> DishManager : wait for DS operatingMode == STANDBY
+      DishManager -> DishManager : wait for DS powerState == FULL_POWER
+      DishManager -> DishManager : wait for SPF operatingMode == OPERATE
       Client -> DishManager: read dishMode
       DishManager --> Client: dishMode = STANDBY_FP
       note left of DishManager: Checking the current dishMode \nPost-condition dishMode = STANDBY_FP.
