@@ -13,12 +13,19 @@ Client -> DishManager: SetStandbyFPMode()
 
   DishManager -> DishManager: is_command_allowed()
   alt Allowed
-      DishManager -> DS: SetStandbyFPMode()
+      == Fan-out Sub-component Commands ==
+      DishManager -> DS: SetStandbyMode()
+      DishManager -> DS: SetPowerMode()
       DishManager -> SPF: SetOperateMode()
       DishManager -x SPFRx
       note left of SPFRx: No command is sent to SPFRx
       DishManager --> Client: Change event with progress (progress updates)
       note left of DishManager: Signifies the command called on each device \nInitiates command on the devices.\nReports command completed.
+      == Await State Transitions ==
+      note over DM, SPFRX: DishManager monitors sub-component attributes via events
+      DM -> DM : wait for DS operatingMode == STANDBY
+      DM -> DM : wait for DS powerState == FULL_POWER
+      DM -> DM : wait for SPF operatingMode == OPERATE
       Client -> DishManager: read dishMode
       DishManager --> Client: dishMode = STANDBY_FP
       note left of DishManager: Checking the current dishMode \nPost-condition dishMode = STANDBY_FP.
