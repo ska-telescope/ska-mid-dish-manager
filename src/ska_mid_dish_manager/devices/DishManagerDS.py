@@ -477,6 +477,7 @@ class DishManager(SKAController):
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
                 "isklocked": "isKLocked",
                 "spectralinversion": "spectralInversion",
+                "spectrumsample": "spectrumSample",
                 "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
                 "actstaticoffsetvalueel": "actStaticOffsetValueEl",
                 "dscpowerlimitkw": "dscPowerLimitKw",
@@ -1719,6 +1720,15 @@ class DishManager(SKAController):
         """Set the status of the SPFRx spectralInversion attribute."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
         spfrx_com_man.write_attribute_value("spectralInversion", value)
+
+    @attribute(
+        dtype=(float,),
+        access=AttrWriteType.READ,
+        doc="Report the SPFRX spectrum sample data",
+    )
+    def spectrumSample(self):
+        """Returns the SPFRX spectrum sample data."""
+        return self.component_manager.component_state.get("spectrumsample", [])
 
     @attribute(
         dtype=str,
