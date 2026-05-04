@@ -1738,7 +1738,7 @@ class DishManager(SKAController):
             "[5127-6151]: P_off,Y (1025 floats), "
             "[6152-7176]: P_off,XY real (1025 floats), "
             "[7177-8201]: P_off,XY imaginary (1025 floats). ",
-            """     
+            """,
     )
     def spectrumSample(self):
         """Returns the SPFRX spectrum sample data."""
