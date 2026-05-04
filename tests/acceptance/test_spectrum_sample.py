@@ -23,8 +23,8 @@ def test_spectrum_sample_attribute_read(
         event_store,
     )
 
-    spfrx_spectrum_sample = spfrx_device_proxy.read_attribute("spectrumSample").value
     spectrum_sample_expected_value = dish_manager_proxy.read_attribute("frequencyResponse").value
+    spfrx_spectrum_sample = spfrx_device_proxy.read_attribute("spectrumSample").value
     # Wait for the first value to be read and emitted as an event
     event_store.wait_for_value(spectrum_sample_expected_value, timeout=7)
     assert isinstance(spectrum_sample_expected_value, np.ndarray)
