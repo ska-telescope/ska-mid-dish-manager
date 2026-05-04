@@ -1723,8 +1723,22 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=(float,),
+        max_dim_x=8202,
         access=AttrWriteType.READ,
-        doc="Report the SPFRX spectrum sample data",
+        doc=""" Report the SPFRX spectrum sample data
+            "Spectrum sample data from the spectrometer as a packed DevFloat array. "
+            "The array contains a UTC timestamp followed by multiple spectral datasets. "
+            "Index layout: "
+            "[0-1]: UTC timestamp in seconds, "
+            "[2-1026]: P_on,X (1025 floats), "
+            "[1027-2051]: P_on,Y (1025 floats), "
+            "[2052-3076]: P_on,XY real (1025 floats), "
+            "[3077-4101]: P_on,XY imaginary (1025 floats), "
+            "[4102-5126]: P_off,X (1025 floats), "
+            "[5127-6151]: P_off,Y (1025 floats), "
+            "[6152-7176]: P_off,XY real (1025 floats), "
+            "[7177-8201]: P_off,XY imaginary (1025 floats). ",
+            """     
     )
     def spectrumSample(self):
         """Returns the SPFRX spectrum sample data."""
