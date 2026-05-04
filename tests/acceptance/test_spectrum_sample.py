@@ -23,11 +23,13 @@ def test_spectrum_sample_attribute_read(
         event_store,
     )
 
-    spectrum_sample_expected_value = dish_manager_proxy.read_attribute("frequencyResponse").value
-    spfrx_spectrum_sample = spfrx_device_proxy.read_attribute("spectrumSample").value
-    # Wait for the first value to be read and emitted as an event
-    event_store.wait_for_value(spectrum_sample_expected_value, timeout=7)
-    assert isinstance(spectrum_sample_expected_value, np.ndarray)
-    assert spectrum_sample_expected_value.shape == (8202,)
-    assert spfrx_spectrum_sample == spectrum_sample_expected_value
+    spectrum_sample_initial_value = dish_manager_proxy.frequencyResponse
+    spfrx_spectrum_sample = spfrx_device_proxy.spectrumSample
+    # Wait for the initial sample value to be read and emitted as an event
+    event_store.wait_for_value(spfrx_spectrum_sample, timeout=7)
+    assert len(spectrum_sample_initial_value) == 8202
+    spfrx_updated_spectrum_sample = spfrx_device_proxy.spectrumSample = np.ones(
+        8202, dtype=np.float32
+    )
+    event_store.wait_for_value(spfrx_updated_spectrum_sample, timeout=7)
     dish_manager_proxy.unsubscribe_event()
