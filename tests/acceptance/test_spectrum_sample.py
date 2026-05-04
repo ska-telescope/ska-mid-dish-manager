@@ -7,7 +7,7 @@ import pytest
 import tango
 
 
-@pytest.fixture.acceptance
+@pytest.mark.acceptance
 def test_spectrum_sample_attribute_read(
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
