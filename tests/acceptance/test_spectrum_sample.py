@@ -17,13 +17,17 @@ def test_spectrum_sample_attribute_read(
     float array from the component manager state.
     """
     event_store = event_store_class()
-    dish_manager_proxy.subscribe_event("spectrumSample", tango.EventType.CHANGE_EVENT, event_store)
+    dish_manager_proxy.subscribe_event(
+        "frequencyResponse",
+        tango.EventType.CHANGE_EVENT,
+        event_store,
+    )
 
-    # Wait for the first value to be read and emitted as an event
-    event_store.wait_for_value(timeout=7)
     spfrx_spectrum_sample = spfrx_device_proxy.read_attribute("spectrumSample").value
-    expected_value = dish_manager_proxy.read_attribute("spectrumSample").value
-    assert isinstance(expected_value, np.ndarray)
-    assert expected_value.shape == (8202,)
-    assert spfrx_spectrum_sample == expected_value
+    spectrum_sample_expected_value = dish_manager_proxy.read_attribute("frequencyResponse").value
+    # Wait for the first value to be read and emitted as an event
+    event_store.wait_for_value(spectrum_sample_expected_value, timeout=7)
+    assert isinstance(spectrum_sample_expected_value, np.ndarray)
+    assert spectrum_sample_expected_value.shape == (8202,)
+    assert spfrx_spectrum_sample == spectrum_sample_expected_value
     dish_manager_proxy.unsubscribe_event()
