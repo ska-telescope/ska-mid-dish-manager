@@ -54,7 +54,7 @@ priority = "primary"
 name = "pypi-public"
 url = "https://pypi.org/simple/"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.group.test.dependencies]
 black = "^22.3.0"
 isort = "^5.6.4"
 flake8 = "^3.8.4"
