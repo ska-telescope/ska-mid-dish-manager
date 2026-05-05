@@ -56,8 +56,7 @@ python-do-lint:
 
 ifdef CI_JOB_TOKEN
 python-post-lint:
-	$(PYTHON_RUNNER) ruff check --output-format="junit" --output-file=build/reports/linting-ruff.xml
-	@make --no-print-directory join-lint-reports
+	$(PYTHON_RUNNER) ruff check --output-format="junit" --output-file=build/reports/linting-ruff.xml join-lint-reports
 endif
 
 #############################
