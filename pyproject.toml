@@ -1,6 +1,6 @@
 [project]
 name = "ska-mid-dish-manager"
-version = "9.4.0"
+version = "9.4.0rc3"
 description = "SKA Dish Manager TANGO device server"
 authors = [{name = "Team Karoo"}]
 maintainers = [{name = "Team Karoo"}]
@@ -54,7 +54,7 @@ priority = "primary"
 name = "pypi-public"
 url = "https://pypi.org/simple/"
 
-[tool.poetry.group.test.dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^22.3.0"
 isort = "^5.6.4"
 flake8 = "^3.8.4"
@@ -118,7 +118,6 @@ exclude = [
     ".ruff_cache",
     ".venv",
     ".vscode",
-    ".make",
     "build",
     "dist",
     "docs",
