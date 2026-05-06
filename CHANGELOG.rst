@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.4.0
+*************
+- See RC releases for details.
+
 Version 9.4.0-rc.3
 ******************
 - `longRunningCommandResult` is updated only after the Abort command execution has completed.
