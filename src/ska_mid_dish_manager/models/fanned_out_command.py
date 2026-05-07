@@ -247,7 +247,7 @@ class FannedOutTangoCommand(FannedOutCommand):
         task_status, msg = self.device_component_manager.execute_command(
             self.command_name, self.command_argument
         )
-        if task_status == TaskStatus.FAILED:
+        if task_status in [TaskStatus.FAILED, TaskStatus.REJECTED, TaskStatus.ABORTED]:
             raise RuntimeError(msg)
         return task_status, msg
 
@@ -297,6 +297,16 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
             progress_callback=progress_callback,
             is_device_ignored=is_device_ignored,
         )
+
+    def _execute_tango_command(self) -> tuple:
+        task_status, msg = super()._execute_tango_command()
+
+        # If the command completed immediately then it won't appear in the LRC attributes. Mark
+        # the lrc as complete, the component state check will be used to complete the command.
+        if task_status == TaskStatus.COMPLETED:
+            self.is_lrc_finished = True
+
+        return task_status, msg
 
     def _is_command_in_lrc_queued(self) -> bool:
         lrc_queue = self.device_component_manager.read_attribute_value("lrcqueue", log_read=False)
