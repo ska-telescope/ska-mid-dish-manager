@@ -129,6 +129,10 @@ class DishModeModel:
             if commands:
                 allowed_commands.extend(commands)
 
+        print("HERE")
+        print(current_dish_mode)
+        print(cmd_name)
+        print(allowed_commands)
         if cmd_name in allowed_commands:
             return True
 
