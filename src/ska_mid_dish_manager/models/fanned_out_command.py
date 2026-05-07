@@ -298,16 +298,27 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
             is_device_ignored=is_device_ignored,
         )
 
-    def _execute_tango_command(self) -> tuple:
-        """Execute the fanned out command and keep the FannedOutCommandStatus as PENDING."""
-        ret = super()._execute_tango_command()
-        # This will be updated to IN_PROGRESS or COMPLETED by self._update_status depending on the
-        # lrcExecuting and lrcFinished attributes, respectively.
-        self._status = FannedOutCommandStatus.QUEUED
-        return ret
+    def _is_command_in_lrc_queued(self) -> bool:
+        lrc_queue = self.device_component_manager.read_attribute_value("lrcqueue", log_read=False)
+        if not isinstance(lrc_queue, tuple):
+            self.logger.error(
+                "lrcQueue value is not a tuple, got %s: %s", type(lrc_queue), lrc_queue
+            )
+            return False
+
+        for queued_cmd in lrc_queue:
+            try:
+                queued_cmd_dict = json.loads(queued_cmd)
+            except json.JSONDecodeError:
+                self.logger.exception("Invalid json value for lrcExecuting")
+                continue
+
+            if queued_cmd_dict.get("uid") == self.executed_cmd_message:
+                return True
+        return False
 
     def _is_command_in_lrc_executing(self) -> bool:
-        lrc_executing = self.device_component_manager.read_attribute_value("lrcexecuting")
+        lrc_executing = self.device_component_manager.read_attribute_value("lrcexecuting", log_read=False)
         if not isinstance(lrc_executing, tuple):
             self.logger.error(
                 "lrcExecuting value is not a tuple, got %s: %s", type(lrc_executing), lrc_executing
@@ -326,7 +337,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         return False
 
     def _get_command_lrc_finished_dict(self) -> Optional[dict]:
-        lrc_finished = self.device_component_manager.read_attribute_value("lrcfinished")
+        lrc_finished = self.device_component_manager.read_attribute_value("lrcfinished", log_read=False)
         if not isinstance(lrc_finished, tuple):
             self.logger.error(
                 "lrcFinished value is not a tuple, got %s: %s", type(lrc_finished), lrc_finished
@@ -346,13 +357,11 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
 
     def _update_status(self, task_callback: Callable) -> None:
         # If the command is queued or in
-        self.logger.info("Updating status, self._status = %s", self._status)
         if self._status in [FannedOutCommandStatus.QUEUED, FannedOutCommandStatus.IN_PROGRESS]:
             # If the LRC has not yet been reported in lrcFinished
             if not self.is_lrc_finished:
                 lrc_finished_dict = self._get_command_lrc_finished_dict()
 
-                self.logger.info("lrc_finished_dict = %s", lrc_finished_dict)
                 if lrc_finished_dict:
                     lrc_result = lrc_finished_dict["result"]
                     lrc_status = lrc_finished_dict["status"]
@@ -373,6 +382,8 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                         return
                 elif self._is_command_in_lrc_executing():
                     self._status = FannedOutCommandStatus.IN_PROGRESS
+                elif self._is_command_in_lrc_queued():
+                    self._status = FannedOutCommandStatus.QUEUED
 
             # Final check
             component_ready = check_component_state_matches_awaited(

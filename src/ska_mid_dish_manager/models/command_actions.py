@@ -280,7 +280,9 @@ class SetMaintenanceModeAction(Action):
             action_on_failure,
             waiting_callback,
         )
-        ds_command = FannedOutTangoLongRunningCommand(
+        # This is not a FannedOutTangoLongRunningCommand because DSManager bypasses the lrcQueue
+        # and does not return the command ID in its response.
+        ds_command = FannedOutTangoCommand(
             logger=self.logger,
             device="DS",
             command_name="Stow",
