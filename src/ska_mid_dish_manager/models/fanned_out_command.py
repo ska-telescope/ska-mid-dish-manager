@@ -81,8 +81,6 @@ class FannedOutCommand:
             assert len(res) == 2, (
                 f"FannedOutCommand 'command' Callable expects a response of len 2, but got '{res}'"
             )
-            self.logger.info("AAAA")
-            self.logger.info(res)
             self.executed_cmd_response, self.executed_cmd_message = res
 
             if self.awaited_component_state is not None:
@@ -302,10 +300,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
 
     def _execute_tango_command(self) -> tuple:
         """Execute the fanned out command and keep the FannedOutCommandStatus as PENDING."""
-        self.logger.info("HERE")
         ret = super()._execute_tango_command()
-        self.logger.info("ret")
-        self.logger.info(ret)
         # This will be updated to IN_PROGRESS or COMPLETED by self._update_status depending on the
         # lrcExecuting and lrcFinished attributes, respectively.
         self._status = FannedOutCommandStatus.QUEUED
@@ -337,9 +332,6 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                 "lrcFinished value is not a tuple, got %s: %s", type(lrc_finished), lrc_finished
             )
             return None
-        
-        self.logger.info(lrc_finished)
-        self.logger.info(self.executed_cmd_message)
 
         for finished_cmd in lrc_finished:
             try:
@@ -356,7 +348,6 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         # If the command is queued or in
         self.logger.info("Updating status, self._status = %s", self._status)
         if self._status in [FannedOutCommandStatus.QUEUED, FannedOutCommandStatus.IN_PROGRESS]:
-            self.logger.info("IN HERE NOW")
             # If the LRC has not yet been reported in lrcFinished
             if not self.is_lrc_finished:
                 lrc_finished_dict = self._get_command_lrc_finished_dict()
@@ -388,9 +379,6 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                 self.component_state,
                 self.awaited_component_state,
             )
-
-            self.logger.info("is_lrc_finished? %s", self.is_lrc_finished)
-            self.logger.info("Is component ready? %s", component_ready)
 
             if self.is_lrc_finished and component_ready:
                 self._status = FannedOutCommandStatus.COMPLETED

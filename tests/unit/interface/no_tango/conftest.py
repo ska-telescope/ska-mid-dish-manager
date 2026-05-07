@@ -30,6 +30,7 @@ def callbacks() -> dict:
         "progress_cb": MethodCallsStore(),
     }
 
+
 def execute_command_side_effect(command_name, command_arg=None):
     # fast commands
     if command_name in ["SetKValue", "TrackLoadTable", "ReleaseAuth"]:
@@ -37,6 +38,7 @@ def execute_command_side_effect(command_name, command_arg=None):
 
     # LRC commands
     return (TaskStatus.IN_PROGRESS, "command_id_123")
+
 
 @pytest.fixture()
 def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Generator:
@@ -53,8 +55,16 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             update_state_from_monitored_attributes=MagicMock(),
             execute_command=MagicMock(side_effect=execute_command_side_effect),
             read_attribute_value=MagicMock(
-                return_value=(json.dumps({"uid": "command_id_123", "result": "some result message", "status": TaskStatus.COMPLETED.name}),)
-            )
+                return_value=(
+                    json.dumps(
+                        {
+                            "uid": "command_id_123",
+                            "result": "some result message",
+                            "status": TaskStatus.COMPLETED.name,
+                        }
+                    ),
+                )
+            ),
         ),
         patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager"),
         patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"),

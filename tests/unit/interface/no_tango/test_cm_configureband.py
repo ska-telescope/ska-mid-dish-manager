@@ -471,7 +471,6 @@ def test_configureband_5b_with_subband_ignore_b5dc(
 
     # check that the initial lrc updates come through
     actual_call_kwargs = callbacks["task_cb"].call_args_list
-    print(actual_call_kwargs)
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]

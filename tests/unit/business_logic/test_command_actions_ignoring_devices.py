@@ -6,7 +6,7 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from ska_control_model import AdminMode, ResultCode, TaskStatus
+from ska_control_model import AdminMode, TaskStatus
 
 from ska_mid_dish_manager.models.command_actions import SetStandbyLPModeAction
 from ska_mid_dish_manager.models.dish_enums import (
@@ -35,8 +35,16 @@ class TestCommandActionsIgnoringDevices:
                 },
                 execute_command=mock.MagicMock(return_value=(None, "command_id_123")),
                 read_attribute_value=mock.MagicMock(
-                    return_value=(json.dumps({"uid": "command_id_123", "result": "command_id_123", "status": TaskStatus.COMPLETED.name}),)
-                )
+                    return_value=(
+                        json.dumps(
+                            {
+                                "uid": "command_id_123",
+                                "result": "command_id_123",
+                                "status": TaskStatus.COMPLETED.name,
+                            }
+                        ),
+                    )
+                ),
             ),
             "SPF": mock.MagicMock(
                 _component_state={"operatingmode": SPFOperatingMode.STANDBY_LP},
