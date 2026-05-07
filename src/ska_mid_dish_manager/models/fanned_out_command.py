@@ -303,7 +303,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
 
         # If the command completed immediately then it won't appear in the LRC attributes. Mark
         # the lrc as complete, the component state check will be used to complete the command.
-        if task_status == TaskStatus.COMPLETED:
+        if task_status in [TaskStatus.COMPLETED, TaskStatus.REJECTED, TaskStatus.ABORTED]:
             self.is_lrc_finished = True
 
         return task_status, msg
