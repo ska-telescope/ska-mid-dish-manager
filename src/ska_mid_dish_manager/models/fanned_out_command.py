@@ -318,7 +318,9 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         return False
 
     def _is_command_in_lrc_executing(self) -> bool:
-        lrc_executing = self.device_component_manager.read_attribute_value("lrcexecuting", log_read=False)
+        lrc_executing = self.device_component_manager.read_attribute_value(
+            "lrcexecuting", log_read=False
+        )
         if not isinstance(lrc_executing, tuple):
             self.logger.error(
                 "lrcExecuting value is not a tuple, got %s: %s", type(lrc_executing), lrc_executing
@@ -337,7 +339,9 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         return False
 
     def _get_command_lrc_finished_dict(self) -> Optional[dict]:
-        lrc_finished = self.device_component_manager.read_attribute_value("lrcfinished", log_read=False)
+        lrc_finished = self.device_component_manager.read_attribute_value(
+            "lrcfinished", log_read=False
+        )
         if not isinstance(lrc_finished, tuple):
             self.logger.error(
                 "lrcFinished value is not a tuple, got %s: %s", type(lrc_finished), lrc_finished
