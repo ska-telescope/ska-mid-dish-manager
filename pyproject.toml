@@ -53,6 +53,7 @@ priority = "primary"
 [[tool.poetry.source]]
 name = "pypi-public"
 url = "https://pypi.org/simple/"
+priority = "supplemental"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.3.0"
