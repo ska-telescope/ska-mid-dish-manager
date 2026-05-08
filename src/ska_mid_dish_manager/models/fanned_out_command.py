@@ -320,7 +320,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
             try:
                 queued_cmd_dict = json.loads(queued_cmd)
             except json.JSONDecodeError:
-                self.logger.exception("Invalid json value for lrcExecuting")
+                self.logger.exception("Invalid json value for lrcQueue")
                 continue
 
             if queued_cmd_dict.get("uid") == self.executed_cmd_message:
