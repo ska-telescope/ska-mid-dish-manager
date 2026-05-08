@@ -370,7 +370,6 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         return None
 
     def _update_status(self, task_callback: Callable) -> None:
-        # If the command is queued or in
         if self._status in [FannedOutCommandStatus.QUEUED, FannedOutCommandStatus.IN_PROGRESS]:
             # If the LRC has not yet been reported in lrcFinished
             if not self.is_lrc_finished:
@@ -399,7 +398,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                 elif self._is_command_in_lrc_queued():
                     self._status = FannedOutCommandStatus.QUEUED
 
-            # Final check
+            # Final component state check
             component_ready = check_component_state_matches_awaited(
                 self.component_state,
                 self.awaited_component_state,
