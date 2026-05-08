@@ -29,3 +29,9 @@ Rules when ignoring both SPFC and SPFRx devices
    :language: python
    :lines: 84-91
    :emphasize-lines: 2,3,4,5,6,7
+
+Summarised Diagram
+-----------------------------------------------
+.. image:: ../images/band_configuration.png
+   :width: 800
+
