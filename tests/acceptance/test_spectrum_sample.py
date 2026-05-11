@@ -17,7 +17,7 @@ def test_spectrum_sample_attribute_read(
     float array from the component manager state.
     """
     event_store = event_store_class()
-    spfrx_device_proxy.subscribe_event(
+    event_id = spfrx_device_proxy.subscribe_event(
         "spectrumSample",
         tango.EventType.CHANGE_EVENT,
         event_store,
@@ -29,4 +29,4 @@ def test_spectrum_sample_attribute_read(
     event_store.wait_for_value(spfrx_updated_spectrum_sample, timeout=8)
     frequency_reponse = dish_manager_proxy.frequencyResponse
     np.testing.assert_array_equal(spfrx_device_proxy.spectrumSample, frequency_reponse)
-    dish_manager_proxy.unsubscribe_event()
+    spfrx_device_proxy.unsubscribe_event(event_id)
