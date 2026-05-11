@@ -1294,6 +1294,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=(float,),
         max_dim_x=8202,
+        access=AttrWriteType.READ,
         doc="Note: This attribute maps to the spectrum sample attribute from the SPFRx"
         "Report the SPFRX spectrum sample data "
         "Spectrum sample data from the spectrometer as a packed DevFloat array. "
