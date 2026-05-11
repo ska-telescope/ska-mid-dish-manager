@@ -393,14 +393,15 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                     self._status = FannedOutCommandStatus.QUEUED
 
             # Final component state check
-            component_ready = check_component_state_matches_awaited(
-                self.component_state,
-                self.awaited_component_state,
-            )
+            if self.is_lrc_finished:
+                component_ready = check_component_state_matches_awaited(
+                    self.component_state,
+                    self.awaited_component_state,
+                )
 
-            if self.is_lrc_finished and component_ready:
-                self._status = FannedOutCommandStatus.COMPLETED
-                return
+                if component_ready:
+                    self._status = FannedOutCommandStatus.COMPLETED
+                    return
 
             # timeout
             if self.timeout_s > 0 and time.time() - self.start_time > self.timeout_s:
