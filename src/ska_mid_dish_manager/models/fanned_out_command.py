@@ -129,12 +129,6 @@ class FannedOutCommand:
             # timeout
             if self.timeout_s > 0 and time.time() - self.start_time > self.timeout_s:
                 self._status = FannedOutCommandStatus.TIMED_OUT
-        # if self._status in [FannedOutCommandStatus.FAILED, FannedOutCommandStatus.TIMED_OUT]:
-        #     report_task_progress(
-        #         f"{self.device} device {self._status.name.lower().replace('_', ' ')}"
-        #         f" executing {self.command_name} command",
-        #         self._progress_callback,
-        #     )
 
     def report_progress(self, task_callback: Callable) -> None:
         """Report the progress of fanned out command."""
