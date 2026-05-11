@@ -1294,10 +1294,8 @@ class DishManager(SKAController):
     @attribute(
         dtype=(float,),
         max_dim_x=8202,
-        doc="""
-    Note: This attribute maps to the spectrum sample attribute from the SPFRx
-
-     Report the SPFRX spectrum sample data
+        doc="Note: This attribute maps to the spectrum sample attribute from the SPFRx"
+            "Report the SPFRX spectrum sample data "
             "Spectrum sample data from the spectrometer as a packed DevFloat array. "
             "The array contains a UTC timestamp followed by multiple spectral datasets. "
             "Index layout: "
@@ -1310,8 +1308,7 @@ class DishManager(SKAController):
             "[5127-6151]: P_off,Y (1025 floats), "
             "[6152-7176]: P_off,XY real (1025 floats), "
             "[7177-8201]: P_off,XY imaginary (1025 floats). ",
-            """,
-    )
+        )
     def frequencyResponse(self):
         """Returns the SPFRX spectrum sample data."""
         return self.component_manager.component_state.get("spectrumsample", [])
