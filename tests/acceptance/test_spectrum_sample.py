@@ -18,7 +18,7 @@ def test_spectrum_sample_attribute_read(
     """
     event_store = event_store_class()
     spfrx_device_proxy.subscribe_event(
-        "frequencyResponse",
+        "spectrumSample",
         tango.EventType.CHANGE_EVENT,
         event_store,
     )
