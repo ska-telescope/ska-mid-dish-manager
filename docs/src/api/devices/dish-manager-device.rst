@@ -896,7 +896,7 @@ Attributes
 
 	:access: READ
 	:data type: DevDouble
-	:data format: IMAGE
+	:data format: SPECTRUM
 	:max_dim_x: 1024
 
 .. index::

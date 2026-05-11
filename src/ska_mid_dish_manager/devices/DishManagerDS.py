@@ -476,7 +476,6 @@ class DishManager(SKAController):
                 "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
                 "isklocked": "isKLocked",
                 "spectralinversion": "spectralInversion",
-                "spectrumsample": "spectrumSample",
                 "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
                 "actstaticoffsetvalueel": "actStaticOffsetValueEl",
                 "dscpowerlimitkw": "dscPowerLimitKw",
@@ -548,7 +547,6 @@ class DishManager(SKAController):
                 "capturing",
                 "dshMaxShortTermPower",
                 "dshPowerCurtailment",
-                "frequencyResponse",
                 "noiseDiodeConfig",
                 "programTrackTable",
                 "pointingBufferSize",
@@ -1312,7 +1310,8 @@ class DishManager(SKAController):
     )
     def frequencyResponse(self):
         """Returns the SPFRX spectrum sample data."""
-        return self.component_manager.component_state.get("spectrumsample", [])
+        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+        return spfrx_com_man.read_attribute_value("spectrumsample")
 
     @attribute(dtype=(float,), access=AttrWriteType.WRITE)
     def noiseDiodeConfig(self):
@@ -1759,7 +1758,8 @@ class DishManager(SKAController):
     )
     def spectrumSample(self):
         """Returns the SPFRX spectrum sample data."""
-        return self.component_manager.component_state.get("spectrumsample", [])
+        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+        return spfrx_com_man.read_attribute_value("spectrumsample")
 
     @attribute(
         dtype=str,

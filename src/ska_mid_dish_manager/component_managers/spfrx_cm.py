@@ -114,7 +114,6 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "attenuationpolvy",
             "isklocked",
             "spectralinversion",
-            "spectrumsample",
         )
 
         super().__init__(
