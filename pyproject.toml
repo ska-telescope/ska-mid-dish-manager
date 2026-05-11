@@ -118,6 +118,7 @@ exclude = [
     ".ruff_cache",
     ".venv",
     ".vscode",
+    ".make",
     "build",
     "dist",
     "docs",
