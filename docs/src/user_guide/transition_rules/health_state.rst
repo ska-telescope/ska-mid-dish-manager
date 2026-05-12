@@ -8,19 +8,23 @@ reported by the DS, SPF and SPFRx devices.
 .. note::
 
    * For the case where devices are `set to ignored`, the conditions below are evaluated with the ignored device(s) removed from consideration.
+
     * Devices that can be ignored are SPF and/or SPFRX by setting dish manager attributes `ignoreSpf` and/or `ignoreSpfrx` to `True`.  
+
    * Conditions are evaluated in `order of precedence`, with the first matching condition determining the health state. 
 
 **Rule Overview**
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 80
+   :widths: 10 25 85
 
-   * - Health State
+   * - Order
+     - Health State
      - Condition
 
-   * - ``DEGRADED``
+   * - 1
+     - ``DEGRADED``
      - At least one subdevice reports ``DEGRADED`` health state,
        while the remaining subdevices are in one of:
 
@@ -28,21 +32,24 @@ reported by the DS, SPF and SPFRx devices.
        * ``DEGRADED``
        * ``UNKNOWN``
 
-   * - ``FAILED``
+   * - 2
+     - ``FAILED``
      - Any subdevice reports a ``FAILED`` health state:
 
        * ``DS.healthstate == FAILED``
        * ``SPF.healthstate == FAILED``
        * ``SPFRX.healthstate == FAILED``
 
-   * - ``OK``
+   * - 3
+     - ``OK``
      - All subdevices report healthy operation:
 
        * ``DS.healthstate == OK``
-       * ``SPF.healthstate == OK``
-       * ``SPFRX.healthstate == NORMAL``
+       * ``SPF.healthstate == NORMAL``
+       * ``SPFRX.healthstate == OK``
 
-   * - ``UNKNOWN``
+   * - 4
+     - ``UNKNOWN``
      - Any subdevice reports an unknown health state:
 
        * ``DS.healthstate == UNKNOWN``
