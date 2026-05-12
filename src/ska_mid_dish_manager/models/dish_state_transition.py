@@ -94,26 +94,31 @@ class StateTransition:
         )
 
         # Get the current enum
-        dish_manager_states["DS"]["healthstate"] = ds_component_state.get(
-            "healthstate", HealthState.UNKNOWN
-        )
-        dish_manager_states["SPFRX"]["healthstate"] = spfrx_component_state.get(
-            "healthstate", HealthState.UNKNOWN
-        )
-        dish_manager_states["SPF"]["healthstate"] = spf_component_state.get(
-            "healthstate", SPFHealthState.UNKNOWN
-        )
+        if ds_component_state:
+            dish_manager_states["DS"]["healthstate"] = ds_component_state.get(
+                "healthstate", HealthState.UNKNOWN
+            )
+        if spfrx_component_state:
+            dish_manager_states["SPFRX"]["healthstate"] = spfrx_component_state.get(
+                "healthstate", HealthState.UNKNOWN
+            )
+        if spf_component_state:
+            dish_manager_states["SPF"]["healthstate"] = spf_component_state.get(
+                "healthstate", SPFHealthState.UNKNOWN
+            )
 
         # Build the name used on the transition rules
         dish_manager_states["DS"]["healthstate"] = (
             f"HealthState.{dish_manager_states['DS']['healthstate'].name}"
         )
-        dish_manager_states["SPFRX"]["healthstate"] = (
-            f"HealthState.{dish_manager_states['SPFRX']['healthstate'].name}"
-        )
-        dish_manager_states["SPF"]["healthstate"] = (
-            f"SPFHealthState.{dish_manager_states['SPF']['healthstate'].name}"
-        )
+        if "SPFRX" in dish_manager_states:
+            dish_manager_states["SPFRX"]["healthstate"] = (
+                f"HealthState.{dish_manager_states['SPFRX']['healthstate'].name}"
+            )
+        if "SPF" in dish_manager_states:
+            dish_manager_states["SPF"]["healthstate"] = (
+                f"SPFHealthState.{dish_manager_states['SPF']['healthstate'].name}"
+            )
 
         rules_to_use = health_state_rules_ds_only
         if spfrx_component_state and spf_component_state:
