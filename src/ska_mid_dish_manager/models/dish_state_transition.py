@@ -10,6 +10,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     PowerState,
     SPFBandInFocus,
+    SPFHealthState,
 )
 from ska_mid_dish_manager.models.transition_rules import (
     band_focus_rules_all_devices,
@@ -90,6 +91,28 @@ class StateTransition:
         """
         dish_manager_states = self._collapse(
             ds_component_state, spfrx_component_state, spf_component_state
+        )
+
+        # Get the current enum
+        dish_manager_states["DS"]["healthstate"] = ds_component_state.get(
+            "healthstate", HealthState.UNKNOWN
+        )
+        dish_manager_states["SPFRX"]["healthstate"] = spfrx_component_state.get(
+            "healthstate", HealthState.UNKNOWN
+        )
+        dish_manager_states["SPF"]["healthstate"] = spf_component_state.get(
+            "healthstate", SPFHealthState.UNKNOWN
+        )
+
+        # Build the name used on the transition rules
+        dish_manager_states["DS"]["healthstate"] = (
+            f"HealthState.{dish_manager_states['DS']['healthstate'].name}"
+        )
+        dish_manager_states["SPFRX"]["healthstate"] = (
+            f"HealthState.{dish_manager_states['SPFRX']['healthstate'].name}"
+        )
+        dish_manager_states["SPF"]["healthstate"] = (
+            f"SPFHealthState.{dish_manager_states['SPF']['healthstate'].name}"
         )
 
         rules_to_use = health_state_rules_ds_only
