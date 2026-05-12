@@ -11,4 +11,4 @@ User Guide
    Apply Pointing Model<apply_pointing_model> 
    Tracking<tracking>
    Troubleshooting<troubleshooting>
-   Transition Rules<transition_rules/transition_rules>
+   Aggregation Rules<aggregation_rules/aggregation_rules>

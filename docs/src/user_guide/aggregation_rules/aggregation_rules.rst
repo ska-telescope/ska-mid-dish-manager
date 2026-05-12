@@ -1,6 +1,6 @@
-================
-Transition Rules
-================
+=================
+Aggregation Rules
+=================
 
 .. toctree::
   :maxdepth: 2

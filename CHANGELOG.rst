@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added aggregation rule descriptions to the user guide.
 
 Version 9.4.0
 *************
