@@ -241,7 +241,6 @@ class TestFannedOutTangoLongRunningCommand:
     @pytest.mark.unit
     def test_update_status_sets_rejected_when_lrc_rejected(self):
         """Test update status sets REJECTED."""
-
         self.command._status = FannedOutCommandStatus.IN_PROGRESS
         self.command.is_lrc_finished = False
 
@@ -261,7 +260,6 @@ class TestFannedOutTangoLongRunningCommand:
     @pytest.mark.unit
     def test_update_status_sets_aborted_when_lrc_aborted(self):
         """Test update status sets ABORTED."""
-
         self.command._status = FannedOutCommandStatus.IN_PROGRESS
         self.command.is_lrc_finished = False
 
