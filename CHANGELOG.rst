@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Limit build state fetch to only positive transitions to communication status ESTABLISHED.
 
 Version 9.4.0
 *************
