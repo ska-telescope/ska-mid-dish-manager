@@ -239,6 +239,46 @@ class TestFannedOutTangoLongRunningCommand:
         assert self.command.executed_cmd_response == "command failed"
 
     @pytest.mark.unit
+    def test_update_status_sets_rejected_when_lrc_rejected(self):
+        """Test update status sets REJECTED."""
+
+        self.command._status = FannedOutCommandStatus.IN_PROGRESS
+        self.command.is_lrc_finished = False
+
+        self.command._get_command_lrc_finished_dict = mock.MagicMock(
+            return_value={
+                "uid": "command_id_123",
+                "result": "command rejected",
+                "status": TaskStatus.REJECTED.name,
+            }
+        )
+
+        self.command._update_status(mock.MagicMock())
+
+        assert self.command._status == FannedOutCommandStatus.REJECTED
+        assert self.command.executed_cmd_response == "command rejected"
+
+    @pytest.mark.unit
+    def test_update_status_sets_aborted_when_lrc_aborted(self):
+        """Test update status sets ABORTED."""
+
+        self.command._status = FannedOutCommandStatus.IN_PROGRESS
+        self.command.is_lrc_finished = False
+
+        self.command._get_command_lrc_finished_dict = mock.MagicMock(
+            return_value={
+                "uid": "command_id_123",
+                "result": "command aborted",
+                "status": TaskStatus.ABORTED.name,
+            }
+        )
+
+        self.command._update_status(mock.MagicMock())
+
+        assert self.command._status == FannedOutCommandStatus.ABORTED
+        assert self.command.executed_cmd_response == "command aborted"
+
+    @pytest.mark.unit
     def test_update_status_sets_timed_out_when_timeout_exceeded(self):
         """Test update status sets TIMED_OUT when timeout exceeded."""
         self.command._status = FannedOutCommandStatus.IN_PROGRESS
