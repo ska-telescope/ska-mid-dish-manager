@@ -241,22 +241,15 @@ class TestFannedOutTangoLongRunningCommand:
     @pytest.mark.unit
     def test_update_status_sets_timed_out_when_timeout_exceeded(self):
         """Test update status sets TIMED_OUT when timeout exceeded."""
-
         self.command._status = FannedOutCommandStatus.IN_PROGRESS
         self.command.is_lrc_finished = False
 
         self.command.timeout_s = 5
         self.command.start_time = 100
 
-        self.command._get_command_lrc_finished_dict = mock.MagicMock(
-            return_value=None
-        )
-        self.command._is_command_in_lrc_executing = mock.MagicMock(
-            return_value=False
-        )
-        self.command._is_command_in_lrc_queued = mock.MagicMock(
-            return_value=False
-        )
+        self.command._get_command_lrc_finished_dict = mock.MagicMock(return_value=None)
+        self.command._is_command_in_lrc_executing = mock.MagicMock(return_value=False)
+        self.command._is_command_in_lrc_queued = mock.MagicMock(return_value=False)
 
         with mock.patch("time.time", return_value=106):
             self.command._update_status(mock.MagicMock())
