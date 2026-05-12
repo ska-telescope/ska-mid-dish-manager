@@ -28,6 +28,7 @@ class B5DCComponentManager(TangoDeviceComponentManager):
         **kwargs: Any,
     ):
         monitored_attr_names = (
+            "buildState",
             "rfcmHAttenuation",
             "rfcmVAttenuation",
             "rfcmFrequency",

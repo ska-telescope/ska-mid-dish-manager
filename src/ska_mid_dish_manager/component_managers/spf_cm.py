@@ -30,6 +30,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
         **kwargs: Any,
     ):
         monitored_attr_names = (
+            "buildState",
             "operatingMode",
             "powerState",
             "healthState",
