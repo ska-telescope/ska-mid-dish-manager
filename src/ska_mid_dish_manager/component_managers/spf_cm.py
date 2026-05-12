@@ -4,12 +4,11 @@ import logging
 from threading import Lock
 from typing import Any, Callable, Optional
 
-from ska_control_model import HealthState
-
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
     SPFBandInFocus,
     SPFCapabilityStates,
+    SPFHealthState,
     SPFOperatingMode,
     SPFPowerState,
 )
@@ -66,7 +65,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
         enum_conversion = {
             "operatingmode": SPFOperatingMode,
             "powerstate": SPFPowerState,
-            "healthstate": HealthState,
+            "healthstate": SPFHealthState,
             "bandinfocus": SPFBandInFocus,
             "b1capabilitystate": SPFCapabilityStates,
             "b2capabilitystate": SPFCapabilityStates,
