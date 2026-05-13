@@ -7,9 +7,9 @@ HEALTH_STATE_RULES_ALL_DEVICES = {
         "("
         "    DS.healthstate == 'HealthState.DEGRADED' and "
         "    SPF.healthstate in "
-        "       ['HealthState.OK', "
-        "        'HealthState.DEGRADED', "
-        "        'HealthState.UNKNOWN'] "
+        "       ['SPFHealthState.NORMAL', "
+        "        'SPFHealthState.DEGRADED', "
+        "        'SPFHealthState.UNKNOWN'] "
         "    and "
         "    SPFRX.healthstate in "
         "      ['HealthState.OK', "
@@ -23,7 +23,7 @@ HEALTH_STATE_RULES_ALL_DEVICES = {
         "        'HealthState.DEGRADED', "
         "        'HealthState.UNKNOWN'] "
         "    and "
-        "    SPF.healthstate == 'HealthState.DEGRADED' "
+        "    SPF.healthstate == 'SPFHealthState.DEGRADED' "
         "    and "
         "    SPFRX.healthstate in "
         "       ['HealthState.OK', "
@@ -38,26 +38,26 @@ HEALTH_STATE_RULES_ALL_DEVICES = {
         "        'HealthState.UNKNOWN'] "
         "    and "
         "    SPF.healthstate in "
-        "        ['HealthState.OK', "
-        "         'HealthState.DEGRADED', "
-        "         'HealthState.UNKNOWN'] "
+        "        ['SPFHealthState.NORMAL', "
+        "         'SPFHealthState.DEGRADED', "
+        "         'SPFHealthState.UNKNOWN'] "
         "    and "
         "    SPFRX.healthstate == 'HealthState.DEGRADED'"
         ")"
     ),
     "FAILED": rule_engine.Rule(
         "DS.healthstate == 'HealthState.FAILED' or "
-        "SPF.healthstate == 'HealthState.FAILED' or "
+        "SPF.healthstate == 'SPFHealthState.FAILED' or "
         "SPFRX.healthstate == 'HealthState.FAILED'"
     ),
     "OK": rule_engine.Rule(
         "DS.healthstate == 'HealthState.OK' and "
-        "SPF.healthstate == 'HealthState.OK' and "
+        "SPF.healthstate == 'SPFHealthState.NORMAL' and "
         "SPFRX.healthstate == 'HealthState.OK'"
     ),
     "UNKNOWN": rule_engine.Rule(
         "DS.healthstate == 'HealthState.UNKNOWN' or "
-        "SPF.healthstate == 'HealthState.UNKNOWN' or "
+        "SPF.healthstate == 'SPFHealthState.UNKNOWN' or "
         "SPFRX.healthstate == 'HealthState.UNKNOWN'"
     ),
 }
@@ -98,9 +98,9 @@ HEALTH_STATE_RULES_SPFRX_IGNORED = {
         "("
         "    DS.healthstate == 'HealthState.DEGRADED' and "
         "    SPF.healthstate in "
-        "       ['HealthState.OK', "
-        "        'HealthState.DEGRADED', "
-        "        'HealthState.UNKNOWN'] "
+        "       ['SPFHealthState.NORMAL', "
+        "        'SPFHealthState.DEGRADED', "
+        "        'SPFHealthState.UNKNOWN'] "
         ")"
         " or "
         "("
@@ -109,17 +109,17 @@ HEALTH_STATE_RULES_SPFRX_IGNORED = {
         "        'HealthState.DEGRADED', "
         "        'HealthState.UNKNOWN'] "
         "    and "
-        "    SPF.healthstate == 'HealthState.DEGRADED' "
+        "    SPF.healthstate == 'SPFHealthState.DEGRADED' "
         ")"
     ),
     "FAILED": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.FAILED' or SPF.healthstate == 'HealthState.FAILED'"
+        "DS.healthstate == 'HealthState.FAILED' or SPF.healthstate == 'SPFHealthState.FAILED'"
     ),
     "OK": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.OK' and SPF.healthstate == 'HealthState.OK'"
+        "DS.healthstate == 'HealthState.OK' and SPF.healthstate == 'SPFHealthState.NORMAL'"
     ),
     "UNKNOWN": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.UNKNOWN' or SPF.healthstate == 'HealthState.UNKNOWN'"
+        "DS.healthstate == 'HealthState.UNKNOWN' or SPF.healthstate == 'SPFHealthState.UNKNOWN'"
     ),
 }
 
