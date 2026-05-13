@@ -2045,21 +2045,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         health_info = []
         for key, com_man in self.sub_component_managers.items():
+            health_state = com_man.component_state.get("healthstate")
             if key == "SPF":
-                if com_man.component_state.get("healthstate") == SPFHealthState.UNKNOWN:
+                if health_state == SPFHealthState.UNKNOWN:
                     health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
-                if com_man.component_state.get("healthstate") == SPFHealthState.FAILED:
+                if health_state == SPFHealthState.FAILED:
                     health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
-                if com_man.component_state.get("healthstate") == SPFHealthState.DEGRADED:
+                if health_state == SPFHealthState.DEGRADED:
                     health_info.append(
                         f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
                     )
             else:
-                if com_man.component_state.get("healthstate") == HealthState.UNKNOWN:
+                if health_state == HealthState.UNKNOWN:
                     health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
-                if com_man.component_state.get("healthstate") == HealthState.FAILED:
+                if health_state == HealthState.FAILED:
                     health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
-                if com_man.component_state.get("healthstate") == HealthState.DEGRADED:
+                if health_state == HealthState.DEGRADED:
                     health_info.append(
                         f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
                     )
