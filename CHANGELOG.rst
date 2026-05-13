@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added aggregation rule descriptions to the user guide.
 - Updated SPF healthstate to match the ICD.
   - Now [`UNKNOWN`, `NORMAL`, `DEGRADED`, `FAILED`]
   - DishManager `healthstate` is unchanged
