@@ -30,7 +30,7 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
     result_event_store.wait_for_command_id(unique_id, timeout=8)
 
     expected_progress_updates = [
-        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
+        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode, SPF.SetOperateMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]

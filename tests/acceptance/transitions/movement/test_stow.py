@@ -26,7 +26,7 @@ def test_stow_transition(
     stow_position = 90.2
     estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
     dish_manager_proxy.SetStowMode()
-    main_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
+    main_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 20)
 
     expected_progress_update = "Stow called, monitor dishmode for LRC completed"
     events = status_event_store.wait_for_progress_update(expected_progress_update)

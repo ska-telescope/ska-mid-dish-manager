@@ -10,13 +10,14 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 @pytest.mark.acceptance
 def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test ConfigureBand2."""
-    main_event_store = event_store_class()
+    dm_event_store = event_store_class()
+    config_band_event_store = event_store_class()
     result_event_store = event_store_class()
     status_event_store = event_store_class()
 
     attr_cb_mapping = {
-        "dishMode": main_event_store,
-        "configuredBand": main_event_store,
+        "dishMode": dm_event_store,
+        "configuredBand": config_band_event_store,
         "Status": status_event_store,
         "longRunningCommandResult": result_event_store,
     }
@@ -29,15 +30,17 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         assert dish_manager_proxy.configuredBand == Band.B1
         assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
-    main_event_store.clear_queue()
+    dm_event_store.clear_queue()
+    config_band_event_store.clear_queue()
     status_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     result_event_store.wait_for_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
-    main_event_store.wait_for_value(Band.B2, timeout=30)
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
+    config_band_event_store.wait_for_value(Band.B2, timeout=30)
+    # wait for dish mode CONFIG then OPERATE
+    dm_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
     assert dish_manager_proxy.configuredBand == Band.B2
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
@@ -142,13 +145,14 @@ def test_configure_band_2_from_stow(
     dish_manager_proxy,
 ):
     """Test ConfigureBand2."""
-    main_event_store = event_store_class()
+    dm_event_store = event_store_class()
+    config_band_event_store = event_store_class()
     result_event_store = event_store_class()
     status_event_store = event_store_class()
 
     attr_cb_mapping = {
-        "dishMode": main_event_store,
-        "configuredBand": main_event_store,
+        "dishMode": dm_event_store,
+        "configuredBand": config_band_event_store,
         "Status": status_event_store,
         "longRunningCommandResult": result_event_store,
     }
@@ -162,7 +166,8 @@ def test_configure_band_2_from_stow(
     assert dish_manager_proxy.configuredBand == Band.B1
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
-    main_event_store.clear_queue()
+    dm_event_store.clear_queue()
+    config_band_event_store.clear_queue()
     status_event_store.clear_queue()
 
     # Stow the dish
@@ -170,13 +175,13 @@ def test_configure_band_2_from_stow(
     stow_position = 90.2
     estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
     dish_manager_proxy.SetStowMode()
-    main_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
+    dm_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     result_event_store.wait_for_command_result(
         unique_id, '[0, "ConfigureBand2 completed."]', timeout=30
     )
-    main_event_store.wait_for_value(Band.B2, timeout=30)
+    config_band_event_store.wait_for_value(Band.B2, timeout=30)
 
     expected_progress_updates = [
         # ConfigureBand2
@@ -209,13 +214,14 @@ def test_configure_band_json(
     dish_manager_proxy,
 ):
     """Test ConfigureBand with JSON string."""
-    main_event_store = event_store_class()
+    dm_event_store = event_store_class()
+    config_band_event_store = event_store_class()
     result_event_store = event_store_class()
     status_event_store = event_store_class()
 
     attr_cb_mapping = {
-        "dishMode": main_event_store,
-        "configuredBand": main_event_store,
+        "dishMode": dm_event_store,
+        "configuredBand": config_band_event_store,
         "Status": status_event_store,
         "longRunningCommandResult": result_event_store,
     }
@@ -242,7 +248,8 @@ def test_configure_band_json(
     assert dish_manager_proxy.configuredBand == Band.B1
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
-    main_event_store.clear_queue()
+    dm_event_store.clear_queue()
+    config_band_event_store.clear_queue()
     status_event_store.clear_queue()
 
     json_payload_2 = """
@@ -320,13 +327,14 @@ def test_configure_band_json_with_b5dc_fanout(
     b5dc_device_proxy,
 ):
     """Test ConfigureBand with receiver band 5b and sub band configuration."""
-    main_event_store = event_store_class()
+    dm_event_store = event_store_class()
+    config_band_event_store = event_store_class()
     result_event_store = event_store_class()
     status_event_store = event_store_class()
 
     dm_attr_cb_mapping = {
-        "dishMode": main_event_store,
-        "configuredBand": main_event_store,
+        "dishMode": dm_event_store,
+        "configuredBand": config_band_event_store,
         "Status": status_event_store,
         "lrcFinished": result_event_store,
     }
@@ -371,7 +379,7 @@ def test_configure_band_json_with_b5dc_fanout(
         # loop refreshing the b5dc attribute values
         b5dc_subband_evt_store.wait_for_value(B5dcFrequency.F_13_2_GHZ.frequency_value_ghz(), 30)
 
-    main_event_store.clear_queue()
+    dm_event_store.clear_queue()
     b5dc_subband_evt_store.clear_queue()
 
     json_payload_with_sub_band = """

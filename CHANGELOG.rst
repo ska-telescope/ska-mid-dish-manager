@@ -8,6 +8,14 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.4.0
+*************
+- See RC releases for details.
+
+Version 9.4.0-rc.3
+******************
+- `longRunningCommandResult` is updated only after the Abort command execution has completed.
+
 Version 9.4.0-rc.2
 ******************
 - Bump DSManager chart to 8.0.5
@@ -27,6 +35,7 @@ Version 9.4.0-rc.1
 - Added new b5dcServerConnectionState attribute to reflect the state of connectivity to the B5dc component
 - Added in supplementary verification ping when an API_TimeEvent error is received before setting the devices CommunicationStatus.
 - Added a tango command to force reconnection on dish manager's subservient devices.
+- Extended the SetStandbyFPModeAction to fan out the SetOperateMode command to the SPF device  
 
 - Upgraded ska-mid-dish-b5dc-proxy chart to v0.1.0
 

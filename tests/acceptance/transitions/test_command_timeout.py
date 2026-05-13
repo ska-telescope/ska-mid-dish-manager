@@ -15,6 +15,7 @@ def test_action_timeout(
     event_store_class,
     dish_manager_proxy,
     ds_device_proxy,
+    spf_device_proxy,
     toggle_skip_attributes,
     restore_action_timeout,
 ):
@@ -52,13 +53,15 @@ def test_action_timeout(
         dish_manager_proxy.actionTimeoutSeconds = DEFAULT_ACTION_TIMEOUT_S
 
         # Bring the dish back to a known state
+        # The test configure band times out from StandbyLP mode
         ds_device_proxy.SetStandbyMode()
         dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=10)
 
         [[_], [configure_unique_id]] = dish_manager_proxy.ConfigureBand2(True)
 
         # Check that Dish Manager is waiting to transition
-        status_event_store.wait_for_progress_update("Awaiting configuredband change to B2")
+        # The first StandByFP action fails because the SPF skipAttributeUpdates was set to True
+        status_event_store.wait_for_progress_update("Awaiting dishmode change to STANDBY_FP")
 
         time.sleep(DEFAULT_ACTION_TIMEOUT_S // 2)
 
@@ -72,7 +75,7 @@ def test_action_timeout(
 
         # Wait for time out
         result_event_store.wait_for_command_result(
-            configure_unique_id, '[3, "SetOperateMode failed"]', timeout=DEFAULT_ACTION_TIMEOUT_S
+            configure_unique_id, '[3, "SetStandbyFPMode failed"]', timeout=DEFAULT_ACTION_TIMEOUT_S
         )
     except RuntimeError:
         # Call Abort on DishManager if anything goes wrong so the LRCs aren't stuck

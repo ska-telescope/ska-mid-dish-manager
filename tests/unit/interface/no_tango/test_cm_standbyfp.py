@@ -6,7 +6,12 @@ import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, DSPowerState
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    DSPowerState,
+    SPFOperatingMode,
+)
 
 
 @pytest.mark.unit
@@ -44,7 +49,8 @@ def test_set_standbyfp_handler(
     expected_progress_updates = [
         "Awaiting DS operatingmode change to STANDBY",
         "Awaiting DS powerstate change to FULL_POWER",
-        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
+        "Awaiting SPF operatingmode change to OPERATE",
+        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode, SPF.SetOperateMode",
         "Awaiting dishmode change to STANDBY_FP",
     ]
     progress_updates = progress_cb.get_args_queue()
@@ -54,6 +60,9 @@ def test_set_standbyfp_handler(
     # check that the component state reports the requested command
     component_manager.sub_component_managers["DS"]._update_component_state(
         operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
+    )
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        operatingmode=SPFOperatingMode.OPERATE
     )
     component_state_cb.wait_for_value("dishmode", DishMode.STANDBY_FP)
 

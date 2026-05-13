@@ -8,6 +8,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
     PowerState,
+    SPFOperatingMode,
 )
 
 
@@ -17,6 +18,7 @@ def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
     """Execute tests."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
 
     dish_mode_event_store = event_store_class()
     status_event_store = event_store_class()
@@ -52,6 +54,7 @@ def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
     ds_cm._update_component_state(
         operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
     )
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     #  we can now expect dishMode to transition to STANDBY_FP
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP)
     assert device_proxy.dishMode == DishMode.STANDBY_FP
@@ -59,7 +62,7 @@ def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
     assert device_proxy.powerState == PowerState.FULL
 
     expected_progress_updates = [
-        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode",
+        "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode, SPF.SetOperateMode",
         "Awaiting dishmode change to STANDBY_FP",
         "SetStandbyFPMode completed",
     ]
