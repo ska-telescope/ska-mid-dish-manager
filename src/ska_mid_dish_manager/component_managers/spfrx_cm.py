@@ -91,7 +91,6 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         **kwargs: Any,
     ):
         monitored_attr_names = (
-            "buildState",
             "operatingMode",
             "dataFiberCheck",
             "configuredBand",

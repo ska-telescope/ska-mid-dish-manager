@@ -188,9 +188,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 event_attr_name,
                 self._tango_device_fqdn,
             )
-            # if self._communication_state != CommunicationStatus.ESTABLISHED:
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
-            self._fetch_build_state_information()
+            if self._communication_state != CommunicationStatus.ESTABLISHED:
+                self._update_communication_state(CommunicationStatus.ESTABLISHED)
+                self._fetch_build_state_information()
 
     def clear_monitored_attributes(self) -> None:
         """Sets all the monitored attribute values to 0.
