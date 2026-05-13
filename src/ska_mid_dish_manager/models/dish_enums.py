@@ -93,6 +93,15 @@ class SPFBandInFocus(enum.IntEnum):
     B5b = 6
 
 
+class SPFHealthState(enum.IntEnum):
+    """SPF health state enums."""
+
+    UNKNOWN = 0
+    NORMAL = 1
+    DEGRADED = 2
+    FAILED = 3
+
+
 class TrackInterpolationMode(enum.IntEnum):
     NEWTON = 0
     SPLINE = 1

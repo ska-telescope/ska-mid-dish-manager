@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated SPF healthstate to match the ICD.
+  - Now [`UNKNOWN`, `NORMAL`, `DEGRADED`, `FAILED`]
+  - DishManager `healthstate` is unchanged
 - Add interlockack command
 - Add new FannedOutTangoLongRunningCommand
   - Uses lrcQueue, lrcExecuting, and lrcFinished from SKA devices to update the status of commands.
