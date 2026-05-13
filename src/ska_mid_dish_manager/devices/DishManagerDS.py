@@ -407,7 +407,6 @@ class DishManager(SKAController):
             device._configure_target_lock = []
             device._dsh_max_short_term_power = 13.5
             device._dsh_power_curtailment = True
-            device._frequency_response = [[], []]
             device._pointing_buffer_size = 0
             device._poly_track = []
             device._power_state = PowerState.LOW
@@ -548,7 +547,6 @@ class DishManager(SKAController):
                 "capturing",
                 "dshMaxShortTermPower",
                 "dshPowerCurtailment",
-                "frequencyResponse",
                 "noiseDiodeConfig",
                 "programTrackTable",
                 "pointingBufferSize",
@@ -1291,10 +1289,29 @@ class DishManager(SKAController):
         self.push_change_event("dshPowerCurtailment", value)
         self.push_archive_event("dshPowerCurtailment", value)
 
-    @attribute(dtype=(((float),),), max_dim_x=1024, max_dim_y=1024)
+    @attribute(
+        dtype=(float,),
+        max_dim_x=8202,
+        access=AttrWriteType.READ,
+        doc="Note: This attribute maps to the spectrum sample attribute from the SPFRx"
+        "Report the SPFRX spectrum sample data "
+        "Spectrum sample data from the spectrometer as a packed DevFloat array. "
+        "The array contains a UTC timestamp followed by multiple spectral datasets. "
+        "Index layout: "
+        "[0-1]: UTC timestamp in seconds, "
+        "[2-1026]: P_on,X (1025 floats), "
+        "[1027-2051]: P_on,Y (1025 floats), "
+        "[2052-3076]: P_on,XY real (1025 floats), "
+        "[3077-4101]: P_on,XY imaginary (1025 floats), "
+        "[4102-5126]: P_off,X (1025 floats), "
+        "[5127-6151]: P_off,Y (1025 floats), "
+        "[6152-7176]: P_off,XY real (1025 floats), "
+        "[7177-8201]: P_off,XY imaginary (1025 floats). ",
+    )
     def frequencyResponse(self):
-        """Returns the frequencyResponse."""
-        return self._frequency_response
+        """Returns the SPFRX spectrum sample data."""
+        spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
+        return spfrx_com_man.read_attribute_value("spectrumsample")
 
     @attribute(dtype=(float,), access=AttrWriteType.WRITE)
     def noiseDiodeConfig(self):
