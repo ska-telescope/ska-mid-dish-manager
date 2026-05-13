@@ -120,6 +120,7 @@ class FannedOutCommand:
         return self.failed or self.successful
 
     def _update_status(self, task_callback: Callable) -> None:
+        """Update the status of the fanned out command based on component state and timeout checks."""
         if self._status == FannedOutCommandStatus.IN_PROGRESS:
             # completed
             if check_component_state_matches_awaited(
@@ -293,6 +294,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         )
 
     def _execute_tango_command(self) -> tuple:
+        """Fan out the respective command to the subservient devices and handle task status response."""
         task_status, msg = super()._execute_tango_command()
 
         # If the command completed immediately then it won't appear in the LRC attributes. Mark
@@ -303,6 +305,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         return task_status, msg
 
     def _is_command_in_lrc_queued(self) -> bool:
+        """Check if the long running command is in the lrcQueue attribute."""
         lrc_queue = self.device_component_manager.read_attribute_value("lrcqueue", log_read=False)
         if not isinstance(lrc_queue, tuple):
             self.logger.error(
@@ -322,6 +325,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         return False
 
     def _is_command_in_lrc_executing(self) -> bool:
+        """Check if the long running command is in the lrcExecuting attribute."""
         lrc_executing = self.device_component_manager.read_attribute_value(
             "lrcexecuting", log_read=False
         )
@@ -343,6 +347,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         return False
 
     def _get_command_lrc_finished_dict(self) -> Optional[dict]:
+        """Get the lrcFinished dict for the long running command."""
         lrc_finished = self.device_component_manager.read_attribute_value(
             "lrcfinished", log_read=False
         )
@@ -364,6 +369,10 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         return None
 
     def _update_status(self, task_callback: Callable) -> None:
+        """Update the status of the fanned out command based on the LRC status and component state.
+
+        Requires both the LRC to have completed and the component states to match to complete.
+        """
         if self._status in [FannedOutCommandStatus.QUEUED, FannedOutCommandStatus.IN_PROGRESS]:
             # If the LRC has not yet been reported in lrcFinished
             if not self.is_lrc_finished:
