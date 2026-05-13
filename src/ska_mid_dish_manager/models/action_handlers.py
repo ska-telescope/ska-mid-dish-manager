@@ -27,7 +27,7 @@ class Action(ABC):
 
     The ``Action`` class represents a high-level operation that involves executing one or more
     commands on subservient devices. Each concrete subclass is responsible for defining its own
-    :class:`FannedOutSlowCommand` instances and assigning an :class:`ActionHandler` instance
+    :class:`FannedOutTangoCommand` instances and assigning an :class:`ActionHandler` instance
     to coordinate and monitor their execution.
 
     Actions can be chained using optional ``action_on_success`` and ``action_on_failure``
@@ -263,7 +263,7 @@ class ActionHandler:
                 self._trigger_failure(
                     task_callback,
                     task_abort_event,
-                    f"{self.action_name} failed {cmd.cmd_response}",
+                    f"{self.action_name} failed {cmd.executed_cmd_response}",
                 )
                 return
 
@@ -303,8 +303,8 @@ class ActionHandler:
             # Handle any failed fanned out command
             if any(cmd.failed for cmd in self.fanned_out_commands):
                 command_statuses = {
-                    f"{sc.device}.{sc.command_name}": sc.status.name
-                    for sc in self.fanned_out_commands
+                    f"{foc.device}.{foc.command_name}": foc.status.name
+                    for foc in self.fanned_out_commands
                 }
                 message = (
                     f"Action '{self.action_name}' failed. Fanned out commands: {command_statuses}"
@@ -398,7 +398,7 @@ class SequentialActionHandler(ActionHandler):
                 self._trigger_failure(
                     task_callback,
                     task_abort_event,
-                    f"{self.action_name} failed {cmd.cmd_response}",
+                    f"{self.action_name} failed {cmd.executed_cmd_response}",
                 )
                 return
 

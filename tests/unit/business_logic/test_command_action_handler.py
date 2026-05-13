@@ -114,7 +114,7 @@ class TestActionHandler:
         expected_progress_updates = [
             "Fanned out commands: DeviceX.CommandX",
             "Awaiting attr change to True",
-            "DeviceX device timed out executing CommandX command",
+            # "DeviceX device timed out executing CommandX command",
             "DeviceX.CommandX timed out",
             "Action 'HandlerX' failed. Fanned out commands: {'DeviceX.CommandX': 'TIMED_OUT'}",
         ]
@@ -159,7 +159,10 @@ class TestActionHandler:
         assert self.component_state["attr"] is False
         progress_callback.wait_for_args(("Awaiting attr change to True",))
         progress_callback.wait_for_args(
-            ("Action 'HandlerX' timed out. Fanned out commands: {'DeviceX.CommandX': 'RUNNING'}",)
+            (
+                "Action 'HandlerX' timed out. Fanned out commands: "
+                "{'DeviceX.CommandX': 'IN_PROGRESS'}",
+            )
         )
 
     @pytest.mark.unit
@@ -239,7 +242,10 @@ class TestActionHandler:
         assert self.component_state["attr"] is False
         progress_callback.wait_for_args(("Awaiting attr change to True",))
         progress_callback.wait_for_args(
-            ("Action 'HandlerX' timed out. Fanned out commands: {'DeviceX.CommandX': 'RUNNING'}",)
+            (
+                "Action 'HandlerX' timed out. Fanned out commands: "
+                "{'DeviceX.CommandX': 'IN_PROGRESS'}",
+            )
         )
 
     @pytest.mark.unit

@@ -44,7 +44,18 @@ class TestCommandActions:
                     "actstaticoffsetvalueel": 1,
                     "actstaticoffsetvaluexel": 1,
                 },
-                execute_command=mock.MagicMock(return_value=(None, None)),
+                execute_command=mock.MagicMock(return_value=(None, "command_id_123")),
+                read_attribute_value=mock.MagicMock(
+                    return_value=(
+                        json.dumps(
+                            {
+                                "uid": "command_id_123",
+                                "result": "some command message",
+                                "status": TaskStatus.COMPLETED.name,
+                            }
+                        ),
+                    )
+                ),
             ),
             "SPF": mock.MagicMock(
                 _component_state={"operatingmode": SPFOperatingMode.STANDBY_LP},
