@@ -12,6 +12,7 @@ reported by the DS and SPF devices.
     * Devices that can be ignored are SPF and/or SPFRX by setting dish manager attributes `ignoreSpf` and/or `ignoreSpfrx` to `True`.  
 
    * Conditions are evaluated in `order of precedence`, with the first matching condition determining the power state. 
+   * If none of the conditions below are met, the power state is reported as ``LOW``.
 
 **Rule Overview**
 

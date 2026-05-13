@@ -12,6 +12,7 @@ position, the SPFRx configured band, and the SPF band in focus.
     * Devices that can be ignored are SPF and/or SPFRX by setting dish manager attributes `ignoreSpf` and/or `ignoreSpfrx` to `True`.  
 
    * Conditions are evaluated in `order of precedence`, with the first matching condition determining the configured band. 
+   * If none of the conditions below are met, the configured band is reported as ``UNKNOWN``.
 
 **Rule Overview**
 

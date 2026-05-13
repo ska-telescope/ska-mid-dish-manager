@@ -12,7 +12,8 @@ by the SPF and SPFRx devices.
 
     * Devices that can be ignored are SPF and/or SPFRX by setting dish manager attributes `ignoreSpf` and/or `ignoreSpfrx` to `True`.  
 
-   * Conditions are evaluated in `order of precedence`, with the first matching condition determining the capability state. 
+   * Conditions are evaluated in `order of precedence`, with the first matching condition determining the capability state.
+   * If none of the conditions below are met, the capability state is reported as ``UNKNOWN``. 
 
 **Rule Overview**
 
