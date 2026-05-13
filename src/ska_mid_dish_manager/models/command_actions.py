@@ -174,7 +174,7 @@ class SetStandbyFPModeAction(Action):
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
-        spf_set_operate_mode = FannedOutSlowCommand(
+        spf_set_operate_mode = FannedOutTangoCommand(
             logger=self.logger,
             device="SPF",
             command_name="SetOperateMode",
