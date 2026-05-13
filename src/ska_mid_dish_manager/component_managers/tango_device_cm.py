@@ -58,12 +58,16 @@ class TangoDeviceComponentManager(BaseComponentManager):
         attrs_to_be_added = set(attr_names_lower).difference(kwargs.keys())
         kwargs.update(dict.fromkeys(attrs_to_be_added))
 
+        # Ensure `buildstate` is present for buildState refresh logic.
+        # If provided by caller, keep it; if missing (or explicitly None), default to empty.
+        if kwargs.get("buildstate") is None:
+            kwargs["buildstate"] = ""
+
         super().__init__(
             logger,
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
-            buildstate="",  # this needed for buildState refresh
             **kwargs,
         )
 
