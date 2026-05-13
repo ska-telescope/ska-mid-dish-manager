@@ -5,13 +5,6 @@ global:
 
 ska-mid-dish-ds-manager:
   enabled: true
-  # Override the image to use a specific version for testing
-  # dishstructuremanager:
-  #   image:
-  #     registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
-  #     image: ska-mid-dish-ds-manager
-  #     tag: 8.0.5-dev.cc6596012
-  #     pullPolicy: IfNotPresent
 
 ska-tango-base:
   enabled: true
@@ -25,3 +18,4 @@ ska-mid-dish-simulators:
       enabled: true
   dsOpcuaSimulator:
     enabled: true
+

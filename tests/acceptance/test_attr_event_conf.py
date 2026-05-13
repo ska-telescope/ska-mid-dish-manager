@@ -5,7 +5,8 @@ import tango
 
 from tests.utils import remove_subscriptions, setup_subscriptions
 
-IGNORE_ATTRIBUTES_LIST = ["lrcProtocolVersions", "_lrcEvent"]
+# Attributes to ignore for event configuration tests
+IGNORE_ATTRIBUTES_LIST = ["lrcProtocolVersions", "_lrcEvent", "frequencyResponse"]
 
 
 @pytest.mark.acceptance
