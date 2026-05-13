@@ -151,9 +151,6 @@ def test_abort_sends_lrc_update_after_abort_sequence_finishes(
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
-    # update the execute_command mock to return IN_PROGRESS and a timestamp
-    ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
-
     dish_mode_event_store = event_store_class()
     lrc_result_event_store = event_store_class()
 
