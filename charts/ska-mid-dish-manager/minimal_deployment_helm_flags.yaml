@@ -5,12 +5,12 @@ global:
 
 ska-mid-dish-ds-manager:
   enabled: true
-  dishstructuremanager:
-    image:
-      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
-      image: ska-mid-dish-ds-manager
-      tag: 8.0.5-dev.ccaafdf88
-      pullPolicy: IfNotPresent
+  #dishstructuremanager:
+  #  image:
+  #    registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
+  #    image: ska-mid-dish-ds-manager
+  #    tag: 8.0.5-dev.ccaafdf88
+  #    pullPolicy: IfNotPresent
 
 ska-tango-base:
   enabled: true
@@ -25,10 +25,10 @@ ska-mid-dish-simulators:
   dsOpcuaSimulator:
     enabled: true
 
-  dishsimulators:
-    image:
-      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-simulators
-      image: ska-mid-dish-simulators
-      tag:  5.8.1-dev.c5aaf2bb6
-      pullPolicy: IfNotPresent
+  #dishsimulators:
+  #  image:
+  #    registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-simulators
+  #    image: ska-mid-dish-simulators
+  #    tag:  5.8.1-dev.c5aaf2bb6
+  #    pullPolicy: IfNotPresent
 
