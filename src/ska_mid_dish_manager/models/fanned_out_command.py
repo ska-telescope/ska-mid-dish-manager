@@ -120,8 +120,7 @@ class FannedOutCommand:
         return self.failed or self.successful
 
     def _update_status(self, task_callback: Callable) -> None:
-        """Update the status of the fanned out command based on component state and timeout checks.
-        """
+        """Update the status of the command based on component state and timeout checks."""
         if self._status == FannedOutCommandStatus.IN_PROGRESS:
             # completed
             if check_component_state_matches_awaited(
