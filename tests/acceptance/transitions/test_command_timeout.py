@@ -87,3 +87,4 @@ def test_action_timeout(
         dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
     finally:
         remove_subscriptions(subscriptions)
+        dish_manager_proxy.actionTimeoutSeconds = DEFAULT_ACTION_TIMEOUT_S

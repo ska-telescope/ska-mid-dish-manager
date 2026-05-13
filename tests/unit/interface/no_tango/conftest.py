@@ -1,3 +1,4 @@
+import json
 import logging
 from collections.abc import Generator
 from unittest.mock import MagicMock, patch
@@ -30,6 +31,15 @@ def callbacks() -> dict:
     }
 
 
+def execute_command_side_effect(command_name, command_arg=None):
+    # fast commands
+    if command_name in ["SetKValue", "TrackLoadTable", "ReleaseAuth"]:
+        return (TaskStatus.COMPLETED, f"{command_name} successfully executed")
+
+    # LRC commands
+    return (TaskStatus.IN_PROGRESS, "command_id_123")
+
+
 @pytest.fixture()
 def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Generator:
     """Fixture that returns the component manager under test.
@@ -41,13 +51,18 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
     with (
         patch.multiple(
             "ska_mid_dish_manager.component_managers.tango_device_cm.TangoDeviceComponentManager",
-            read_attribute_value=MagicMock(),
             write_attribute_value=MagicMock(),
             update_state_from_monitored_attributes=MagicMock(),
-            execute_command=MagicMock(
-                side_effect=lambda command_name, command_arg: (
-                    TaskStatus.IN_PROGRESS,
-                    f"{command_name} successfully executed",
+            execute_command=MagicMock(side_effect=execute_command_side_effect),
+            read_attribute_value=MagicMock(
+                return_value=(
+                    json.dumps(
+                        {
+                            "uid": "command_id_123",
+                            "result": "some result message",
+                            "status": TaskStatus.COMPLETED.name,
+                        }
+                    ),
                 )
             ),
         ),

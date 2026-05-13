@@ -31,7 +31,8 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.models.fanned_out_command import (
     DishManagerCMMethod,
     DishManagerCMMethodResultCode,
-    FannedOutSlowCommand,
+    FannedOutTangoCommand,
+    FannedOutTangoLongRunningCommand,
 )
 from ska_mid_dish_manager.utils.action_helpers import (
     update_task_status,
@@ -62,7 +63,7 @@ class SetStandbyLPModeAction(Action):
             waiting_callback,
         )
 
-        self.spf_command = FannedOutSlowCommand(
+        self.spf_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPF",
             command_name="SetStandbyLPMode",
@@ -73,7 +74,7 @@ class SetStandbyLPModeAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
         )
 
-        self.spfrx_command = FannedOutSlowCommand(
+        self.spfrx_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPFRX",
             command_name="SetStandbyMode",
@@ -84,7 +85,7 @@ class SetStandbyLPModeAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
         )
 
-        self.ds_command = FannedOutSlowCommand(
+        self.ds_command = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="SetStandbyMode",
@@ -150,7 +151,7 @@ class SetStandbyFPModeAction(Action):
             action_on_failure,
             waiting_callback,
         )
-        ds_set_standby_mode = FannedOutSlowCommand(
+        ds_set_standby_mode = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="SetStandbyMode",
@@ -163,7 +164,7 @@ class SetStandbyFPModeAction(Action):
         dsc_power_limit = dish_manager_cm._component_state.get(
             "dscpowerlimitkw", DSC_MIN_POWER_LIMIT_KW
         )
-        ds_set_full_power_mode = FannedOutSlowCommand(
+        ds_set_full_power_mode = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="SetPowerMode",
@@ -173,7 +174,7 @@ class SetStandbyFPModeAction(Action):
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("DS"),
         )
-        spf_set_operate_mode = FannedOutSlowCommand(
+        spf_set_operate_mode = FannedOutTangoCommand(
             logger=self.logger,
             device="SPF",
             command_name="SetOperateMode",
@@ -221,7 +222,7 @@ class SetOperateModeAction(Action):
             waiting_callback,
         )
 
-        spf_command = FannedOutSlowCommand(
+        spf_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPF",
             command_name="SetOperateMode",
@@ -230,7 +231,7 @@ class SetOperateModeAction(Action):
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
         )
-        ds_command = FannedOutSlowCommand(
+        ds_command = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="SetPointMode",
@@ -288,7 +289,9 @@ class SetMaintenanceModeAction(Action):
             action_on_failure,
             waiting_callback,
         )
-        ds_command = FannedOutSlowCommand(
+        # This is not a FannedOutTangoLongRunningCommand because DSManager bypasses the lrcQueue
+        # and does not return the command ID in its response.
+        ds_command = FannedOutTangoCommand(
             logger=self.logger,
             device="DS",
             command_name="Stow",
@@ -296,7 +299,7 @@ class SetMaintenanceModeAction(Action):
             awaited_component_state={"operatingmode": DSOperatingMode.STOW},
             progress_callback=self._progress_callback,
         )
-        spfrx_command = FannedOutSlowCommand(
+        spfrx_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPFRX",
             command_name="SetStandbyMode",
@@ -305,7 +308,7 @@ class SetMaintenanceModeAction(Action):
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
         )
-        spf_command = FannedOutSlowCommand(
+        spf_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPF",
             command_name="SetMaintenanceMode",
@@ -369,7 +372,7 @@ class TrackAction(Action):
             action_on_failure,
             waiting_callback,
         )
-        ds_command = FannedOutSlowCommand(
+        ds_command = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="Track",
@@ -421,7 +424,7 @@ class TrackStopAction(Action):
             action_on_failure,
             waiting_callback,
         )
-        ds_command = FannedOutSlowCommand(
+        ds_command = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="TrackStop",
@@ -557,7 +560,7 @@ class ConfigureBandAction(Action):
                     )
                 else:
                     b5dc_freq_enum = B5dcFrequency(int(sub_band))
-                    b5dc_set_frequency_command = FannedOutSlowCommand(
+                    b5dc_set_frequency_command = FannedOutTangoLongRunningCommand(
                         logger=self.logger,
                         device="B5DC",
                         command_name="SetFrequency",
@@ -570,7 +573,7 @@ class ConfigureBandAction(Action):
                         is_device_ignored=self.dish_manager_cm.is_device_ignored("B5DC"),
                     )
 
-            spfrx_configure_band_command = FannedOutSlowCommand(
+            spfrx_configure_band_command = FannedOutTangoCommand(
                 logger=self.logger,
                 device="SPFRX",
                 command_name=self.requested_cmd,
@@ -590,7 +593,7 @@ class ConfigureBandAction(Action):
                 # await for band B1 to be configured on SPFRx if the requested band is B5b
                 spfrx_awaited_band = Band.B1
 
-            spfrx_configure_band_command = FannedOutSlowCommand(
+            spfrx_configure_band_command = FannedOutTangoCommand(
                 logger=self.logger,
                 device="SPFRX",
                 command_name=spfrx_requested_cmd,
@@ -604,7 +607,7 @@ class ConfigureBandAction(Action):
         fanned_out_commands = [spfrx_configure_band_command]
         # Only fan out the DS SetIndexPosition command if the band is changing
         if self.dish_manager_cm._component_state["configuredband"] != self.band:
-            ds_set_index_position_command = FannedOutSlowCommand(
+            ds_set_index_position_command = FannedOutTangoLongRunningCommand(
                 logger=self.logger,
                 device="DS",
                 command_name="SetIndexPosition",
@@ -783,7 +786,7 @@ class SlewAction(Action):
             waiting_callback,
         )
 
-        ds_command = FannedOutSlowCommand(
+        ds_command = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="Slew",
@@ -836,7 +839,7 @@ class TrackLoadStaticOffAction(Action):
             waiting_callback,
         )
 
-        ds_command = FannedOutSlowCommand(
+        ds_command = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="TrackLoadStaticOff",
@@ -891,7 +894,7 @@ class AbortScanSequence(Action):
         )
         self.completed_message = "Abort sequence completed."
 
-        ds_command = FannedOutSlowCommand(
+        ds_command = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="TrackStop",
@@ -925,6 +928,52 @@ class AbortScanSequence(Action):
             action_on_success=action_on_success,
             action_on_failure=action_on_failure,
             waiting_callback=waiting_callback,
+            progress_callback=self._progress_callback,
+            timeout_s=timeout_s,
+        )
+
+
+class InterlockAckAction(Action):
+    """Acknowledge Interlock on DSC."""
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        dish_manager_cm,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
+        action_on_success: Optional["Action"] = None,
+        action_on_failure: Optional["Action"] = None,
+        waiting_callback: Optional[Callable] = None,
+    ):
+        super().__init__(
+            logger,
+            dish_manager_cm,
+            timeout_s,
+            action_on_success,
+            action_on_failure,
+            waiting_callback,
+        )
+        ds_command = FannedOutTangoLongRunningCommand(
+            logger=self.logger,
+            device="DS",
+            command_name="InterLockAck",
+            device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
+            awaited_component_state={},
+            progress_callback=self._progress_callback,
+        )
+
+        self._handler = ActionHandler(
+            self.logger,
+            "InterLockAck",
+            [ds_command],
+            # use _dish_manager_cm._component_state to pass the dict by reference
+            # _dish_manager_cm.component_state will use the tango base property which will do a
+            # deep copy
+            component_state=self.dish_manager_cm._component_state,
+            awaited_component_state={},
+            action_on_success=self.action_on_success,
+            action_on_failure=self.action_on_failure,
+            waiting_callback=self.waiting_callback,
             progress_callback=self._progress_callback,
             timeout_s=timeout_s,
         )

@@ -1,5 +1,6 @@
 """Contains pytest fixtures for tango unit tests setup."""
 
+import json
 from unittest.mock import Mock, patch
 
 import pytest
@@ -50,7 +51,20 @@ def dish_manager_resources():
         ]
         for method_name in candidate_stub_methods:
             if method_name == "execute_command":
-                mock_method = Mock(return_value=(TaskStatus.IN_PROGRESS, "some string"))
+                mock_method = Mock(return_value=(TaskStatus.IN_PROGRESS, "12345"))
+            elif method_name == "read_attribute_value":
+                # mock_method = Mock(return_value=(TaskStatus.IN_PROGRESS, "some string"))
+                mock_method = Mock(
+                    return_value=(
+                        json.dumps(
+                            {
+                                "uid": "12345",
+                                "result": "some result message",
+                                "status": TaskStatus.COMPLETED.name,
+                            }
+                        ),
+                    )
+                )
             else:
                 mock_method = Mock()
             setattr(ds_cm, method_name, mock_method)
