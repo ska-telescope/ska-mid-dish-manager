@@ -101,8 +101,8 @@ def test_wms_cm_wind_gust_and_mean_wind_speed_updates(mock_tango_group):
     ]
 
     # Simulate a successful write to weather station device group
-    wms.write_wms_group_attribute_value.side_effect = (
-        lambda *args, **kwargs: wms._update_communication_state(CommunicationStatus.ESTABLISHED)
+    wms.write_wms_group_attribute_value.side_effect = lambda *args, **kwargs: (
+        wms._update_communication_state(CommunicationStatus.ESTABLISHED)
     )
 
     wms.start_communicating()

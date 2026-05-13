@@ -54,12 +54,6 @@ python-do-lint:
 	$(PYTHON_RUNNER) ruff check $(PYTHON_LINT_TARGET) || rc=1; \
 	exit $$rc
 
-ifdef CI_JOB_TOKEN
-python-post-lint:
-	$(PYTHON_RUNNER) ruff check --output-format="junit" --output-file=build/reports/linting-ruff.xml
-	@make --no-print-directory join-lint-reports
-endif
-
 #############################
 # OCI, K8s, Helm
 #############################

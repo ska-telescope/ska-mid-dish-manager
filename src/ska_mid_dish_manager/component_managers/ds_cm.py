@@ -104,12 +104,18 @@ class DSComponentManager(TangoDeviceComponentManager):
         """Override default interpretation to handle DS specific reply format."""
         # on this method evocation the reply from DS is of type DevVarLongStringArray
         [[result_code], [msg]] = reply
-        if result_code == ResultCode.FAILED:
+        if result_code in [ResultCode.FAILED, ResultCode.REJECTED]:
             self.logger.error(
                 "[%s] on [%s] failed with message: %s",
                 command_name,
                 self._tango_device_fqdn,
                 msg,
             )
-            return TaskStatus.FAILED, msg
+
+            status_map = {
+                ResultCode.FAILED: TaskStatus.FAILED,
+                ResultCode.REJECTED: TaskStatus.REJECTED,
+            }
+
+            return status_map[result_code], msg
         return TaskStatus.IN_PROGRESS, msg

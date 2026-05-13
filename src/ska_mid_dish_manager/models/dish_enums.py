@@ -93,6 +93,15 @@ class SPFBandInFocus(enum.IntEnum):
     B5b = 6
 
 
+class SPFHealthState(enum.IntEnum):
+    """SPF health state enums."""
+
+    UNKNOWN = 0
+    NORMAL = 1
+    DEGRADED = 2
+    FAILED = 3
+
+
 class TrackInterpolationMode(enum.IntEnum):
     NEWTON = 0
     SPLINE = 1
@@ -189,8 +198,11 @@ class FannedOutCommandStatus(enum.IntEnum):
     """Fanned out command status enums."""
 
     PENDING = 0
-    RUNNING = 1
+    QUEUED = 0
+    IN_PROGRESS = 1
     COMPLETED = 2
     TIMED_OUT = 3
     FAILED = 4
     IGNORED = 5
+    ABORTED = 6
+    REJECTED = 7

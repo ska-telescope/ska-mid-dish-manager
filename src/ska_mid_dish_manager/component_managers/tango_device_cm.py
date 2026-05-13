@@ -346,13 +346,14 @@ class TangoDeviceComponentManager(BaseComponentManager):
         return self._interpret_command_reply(command_name, reply)
 
     @check_communicating
-    def read_attribute_value(self, attribute_name: str) -> Any:
+    def read_attribute_value(self, attribute_name: str, log_read: bool = True) -> Any:
         """Check the connection and read an attribute."""
-        self.logger.debug(
-            "About to read attribute [%s] on device [%s]",
-            attribute_name,
-            self._tango_device_fqdn,
-        )
+        if log_read:
+            self.logger.debug(
+                "About to read attribute [%s] on device [%s]",
+                attribute_name,
+                self._tango_device_fqdn,
+            )
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
             try:
@@ -364,12 +365,13 @@ class TangoDeviceComponentManager(BaseComponentManager):
                     self._tango_device_fqdn,
                 )
                 raise
-            self.logger.debug(
-                "Result of reading [%s] on [%s] is [%s]",
-                attribute_name,
-                self._tango_device_fqdn,
-                result,
-            )
+            if log_read:
+                self.logger.debug(
+                    "Result of reading [%s] on [%s] is [%s]",
+                    attribute_name,
+                    self._tango_device_fqdn,
+                    result,
+                )
             return result
 
     @check_communicating

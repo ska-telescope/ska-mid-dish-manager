@@ -7,6 +7,30 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added aggregation rule descriptions to the user guide.
+- Updated SPF healthstate to match the ICD.
+  - Now [`UNKNOWN`, `NORMAL`, `DEGRADED`, `FAILED`]
+  - DishManager `healthstate` is unchanged
+- Add interlockack command
+- Add new FannedOutTangoLongRunningCommand
+  - Uses lrcQueue, lrcExecuting, and lrcFinished from SKA devices to update the status of commands.
+  - Used for DS & B5DC commands
+
+- Upgraded ska-mid-dish-simulators to v5.9.0.
+    - Updated healthstate to match the ICD.
+      - Now [`UNKNOWN`, `NORMAL`, `DEGRADED`, `FAILED`]
+    - Aligned the spectrumSample attribute implementation with the SPFRx hardware behavior.
+    - Added attribute 'spectrumSample' to SPFRx simulator
+    - Implemented ReTakeAuth command on DSC simulator.
+    - Updated TakeAuth command arguments to include immutable user ID on DSC simulator.
+
+- Upgraded ska-tango-base to v1.1.1
+- Upgraded ska-tango-util to v1.1.1
+
+- Upgraded ska-mid-dish-ds-manager to v8.2.1
+  - Implemented the ability to retake authority from DSC implicitly through commands that require authority.
+  - Added a new command, RetakeAuthority, which can be used to retake authority from the DSC explicitly.
+  
 - Limited build state fetch to only positive transitions to communication status ESTABLISHED.
 - Allowed build state information to be driven by change events of subdevices.
 

@@ -24,6 +24,7 @@ from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
     AbortScanSequence,
     ConfigureBandActionSequence,
+    InterlockAckAction,
     SetMaintenanceModeAction,
     SetOperateModeAction,
     SetStandbyFPModeAction,
@@ -60,6 +61,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     PowerState,
     SPFBandInFocus,
     SPFCapabilityStates,
+    SPFHealthState,
     SPFOperatingMode,
     SPFPowerState,
     SPFRxCapabilityStates,
@@ -247,7 +249,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._state_update_lock,
                 operatingmode=SPFOperatingMode.UNKNOWN,
                 powerstate=SPFPowerState.UNKNOWN,
-                healthstate=HealthState.UNKNOWN,
+                healthstate=SPFHealthState.UNKNOWN,
                 bandinfocus=SPFBandInFocus.UNKNOWN,
                 b1capabilitystate=SPFCapabilityStates.UNAVAILABLE,
                 b2capabilitystate=SPFCapabilityStates.UNAVAILABLE,
@@ -1171,7 +1173,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 excep,
                 extra=OPERATOR_TAG,
             )
-            ResultCode.FAILED, f"Failed to reconnect {upper_cased_device_name}: {excep}"
+            return ResultCode.FAILED, f"Failed to reconnect {upper_cased_device_name}: {excep}"
 
     def set_spf_device_ignored(self, ignored: bool, sync: bool = True):
         """Set the SPF device ignored boolean and update device communication."""
@@ -2043,9 +2045,36 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         TODO work out how to get the actual reasons.
         """
         health_info = []
-        for com_man in self.sub_component_managers.values():
-            if com_man.component_state.get("healthstate") == HealthState.FAILED:
-                health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
-            if com_man.component_state.get("healthstate") == HealthState.DEGRADED:
-                health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]')
+        for key, com_man in self.sub_component_managers.items():
+            health_state = com_man.component_state.get("healthstate")
+            if key == "SPF":
+                if health_state == SPFHealthState.UNKNOWN:
+                    health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
+                if health_state == SPFHealthState.FAILED:
+                    health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
+                if health_state == SPFHealthState.DEGRADED:
+                    health_info.append(
+                        f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
+                    )
+            else:
+                if health_state == HealthState.UNKNOWN:
+                    health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
+                if health_state == HealthState.FAILED:
+                    health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
+                if health_state == HealthState.DEGRADED:
+                    health_info.append(
+                        f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
+                    )
         return health_info
+
+    @check_communicating
+    def interlock_acknowledge(
+        self, task_callback: Optional[Callable] = None
+    ) -> Tuple[TaskStatus, str]:
+        """Acknowledge the interlock on the DSC."""
+        status, response = self.submit_task(
+            InterlockAckAction(self.logger, self, self.get_action_timeout()).execute,
+            is_cmd_allowed=None,
+            task_callback=task_callback,
+        )
+        return status, response

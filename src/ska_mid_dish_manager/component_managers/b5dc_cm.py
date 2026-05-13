@@ -2,10 +2,10 @@
 
 import logging
 from threading import Lock
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Tuple
 
 import tango
-from ska_control_model import CommunicationStatus
+from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcFrequency,
     B5dcPllState,
@@ -83,3 +83,23 @@ class B5DCComponentManager(TangoDeviceComponentManager):
                 self._update_component_state(connectionstate=on_dev_connection_state)
             except tango.DevFailed:
                 self.logger.warning("Failed to read and synchronize B5dc server connectionState")
+
+    def _interpret_command_reply(self, command_name: str, reply: Any) -> Tuple[TaskStatus, Any]:
+        """Override default interpretation to handle B5DC specific reply format."""
+        # on this method evocation the reply from B5DC is of type DevVarLongStringArray
+        [[result_code], [msg]] = reply
+        if result_code in [ResultCode.FAILED, ResultCode.REJECTED]:
+            self.logger.error(
+                "[%s] on [%s] failed with message: %s",
+                command_name,
+                self._tango_device_fqdn,
+                msg,
+            )
+
+            status_map = {
+                ResultCode.FAILED: TaskStatus.FAILED,
+                ResultCode.REJECTED: TaskStatus.REJECTED,
+            }
+
+            return status_map[result_code], msg
+        return TaskStatus.IN_PROGRESS, msg
