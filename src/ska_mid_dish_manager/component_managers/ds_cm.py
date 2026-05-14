@@ -30,6 +30,7 @@ class DSComponentManager(TangoDeviceComponentManager):
         **kwargs: Any,
     ):
         monitored_attr_names: tuple[str, ...] = (
+            "buildState",
             "operatingMode",
             "powerState",
             "healthState",

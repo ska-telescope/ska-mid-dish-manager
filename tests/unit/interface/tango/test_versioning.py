@@ -13,6 +13,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
 )
+from ska_mid_dish_manager.models.dish_enums import DishDevice
 from ska_mid_dish_manager.release import ReleaseInfo
 from tests.utils import generate_random_text
 
@@ -69,6 +70,35 @@ class TestDishManagerVersioning:
         assert build_state_json["spfc_device"]["address"] == DEFAULT_SPFC_TRL
         assert build_state_json["b5dc_device"]["version"] == ""
         assert build_state_json["b5dc_device"]["address"] == ["a/b/c"]
+
+    def test_build_state_updates_through_cm(self):
+        """Test the the build state gets updated when subdevice buildstate changes."""
+        build_state_update_ds_json = {"version": generate_random_text()}
+        build_state_update_ds = json.dumps(build_state_update_ds_json)
+
+        build_state_update_spfrx_json = {"version": generate_random_text()}
+        build_state_update_spfrx = json.dumps(build_state_update_spfrx_json)
+
+        build_state_update_spfc_json = {"version": generate_random_text()}
+        build_state_update_spfc = json.dumps(build_state_update_spfc_json)
+
+        build_state_update_b5dc_json = {"version": generate_random_text()}
+        build_state_update_b5dc = json.dumps(build_state_update_b5dc_json)
+
+        cm = self.dish_manager_cm
+        cm._sub_device_component_state_changed(DishDevice.DS, buildstate=build_state_update_ds)
+        cm._sub_device_component_state_changed(
+            DishDevice.SPFRX, buildstate=build_state_update_spfrx
+        )
+        cm._sub_device_component_state_changed(DishDevice.SPF, buildstate=build_state_update_spfc)
+        cm._sub_device_component_state_changed(DishDevice.B5DC, buildstate=build_state_update_b5dc)
+
+        build_state = self._dish_manager_proxy.buildState
+        build_state_json = json.loads(build_state)
+        assert build_state_json["ds_manager_device"]["version"] == build_state_update_ds_json
+        assert build_state_json["spfrx_device"]["version"] == build_state_update_spfrx
+        assert build_state_json["spfc_device"]["version"] == build_state_update_spfc
+        assert build_state_json["b5dc_device"]["version"] == build_state_update_b5dc
 
     @pytest.mark.parametrize(
         "device, build_state_key",
