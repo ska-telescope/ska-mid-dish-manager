@@ -32,7 +32,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
   - Added a new command, RetakeAuthority, which can be used to retake authority from the DSC explicitly.
   
 - Limited build state fetch to only positive transitions to communication status ESTABLISHED.
-- Allowed build state information to be driven by change events of subdevices.
+- Allowed DS and B5DC build state information to be driven by change events.
 
 Version 9.4.0
 *************
