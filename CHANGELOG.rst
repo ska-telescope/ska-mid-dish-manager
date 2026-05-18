@@ -8,8 +8,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
-Version 9.5.0
-*************
+Version 9.5.0-rc.1
+******************
 - Added aggregation rule descriptions to the user guide.
 - Updated SPF healthstate to match the ICD.
 
