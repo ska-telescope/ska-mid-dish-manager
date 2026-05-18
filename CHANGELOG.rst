@@ -22,13 +22,15 @@ Version 9.5.0-rc.1
   - Uses lrcQueue, lrcExecuting, and lrcFinished from SKA devices to update the status of commands.
   - Used for DS & B5DC commands
 
-- Upgraded ska-mid-dish-simulators to v5.9.0.
+- Upgraded ska-mid-dish-simulators to v5.9.2.
+
     - Updated healthstate to match the ICD.
       - Now [`UNKNOWN`, `NORMAL`, `DEGRADED`, `FAILED`]
     - Aligned the spectrumSample attribute implementation with the SPFRx hardware behavior.
     - Added attribute 'spectrumSample' to SPFRx simulator
     - Implemented ReTakeAuth command on DSC simulator.
     - Updated TakeAuth command arguments to include immutable user ID on DSC simulator.
+    - Updated DSC simulator AxisSelect node to match ICD. 
 
 - Upgraded ska-tango-base to v1.1.1
 - Upgraded ska-tango-util to v1.1.1
