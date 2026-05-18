@@ -7,12 +7,18 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 9.5.0
+*************
 - Added aggregation rule descriptions to the user guide.
 - Updated SPF healthstate to match the ICD.
+
   - Now [`UNKNOWN`, `NORMAL`, `DEGRADED`, `FAILED`]
   - DishManager `healthstate` is unchanged
-- Add interlockack command
-- Add new FannedOutTangoLongRunningCommand
+
+- Added interlockack command
+- Added new FannedOutTangoLongRunningCommand
+
   - Uses lrcQueue, lrcExecuting, and lrcFinished from SKA devices to update the status of commands.
   - Used for DS & B5DC commands
 
@@ -27,7 +33,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Upgraded ska-tango-base to v1.1.1
 - Upgraded ska-tango-util to v1.1.1
 
-- Upgraded ska-mid-dish-ds-manager to v8.2.1
+- Upgraded ska-mid-dish-ds-manager to v8.2.2
+
   - Implemented the ability to retake authority from DSC implicitly through commands that require authority.
   - Added a new command, RetakeAuthority, which can be used to retake authority from the DSC explicitly.
   
