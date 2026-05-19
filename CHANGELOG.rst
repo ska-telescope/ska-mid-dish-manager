@@ -22,7 +22,7 @@ Version 9.5.0-rc.1
   - Uses lrcQueue, lrcExecuting, and lrcFinished from SKA devices to update the status of commands.
   - Used for DS & B5DC commands
 
-- Upgraded ska-mid-dish-simulators to v5.9.2.
+- Upgraded ska-mid-dish-simulators to v5.9.3.
 
     - Updated healthstate to match the ICD.
       - Now [`UNKNOWN`, `NORMAL`, `DEGRADED`, `FAILED`]
@@ -35,7 +35,7 @@ Version 9.5.0-rc.1
 - Upgraded ska-tango-base to v1.1.1
 - Upgraded ska-tango-util to v1.1.1
 
-- Upgraded ska-mid-dish-ds-manager to v8.2.2
+- Upgraded ska-mid-dish-ds-manager to v8.2.3
 
   - Implemented the ability to retake authority from DSC implicitly through commands that require authority.
   - Added a new command, RetakeAuthority, which can be used to retake authority from the DSC explicitly.
