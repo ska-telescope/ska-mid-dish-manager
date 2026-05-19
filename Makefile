@@ -16,7 +16,8 @@ CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
 ifneq ($(DOCS_TARGET_ARGS),clean)
 docs-pre-build:
 	@if [ -v CI_JOB_TOKEN ]; then \
-		poetry install --only-root; \
+		poetry config virtualenvs.create false; \
+		poetry install --with=main,docs; \
 	fi
 	tangodocgen --auto -o docs/src/api/devices
 endif
