@@ -22,7 +22,7 @@ Version 9.5.0-rc.1
   - Uses lrcQueue, lrcExecuting, and lrcFinished from SKA devices to update the status of commands.
   - Used for DS & B5DC commands
 
-- Upgraded ska-mid-dish-simulators to v5.9.3.
+- Upgraded ska-mid-dish-simulators to v5.9.2.
 
     - Updated healthstate to match the ICD.
       - Now [`UNKNOWN`, `NORMAL`, `DEGRADED`, `FAILED`]
