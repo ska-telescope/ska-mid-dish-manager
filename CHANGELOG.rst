@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Upgraded ska-mid-dish-ds-manager to v8.2.4
 
 Version 9.5.0-rc.1
 ******************
