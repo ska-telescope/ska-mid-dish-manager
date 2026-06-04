@@ -476,7 +476,7 @@ def test_configure_band_6_from_stow(
         # ConfigureBand6
         "Fanned out commands: DS.SetIndexPosition",
         "Awaiting DS indexerposition change to B6",
-        "Awaiting configuredband change to B2",
+        "Awaiting configuredband change to B6",
         "DS indexerposition changed to B6",
         "DS.SetIndexPosition completed",
     ]
