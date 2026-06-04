@@ -7,6 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Implemented ConfigureBand6
+- 
+  - call SetIndexer(7) on the DSC
 
 Version 9.5.0-rc.1
 ******************

@@ -752,6 +752,92 @@ class ConfigureBandActionSequence(Action):
         return configure_action.execute(task_callback, task_abort_event, completed_response_msg)
 
 
+class ConfigureBand6Action(Action):
+    """Configure band 6 on DS."""
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        dish_manager_cm,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
+        action_on_success: Optional["Action"] = None,
+        action_on_failure: Optional["Action"] = None,
+        waiting_callback: Optional[Callable] = None,
+    ):
+        super().__init__(
+            logger,
+            dish_manager_cm,
+            timeout_s,
+            action_on_success,
+            action_on_failure,
+            waiting_callback,
+        )
+        fanned_out_commands = []
+
+        if self.dish_manager_cm._component_state["configuredband"] != self.band:
+            ds_set_index_position_command = FannedOutTangoLongRunningCommand(
+                logger=self.logger,
+                device="DS",
+                command_name="SetIndexPosition",
+                device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
+                command_argument=7,
+                awaited_component_state={"indexerposition": IndexerPosition.B6},
+                progress_callback=self._progress_callback,
+            )
+            fanned_out_commands.insert(0, ds_set_index_position_command)
+
+        self._handler = ActionHandler(
+            logger=self.logger,
+            action_name=self.requested_cmd,
+            fanned_out_commands=fanned_out_commands,
+            component_state=self.dish_manager_cm._component_state,
+            awaited_component_state={"configuredband": self.band},
+            action_on_success=action_on_success,
+            action_on_failure=action_on_failure,
+            waiting_callback=self.waiting_callback,
+            progress_callback=self._progress_callback,
+            timeout_s=timeout_s,
+        )
+
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
+        self.logger.info(f"{self.requested_cmd} called")
+        return super().execute(task_callback, task_abort_event, completed_response_msg)
+
+
+class ConfigureBand6ActionSequence(Action):
+    """Moves the DSC to position 6."""
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        dish_manager_cm,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
+        action_on_success: Optional["Action"] = None,
+        action_on_failure: Optional["Action"] = None,
+        waiting_callback: Optional[Callable] = None,
+    ):
+        super().__init__(
+            logger,
+            dish_manager_cm,
+            timeout_s,
+            action_on_success,
+            action_on_failure,
+            waiting_callback,
+        )
+
+    def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
+        """Execute the defined action."""
+        configure_action = ConfigureBand6Action(
+            logger=self.logger,
+            dish_manager_cm=self.dish_manager_cm,
+            action_on_success=None,  # chain operate action if we aren't in STOW
+            waiting_callback=self.waiting_callback,
+            timeout_s=self.timeout_s,
+        )
+
+        return configure_action.execute(task_callback, task_abort_event, completed_response_msg)
+
+
 class SlewAction(Action):
     """Slew the dish to the specified target coordinates."""
 
