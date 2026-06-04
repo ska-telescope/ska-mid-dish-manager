@@ -23,7 +23,7 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManag
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
     AbortScanSequence,
-    ConfigureBand6ActionSequence,
+    ConfigureBand6Action,
     ConfigureBandActionSequence,
     InterlockAckAction,
     SetMaintenanceModeAction,
@@ -1475,7 +1475,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         :rtype: Tuple[TaskStatus, str]
         """
         status, response = self.submit_task(
-            ConfigureBand6ActionSequence(
+            ConfigureBand6Action(
                 self.logger,
                 self,
                 timeout_s=self.get_action_timeout(),
