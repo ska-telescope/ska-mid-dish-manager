@@ -2452,7 +2452,7 @@ class DishManager(SKAController):
     @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
-        dtype_in=bool,
+        dtype_in=None,
         doc_in="Used by DVS for their KU band, sets indexerposition to 6 on the DSC.",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
