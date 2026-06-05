@@ -712,13 +712,13 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
         (
-            dict(something="nothing"),
-            dict(anything="something"),
             dict(indexerposition=IndexerPosition.B6),
+            dict(something="nothing"),
+            dict(configuredband="something"),
             Band.B6,
         ),
         (
-            dict(something="nothing"),
+            dict(indexerposition="nothing"),
             dict(anything="something"),
             dict(configuredband=Band.NONE),
             Band.NONE,
