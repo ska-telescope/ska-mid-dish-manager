@@ -764,6 +764,8 @@ class ConfigureBand6Action(Action):
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
     ):
+        self.band = Band.B6
+        self.requested_cmd = "ConfigureBand6"
         super().__init__(
             logger,
             dish_manager_cm,

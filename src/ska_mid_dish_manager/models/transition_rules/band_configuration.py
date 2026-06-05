@@ -3,6 +3,8 @@
 import rule_engine
 
 CONFIGURED_BAND_RULES_ALL_DEVICES = {
+    # Must be before None, since for B6 the SPFRx is not configured.
+    "B6": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B6'"),
     "NONE": rule_engine.Rule("SPFRX.configuredband  == 'Band.NONE'"),
     "B1": rule_engine.Rule(
         "DS.indexerposition  == 'IndexerPosition.B1' and "
@@ -34,7 +36,6 @@ CONFIGURED_BAND_RULES_ALL_DEVICES = {
         "SPFRX.configuredband  == 'Band.B1' and "
         "SPF.bandinfocus == 'SPFBandInFocus.B5b'"
     ),
-    "B6": rule_engine.Rule("DS.indexerposition  == 'IndexerPosition.B6'"),
 }
 
 CONFIGURED_BAND_RULES_SPF_IGNORED = {
