@@ -52,13 +52,15 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
     )
 
     dish_manager_cm._update_component_state(dishmode=DishMode.MAINTENANCE)
-    dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
+    dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
     [[result_code], [_]] = device_proxy.Abort()
     assert result_code == ResultCode.STARTED
 
     assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
+    assert "[...]" not in caplog.text
+    assert "<- DishManager.Abort" in caplog.text
 
 
 @pytest.mark.unit
