@@ -25,7 +25,6 @@ from tango import (
     DevVarStringArray,
     DispLevel,
     InfoIt,
-    log4tango,
 )
 from tango.server import attribute, command, device_property, run
 
@@ -89,9 +88,6 @@ DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
 # Used for input validation. Input samples to tracktable that is less that
 # TRACK_LOAD_FUTURE_THRESHOLD_SEC in the future are logged
 TRACK_LOAD_FUTURE_THRESHOLD_SEC = 5
-
-# Longer logs, like LRC IDs get truncated by Tango, bumping MAX_ARG_LEN helps debugging
-log4tango.MAX_ARG_LEN = 200  # noqa: F811
 
 
 class DishManager(SKAController):
