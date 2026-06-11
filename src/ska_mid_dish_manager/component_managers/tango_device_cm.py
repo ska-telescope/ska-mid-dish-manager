@@ -15,6 +15,9 @@ from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceP
 from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 from ska_mid_dish_manager.utils.decorators import check_communicating
 
+# Remove repeated "float64" from logs
+np.set_printoptions(legacy="1.25")
+
 
 class TangoDeviceComponentManager(BaseComponentManager):
     """A component manager for a Tango device."""
