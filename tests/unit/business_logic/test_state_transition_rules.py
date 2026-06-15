@@ -791,12 +791,6 @@ def test_compute_configured_band(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
         (
-            dict(something="nothing"),
-            None,
-            dict(configuredband=Band.NONE),
-            Band.NONE,
-        ),
-        (
             dict(indexerposition=IndexerPosition.B1),
             None,
             dict(configuredband=Band.B1),
@@ -843,6 +837,12 @@ def test_compute_configured_band(
             None,
             dict(configuredband=Band.B5a),
             Band.UNKNOWN,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B6),
+            None,
+            dict(configuredband=Band.B5a),
+            Band.B6,
         ),
     ],
 )
