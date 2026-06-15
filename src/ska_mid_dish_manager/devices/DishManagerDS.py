@@ -17,7 +17,15 @@ from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
 )
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
-from tango import AttrQuality, AttrWriteType, DevState, DevULong, DevVarStringArray, DispLevel
+from tango import (
+    AttrQuality,
+    AttrWriteType,
+    DevState,
+    DevULong,
+    DevVarStringArray,
+    DispLevel,
+    InfoIt,
+)
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
@@ -62,7 +70,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackTableLoadMode,
 )
 from ska_mid_dish_manager.release import ReleaseInfo
-from ska_mid_dish_manager.utils.command_logger import BaseInfoIt
 from ska_mid_dish_manager.utils.decorators import (
     log_tango_attr_write,
     log_tango_command,
@@ -357,6 +364,10 @@ class DishManager(SKAController):
             )
 
         for comp_state_name, comp_state_value in kwargs.items():
+            if comp_state_name == "dishmode":
+                self.logger.debug("Dish mode changed to %s", comp_state_value)
+            if "lrc" in comp_state_name:
+                self.logger.debug("LRC update %s", comp_state_value)
             attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
             attribute_variable = change_case(attribute_name)
             setattr(self, attribute_variable, comp_state_value)
@@ -2188,7 +2199,7 @@ class DishManager(SKAController):
     # Commands
     # --------
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         doc_in="Abort currently executing long running command on "
@@ -2209,7 +2220,7 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     # @record_command(False)
-    # @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    # @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     # @log_tango_command()
     # @command(
     #     doc_in="Abort dish movement and clear out the scan id.",
@@ -2232,7 +2243,7 @@ class DishManager(SKAController):
     #     return ([return_code], [message])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in="DevString",
@@ -2290,7 +2301,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=bool,
@@ -2318,7 +2329,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=bool,
@@ -2348,7 +2359,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=bool,
@@ -2373,7 +2384,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=bool,
@@ -2398,7 +2409,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=bool,
@@ -2423,7 +2434,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=bool,
@@ -2455,7 +2466,7 @@ class DishManager(SKAController):
         raise NotImplementedError
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=str,
@@ -2474,7 +2485,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2490,7 +2501,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(True)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2513,7 +2524,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(True)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2538,7 +2549,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(True)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2571,7 +2582,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(True)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2596,7 +2607,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(True)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2627,7 +2638,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in="DevVarFloatArray",
@@ -2660,7 +2671,7 @@ class DishManager(SKAController):
         raise NotImplementedError
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2696,7 +2707,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2719,7 +2730,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(  # type: ignore[misc]
         dtype_in=(float,),
@@ -2750,7 +2761,7 @@ class DishManager(SKAController):
         return ([result_code], [unique_id])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in="DevLong64",
@@ -2768,7 +2779,7 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     @record_command(True)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in="DevString",
@@ -2788,7 +2799,7 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",
@@ -2806,7 +2817,7 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=int,
@@ -2824,7 +2835,7 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=int,
@@ -2887,7 +2898,7 @@ class DishManager(SKAController):
         return ([return_code], [message])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2901,7 +2912,7 @@ class DishManager(SKAController):
         self.component_manager.stop_communicating()
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2915,7 +2926,7 @@ class DishManager(SKAController):
         self.component_manager.start_communicating()
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2938,7 +2949,7 @@ class DishManager(SKAController):
         return json.dumps(str(component_states))
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -2956,7 +2967,7 @@ class DishManager(SKAController):
             self.component_manager.sync_component_states()
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_out="DevVarLongStringArray",
@@ -2991,7 +3002,7 @@ class DishManager(SKAController):
         )
 
     @record_command(False)
-    @BaseInfoIt(show_args=False, show_kwargs=False, show_ret=True)
+    @InfoIt(show_args=False, show_kwargs=False, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in=None,
@@ -3016,7 +3027,7 @@ class DishManager(SKAController):
         return ([result_code], ["programTrackTable successfully reset"])
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def On(self) -> DevVarLongStringArrayType:
@@ -3024,7 +3035,7 @@ class DishManager(SKAController):
         raise NotImplementedError("DishManager does not implement the On command.")
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def Off(self) -> DevVarLongStringArrayType:
@@ -3032,7 +3043,7 @@ class DishManager(SKAController):
         raise NotImplementedError("DishManager does not implement the Off command.")
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def Standby(self) -> DevVarLongStringArrayType:
@@ -3040,7 +3051,7 @@ class DishManager(SKAController):
         raise NotImplementedError("DishManager does not implement the Standby command.")
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
     def Reset(self) -> DevVarLongStringArrayType:
@@ -3048,7 +3059,7 @@ class DishManager(SKAController):
         raise NotImplementedError("DishManager does not implement the Reset command.")
 
     @record_command(False)
-    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(  # type: ignore[misc]
         dtype_out="DevVarLongStringArray",
