@@ -59,6 +59,8 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
     assert result_code == ResultCode.STARTED
 
     assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
+    assert "[...]" not in caplog.text
+    assert "<- DishManager.Abort" in caplog.text
 
 
 @pytest.mark.unit

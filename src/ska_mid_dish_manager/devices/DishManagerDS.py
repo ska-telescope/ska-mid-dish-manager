@@ -366,8 +366,6 @@ class DishManager(SKAController):
         for comp_state_name, comp_state_value in kwargs.items():
             if comp_state_name == "dishmode":
                 self.logger.debug("Dish mode changed to %s", comp_state_value)
-            if "lrc" in comp_state_name:
-                self.logger.debug("LRC update %s", comp_state_value)
             attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
             attribute_variable = change_case(attribute_name)
             setattr(self, attribute_variable, comp_state_value)
