@@ -23,6 +23,7 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManag
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
     AbortScanSequence,
+    ConfigureBand6Action,
     ConfigureBandActionSequence,
     InterlockAckAction,
     SetMaintenanceModeAction,
@@ -1457,6 +1458,28 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 timeout_s=self.get_action_timeout(),
             ).execute,
             is_cmd_allowed=_is_configure_band_cmd_allowed,
+            task_callback=task_callback,
+        )
+        return status, response
+
+    @check_communicating
+    def configure_band_six_cmd(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Configure band 6. This only set the DSC to indexer postition 7.
+
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :return: Result status and message
+        :rtype: Tuple[TaskStatus, str]
+        """
+        status, response = self.submit_task(
+            ConfigureBand6Action(
+                self.logger,
+                self,
+                timeout_s=self.get_action_timeout(),
+            ).execute,
             task_callback=task_callback,
         )
         return status, response

@@ -164,6 +164,7 @@ class DishManager(SKAController):
             ("ConfigureBand4", "configure_band_cmd"),
             ("ConfigureBand5a", "configure_band_cmd"),
             ("ConfigureBand5b", "configure_band_cmd"),
+            ("ConfigureBand6", "configure_band_six_cmd"),
             ("Slew", "slew"),
             ("Scan", "scan"),
             ("TrackLoadStaticOff", "track_load_static_off"),
@@ -2444,6 +2445,22 @@ class DishManager(SKAController):
         """
         handler = self.get_command_object("ConfigureBand5b")
         result_code, unique_id = handler(Band.B5b, synchronise)
+
+        return ([result_code], [unique_id])
+
+    @record_command(False)
+    @BaseInfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
+    @command(
+        dtype_in=None,
+        doc_in="Used by DVS for their KU band, sets IndexerPosition.B6 (7) on the DSC.",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+    )
+    def ConfigureBand6(self):  # pylint: disable=unused-argument
+        """This command triggers the dish structure controller to transition to band 6."""
+        handler = self.get_command_object("ConfigureBand6")
+        result_code, unique_id = handler()
 
         return ([result_code], [unique_id])
 

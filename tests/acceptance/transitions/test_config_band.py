@@ -425,3 +425,69 @@ def test_configure_band_json_with_b5dc_fanout(
 
     remove_subscriptions(b5dc_subband_sub)
     remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+def test_configure_band_6_from_stow(
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+):
+    """Test ConfigureBand6."""
+    dm_event_store = event_store_class()
+    config_band_event_store = event_store_class()
+    result_event_store = event_store_class()
+    status_event_store = event_store_class()
+
+    attr_cb_mapping = {
+        "dishMode": dm_event_store,
+        "configuredBand": config_band_event_store,
+        "Status": status_event_store,
+        "longRunningCommandResult": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+
+    # make sure configuredBand is not B2
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+    )
+    assert dish_manager_proxy.configuredBand == Band.B1
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+
+    dm_event_store.clear_queue()
+    config_band_event_store.clear_queue()
+    status_event_store.clear_queue()
+
+    # Stow the dish
+    current_el = dish_manager_proxy.achievedPointing[2]
+    stow_position = 90.2
+    estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
+    dish_manager_proxy.SetStowMode()
+    dm_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
+
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand6()
+    result_event_store.wait_for_command_result(
+        unique_id, '[0, "ConfigureBand6 completed."]', timeout=30
+    )
+    config_band_event_store.wait_for_value(Band.B6, timeout=30)
+
+    expected_progress_updates = [
+        # ConfigureBand6
+        "Fanned out commands: DS.SetIndexPosition",
+        "Awaiting DS indexerposition change to B6",
+        "Awaiting configuredband change to B6",
+        "DS indexerposition changed to B6",
+        "DS.SetIndexPosition completed",
+    ]
+
+    events = status_event_store.get_queue_values(timeout=0)
+
+    events_string = "".join([str(attr_value) for _, attr_value in events])
+    for message in expected_progress_updates:
+        assert message in events_string
+
+    assert dish_manager_proxy.configuredBand == Band.B6
+    assert dish_manager_proxy.dishMode == DishMode.STOW
+
+    remove_subscriptions(subscriptions)

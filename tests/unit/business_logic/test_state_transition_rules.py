@@ -712,7 +712,13 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
         (
+            dict(indexerposition=IndexerPosition.B6),
             dict(something="nothing"),
+            dict(configuredband="something"),
+            Band.B6,
+        ),
+        (
+            dict(indexerposition="nothing"),
             dict(anything="something"),
             dict(configuredband=Band.NONE),
             Band.NONE,
@@ -785,12 +791,6 @@ def test_compute_configured_band(
     ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_band_number"),
     [
         (
-            dict(something="nothing"),
-            None,
-            dict(configuredband=Band.NONE),
-            Band.NONE,
-        ),
-        (
             dict(indexerposition=IndexerPosition.B1),
             None,
             dict(configuredband=Band.B1),
@@ -837,6 +837,12 @@ def test_compute_configured_band(
             None,
             dict(configuredband=Band.B5a),
             Band.UNKNOWN,
+        ),
+        (
+            dict(indexerposition=IndexerPosition.B6),
+            None,
+            dict(configuredband=Band.B5a),
+            Band.B6,
         ),
     ],
 )
