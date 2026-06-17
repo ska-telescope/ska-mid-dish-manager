@@ -1949,7 +1949,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         cmds_in_progress = self.get_currently_executing_lrcs()
         if cmds_in_progress:
-            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
+            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress) or any(
+                "cancel-lrc" in cmd_id.lower() for cmd_id in cmds_in_progress
+            ):
                 self.logger.error("Abort rejected: there is an ongoing abort sequence.")
                 update_task_status(
                     task_callback,
