@@ -8,11 +8,19 @@ def check_component_state_matches_awaited(component_state: dict, awaited_state: 
     """Check if the given component state matches the awaited state."""
     for awaited_attr, awaited_attr_value in awaited_state.items():
         if awaited_attr not in component_state:
-            return False
+            break
+
+        # If one awaited component state key has multiple possible states we apply a logical OR
+        if isinstance(awaited_attr_value, (list, tuple)):
+            for possible_awaited_attr_value in awaited_attr_value:
+                if component_state[awaited_attr] == possible_awaited_attr_value:
+                    return True
+
+        # We may want to match a iterable as a whole, so still doing this check as well
         component_state_attr_value = component_state[awaited_attr]
-        if component_state_attr_value != awaited_attr_value:
-            return False
-    return True
+        if component_state_attr_value == awaited_attr_value:
+            return True
+    return False
 
 
 def update_task_status(task_callback: Optional[Callable], **task_statuses: Any) -> None:

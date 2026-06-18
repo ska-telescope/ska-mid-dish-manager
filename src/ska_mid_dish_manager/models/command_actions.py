@@ -429,7 +429,7 @@ class TrackStopAction(Action):
             device="DS",
             command_name="TrackStop",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            awaited_component_state={"pointingstate": PointingState.READY},
+            awaited_component_state={"pointingstate": (PointingState.READY, PointingState.UNKNOWN)},
             progress_callback=self._progress_callback,
         )
 
