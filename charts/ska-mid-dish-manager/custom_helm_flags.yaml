@@ -1,7 +1,7 @@
 global:
   minikube: true
   operator: true
-  dishes: ["001", "MKT111"]
+  dishes: ["001"]
 
 ska-tango-base:
   enabled: true
@@ -13,21 +13,21 @@ ska-mid-dish-simulators:
   enabled: true
   deviceServers:
     spfdevice:
-      enabled: true
+      enabled: false
     spfrxdevice:
-      enabled: true
+      enabled: false
   dsOpcuaSimulator:
     enabled: true
 
 ska-mid-wms:
-  enabled: true
+  enabled: false
 
 ska-mid-dish-b5dc-proxy:
-  enabled: true
+  enabled: false
 
 dishmanager:
   wms:
-    monitoring: true
-    station_ids: ["1"]
+    monitoring: false
+    station_ids: []
   b5dcproxy:
-    monitoring: true
+    monitoring: false
