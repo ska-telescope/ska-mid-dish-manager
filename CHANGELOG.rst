@@ -7,7 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Bumped simulators chart to v5.9.3
+- Bumped simulators chart to v8.2.5
 
  - Updated TrackLoadTable validation limits from science to dish mechanical limits in the azimuth axis and updated elevation axis limits to -271 to +271 degrees.
 
