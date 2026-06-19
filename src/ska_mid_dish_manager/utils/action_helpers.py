@@ -10,16 +10,16 @@ def check_component_state_matches_awaited(component_state: dict, awaited_state: 
         if awaited_attr not in component_state:
             break
 
+        # Match awaited as a whole, even if iterable
+        component_state_attr_value = component_state[awaited_attr]
+        if component_state_attr_value == awaited_attr_value:
+            return True
+
         # If one awaited component state key has multiple possible states we apply a logical OR
         if isinstance(awaited_attr_value, (list, tuple)):
             for possible_awaited_attr_value in awaited_attr_value:
                 if component_state[awaited_attr] == possible_awaited_attr_value:
                     return True
-
-        # We may want to match a iterable as a whole, so still doing this check as well
-        component_state_attr_value = component_state[awaited_attr]
-        if component_state_attr_value == awaited_attr_value:
-            return True
     return False
 
 
