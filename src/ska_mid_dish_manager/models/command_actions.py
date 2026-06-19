@@ -429,7 +429,9 @@ class TrackStopAction(Action):
             device="DS",
             command_name="TrackStop",
             device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            awaited_component_state={"pointingstate": (PointingState.READY, PointingState.UNKNOWN)},
+            awaited_component_state={
+                "pointingstate": (PointingState.READY, PointingState.UNKNOWN)
+            },
             progress_callback=self._progress_callback,
         )
 
@@ -441,7 +443,9 @@ class TrackStopAction(Action):
             # _dish_manager_cm.component_state will use the tango base property which will do a
             # deep copy
             component_state=self.dish_manager_cm._component_state,
-            awaited_component_state={"pointingstate": PointingState.READY},
+            awaited_component_state={
+                "pointingstate": (PointingState.READY, PointingState.UNKNOWN)
+            },
             action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,

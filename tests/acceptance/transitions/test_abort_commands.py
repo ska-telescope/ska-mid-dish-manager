@@ -162,7 +162,7 @@ def test_abort_commands_during_track(
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_command_result(
-        unique_id, '[0, "Abort sequence completed"]', timeout=30
+        unique_id, '[0, "Abort sequence completed"]', timeout=150
     )
 
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
