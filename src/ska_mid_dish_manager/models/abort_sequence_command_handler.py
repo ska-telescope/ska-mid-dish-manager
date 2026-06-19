@@ -100,7 +100,7 @@ class Abort:
         if current_dish_mode == DishMode.STOW:
             self.logger.debug("abort-sequence: dish is in STOW mode, skipping track stop")
         elif current_pointing_state in (PointingState.READY, PointingState.UNKNOWN):
-            self.logger.debug("abort-sequence: dish is not moving, skipping track stop")
+            self.logger.debug("abort-sequence: dish is UNKNOWN/READY, skipping track stop")
         else:
             self._stop_dish(task_abort_event)
 
