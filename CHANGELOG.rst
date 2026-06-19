@@ -7,6 +7,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 9.5.0-rc.3
+******************
+- Skipping TrackStop when dish is not moving during Abort
 - Bumped DSManager chart to v8.2.5
 
  - Updated TrackLoadTable validation limits from science to dish mechanical limits in the azimuth axis and updated elevation axis limits to -271 to +271 degrees.
