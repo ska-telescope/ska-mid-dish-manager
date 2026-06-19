@@ -8,7 +8,7 @@ from typing import Any, Callable, Optional
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.command_actions import SetStandbyFPModeAction, TrackStopAction
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
 
 
@@ -96,9 +96,11 @@ class Abort:
         # ResetTrackTable is called after it - TODO: improvement chain commands on completion.
 
         current_dish_mode = self._component_manager.component_state.get("dishmode")
+        current_pointing_state = self._component_manager.component_state.get("pointingstate")
         if current_dish_mode == DishMode.STOW:
             self.logger.debug("abort-sequence: dish is in STOW mode, skipping track stop")
-
+        elif current_pointing_state in (PointingState.READY, PointingState.UNKNOWN):
+            self.logger.debug("abort-sequence: dish is not moving, skipping track stop")
         else:
             self._stop_dish(task_abort_event)
 
