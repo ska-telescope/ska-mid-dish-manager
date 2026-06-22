@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 9.5.0
+*************
+- See RC releases for details.
+
 Version 9.5.0-rc.3
 ******************
 - Skipping TrackStop when dish is not moving during Abort
