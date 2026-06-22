@@ -37,7 +37,7 @@ def test_stow_transition(
 
     events_string = "".join([str(event.attr_value.value) for event in events])
     for message in expected_progress_update:
-        assert message in events_string, "Did not get {}, but {}".format(
+        assert message in events_string, "Did not get [{}], but [{}]".format(
             expected_progress_update, events_string
         )
 
