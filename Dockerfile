@@ -24,7 +24,7 @@ COPY --from=tools /usr/local/bin/retry /usr/local/bin/retry
 COPY --from=tools /usr/local/bin/wait-for-it.sh /usr/local/bin/wait-for-it.sh
 
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-ENV PYTHONPATH="/app/src:app/.venv/lib/python3.10/site-packages/:${PYTHONPATH}"
+ENV PYTHONPATH="/app/src:app/.venv/lib/python3.14/site-packages/:${PYTHONPATH}"
 
 # Metadata labels
 LABEL int.skao.image.team="TEAM KAROO" \

@@ -7,6 +7,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated pytango to v10.3.0
+- Updated python to v3.14.0
 
 Version 9.5.0-rc.1
 ******************
