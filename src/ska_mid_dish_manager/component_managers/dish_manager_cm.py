@@ -23,6 +23,7 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManag
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.command_actions import (
     AbortScanSequence,
+    ConfigureBand6Action,
     ConfigureBandActionSequence,
     InterlockAckAction,
     SetMaintenanceModeAction,
@@ -1462,6 +1463,28 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     @check_communicating
+    def configure_band_six_cmd(
+        self,
+        task_callback: Optional[Callable] = None,
+    ) -> Tuple[TaskStatus, str]:
+        """Configure band 6. This only set the DSC to indexer postition 7.
+
+        :param task_callback: task callback, defaults to None
+        :type task_callback: Optional[Callable], optional
+        :return: Result status and message
+        :rtype: Tuple[TaskStatus, str]
+        """
+        status, response = self.submit_task(
+            ConfigureBand6Action(
+                self.logger,
+                self,
+                timeout_s=self.get_action_timeout(),
+            ).execute,
+            task_callback=task_callback,
+        )
+        return status, response
+
+    @check_communicating
     def configure_band_with_json(
         self,
         data: str,
@@ -1926,7 +1949,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         cmds_in_progress = self.get_currently_executing_lrcs()
         if cmds_in_progress:
-            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
+            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress) or any(
+                "cancel-lrc" in cmd_id.lower() for cmd_id in cmds_in_progress
+            ):
                 self.logger.error("Abort rejected: there is an ongoing abort sequence.")
                 update_task_status(
                     task_callback,

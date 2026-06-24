@@ -66,7 +66,8 @@ class Band(enum.IntEnum):
     # pylint: disable=invalid-name
     B5a = 5
     B5b = 6
-    UNKNOWN = 7
+    B6 = 7
+    UNKNOWN = 8
 
 
 class IndexerPosition(enum.IntEnum):
