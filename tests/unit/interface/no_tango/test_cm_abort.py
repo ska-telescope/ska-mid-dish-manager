@@ -10,7 +10,15 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
 @pytest.mark.unit
+@patch(
+    "ska_mid_dish_manager.models.abort_sequence_command_handler.AbortSequenceCommandHandler.execute_abort_sequence",
+)
+@patch(
+    "ska_mid_dish_manager.component_managers.dish_manager_cm.DishManagerComponentManager.abort_tasks",
+)
 def test_abort_handler_runs_only_one_sequence_at_a_time(
+    mock_abort_tasks: MagicMock,
+    mock_execute_abort_sequence: MagicMock,
     component_manager: DishManagerComponentManager,
     mock_command_tracker: MagicMock,
 ) -> None:
@@ -31,13 +39,20 @@ def test_abort_handler_runs_only_one_sequence_at_a_time(
     assert task_status == TaskStatus.REJECTED
     assert message == "Existing Abort sequence ongoing"
 
+    assert mock_abort_tasks.call_count == 1
+    assert mock_execute_abort_sequence.call_count == 1
+
 
 @pytest.mark.unit
 @patch(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     MagicMock(return_value=True),
 )
+@patch(
+    "ska_mid_dish_manager.models.abort_sequence_command_handler.AbortSequenceCommandHandler.execute_abort_sequence",
+)
 def test_abort_handler(
+    mock_execute_abort_sequence: MagicMock,
     component_manager: DishManagerComponentManager,
     mock_command_tracker: MagicMock,
     callbacks: dict,
@@ -69,16 +84,9 @@ def test_abort_handler(
     component_state_cb.get_queue_values()
 
     expected_call_kwargs = (
-        {"status": TaskStatus.IN_PROGRESS},
-        # TODO remove extra status check for higher version of base classes
-        {"status": TaskStatus.IN_PROGRESS},
         {
             "status": TaskStatus.ABORTED,
             "result": (ResultCode.ABORTED, "SetStandbyLPMode aborted"),
-        },
-        {
-            "status": TaskStatus.COMPLETED,
-            "result": (ResultCode.OK, "Abort completed OK"),
         },
     )
 

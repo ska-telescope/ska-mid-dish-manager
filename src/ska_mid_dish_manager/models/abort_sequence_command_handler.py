@@ -1,7 +1,6 @@
 """Abstracts all the logic for executing commands on the device."""
 
 import logging
-from functools import partial
 from threading import Event
 from typing import Any, Callable, Optional
 
@@ -12,21 +11,21 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
 
 
-class Abort:
+class AbortSequenceCommandHandler:
     """Abort command handler."""
 
-    def __init__(self, component_manager: Any, command_tracker: Any, logger: logging.Logger):
-        self.logger = logger
-        self.command_id = None
+    def __call__(
+        self,
+        component_manager: Any,
+        task_callback: Optional[Callable] = None,
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        """Execute the abort sequence."""
         self._component_manager = component_manager
-        self._command_tracker = command_tracker
+        self.logger = logger or component_manager.logger
         self._progress_callback = component_manager._command_progress_callback
-
-    def __call__(self, triggered_from_invoked: bool) -> None:
-        if not triggered_from_invoked:
-            self.command_id = self.command_id or self._command_tracker.new_command("Abort")
-            task_callback = partial(self._command_tracker.update_command_info, self.command_id)
-            self.abort(task_callback=task_callback)
+        self._abort_event = Event()
+        self.execute_abort_sequence(task_callback=task_callback)
 
     def _dummy_task_cb(self, *args, **kwargs):
         # TODO: remove after action handlers are updated to accept None for task callbacks
@@ -92,8 +91,9 @@ class Abort:
         self.logger.debug("abort-sequence: SetStandbyFPMode command completed successfully")
 
     def _complete_abort_sequence(
-        self, task_abort_event: Event = Event(), task_callback: Optional[Callable] = None
+        self, task_abort_event: Optional[Event] = None, task_callback: Optional[Callable] = None
     ):
+        task_abort_event = task_abort_event or self._abort_event
         update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
 
         # the order the commands are run is important: so that the plc is not interrupted
@@ -138,8 +138,10 @@ class Abort:
         )
         self.logger.debug("Abort sequence completed")
 
-    def abort(self, task_callback: Optional[Callable] = None) -> None:
+    def execute_abort_sequence(self, task_callback: Optional[Callable] = None) -> None:
         """Executes the abort sequence."""
+        # allow the executor to finish cancelling tasks before starting the abort sequence
+        self._abort_event.wait(timeout=0.1)
         self._component_manager.submit_task(
             self._complete_abort_sequence,
             args=[],

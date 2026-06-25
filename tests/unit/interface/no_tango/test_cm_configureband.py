@@ -429,6 +429,10 @@ def test_configureband_5b_with_subband(
     progress_cb.wait_for_args(("SetOperateMode completed.",))
 
 
+@patch(
+    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
+    Mock(return_value=True),
+)
 def test_configureband_5b_with_subband_ignore_b5dc(
     component_manager: DishManagerComponentManager,
     callbacks: dict,
@@ -478,8 +482,8 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         "Awaiting DS indexerposition change to B5b",
         "Awaiting SPFRX configuredband change to B1",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
-        "B5DC device is disabled. B5DC.SetFrequency ignored",
         "Awaiting configuredband change to B5b",
+        "B5DC.SetFrequency ignored",
     ]
     progress_cb = callbacks["progress_cb"]
     for msg in msgs:
@@ -503,9 +507,9 @@ def test_configureband_5b_with_subband_ignore_b5dc(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed",))
+    progress_cb.wait_for_args(("SetOperateMode completed.",))
 
 
 @pytest.mark.unit

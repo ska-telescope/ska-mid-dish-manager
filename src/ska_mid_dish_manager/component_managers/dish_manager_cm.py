@@ -21,6 +21,7 @@ from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
+from ska_mid_dish_manager.models.abort_sequence_command_handler import AbortSequenceCommandHandler
 from ska_mid_dish_manager.models.command_actions import (
     AbortScanSequence,
     ConfigureBand6Action,
@@ -439,6 +440,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
+        self.abort_sequence_handler = AbortSequenceCommandHandler()
         # Trigger initial Astropy import to avoid first-call latency later
         get_current_tai_timestamp_from_unix_time()
 
@@ -695,6 +697,36 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             raise RuntimeError(
                 "Cannot change LNA power state while dish is not in operate or maintanance mode."
             )
+
+    def _start_abort_sequence(
+        self, task_callback: Optional[Callable] = None
+    ) -> Tuple[TaskStatus, str]:
+        """Execute custom abort logic.
+
+        The device has Abort and AbortCommands on its interface. AbortCommands has been deprecated
+        and will be removed in a future release. This ensures that the abort logic is consistent
+        across both commands.
+        """
+        cmds_in_progress = self.get_currently_executing_lrcs()
+        if cmds_in_progress:
+            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
+                self.logger.error("Abort rejected: there is an ongoing abort sequence.")
+                update_task_status(
+                    task_callback,
+                    status=TaskStatus.REJECTED,
+                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
+                )
+                return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
+
+        if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
+            self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
+            self.abort_tasks()
+            return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
+
+        self.logger.debug("Aborting LRCs from Abort sequence")
+        self.abort_tasks()
+        self.abort_sequence_handler(self, task_callback)
+        return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     # ---------
     # Callbacks
@@ -1936,33 +1968,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return (ResultCode.OK, "Successfully updated pseudoRandomNoiseDiodePars on SPFRx")
 
-    @check_communicating
-    def abort(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
-        """Issue abort sequence.
+    def abort_commands(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        """Override the abort_commands method to ensure that custom
+        abort logic is executed when dp.AbortCommands is called.
 
-        :param task_callback: Callback for task status updates
+        Remove after dp.AbortCommands is deprecated and removed from base device.
         """
-        if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
-            self.abort_tasks(task_callback=task_callback)
-            self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
-            return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
+        return self._start_abort_sequence(task_callback=task_callback)
 
-        cmds_in_progress = self.get_currently_executing_lrcs()
-        if cmds_in_progress:
-            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress) or any(
-                "cancel-lrc" in cmd_id.lower() for cmd_id in cmds_in_progress
-            ):
-                self.logger.error("Abort rejected: there is an ongoing abort sequence.")
-                update_task_status(
-                    task_callback,
-                    status=TaskStatus.REJECTED,
-                    result=(ResultCode.REJECTED, "Existing Abort sequence ongoing"),
-                )
-                return TaskStatus.REJECTED, "Existing Abort sequence ongoing"
-
-        self.logger.debug("Aborting LRCs from Abort sequence")
-        self.abort_tasks(task_callback=task_callback)
-        return TaskStatus.IN_PROGRESS, "Abort sequence has started"
+    def abort(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        """Override the abort method to ensure that
+        custom abort logic is executed when dp.Abort is called.
+        """
+        return self._start_abort_sequence(task_callback=task_callback)
 
     @check_communicating
     def abort_scan(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
