@@ -14,6 +14,13 @@ build:
       # Install dependencies with 'docs' dependency group. If you do not have docs group, please omit it
       # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
       - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --with docs
+    pre_build:
+      - make docs-pre-build DOCS_TARGET_ARGS=html
+
+submodules:
+  include:
+    - .make
+  recursive: true
 
 sphinx:
   configuration: docs/src/conf.py
