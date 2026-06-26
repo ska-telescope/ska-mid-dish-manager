@@ -158,8 +158,8 @@ class DishManager(SKAController):
         """Return the registered command handler for a Tango command.
 
         ska-tango-base 1.6.x no longer relies on the deprecated command-object lookup
-        path for dispatch. We prefer the internal overridden-command hook when it is
-        available and fall back to the inherited implementation for older versions.
+        path for dispatch. This function implements the internal overridden-command hook when it is
+        available.
         """
         try:
             handler = self._get_overridden_command(command_name)
@@ -559,7 +559,7 @@ class DishManager(SKAController):
             try:
                 self.set_change_event(attr, True, False)
                 self.set_archive_event(attr, True, False)
-            except Exception: 
+            except Exception:
                 pass
 
         # Configure events for attributes not pushed through callbacks updates
