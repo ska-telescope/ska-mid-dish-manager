@@ -75,6 +75,7 @@ def test_abort_handler(
             "result": (ResultCode.ABORTED, "SetStandbyLPMode aborted"),
         },
         {
+            "status": TaskStatus.COMPLETED,
             "result": (ResultCode.OK, "Abort completed OK"),
         },
     )
