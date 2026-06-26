@@ -5,8 +5,8 @@ import logging
 from typing import Any, Optional
 
 from ska_control_model import ResultCode, TaskStatus
-from ska_tango_base.base import CommandTracker
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
+from ska_tango_base.type_hints import CommandTrackerProtocol
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 
@@ -25,7 +25,7 @@ class AbortCommand(SlowCommand):
             starts and finishes
         :param logger: a logger for this command object to use
         """
-        self._command_tracker: CommandTracker = command_tracker
+        self._command_tracker: CommandTrackerProtocol = command_tracker
         self._component_manager: DishManagerComponentManager = component_manager
         # _callback is an instance of Abort in abort_sequence_command_handler.py
         super().__init__(callback=callback, logger=logger)

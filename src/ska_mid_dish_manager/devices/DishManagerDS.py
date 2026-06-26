@@ -9,7 +9,7 @@ import logging
 import weakref
 from datetime import datetime
 from functools import reduce
-from typing import List, Literal, Optional, Tuple
+from typing import Any, List, Literal, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
@@ -153,6 +153,26 @@ class DishManager(SKAController):
             default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
             default_wind_gust_threshold=self.WindGustThreshold,
         )
+
+    def get_command_object(self, command_name: str) -> Any:
+        """Return the registered command handler for a Tango command.
+
+        ska-tango-base 1.6.x no longer relies on the deprecated command-object lookup
+        path for dispatch. We prefer the internal overridden-command hook when it is
+        available and fall back to the inherited implementation for older versions.
+        """
+        try:
+            handler = self._get_overridden_command(command_name)
+        except AttributeError:
+            handler = None
+
+        if handler is not None:
+            return handler
+
+        try:
+            return super().get_command_object(command_name)
+        except AttributeError as exc:
+            raise KeyError(f"No command object registered for {command_name}") from exc
 
     def init_command_objects(self) -> None:
         """Initialise the command handlers."""
@@ -394,190 +414,187 @@ class DishManager(SKAController):
             # ensure this runs only once after the conditions return to normal
             self.component_manager.wind_stow_active = False
 
-    class InitCommand(SKAController.InitCommand):  # pylint: disable=too-few-public-methods
-        """A class for the Dish Manager's init_device() method."""
+    def init_device(self):
+        """Initialize the device attributes and properties.
 
-        # pylint: disable=invalid-name
-        # pylint: disable=too-many-statements
-        # pylint: disable=arguments-differ
-        def do(self):
-            """Initializes the attributes and properties of the DishManager."""
-            device: DishManager = self._device
-            # pylint: disable=protected-access
-            device._achieved_pointing_az = [0.0, 0.0]
-            device._achieved_pointing_el = [0.0, 0.0]
-            device._azimuth_over_wrap = False
-            device._band5a_pointing_model_params = []
-            device._band5b_pointing_model_params = []
-            device._band1_sampler_frequency = 0.0
-            device._band2_sampler_frequency = 0.0
-            device._band3_sampler_frequency = 0.0
-            device._band4_sampler_frequency = 0.0
-            device._band5a_sampler_frequency = 0.0
-            device._band5b_sampler_frequency = 0.0
-            device._configure_target_lock = []
-            device._dsh_max_short_term_power = 13.5
-            device._dsh_power_curtailment = True
-            device._pointing_buffer_size = 0
-            device._poly_track = []
-            device._power_state = PowerState.LOW
-            device._program_track_table = []
-            device._track_interpolation_mode = TrackInterpolationMode.SPLINE
-            device._track_program_mode = TrackProgramMode.TABLEA
-            device._track_table_load_mode = TrackTableLoadMode.APPEND
-            device._last_commanded_pointing_params = ""
-            device._release_info = ReleaseInfo(
-                ds_manager_address=device.DSDeviceFqdn,
-                spfc_address=device.SPFDeviceFqdn,
-                spfrx_address=device.SPFRxDeviceFqdn,
-                b5dc_address=device.B5DCDeviceFqdn,
-            )
-            device._build_state = device._release_info.get_build_state()
-            device._version_id = device._release_info.get_dish_manager_release_version()
-            device._action_timeout_seconds = DEFAULT_ACTION_TIMEOUT_S
+        This method replaces the deprecated InitCommand pattern and directly
+        initializes all device state on startup.
+        """
+        # Call parent init_device first to set up base class structures
+        super().init_device()
 
-            # push change events, needed to use testing library
+        # Initialize all device attributes
+        self._achieved_pointing_az = [0.0, 0.0]
+        self._achieved_pointing_el = [0.0, 0.0]
+        self._azimuth_over_wrap = False
+        self._band5a_pointing_model_params = []
+        self._band5b_pointing_model_params = []
+        self._band1_sampler_frequency = 0.0
+        self._band2_sampler_frequency = 0.0
+        self._band3_sampler_frequency = 0.0
+        self._band4_sampler_frequency = 0.0
+        self._band5a_sampler_frequency = 0.0
+        self._band5b_sampler_frequency = 0.0
+        self._configure_target_lock = []
+        self._dsh_max_short_term_power = 13.5
+        self._dsh_power_curtailment = True
+        self._pointing_buffer_size = 0
+        self._poly_track = []
+        self._power_state = PowerState.LOW
+        self._program_track_table = []
+        self._track_interpolation_mode = TrackInterpolationMode.SPLINE
+        self._track_program_mode = TrackProgramMode.TABLEA
+        self._track_table_load_mode = TrackTableLoadMode.APPEND
+        self._last_commanded_pointing_params = ""
+        self._release_info = ReleaseInfo(
+            ds_manager_address=self.DSDeviceFqdn,
+            spfc_address=self.SPFDeviceFqdn,
+            spfrx_address=self.SPFRxDeviceFqdn,
+            b5dc_address=self.B5DCDeviceFqdn,
+        )
+        self._build_state = self._release_info.get_build_state()
+        self._version_id = self._release_info.get_dish_manager_release_version()
+        self._action_timeout_seconds = DEFAULT_ACTION_TIMEOUT_S
 
-            device._component_state_attr_map = {
-                "dishmode": "dishMode",
-                "powerstate": "powerState",
-                "pointingstate": "pointingState",
-                "configuredband": "configuredBand",
-                "achievedtargetlock": "achievedTargetLock",
-                "dsccmdauth": "dscCmdAuth",
-                "configuretargetlock": "configureTargetLock",
-                "healthstate": "healthState",
-                "b1capabilitystate": "b1CapabilityState",
-                "b2capabilitystate": "b2CapabilityState",
-                "b3capabilitystate": "b3CapabilityState",
-                "b4capabilitystate": "b4CapabilityState",
-                "b5acapabilitystate": "b5aCapabilityState",
-                "b5bcapabilitystate": "b5bCapabilityState",
-                "desiredpointingaz": "desiredPointingAz",
-                "desiredpointingel": "desiredPointingEl",
-                "achievedpointing": "achievedPointing",
-                "band0pointingmodelparams": "band0PointingModelParams",
-                "band1pointingmodelparams": "band1PointingModelParams",
-                "band2pointingmodelparams": "band2PointingModelParams",
-                "band3pointingmodelparams": "band3PointingModelParams",
-                "band4pointingmodelparams": "band4PointingModelParams",
-                "band5apointingmodelparams": "band5aPointingModelParams",
-                "band5bpointingmodelparams": "band5bPointingModelParams",
-                "attenuation1polhx": "attenuation1PolHX",
-                "attenuation1polvy": "attenuation1PolVY",
-                "attenuation2polhx": "attenuation2PolHX",
-                "attenuation2polvy": "attenuation2PolVY",
-                "attenuationpolhx": "attenuationPolHX",
-                "attenuationpolvy": "attenuationPolVY",
-                "kvalue": "kValue",
-                "trackinterpolationmode": "trackInterpolationMode",
-                "scanid": "scanID",
-                "ignorespf": "ignoreSpf",
-                "ignorespfrx": "ignoreSpfrx",
-                "ignoreb5dc": "ignoreB5dc",
-                "spfconnectionstate": "spfConnectionState",
-                "spfrxconnectionstate": "spfrxConnectionState",
-                "dsconnectionstate": "dsConnectionState",
-                "wmsconnectionstate": "wmsConnectionState",
-                "b5dcconnectionstate": "b5dcConnectionState",
-                "dscconnectionstate": "dscConnectionState",
-                "b5dcserverconnectionstate": "b5dcServerConnectionState",
-                "noisediodemode": "noiseDiodeMode",
-                "periodicnoisediodepars": "periodicNoiseDiodePars",
-                "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
-                "isklocked": "isKLocked",
-                "spectralinversion": "spectralInversion",
-                "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
-                "actstaticoffsetvalueel": "actStaticOffsetValueEl",
-                "dscpowerlimitkw": "dscPowerLimitKw",
-                "tracktablecurrentindex": "trackTableCurrentIndex",
-                "tracktableendindex": "trackTableEndIndex",
-                "lastwatchdogreset": "lastWatchdogReset",
-                "watchdogtimeout": "watchdogTimeout",
-                "meanwindspeed": "meanWindSpeed",
-                "windgust": "windGust",
-                "autowindstowenabled": "autoWindStowEnabled",
-                "lastcommandedmode": "lastCommandedMode",
-                "lastcommandinvoked": "lastCommandInvoked",
-                "dscctrlstate": "dscCtrlState",
-                "actiontimeoutseconds": "actionTimeoutSeconds",
-                "b1lnahpowerstate": "b1LnaHPowerState",
-                "b2lnahpowerstate": "b2LnaHPowerState",
-                "b1lnavpowerstate": "b1LnaVPowerState",
-                "b2lnavpowerstate": "b2LnaVPowerState",
-                "b3lnapowerstate": "b3LnaPowerState",
-                "b4lnapowerstate": "b4LnaPowerState",
-                "b5alnapowerstate": "b5aLnaPowerState",
-                "b5blnapowerstate": "b5bLnaPowerState",
-                "rfcmfrequency": "rfcmFrequency",
-                "rfcmplllock": "rfcmPllLock",
-                "rfcmhattenuation": "rfcmHAttenuation",
-                "rfcmvattenuation": "rfcmVAttenuation",
-                "clkphotodiodecurrent": "clkPhotodiodeCurrent",
-                "hpolrfpowerin": "hPolRfPowerIn",
-                "vpolrfPowerin": "vPolRfPowerIn",
-                "hpolrfpowerout": "hPolRfPowerOut",
-                "vpolrfpowerout": "vPolRfPowerOut",
-                "rftemperature": "rfTemperature",
-                "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
-                "dscerrorstatuses": "dscErrorStatuses",
-                "healthinfo": "healthInfo",
-            }
-            for attr in device._component_state_attr_map.values():
-                device.set_change_event(attr, True, False)
-                device.set_archive_event(attr, True, False)
+        self._component_state_attr_map = {
+            "dishmode": "dishMode",
+            "powerstate": "powerState",
+            "pointingstate": "pointingState",
+            "configuredband": "configuredBand",
+            "achievedtargetlock": "achievedTargetLock",
+            "dsccmdauth": "dscCmdAuth",
+            "configuretargetlock": "configureTargetLock",
+            "healthstate": "healthState",
+            "b1capabilitystate": "b1CapabilityState",
+            "b2capabilitystate": "b2CapabilityState",
+            "b3capabilitystate": "b3CapabilityState",
+            "b4capabilitystate": "b4CapabilityState",
+            "b5acapabilitystate": "b5aCapabilityState",
+            "b5bcapabilitystate": "b5bCapabilityState",
+            "desiredpointingaz": "desiredPointingAz",
+            "desiredpointingel": "desiredPointingEl",
+            "achievedpointing": "achievedPointing",
+            "band0pointingmodelparams": "band0PointingModelParams",
+            "band1pointingmodelparams": "band1PointingModelParams",
+            "band2pointingmodelparams": "band2PointingModelParams",
+            "band3pointingmodelparams": "band3PointingModelParams",
+            "band4pointingmodelparams": "band4PointingModelParams",
+            "band5apointingmodelparams": "band5aPointingModelParams",
+            "band5bpointingmodelparams": "band5bPointingModelParams",
+            "attenuation1polhx": "attenuation1PolHX",
+            "attenuation1polvy": "attenuation1PolVY",
+            "attenuation2polhx": "attenuation2PolHX",
+            "attenuation2polvy": "attenuation2PolVY",
+            "attenuationpolhx": "attenuationPolHX",
+            "attenuationpolvy": "attenuationPolVY",
+            "kvalue": "kValue",
+            "trackinterpolationmode": "trackInterpolationMode",
+            "scanid": "scanID",
+            "ignorespf": "ignoreSpf",
+            "ignorespfrx": "ignoreSpfrx",
+            "ignoreb5dc": "ignoreB5dc",
+            "spfconnectionstate": "spfConnectionState",
+            "spfrxconnectionstate": "spfrxConnectionState",
+            "dsconnectionstate": "dsConnectionState",
+            "wmsconnectionstate": "wmsConnectionState",
+            "b5dcconnectionstate": "b5dcConnectionState",
+            "dscconnectionstate": "dscConnectionState",
+            "b5dcserverconnectionstate": "b5dcServerConnectionState",
+            "noisediodemode": "noiseDiodeMode",
+            "periodicnoisediodepars": "periodicNoiseDiodePars",
+            "pseudorandomnoisediodepars": "pseudoRandomNoiseDiodePars",
+            "isklocked": "isKLocked",
+            "spectralinversion": "spectralInversion",
+            "actstaticoffsetvaluexel": "actStaticOffsetValueXel",
+            "actstaticoffsetvalueel": "actStaticOffsetValueEl",
+            "dscpowerlimitkw": "dscPowerLimitKw",
+            "tracktablecurrentindex": "trackTableCurrentIndex",
+            "tracktableendindex": "trackTableEndIndex",
+            "lastwatchdogreset": "lastWatchdogReset",
+            "watchdogtimeout": "watchdogTimeout",
+            "meanwindspeed": "meanWindSpeed",
+            "windgust": "windGust",
+            "autowindstowenabled": "autoWindStowEnabled",
+            "lastcommandedmode": "lastCommandedMode",
+            "lastcommandinvoked": "lastCommandInvoked",
+            "dscctrlstate": "dscCtrlState",
+            "actiontimeoutseconds": "actionTimeoutSeconds",
+            "b1lnahpowerstate": "b1LnaHPowerState",
+            "b2lnahpowerstate": "b2LnaHPowerState",
+            "b1lnavpowerstate": "b1LnaVPowerState",
+            "b2lnavpowerstate": "b2LnaVPowerState",
+            "b3lnapowerstate": "b3LnaPowerState",
+            "b4lnapowerstate": "b4LnaPowerState",
+            "b5alnapowerstate": "b5aLnaPowerState",
+            "b5blnapowerstate": "b5bLnaPowerState",
+            "rfcmfrequency": "rfcmFrequency",
+            "rfcmplllock": "rfcmPllLock",
+            "rfcmhattenuation": "rfcmHAttenuation",
+            "rfcmvattenuation": "rfcmVAttenuation",
+            "clkphotodiodecurrent": "clkPhotodiodeCurrent",
+            "hpolrfpowerin": "hPolRfPowerIn",
+            "vpolrfPowerin": "vPolRfPowerIn",
+            "hpolrfpowerout": "hPolRfPowerOut",
+            "vpolrfpowerout": "vPolRfPowerOut",
+            "rftemperature": "rfTemperature",
+            "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
+            "dscerrorstatuses": "dscErrorStatuses",
+            "healthinfo": "healthInfo",
+        }
+        for attr in self._component_state_attr_map.values():
+            self.set_change_event(attr, True, False)
+            self.set_archive_event(attr, True, False)
 
-            # Configure events for base class attributes. These are not necessary for functionality
-            # of Dish Manager but needed to suppress errors in DVS integration
-            for attr in (
-                "buildState",
-                "versionId",
-                "loggingLevel",
-                "loggingTargets",
-                # remove element attrs for higher version of base classes
-                "elementLoggerAddress",
-                "elementAlarmAddress",
-                "elementTelStateAddress",
-                "elementDatabaseAddress",
-            ):
-                device.set_change_event(attr, True, False)
-                device.set_archive_event(attr, True, False)
+        # Configure events for base class attributes
+        for attr in (
+            "buildState",
+            "versionId",
+            "loggingLevel",
+            "loggingTargets",
+            "elementLoggerAddress",
+            "elementAlarmAddress",
+            "elementTelStateAddress",
+            "elementDatabaseAddress",
+        ):
+            try:
+                self.set_change_event(attr, True, False)
+                self.set_archive_event(attr, True, False)
+            except Exception: 
+                pass
 
-            # Configure events for attributes. The events for these attributes are not pushed
-            # through callback updates
-            for attr in (
-                "maxCapabilities",
-                "availableCapabilities",
-                "azimuthOverWrap",
-                "band1SamplerFrequency",
-                "band2SamplerFrequency",
-                "band3SamplerFrequency",
-                "band4SamplerFrequency",
-                "band5aSamplerFrequency",
-                "band5bSamplerFrequency",
-                "capturing",
-                "dshMaxShortTermPower",
-                "dshPowerCurtailment",
-                "noiseDiodeConfig",
-                "programTrackTable",
-                "pointingBufferSize",
-                "polyTrack",
-                "trackProgramMode",
-                "trackTableLoadMode",
-                "lastCommandedPointingParams",
-            ):
-                device.set_change_event(attr, True, False)
-                device.set_archive_event(attr, True, False)
+        # Configure events for attributes not pushed through callbacks updates
+        for attr in (
+            "maxCapabilities",
+            "availableCapabilities",
+            "azimuthOverWrap",
+            "band1SamplerFrequency",
+            "band2SamplerFrequency",
+            "band3SamplerFrequency",
+            "band4SamplerFrequency",
+            "band5aSamplerFrequency",
+            "band5bSamplerFrequency",
+            "capturing",
+            "dshMaxShortTermPower",
+            "dshPowerCurtailment",
+            "noiseDiodeConfig",
+            "programTrackTable",
+            "pointingBufferSize",
+            "polyTrack",
+            "trackProgramMode",
+            "trackTableLoadMode",
+            "lastCommandedPointingParams",
+        ):
+            self.set_change_event(attr, True, False)
+            self.set_archive_event(attr, True, False)
 
-            # Try to connect to DB and update memorized attributes if TANGO_HOST is set
-            device.component_manager.try_update_memorized_attributes_from_db()
+        # Try to connect to DB and update memorized attributes if TANGO_HOST is set
+        self.component_manager.try_update_memorized_attributes_from_db()
 
-            device.instances[device.get_name()] = device
-            (result_code, message) = super().do()
-            self.logger.info("Device Initialization: %s", result_code.name, extra=OPERATOR_TAG)
-            device.op_state_model.perform_action("component_on")
-            device.component_manager.start_communicating()
-            return (ResultCode(result_code), message)
+        # Register device instance and continue initialization
+        self.instances[self.get_name()] = self
+        self.logger.info("Device Initialization: Complete", extra=OPERATOR_TAG)
+        self.op_state_model.perform_action("component_on")
+        self.component_manager.start_communicating()
 
     def _configure_additional_user_tags_for_logging(self):
         """Append user tags to log records."""
