@@ -115,15 +115,23 @@ For dish mananager example usage, consult the [user guide](https://developer.ska
 
 ## Writing documentation
 
-The documentation for this project can be found in the docs folder. To generate the docs locally,
-run the command below and browse the docs from `docs/build/html/index.html`.
+The documentation for this project can be found in the docs folder. To generate the docs locally, run the command below and browse the docs from `docs/build/html/index.html`.
 
 ```bash
 make docs-build html
 ```
 
-Use the code below to generate the mode transition graph:
+To remove generated docs in docs/build
+```bash
+make docs-build clean
+```
 
+To test the auto doc generation for the tango interface run
+```bash
+tangodocgen --auto -o docs/src/api/devices
+```
+
+Use the code below to generate the mode transition graph:
 ```python
 import networkx as nx
 import matplotlib.pyplot as plt
