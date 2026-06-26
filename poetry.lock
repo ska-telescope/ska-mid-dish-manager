@@ -142,7 +142,7 @@ description = "Astronomy and astrophysics core library"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-markers = "python_version >= \"3.11\""
+markers = "python_version != \"3.10\""
 files = [
     {file = "astropy-7.2.0-cp311-abi3-macosx_10_9_x86_64.whl", hash = "sha256:efac04df4cc488efe630c2fff1992d6516dfb16a06e197fb68bc9e8e3b85def1"},
     {file = "astropy-7.2.0-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:52e9a7d9c86b21f1af911a2930cd0c4a275fb302d455c89e11eedaffef6f2ad0"},
@@ -566,7 +566,7 @@ description = "Python library for calculating contours of 2D quadrilateral grids
 optional = false
 python-versions = ">=3.11"
 groups = ["dev"]
-markers = "python_version >= \"3.11\""
+markers = "python_version != \"3.10\""
 files = [
     {file = "contourpy-1.3.3-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:709a48ef9a690e1343202916450bc48b9e51c049b089c7f79a267b46cffcdaa1"},
     {file = "contourpy-1.3.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:23416f38bfd74d5d28ab8429cc4d63fa67d5068bd711a85edb1c3fb0c3e2f381"},
@@ -3049,31 +3049,32 @@ reference = "ska-nexus"
 
 [[package]]
 name = "ska-tango-base"
-version = "1.3.2"
+version = "1.6.1"
 description = "SKA Tango base classes"
 optional = false
-python-versions = ">=3.10,<4.0"
+python-versions = ">=3.10.0,<4.0.0"
 groups = ["main"]
 files = [
-    {file = "ska_tango_base-1.3.2-py3-none-any.whl", hash = "sha256:7318d9460eaee24863b77e68c965b44428a32be51bf2595316c5e9230bf616ea"},
-    {file = "ska_tango_base-1.3.2.tar.gz", hash = "sha256:2d23369c3ae737bff66839c1d7a8d6f4691e0064a5296ef4b48983b9082e11e8"},
+    {file = "ska_tango_base-1.6.1-py3-none-any.whl", hash = "sha256:8bc7eab1f826b652e7962afb76468210c5af9b025ecac205948c66518f3963c1"},
+    {file = "ska_tango_base-1.6.1.tar.gz", hash = "sha256:0dc25a265c005b7664d90c4aaa855df22578e24fe042c0e812b91d468736d7f8"},
 ]
 
 [package.dependencies]
 debugpy = ">=1.6.2,<2.0.0"
 jsonschema = ">=4.17.3,<5.0.0"
 numpy = [
+    {version = ">=1.26.0", markers = "python_version != \"3.10\" and python_version != \"3.11\""},
     {version = ">=1.21.6", markers = "python_version == \"3.10\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
 ]
-pytango = ">=9.4.2,<11.0.0"
+pytango = ">=9.4.2,<9.5.1 || >9.5.1,<11.0.0"
 ska-control-model = ">=1.0.0,<2.0.0"
 ska-ser-logging = ">=0.4.3,<0.5.0"
 transitions = ">=0.9.0,<0.10.0"
 
 [package.extras]
 telemetry = ["opentelemetry-exporter-otlp (>=1.29.0)", "opentelemetry-sdk (>=1.29.0)"]
+tutorial = ["itango (>=0.3.0)", "watchfiles (>=1.1.1)"]
 
 [package.source]
 type = "legacy"
@@ -3783,5 +3784,5 @@ reference = "pypi-public"
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.10,<=3.15"
-content-hash = "085797d4d579b8a2d9e4066a8a00ed1a1594a914406edd4baf9f8c29e1e5380f"
+python-versions = ">=3.10,<4"
+content-hash = "ba572d03ed6a96d934042568833952d4768c3c045bad9f8ff98fadd46fd1616e"
