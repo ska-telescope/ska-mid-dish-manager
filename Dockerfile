@@ -1,5 +1,5 @@
 FROM artefact.skao.int/ska-tango-images-tango-dsconfig:1.5.13 as tools
-FROM artefact.skao.int/ska-build-python:0.5.0 as build
+FROM registry.gitlab.com/ska-telescope/ska-base-images/ska-build-python-ubuntu26:6d8cef89 as build
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock ./
@@ -14,7 +14,7 @@ COPY src /app/src
 COPY README.md /app/README.md
 RUN poetry install --only-root
 
-FROM artefact.skao.int/ska-python:0.3.1
+FROM registry.gitlab.com/ska-telescope/ska-base-images/ska-python-ubuntu26:6d8cef89
 WORKDIR /app
 
 ENV VIRTUAL_ENV=/app/.venv
