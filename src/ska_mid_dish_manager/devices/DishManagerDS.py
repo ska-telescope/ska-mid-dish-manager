@@ -1322,7 +1322,7 @@ class DishManager(SKAController):
     def frequencyResponse(self):
         """Returns the SPFRX spectrum sample data."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-        return spfrx_com_man.read_attribute_value("spectrumsample")
+        return spfrx_com_man.read_attribute_value("spectrumsample", log_read=False)
 
     @attribute(dtype=(float,), access=AttrWriteType.WRITE)
     def noiseDiodeConfig(self):
