@@ -52,7 +52,7 @@ def test_abort_handler_runs_only_one_sequence_at_a_time(
     "ska_mid_dish_manager.models.abort_sequence_command_handler.AbortSequenceCommandHandler.on_abort_task_complete",
 )
 def test_abort_handler(
-    mock_on_abort_task_complete: MagicMock,
+    mock_abort_sequence_handler: MagicMock,
     abort_method: str,
     component_manager: DishManagerComponentManager,
     mock_command_tracker: MagicMock,
@@ -87,7 +87,6 @@ def test_abort_handler(
     component_state_cb.get_queue_values()
 
     expected_call_kwargs = (
-        {"status": TaskStatus.IN_PROGRESS},
         {
             "status": TaskStatus.ABORTED,
             "result": (ResultCode.ABORTED, "SetStandbyLPMode aborted"),

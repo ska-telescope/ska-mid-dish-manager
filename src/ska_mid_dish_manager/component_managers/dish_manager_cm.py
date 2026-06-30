@@ -729,7 +729,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         on_abort_task_complete = partial(
             self.abort_sequence_handler.on_abort_task_complete, task_callback
         )
-        update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
         self.abort_tasks(task_callback=on_abort_task_complete)
         self.logger.debug("Queue is being aborted")
 

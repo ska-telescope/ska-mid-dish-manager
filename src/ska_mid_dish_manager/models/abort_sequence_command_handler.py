@@ -87,6 +87,7 @@ class AbortSequenceCommandHandler:
     def complete_abort_sequence(
         self, task_abort_event: Optional[Event] = None, task_callback: Optional[Callable] = None
     ):
+        update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
         task_abort_event = task_abort_event or self._abort_event
 
         # the order the commands are run is important: so that the plc is not interrupted
