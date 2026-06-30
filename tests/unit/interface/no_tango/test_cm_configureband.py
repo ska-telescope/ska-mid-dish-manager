@@ -83,10 +83,10 @@ def test_configureband_handler(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "DS and SPF already in operate state, SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed"),
     )
     progress_cb.wait_for_args(
-        ("DS and SPF already in operate state, SetOperateMode completed",)
+        ("SetOperateMode completed",)
     )
 
     # Verify apply_pointing_model was called
@@ -175,10 +175,10 @@ def test_configureband_json_handler_happy(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "DS and SPF already in operate state, SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed"),
     )
     progress_cb.wait_for_args(
-        ("DS and SPF already in operate state, SetOperateMode completed",)
+        ("SetOperateMode completed",)
     )
 
     # Verify apply_pointing_model was called
@@ -428,10 +428,10 @@ def test_configureband_5b_with_subband(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "DS and SPF already in operate state, SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed"),
     )
     progress_cb.wait_for_args(
-        ("DS and SPF already in operate state, SetOperateMode completed",)
+        ("SetOperateMode completed",)
     )
 
 
@@ -518,10 +518,10 @@ def test_configureband_5b_with_subband_ignore_b5dc(
     task_cb = callbacks["task_cb"]
     task_cb.assert_called_with(
         status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "DS and SPF already in operate state, SetOperateMode completed"),
+        result=(ResultCode.OK, "SetOperateMode completed"),
     )
     progress_cb.wait_for_args(
-        ("DS and SPF already in operate state, SetOperateMode completed",)
+        ("SetOperateMode completed",)
     )
 
 

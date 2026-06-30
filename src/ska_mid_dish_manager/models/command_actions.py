@@ -288,10 +288,14 @@ class SetOperateModeAction(Action):
 
         # Nothing to do: DS and SPF are already in their desired states.
         if not fanned_out_commands:
+            self.logger.info(
+                "DS and SPF already in operate state, SetOperateMode completed",
+                extra=OPERATOR_TAG
+            )
             self.handler._trigger_success(
                 task_callback,
                 task_abort_event,
-                "DS and SPF already in operate state, SetOperateMode completed",
+                "SetOperateMode completed",
             )
             return
 
