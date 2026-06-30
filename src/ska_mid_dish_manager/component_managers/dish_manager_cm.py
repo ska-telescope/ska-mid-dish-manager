@@ -500,7 +500,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         command_idx = 0
         status_idx = 1
         cmd_ids = []
-        statuses_to_check = (TaskStatus.QUEUED, TaskStatus.IN_PROGRESS)
+        statuses_to_check = (TaskStatus.STAGING, TaskStatus.QUEUED, TaskStatus.IN_PROGRESS)
 
         command_statuses = self._command_tracker.command_statuses
         filtered_command_statuses = [
@@ -759,7 +759,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         cmds_in_progress = self.get_currently_executing_lrcs()
         if cmds_in_progress:
-            if any("abort" in cmd_id.lower() for cmd_id in cmds_in_progress):
+            abort_cmds_in_progress = [
+                cmd_id for cmd_id in cmds_in_progress if "abort" in cmd_id.lower()
+            ]
+            # there should only be one abort command in progress at a time
+            # if there is more than one, reject the new abort request.
+            if len(abort_cmds_in_progress) > 1:
                 self.logger.error("Abort rejected: there is an ongoing abort sequence.")
                 update_task_status(
                     task_callback,

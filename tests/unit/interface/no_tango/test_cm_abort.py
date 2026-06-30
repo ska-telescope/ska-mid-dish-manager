@@ -28,12 +28,16 @@ def test_abort_handler_runs_only_one_sequence_at_a_time(
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
+    mock_command_tracker.command_statuses = [("Abort", TaskStatus.STAGING)]
     abort_func = getattr(component_manager, abort_method)
     task_status, message = abort_func()
     assert task_status == TaskStatus.IN_PROGRESS
     assert message == "Abort sequence has started"
-    mock_command_tracker.command_statuses = [("Abort", TaskStatus.IN_PROGRESS)]
 
+    mock_command_tracker.command_statuses = [
+        ("Abort", TaskStatus.STAGING),
+        ("Abort", TaskStatus.IN_PROGRESS),
+    ]
     # issue a 2nd abort while the previous is busy running
     task_status, message = abort_func()
     assert task_status == TaskStatus.REJECTED
