@@ -85,9 +85,7 @@ def test_configureband_handler(
         status=TaskStatus.COMPLETED,
         result=(ResultCode.OK, "SetOperateMode completed"),
     )
-    progress_cb.wait_for_args(
-        ("SetOperateMode completed",)
-    )
+    progress_cb.wait_for_args(("SetOperateMode completed",))
 
     # Verify apply_pointing_model was called
     mock_apply_pointing_model.assert_called_once()
@@ -177,9 +175,7 @@ def test_configureband_json_handler_happy(
         status=TaskStatus.COMPLETED,
         result=(ResultCode.OK, "SetOperateMode completed"),
     )
-    progress_cb.wait_for_args(
-        ("SetOperateMode completed",)
-    )
+    progress_cb.wait_for_args(("SetOperateMode completed",))
 
     # Verify apply_pointing_model was called
     mock_apply_pointing_model.assert_called_once()
@@ -430,9 +426,7 @@ def test_configureband_5b_with_subband(
         status=TaskStatus.COMPLETED,
         result=(ResultCode.OK, "SetOperateMode completed"),
     )
-    progress_cb.wait_for_args(
-        ("SetOperateMode completed",)
-    )
+    progress_cb.wait_for_args(("SetOperateMode completed",))
 
 
 @pytest.mark.unit
@@ -520,9 +514,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         status=TaskStatus.COMPLETED,
         result=(ResultCode.OK, "SetOperateMode completed"),
     )
-    progress_cb.wait_for_args(
-        ("SetOperateMode completed",)
-    )
+    progress_cb.wait_for_args(("SetOperateMode completed",))
 
 
 @pytest.mark.unit
