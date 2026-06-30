@@ -7,7 +7,6 @@ import random
 import string
 import time
 from dataclasses import dataclass, field
-from json.decoder import JSONDecodeError
 from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
@@ -354,34 +353,52 @@ class EventStore:
         :type timeout: int, optional
         :raises RuntimeError: If none are found
         :return: The result of the long running command
-        :rtype: str
+        :rtype: bool
         """
         result_from_id = False
+
+        try:
+            expected_obj = json.loads(command_result)
+        except json.JSONDecodeError:
+            expected_obj = command_result
+
         try:
             while True:
                 event = self._queue.get(timeout=timeout)
                 if not event.attr_value:
                     continue
-                # Ensure that the event picked off the queue is a tuple as expected
-                # from attribute "lrcFinished", and that the tuple is not empty before
-                # attempting to pick off the latest lrcFinished results from the tuple
+
                 if not isinstance(event.attr_value.value, tuple) or not event.attr_value.value:
                     continue
-                last_result = json.loads(event.attr_value.value[-1])
-                recieved_result = str(last_result["result"])
 
-                if last_result["uid"] == command_id:
+                last_result = json.loads(event.attr_value.value[-1])
+
+                if last_result.get("uid") == command_id:
                     result_from_id = True
-                    if recieved_result == command_result:
+                    received_result = last_result.get("result")
+
+                    if received_result == expected_obj:
                         return True
+
+                    if isinstance(received_result, str):
+                        try:
+                            if json.loads(received_result) == expected_obj:
+                                return True
+                        except json.JSONDecodeError:
+                            pass
+
+                    if str(received_result) == command_result:
+                        return True
+
                     continue
+
         except queue.Empty as err:
             if not result_from_id:
                 raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
             raise RuntimeError(
                 f"A result was received from [{command_id}] however it was not the awaited result"
             ) from err
-        except JSONDecodeError:
+        except json.JSONDecodeError:
             raise RuntimeError(
                 "Failed to parse event data while awaiting result"
                 f" for [{command_id}]\n. Please ensure that this helper function"

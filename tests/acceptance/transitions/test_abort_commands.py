@@ -34,8 +34,8 @@ def test_abort_commands(
 
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
-        "longRunningCommandResult": result_event_store,
-        "longRunningCommandsInQueue": cmds_in_queue_store,
+        "lrcFinished": result_event_store,
+        "lrcQueue": cmds_in_queue_store,
         "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -56,7 +56,7 @@ def test_abort_commands(
     # Abort the LRC
     [[_], [unique_id]] = dish_manager_proxy.Abort()
     # Confirm Dish Manager aborted the request on the Configure action
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
     status_event_store.wait_for_progress_update("SetOperateMode aborted", timeout=30)
@@ -85,7 +85,7 @@ def track_a_sample(
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "pointingState": main_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
         "configuredBand": band_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -155,13 +155,13 @@ def test_abort_commands_during_track(
 
     attr_cb_mapping = {
         "dishMode": main_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
 
@@ -184,7 +184,7 @@ def test_abort_commands_during_slew(
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "pointingState": main_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
         "configuredBand": main_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -200,7 +200,7 @@ def test_abort_commands_during_slew(
 
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
 
@@ -229,7 +229,7 @@ def test_abort_commands_during_stow(
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "pointingState": main_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -248,7 +248,8 @@ def test_abort_commands_during_stow(
 
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
-    result_event_store.wait_for_command_result(
+    print([[_], [unique_id]])
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
 

@@ -55,9 +55,7 @@ def test_dish_does_not_stow(dish_manager_resources, event_store_class):
     device_proxy, _ = dish_manager_resources
     result_event_store = event_store_class()
 
-    subscriptions = setup_subscriptions(
-        device_proxy, {"longRunningCommandResult": result_event_store}
-    )
+    subscriptions = setup_subscriptions(device_proxy, {"lrcFinished": result_event_store})
 
     init_dish_mode = device_proxy.dishMode
 
@@ -81,7 +79,7 @@ def test_exception_on_callback(dish_manager_resources, event_store_class):
 
     attr_cb_mapping = {
         "lrcFinished": result_event_store,
-        "lrcStatus": lrc_status_event_store,
+        "Status": lrc_status_event_store,
     }
     subscriptions = setup_subscriptions(device_proxy, attr_cb_mapping)
 

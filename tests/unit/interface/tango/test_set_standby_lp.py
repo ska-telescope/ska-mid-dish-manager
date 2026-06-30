@@ -31,7 +31,7 @@ def test_standbylp_cmd_fails_from_standbylp_dish_mode(dish_manager_resources, ev
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandStatus",
+        "Status",
         tango.EventType.CHANGE_EVENT,
         lrc_status_event_store,
     )

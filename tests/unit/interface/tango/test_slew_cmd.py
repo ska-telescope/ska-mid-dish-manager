@@ -51,7 +51,7 @@ def test_set_slew_cmd_fails_when_dish_mode_is_not_operate(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandStatus",
+        "Status",
         tango.EventType.CHANGE_EVENT,
         lrc_status_event_store,
     )
@@ -112,7 +112,7 @@ def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandStatus",
+        "Status",
         tango.EventType.CHANGE_EVENT,
         lrc_status_event_store,
     )
@@ -217,7 +217,7 @@ def test_set_slew_cmd_rejected_invalid_inputs(
     lrc_status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
-        "longRunningCommandStatus",
+        "Status",
         tango.EventType.CHANGE_EVENT,
         lrc_status_event_store,
     )

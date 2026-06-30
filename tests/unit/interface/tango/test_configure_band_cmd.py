@@ -38,7 +38,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
 
     for attr in [
         "dishMode",
-        "longRunningCommandResult",
+        "lrcFinished",
         "configuredBand",
     ]:
         device_proxy.subscribe_event(

@@ -39,7 +39,7 @@ def test_track_stop_cmd_fails_in_wrong_pointing_state(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandStatus",
+        "Status",
         tango.EventType.CHANGE_EVENT,
         lrc_status_event_store,
     )
@@ -67,7 +67,7 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
 
     attributes_to_subscribe_to = (
         "dishMode",
-        "longRunningCommandResult",
+        "lrcFinished",
         "pointingState",
     )
     for attribute_name in attributes_to_subscribe_to:

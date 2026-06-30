@@ -36,7 +36,7 @@ def test_stress_test_dish_pointing(dish_manager_proxy, ds_device_proxy, event_st
         "dishMode": dish_mode_event_store,
         "configuredBand": band_event_store,
         "pointingState": pointing_state_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 

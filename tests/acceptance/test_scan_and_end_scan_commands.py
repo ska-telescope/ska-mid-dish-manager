@@ -14,7 +14,7 @@ def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     attr_cb_mapping = {
         "scanID": attribute_event_store,
         "Status": status_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -22,9 +22,11 @@ def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     scan_id = "4"
     [[_], [unique_id]] = dish_manager_proxy.Scan(scan_id)
     result_event_store.wait_for_command_id(unique_id)
+    # result_event_store.wait_for_finished_command_result(unique_id, "OK", timeout=10)
     status_event_store.wait_for_progress_update("Scan completed")
-
-    attribute_event_store.wait_for_value(scan_id)
+    print(f"scanID attribute value: {dish_manager_proxy.read_attribute('scanID').value}")
+    assert dish_manager_proxy.read_attribute("scanID").value == scan_id
+    attribute_event_store.wait_for_value(scan_id, timeout=5)
 
     [[_], [unique_id]] = dish_manager_proxy.EndScan()
     result_event_store.wait_for_command_id(unique_id)
@@ -34,7 +36,7 @@ def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     # exercising scanID using the write method and EndScan command
     scan_id = "5"
     dish_manager_proxy.write_attribute("scanID", scan_id)
-    attribute_event_store.wait_for_value(scan_id)
+    attribute_event_store.wait_for_value(scan_id, timeout=5)
 
     [[_], [unique_id]] = dish_manager_proxy.EndScan()
     result_event_store.wait_for_command_id(unique_id)

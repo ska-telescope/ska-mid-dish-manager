@@ -27,7 +27,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
         "configuredBand": band_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
         "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)

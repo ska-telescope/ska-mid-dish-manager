@@ -1,5 +1,6 @@
 """Test command timeout."""
 
+import json
 import time
 
 import pytest
@@ -42,10 +43,14 @@ def test_action_timeout(
         dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=10)
         assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
 
-        assert configure_unique_id in dish_manager_proxy.lrcExecuting
+        executing_uids = [json.loads(cmd).get("uid") for cmd in dish_manager_proxy.lrcExecuting]
+
+        assert configure_unique_id in executing_uids, (
+            f"Command {configure_unique_id} not found in {executing_uids}"
+        )
 
         # Check lrcFinished event for the ConfigureBand1 command timeout
-        result_event_store.wait_for_command_result(
+        result_event_store.wait_for_finished_command_result(
             configure_unique_id, '[3, "SetOperateMode failed"]', timeout=5
         )
 
@@ -60,21 +65,21 @@ def test_action_timeout(
 
         time.sleep(DEFAULT_ACTION_TIMEOUT_S // 2)
 
-        # Check that the lrcExecuting still reports IN_PROGRESS (ID is in the executing queue)
-        lrc_executing = dish_manager_proxy.lrcExecuting
-        assert configure_unique_id in lrc_executing, (
-            f"Command {configure_unique_id} is not executing."
+        executing_uids = [json.loads(cmd).get("uid") for cmd in dish_manager_proxy.lrcExecuting]
+
+        assert configure_unique_id in executing_uids, (
+            f"Command {configure_unique_id} not found in {executing_uids}"
         )
 
         # Wait for time out
-        result_event_store.wait_for_command_result(
+        result_event_store.wait_for_finished_command_result(
             configure_unique_id, '[3, "SetStandbyFPMode failed"]', timeout=DEFAULT_ACTION_TIMEOUT_S
         )
     except RuntimeError:
         # Call Abort on DishManager if anything goes wrong so the LRCs aren't stuck
         # IN_PROGRESS
         [[_], [unique_id]] = dish_manager_proxy.Abort()
-        result_event_store.wait_for_command_result(
+        result_event_store.wait_for_finished_command_result(
             unique_id, '[0, "Abort sequence completed"]', timeout=30
         )
         dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
