@@ -27,6 +27,6 @@ def test_spectrum_sample_attribute_read(
         8202, dtype=np.float32
     )
     event_store.wait_for_value(spfrx_updated_spectrum_sample, timeout=8)
-    frequency_reponse = dish_manager_proxy.frequencyResponse
-    np.testing.assert_array_equal(spfrx_device_proxy.spectrumSample, frequency_reponse)
+    dish_manager_spectrum_sample = dish_manager_proxy.spectrumSample
+    np.testing.assert_array_equal(spfrx_device_proxy.spectrumSample, dish_manager_spectrum_sample)
     spfrx_device_proxy.unsubscribe_event(event_id)
