@@ -222,7 +222,7 @@ class SetOperateModeAction(Action):
             waiting_callback,
         )
 
-        spf_command = FannedOutTangoCommand(
+        self.spf_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPF",
             command_name="SetOperateMode",
@@ -231,7 +231,7 @@ class SetOperateModeAction(Action):
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
         )
-        ds_command = FannedOutTangoLongRunningCommand(
+        self.ds_command = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="SetPointMode",
@@ -240,10 +240,15 @@ class SetOperateModeAction(Action):
             progress_callback=self._progress_callback,
         )
 
+        # Build a default handler with both commands so self.handler exists for the
+        # band-check failure path and for any chaining before execute() runs.
+        self._build_handler([self.spf_command, self.ds_command])
+
+    def _build_handler(self, fanned_out_commands):
         self._handler = ActionHandler(
             self.logger,
             "SetOperateMode",
-            [spf_command, ds_command],
+            fanned_out_commands,
             # use _dish_manager_cm._component_state to pass the dict by reference
             # _dish_manager_cm.component_state will use the tango base property which will do a
             # deep copy
@@ -266,6 +271,31 @@ class SetOperateModeAction(Action):
                 result_code=ResultCode.NOT_ALLOWED,
             )
             return
+
+        # Only fan out a command if its sub-device is not already in the desired state.
+        fanned_out_commands = []
+
+        spf_state = self.dish_manager_cm.sub_component_managers["SPF"]._component_state
+        if (
+            not self.dish_manager_cm.is_device_ignored("SPF")
+            and spf_state.get("operatingmode") != SPFOperatingMode.OPERATE
+        ):
+            fanned_out_commands.append(self.spf_command)
+
+        ds_state = self.dish_manager_cm.sub_component_managers["DS"]._component_state
+        if ds_state.get("operatingmode") != DSOperatingMode.POINT:
+            fanned_out_commands.append(self.ds_command)
+
+        # Nothing to do: DS and SPF are already in their desired states.
+        if not fanned_out_commands:
+            self.handler._trigger_success(
+                task_callback,
+                task_abort_event,
+                "DS and SPF already in operate state, SetOperateMode completed",
+            )
+            return
+
+        self._build_handler(fanned_out_commands)
         return super().execute(task_callback, task_abort_event, completed_response_msg)
 
 

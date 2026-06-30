@@ -10,6 +10,7 @@ from ska_control_model import AdminMode, ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
+    SetOperateModeAction,
     SetStandbyLPModeAction,
     TrackLoadStaticOffAction,
 )
@@ -246,12 +247,9 @@ class TestCommandActions:
             "SPFRX.ConfigureBand2 completed",
             "ConfigureBand2 complete. Triggering on success action.",
             # Then SetOperateMode
-            "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
-            "Awaiting SPF operatingmode change to OPERATE",
+            "Fanned out commands: DS.SetPointMode",
             "Awaiting DS operatingmode change to POINT",
             "Awaiting dishmode change to OPERATE",
-            "SPF operatingmode changed to OPERATE",
-            "SPF.SetOperateMode completed",
             "DS operatingmode changed to POINT",
             "DS.SetPointMode completed",
             "SetOperateMode completed.",
@@ -328,12 +326,9 @@ class TestCommandActions:
             "SPFRX.ConfigureBand completed",
             "ConfigureBand complete. Triggering on success action.",
             # Then SetOperateMode
-            "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
-            "Awaiting SPF operatingmode change to OPERATE",
+            "Fanned out commands: DS.SetPointMode",
             "Awaiting DS operatingmode change to POINT",
             "Awaiting dishmode change to OPERATE",
-            "SPF operatingmode changed to OPERATE",
-            "SPF.SetOperateMode completed",
             "DS operatingmode changed to POINT",
             "DS.SetPointMode completed",
             "SetOperateMode completed.",
@@ -420,12 +415,9 @@ class TestCommandActions:
             "SPFRX.ConfigureBand2 completed",
             "ConfigureBand2 complete. Triggering on success action.",
             # Then SetOperateMode
-            "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
-            "Awaiting SPF operatingmode change to OPERATE",
+            "Fanned out commands: DS.SetPointMode",
             "Awaiting DS operatingmode change to POINT",
             "Awaiting dishmode change to OPERATE",
-            "SPF operatingmode changed to OPERATE",
-            "SPF.SetOperateMode completed",
             "DS operatingmode changed to POINT",
             "DS.SetPointMode completed",
             "SetOperateMode completed.",
@@ -436,3 +428,72 @@ class TestCommandActions:
 
         assert len(result_calls) == 1
         assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed.")
+
+    @pytest.mark.unit
+    def test_set_operate_mode(self):
+        """Test SetOperateMode only fans out commands for devices not already in desired state."""
+
+        def run_scenario(spf_mode, ds_mode):
+            """Set initial DS/SPF modes, run SetOperateMode, return progress and results."""
+            task_abort_event = Event()
+            progress_updates = []
+            result_calls = []
+
+            def progress_callback(msg, user_operator=True):
+                progress_updates.append(msg)
+                # Flip both sub-devices and the dishmode once the handler starts
+                # awaiting the aggregate state. Devices already in state are no-ops.
+                if "Awaiting dishmode change to OPERATE" in msg:
+                    self.dish_manager_cm_mock.sub_component_managers["SPF"]._component_state[
+                        "operatingmode"
+                    ] = SPFOperatingMode.OPERATE
+                    self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+                        "operatingmode"
+                    ] = DSOperatingMode.POINT
+                    self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
+
+            def my_task_callback(**kwargs):
+                if kwargs.get("result") is not None:
+                    result_calls.append(kwargs.get("result"))
+
+            self.dish_manager_cm_mock._command_progress_callback = progress_callback
+            # A valid configured band is required, otherwise execution is rejected.
+            self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
+            self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.STANDBY_FP
+            self.dish_manager_cm_mock.sub_component_managers["SPF"]._component_state[
+                "operatingmode"
+            ] = spf_mode
+            self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
+                "operatingmode"
+            ] = ds_mode
+
+            SetOperateModeAction(LOGGER, self.dish_manager_cm_mock).execute(
+                my_task_callback, task_abort_event
+            )
+            return progress_updates, result_calls
+
+        # Case 1: neither device in state -> both commands fanned out
+        progress, results = run_scenario(SPFOperatingMode.STANDBY_LP, DSOperatingMode.STANDBY)
+        assert "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode" in progress
+        assert (ResultCode.OK, "SetOperateMode completed.") in results
+
+        # Case 2: SPF already in OPERATE -> only DS fanned out
+        progress, results = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.STANDBY)
+        assert "Fanned out commands: DS.SetPointMode" in progress
+        assert not any("SPF.SetOperateMode" in msg for msg in progress)
+        assert (ResultCode.OK, "SetOperateMode completed.") in results
+
+        # Case 3: DS already in POINT -> only SPF fanned out
+        progress, results = run_scenario(SPFOperatingMode.STANDBY_LP, DSOperatingMode.POINT)
+        assert "Fanned out commands: SPF.SetOperateMode" in progress
+        assert not any("DS.SetPointMode" in msg for msg in progress)
+        assert (ResultCode.OK, "SetOperateMode completed.") in results
+
+        # Case 4: both already in state -> nothing fanned out, success triggered directly
+        progress, results = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.POINT)
+        assert not any(msg.startswith("Fanned out commands") for msg in progress)
+        assert "DS and SPF already in operate state, SetOperateMode completed" in progress
+        assert (
+            ResultCode.OK,
+            "DS and SPF already in operate state, SetOperateMode completed",
+        ) in results
