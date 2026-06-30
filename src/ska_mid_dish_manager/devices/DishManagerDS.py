@@ -1336,10 +1336,10 @@ class DishManager(SKAController):
         "[6152-7176]: P_off,XY real (1025 floats), "
         "[7177-8201]: P_off,XY imaginary (1025 floats). ",
     )
-    def frequencyResponse(self):
+    def spectrumSample(self):
         """Returns the SPFRX spectrum sample data."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
-        return spfrx_com_man.read_attribute_value("spectrumsample")
+        return spfrx_com_man.read_attribute_value("spectrumsample", log_read=False)
 
     @attribute(dtype=(float,), access=AttrWriteType.WRITE)
     def noiseDiodeConfig(self):

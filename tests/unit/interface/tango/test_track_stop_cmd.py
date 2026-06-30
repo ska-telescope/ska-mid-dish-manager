@@ -30,7 +30,7 @@ def test_track_stop_cmd_fails_in_wrong_pointing_state(
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
 
     pointing_state_event_store = event_store_class()
-    lrc_status_event_store = event_store_class()
+    lrc_finished_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "pointingState",
@@ -39,16 +39,20 @@ def test_track_stop_cmd_fails_in_wrong_pointing_state(
     )
 
     device_proxy.subscribe_event(
-        "Status",
+        "lrcFinished",
         tango.EventType.CHANGE_EVENT,
-        lrc_status_event_store,
+        lrc_finished_event_store,
     )
 
     ds_cm._update_component_state(pointingstate=current_pointing_state)
     pointing_state_event_store.wait_for_value(current_pointing_state, timeout=5)
 
     [[_], [unique_id]] = device_proxy.TrackStop()
-    lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
+    expected_result = '[6, "Command is not allowed"]'
+
+    lrc_finished_event_store.wait_for_finished_command_result(
+        unique_id, expected_result, timeout=5
+    )
 
 
 @pytest.mark.unit

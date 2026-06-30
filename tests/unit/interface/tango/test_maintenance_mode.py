@@ -75,24 +75,19 @@ def test_exception_on_callback(dish_manager_resources, event_store_class):
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
 
     result_event_store = event_store_class()
-    lrc_status_event_store = event_store_class()
 
+    # We only need lrcFinished to prove the command failed and returned the correct error
     attr_cb_mapping = {
         "lrcFinished": result_event_store,
-        "Status": lrc_status_event_store,
     }
     subscriptions = setup_subscriptions(device_proxy, attr_cb_mapping)
 
-    # Configure the mock to raise a Tango exception when execute_command is called
     ds_cm.execute_command.return_value = TaskStatus.FAILED, "Simulated failure"
 
     [[_], [unique_id]] = device_proxy.SetMaintenanceMode()
-    results = result_event_store.get_queue_values()
 
-    _, result_msg = results[0][1]
-    assert result_msg == '[3, "SetMaintenanceMode failed"]'
+    expected_result = '[3, "SetMaintenanceMode failed"]'
 
-    expected_status = [unique_id, "FAILED"]
-    lrc_status_event_store.wait_for_value(tuple(expected_status), timeout=10)
+    result_event_store.wait_for_finished_command_result(unique_id, expected_result, timeout=10)
 
     remove_subscriptions(subscriptions)

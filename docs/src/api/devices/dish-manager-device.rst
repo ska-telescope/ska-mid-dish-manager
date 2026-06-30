@@ -3,6 +3,144 @@ DishManager Tango Device
 ========================
 The Dish Manager of the Dish LMC subsystem.
 
+Properties
+----------
+.. index::
+	single: B5DCDeviceFqdn; DishManager.B5DCDeviceFqdn
+
+.. py:attribute:: B5DCDeviceFqdn
+	:module: DishManager
+
+	:data type: DevString
+
+.. index::
+	single: DSDeviceFqdn; DishManager.DSDeviceFqdn
+
+.. py:attribute:: DSDeviceFqdn
+	:module: DishManager
+
+	:data type: DevString
+	:default value: mid-dish/ds-manager/SKA001
+
+.. index::
+	single: DefaultActionTimeoutSeconds; DishManager.DefaultActionTimeoutSeconds
+
+.. py:attribute:: DefaultActionTimeoutSeconds
+	:module: DishManager
+
+	The default timeout value (in seconds) for each fanned out action.
+
+	:data type: DevDouble
+	:default value: 120
+
+.. index::
+	single: DefaultWatchdogTimeout; DishManager.DefaultWatchdogTimeout
+
+.. py:attribute:: DefaultWatchdogTimeout
+	:module: DishManager
+
+	:data type: DevDouble
+
+.. index::
+	single: DishId; DishManager.DishId
+
+.. py:attribute:: DishId
+	:module: DishManager
+
+	:data type: DevString
+	:default value: SKA001
+
+.. index::
+	single: GroupDefinitions; DishManager.GroupDefinitions
+
+.. py:attribute:: GroupDefinitions
+	:module: DishManager
+
+	:data type: DevVarStringArray
+
+.. index::
+	single: LoggingLevelDefault; DishManager.LoggingLevelDefault
+
+.. py:attribute:: LoggingLevelDefault
+	:module: DishManager
+
+	:data type: DevUShort
+	:default value: 4
+
+.. index::
+	single: LoggingTargetsDefault; DishManager.LoggingTargetsDefault
+
+.. py:attribute:: LoggingTargetsDefault
+	:module: DishManager
+
+	:data type: DevVarStringArray
+	:default value: ['tango::logger']
+
+.. index::
+	single: MaxCapabilities; DishManager.MaxCapabilities
+
+.. py:attribute:: MaxCapabilities
+	:module: DishManager
+
+	:data type: DevVarStringArray
+
+.. index::
+	single: MeanWindSpeedThreshold; DishManager.MeanWindSpeedThreshold
+
+.. py:attribute:: MeanWindSpeedThreshold
+	:module: DishManager
+
+	Threshold value for mean wind speed (in m/s) used to trigger stow.
+
+	:data type: DevDouble
+	:default value: 11.1
+
+.. index::
+	single: SPFDeviceFqdn; DishManager.SPFDeviceFqdn
+
+.. py:attribute:: SPFDeviceFqdn
+	:module: DishManager
+
+	:data type: DevString
+	:default value: mid-dish/simulator-spfc/SKA001
+
+.. index::
+	single: SPFRxDeviceFqdn; DishManager.SPFRxDeviceFqdn
+
+.. py:attribute:: SPFRxDeviceFqdn
+	:module: DishManager
+
+	:data type: DevString
+	:default value: mid-dish/simulator-spfrx/SKA001
+
+.. index::
+	single: SkaLevel; DishManager.SkaLevel
+
+.. py:attribute:: SkaLevel
+	:module: DishManager
+
+	:data type: DevShort
+	:default value: 4
+
+.. index::
+	single: WMSDeviceNames; DishManager.WMSDeviceNames
+
+.. py:attribute:: WMSDeviceNames
+	:module: DishManager
+
+	:data type: DevVarStringArray
+
+.. index::
+	single: WindGustThreshold; DishManager.WindGustThreshold
+
+.. py:attribute:: WindGustThreshold
+	:module: DishManager
+
+	Threshold value for wind gust speed (in m/s) used to trigger stow.
+
+	:data type: DevDouble
+	:default value: 16.9
+
 Attributes
 ----------
 .. index::
@@ -36,7 +174,6 @@ Attributes
 	:module: DishManager
 
 	[0] Timestamp
-
 	[1] Azimuth
 	[2] Elevation
 
@@ -88,7 +225,6 @@ Attributes
 	:module: DishManager
 
 	Timeout (in seconds) to be used for each action. On each action DishManager will wait
-
 	for the timeout duration for expected subservient device attribute updates. A value
 	<= 0 will disable waiting and no monitoring will occur, commands will be fanned out to
 	their respective subsevient devices and then the DishManager command will return as
@@ -109,8 +245,6 @@ Attributes
 	It may interpret the current device condition and condition of all managed
 	devices to set this. Most possibly an aggregate attribute.
 
-	:return: Admin Mode of the device
-
 	:access: READ_WRITE
 	:data type: DevEnum
 	:data format: SCALAR
@@ -122,7 +256,6 @@ Attributes
 	:module: DishManager
 
 	The current attenuation value for attenuator 1 on the
-
 	H/X polarization.
 
 	:access: READ_WRITE
@@ -136,7 +269,6 @@ Attributes
 	:module: DishManager
 
 	The current attenuation value for attenuator 1 on the
-
 	V/Y polarization.
 
 	:access: READ_WRITE
@@ -150,7 +282,6 @@ Attributes
 	:module: DishManager
 
 	The current attenuation value for attenuator 2 on the
-
 	H/X polarization.
 
 	:access: READ_WRITE
@@ -164,7 +295,6 @@ Attributes
 	:module: DishManager
 
 	The current attenuation value for attenuator 2 on the
-
 	V/Y polarization.
 
 	:access: READ_WRITE
@@ -178,7 +308,6 @@ Attributes
 	:module: DishManager
 
 	The current total attenuation value across both attenuators on the
-
 	H/X polarization.
 
 	:access: READ_WRITE
@@ -192,7 +321,6 @@ Attributes
 	:module: DishManager
 
 	The current total attenuation value across both attenuators on the
-
 	V/Y polarization.
 
 	:access: READ_WRITE
@@ -206,7 +334,6 @@ Attributes
 	:module: DishManager
 
 	Flag to enable or disable auto wind stow on wind speed
-
 	or wind gust for values exeeding the configured threshold.
 
 	:access: READ_WRITE
@@ -419,6 +546,18 @@ Attributes
 	:data format: SCALAR
 
 .. index::
+	single: b5dcServerConnectionState; DishManager.b5dcServerConnectionState
+
+.. py:attribute:: b5dcServerConnectionState
+	:module: DishManager
+
+	Return the status of the connection of the B5dc Proxy device to the B5dc server.
+
+	:access: READ
+	:data type: DevEnum
+	:data format: SCALAR
+
+.. index::
 	single: band0PointingModelParams; DishManager.band0PointingModelParams
 
 .. py:attribute:: band0PointingModelParams
@@ -427,6 +566,7 @@ Attributes
 	Parameters for (local) Band 0 pointing models used by Dish to do pointing corrections.
 
 	When writing to this attribute, the selected band for correction will be set to B0.
+
 	Band pointing model parameters are:
 	[0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
 	[9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
@@ -446,6 +586,7 @@ Attributes
 	Parameters for (local) Band 1 pointing models used by Dish to do pointing corrections.
 
 	When writing to this attribute, the selected band for correction will be set to B1.
+
 	Band pointing model parameters are:
 	[0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
 	[9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
@@ -477,6 +618,7 @@ Attributes
 	Parameters for (local) Band 2 pointing models used by Dish to do pointing corrections.
 
 	When writing to this attribute, the selected band for correction will be set to B2.
+
 	Band pointing model parameters are:
 	[0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
 	[9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
@@ -508,6 +650,7 @@ Attributes
 	Parameters for (local) Band 3 pointing models used by Dish to do pointing corrections.
 
 	When writing to this attribute, the selected band for correction will be set to B3.
+
 	Band pointing model parameters are:
 	[0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
 	[9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
@@ -539,6 +682,7 @@ Attributes
 	Parameters for (local) Band 4 pointing models used by Dish to do pointing corrections.
 
 	When writing to this attribute, the selected band for correction will be set to B4.
+
 	Band pointing model parameters are:
 	[0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
 	[9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
@@ -619,8 +763,6 @@ Attributes
 
 	Read the Build State of the device.
 
-	:return: the build state of the device
-
 	:access: READ
 	:data type: DevString
 	:data format: SCALAR
@@ -661,8 +803,6 @@ Attributes
 	"STANDBY" or "ON", following the start of the Off(), Standby(), On() or Reset()
 	long running commands.
 
-	:return: commanded operating state string.
-
 	:access: READ
 	:data type: DevString
 	:data format: SCALAR
@@ -674,7 +814,6 @@ Attributes
 	:module: DishManager
 
 	[0] Pointing error
-
 	[1] Time period
 
 	:access: WRITE
@@ -706,8 +845,6 @@ Attributes
 	Tango Device accepts only from a ‘local’ client and ignores commands and
 	queries received from TM or any other ‘remote’ clients. The Local clients
 	has to release LOCAL control before REMOTE clients can take control again.
-
-	:return: Control Mode of the device
 
 	:access: READ_WRITE
 	:data type: DevEnum
@@ -776,6 +913,18 @@ Attributes
 	:data format: SCALAR
 
 .. index::
+	single: dscConnectionState; DishManager.dscConnectionState
+
+.. py:attribute:: dscConnectionState
+	:module: DishManager
+
+	Return the status of the connection of the DSManager device to the dish controller.
+
+	:access: READ
+	:data type: DevEnum
+	:data format: SCALAR
+
+.. index::
 	single: dscCtrlState; DishManager.dscCtrlState
 
 .. py:attribute:: dscCtrlState
@@ -806,7 +955,6 @@ Attributes
 	:module: DishManager
 
 	DSC Power Limit (kW). Note that this attribute can also be set by calling
-
 	SetPowerMode. This value does not reflect the power limit in reality because
 	the current PowerLimit(kW) is not reported as it cannot be read from the DSC.
 
@@ -887,17 +1035,17 @@ Attributes
 	:data format: SCALAR
 
 .. index::
-	single: frequencyResponse; DishManager.frequencyResponse
+	single: spectrumSample; DishManager.spectrumSample
 
-.. py:attribute:: frequencyResponse
+.. py:attribute:: spectrumSample
 	:module: DishManager
 
-	Returns the frequencyResponse.
+	Note: This attribute maps to the spectrum sample attribute from the SPFRxReport the SPFRX spectrum sample data Spectrum sample data from the spectrometer as a packed DevFloat array. The array contains a UTC timestamp followed by multiple spectral datasets. Index layout: [0-1]: UTC timestamp in seconds, [2-1026]: P_on,X (1025 floats), [1027-2051]: P_on,Y (1025 floats), [2052-3076]: P_on,XY real (1025 floats), [3077-4101]: P_on,XY imaginary (1025 floats), [4102-5126]: P_off,X (1025 floats), [5127-6151]: P_off,Y (1025 floats), [6152-7176]: P_off,XY real (1025 floats), [7177-8201]: P_off,XY imaginary (1025 floats).
 
 	:access: READ
 	:data type: DevDouble
 	:data format: SPECTRUM
-	:max_dim_x: 1024
+	:max_dim_x: 8202
 
 .. index::
 	single: hPolRfPowerIn; DishManager.hPolRfPowerIn
@@ -924,6 +1072,18 @@ Attributes
 	:data format: SCALAR
 
 .. index::
+	single: healthInfo; DishManager.healthInfo
+
+.. py:attribute:: healthInfo
+	:module: DishManager
+
+	Report the reason for healthstate failures.
+
+	:access: READ
+	:data type: DevString
+	:data format: SPECTRUM
+
+.. index::
 	single: healthState; DishManager.healthState
 
 .. py:attribute:: healthState
@@ -933,8 +1093,6 @@ Attributes
 
 	It interprets the current device condition and condition of
 	all managed devices to set this. Most possibly an aggregate attribute.
-
-	:return: Health State of the device
 
 	:access: READ
 	:data type: DevEnum
@@ -983,7 +1141,6 @@ Attributes
 	:module: DishManager
 
 	Check the SAT.RM module to see if
-
 	the k- value is locked. If not false is returned.
 
 	:access: READ
@@ -1063,8 +1220,6 @@ Attributes
 	Initialises to LoggingLevelDefault on startup.
 	See :py:class:`~ska_control_model.LoggingLevel`
 
-	:return:  Logging level of the device.
-
 	:access: READ_WRITE
 	:data type: DevEnum
 	:data format: SCALAR
@@ -1079,8 +1234,6 @@ Attributes
 
 	Note that this excludes the handlers provided by the ska_ser_logging
 	library defaults - initialises to LoggingTargetsDefault on startup.
-
-	:return:  Logging level of the device.
 
 	:access: READ_WRITE
 	:data type: DevString
@@ -1110,8 +1263,6 @@ Attributes
 
 	Read info of the finished long running commands.
 
-	:return: a list of info JSON blobs of the finished long running commands.
-
 	:access: READ
 	:data type: DevString
 	:data format: SPECTRUM
@@ -1124,9 +1275,6 @@ Attributes
 	:module: DishManager
 
 	Return supported protocol versions.
-
-	:return: A tuple containing the lower and upper bounds of supported long running
-		command protocol versions.
 
 	:access: READ
 	:data type: DevLong64
@@ -1168,7 +1316,6 @@ Attributes
 	:module: DishManager
 
 	The average wind speed in m/s of the last 10 minutes
-
 	calculated from the connected weather stations.
 
 	:access: READ
@@ -1196,6 +1343,7 @@ Attributes
 	Noise diode mode.
 
 	0: OFF, 1: PERIODIC, 2: PSEUDO-RANDOM
+
 	Note: This attribute does not persist after a power cycle. A default value is included
 	as a device property on the SPFRx.
 
@@ -1212,6 +1360,7 @@ Attributes
 	Periodic noise diode pars (units are in time quanta).
 
 	[0]: period, [1]: duty cycle, [2]: phase shift
+
 	Note: This attribute does not persist after a power cycle. A default value is included
 	as a device property on the SPFRx.
 
@@ -1227,7 +1376,6 @@ Attributes
 	:module: DishManager
 
 	Number of desiredPointing write values that the buffer has space for.
-
 	Note: desiredPointing write values are stored by Dish in a buffer for application at the time specified in each desiredPointing record.
 
 	:access: READ
@@ -1253,7 +1401,6 @@ Attributes
 	:module: DishManager
 
 	[0] Timestamp
-
 	[1] Azimuth
 	[2] Elevation
 	[3] Azimuth speed
@@ -1287,7 +1434,6 @@ Attributes
 	:module: DishManager
 
 	Timestamp of i-th coordinate in table (max 1000 coordinates) given in milliseconds since TAI epoch, representing time at which Dish should track i-th coordinate.
-
 	Azimuth of i-th coordinate in table (max 1000 points) given in degrees.
 	Elevation of i-th coordinate in table (max points coordinates) given in degrees
 
@@ -1305,6 +1451,7 @@ Attributes
 	Pseudo random noise diode pars (units are in time quanta).
 
 	[0]: binary polynomial, [1]: seed, [2]: dwell
+
 	Note: This attribute does not persist after a power cycle. A default value is included
 	as a device property on the SPFRx.
 
@@ -1409,8 +1556,6 @@ Attributes
 	both modes, while others will have simulators that set simulationMode
 	to True while the real devices always set simulationMode to False.
 
-	:return: Simulation Mode of the device.
-
 	:access: READ_WRITE
 	:data type: DevEnum
 	:data format: SCALAR
@@ -1422,10 +1567,12 @@ Attributes
 	:module: DishManager
 
 	Spectral inversion to correct the frequency sense of the currently
-
 	configured band with respect to the RF signal.
+
 	Logic 0: Output signal in the same frequency sense as input.
+
 	Logic 1: Output signal in the opposite frequency sense as input.
+
 	Setting this attribute to true will set the
 	spectrum to be flipped.
 
@@ -1466,8 +1613,6 @@ Attributes
 	Read the Test Mode of the device.
 
 	Either no test mode or an indication of the test mode.
-
-	:return: Test Mode of the device
 
 	:access: READ_WRITE
 	:data type: DevEnum
@@ -1528,7 +1673,6 @@ Attributes
 	:module: DishManager
 
 	Selects track table load mode.
-
 	With ADD selected, Dish will add the coordinate set given in programTrackTable attribute to the list of pointing coordinates already loaded in ACU.
 	With NEW selected, Dish will delete the list of pointing coordinates previously loaded in ACU when new coordinates are given in the programTrackTable attribute.
 
@@ -1568,8 +1712,6 @@ Attributes
 
 	Read the Version Id of the device.
 
-	:return: the version id of the device
-
 	:access: READ
 	:data type: DevString
 	:data format: SCALAR
@@ -1593,7 +1735,6 @@ Attributes
 	:module: DishManager
 
 	The maximum wind speed in m/s of the last 3 seconds
-
 	calculated from the connected weather stations.
 
 	:access: READ
@@ -1622,13 +1763,21 @@ Commands
 
 	Abort currently executing long running command on DishManager including stopping dish movement and transitioning dishMode to StandbyFP. For details consult DishManager documentation
 
+	:returns: A tuple containing a return code and a string
+		message indicating status. The message is for
+		information purpose only.
+
 .. index::
 	single: AbortCommands; DishManager.AbortCommands
 
 .. py:method:: AbortCommands() -> DevVarLongStringArray
 	:module: DishManager
 
-	Abort commands
+	No input parameter (DevVoid)
+
+	:returns: A tuple containing a return code and a string
+		message indicating status. The message is for
+		information purpose only.
 
 .. index::
 	single: ApplyPointingModel; DishManager.ApplyPointingModel
@@ -1637,11 +1786,11 @@ Commands
 	:module: DishManager
 
 	The command accepts a JSON input (value) containing data to update a particular
-
 	band's (b1-b5b). The following 18 coefficients need to be within the JSON object:
 	[0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
 	[9] ABA, [10] ABphi, [11] IE, [12] ECEC, [13] ECES, [14] HECE4,
 	[15] HESE4, [16] HECE8, [17] HESE8.
+
 	The command only looks for the antenna, band and coefficients
 	- everything else is ignored. A typical structure would be:
 	"interface": "...",
@@ -1666,7 +1815,6 @@ Commands
 	:module: DishManager
 
 	The command accepts a JSON string containing data to configure the SPFRx.
-
 	The JSON structure is as follows:
 	{
 	"receiver_band": <string>,
@@ -1700,6 +1848,9 @@ Commands
 	The 'dishes' field is a list of dish names that the SPFRx should be configured for,
 	if 'all' is specified in the list, the SPFRx will be configured for all dishes.
 
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
+
 .. index::
 	single: ConfigureBand1; DishManager.ConfigureBand1
 
@@ -1707,6 +1858,9 @@ Commands
 	:module: DishManager
 
 	If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band being configured, and the band counters are reset. (Should be default to False).
+
+	:returns: A tuple containing a return code and a string
+		message indicating status.
 
 .. index::
 	single: ConfigureBand2; DishManager.ConfigureBand2
@@ -1716,6 +1870,9 @@ Commands
 
 	If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band being configured, and the band counters are reset. (Should be default to False).
 
+	:returns: A tuple containing a return code and a string
+		message indicating status.
+
 .. index::
 	single: ConfigureBand3; DishManager.ConfigureBand3
 
@@ -1723,6 +1880,9 @@ Commands
 	:module: DishManager
 
 	If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band being configured, and the band counters are reset. (Should be default to False).
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: ConfigureBand4; DishManager.ConfigureBand4
@@ -1732,6 +1892,9 @@ Commands
 
 	If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band being configured, and the band counters are reset. (Should be default to False).
 
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
+
 .. index::
 	single: ConfigureBand5a; DishManager.ConfigureBand5a
 
@@ -1739,6 +1902,9 @@ Commands
 	:module: DishManager
 
 	If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band being configured, and the band counters are reset. (Should be default to False).
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: ConfigureBand5b; DishManager.ConfigureBand5b
@@ -1748,13 +1914,27 @@ Commands
 
 	If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band being configured, and the band counters are reset. (Should be default to False).
 
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
+
+.. index::
+	single: ConfigureBand6; DishManager.ConfigureBand6
+
+.. py:method:: ConfigureBand6() -> DevVarLongStringArray
+	:module: DishManager
+
+	Used by DVS for their KU band, sets IndexerPosition.B6 (7) on the DSC.
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
+
 .. index::
 	single: DebugDevice; DishManager.DebugDevice
 
 .. py:method:: DebugDevice() -> DevUShort
 	:module: DishManager
 
-	Debug device
+	No input parameter (DevVoid)
 
 	:returns: The TCP port the debugger is listening on.
 
@@ -1764,7 +1944,10 @@ Commands
 .. py:method:: EndScan() -> DevVarLongStringArray
 	:module: DishManager
 
-	End scan
+	This command clears out the scanID from DishManager.
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: ExecutePendingOperations; DishManager.ExecutePendingOperations
@@ -1772,7 +1955,9 @@ Commands
 .. py:method:: ExecutePendingOperations() -> DevVoid
 	:module: DishManager
 
-	Execute pending operations
+	No input parameter (DevVoid)
+
+	:returns: No output parameter (DevVoid)
 
 .. index::
 	single: FlushCommandQueue; DishManager.FlushCommandQueue
@@ -1780,7 +1965,9 @@ Commands
 .. py:method:: FlushCommandQueue() -> DevVoid
 	:module: DishManager
 
-	Flush command queue
+	No input parameter (DevVoid)
+
+	:returns: No output parameter (DevVoid)
 
 .. index::
 	single: GetComponentStates; DishManager.GetComponentStates
@@ -1788,7 +1975,7 @@ Commands
 .. py:method:: GetComponentStates() -> DevString
 	:module: DishManager
 
-	Get component states
+	No input parameter (DevVoid)
 
 	:returns: Retrieve the states of SPF, SPFRx and DS as DishManager sees it.
 
@@ -1798,7 +1985,9 @@ Commands
 .. py:method:: GetVersionInfo() -> DevVarStringArray
 	:module: DishManager
 
-	Get version info
+	No input parameter (DevVoid)
+
+	:returns: The result code and the command unique ID
 
 .. index::
 	single: Init; DishManager.Init
@@ -1806,7 +1995,18 @@ Commands
 .. py:method:: Init() -> DevVoid
 	:module: DishManager
 
-	Init
+	Reinitialise the Tango device.
+
+.. index::
+	single: InterlockAck; DishManager.InterlockAck
+
+.. py:method:: InterlockAck() -> DevVarLongStringArray
+	:module: DishManager
+
+	Clear the interlock status once interlocks or E-Stops have been cleared on the dish structure controller
+
+	:returns: A tuple containing a return code and a string
+		message indicating status.
 
 .. index::
 	single: IsCapabilityAchievable; DishManager.IsCapabilityAchievable
@@ -1824,7 +2024,10 @@ Commands
 .. py:method:: Off() -> DevVarLongStringArray
 	:module: DishManager
 
-	Off
+	Not implemented.
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: On; DishManager.On
@@ -1832,7 +2035,10 @@ Commands
 .. py:method:: On() -> DevVarLongStringArray
 	:module: DishManager
 
-	On
+	Not implemented.
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: Reset; DishManager.Reset
@@ -1840,7 +2046,23 @@ Commands
 .. py:method:: Reset() -> DevVarLongStringArray
 	:module: DishManager
 
-	Reset
+	Not implemented.
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
+
+.. index::
+	single: ResetComponentConnection; DishManager.ResetComponentConnection
+
+.. py:method:: ResetComponentConnection(DevString) -> DevVarLongStringArray
+	:module: DishManager
+
+	Reset connections between the Dish Manager and a sub-device.
+
+	:param device_name: sub-device to reconnect [SPF, SPFRX, DS, B5DC]
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: ResetTrackTable; DishManager.ResetTrackTable
@@ -1849,6 +2071,9 @@ Commands
 	:module: DishManager
 
 	This command resets the program track table on the controller
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: ResetWatchdogTimer; DishManager.ResetWatchdogTimer
@@ -1866,7 +2091,10 @@ Commands
 .. py:method:: Scan(DevString) -> DevVarLongStringArray
 	:module: DishManager
 
-	Scan
+	DishManager records the scanID for an ongoing scan.
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: SetFrequency; DishManager.SetFrequency
@@ -1876,7 +2104,11 @@ Commands
 
 	Set the frequency on the band 5 down converter.
 
+	:param frequency: frequency to set [B5dcFrequency.F_11_1_GHZ(1),
 	B5dcFrequency.F_13_2_GHZ(2) or B5dcFrequency.F_13_86_GHZ(3)]
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: SetHPolAttenuation; DishManager.SetHPolAttenuation
@@ -1886,13 +2118,21 @@ Commands
 
 	Set the horizontal polarization attenuation on the band 5 down converter.
 
+	:param attenuation_db: value to set in dB [0-31dB]
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
+
 .. index::
 	single: SetKValue; DishManager.SetKValue
 
 .. py:method:: SetKValue(DevLong64) -> DevVarLongStringArray
 	:module: DishManager
 
-	Set k value
+	Set the K value on the SPFRx.
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: SetMaintenanceMode; DishManager.SetMaintenanceMode
@@ -1900,7 +2140,10 @@ Commands
 .. py:method:: SetMaintenanceMode() -> DevVarLongStringArray
 	:module: DishManager
 
-	Set maintenance mode
+	This command triggers the Dish to transition to the MAINTENANCE Dishmode.
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: SetOperateMode; DishManager.SetOperateMode
@@ -1910,13 +2153,19 @@ Commands
 
 	SetOperateMode is a deprecated command, it is recommended to use ConfigureBand or ConfigureBand<N> command instead to trigger the transition to OPERATE dish mode.
 
+	:returns: A tuple containing a return code and a string
+		message indicating status.
+
 .. index::
 	single: SetStandbyFPMode; DishManager.SetStandbyFPMode
 
 .. py:method:: SetStandbyFPMode() -> DevVarLongStringArray
 	:module: DishManager
 
-	Set standby f p mode
+	This command triggers the Dish to transition to the STANDBY‐FP Dishmode.
+
+	:returns: A tuple containing a return code and a string
+		message indicating status.
 
 .. index::
 	single: SetStandbyLPMode; DishManager.SetStandbyLPMode
@@ -1924,7 +2173,10 @@ Commands
 .. py:method:: SetStandbyLPMode() -> DevVarLongStringArray
 	:module: DishManager
 
-	Set standby l p mode
+	This command triggers the Dish to transition to the STANDBY‐LP Dishmode.
+
+	:returns: A tuple containing a return code and a string
+		message indicating status.
 
 .. index::
 	single: SetStowMode; DishManager.SetStowMode
@@ -1932,7 +2184,10 @@ Commands
 .. py:method:: SetStowMode() -> DevVarLongStringArray
 	:module: DishManager
 
-	Set stow mode
+	This command triggers the Dish to transition to STOW.
+
+	:returns: A tuple containing a return code and a string
+		message indicating status.
 
 .. index::
 	single: SetVPolAttenuation; DishManager.SetVPolAttenuation
@@ -1942,15 +2197,22 @@ Commands
 
 	Set the vertical polarization attenuation on the band 5 down converter.
 
+	:param attenuation_db: value to set in dB [0-31dB]
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
+
 .. index::
 	single: Slew; DishManager.Slew
 
 .. py:method:: Slew(DevVarFloatArray) -> DevVarLongStringArray
 	:module: DishManager
 
-	[0]: Azimuth
-
+	Slew to Az/EL: [0]: Azimuth
 	[1]: Elevation
+
+	:returns: A tuple containing a return code and a string
+		message indicating status.
 
 .. index::
 	single: Standby; DishManager.Standby
@@ -1958,7 +2220,10 @@ Commands
 .. py:method:: Standby() -> DevVarLongStringArray
 	:module: DishManager
 
-	Standby
+	Not implemented.
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
 
 .. index::
 	single: StartCommunication; DishManager.StartCommunication
@@ -1968,6 +2233,8 @@ Commands
 
 	Starts communication with subdevices and starts the watchdog timer, if it is configured via `watchdogTimeout` attribute.
 
+	:returns: No output parameter (DevVoid)
+
 .. index::
 	single: StopCommunication; DishManager.StopCommunication
 
@@ -1976,13 +2243,17 @@ Commands
 
 	Stops communication with subdevices and stops the watchdog timer, if it is active.
 
+	:returns: No output parameter (DevVoid)
+
 .. index::
 	single: SyncComponentStates; DishManager.SyncComponentStates
 
 .. py:method:: SyncComponentStates() -> DevVoid
 	:module: DishManager
 
-	Sync component states
+	Sync each subservient device componentstate with the dish manager component state.
+
+	:returns: No output parameter (DevVoid)
 
 .. index::
 	single: Synchronise; DishManager.Synchronise
@@ -1990,7 +2261,9 @@ Commands
 .. py:method:: Synchronise() -> DevVoid
 	:module: DishManager
 
-	Synchronise
+	Not Implemented.
+
+	:returns: No output parameter (DevVoid)
 
 .. index::
 	single: Track; DishManager.Track
@@ -1998,7 +2271,10 @@ Commands
 .. py:method:: Track() -> DevVarLongStringArray
 	:module: DishManager
 
-	Track
+	Executes TrackStart on the DSC.
+
+	:returns: A tuple containing a return code and a string
+		message indicating status.
 
 .. index::
 	single: TrackLoadStaticOff; DishManager.TrackLoadStaticOff
@@ -2012,10 +2288,15 @@ Commands
 	between tracks. The static offset introduces a positional adjustment to facilitate
 	reference pointing and the five-point calibration. The static offsets are added the
 	output of the interpolator before the correction of the static pointing model.
+
 	Note: If the static pointing correction is switched off, the static offsets remain as
 	an offset to the Azimuth and Elevation positions and need to be set to zero manually.
+
 	Static offset parameters are:
 	[0] Off_Xel, [1] Off_El
+
+	:returns: A tuple containing a return code and a string
+		message indicating status.
 
 .. index::
 	single: TrackStop; DishManager.TrackStop
@@ -2023,4 +2304,7 @@ Commands
 .. py:method:: TrackStop() -> DevVarLongStringArray
 	:module: DishManager
 
-	Track stop
+	Executes TrackStop on the DSC.
+
+	:returns: A tuple containing a return code and a string
+		message indicating status.

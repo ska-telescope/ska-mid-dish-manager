@@ -356,6 +356,7 @@ class EventStore:
         :rtype: bool
         """
         result_from_id = False
+        last_received_result = None
 
         try:
             expected_obj = json.loads(command_result)
@@ -368,6 +369,7 @@ class EventStore:
                 if not event.attr_value:
                     continue
 
+                # Ensure that the event picked off the queue is a tuple as expected
                 if not isinstance(event.attr_value.value, tuple) or not event.attr_value.value:
                     continue
 
@@ -376,6 +378,7 @@ class EventStore:
                 if last_result.get("uid") == command_id:
                     result_from_id = True
                     received_result = last_result.get("result")
+                    last_received_result = received_result
 
                     if received_result == expected_obj:
                         return True
@@ -395,8 +398,12 @@ class EventStore:
         except queue.Empty as err:
             if not result_from_id:
                 raise RuntimeError(f"Never got an LRC result from command [{command_id}]") from err
+
             raise RuntimeError(
-                f"A result was received from [{command_id}] however it was not the awaited result"
+                f"A result was received from [{command_id}]"
+                "however it was not the awaited result.\n"
+                f"Expected: {command_result}\n"
+                f"Actually Received: {last_received_result}"
             ) from err
         except json.JSONDecodeError:
             raise RuntimeError(
