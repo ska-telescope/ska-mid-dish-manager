@@ -696,6 +696,56 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Cannot change LNA power state while dish is not in operate or maintanance mode."
             )
 
+    def _stow_on_watchdog_expiry(self) -> None:
+        """Stow the dish on watchdog expiry and restart timer if still enabled."""
+        self.logger.info("Watchdog timer has expired.", extra=OPERATOR_TAG)
+        self._execute_stow_command("HeartbeatStow")
+
+    def _reenable_watchdog_timer(self) -> None:
+        """Re-enable the watchdog timer if it was disabled."""
+        if not self.watchdog_timer.is_enabled() and self.component_state["watchdogtimeout"] > 0:
+            self.logger.debug(
+                "Re-enabling watchdog timer with timeout %s seconds.",
+                self.component_state["watchdogtimeout"],
+            )
+            self.watchdog_timer.enable(timeout=self.component_state["watchdogtimeout"])
+
+    def _check_b5dc_active(self) -> bool:
+        """Check if B5DC is active based on the current band and configuration."""
+        b5dc_manager = self.sub_component_managers.get("B5DC")
+        if not b5dc_manager:
+            self.logger.info("Monitoring and control not set up for B5DC device.")
+            return False
+        return True
+
+    def generate_healthinfo(self) -> List[str]:
+        """Report the reason for healthstate failures.
+
+        TODO work out how to get the actual reasons.
+        """
+        health_info = []
+        for key, com_man in self.sub_component_managers.items():
+            health_state = com_man.component_state.get("healthstate")
+            if key == "SPF":
+                if health_state == SPFHealthState.UNKNOWN:
+                    health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
+                if health_state == SPFHealthState.FAILED:
+                    health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
+                if health_state == SPFHealthState.DEGRADED:
+                    health_info.append(
+                        f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
+                    )
+            else:
+                if health_state == HealthState.UNKNOWN:
+                    health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
+                if health_state == HealthState.FAILED:
+                    health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
+                if health_state == HealthState.DEGRADED:
+                    health_info.append(
+                        f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
+                    )
+        return health_info
+
     # ---------
     # Callbacks
     # ---------
@@ -1082,6 +1132,31 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             self._update_component_state(b5dcserverconnectionstate=b5dcserverconnectionstate)
 
+    def stow_to_maintenance_transition_callback(self, start: bool) -> None:
+        """Handle the transition from STOW to MAINTENANCE mode.
+
+        This will set the MaintenanceModeActive property to true and
+        set the dish mode to MAINTENANCE if the dish is in STOW mode.
+        If the dish is not in STOW mode, it will log a warning.
+
+        :param start: If false then callback runs when long running command is completed.
+                      If true then callback runs when long running command is started.
+        :type start: bool
+        """
+        if not start:
+            if self.component_state["dishmode"] == DishMode.STOW:
+                self.logger.debug("Releasing authority from DS.")
+                ds_cm = self.sub_component_managers["DS"]
+                ds_cm.execute_command("ReleaseAuth", None)
+                self.logger.debug("Transitioning from STOW to MAINTENANCE mode.")
+                self._set_maintenance_mode_active()
+                self._update_component_state(dishmode=DishMode.MAINTENANCE)
+            else:
+                self.logger.error(
+                    "Cannot transition to MAINTENANCE mode from %s mode.",
+                    self.component_state["dishmode"],
+                )
+
     def _aggregate_dsc_error_statuses(self, ds_component_state: dict[str, Any]):
         """Aggregate any error statuses from the DSC into one string."""
         active_errors: list[str] = []
@@ -1313,31 +1388,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback=task_callback,
         )
         return status, response
-
-    def stow_to_maintenance_transition_callback(self, start: bool) -> None:
-        """Handle the transition from STOW to MAINTENANCE mode.
-
-        This will set the MaintenanceModeActive property to true and
-        set the dish mode to MAINTENANCE if the dish is in STOW mode.
-        If the dish is not in STOW mode, it will log a warning.
-
-        :param start: If false then callback runs when long running command is completed.
-                      If true then callback runs when long running command is started.
-        :type start: bool
-        """
-        if not start:
-            if self.component_state["dishmode"] == DishMode.STOW:
-                self.logger.debug("Releasing authority from DS.")
-                ds_cm = self.sub_component_managers["DS"]
-                ds_cm.execute_command("ReleaseAuth", None)
-                self.logger.debug("Transitioning from STOW to MAINTENANCE mode.")
-                self._set_maintenance_mode_active()
-                self._update_component_state(dishmode=DishMode.MAINTENANCE)
-            else:
-                self.logger.error(
-                    "Cannot transition to MAINTENANCE mode from %s mode.",
-                    self.component_state["dishmode"],
-                )
 
     @check_communicating
     def track_cmd(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
@@ -1574,20 +1624,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.abort_tasks()
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
-
-    def _stow_on_watchdog_expiry(self) -> None:
-        """Stow the dish on watchdog expiry and restart timer if still enabled."""
-        self.logger.info("Watchdog timer has expired.", extra=OPERATOR_TAG)
-        self._execute_stow_command("HeartbeatStow")
-
-    def _reenable_watchdog_timer(self) -> None:
-        """Re-enable the watchdog timer if it was disabled."""
-        if not self.watchdog_timer.is_enabled() and self.component_state["watchdogtimeout"] > 0:
-            self.logger.debug(
-                "Re-enabling watchdog timer with timeout %s seconds.",
-                self.component_state["watchdogtimeout"],
-            )
-            self.watchdog_timer.enable(timeout=self.component_state["watchdogtimeout"])
 
     @check_communicating
     def slew(
@@ -2055,42 +2091,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_status == TaskStatus.FAILED:
             return (ResultCode.FAILED, msg)
         return (ResultCode.OK, "Successfully updated Frequency on the B5DC proxy.")
-
-    def _check_b5dc_active(self) -> bool:
-        """Check if B5DC is active based on the current band and configuration."""
-        b5dc_manager = self.sub_component_managers.get("B5DC")
-        if not b5dc_manager:
-            self.logger.info("Monitoring and control not set up for B5DC device.")
-            return False
-        return True
-
-    def generate_healthinfo(self) -> List[str]:
-        """Report the reason for healthstate failures.
-
-        TODO work out how to get the actual reasons.
-        """
-        health_info = []
-        for key, com_man in self.sub_component_managers.items():
-            health_state = com_man.component_state.get("healthstate")
-            if key == "SPF":
-                if health_state == SPFHealthState.UNKNOWN:
-                    health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
-                if health_state == SPFHealthState.FAILED:
-                    health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
-                if health_state == SPFHealthState.DEGRADED:
-                    health_info.append(
-                        f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
-                    )
-            else:
-                if health_state == HealthState.UNKNOWN:
-                    health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
-                if health_state == HealthState.FAILED:
-                    health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
-                if health_state == HealthState.DEGRADED:
-                    health_info.append(
-                        f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
-                    )
-        return health_info
 
     @check_communicating
     def interlock_acknowledge(
