@@ -407,15 +407,18 @@ class EventStore:
             while True:
                 event = self._queue.get(timeout=timeout)
                 events.append(event)
-                if not event.attr_value:
+                if not event.attr_value or event.attr_value.value is None:
                     continue
-                if not isinstance(event.attr_value.value, tuple):
-                    continue
-                if len(event.attr_value.value) != 2:
-                    continue
-                (lrc_id, _) = event.attr_value.value
-                if command_id == lrc_id and event.attr_value.name == "longrunningcommandresult":
-                    return events
+                event_value = event.attr_value.value
+                event_name = event.attr_value.name.lower()
+
+                # event_value is a tuple of JSON strings: ('{"uid": "...", ...}',
+                # '{"uid": "...", ...}')
+                if event_name == "lrcfinished":
+                    payload_str = str(event_value)
+                    if command_id in payload_str:
+                        return events
+
         except queue.Empty as err:
             event_info = [(event.attr_value.name, event.attr_value.value) for event in events]
             raise RuntimeError(

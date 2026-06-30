@@ -22,8 +22,8 @@ def test_happy_case(dish_manager_resources, event_store_class):
     result_event_store = event_store_class()
 
     attr_cb_mapping = {
-        "longRunningCommandResult": result_event_store,
-        "dishmode": dish_mode_event_store,
+        "lrcFinished": result_event_store,
+        "dishMode": dish_mode_event_store,
     }
 
     device_proxy.subscribe_event(
@@ -80,8 +80,8 @@ def test_exception_on_callback(dish_manager_resources, event_store_class):
     lrc_status_event_store = event_store_class()
 
     attr_cb_mapping = {
-        "longRunningCommandResult": result_event_store,
-        "longRunningCommandStatus": lrc_status_event_store,
+        "lrcFinished": result_event_store,
+        "lrcStatus": lrc_status_event_store,
     }
     subscriptions = setup_subscriptions(device_proxy, attr_cb_mapping)
 
