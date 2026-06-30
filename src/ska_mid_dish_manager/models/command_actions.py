@@ -35,8 +35,8 @@ from ska_mid_dish_manager.models.fanned_out_command import (
     FannedOutTangoLongRunningCommand,
 )
 from ska_mid_dish_manager.utils.action_helpers import (
-    update_task_status,
     report_task_progress,
+    update_task_status,
 )
 
 
