@@ -31,6 +31,7 @@ from tango.server import attribute, command, device_property, run
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
+    AbortCommandsCommand,
     ApplyPointingModelCommand,
     ResetComponentConnectionCommand,
     ResetTrackTableCommand,
@@ -232,6 +233,15 @@ class DishManager(SKAController):
         self.register_command_object(
             "Abort",
             AbortCommand(
+                self._command_tracker,
+                self.component_manager,
+                callback=None,
+                logger=self.logger,
+            ),
+        )
+        self.register_command_object(
+            "AbortCommands",
+            AbortCommandsCommand(
                 self._command_tracker,
                 self.component_manager,
                 callback=None,

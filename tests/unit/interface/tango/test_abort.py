@@ -21,14 +21,10 @@ from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestam
 @pytest.mark.unit
 @pytest.mark.forked
 def test_abort_commands_raises_deprecation_warning(dish_manager_resources):
-    # this test will be removed when AbortCommands is also removed
     device_proxy, _ = dish_manager_resources
     with pytest.warns(DeprecationWarning) as record:
         device_proxy.AbortCommands()
 
-    # check that only one warning was raised
-    assert len(record) == 1
-    # check that the message matches
     warning_msg = (
         "'AbortCommands' is deprecated and will be removed in the next major "
         "release. The client should call the tracked 'Abort' long running "

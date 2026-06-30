@@ -52,6 +52,50 @@ class AbortCommand(SlowCommand):
         )
 
 
+class AbortCommandsCommand(SlowCommand):
+    """A custom class for AbortCommands (Deprecated)."""
+
+    def __init__(
+        self, command_tracker, component_manager, callback, logger: logging.Logger | None = None
+    ) -> None:
+        """Initialise a new AbortCommandsCommand instance.
+
+        :param command_tracker: the device's command tracker
+        :param component_manager: the device's component manager
+        :param callback: callback to be called when this command
+            starts and finishes
+        :param logger: a logger for this command object to use
+        """
+        self._command_tracker = command_tracker
+        self._component_manager = component_manager
+        super().__init__(callback=callback, logger=logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Stateless hook for command functionality.
+
+        :param args: positional args to the component manager method
+        :param kwargs: keyword args to the component manager method
+
+        :return: A tuple containing the result code (e.g. STARTED)
+            and a string message containing a command_id (if
+            the command has been accepted) or an informational message
+            (if the command was rejected)
+        """
+        abort_sequence_command_id = self._command_tracker.new_command("AbortCommands")
+
+        status, message = self._component_manager.abort_commands(
+            functools.partial(self._command_tracker.update_command_info, abort_sequence_command_id)
+        )
+        if status == TaskStatus.IN_PROGRESS:
+            return ResultCode.STARTED, abort_sequence_command_id
+        if status == TaskStatus.REJECTED:
+            return ResultCode.REJECTED, abort_sequence_command_id
+        return (
+            ResultCode.FAILED,
+            f"{status.name} was returned by command method with message: {message}",
+        )
+
+
 class ApplyPointingModelCommand(FastCommand):
     """Class for handling band pointing parameters given a JSON input."""
 

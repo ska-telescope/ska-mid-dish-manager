@@ -440,7 +440,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ],
         }
 
-        self.abort_sequence_handler = AbortSequenceCommandHandler()
+        self.abort_sequence_handler = AbortSequenceCommandHandler(self)
         # Trigger initial Astropy import to avoid first-call latency later
         get_current_tai_timestamp_from_unix_time()
 
@@ -720,12 +720,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         if self.component_state.get("dishmode") == DishMode.MAINTENANCE:
             self.logger.debug("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
-            self.abort_tasks()
+            # send lrc updates to client if the only action performed is to cancel LRCs
+            self.abort_tasks(task_callback=task_callback)
             return TaskStatus.IN_PROGRESS, "LRCs are being aborted"
 
-        self.logger.debug("Aborting LRCs from Abort sequence")
-        self.abort_tasks()
-        self.abort_sequence_handler(self, task_callback)
+        # use a custom callback to notify the abort sequence
+        # handler when abort task completes draining the queue
+        on_abort_task_complete = partial(
+            self.abort_sequence_handler.on_abort_task_complete, task_callback
+        )
+        update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
+        self.abort_tasks(task_callback=on_abort_task_complete)
+        self.logger.debug("Queue is being aborted")
+
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     # ---------
