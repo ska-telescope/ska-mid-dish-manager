@@ -2015,6 +2015,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return (ResultCode.OK, "Successfully updated pseudoRandomNoiseDiodePars on SPFRx")
 
+    @check_communicating
     def abort_commands(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Override the abort_commands method to ensure that custom
         abort logic is executed when dp.AbortCommands is called.
@@ -2023,6 +2024,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         return self._start_abort_sequence(task_callback=task_callback)
 
+    @check_communicating
     def abort(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Override the abort method to ensure that
         custom abort logic is executed when dp.Abort is called.
