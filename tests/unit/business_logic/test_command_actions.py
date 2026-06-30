@@ -492,8 +492,8 @@ class TestCommandActions:
         # Case 4: both already in state -> nothing fanned out, success triggered directly
         progress, results = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.POINT)
         assert not any(msg.startswith("Fanned out commands") for msg in progress)
-        assert "SetOperateMode completed" in progress
+        assert "SetOperateMode completed." in progress
         assert (
             ResultCode.OK,
-            "SetOperateMode completed",
+            "SetOperateMode completed.",
         ) in results

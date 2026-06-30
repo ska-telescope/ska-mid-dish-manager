@@ -36,6 +36,7 @@ from ska_mid_dish_manager.models.fanned_out_command import (
 )
 from ska_mid_dish_manager.utils.action_helpers import (
     update_task_status,
+    report_task_progress,
 )
 
 
@@ -291,10 +292,14 @@ class SetOperateModeAction(Action):
             self.logger.info(
                 "DS and SPF already in operate state, SetOperateMode completed", extra=OPERATOR_TAG
             )
+            report_task_progress(
+                "No commands fanned out. DS and SPF already in operate state.",
+                self._progress_callback,
+            )
             self.handler._trigger_success(
                 task_callback,
                 task_abort_event,
-                "SetOperateMode completed",
+                "SetOperateMode completed.",
             )
             return
 
