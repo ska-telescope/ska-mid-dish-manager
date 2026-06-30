@@ -1,9 +1,9 @@
 name: "dishmanager-{{ .Release.Name }}"
 function: telescope-monitoring
 domain: general-monitoring
-command: "DishManager"
+command: "DishManagerDS"
 server:
-  name: "DishManager"
+  name: "DishManagerDS"
   instances:
   {{- range .Values.coalesced_dishes }}
     {{- $dish := . | trim }}
