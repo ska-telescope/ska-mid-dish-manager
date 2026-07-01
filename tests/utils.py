@@ -369,7 +369,6 @@ class EventStore:
                 if not event.attr_value:
                     continue
 
-                # Ensure that the event picked off the queue is a tuple as expected
                 if not isinstance(event.attr_value.value, tuple) or not event.attr_value.value:
                     continue
 
