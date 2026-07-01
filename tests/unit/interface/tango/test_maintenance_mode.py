@@ -86,9 +86,7 @@ def test_exception_on_callback(dish_manager_resources, event_store_class):
     [[_], [unique_id]] = device_proxy.SetMaintenanceMode()
 
     expected_result = '[3, "SetMaintenanceMode failed"]'
-    
-    result_event_store.wait_for_finished_command_result(
-        unique_id, expected_result, timeout=10
-    )
+
+    result_event_store.wait_for_finished_command_result(unique_id, expected_result, timeout=10)
 
     remove_subscriptions(subscriptions)
