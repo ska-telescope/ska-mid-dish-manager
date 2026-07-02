@@ -49,11 +49,13 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
 
     events = result_event_store.wait_for_n_events(1, timeout=5)
     event_values = result_event_store.get_data_from_events(events)
-    event_value = event_values[0][1]
-    # Sample event value:
-    # ('1659015778.0797186_172264627776495_DS_SetStandbyFPMode', '[0, "result"]'))
-    command_name = event_value[0].split("_")[-1]
-    assert command_name == "SetStandbyFPMode"
+    # event_values[0][1] is a tuple containing the JSON string of the result,
+    # e.g. ('[0, "SetStandbyFPMode completed"]',)
+
+    json_payload_str = event_values[0][1][-1]
+    print(f"json_payload_str: {json_payload_str}")
+    payload = json.loads(json_payload_str)
+    assert payload.get("name") == "SetStandbyFPMode"
 
 
 @pytest.mark.unit
