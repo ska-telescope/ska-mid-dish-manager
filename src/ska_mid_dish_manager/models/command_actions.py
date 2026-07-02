@@ -277,25 +277,42 @@ class SetOperateModeAction(Action):
         fanned_out_commands = []
 
         spf_state = self.dish_manager_cm.sub_component_managers["SPF"]._component_state
-        if (
-            not self.dish_manager_cm.is_device_ignored("SPF")
-            and spf_state.get("operatingmode") != SPFOperatingMode.OPERATE
-        ):
+        if self.dish_manager_cm.is_device_ignored("SPF"):
+            msg = "SPF device is disabled. SetOperateMode call ignored."
+            self.logger.info(msg, extra=OPERATOR_TAG)
+            report_task_progress(
+                msg,
+                self._progress_callback,
+            )
+        elif spf_state.get("operatingmode") == SPFOperatingMode.OPERATE:
+            msg = "SPF already in operate state. Not fanning out SetOperateMode command."
+            self.logger.info(
+                msg,
+                extra=OPERATOR_TAG,
+            )
+            report_task_progress(
+                msg,
+                self._progress_callback,
+            )
+        else:
             fanned_out_commands.append(self.spf_command)
 
         ds_state = self.dish_manager_cm.sub_component_managers["DS"]._component_state
-        if ds_state.get("operatingmode") != DSOperatingMode.POINT:
+        if ds_state.get("operatingmode") == DSOperatingMode.POINT:
+            msg = "DS already in point state. Not fanning out SetPointMode command."
+            self.logger.info(
+                msg,
+                extra=OPERATOR_TAG,
+            )
+            report_task_progress(
+                msg,
+                self._progress_callback,
+            )
+        else:
             fanned_out_commands.append(self.ds_command)
 
         # Nothing to do: DS and SPF are already in their desired states.
         if not fanned_out_commands:
-            self.logger.info(
-                "DS and SPF already in operate state, SetOperateMode completed", extra=OPERATOR_TAG
-            )
-            report_task_progress(
-                "No commands fanned out. DS and SPF already in operate state.",
-                self._progress_callback,
-            )
             self.handler._trigger_success(
                 task_callback,
                 task_abort_event,

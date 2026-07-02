@@ -56,7 +56,8 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         "SPFRX.ConfigureBand2 completed",
         "ConfigureBand2 complete. Triggering on success action.",
         # Then SetOperateMode
-        "No commands fanned out. DS and SPF already in operate state.",
+        "SPF already in operate state. Not fanning out SetOperateMode command.",
+        "DS already in point state. Not fanning out SetPointMode command.",
         "SetOperateMode completed",
     ]
 

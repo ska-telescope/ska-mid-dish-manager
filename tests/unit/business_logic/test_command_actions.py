@@ -477,21 +477,25 @@ class TestCommandActions:
         assert "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode" in progress
         assert (ResultCode.OK, "SetOperateMode completed.") in results
 
-        # Case 2: SPF already in OPERATE -> only DS fanned out
+        # Case 2: SPF already in OPERATE -> only DS fanned out, SPF reports a no-op progress update
         progress, results = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.STANDBY)
         assert "Fanned out commands: DS.SetPointMode" in progress
         assert not any("SPF.SetOperateMode" in msg for msg in progress)
+        assert "SPF already in operate state. Not fanning out SetOperateMode command." in progress
         assert (ResultCode.OK, "SetOperateMode completed.") in results
 
-        # Case 3: DS already in POINT -> only SPF fanned out
+        # Case 3: DS already in POINT -> only SPF fanned out, DS reports a no-op progress update
         progress, results = run_scenario(SPFOperatingMode.STANDBY_LP, DSOperatingMode.POINT)
         assert "Fanned out commands: SPF.SetOperateMode" in progress
         assert not any("DS.SetPointMode" in msg for msg in progress)
+        assert "DS already in point state. Not fanning out SetPointMode command." in progress
         assert (ResultCode.OK, "SetOperateMode completed.") in results
 
         # Case 4: both already in state -> nothing fanned out, success triggered directly
         progress, results = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.POINT)
         assert not any(msg.startswith("Fanned out commands") for msg in progress)
+        assert "SPF already in operate state. Not fanning out SetOperateMode command." in progress
+        assert "DS already in point state. Not fanning out SetPointMode command." in progress
         assert "SetOperateMode completed." in progress
         assert (
             ResultCode.OK,
