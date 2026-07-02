@@ -5,10 +5,7 @@ import logging
 from typing import Any, Optional
 
 from ska_control_model import ResultCode, TaskStatus
-from ska_tango_base.base import CommandTracker
 from ska_tango_base.commands import FastCommand, SlowCommand, SubmittedSlowCommand
-
-from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 
 
 class AbortCommand(SlowCommand):
@@ -25,9 +22,8 @@ class AbortCommand(SlowCommand):
             starts and finishes
         :param logger: a logger for this command object to use
         """
-        self._command_tracker: CommandTracker = command_tracker
-        self._component_manager: DishManagerComponentManager = component_manager
-        # _callback is an instance of Abort in abort_sequence_command_handler.py
+        self._command_tracker = command_tracker
+        self._component_manager = component_manager
         super().__init__(callback=callback, logger=logger)
 
     def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
@@ -42,16 +38,53 @@ class AbortCommand(SlowCommand):
             (if the command was rejected)
         """
         abort_sequence_command_id = self._command_tracker.new_command("Abort")
-        # replace the command_id in the callback with the abort_sequence_command_id
-        # so that clients tracking the long running command result receive updates
-        # only when the abort sequence command completes.
-        self._callback.command_id = abort_sequence_command_id
-        abort_task_command_id = self._command_tracker.new_command(
-            "cancel-lrcs", completed_callback=self._completed
-        )
 
         status, message = self._component_manager.abort(
-            functools.partial(self._command_tracker.update_command_info, abort_task_command_id),
+            functools.partial(self._command_tracker.update_command_info, abort_sequence_command_id)
+        )
+        if status == TaskStatus.IN_PROGRESS:
+            return ResultCode.STARTED, abort_sequence_command_id
+        if status == TaskStatus.REJECTED:
+            return ResultCode.REJECTED, abort_sequence_command_id
+        return (
+            ResultCode.FAILED,
+            f"{status.name} was returned by command method with message: {message}",
+        )
+
+
+class AbortCommandsCommand(SlowCommand):
+    """A custom class for AbortCommands (Deprecated)."""
+
+    def __init__(
+        self, command_tracker, component_manager, callback, logger: logging.Logger | None = None
+    ) -> None:
+        """Initialise a new AbortCommandsCommand instance.
+
+        :param command_tracker: the device's command tracker
+        :param component_manager: the device's component manager
+        :param callback: callback to be called when this command
+            starts and finishes
+        :param logger: a logger for this command object to use
+        """
+        self._command_tracker = command_tracker
+        self._component_manager = component_manager
+        super().__init__(callback=callback, logger=logger)
+
+    def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
+        """Stateless hook for command functionality.
+
+        :param args: positional args to the component manager method
+        :param kwargs: keyword args to the component manager method
+
+        :return: A tuple containing the result code (e.g. STARTED)
+            and a string message containing a command_id (if
+            the command has been accepted) or an informational message
+            (if the command was rejected)
+        """
+        abort_sequence_command_id = self._command_tracker.new_command("AbortCommands")
+
+        status, message = self._component_manager.abort_commands(
+            functools.partial(self._command_tracker.update_command_info, abort_sequence_command_id)
         )
         if status == TaskStatus.IN_PROGRESS:
             return ResultCode.STARTED, abort_sequence_command_id
