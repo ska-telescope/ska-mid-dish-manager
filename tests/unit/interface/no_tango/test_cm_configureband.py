@@ -429,11 +429,14 @@ def test_configureband_5b_with_subband(
     progress_cb.wait_for_args(("SetOperateMode completed.",))
 
 
+@pytest.mark.unit
 @patch(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
+@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
 def test_configureband_5b_with_subband_ignore_b5dc(
+    mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
     callbacks: dict,
 ) -> None:
@@ -460,6 +463,8 @@ def test_configureband_5b_with_subband_ignore_b5dc(
             ] }
     }"""
     component_manager._component_state["ignoreb5dc"] = True
+    component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
+    mock_apply_pointing_model.return_value = None
     status, response = component_manager.configure_band_with_json(
         configure_json, callbacks["task_cb"]
     )
