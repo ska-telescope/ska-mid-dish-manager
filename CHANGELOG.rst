@@ -12,7 +12,7 @@ Version 10.0.0-rc.1
 *******************
 - Cleaned up "Abort" LRC response message strings - response codes remain unchanged.
 - Renamed attribute `frequencyResponse` to `spectrumSample`
-- No longer fanning out commands to `SPF`` and `DSC`` during `ConfigureBand` if they are already in the desired state.
+- No longer fanning out commands to `SPF` and `DSC` during `ConfigureBand` if they are already in the desired state.
 
   - Assists in resolving SKB-1401
 
