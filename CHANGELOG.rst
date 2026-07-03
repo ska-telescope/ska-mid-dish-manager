@@ -8,6 +8,16 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 10.0.0-rc.1
+*******************
+- Cleaned up "Abort" LRC response message strings - response codes remain unchanged.
+- Renamed attribute `frequencyResponse` to `spectrumSample`
+- No longer fanning out commands to `SPF`` and `DSC`` during `ConfigureBand` if they are already in the desired state.
+
+  - Assists in resolving SKB-1401
+
+- Added Helm resource constraints where they were missing, see SKB-1427
+
 Version 9.5.0
 *************
 - See RC releases for details.
