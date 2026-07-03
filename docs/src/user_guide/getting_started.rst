@@ -52,7 +52,7 @@ can be found in the :doc:`API section <../api/devices/dish-manager-device>`.
 
 Since DishManager fans out commands to sub devices which in turn execute over a relatively "long"
 period, most of the commands are implemented to run asynchronously. The progress of a command can
-be tracked on `dedicated attributes`_ (for example ``lrcExecuting`` and ``lrcFinished``) (this is in
+be tracked on `dedicated attributes`_ (which have a ``lrc_`` prefix, e.g. lrcQueue) (this is in
 addition to the attribute which will report the final state of the Dish).
 
 The specific attribute(s) which is updated for each command is :ref:`tabulated below <tabulated-commands-and-attributes>`.

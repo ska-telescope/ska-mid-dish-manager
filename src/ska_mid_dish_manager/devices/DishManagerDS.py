@@ -9,7 +9,7 @@ import logging
 import weakref
 from datetime import datetime
 from functools import reduce
-from typing import Any, List, Literal, Optional, Tuple
+from typing import List, Literal, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
@@ -29,9 +29,9 @@ from tango import (
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.models.abort_sequence_command_handler import Abort
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
+    AbortCommandsCommand,
     ApplyPointingModelCommand,
     ResetComponentConnectionCommand,
     ResetTrackTableCommand,
@@ -154,26 +154,6 @@ class DishManager(SKAController):
             default_wind_gust_threshold=self.WindGustThreshold,
         )
 
-    def get_command_object(self, command_name: str) -> Any:
-        """Return the registered command handler for a Tango command.
-
-        ska-tango-base 1.6.x no longer relies on the deprecated command-object lookup
-        path for dispatch. This function implements the internal overridden-command hook when it is
-        available.
-        """
-        try:
-            handler = self._get_overridden_command(command_name)
-        except AttributeError:
-            handler = None
-
-        if handler is not None:
-            return handler
-
-        try:
-            return super().get_command_object(command_name)
-        except AttributeError as exc:
-            raise KeyError(f"No command object registered for {command_name}") from exc
-
     def init_command_objects(self) -> None:
         """Initialise the command handlers."""
         super().init_command_objects()
@@ -250,14 +230,21 @@ class DishManager(SKAController):
         #     ),
         # )
 
-        # abort_sequence_handler is executed after base class `abort_task` completes
-        abort_sequence_handler = Abort(self.component_manager, self._command_tracker, self.logger)
         self.register_command_object(
             "Abort",
             AbortCommand(
                 self._command_tracker,
                 self.component_manager,
-                callback=abort_sequence_handler,
+                callback=None,
+                logger=self.logger,
+            ),
+        )
+        self.register_command_object(
+            "AbortCommands",
+            AbortCommandsCommand(
+                self._command_tracker,
+                self.component_manager,
+                callback=None,
                 logger=self.logger,
             ),
         )
@@ -415,11 +402,7 @@ class DishManager(SKAController):
             self.component_manager.wind_stow_active = False
 
     def init_device(self):
-        """Initialize the device attributes and properties.
-
-        This method replaces the deprecated InitCommand pattern and directly
-        initializes all device state on startup.
-        """
+        """Initialize the device attributes and properties."""
         # Call parent init_device first to set up base class structures
         super().init_device()
 
