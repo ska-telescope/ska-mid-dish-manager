@@ -1239,6 +1239,106 @@ Attributes
 	:data type: DevString
 	:data format: SPECTRUM
 	:max_dim_x: 4
+.. index::
+	single: longRunningCommandIDsInQueue; DishManager.longRunningCommandIDsInQueue
+
+.. py:attribute:: longRunningCommandIDsInQueue
+	:module: DishManager
+
+	Read the IDs of the long running commands in the queue.
+
+	Every client that executes a command will receive a command ID as response.
+	Keep track of IDs currently allocated.
+	Entries are removed `self._command_tracker._removal_time` seconds
+	after they have finished.
+
+	:access: READ
+	:data type: DevString
+	:data format: SPECTRUM
+	:max_dim_x: 66
+
+.. index::
+	single: longRunningCommandInProgress; DishManager.longRunningCommandInProgress
+
+.. py:attribute:: longRunningCommandInProgress
+	:module: DishManager
+
+	Read the name(s) of the currently executing long running command(s).
+
+	Name(s) of command and possible abort in progress or empty string(s).
+
+	:access: READ
+	:data type: DevString
+	:data format: SPECTRUM
+	:max_dim_x: 2
+
+.. index::
+	single: longRunningCommandProgress; DishManager.longRunningCommandProgress
+
+.. py:attribute:: longRunningCommandProgress
+	:module: DishManager
+
+	Read the progress of the currently executing long running command(s).
+
+	ID, progress of the currently executing command(s).
+	Clients can subscribe to on_change event and wait
+	for the ID they are interested in.
+
+	:access: READ
+	:data type: DevString
+	:data format: SPECTRUM
+	:max_dim_x: 4
+
+.. index::
+	single: longRunningCommandResult; DishManager.longRunningCommandResult
+
+.. py:attribute:: longRunningCommandResult
+	:module: DishManager
+
+	Read the result of the completed long running command.
+
+	Reports unique_id, json-encoded result.
+	Clients can subscribe to on_change event and wait for
+	the ID they are interested in.
+
+	:access: READ
+	:data type: DevString
+	:data format: SPECTRUM
+	:max_dim_x: 2
+
+.. index::
+	single: longRunningCommandStatus; DishManager.longRunningCommandStatus
+
+.. py:attribute:: longRunningCommandStatus
+	:module: DishManager
+
+	Read the status of the currently executing long running commands.
+
+	ID, status pairs of the currently executing commands.
+	Clients can subscribe to on_change event and wait for the
+	ID they are interested in.
+
+	:access: READ
+	:data type: DevString
+	:data format: SPECTRUM
+	:max_dim_x: 132
+
+.. index::
+	single: longRunningCommandsInQueue; DishManager.longRunningCommandsInQueue
+
+.. py:attribute:: longRunningCommandsInQueue
+	:module: DishManager
+
+	Read the long running commands in the queue.
+
+	Keep track of which commands are that are currently known about.
+	Entries are removed `self._command_tracker._removal_time` seconds
+	after they have finished.
+
+	:access: READ
+	:data type: DevString
+	:data format: SPECTRUM
+	:max_dim_x: 66
 
 .. index::
 	single: lrcExecuting; DishManager.lrcExecuting
@@ -1808,6 +1908,19 @@ Commands
 	"sky_rms": {...}
 	}
 	}
+	
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
+
+.. index::
+	single: CheckLongRunningCommandStatus; DishManager.CheckLongRunningCommandStatus
+
+.. py:method:: CheckLongRunningCommandStatus(DevString) -> DevString
+	:module: DishManager
+
+	argin (None): the command id
+
+	:returns: command status
 .. index::
 	single: ConfigureBand; DishManager.ConfigureBand
 
