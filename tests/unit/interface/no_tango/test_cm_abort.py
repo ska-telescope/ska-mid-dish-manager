@@ -1,4 +1,4 @@
-"""Tests dish manager component manager abort command handler."""
+"""Tests dish manager component manager abort/abort_commands command handler."""
 
 from unittest.mock import MagicMock, patch
 
@@ -10,7 +10,13 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize("abort_method", ["abort", "abort_commands"])
+@patch(
+    "ska_mid_dish_manager.component_managers.dish_manager_cm.DishManagerComponentManager.abort_tasks",
+)
 def test_abort_handler_runs_only_one_sequence_at_a_time(
+    mock_abort_tasks: MagicMock,
+    abort_method: str,
     component_manager: DishManagerComponentManager,
     mock_command_tracker: MagicMock,
 ) -> None:
@@ -18,26 +24,40 @@ def test_abort_handler_runs_only_one_sequence_at_a_time(
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: a representing the command tracker class
+    :param abort_method: the abort method to test
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
-    task_status, message = component_manager.abort()
+    mock_command_tracker.command_statuses = [("Abort", TaskStatus.STAGING)]
+    abort_func = getattr(component_manager, abort_method)
+    task_status, message = abort_func()
     assert task_status == TaskStatus.IN_PROGRESS
     assert message == "Abort sequence has started"
-    mock_command_tracker.command_statuses = [("Abort", TaskStatus.IN_PROGRESS)]
 
+    mock_command_tracker.command_statuses = [
+        ("Abort", TaskStatus.STAGING),
+        ("Abort", TaskStatus.IN_PROGRESS),
+    ]
     # issue a 2nd abort while the previous is busy running
-    task_status, message = component_manager.abort()
+    task_status, message = abort_func()
     assert task_status == TaskStatus.REJECTED
     assert message == "Existing Abort sequence ongoing"
 
+    assert mock_abort_tasks.call_count == 1
+
 
 @pytest.mark.unit
+@pytest.mark.parametrize("abort_method", ["abort", "abort_commands"])
 @patch(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     MagicMock(return_value=True),
 )
+@patch(
+    "ska_mid_dish_manager.models.abort_sequence_command_handler.AbortSequenceCommandHandler.on_abort_task_complete",
+)
 def test_abort_handler(
+    mock_abort_sequence_handler: MagicMock,
+    abort_method: str,
     component_manager: DishManagerComponentManager,
     mock_command_tracker: MagicMock,
     callbacks: dict,
@@ -46,6 +66,7 @@ def test_abort_handler(
 
     :param component_manager: the component manager under test
     :param mock_command_tracker: a representing the command tracker class
+    :param abort_method: the abort method to test
     :param callbacks: a dictionary of mocks, passed as callbacks to
         the command tracker under test
     """
@@ -60,7 +81,8 @@ def test_abort_handler(
     mock_command_tracker.command_statuses = [("SetStandbyLPMode", TaskStatus.IN_PROGRESS)]
 
     # issue an abort while the command is busy running
-    task_status, message = component_manager.abort(callbacks["task_cb"])
+    abort_func = getattr(component_manager, abort_method)
+    task_status, message = abort_func(callbacks["task_cb"])
     assert task_status == TaskStatus.IN_PROGRESS
     assert message == "Abort sequence has started"
 
@@ -69,14 +91,9 @@ def test_abort_handler(
     component_state_cb.get_queue_values()
 
     expected_call_kwargs = (
-        {"status": TaskStatus.IN_PROGRESS},
         {
             "status": TaskStatus.ABORTED,
             "result": (ResultCode.ABORTED, "SetStandbyLPMode aborted"),
-        },
-        {
-            "status": TaskStatus.COMPLETED,
-            "result": (ResultCode.OK, "Abort completed OK"),
         },
     )
 
