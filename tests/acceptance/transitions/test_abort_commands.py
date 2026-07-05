@@ -248,7 +248,6 @@ def test_abort_commands_during_stow(
 
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
-    print([[_], [unique_id]])
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )

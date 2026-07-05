@@ -24,7 +24,6 @@ def test_scan_and_end_scan_commands(dish_manager_proxy, event_store_class):
     result_event_store.wait_for_command_id(unique_id)
     # result_event_store.wait_for_finished_command_result(unique_id, "OK", timeout=10)
     status_event_store.wait_for_progress_update("Scan completed")
-    print(f"scanID attribute value: {dish_manager_proxy.read_attribute('scanID').value}")
     assert dish_manager_proxy.read_attribute("scanID").value == scan_id
     attribute_event_store.wait_for_value(scan_id, timeout=5)
 

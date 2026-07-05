@@ -53,7 +53,6 @@ def test_dish_manager_behaviour(dish_manager_resources, event_store_class):
     # e.g. ('[0, "SetStandbyFPMode completed"]',)
 
     json_payload_str = event_values[0][1][-1]
-    print(f"json_payload_str: {json_payload_str}")
     payload = json.loads(json_payload_str)
     assert payload.get("name") == "SetStandbyFPMode"
 

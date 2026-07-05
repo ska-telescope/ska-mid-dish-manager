@@ -122,7 +122,7 @@ def test_track_and_track_stop_cmds(
     dish_manager_proxy.programTrackTable = track_table
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
-    print(f"Track command unique ID: {unique_id}")
+
     result_event_store.wait_for_command_id(unique_id, timeout=10)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=20)
 
@@ -228,7 +228,7 @@ def test_append_dvs_case(
     dish_manager_proxy.programTrackTable = track_table
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
-    print(f"Track command unique ID: {unique_id}")
+
     result_event_store.wait_for_command_id(unique_id, timeout=10)
     pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
@@ -358,7 +358,7 @@ def test_maximum_capacity(
     assert track_start_tai > load_complete_time
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
-    print(f"Track command unique ID: {unique_id}")
+
     result_event_store.wait_for_command_id(unique_id, timeout=10)
     pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
