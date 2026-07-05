@@ -8,7 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Updated pytango to v10.3.0
-- Updated python to v3.14.0
+- Updated ska-tango-base to v1.6.1
 
 Version 10.0.0-rc.1
 *******************
