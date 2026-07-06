@@ -1378,6 +1378,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Track command is allowed for dishMode OPERATE"
                 )
                 report_task_progress(msg, self._command_progress_callback)
+                self.last_command_failure_helper("track", "-", msg)
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
                 msg = (
