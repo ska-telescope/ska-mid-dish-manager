@@ -73,7 +73,10 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
-from ska_mid_dish_manager.utils.decorators import check_communicating
+from ska_mid_dish_manager.utils.decorators import (
+    check_communicating,
+    last_command_failure_decorator,
+)
 from ska_mid_dish_manager.utils.input_validation import (
     ConfigureBandValidationError,
     validate_configure_band_input,
@@ -196,6 +199,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             windgust=-1,
             lastcommandedmode=("0.0", ""),
             lastcommandinvoked=("0.0", ""),
+            lastcommandfailure=("0", "0", "0", "0"),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
             rfcmplllock=B5dcPllState.NOT_LOCKED,
             rfcmhattenuation=0.0,
@@ -336,7 +340,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 noisediodemode=NoiseDiodeMode.OFF,
                 periodicnoisediodepars=[0, 0, 0],
                 pseudorandomnoisediodepars=[0, 0, 0],
-                adminmode=AdminMode.OFFLINE,
+                adminmode=AdminMode.ONLINE,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPFRX
                 ),
@@ -1127,6 +1131,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             for component_manager in self.sub_component_managers.values():
                 component_manager.stop_communicating()
 
+    @last_command_failure_decorator
     def reset_subservient_dev_connections(self, device_name: str) -> Tuple[ResultCode, str]:
         """Reset connections between dish manager and subservient devices."""
         if not device_name:
@@ -1249,6 +1254,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except tango.DevFailed:
             raise
 
+    @last_command_failure_decorator
     def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
     ) -> Tuple[TaskStatus, str]:
@@ -1260,6 +1266,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return task_status, msg
 
     @check_communicating
+    @last_command_failure_decorator
     def set_standby_lp_mode(
         self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1278,6 +1285,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     @check_communicating
+    @last_command_failure_decorator
     def set_standby_fp_mode(
         self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1296,6 +1304,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     @check_communicating
+    @last_command_failure_decorator
     def set_maintenance_mode(
         self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1340,6 +1349,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
 
     @check_communicating
+    @last_command_failure_decorator
     def track_cmd(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Track the commanded pointing position."""
 
@@ -1368,6 +1378,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     @check_communicating
+    @last_command_failure_decorator
     def track_stop_cmd(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Stop tracking."""
 
@@ -1389,6 +1400,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     @check_communicating
+    @last_command_failure_decorator
     def set_operate_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Fanout commands to subdevices to set operate mode.
 
@@ -1421,6 +1433,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     @check_communicating
+    @last_command_failure_decorator
     def configure_band_cmd(
         self, band: Band, synchronise: bool, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1463,6 +1476,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     @check_communicating
+    @last_command_failure_decorator
     def configure_band_six_cmd(
         self,
         task_callback: Optional[Callable] = None,
@@ -1485,6 +1499,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     @check_communicating
+    @last_command_failure_decorator
     def configure_band_with_json(
         self,
         data: str,
@@ -1555,6 +1570,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         self._update_component_state(dishmode=new_dish_mode)
 
+    @last_command_failure_decorator
     def set_stow_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode."""
         ds_cm = self.sub_component_managers["DS"]
@@ -1590,6 +1606,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.watchdog_timer.enable(timeout=self.component_state["watchdogtimeout"])
 
     @check_communicating
+    @last_command_failure_decorator
     def slew(
         self, values: list[float], task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1629,6 +1646,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    @last_command_failure_decorator
     def scan(
         self, scanid: str, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1648,6 +1666,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback, status=TaskStatus.COMPLETED, result=(ResultCode.OK, "Scan completed")
         )
 
+    @last_command_failure_decorator
     def end_scan(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Clear the scanid."""
         status, response = self.submit_task(self._end_scan, args=[], task_callback=task_callback)
@@ -1664,6 +1683,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
     @check_communicating
+    @last_command_failure_decorator
     def track_load_static_off(
         self, values: list[float], task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1687,6 +1707,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
+    @last_command_failure_decorator
     def set_kvalue(self, k_value: float) -> Tuple[ResultCode, str]:
         """Set the k-value on the SPFRx.
         Note that it will only take effect after
@@ -1698,6 +1719,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return (ResultCode.FAILED, msg)
         return (ResultCode.OK, msg)
 
+    @last_command_failure_decorator
     def apply_pointing_model(self, json_object) -> Tuple[ResultCode, str]:
         # pylint: disable=R0911
         """Updates a band's coefficient parameters with a given JSON input.
@@ -1937,6 +1959,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return (ResultCode.OK, "Successfully updated pseudoRandomNoiseDiodePars on SPFRx")
 
     @check_communicating
+    @last_command_failure_decorator
     def abort(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Issue abort sequence.
 
@@ -1965,6 +1988,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     @check_communicating
+    @last_command_failure_decorator
     def abort_scan(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Issue abort sequence.
 
@@ -1994,6 +2018,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
 
     @check_communicating
+    @last_command_failure_decorator
     def reset_track_table(self) -> Tuple[ResultCode, List[float] | str]:
         """Reset the track table."""
         self.logger.debug("Resetting the programTrackTable")
@@ -2014,6 +2039,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return ResultCode.FAILED, msg
         return ResultCode.OK, reset_point
 
+    @last_command_failure_decorator
     def set_h_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
         """Update HPolAttenuation on B5DC."""
         if not self._check_b5dc_active():
@@ -2028,6 +2054,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return (ResultCode.FAILED, msg)
         return (ResultCode.OK, "Successfully updated HPolAttenuation on the B5DC proxy.")
 
+    @last_command_failure_decorator
     def set_v_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:
         """Update VPolAttenuation on B5DC."""
         if not self._check_b5dc_active():
@@ -2042,6 +2069,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return (ResultCode.FAILED, msg)
         return (ResultCode.OK, "Successfully updated VPolAttenuation on the B5DC proxy.")
 
+    @last_command_failure_decorator
     def set_frequency(self, value: int) -> Tuple[ResultCode, str]:
         """Update Frequency on B5DC."""
         if not self._check_b5dc_active():
@@ -2093,6 +2121,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return health_info
 
     @check_communicating
+    @last_command_failure_decorator
     def interlock_acknowledge(
         self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:

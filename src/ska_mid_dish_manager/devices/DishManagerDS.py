@@ -426,6 +426,7 @@ class DishManager(SKAController):
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
             device._last_commanded_pointing_params = ""
+            device._last_commanded_failure = ("0", "0", "0", "0")
             device._release_info = ReleaseInfo(
                 ds_manager_address=device.DSDeviceFqdn,
                 spfc_address=device.SPFDeviceFqdn,
@@ -499,6 +500,7 @@ class DishManager(SKAController):
                 "autowindstowenabled": "autoWindStowEnabled",
                 "lastcommandedmode": "lastCommandedMode",
                 "lastcommandinvoked": "lastCommandInvoked",
+                "lastcommandfailure": "lastCommandFailure",
                 "dscctrlstate": "dscCtrlState",
                 "actiontimeoutseconds": "actionTimeoutSeconds",
                 "b1lnahpowerstate": "b1LnaHPowerState",
@@ -624,6 +626,24 @@ class DishManager(SKAController):
     def lastCommandInvoked(self) -> tuple[str, str]:
         """Return the last command invoked and its timestamp."""
         return self.component_manager.component_state["lastcommandinvoked"]
+
+    @attribute(
+        dtype=(str, str, str, str),
+        max_dim_x=4,
+        access=AttrWriteType.READ,
+        doc=(
+            "The returned tuple contains:"
+            "- Dish Manager (Constant)"
+            "- Timestamp of the failure (UNIX UTC format)"
+            "- Command name (Triggered on DishManager)"
+            "- Error message (Contains the affect subservient devices )"
+        ),
+    )
+    @time_tango_write()
+    @requires_component_manager
+    def lastCommandFailure(self) -> tuple[str, str, str, str]:
+        """Return the last command failure (DM, SPFRx and SPF)."""
+        return self.component_manager.component_state["lastcommandfailure"]
 
     # pylint: disable=invalid-name
     @attribute(
