@@ -2018,7 +2018,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
     @check_communicating
-    @last_command_failure_decorator
     def abort_scan(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Issue abort sequence.
 
