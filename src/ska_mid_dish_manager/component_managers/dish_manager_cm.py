@@ -1660,7 +1660,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Slew command rejected for current pointingState. "
                     "Slew command is allowed for pointingState READY"
                 )
-                report_task_progress(self, msg, self._command_progress_callback)
+                report_task_progress(msg, self._command_progress_callback)
                 self.last_command_failure_helper("slew", "-", msg)
                 return False
             return True
