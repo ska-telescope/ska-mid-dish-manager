@@ -343,7 +343,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 noisediodemode=NoiseDiodeMode.OFF,
                 periodicnoisediodepars=[0, 0, 0],
                 pseudorandomnoisediodepars=[0, 0, 0],
-                adminmode=AdminMode.ONLINE,
+                adminmode=AdminMode.OFFLINE,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPFRX
                 ),
