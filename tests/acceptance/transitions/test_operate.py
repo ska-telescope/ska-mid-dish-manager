@@ -65,7 +65,7 @@ def test_set_operate_from_standbyfp(
         "dishMode": main_event_store,
         "configuredBand": band_event_store,
         "Status": status_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -81,7 +81,7 @@ def test_set_operate_from_standbyfp(
 
     # Test direct SetOperateMode command from STANDBY_FP
     [[_], [unique_id]] = dish_manager_proxy.SetOperateMode()
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)

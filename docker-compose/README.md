@@ -50,7 +50,7 @@ root@bd44d478b7ce:/app#
 root@bd44d478b7ce:/app# pip3 install itango
 Collecting itango
   Downloading itango-0.3.0-py3-none-any.whl.metadata (2.7 kB)
-Requirement already satisfied: pytango>=9.3.0 in ./.venv/lib/python3.10/site-packages (from itango) (9.5.0)
+Requirement already satisfied: pytango>=10.3.0 in ./.venv/lib/python3.10/site-packages (from itango) (10.3.0)
 Collecting ipython<10.0,>=8.5 (from itango)
   Downloading ipython-8.37.0-py3-none-any.whl.metadata (5.1 kB)
 
@@ -59,7 +59,7 @@ Collecting ipython<10.0,>=8.5 (from itango)
 root@bd44d478b7ce:/app# itango
 ITango 0.3.0 -- An interactive Tango client.
 
-Running on top of Python 3.10.12, IPython 8.37.0 and PyTango 9.5.0
+Running on top of Python 3.10.12, IPython 8.37.0 and PyTango 10.3.0
 
 help      -> ITango's help system.
 object?   -> Details about 'object'. ?object also works, ?? prints more.

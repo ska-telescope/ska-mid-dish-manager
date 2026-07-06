@@ -111,7 +111,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandsInQueue",
+        "lrcQueue",
         tango.EventType.CHANGE_EVENT,
         cmds_in_queue_store,
     )
@@ -178,7 +178,7 @@ def test_abort_sends_lrc_update_after_abort_sequence_finishes(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandResult",
+        "lrcFinished",
         tango.EventType.CHANGE_EVENT,
         lrc_result_event_store,
     )

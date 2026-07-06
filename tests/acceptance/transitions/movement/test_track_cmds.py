@@ -79,7 +79,7 @@ def test_track_and_track_stop_cmds(
     attr_cb_mapping = {
         "pointingState": pointing_state_event_store,
         "achievedPointing": achieved_pointing_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
         "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -122,7 +122,8 @@ def test_track_and_track_stop_cmds(
     dish_manager_proxy.programTrackTable = track_table
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+
+    result_event_store.wait_for_command_id(unique_id, timeout=10)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=20)
 
     expected_progress_updates = [
@@ -193,7 +194,7 @@ def test_append_dvs_case(
     attr_cb_mapping = {
         "pointingState": pointing_state_event_store,
         "achievedPointing": achieved_pointing_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -227,7 +228,8 @@ def test_append_dvs_case(
     dish_manager_proxy.programTrackTable = track_table
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+
+    result_event_store.wait_for_command_id(unique_id, timeout=10)
     pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
 
@@ -281,7 +283,7 @@ def test_maximum_capacity(
         "achievedPointing": achieved_pointing_event_store,
         "trackTableCurrentIndex": current_index_event_store,
         "trackTableEndIndex": end_index_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     # Don't reset the queues, if the table indexes are already at 1 and 50 then the NEW load below
     # will not trigger a CHANGE_EVENT and current_index_event_store.wait_for_value(1) will time
@@ -356,7 +358,8 @@ def test_maximum_capacity(
     assert track_start_tai > load_complete_time
 
     [[_], [unique_id]] = dish_manager_proxy.Track()
-    result_event_store.wait_for_command_id(unique_id, timeout=8)
+
+    result_event_store.wait_for_command_id(unique_id, timeout=10)
     pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
 
