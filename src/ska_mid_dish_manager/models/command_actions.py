@@ -121,10 +121,11 @@ class SetStandbyLPModeAction(Action):
                 try:
                     spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)
                 except tango.DevFailed:
+                    err_message = "Failed to transition SPFRx from AdminMode ENGINEERING to ONLINE"
                     self.handler._trigger_failure(
                         task_callback,
                         task_abort_event,
-                        "Failed to transition SPFRx from AdminMode ENGINEERING to ONLINE",
+                        err_message,
                     )
                     return
 

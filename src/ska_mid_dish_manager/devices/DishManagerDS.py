@@ -426,7 +426,7 @@ class DishManager(SKAController):
             device._track_program_mode = TrackProgramMode.TABLEA
             device._track_table_load_mode = TrackTableLoadMode.APPEND
             device._last_commanded_pointing_params = ""
-            device._last_commanded_failure = ("0", "0", "0", "0")
+            device._last_commanded_failure = ("0.0", "0.0", "0.0", "0.0")
             device._release_info = ReleaseInfo(
                 ds_manager_address=device.DSDeviceFqdn,
                 spfc_address=device.SPFDeviceFqdn,

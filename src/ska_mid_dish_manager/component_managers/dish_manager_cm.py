@@ -72,7 +72,10 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
-from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
+from ska_mid_dish_manager.utils.action_helpers import (
+    report_task_progress,
+    update_task_status,
+)
 from ska_mid_dish_manager.utils.decorators import (
     check_communicating,
     last_command_failure_decorator,
@@ -199,7 +202,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             windgust=-1,
             lastcommandedmode=("0.0", ""),
             lastcommandinvoked=("0.0", ""),
-            lastcommandfailure=("0", "0", "0", "0"),
+            lastcommandfailure=("0.0", "0.0", "0.0", "0.0"),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
             rfcmplllock=B5dcPllState.NOT_LOCKED,
             rfcmhattenuation=0.0,
@@ -477,6 +480,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # --------------
     # Helper methods
     # --------------
+    def last_command_failure_helper(
+        self,
+        command: str,
+        status: str,
+        response: str,
+    ) -> None:
+        failure = (
+            "DishManager",
+            str(time.time()),
+            command,
+            f"Status: {status}, Response: {response}",
+        )
+
+        if self._update_component_state:
+            self._update_component_state(lastcommandfailure=failure)
+
     def get_current_tai_offset_from_dsc_with_manual_fallback(self) -> float:
         """Try and get the TAI offset from the DSManager device.
         Or calulate it manually if that fails.
@@ -1254,7 +1273,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except tango.DevFailed:
             raise
 
-    @last_command_failure_decorator
     def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
     ) -> Tuple[TaskStatus, str]:
@@ -1367,6 +1385,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Track command is allowed for pointingState READY"
                 )
                 report_task_progress(msg, self._command_progress_callback)
+                self.last_command_failure_helper("track", "-", msg)
                 return False
             return True
 
@@ -1389,7 +1408,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 PointingState.TRACK,
                 PointingState.SLEW,
             ]:
+                self.last_command_failure_helper(
+                    "track_stop",
+                    "-",
+                    "Command not allowed. DishMode is not OPERATE and"
+                    " PointingState is not SLEW/TRACK.",
+                )
                 return False
+
             return True
 
         status, response = self.submit_task(
@@ -1419,6 +1445,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Set operate mode command is allowed for dishMode STANDBY_FP"
                 )
                 report_task_progress(msg, self._command_progress_callback)
+                self.last_command_failure_helper("set_operate", "-", msg)
                 return False
             return True
 
@@ -1625,13 +1652,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Slew command is allowed for dishMode OPERATE"
                 )
                 report_task_progress(msg, self._command_progress_callback)
+                self.last_command_failure_helper("slew", "-", msg)
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
                 msg = (
                     "Slew command rejected for current pointingState. "
                     "Slew command is allowed for pointingState READY"
                 )
-                report_task_progress(msg, self._command_progress_callback)
+                self.last_command_failure_helper("slew", "-", msg)
+                report_task_progress(self, msg, self._command_progress_callback)
                 return False
             return True
 
