@@ -22,7 +22,7 @@ def test_standbylp_cmd_fails_from_standbylp_dish_mode(dish_manager_resources, ev
     device_proxy, _ = dish_manager_resources
 
     dish_mode_event_store = event_store_class()
-    lrc_status_event_store = event_store_class()
+    lrc_finished_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -31,15 +31,19 @@ def test_standbylp_cmd_fails_from_standbylp_dish_mode(dish_manager_resources, ev
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandStatus",
+        "lrcFinished",
         tango.EventType.CHANGE_EVENT,
-        lrc_status_event_store,
+        lrc_finished_event_store,
     )
 
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
 
     [[_], [unique_id]] = device_proxy.SetStandbyLPMode()
-    lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
+    expected_result = '[6, "Command is not allowed"]'
+
+    lrc_finished_event_store.wait_for_finished_command_result(
+        unique_id, expected_result, timeout=5
+    )
 
 
 @pytest.mark.unit

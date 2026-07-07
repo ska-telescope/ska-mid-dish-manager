@@ -27,7 +27,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
         "configuredBand": band_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
         "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -50,16 +50,13 @@ def test_dish_handles_unhappy_path_in_command_execution(
     result_event_store.clear_queue()
     status_event_store.clear_queue()
 
-    dish_manager_proxy.SetStandbyLPMode()
+    [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
 
     progress_msg = "SetStandbyLPMode failed Exception:"
     status_event_store.wait_for_progress_update(progress_msg, timeout=5)
 
-    result_event_store = result_event_store.get_queue_values(timeout=5)
-    # e.g ['[0, "SetStandbyFPMode completed"]', '[3, "SetStandbyLPMode failed"]', ...]
-    lrc_result_msgs = [event[1][1] for event in result_event_store]
-    expected_result_message = lrc_result_msgs[-1]
-    assert "SetStandbyLPMode failed" in expected_result_message, lrc_result_msgs
+    expected_result = '[3, "SetStandbyLPMode failed"]'
+    result_event_store.wait_for_finished_command_result(unique_id, expected_result, timeout=10)
 
     # check that the mode transition to LP mode did not happen on dish manager, spf and spfrx
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP

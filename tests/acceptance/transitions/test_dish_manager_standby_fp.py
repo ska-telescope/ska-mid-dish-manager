@@ -13,7 +13,7 @@ def test_standby_fp_transition(monitor_tango_servers, event_store_class, dish_ma
     status_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
     attr_cb_mapping = {
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
         "dishmode": dish_mode_event_store,
         "Status": status_event_store,
     }

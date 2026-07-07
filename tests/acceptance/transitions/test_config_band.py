@@ -19,7 +19,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         "dishMode": dm_event_store,
         "configuredBand": config_band_event_store,
         "Status": status_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -35,7 +35,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     status_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     config_band_event_store.wait_for_value(Band.B2, timeout=30)
@@ -56,14 +56,8 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         "SPFRX.ConfigureBand2 completed",
         "ConfigureBand2 complete. Triggering on success action.",
         # Then SetOperateMode
-        "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
-        "Awaiting SPF operatingmode change to OPERATE",
-        "Awaiting DS operatingmode change to POINT",
-        "Awaiting dishmode change to OPERATE",
-        "SPF operatingmode changed to OPERATE",
-        "SPF.SetOperateMode completed",
-        "DS operatingmode changed to POINT",
-        "DS.SetPointMode completed",
+        "SPF already in operate state. Not fanning out SetOperateMode command.",
+        "DS already in point state. Not fanning out SetPointMode command.",
         "SetOperateMode completed",
     ]
 
@@ -108,7 +102,7 @@ def test_configure_band_b(
     attr_cb_mapping = {
         "configuredBand": main_event_store,
         "Status": status_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -154,13 +148,13 @@ def test_configure_band_2_from_stow(
         "dishMode": dm_event_store,
         "configuredBand": config_band_event_store,
         "Status": status_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # make sure configuredBand is not B2
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B1
@@ -178,7 +172,7 @@ def test_configure_band_2_from_stow(
     dm_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "ConfigureBand2 completed."]', timeout=30
     )
     config_band_event_store.wait_for_value(Band.B2, timeout=30)
@@ -223,7 +217,7 @@ def test_configure_band_json(
         "dishMode": dm_event_store,
         "configuredBand": config_band_event_store,
         "Status": status_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -242,7 +236,7 @@ def test_configure_band_json(
     """
     # make sure configuredBand is not B2
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_1)
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B1
@@ -266,7 +260,7 @@ def test_configure_band_json(
     }
     """
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B2
@@ -296,7 +290,7 @@ def test_configure_band_json(
     # Check that dish manager allows configure band when already in requested band
     # but does not set the indexer position again.
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B2
@@ -443,13 +437,13 @@ def test_configure_band_6_from_stow(
         "dishMode": dm_event_store,
         "configuredBand": config_band_event_store,
         "Status": status_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # make sure configuredBand is not B2
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B1
@@ -467,7 +461,7 @@ def test_configure_band_6_from_stow(
     dm_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand6()
-    result_event_store.wait_for_command_result(
+    result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "ConfigureBand6 completed."]', timeout=30
     )
     config_band_event_store.wait_for_value(Band.B6, timeout=30)

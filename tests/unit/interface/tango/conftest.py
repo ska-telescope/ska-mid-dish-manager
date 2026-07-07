@@ -53,7 +53,6 @@ def dish_manager_resources():
             if method_name == "execute_command":
                 mock_method = Mock(return_value=(TaskStatus.IN_PROGRESS, "12345"))
             elif method_name == "read_attribute_value":
-                # mock_method = Mock(return_value=(TaskStatus.IN_PROGRESS, "some string"))
                 mock_method = Mock(
                     return_value=(
                         json.dumps(

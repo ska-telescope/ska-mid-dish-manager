@@ -20,6 +20,21 @@ from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestam
 
 @pytest.mark.unit
 @pytest.mark.forked
+def test_abort_commands_raises_deprecation_warning(dish_manager_resources):
+    device_proxy, _ = dish_manager_resources
+    with pytest.warns(DeprecationWarning) as record:
+        device_proxy.AbortCommands()
+
+    warning_msg = (
+        "'AbortCommands' is deprecated and will be removed in the next major "
+        "release. The client should call the tracked 'Abort' long running "
+        "command instead."
+    )
+    assert str(record[0].message) == warning_msg
+
+
+@pytest.mark.unit
+@pytest.mark.forked
 def test_only_one_abort_runs_at_a_time(dish_manager_resources):
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
@@ -96,7 +111,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandsInQueue",
+        "lrcQueue",
         tango.EventType.CHANGE_EVENT,
         cmds_in_queue_store,
     )
@@ -163,7 +178,7 @@ def test_abort_sends_lrc_update_after_abort_sequence_finishes(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandResult",
+        "lrcFinished",
         tango.EventType.CHANGE_EVENT,
         lrc_result_event_store,
     )

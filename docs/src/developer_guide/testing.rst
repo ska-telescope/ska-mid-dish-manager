@@ -92,5 +92,5 @@ Deploy DishManager with DB
 
 TODO in KAR-865 (using docker-compose).
 
-.. _DeviceTestContext: https://gitlab.com/tango-controls/pytango/-/blob/v9.5.0/tango/test_context.py?ref_type=tags#L740
+.. _DeviceTestContext: https://gitlab.com/tango-controls/pytango/-/blob/v10.3.0/tango/test_context.py#L767
 .. _simulated devices: https://gitlab.com/ska-telescope/ska-mid-dish-simulators

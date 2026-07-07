@@ -52,7 +52,7 @@ can be found in the :doc:`API section <../api/devices/dish-manager-device>`.
 
 Since DishManager fans out commands to sub devices which in turn execute over a relatively "long"
 period, most of the commands are implemented to run asynchronously. The progress of a command can
-be tracked on `dedicated attributes`_ which have a ``longrunningcommand_`` suffix (this is in 
+be tracked on `dedicated attributes`_ (which have a ``lrc_`` prefix, e.g. lrcQueue) (this is in
 addition to the attribute which will report the final state of the Dish).
 
 The specific attribute(s) which is updated for each command is :ref:`tabulated below <tabulated-commands-and-attributes>`.
@@ -65,7 +65,7 @@ Event subscription will be used to monitor progress on the dishMode and configur
       .. code-block:: rst
 
          In [1]: cb = tango.utils.EventCallback()
-            ...: subscription_id = dish_manager.subscribe_event("longrunningcommandprogress", tango.EventType.CHANGE_EVENT, cb)
+            ...: subscription_id = dish_manager.subscribe_event("lrcFinished", tango.EventType.CHANGE_EVENT, cb)
          
          # request to go to STANDBY_FP, response is a result code and unique id
          In [2]: dish_manager.SetStandbyFPMode()

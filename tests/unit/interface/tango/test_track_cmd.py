@@ -60,7 +60,7 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
     device_proxy, dish_manager_cm = dish_manager_resources
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
-    lrc_status_event_store = event_store_class()
+    lrc_finished_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -75,12 +75,11 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandStatus",
+        "lrcFinished",
         tango.EventType.CHANGE_EVENT,
-        lrc_status_event_store,
+        lrc_finished_event_store,
     )
 
-    # Ensure that the pointingState precondition is met before testing Track() against dishMode
     dish_manager_cm._update_component_state(pointingstate=PointingState.READY)
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=5)
 
@@ -88,7 +87,11 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
     dish_mode_event_store.wait_for_value(current_dish_mode, timeout=5)
 
     [[_], [unique_id]] = device_proxy.Track()
-    lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
+
+    expected_result = '[6, "Command is not allowed"]'
+    lrc_finished_event_store.wait_for_finished_command_result(
+        unique_id, expected_result, timeout=5
+    )
 
 
 @pytest.mark.unit
@@ -111,7 +114,7 @@ def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
     device_proxy, dish_manager_cm = dish_manager_resources
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
-    lrc_status_event_store = event_store_class()
+    lrc_finished_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -126,12 +129,11 @@ def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
     )
 
     device_proxy.subscribe_event(
-        "longRunningCommandStatus",
+        "lrcFinished",
         tango.EventType.CHANGE_EVENT,
-        lrc_status_event_store,
+        lrc_finished_event_store,
     )
 
-    # Ensure that the dishMode precondition is met before testing Track() against pointingState
     dish_manager_cm._update_component_state(dishmode=DishMode.OPERATE)
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
 
@@ -139,7 +141,11 @@ def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
     pointing_state_event_store.wait_for_value(current_pointing_state, timeout=5)
 
     [[_], [unique_id]] = device_proxy.Track()
-    lrc_status_event_store.wait_for_value((unique_id, "REJECTED"))
+
+    expected_result = '[6, "Command is not allowed"]'
+    lrc_finished_event_store.wait_for_finished_command_result(
+        unique_id, expected_result, timeout=5
+    )
 
 
 @pytest.mark.unit
