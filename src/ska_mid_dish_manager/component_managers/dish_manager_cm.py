@@ -1401,8 +1401,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         task_status, msg = ds_cm.execute_command("TrackLoadTable", float_list)
         return task_status, msg
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def set_standby_lp_mode(
         self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1420,8 +1420,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def set_standby_fp_mode(
         self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1439,8 +1439,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def set_maintenance_mode(
         self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1459,8 +1459,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def track_cmd(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Track the commanded pointing position."""
 
@@ -1490,8 +1490,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def track_stop_cmd(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Stop tracking."""
 
@@ -1519,8 +1519,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def set_operate_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Fanout commands to subdevices to set operate mode.
 
@@ -1553,8 +1553,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def configure_band_cmd(
         self, band: Band, synchronise: bool, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1596,8 +1596,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def configure_band_six_cmd(
         self,
         task_callback: Optional[Callable] = None,
@@ -1619,8 +1619,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
         return status, response
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def configure_band_with_json(
         self,
         data: str,
@@ -1712,8 +1712,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return TaskStatus.COMPLETED, "Stow called, monitor dishmode for LRC completed"
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def slew(
         self, values: list[float], task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -1791,8 +1791,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback, status=TaskStatus.COMPLETED, result=(ResultCode.OK, "EndScan completed")
         )
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def track_load_static_off(
         self, values: list[float], task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
@@ -2112,8 +2112,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             raise
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def reset_track_table(self) -> Tuple[ResultCode, List[float] | str]:
         """Reset the track table."""
         self.logger.debug("Resetting the programTrackTable")
@@ -2179,8 +2179,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return (ResultCode.FAILED, msg)
         return (ResultCode.OK, "Successfully updated Frequency on the B5DC proxy.")
 
-    @check_communicating
     @last_command_failure_decorator
+    @check_communicating
     def interlock_acknowledge(
         self, task_callback: Optional[Callable] = None
     ) -> Tuple[TaskStatus, str]:
