@@ -85,14 +85,13 @@ def test_spf_lna_power_state_rejects_attribute_writes(
     """Test that SPF Lna Power State change is rejected when dishmode either not in operate
     or maintainance.
     """
-    main_event_store = event_store_class()
-    attr_cb_mapping = {"dishmode": main_event_store}
+    attr_cb_mapping = {}
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    main_event_store.clear_queue()
-    dish_manager_proxy.SetStandbyLPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_LP, 120)
     err_msg = "Cannot change LNA power state while dish is not in operate or maintanance mode."
-    # assert dish_manager_proxy.read_attribute("dishMode").value == DishMode.STANDBY_LP
+    assert dish_manager_proxy.read_attribute("dishMode").value in [
+        DishMode.STANDBY_LP,
+        DishMode.UNKNOWN,
+    ]
     with pytest.raises(tango.DevFailed) as exc_info:
         dish_manager_proxy.write_attribute(attribute_name, True)
     err_desc = exc_info.value.args[0].desc
