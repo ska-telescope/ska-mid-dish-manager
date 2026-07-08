@@ -121,19 +121,25 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
 ) -> None:
     """Test that SPF Lna Power State change updates when dishmode is in operate."""
     dm_event_store = event_store_class()
+    result_event_store = event_store_class()
     spf_lna_power_state_attr_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dm_event_store,
         attribute_name: spf_lna_power_state_attr_event_store,
+        "lrcFinished": result_event_store,
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     dish_manager_proxy.SetOperateMode()
     dm_event_store.wait_for_value(DishMode.OPERATE, 30)
+
     try:
         if dish_manager_proxy.dishMode != DishMode.OPERATE:
             configure_band_cmd = getattr(dish_manager_proxy, f"ConfigureBand{band}")
-            configure_band_cmd(True)
+            [[_], [unique_id]] = configure_band_cmd(True)
+            result_event_store.wait_for_finished_command_result(
+                unique_id, '[0, "SetOperateMode completed."]', timeout=30
+            )
             dm_event_store.wait_for_value(DishMode.OPERATE, timeout=90)
         # Setting LNA power state to False as a precondition for the test to check change event
         dish_manager_proxy.write_attribute(attribute_name, False)
