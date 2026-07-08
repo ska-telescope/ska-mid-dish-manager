@@ -1401,7 +1401,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_cm = self.sub_component_managers["DS"]
         task_status, msg = ds_cm.execute_command("TrackLoadTable", float_list)
         return task_status, msg
-    
+
     @last_command_failure_decorator
     @check_communicating
     def set_standby_lp_mode(
@@ -1596,7 +1596,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback=task_callback,
         )
         return status, response
-    
+
     @last_command_failure_decorator
     @check_communicating
     def configure_band_six_cmd(
