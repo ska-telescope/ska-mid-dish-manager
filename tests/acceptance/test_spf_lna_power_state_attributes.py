@@ -130,8 +130,6 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    dish_manager_proxy.SetOperateMode()
-    dm_event_store.wait_for_value(DishMode.OPERATE, 30)
 
     try:
         if dish_manager_proxy.dishMode != DishMode.OPERATE:
