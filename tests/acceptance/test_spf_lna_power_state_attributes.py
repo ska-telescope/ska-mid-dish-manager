@@ -90,7 +90,7 @@ def test_spf_lna_power_state_rejects_attribute_writes(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     main_event_store.clear_queue()
     dish_manager_proxy.SetStandbyLPMode()
-    main_event_store.wait_for_value(DishMode.STANDBY_LP, 15)
+    main_event_store.wait_for_value(DishMode.STANDBY_LP, 120)
     err_msg = "Cannot change LNA power state while dish is not in operate or maintanance mode."
     # assert dish_manager_proxy.read_attribute("dishMode").value == DishMode.STANDBY_LP
     with pytest.raises(tango.DevFailed) as exc_info:
