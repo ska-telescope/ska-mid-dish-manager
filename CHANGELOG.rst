@@ -10,8 +10,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Updated pytango to v10.3.0
 - Updated ska-tango-base to v1.6.1
 
-Version 10.0.0-rc.1
-*******************
+Version 10.0.0
+**************
 - Cleaned up "Abort" LRC response message strings - response codes remain unchanged.
 - Renamed attribute `frequencyResponse` to `spectrumSample`
 - No longer fanning out commands to `SPF` and `DSC` during `ConfigureBand` if they are already in the desired state.
