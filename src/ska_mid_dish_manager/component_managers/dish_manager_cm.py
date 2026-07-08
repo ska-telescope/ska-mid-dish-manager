@@ -1391,6 +1391,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         except tango.DevFailed:
             raise
 
+    @last_command_failure_decorator
     def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
     ) -> Tuple[TaskStatus, str]:
