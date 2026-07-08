@@ -128,13 +128,13 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    # dish_manager_proxy.SetOperateMode()
-    # dm_event_store.wait_for_value(DishMode.OPERATE, 15)
+    dish_manager_proxy.SetOperateMode()
+    dm_event_store.wait_for_value(DishMode.OPERATE, 30)
     try:
         if dish_manager_proxy.dishMode != DishMode.OPERATE:
             configure_band_cmd = getattr(dish_manager_proxy, f"ConfigureBand{band}")
             configure_band_cmd(True)
-            dm_event_store.wait_for_value(DishMode.OPERATE, timeout=120)
+            dm_event_store.wait_for_value(DishMode.OPERATE, timeout=90)
         # Setting LNA power state to False as a precondition for the test to check change event
         dish_manager_proxy.write_attribute(attribute_name, False)
         dish_manager_proxy.write_attribute(attribute_name, True)
