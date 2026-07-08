@@ -6,7 +6,7 @@ import pytest
 import tango
 from tango import AttrWriteType
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
+from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
@@ -121,12 +121,12 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
 ) -> None:
     """Test that SPF Lna Power State change updates when dishmode is in operate."""
     dm_event_store = event_store_class()
-    result_event_store = event_store_class()
     spf_lna_power_state_attr_event_store = event_store_class()
+    band_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dm_event_store,
         attribute_name: spf_lna_power_state_attr_event_store,
-        "lrcFinished": result_event_store,
+        "configuredBand": band_event_store,
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -136,10 +136,8 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     try:
         if dish_manager_proxy.dishMode != DishMode.OPERATE:
             configure_band_cmd = getattr(dish_manager_proxy, f"ConfigureBand{band}")
-            [[_], [unique_id]] = configure_band_cmd(True)
-            result_event_store.wait_for_finished_command_result(
-                unique_id, '[0, "SetOperateMode completed."]', timeout=30
-            )
+            configure_band_cmd(True)
+            band_event_store.wait_for_value(f"{Band}.B{band}", timeout=30)
             dm_event_store.wait_for_value(DishMode.OPERATE, timeout=90)
         # Setting LNA power state to False as a precondition for the test to check change event
         dish_manager_proxy.write_attribute(attribute_name, False)
