@@ -118,6 +118,8 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
+    toggle_skip_attributes,
+    spf_device_proxy,
 ) -> None:
     """Test that SPF Lna Power State change updates when dishmode is in operate."""
     dm_event_store = event_store_class()
@@ -128,9 +130,7 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    dish_manager_proxy.SetOperateMode()
-    dm_event_store.wait_for_value(DishMode.OPERATE, 30)
-
+    spf_device_proxy.skipAttributeUpdates = False
     try:
         if dish_manager_proxy.dishMode != DishMode.OPERATE:
             configure_band_cmd = getattr(dish_manager_proxy, f"ConfigureBand{band}")
