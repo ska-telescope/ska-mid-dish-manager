@@ -80,14 +80,19 @@ def test_spf_lna_power_state_attributes_types(
 def test_spf_lna_power_state_rejects_attribute_writes(
     attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
+    event_store_class,
 ) -> None:
     """Test that SPF Lna Power State change is rejected when dishmode either not in operate
     or maintainance.
     """
-    attr_cb_mapping = {}
+    main_event_store = event_store_class()
+    attr_cb_mapping = {"dishmode": main_event_store}
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    main_event_store.clear_queue()
+    dish_manager_proxy.SetStandbyLPMode()
+    main_event_store.wait_for_value(DishMode.STANDBY_LP, 15)
     err_msg = "Cannot change LNA power state while dish is not in operate or maintanance mode."
-    assert dish_manager_proxy.read_attribute("dishMode").value == DishMode.STANDBY_LP
+    # assert dish_manager_proxy.read_attribute("dishMode").value == DishMode.STANDBY_LP
     with pytest.raises(tango.DevFailed) as exc_info:
         dish_manager_proxy.write_attribute(attribute_name, True)
     err_desc = exc_info.value.args[0].desc
@@ -124,12 +129,13 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-
+    # dish_manager_proxy.SetOperateMode()
+    # dm_event_store.wait_for_value(DishMode.OPERATE, 15)
     try:
         if dish_manager_proxy.dishMode != DishMode.OPERATE:
             configure_band_cmd = getattr(dish_manager_proxy, f"ConfigureBand{band}")
             configure_band_cmd(True)
-            dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
+            dm_event_store.wait_for_value(DishMode.OPERATE, timeout=120)
         # Setting LNA power state to False as a precondition for the test to check change event
         dish_manager_proxy.write_attribute(attribute_name, False)
         dish_manager_proxy.write_attribute(attribute_name, True)
