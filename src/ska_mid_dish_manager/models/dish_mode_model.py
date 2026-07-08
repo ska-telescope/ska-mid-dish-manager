@@ -142,5 +142,6 @@ class DishModeModel:
             logger.debug(msg)
 
         report_task_progress(msg, progress_callback)
-
+        # This is a pre-condition rejection, not an execution failure.
+        self.last_command_failure_helper(cmd_name, "-", msg)
         return False

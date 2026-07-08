@@ -482,6 +482,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # --------------
     # Helper methods
     # --------------
+    def last_command_failure_helper(
+        self,
+        command: str,
+        status: str,
+        response: str,
+    ) -> None:
+        failure = (
+            "DishManager",
+            str(time.time()),
+            command,
+            f"Status: {status}, Response: {response}",
+        )
+
+        if self._update_component_state:
+            self._update_component_state(lastcommandfailure=failure)
+
     def get_current_tai_offset_from_dsc_with_manual_fallback(self) -> float:
         """Try and get the TAI offset from the DSManager device.
         Or calulate it manually if that fails.
@@ -1384,7 +1400,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ds_cm = self.sub_component_managers["DS"]
         task_status, msg = ds_cm.execute_command("TrackLoadTable", float_list)
         return task_status, msg
-
+    
     @last_command_failure_decorator
     @check_communicating
     def set_standby_lp_mode(
@@ -1455,6 +1471,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Track command is allowed for dishMode OPERATE"
                 )
                 report_task_progress(msg, self._command_progress_callback)
+                self.last_command_failure_helper("track", "-", msg)
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
                 msg = (
@@ -1462,6 +1479,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Track command is allowed for pointingState READY"
                 )
                 report_task_progress(msg, self._command_progress_callback)
+                self.last_command_failure_helper("track", "-", msg)
                 return False
             return True
 
@@ -1484,11 +1502,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 PointingState.TRACK,
                 PointingState.SLEW,
             ]:
-                # So the message can trickle back up to lastCommandFailure
-                report_task_progress(
+                self.last_command_failure_helper(
+                    "track_stop",
+                    "-",
                     "Command not allowed. DishMode is not OPERATE and"
                     " PointingState is not SLEW/TRACK.",
-                    self._command_progress_callback,
                 )
                 return False
 
@@ -1521,6 +1539,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Set operate mode command is allowed for dishMode STANDBY_FP"
                 )
                 report_task_progress(msg, self._command_progress_callback)
+                self.last_command_failure_helper("set_operate", "-", msg)
                 return False
             return True
 
@@ -1576,7 +1595,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             task_callback=task_callback,
         )
         return status, response
-
+    
     @last_command_failure_decorator
     @check_communicating
     def configure_band_six_cmd(
@@ -1713,6 +1732,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Slew command is allowed for dishMode OPERATE"
                 )
                 report_task_progress(msg, self._command_progress_callback)
+                self.last_command_failure_helper("slew", "-", msg)
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
                 msg = (
@@ -1720,6 +1740,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Slew command is allowed for pointingState READY"
                 )
                 report_task_progress(msg, self._command_progress_callback)
+                self.last_command_failure_helper("slew", "-", msg)
                 return False
             return True
 
