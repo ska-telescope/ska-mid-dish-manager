@@ -56,7 +56,7 @@ def test_configureband_handler(
 
     msgs = [
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
         "Awaiting configuredband change to B2",
     ]
@@ -147,7 +147,7 @@ def test_configureband_json_handler_happy(
 
     msgs = [
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
         "Awaiting configuredband change to B2",
     ]
@@ -392,7 +392,7 @@ def test_configureband_5b_with_subband(
 
     msgs = [
         "Awaiting DS indexerposition change to B5b",
-        "Awaiting SPFRX configuredband change to B1",
+        "Awaiting SPFRX configuredband, operatingmode change to B1, OPERATE",
         f"Awaiting B5DC rfcmfrequency change to {sub_band_frequency}",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand, B5DC.SetFrequency",
         "Awaiting configuredband change to B5b",
@@ -485,7 +485,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         assert kwargs == expected_call_kwargs[count]
     msgs = [
         "Awaiting DS indexerposition change to B5b",
-        "Awaiting SPFRX configuredband change to B1",
+        "Awaiting SPFRX configuredband, operatingmode change to B1, OPERATE",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
         "Awaiting configuredband change to B5b",
         "B5DC.SetFrequency ignored",

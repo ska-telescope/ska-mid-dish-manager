@@ -239,7 +239,7 @@ class TestCommandActions:
             # ConfigureBand2
             "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
             "Awaiting DS indexerposition change to B2",
-            "Awaiting SPFRX configuredband change to B2",
+            "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
             "Awaiting configuredband change to B2",
             "DS indexerposition changed to B2",
             "DS.SetIndexPosition completed",
@@ -318,7 +318,7 @@ class TestCommandActions:
             # ConfigureBand
             "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
             "Awaiting DS indexerposition change to B2",
-            "Awaiting SPFRX configuredband change to B2",
+            "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
             "Awaiting configuredband change to B2",
             "DS indexerposition changed to B2",
             "DS.SetIndexPosition completed",
@@ -407,7 +407,7 @@ class TestCommandActions:
             # Then ConfigureBand2
             "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
             "Awaiting DS indexerposition change to B2",
-            "Awaiting SPFRX configuredband change to B2",
+            "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
             "Awaiting configuredband change to B2",
             "DS indexerposition changed to B2",
             "DS.SetIndexPosition completed",
