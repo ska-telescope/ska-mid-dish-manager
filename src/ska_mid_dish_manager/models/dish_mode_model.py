@@ -142,5 +142,8 @@ class DishModeModel:
             logger.debug(msg)
 
         report_task_progress(msg, progress_callback)
+        if component_manager:
+            # This is a pre-condition rejection, not an execution failure.
+            component_manager.last_command_failure_helper(cmd_name, "PRECONDITION_FAILED", msg)
 
         return False

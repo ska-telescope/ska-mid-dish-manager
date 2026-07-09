@@ -5,7 +5,7 @@ import logging
 import time
 from typing import Any, Callable
 
-from ska_control_model import CommunicationStatus
+from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 
@@ -191,3 +191,53 @@ def log_tango_attr_write() -> Callable:
         return wrapper
 
     return decorator
+
+
+def last_command_failure_decorator(func: Any) -> Any:
+    """Record the last command failure originating from Dish Manager."""
+
+    @functools.wraps(func)
+    def last_command_failure_wrapper(*args: Any, **kwargs: Any) -> Any:
+        device_instance = args[0]
+        try:
+            result = func(*args, **kwargs)
+            if isinstance(result, tuple):
+                status, response = result
+                failure_states: tuple[Any, ...] = ()
+                # Check to see if the status indicates a failure
+                if isinstance(status, TaskStatus):
+                    failure_states = (
+                        TaskStatus.FAILED,
+                        TaskStatus.REJECTED,
+                    )
+
+                elif isinstance(status, ResultCode):
+                    failure_states = (
+                        ResultCode.FAILED,
+                        ResultCode.REJECTED,
+                        ResultCode.NOT_ALLOWED,
+                        ResultCode.ABORTED,
+                        ResultCode.UNKNOWN,
+                    )
+                if status in failure_states:
+                    # Record failure
+                    failure = (
+                        "DishManager",
+                        str(time.time()),
+                        func.__name__,
+                        f"Status: {status.name}:{status}, Response: {response}",
+                    )
+                    # Update component state
+                    if device_instance._update_component_state:
+                        device_instance._update_component_state(lastcommandfailure=failure)
+
+            return result
+        except Exception as ex:
+            failure = ("DishManager", str(time.time()), func.__name__, str(ex))
+            # Update component state
+            if device_instance._update_component_state:
+                device_instance._update_component_state(lastcommandfailure=failure)
+            # Raise the error
+            raise
+
+    return last_command_failure_wrapper
