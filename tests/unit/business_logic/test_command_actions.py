@@ -203,6 +203,9 @@ class TestCommandActions:
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
                     "configuredband"
                 ] = Band.B2
+                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
+                    "operatingmode"
+                ] = SPFRxOperatingMode.OPERATE
                 self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
             elif "Awaiting dishmode change to OPERATE" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -278,6 +281,9 @@ class TestCommandActions:
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
                     "configuredband"
                 ] = Band.B2
+                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
+                    "operatingmode"
+                ] = SPFRxOperatingMode.OPERATE
                 self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
             elif "Awaiting dishmode change to OPERATE" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -367,6 +373,9 @@ class TestCommandActions:
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
                     "configuredband"
                 ] = Band.B2
+                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
+                    "operatingmode"
+                ] = SPFRxOperatingMode.OPERATE
                 self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
             elif "Awaiting dishmode change to OPERATE" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[

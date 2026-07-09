@@ -298,7 +298,7 @@ def test_configure_band_json(
 
     expected_progress_updates = [
         "Fanned out commands: SPFRX.ConfigureBand",
-        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Awaiting configuredband change to B2",
         "SPFRX configuredband changed to B2",
         "SPFRX.ConfigureBand completed",
