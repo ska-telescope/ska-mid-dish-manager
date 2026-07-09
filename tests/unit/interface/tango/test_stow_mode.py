@@ -16,7 +16,7 @@ def test_stow_mode(dish_manager_resources, event_store_class):
     status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
-        "longRunningCommandResult",
+        "lrcFinished",
         tango.EventType.CHANGE_EVENT,
         result_event_store,
     )

@@ -54,7 +54,7 @@ def test_ignoring_spf(
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "configuredband": main_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
         "Status": status_event_store,
     }
 
@@ -95,7 +95,7 @@ def test_ignoring_spfrx(
     dish_mode_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
         "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -136,7 +136,7 @@ def test_ignoring_all(
     dish_mode_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
-        "longRunningCommandResult": result_event_store,
+        "lrcFinished": result_event_store,
         "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)

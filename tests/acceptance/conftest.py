@@ -119,9 +119,9 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             "spfrxconnectionstate",
             "dsconnectionstate",
             "b5dcconnectionstate",
-            "longrunningcommandstatus",
-            "longrunningcommandresult",
-            "longrunningcommandprogress",
+            "lrcExecuting",
+            "lrcFinished",
+            "lrcQueue",
         ),
     )
     ds_tracker = TrackedDevice(
@@ -160,16 +160,12 @@ def reset_dish_to_standby(
     power_state_events = event_store_class()
     dish_mode_events = event_store_class()
 
-    lrc_status = dish_manager_proxy.longRunningCommandStatus
-    lrc_status = ", ".join([evt for evt in lrc_status])
-    if "IN_PROGRESS" in lrc_status:
+    lrc_executing = dish_manager_proxy.lrcExecuting
+
+    if len(lrc_executing) > 0:
         # this wait is very important for our AUTOMATED tests!!!
         # wait for task status updates to finish before resetting the
-        # sub devices to a clean state for the next test. Reasons are:
-        # [*] your command map may never evaluate true for the
-        # awaited value to report the final task status of the LRC.
-        # [*] the base classes needs this final task status to allow the
-        # subsequently issued commands to be moved from queued to in progress
+        # sub devices to a clean state for the next test.
         op_mode_events.get_queue_events(timeout=5)
 
     subscriptions = {}
@@ -209,8 +205,8 @@ def reset_dish_to_standby(
             dish_manager_proxy.SetStandbyFPMode()
             dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=20)
         except (RuntimeError, tango.DevFailed):
-            logger.debug("DishManager commands: %s", dish_manager_proxy.longrunningcommandstatus)
-            logger.debug("DSManager commands: %s", ds_device_proxy.longrunningcommandstatus)
+            logger.debug("DishManager commands: %s", dish_manager_proxy.status())
+            logger.debug("DSManager commands: %s", ds_device_proxy.status())
             logger.debug("\n\nDM component state: %s\n\n", dish_manager_proxy.GetComponentStates())
             remove_subscriptions(subscriptions)
             raise
