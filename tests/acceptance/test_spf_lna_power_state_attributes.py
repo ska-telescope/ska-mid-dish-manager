@@ -80,7 +80,6 @@ def test_spf_lna_power_state_attributes_types(
 def test_spf_lna_power_state_rejects_attribute_writes(
     attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
-    event_store_class,
 ) -> None:
     """Test that SPF Lna Power State change is rejected when dishmode either not in operate
     or maintainance.
@@ -117,7 +116,6 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
-    spf_device_proxy,
 ) -> None:
     """Test that SPF Lna Power State change updates when dishmode is in operate."""
     dm_event_store = event_store_class()
@@ -130,8 +128,7 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     try:
         if dish_manager_proxy.dishMode != DishMode.OPERATE:
-            dish_manager_proxy.SetStowMode()
-            dish_manager_proxy.SetOperateMode()
+            dish_manager_proxy.ConfigureBand1(True)
             dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
         # Setting LNA power state to False as a precondition for the test to check change event
         dish_manager_proxy.write_attribute(attribute_name, False)

@@ -1472,7 +1472,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Track command is allowed for dishMode OPERATE"
                 )
                 report_task_progress(msg, self._command_progress_callback)
-                self.last_command_failure_helper("track", "-", msg)
+                self.last_command_failure_helper("track", "PRECONDITION_FAILED", msg)
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
                 msg = (
@@ -1480,7 +1480,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Track command is allowed for pointingState READY"
                 )
                 report_task_progress(msg, self._command_progress_callback)
-                self.last_command_failure_helper("track", "-", msg)
+                self.last_command_failure_helper("track", "PRECONDITION_FAILED", msg)
                 return False
             return True
 
@@ -1505,7 +1505,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             ]:
                 self.last_command_failure_helper(
                     "track_stop",
-                    "-",
+                    "PRECONDITION_FAILED",
                     "Command not allowed. DishMode is not OPERATE and"
                     " PointingState is not SLEW/TRACK.",
                 )
@@ -1540,7 +1540,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Set operate mode command is allowed for dishMode STANDBY_FP"
                 )
                 report_task_progress(msg, self._command_progress_callback)
-                self.last_command_failure_helper("set_operate", "-", msg)
+                self.last_command_failure_helper("set_operate", "PRECONDITION_FAILED", msg)
                 return False
             return True
 
@@ -1733,7 +1733,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Slew command is allowed for dishMode OPERATE"
                 )
                 report_task_progress(msg, self._command_progress_callback)
-                self.last_command_failure_helper("slew", "-", msg)
+                self.last_command_failure_helper("slew", "PRECONDITION_FAILED", msg)
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
                 msg = (
@@ -1741,7 +1741,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Slew command is allowed for pointingState READY"
                 )
                 report_task_progress(msg, self._command_progress_callback)
-                self.last_command_failure_helper("slew", "-", msg)
+                self.last_command_failure_helper("slew", "PRECONDITION_FAILED", msg)
                 return False
             return True
 
