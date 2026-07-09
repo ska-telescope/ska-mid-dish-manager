@@ -1,4 +1,4 @@
-"""SPFCLnaHPowerState checks."""
+"""SPFCLnaHPowerState checks - Test set 1."""
 
 from typing import Any
 
@@ -25,6 +25,7 @@ from tests.utils import remove_subscriptions, setup_subscriptions
     ],
 )
 def test_spf_lna_power_state_attributes_initial_values(
+    reset_dish_to_standby,
     dish_manager_proxy: tango.DeviceProxy,
     attribute_name: str,
 ) -> None:
@@ -53,7 +54,7 @@ def test_spf_lna_power_state_attributes_initial_values(
     ],
 )
 def test_spf_lna_power_state_attributes_types(
-    dish_manager_proxy: tango.DeviceProxy, attribute_name: str
+    reset_dish_to_standby, dish_manager_proxy: tango.DeviceProxy, attribute_name: str
 ) -> None:
     """Test the spf lna attribute configurations are read and write."""
     attr_cb_mapping = {}
@@ -78,6 +79,7 @@ def test_spf_lna_power_state_attributes_types(
     ],
 )
 def test_spf_lna_power_state_rejects_attribute_writes(
+    reset_dish_to_standby,
     attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
 ) -> None:
@@ -113,6 +115,7 @@ def test_spf_lna_power_state_rejects_attribute_writes(
     ],
 )
 def test_spf_lna_power_state_change_on_dishmode_operate(
+    reset_dish_to_standby,
     attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
@@ -156,6 +159,7 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
     ],
 )
 def test_spf_lna_power_state_change_on_dishmode_maintainance(
+    reset_dish_to_standby,
     attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
@@ -163,16 +167,17 @@ def test_spf_lna_power_state_change_on_dishmode_maintainance(
     """Test that SPF Lna Power State change updates when dishmode is in maintainance."""
     dm_event_store = event_store_class()
     spf_lna_power_state_attr_event_store = event_store_class()
-
+    dish_manager_proxy.SetMaintenanceMode()
     attr_cb_mapping = {
         "dishMode": dm_event_store,
         attribute_name: spf_lna_power_state_attr_event_store,
     }
+
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     try:
         if dish_manager_proxy.dishmode != DishMode.MAINTENANCE:
             dish_manager_proxy.SetMaintenanceMode()
-            dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=120)
+            dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=60)
         # Setting LNA power state to False as a precondition for the test to check change event
         dish_manager_proxy.write_attribute(attribute_name, False)
         dish_manager_proxy.write_attribute(attribute_name, True)
