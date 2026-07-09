@@ -177,7 +177,7 @@ def test_spf_lna_power_state_change_on_dishmode_maintainance(
     try:
         if dish_manager_proxy.dishmode != DishMode.MAINTENANCE:
             dish_manager_proxy.SetMaintenanceMode()
-            dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=300)
+            dm_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=250)
         # Setting LNA power state to False as a precondition for the test to check change event
         dish_manager_proxy.write_attribute(attribute_name, False)
         dish_manager_proxy.write_attribute(attribute_name, True)

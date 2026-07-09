@@ -379,6 +379,7 @@ class DishManager(SKAController):
             setattr(self, attribute_variable, comp_state_value)
             self.push_change_event(attribute_name, comp_state_value)
             self.push_archive_event(attribute_name, comp_state_value)
+            self._submit_tango_operation("push_alarm_event", attribute_name, comp_state_value)
 
     def _wind_stow_inform(self, **computed_averages):
         """Updates the device state and status based on wind condition.
@@ -528,6 +529,8 @@ class DishManager(SKAController):
         for attr in self._component_state_attr_map.values():
             self.set_change_event(attr, True, False)
             self.set_archive_event(attr, True, False)
+            # Manual push but allow filtering of alarms based on configured thresholds
+            self.set_alarm_event(attr, True, True)
 
         # Configure events for base class attributes
         for attr in (
@@ -543,6 +546,7 @@ class DishManager(SKAController):
             try:
                 self.set_change_event(attr, True, False)
                 self.set_archive_event(attr, True, False)
+                self.set_alarm_event(attr, True, True)
             except Exception:
                 pass
 
@@ -570,6 +574,7 @@ class DishManager(SKAController):
         ):
             self.set_change_event(attr, True, False)
             self.set_archive_event(attr, True, False)
+            self.set_alarm_event(attr, True, True)
 
         # Try to connect to DB and update memorized attributes if TANGO_HOST is set
         self.component_manager.try_update_memorized_attributes_from_db()
