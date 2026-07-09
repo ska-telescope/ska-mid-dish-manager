@@ -580,7 +580,10 @@ class ConfigureBandAction(Action):
                 command_name=self.requested_cmd,
                 device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
                 command_argument=self.data,
-                awaited_component_state={"configuredband": spfrx_awaited_band},
+                awaited_component_state={
+                    "configuredband": spfrx_awaited_band,
+                    "operatingmode": SPFRxOperatingMode.OPERATE,
+                },
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
@@ -600,7 +603,10 @@ class ConfigureBandAction(Action):
                 command_name=spfrx_requested_cmd,
                 device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
                 command_argument=self.synchronise,
-                awaited_component_state={"configuredband": spfrx_awaited_band},
+                awaited_component_state={
+                    "configuredband": spfrx_awaited_band,
+                    "operatingmode": SPFRxOperatingMode.OPERATE,
+                },
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
