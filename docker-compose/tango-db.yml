@@ -70,7 +70,7 @@ services:
 
   cli:
     platform: linux/amd64
-    image: artefact.skao.int/ska-tango-images-tango-itango:9.5.0
+    image: artefact.skao.int/ska-tango-images-tango-itango:10.3.0
     restart: unless-stopped
     depends_on:
       - databaseds
