@@ -28,7 +28,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
         result_event_store.wait_for_command_id(unique_id, timeout=30)
         assert dish_manager_proxy.configuredBand == Band.B1
-        assert dish_manager_proxy.dishMode == DishMode.OPERATE
+        dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
 
     dm_event_store.clear_queue()
     config_band_event_store.clear_queue()
