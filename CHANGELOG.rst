@@ -7,7 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-
+- Configured alarm events for all attributes.
 
 Version 10.0.0
 **************
