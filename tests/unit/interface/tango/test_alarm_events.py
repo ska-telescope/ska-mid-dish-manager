@@ -55,17 +55,28 @@ def test_client_receives_alarm_event(dish_manager_resources, event_store_class):
         tango.EventType.ALARM_EVENT,
         event_store,
     )
+    event_store.clear_queue()
 
-    # check that attribute quality is valid
+    # check initial conditions
+    assert device_proxy.rfTemperature == 0.0
     assert device_proxy.read_attribute("rfTemperature").quality == tango.AttrQuality.ATTR_VALID
+
+    # Tango always pushes the first alarm on change event
+    dish_manager_cm._update_component_state(rftemperature=5.0)
+    events = event_store.wait_for_n_events(1, timeout=6)
+    assert events[0].attr_value.value == 5.0
+    assert events[0].attr_value.quality == tango.AttrQuality.ATTR_VALID
+
+    # Simulate component state update to a value within the alarm limits.
+    dish_manager_cm._update_component_state(rftemperature=8.0)
+    events = event_store.get_queue_events()
+    assert len(events) == 0, "No events should be received for values within alarm limits."
 
     # Simulate component state update to a value above max_alarm.
     dish_manager_cm._update_component_state(rftemperature=20.0)
-
-    assert event_store.wait_for_n_events(1, timeout=6)
-
-    # check that attribute quality is invalid
-    assert device_proxy.read_attribute("rfTemperature").quality == tango.AttrQuality.ATTR_ALARM
+    events = event_store.wait_for_n_events(1, timeout=6)
+    assert events[0].attr_value.value == 20.0
+    assert events[0].attr_value.quality == tango.AttrQuality.ATTR_ALARM
 
     device_proxy.unsubscribe_event(subscription_id)
 
@@ -87,16 +98,27 @@ def test_client_receives_alarm_event_for_warning(dish_manager_resources, event_s
         tango.EventType.ALARM_EVENT,
         event_store,
     )
+    event_store.clear_queue()
 
-    # check that attribute quality is valid
+    # check initial conditions
+    assert device_proxy.rfTemperature == 0.0
     assert device_proxy.read_attribute("rfTemperature").quality == tango.AttrQuality.ATTR_VALID
+
+    # Tango always pushes the first alarm on change event
+    dish_manager_cm._update_component_state(rftemperature=5.0)
+    events = event_store.wait_for_n_events(1, timeout=6)
+    assert events[0].attr_value.value == 5.0
+    assert events[0].attr_value.quality == tango.AttrQuality.ATTR_VALID
+
+    # Simulate component state update to a value within the alarm limits.
+    dish_manager_cm._update_component_state(rftemperature=8.0)
+    events = event_store.get_queue_events()
+    assert len(events) == 0, "No events should be received for values within alarm limits."
 
     # Simulate component state update to a value above max_warning.
     dish_manager_cm._update_component_state(rftemperature=20.0)
-
-    assert event_store.wait_for_n_events(1, timeout=6)
-
-    # check that attribute quality is in warning state
-    assert device_proxy.read_attribute("rfTemperature").quality == tango.AttrQuality.ATTR_WARNING
+    events = event_store.wait_for_n_events(1, timeout=6)
+    assert events[0].attr_value.value == 20.0
+    assert events[0].attr_value.quality == tango.AttrQuality.ATTR_WARNING
 
     device_proxy.unsubscribe_event(subscription_id)
