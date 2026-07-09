@@ -527,6 +527,7 @@ class DishManager(SKAController):
         for attr in self._component_state_attr_map.values():
             self.set_change_event(attr, True, False)
             self.set_archive_event(attr, True, False)
+            self.set_alarm_event(attr, True, False)
 
         # Configure events for base class attributes
         for attr in (
