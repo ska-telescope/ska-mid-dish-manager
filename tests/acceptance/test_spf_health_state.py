@@ -40,7 +40,7 @@ def test_spf_per_band_health_state_monitoring(
 
         # NOTE: The following attribute write is only possible against the SPF simulator
         spf_device_proxy.write_attribute(attribute_name, current_health_state)
-        
+
         spf_health_state_events.wait_for_value(current_health_state, timeout=7)
 
         # Reset SPF back to healthState NORMAL before the next check
