@@ -200,7 +200,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             windgust=-1,
             lastcommandedmode=("0.0", ""),
             lastcommandinvoked=("0.0", ""),
-            lastcommandfailure=("0.0", "0.0", "0.0", "0.0"),
+            lastcommandfailure=("0.0", "", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
             rfcmplllock=B5dcPllState.NOT_LOCKED,
             rfcmhattenuation=0.0,
@@ -479,17 +479,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # --------------
     # Helper methods
     # --------------
-    def last_command_failure_helper(
-        self,
-        command: str,
-        status: str,
-        response: str,
-    ) -> None:
+    def publish_last_command_failure(self, command: str, response: str | None = None) -> None:
+        """Update the last command failure attribute.
+
+        Constructs a `lastcommandfailure` record for a failed command and
+        publishes it via the component state callback.
+
+        :param command: The name of the command that failed.
+        :param status: The status returned by the command.
+        :param response: The response or failure message returned by the command.
+        """
         failure = (
-            "DishManager",
             str(time.time()),
             command,
-            f"Status: {status}, Response: {response}",
+            response,
         )
 
         if self._update_component_state:
@@ -1469,7 +1472,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Track command is allowed for dishMode OPERATE"
                 )
                 report_task_progress(msg, self._command_progress_callback)
-                self.last_command_failure_helper("track", "PRECONDITION_FAILED", msg)
+                self.publish_last_command_failure("track", msg)
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
                 msg = (
@@ -1477,7 +1480,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Track command is allowed for pointingState READY"
                 )
                 report_task_progress(msg, self._command_progress_callback)
-                self.last_command_failure_helper("track", "PRECONDITION_FAILED", msg)
+                self.publish_last_command_failure("track", msg)
                 return False
             return True
 
@@ -1500,9 +1503,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 PointingState.TRACK,
                 PointingState.SLEW,
             ]:
-                self.last_command_failure_helper(
+                self.publish_last_command_failure(
                     "track_stop",
-                    "PRECONDITION_FAILED",
                     "Command not allowed. DishMode is not OPERATE and"
                     " PointingState is not SLEW/TRACK.",
                 )
@@ -1536,7 +1538,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Set operate mode command is allowed for dishMode STANDBY_FP"
                 )
                 report_task_progress(msg, self._command_progress_callback)
-                self.last_command_failure_helper("set_operate", "PRECONDITION_FAILED", msg)
+                self.publish_last_command_failure("set_operate", msg)
                 return False
             return True
 
@@ -1729,7 +1731,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Slew command is allowed for dishMode OPERATE"
                 )
                 report_task_progress(msg, self._command_progress_callback)
-                self.last_command_failure_helper("slew", "PRECONDITION_FAILED", msg)
+                self.publish_last_command_failure("slew", msg)
                 return False
             if self.component_state["pointingstate"] != PointingState.READY:
                 msg = (
@@ -1737,7 +1739,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Slew command is allowed for pointingState READY"
                 )
                 report_task_progress(msg, self._command_progress_callback)
-                self.last_command_failure_helper("slew", "PRECONDITION_FAILED", msg)
+                self.publish_last_command_failure("slew", msg)
                 return False
             return True
 
@@ -1778,7 +1780,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         status, response = self.submit_task(self._end_scan, args=[], task_callback=task_callback)
         return status, response
 
-    @last_command_failure_decorator
     def _end_scan(self, task_abort_event=None, task_callback: Optional[Callable] = None) -> None:
         """Clear the scanid."""
         report_task_progress("Clearing scanID", self._command_progress_callback)

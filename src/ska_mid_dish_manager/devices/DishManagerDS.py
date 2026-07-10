@@ -632,21 +632,19 @@ class DishManager(SKAController):
         return self.component_manager.component_state["lastcommandinvoked"]
 
     @attribute(
-        dtype=(str, str, str, str),
-        max_dim_x=4,
+        dtype=(str, str, str),
+        max_dim_x=3,
         access=AttrWriteType.READ,
         doc=(
             "The returned tuple contains:"
-            "- Dish Manager (Constant)"
             "- Timestamp of the failure (UNIX UTC format)"
             "- Command name (Triggered on DishManager)"
-            "- Error message (Contains the affect subservient devices )"
+            "- Error message"
         ),
     )
-    @time_tango_write()
     @requires_component_manager
-    def lastCommandFailure(self) -> tuple[str, str, str, str]:
-        """Return the last command failure (DM, SPFRx and SPF)."""
+    def lastCommandFailure(self) -> tuple[str, str, str]:
+        """Return the last command failure on DM."""
         return self.component_manager.component_state["lastcommandfailure"]
 
     # pylint: disable=invalid-name

@@ -222,10 +222,9 @@ def last_command_failure_decorator(func: Any) -> Any:
                 if status in failure_states:
                     # Record failure
                     failure = (
-                        "DishManager",
                         str(time.time()),
                         func.__name__,
-                        f"Status: {status.name}:{status}, Response: {response}",
+                        response,
                     )
                     # Update component state
                     if device_instance._update_component_state:
@@ -233,7 +232,7 @@ def last_command_failure_decorator(func: Any) -> Any:
 
             return result
         except Exception as ex:
-            failure = ("DishManager", str(time.time()), func.__name__, str(ex))
+            failure = (str(time.time()), func.__name__, str(ex))
             # Update component state
             if device_instance._update_component_state:
                 device_instance._update_component_state(lastcommandfailure=failure)

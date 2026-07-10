@@ -23,7 +23,7 @@ def test_last_command_failure(
     dish_manager_proxy.Slew([45, 45])
     assert (
         "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE"
-        in dish_manager_proxy.lastCommandFailure[3]
+        in dish_manager_proxy.lastCommandFailure[2]
     )
     dm_last_command_failure_value_3 = dish_manager_proxy.read_attribute("lastCommandFailure").value
 
