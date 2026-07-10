@@ -36,8 +36,6 @@ def test_spf_per_band_health_state_monitoring(
     ]
 
     for current_health_state in possible_band_health_states:
-        spf_health_state_events.clear_queue()
-
         # NOTE: The following attribute write is only possible against the SPF simulator
         spf_device_proxy.write_attribute(attribute_name, current_health_state)
 
