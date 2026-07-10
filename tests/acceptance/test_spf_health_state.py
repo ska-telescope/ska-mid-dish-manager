@@ -1,7 +1,34 @@
 import pytest
 import tango
+from ska_control_model import HealthState
 
 from ska_mid_dish_manager.models.dish_enums import SPFHealthState
+
+
+@pytest.mark.fixture
+def reset_band_health_states_to_normal(
+    event_store_class, dish_manager_proxy: tango.DeviceProxy, spf_device_proxy: tango.DeviceProxy
+):
+    """Ensure that the Dish Manager healthState is returned to OK."""
+    yield
+    health_state_events = event_store_class()
+    dish_manager_proxy.subscribe_event(
+        "healthState", tango.EventType.CHANGE_EVENT, health_state_events
+    )
+
+    band_health_states = [
+        "b1HealthState",
+        "b2HealthState",
+        "b3HealthState",
+        "b4HealthState",
+        "b5aHealthState",
+        "b5bHealthState",
+    ]
+
+    for band in band_health_states:
+        spf_device_proxy.write_attribute(band, SPFHealthState.NORMAL)
+
+    health_state_events.wait_for_value(HealthState.OK, timeout=7)
 
 
 @pytest.mark.acceptance
