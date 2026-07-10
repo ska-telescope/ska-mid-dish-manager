@@ -20,6 +20,11 @@ DEVICE_PROXY_TIMEOUT_MS = 5000
 STOW_ELEVATION_DEGREES = 90.2
 ELEVATION_SPEED_DEGREES_PER_SECOND = 1.0
 DEFAULT_ACTION_TIMEOUT_S = 120
+# Name of the environment variable holding the URL of the TZ data file that is
+# downloaded and forwarded to SPFRx by the UpdateTZData command.
+TZ_DATA_URL_ENV_VAR = "TZDataURL"
+# Timeout (in seconds) for downloading the TZ data file from TZ_DATA_URL_ENV_VAR.
+TZ_DATA_DOWNLOAD_TIMEOUT_S = 60
 MAX_ELEVATION_SCIENCE = 85.0
 MIN_ELEVATION_SCIENCE = 15.0
 MAX_AZIMUTH = 270.0

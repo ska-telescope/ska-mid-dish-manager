@@ -1,5 +1,6 @@
 """Component manager for a DishManager tango device."""
 
+import base64
 import json
 import logging
 import os
@@ -9,6 +10,7 @@ from functools import partial
 from threading import Lock
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+import requests
 import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
@@ -46,6 +48,8 @@ from ska_mid_dish_manager.models.constants import (
     MAINTENANCE_MODE_TRUE_VALUE,
     MEAN_WIND_SPEED_THRESHOLD_MPS,
     OPERATOR_TAG,
+    TZ_DATA_DOWNLOAD_TIMEOUT_S,
+    TZ_DATA_URL_ENV_VAR,
     WIND_GUST_THRESHOLD_MPS,
 )
 from ska_mid_dish_manager.models.dish_enums import (
@@ -1776,6 +1780,121 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if task_status == TaskStatus.FAILED:
             return (ResultCode.FAILED, msg)
         return (ResultCode.OK, msg)
+
+    def update_tz_data(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
+        """Download the latest TZ data file and upload it to SPFRx.
+
+        The URL of the file to download is read from the environment variable named by
+        :data:`TZ_DATA_URL_ENV_VAR`. The downloaded file is base64 encoded and forwarded
+        to SPFRx via its ``UpdateTZData`` command.
+        """
+        status, response = self.submit_task(
+            self._update_tz_data, args=[], task_callback=task_callback
+        )
+        return status, response
+
+    def _update_tz_data(
+        self, task_abort_event=None, task_callback: Optional[Callable] = None
+    ) -> None:
+        """Download the latest TZ data file and upload it to SPFRx.
+
+        The URL of the file to download is read from the environment variable named by
+        :data:`TZ_DATA_URL_ENV_VAR`. The downloaded file is base64 encoded and forwarded
+        to SPFRx via its ``UpdateTZData`` command.
+        """
+        update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
+
+        if self.is_device_ignored("SPFRX"):
+            message = "UpdateTZData rejected. SPFRx is ignored, cannot upload TZ data."
+            self.logger.error(message)
+            update_task_status(
+                task_callback,
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, message),
+            )
+            return
+
+        # Read the URL to download the TZ data file from.
+        tz_data_url = os.getenv(TZ_DATA_URL_ENV_VAR)
+        if not tz_data_url:
+            message = (
+                f"UpdateTZData failed. Environment variable '{TZ_DATA_URL_ENV_VAR}' is not "
+                "set or is empty; cannot determine where to download the TZ data from."
+            )
+            self.logger.error(message)
+            update_task_status(
+                task_callback,
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, message),
+            )
+            return
+
+        # Download the TZ data file.
+        report_task_progress(
+            f"Downloading TZ data from {tz_data_url}", self._command_progress_callback
+        )
+        try:
+            response = requests.get(tz_data_url, timeout=TZ_DATA_DOWNLOAD_TIMEOUT_S)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            message = f"UpdateTZData failed. Could not download TZ data from {tz_data_url}."
+            self.logger.exception(message)
+            update_task_status(
+                task_callback,
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, message),
+            )
+            return
+
+        tz_data_bytes = response.content
+        self.logger.info("Downloaded %d bytes of TZ data from %s", len(tz_data_bytes), tz_data_url)
+
+        # base64 encode the downloaded file.
+        try:
+            encoded_tz_data = base64.b64encode(tz_data_bytes).decode("ascii")
+        except (ValueError, TypeError):
+            message = "UpdateTZData failed. Could not base64 encode the downloaded TZ data."
+            self.logger.exception(message)
+            update_task_status(
+                task_callback,
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, message),
+            )
+            return
+
+        # Forward the encoded TZ data to SPFRx.
+        report_task_progress("Uploading TZ data to SPFRx", self._command_progress_callback)
+        spfrx_cm = self.sub_component_managers["SPFRX"]
+        try:
+            task_status, msg = spfrx_cm.execute_command("UpdateTZData", encoded_tz_data)
+        except Exception:  # pylint: disable=broad-except
+            message = "UpdateTZData failed. Unexpected error while calling UpdateTZData on SPFRx."
+            self.logger.exception(message)
+            update_task_status(
+                task_callback,
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, message),
+            )
+            return
+
+        if task_status == TaskStatus.FAILED:
+            message = f"UpdateTZData failed. SPFRx rejected the TZ data upload: {msg}"
+            self.logger.error(message)
+            update_task_status(
+                task_callback,
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, message),
+            )
+            return
+
+        message = "UpdateTZData completed. TZ data successfully uploaded to SPFRx."
+        self.logger.info(message)
+        report_task_progress(message, self._command_progress_callback)
+        update_task_status(
+            task_callback,
+            status=TaskStatus.COMPLETED,
+            result=(ResultCode.OK, message),
+        )
 
     def apply_pointing_model(self, json_object) -> Tuple[ResultCode, str]:
         # pylint: disable=R0911
