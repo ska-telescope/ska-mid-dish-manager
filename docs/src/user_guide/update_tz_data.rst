@@ -1,8 +1,8 @@
-=============================
-UpdateTZData on DishManager
-=============================
+===========================================
+Update SPFRx time zone data via DishManager
+===========================================
 
-*UpdateTZData* (a Long Running Command) refreshes the timezone (TZ) data used by
+*UpdateTZData* (a Long Running Command) refreshes the time zone (TZ) data used by
 SPFRx. When invoked, DishManager downloads the latest TZ data file, base64
 encodes it and forwards it to SPFRx via the SPFRx *UpdateTZData* command.
 
@@ -14,9 +14,6 @@ Because it is a long running command, the call returns immediately with a comman
 ID. The final outcome is reported asynchronously on the ``lrcFinished`` attribute.
 
 **Note**:
-
-* ``TZDataURL`` environment variable must be set on the DishManager device server to the URL of
-  the TZ data file to download. It is not provided by the caller.
 
 * SPFRx must not be ignored (``ignoreSpfrx`` must be ``False``).
 
