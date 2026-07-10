@@ -36,11 +36,14 @@ def test_spf_per_band_health_state_monitoring(
     ]
 
     for current_health_state in possible_band_health_states:
+        spf_health_state_events.clear_queue()
+
+        # NOTE: The following attribute write is only possible against the SPF simulator
         spf_device_proxy.write_attribute(attribute_name, current_health_state)
+        
         spf_health_state_events.wait_for_value(current_health_state, timeout=7)
 
         # Reset SPF back to healthState NORMAL before the next check
         spf_device_proxy.ResetToDefault()
-        spf_health_state_events.clear_queue()
 
     dish_manager_proxy.unsubscribe_event(sub_id)
