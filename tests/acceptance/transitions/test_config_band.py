@@ -294,7 +294,7 @@ def test_configure_band_json(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B2
-    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
 
     expected_progress_updates = [
         "Fanned out commands: SPFRX.ConfigureBand",
