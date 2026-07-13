@@ -5,7 +5,7 @@ from ska_control_model import HealthState
 from ska_mid_dish_manager.models.dish_enums import SPFHealthState
 
 
-@pytest.mark.fixture
+@pytest.fixture
 def reset_band_health_states_to_normal(
     event_store_class, dish_manager_proxy: tango.DeviceProxy, spf_device_proxy: tango.DeviceProxy
 ):
@@ -47,6 +47,7 @@ def test_spf_per_band_health_state_monitoring(
     dish_manager_proxy: tango.DeviceProxy,
     spf_device_proxy: tango.DeviceProxy,
     event_store_class,
+    reset_band_health_states_to_normal,
     spf_health_state_attr_name: str,
     dm_health_state_attr_name: str,
 ) -> None:
