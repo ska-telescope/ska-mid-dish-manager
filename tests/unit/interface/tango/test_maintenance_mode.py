@@ -22,8 +22,8 @@ def test_happy_case(dish_manager_resources, event_store_class):
     result_event_store = event_store_class()
 
     attr_cb_mapping = {
-        "longRunningCommandResult": result_event_store,
-        "dishmode": dish_mode_event_store,
+        "lrcFinished": result_event_store,
+        "dishMode": dish_mode_event_store,
     }
 
     device_proxy.subscribe_event(
@@ -55,9 +55,7 @@ def test_dish_does_not_stow(dish_manager_resources, event_store_class):
     device_proxy, _ = dish_manager_resources
     result_event_store = event_store_class()
 
-    subscriptions = setup_subscriptions(
-        device_proxy, {"longRunningCommandResult": result_event_store}
-    )
+    subscriptions = setup_subscriptions(device_proxy, {"lrcFinished": result_event_store})
 
     init_dish_mode = device_proxy.dishMode
 
@@ -77,24 +75,18 @@ def test_exception_on_callback(dish_manager_resources, event_store_class):
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
 
     result_event_store = event_store_class()
-    lrc_status_event_store = event_store_class()
 
     attr_cb_mapping = {
-        "longRunningCommandResult": result_event_store,
-        "longRunningCommandStatus": lrc_status_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(device_proxy, attr_cb_mapping)
 
-    # Configure the mock to raise a Tango exception when execute_command is called
     ds_cm.execute_command.return_value = TaskStatus.FAILED, "Simulated failure"
 
     [[_], [unique_id]] = device_proxy.SetMaintenanceMode()
-    results = result_event_store.get_queue_values()
 
-    _, result_msg = results[0][1]
-    assert result_msg == '[3, "SetMaintenanceMode failed"]'
+    expected_result = '[3, "SetMaintenanceMode failed"]'
 
-    expected_status = [unique_id, "FAILED"]
-    lrc_status_event_store.wait_for_value(tuple(expected_status), timeout=10)
+    result_event_store.wait_for_finished_command_result(unique_id, expected_result, timeout=10)
 
     remove_subscriptions(subscriptions)

@@ -13,7 +13,7 @@
 services:
   ds-opcua-server:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-simulators:5.9.3
+    image: artefact.skao.int/ska-mid-dish-simulators:5.9.4
     container_name: ds-opcua-server
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -37,7 +37,7 @@ services:
 
   spfrx-simulator:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-simulators:5.9.3
+    image: artefact.skao.int/ska-mid-dish-simulators:5.9.4
     container_name: spfrx-simulator
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -52,7 +52,7 @@ services:
 
   spf-simulator:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-simulators:5.9.3
+    image: artefact.skao.int/ska-mid-dish-simulators:5.9.4
     container_name: spf-simulator
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -67,7 +67,7 @@ services:
 
   ds-manager:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-ds-manager:8.2.5
+    image: artefact.skao.int/ska-mid-dish-ds-manager:8.2.6
     container_name: ds-manager
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -84,7 +84,7 @@ services:
 
   dish-manager:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-manager:9.5.0
+    image: artefact.skao.int/ska-mid-dish-manager:10.0.0
     container_name: dish-manager
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -97,7 +97,7 @@ services:
       - spfrx-simulator
     environment:
       - TANGO_HOST=${TANGO_HOST}
-    # To run DishManager, "DishManagerDS SKA001"
+    # To run DishManager, "DishManager SKA001"
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
           sleep infinity"
@@ -106,7 +106,7 @@ services:
 
   dev-pod:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-manager:9.5.0
+    image: artefact.skao.int/ska-mid-dish-manager:10.0.0
     container_name: dev-pod
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped

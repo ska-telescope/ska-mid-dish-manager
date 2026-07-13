@@ -27,7 +27,7 @@ Connect to the `dish-manager` pod and start the `DishManager` service
 ```bash
 docker exec -it dish-manager  /bin/bash
 root@ec80dc9c6d05:/app#
-root@ec80dc9c6d05:/app# DishManagerDS SKA001
+root@ec80dc9c6d05:/app# DishManager SKA001
 1|2025-08-01T08:12:10.931Z|INFO|MainThread|set_logging_level|base_device.py#1010|tango-device:mid-dish/dish-manager/SKA001|Logging level set to LoggingLevel.DEBUG on Python and Tango loggers
 1|2025-08-01T08:12:10.932Z|INFO|MainThread|update_logging_handlers|logging.py#380|tango-device:mid-dish/dish-manager/SKA001|Logging targets set to ['tango::logger']
 1|2025-08-01T08:12:10.937Z|DEBUG|MainThread|_init_logging|base_device.py#418|tango-device:mid-dish/dish-manager/SKA001|Logger initialised
@@ -50,7 +50,7 @@ root@bd44d478b7ce:/app#
 root@bd44d478b7ce:/app# pip3 install itango
 Collecting itango
   Downloading itango-0.3.0-py3-none-any.whl.metadata (2.7 kB)
-Requirement already satisfied: pytango>=9.3.0 in ./.venv/lib/python3.10/site-packages (from itango) (9.5.0)
+Requirement already satisfied: pytango>=10.3.0 in ./.venv/lib/python3.10/site-packages (from itango) (10.3.0)
 Collecting ipython<10.0,>=8.5 (from itango)
   Downloading ipython-8.37.0-py3-none-any.whl.metadata (5.1 kB)
 
@@ -59,7 +59,7 @@ Collecting ipython<10.0,>=8.5 (from itango)
 root@bd44d478b7ce:/app# itango
 ITango 0.3.0 -- An interactive Tango client.
 
-Running on top of Python 3.10.12, IPython 8.37.0 and PyTango 9.5.0
+Running on top of Python 3.10.12, IPython 8.37.0 and PyTango 10.3.0
 
 help      -> ITango's help system.
 object?   -> Details about 'object'. ?object also works, ?? prints more.

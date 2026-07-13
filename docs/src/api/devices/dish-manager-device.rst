@@ -1239,7 +1239,6 @@ Attributes
 	:data type: DevString
 	:data format: SPECTRUM
 	:max_dim_x: 4
-
 .. index::
 	single: longRunningCommandIDsInQueue; DishManager.longRunningCommandIDsInQueue
 
@@ -1909,7 +1908,7 @@ Commands
 	"sky_rms": {...}
 	}
 	}
-
+	
 	:returns: :return: (not documented)
 		:rtype: DevVarLongStringArray
 
@@ -1922,7 +1921,6 @@ Commands
 	argin (None): the command id
 
 	:returns: command status
-
 .. index::
 	single: ConfigureBand; DishManager.ConfigureBand
 
