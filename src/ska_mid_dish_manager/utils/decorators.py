@@ -194,7 +194,7 @@ def log_tango_attr_write() -> Callable:
 
 
 def last_command_failure_decorator(func: Any) -> Any:
-    """Record the last command failure originating from Dish Manager."""
+    """Record the last command failure."""
 
     @functools.wraps(func)
     def last_command_failure_wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -204,13 +204,11 @@ def last_command_failure_decorator(func: Any) -> Any:
             if isinstance(result, tuple):
                 status, reason = result
                 failure_states: tuple[Any, ...] = ()
-                # Check to see if the status indicates a failure
                 if isinstance(status, TaskStatus):
                     failure_states = (
                         TaskStatus.FAILED,
                         TaskStatus.REJECTED,
                     )
-
                 elif isinstance(status, ResultCode):
                     failure_states = (
                         ResultCode.FAILED,
@@ -220,23 +218,22 @@ def last_command_failure_decorator(func: Any) -> Any:
                         ResultCode.UNKNOWN,
                     )
                 if status in failure_states:
-                    # Record failure
-                    failure = (
-                        str(time.time()),
-                        func.__name__,
-                        reason,
+                    device_instance._update_component_state(
+                        lastcommandfailure=(
+                            str(time.time()),
+                            func.__name__,
+                            str(reason),
+                        )
                     )
-                    # Update component state
-                    if device_instance._update_component_state:
-                        device_instance._update_component_state(lastcommandfailure=failure)
-
             return result
         except Exception as ex:
-            failure = (str(time.time()), func.__name__, str(ex))
-            # Update component state
-            if device_instance._update_component_state:
-                device_instance._update_component_state(lastcommandfailure=failure)
-            # Raise the error
+            device_instance._update_component_state(
+                lastcommandfailure=(
+                    str(time.time()),
+                    func.__name__,
+                    str(ex),
+                )
+            )
             raise
 
     return last_command_failure_wrapper
