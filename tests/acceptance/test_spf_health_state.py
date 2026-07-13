@@ -12,23 +12,28 @@ def reset_band_health_states_to_normal(
     """Ensure that the Dish Manager healthState is returned to OK."""
     yield
     health_state_events = event_store_class()
-    dish_manager_proxy.subscribe_event(
+    sub_id = dish_manager_proxy.subscribe_event(
         "healthState", tango.EventType.CHANGE_EVENT, health_state_events
     )
 
-    band_health_states = [
-        "b1HealthState",
-        "b2HealthState",
-        "b3HealthState",
-        "b4HealthState",
-        "b5aHealthState",
-        "b5bHealthState",
-    ]
+    try:
+        band_health_states = [
+            "b1HealthState",
+            "b2HealthState",
+            "b3HealthState",
+            "b4HealthState",
+            "b5aHealthState",
+            "b5bHealthState",
+        ]
 
-    for band in band_health_states:
-        spf_device_proxy.write_attribute(band, SPFHealthState.NORMAL)
+        for band in band_health_states:
+            spf_device_proxy.write_attribute(band, SPFHealthState.NORMAL)
+    
+        health_state_events.wait_for_value(HealthState.OK, timeout=7)
 
-    health_state_events.wait_for_value(HealthState.OK, timeout=7)
+    finally:
+        dish_manager_proxy.unsubscribe_event(sub_id)
+
 
 
 @pytest.mark.acceptance
@@ -64,13 +69,14 @@ def test_spf_per_band_health_state_monitoring(
         SPFHealthState.FAILED,
     ]
 
-    for current_health_state in possible_band_health_states:
-        # NOTE: The following attribute write is only possible against the SPF simulator
-        spf_device_proxy.write_attribute(spf_health_state_attr_name, current_health_state)
+    try:
+        for current_health_state in possible_band_health_states:
+            # NOTE: The following attribute write is only possible against the SPF simulator
+            spf_device_proxy.write_attribute(spf_health_state_attr_name, current_health_state)
 
-        spf_health_state_events.wait_for_value(current_health_state, timeout=7)
+            spf_health_state_events.wait_for_value(current_health_state, timeout=7)
 
-        # Reset SPF back to healthState NORMAL before the next check
-        spf_device_proxy.ResetToDefault()
-
-    dish_manager_proxy.unsubscribe_event(sub_id)
+            # Reset SPF back to healthState NORMAL before the next check
+            spf_device_proxy.ResetToDefault()
+    finally:
+        dish_manager_proxy.unsubscribe_event(sub_id)
