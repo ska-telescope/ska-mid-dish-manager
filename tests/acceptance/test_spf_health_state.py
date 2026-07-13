@@ -1,0 +1,81 @@
+import pytest
+import tango
+from ska_control_model import HealthState
+
+from ska_mid_dish_manager.models.dish_enums import SPFHealthState
+
+
+@pytest.fixture
+def reset_band_health_states_to_normal(
+    event_store_class, dish_manager_proxy: tango.DeviceProxy, spf_device_proxy: tango.DeviceProxy
+):
+    """Ensure that the Dish Manager healthState is returned to OK."""
+    yield
+    health_state_events = event_store_class()
+    sub_id = dish_manager_proxy.subscribe_event(
+        "healthState", tango.EventType.CHANGE_EVENT, health_state_events
+    )
+
+    try:
+        band_health_states = [
+            "b1HealthState",
+            "b2HealthState",
+            "b3HealthState",
+            "b4HealthState",
+            "b5aHealthState",
+            "b5bHealthState",
+        ]
+
+        for band in band_health_states:
+            spf_device_proxy.write_attribute(band, SPFHealthState.NORMAL)
+
+        health_state_events.wait_for_value(HealthState.OK, timeout=7)
+
+    finally:
+        dish_manager_proxy.unsubscribe_event(sub_id)
+
+
+@pytest.mark.acceptance
+@pytest.mark.parametrize(
+    "spf_health_state_attr_name, dm_health_state_attr_name",
+    [
+        ("b1healthstate", "spfcB1HealthState"),
+        ("b2healthstate", "spfcB2HealthState"),
+        ("b3healthstate", "spfcB3HealthState"),
+        ("b4healthstate", "spfcB4HealthState"),
+        ("b5ahealthstate", "spfcB5aHealthState"),
+        ("b5bhealthstate", "spfcB5bHealthState"),
+    ],
+)
+def test_spf_per_band_health_state_monitoring(
+    dish_manager_proxy: tango.DeviceProxy,
+    spf_device_proxy: tango.DeviceProxy,
+    event_store_class,
+    reset_band_health_states_to_normal,
+    spf_health_state_attr_name: str,
+    dm_health_state_attr_name: str,
+) -> None:
+    """Test that dish manager correctly mirrors the SPF band healthState."""
+    spf_health_state_events = event_store_class()
+    sub_id = dish_manager_proxy.subscribe_event(
+        dm_health_state_attr_name, tango.EventType.CHANGE_EVENT, spf_health_state_events
+    )
+
+    possible_band_health_states = [
+        SPFHealthState.UNKNOWN,
+        SPFHealthState.NORMAL,
+        SPFHealthState.DEGRADED,
+        SPFHealthState.FAILED,
+    ]
+
+    try:
+        for current_health_state in possible_band_health_states:
+            # NOTE: The following attribute write is only possible against the SPF simulator
+            spf_device_proxy.write_attribute(spf_health_state_attr_name, current_health_state)
+
+            spf_health_state_events.wait_for_value(current_health_state, timeout=7)
+
+            # Reset SPF back to healthState NORMAL before the next check
+            spf_device_proxy.ResetToDefault()
+    finally:
+        dish_manager_proxy.unsubscribe_event(sub_id)
