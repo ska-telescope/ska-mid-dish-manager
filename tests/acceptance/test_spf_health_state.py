@@ -28,12 +28,11 @@ def reset_band_health_states_to_normal(
 
         for band in band_health_states:
             spf_device_proxy.write_attribute(band, SPFHealthState.NORMAL)
-    
+
         health_state_events.wait_for_value(HealthState.OK, timeout=7)
 
     finally:
         dish_manager_proxy.unsubscribe_event(sub_id)
-
 
 
 @pytest.mark.acceptance
