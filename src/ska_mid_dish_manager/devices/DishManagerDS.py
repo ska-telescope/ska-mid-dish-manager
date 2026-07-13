@@ -639,7 +639,7 @@ class DishManager(SKAController):
             "The returned tuple contains:"
             "- Timestamp of the failure (UNIX UTC format)"
             "- Command name (Triggered on DishManager)"
-            "- Error message"
+            "- Reason for failure (as returned by the command)"
         ),
     )
     @requires_component_manager

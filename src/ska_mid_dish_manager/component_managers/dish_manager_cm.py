@@ -479,7 +479,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # --------------
     # Helper methods
     # --------------
-    def publish_last_command_failure(self, command: str, response: str | None = None) -> None:
+    def publish_last_command_failure(self, command: str, reason: str | None = None) -> None:
         """Update the last command failure attribute.
 
         Constructs a `lastcommandfailure` record for a failed command and
@@ -487,16 +487,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         :param command: The name of the command that failed.
         :param status: The status returned by the command.
-        :param response: The response or failure message returned by the command.
+        :param reason: The reason or failure message returned by the command.
         """
+        reason = reason or ""
         failure = (
             str(time.time()),
             command,
-            response,
+            reason,
         )
 
-        if self._update_component_state:
-            self._update_component_state(lastcommandfailure=failure)
+        self._update_component_state(lastcommandfailure=failure)
 
     def get_current_tai_offset_from_dsc_with_manual_fallback(self) -> float:
         """Try and get the TAI offset from the DSManager device.

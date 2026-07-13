@@ -202,7 +202,7 @@ def last_command_failure_decorator(func: Any) -> Any:
         try:
             result = func(*args, **kwargs)
             if isinstance(result, tuple):
-                status, response = result
+                status, reason = result
                 failure_states: tuple[Any, ...] = ()
                 # Check to see if the status indicates a failure
                 if isinstance(status, TaskStatus):
@@ -224,7 +224,7 @@ def last_command_failure_decorator(func: Any) -> Any:
                     failure = (
                         str(time.time()),
                         func.__name__,
-                        response,
+                        reason,
                     )
                     # Update component state
                     if device_instance._update_component_state:
