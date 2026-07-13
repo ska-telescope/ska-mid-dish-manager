@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Configured alarm events for all attributes.
+- Expose SPFc per band healthState attributes on the dish manager interface.
 
 Version 10.0.0
 **************

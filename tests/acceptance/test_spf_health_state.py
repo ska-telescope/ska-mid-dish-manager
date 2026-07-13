@@ -33,26 +33,27 @@ def reset_band_health_states_to_normal(
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
-    "attribute_name",
+    "spf_health_state_attr_name, dm_health_state_attr_name",
     [
-        "b1HealthState",
-        "b2HealthState",
-        "b3HealthState",
-        "b4HealthState",
-        "b5aHealthState",
-        "b5bHealthState",
+        ("b1healthstate", "spfcB1HealthState"),
+        ("b2healthstate", "spfcB2HealthState"),
+        ("b3healthstate", "spfcB3HealthState"),
+        ("b4healthstate", "spfcB4HealthState"),
+        ("b5ahealthstate", "spfcB5aHealthState"),
+        ("b5bhealthstate", "spfcB5bHealthState"),
     ],
 )
 def test_spf_per_band_health_state_monitoring(
     dish_manager_proxy: tango.DeviceProxy,
     spf_device_proxy: tango.DeviceProxy,
     event_store_class,
-    attribute_name: str,
+    spf_health_state_attr_name: str,
+    dm_health_state_attr_name: str,
 ) -> None:
     """Test that dish manager correctly mirrors the SPF band healthState."""
     spf_health_state_events = event_store_class()
     sub_id = dish_manager_proxy.subscribe_event(
-        attribute_name, tango.EventType.CHANGE_EVENT, spf_health_state_events
+        dm_health_state_attr_name, tango.EventType.CHANGE_EVENT, spf_health_state_events
     )
 
     possible_band_health_states = [
@@ -64,7 +65,7 @@ def test_spf_per_band_health_state_monitoring(
 
     for current_health_state in possible_band_health_states:
         # NOTE: The following attribute write is only possible against the SPF simulator
-        spf_device_proxy.write_attribute(attribute_name, current_health_state)
+        spf_device_proxy.write_attribute(spf_health_state_attr_name, current_health_state)
 
         spf_health_state_events.wait_for_value(current_health_state, timeout=7)
 

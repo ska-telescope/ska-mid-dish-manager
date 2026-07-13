@@ -525,12 +525,12 @@ class DishManager(SKAController):
             "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
             "dscerrorstatuses": "dscErrorStatuses",
             "healthinfo": "healthInfo",
-            "b1healthstate": "b1HealthState",
-            "b2healthstate": "b2HealthState",
-            "b3healthstate": "b3HealthState",
-            "b4healthstate": "b4HealthState",
-            "b5ahealthstate": "b5aHealthState",
-            "b5bhealthstate": "b5bHealthState",
+            "b1healthstate": "spfcB1HealthState",
+            "b2healthstate": "spfcB2HealthState",
+            "b3healthstate": "spfcB3HealthState",
+            "b4healthstate": "spfcB4HealthState",
+            "b5ahealthstate": "spfcB5aHealthState",
+            "b5bhealthstate": "spfcB5bHealthState",
         }
         for attr in self._component_state_attr_map.values():
             self.set_change_event(attr, True, False)
@@ -2211,7 +2211,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="The Band 1 healthState as reported by the SPF controller.",
     )
-    def b1HealthState(self):
+    def spfcB1HealthState(self):
         """Return the Band 1 healthState as reported by the SPF controller."""
         return self.component_manager.component_state.get("b1healthstate", SPFHealthState.UNKNOWN)
 
@@ -2220,7 +2220,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="The Band 2 healthState as reported by the SPF controller.",
     )
-    def b2HealthState(self):
+    def spfcB2HealthState(self):
         """Return the Band 2 healthState as reported by the SPF controller."""
         return self.component_manager.component_state.get("b2healthstate", SPFHealthState.UNKNOWN)
 
@@ -2229,7 +2229,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="The Band 3 healthState as reported by the SPF controller.",
     )
-    def b3HealthState(self):
+    def spfcB3HealthState(self):
         """Return the Band 3 healthState as reported by the SPF controller."""
         return self.component_manager.component_state.get("b3healthstate", SPFHealthState.UNKNOWN)
 
@@ -2238,7 +2238,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="The Band 4 healthState as reported by the SPF controller.",
     )
-    def b4HealthState(self):
+    def spfcB4HealthState(self):
         """Return the Band 4 healthState as reported by the SPF controller."""
         return self.component_manager.component_state.get("b4healthstate", SPFHealthState.UNKNOWN)
 
@@ -2247,7 +2247,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="The Band 5a healthState as reported by the SPF controller.",
     )
-    def b5aHealthState(self):
+    def spfcB5aHealthState(self):
         """Return the Band 5a healthState as reported by the SPF controller."""
         return self.component_manager.component_state.get("b5ahealthstate", SPFHealthState.UNKNOWN)
 
@@ -2256,7 +2256,7 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="The Band 5b healthState as reported by the SPF controller.",
     )
-    def b5bHealthState(self):
+    def spfcB5bHealthState(self):
         """Return the Band 5b healthState as reported by the SPF controller."""
         return self.component_manager.component_state.get("b5bhealthstate", SPFHealthState.UNKNOWN)
 
