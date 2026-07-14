@@ -9,6 +9,7 @@ from functools import partial
 from threading import Lock
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+import numpy as np
 import tango
 from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
@@ -465,6 +466,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.abort_sequence_handler = AbortSequenceCommandHandler(self)
         # Trigger initial Astropy import to avoid first-call latency later
         get_current_tai_timestamp_from_unix_time()
+        np.set_printoptions(legacy="1.25")
 
     @property
     def wind_stow_active(self) -> bool:
@@ -879,6 +881,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         the subservient devices. DishManager reflects this in its connection
         status attributes.
         """
+        np.set_printoptions(legacy="1.25")
         self.logger.info(
             "Communication state changed on %s device to %s.",
             device.name,

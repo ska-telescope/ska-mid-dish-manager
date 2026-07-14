@@ -317,6 +317,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
     @check_communicating
     def execute_command(self, command_name: str, command_arg: Any) -> Tuple[TaskStatus, Any]:
         """Check the connection and execute the command on the Tango device."""
+        np.set_printoptions(legacy="1.25")
         self.logger.debug(
             "About to execute command [%s] on device [%s] with param [%s]",
             command_name,
