@@ -1,16 +1,16 @@
 """Generic component manager for a subservient tango device."""
 
 import logging
-from queue import Empty, Queue
 from threading import Event, Thread
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import numpy as np
 import tango
 from ska_control_model import CommunicationStatus, TaskStatus
+from ska_tango_base import type_hints
 from ska_tango_base.base import BaseComponentManager
+from ska_tango_base.callback_scheduler import CallbackScheduler
 
-from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 from ska_mid_dish_manager.utils.decorators import check_communicating
@@ -32,7 +32,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
         **kwargs: Any,
     ):
         self._quality_state_callback = quality_state_callback
-        self._events_queue: Queue = Queue()
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = tuple(attr.lower() for attr in monitored_attributes)
         self._quality_monitored_attributes = tuple(
@@ -45,13 +44,25 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._event_consumer_abort_event: Optional[Event] = None
 
         self._device_proxy_factory = DeviceProxyManager(self.logger, self._dp_factory_signal)
-        self._tango_device_monitor = TangoDeviceMonitor(
-            self._tango_device_fqdn,
-            self._device_proxy_factory,
-            self._monitored_attributes,
-            self._events_queue,
-            logger,
+        # NOTE:
+        # Keep thread_count=1 so that Tango events, component-state updates, and
+        # communication-state transitions are processed sequentially. This preserves
+        # the behaviour of the original TangoDeviceComponentManager and avoids
+        # concurrent access to shared component-manager state.
+        #
+        # Increasing thread_count would allow callbacks from different event streams
+        # to execute concurrently, which may improve responsiveness for high-rate
+        # attributes. However, this would require all shared state, including
+        # component-state updates and subscription management, to be fully
+        # thread-safe.
+        #
+        # TODO: Evaluate increasing thread_count and allocating a dedicated queue for
+        # high-rate attributes (e.g. achievedPointing) if event-processing latency
+        # becomes an issue.
+        self._events_monitor = CallbackScheduler(
+            thread_count=1, logger=self.logger, name="events_monitor"
         )
+        self._shared_events_queue = self._events_monitor.allocate_queue(queue_size=8132)
 
         # make sure everything monitored is in the component state
         attr_names_lower = map(lambda x: x.lower(), monitored_attributes)
@@ -106,7 +117,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # update the communication state in case the error event callback flipped it
         self.sync_communication_to_valid_event(attr_name)
 
-    def _handle_error_events(self, event_data: tango.EventData) -> None:
+    def _handle_error_event(self, event_data: tango.EventData) -> None:
         """Handle error events from attr subscription.
 
         :param event_data: data representing tango event
@@ -134,26 +145,54 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # be further actioned after logging.
         dev_error = errors[0]
         if dev_error.reason == "API_EventTimeout":
-            # Important: _device_proxy_factory performs retries to check device liveness.
-            # This operation can be expensive, so it is only triggered for
-            # API_EventTimeout errors.
-            device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
+            device_proxy = self._device_proxy_factory.get_cached_proxy(self._tango_device_fqdn)
             try:
                 self._active_attr_event_subscriptions.remove(attr_name)
             except KeyError:
                 pass
-            try:
-                device_proxy.ping()
-            except tango.DevFailed:
-                dev_name = device_proxy.dev_name()
-                self.logger.exception(
-                    "Failed to ping device proxy: %s after an %s error. Communication Status"
-                    " degraded to 'Not Established'.",
-                    dev_name,
-                    dev_error.reason,
+
+            if device_proxy is None:
+                device_available = False
+            else:
+                try:
+                    device_proxy.ping()
+                except tango.DevFailed:
+                    device_available = False
+                else:
+                    device_available = True
+
+            if not device_available:
+                self.logger.debug(
+                    "Device at %s is unavailable. Communication status is being "
+                    "set to NOT_ESTABLISHED.",
+                    self._tango_device_fqdn,
                     extra=OPERATOR_TAG,
                 )
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
+    def _dispatch_event(self, event: type_hints.EventDataType) -> None:
+        if not isinstance(event, tango.EventData):
+            self.logger.warning(
+                "Ignoring unexpected event type %s received from device %s",
+                type(event).__name__,
+                self._tango_device_fqdn,
+            )
+            return
+
+        # an invalid attribute event should not
+        # be treated as a communication failure.
+        error = event.err
+        if (
+            error
+            and event.attr_value is not None
+            and event.attr_value.quality == tango.AttrQuality.ATTR_INVALID
+        ):
+            error = False
+
+        if error:
+            self._handle_error_event(event)
+        else:
+            self._update_state_from_event(event)
 
     # --------------
     # helper methods
@@ -248,66 +287,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
             monitored_attribute_values[attr_name] = value
 
         self._update_component_state(**monitored_attribute_values)
-
-    @classmethod
-    def _event_consumer(
-        cls,
-        event_queue: Queue,
-        valid_event_cb: Callable,
-        task_abort_event: Optional[Event] = None,
-        error_event_cb: Optional[Callable] = None,  # type: ignore
-    ) -> None:
-        while task_abort_event and not task_abort_event.is_set():
-            try:
-                event_data = event_queue.get(timeout=1)
-                error = event_data.err
-                # If a tango error has been flagged, due to an invalid attribute, do not
-                # interpret it as communication error.
-                if error and event_data.attr_value:
-                    if event_data.attr_value.quality == tango.AttrQuality.ATTR_INVALID:
-                        error = False
-
-                if error:
-                    if error_event_cb:
-                        error_event_cb(event_data)
-                    continue
-                valid_event_cb(event_data)
-            except Empty:
-                pass
-
-    def _stop_event_consumer_thread(self) -> None:
-        """Stop the event consumer thread if it is alive."""
-        if (
-            self._event_consumer_thread is not None
-            and self._event_consumer_abort_event is not None
-            and self._event_consumer_thread.is_alive()
-        ):
-            self._event_consumer_abort_event.set()
-            self._event_consumer_thread.join()
-
-    def _start_event_consumer_thread(self) -> None:
-        """Start the event consumer thread.
-
-        This method is idempotent. When called the existing (if any)
-        event consumer thread is removed and recreated.
-        """
-        self._stop_event_consumer_thread()
-
-        self._event_consumer_abort_event = Event()
-        self._event_consumer_thread = Thread(
-            target=self._event_consumer,
-            args=[
-                self._events_queue,
-                self._update_state_from_event,
-                self._event_consumer_abort_event,
-                self._handle_error_events,
-            ],
-        )
-
-        # e.g. mid-dish/simulator-spfc/SKA001 -> mid_dish.simulator_spfc.SKA001
-        formatted_fqdn = self._tango_device_fqdn.replace("/", ".").replace("-", "_")
-        self._event_consumer_thread.name = f"{formatted_fqdn}.event_consumer_thread"
-        self._event_consumer_thread.start()
 
     def _interpret_command_reply(self, command_name: str, reply: Any) -> Tuple[TaskStatus, Any]:
         """Default interpretation: return IN_PROGRESS and the reply."""
@@ -410,8 +389,14 @@ class TangoDeviceComponentManager(BaseComponentManager):
             f"Establishing communication with {self._tango_device_fqdn}.", extra=OPERATOR_TAG
         )
         self._dp_factory_signal.clear()
-        self._tango_device_monitor.monitor()
-        self._start_event_consumer_thread()
+        for attr in self._monitored_attributes:
+            self._events_monitor.register_event_callback(
+                self._tango_device_fqdn,
+                attr,
+                tango.EventType.CHANGE_EVENT,
+                self._dispatch_event,
+                queue_factory=lambda: self._shared_events_queue,
+            )
 
     def stop_communicating(self) -> None:
         """Stop communication with the device."""
@@ -419,8 +404,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
             f"Stopping communication with {self._tango_device_fqdn}.", extra=OPERATOR_TAG
         )
         self._dp_factory_signal.set()
-        self._tango_device_monitor.stop_monitoring()
+        self._events_monitor.disconnect_all()
         self._active_attr_event_subscriptions.clear()
-        self._stop_event_consumer_thread()
-        self._events_queue.queue.clear()
         self._update_communication_state(CommunicationStatus.DISABLED)

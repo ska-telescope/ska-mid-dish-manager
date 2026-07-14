@@ -23,4 +23,3 @@ def test_ds_component_manager_includes_buildstate_in_monitored_attributes() -> N
     )
 
     assert "buildstate" in cm._monitored_attributes
-    assert "buildstate" in cm._tango_device_monitor._monitored_attributes

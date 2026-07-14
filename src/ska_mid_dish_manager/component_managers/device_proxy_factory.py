@@ -88,17 +88,19 @@ class DeviceProxyManager:
     """
 
     def __init__(
-        self, logger: logging.Logger = logging.getLogger(__name__), thread_event: Event = Event()
+        self,
+        logger: logging.Logger = logging.getLogger(__name__),
+        thread_event: Event | None = None,
     ):
         self._device_proxies: Dict[str, tango.DeviceProxy] = {}
         self.logger = logger
-        self.event_signal = thread_event
+        self.event_signal = thread_event or Event()
 
     def __del__(self) -> None:
         """Remove all device proxies when the object is deleted."""
         self.factory_reset()
 
-    def __call__(self, trl: str) -> Any:
+    def __call__(self, trl: str) -> tango.DeviceProxy | None:
         device_proxy = self._device_proxies.get(trl)
 
         if device_proxy is None:
@@ -141,6 +143,10 @@ class DeviceProxyManager:
 
         return is_device_running
 
+    def get_cached_proxy(self, trl: str) -> tango.DeviceProxy | None:
+        """Return an existing proxy without creating or reconnecting it."""
+        return self._device_proxies.get(trl)
+
     @retry_connection
     def wait_for_device(
         self,
@@ -173,10 +179,4 @@ class DeviceProxyManager:
 
     def factory_reset(self) -> Any:
         """Remove device proxy references to the devices."""
-        # delete all references to the device proxies to prevent potential memory leak
-        trls = list(self._device_proxies.keys())
-        for trl in trls:
-            del self._device_proxies[trl]
-
-        # finally, clear any remaining proxies (if any) to ensure memory cleanup
         self._device_proxies.clear()
