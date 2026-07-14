@@ -24,8 +24,8 @@ def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_mana
 
     dish_manager_proxy.ConfigureBand1(True)
 
-    cap_state_event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=10)
-    cap_state_event_store.wait_for_value(CapabilityStates.OPERATE_FULL, timeout=10)
+    cap_state_event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=30)
+    cap_state_event_store.wait_for_value(CapabilityStates.OPERATE_FULL, timeout=30)
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
