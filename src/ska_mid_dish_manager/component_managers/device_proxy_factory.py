@@ -100,7 +100,7 @@ class DeviceProxyManager:
         """Remove all device proxies when the object is deleted."""
         self.factory_reset()
 
-    def __call__(self, trl: str) -> tango.DeviceProxy | None:
+    def __call__(self, trl: str) -> tango.DeviceProxy:
         device_proxy = self._device_proxies.get(trl)
 
         if device_proxy is None:
@@ -111,7 +111,7 @@ class DeviceProxyManager:
                 self.logger.warning(
                     "Failed creating DeviceProxy to device at %s", trl, extra=OPERATOR_TAG
                 )
-                return device_proxy
+                raise
             self._device_proxies[trl] = device_proxy
 
         if not self._is_tango_device_running(device_proxy):

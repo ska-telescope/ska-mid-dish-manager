@@ -9,7 +9,7 @@ import tango
 from ska_control_model import CommunicationStatus, TaskStatus
 from ska_tango_base import type_hints
 from ska_tango_base.base import BaseComponentManager
-from ska_tango_base.callback_scheduler import CallbackScheduler
+from ska_tango_base.callback_scheduler import CallbackScheduler, Queue
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 from ska_mid_dish_manager.models.constants import OPERATOR_TAG
@@ -44,25 +44,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         self._event_consumer_abort_event: Optional[Event] = None
 
         self._device_proxy_factory = DeviceProxyManager(self.logger, self._dp_factory_signal)
-        # NOTE:
-        # Keep thread_count=1 so that Tango events, component-state updates, and
-        # communication-state transitions are processed sequentially. This preserves
-        # the behaviour of the original TangoDeviceComponentManager and avoids
-        # concurrent access to shared component-manager state.
-        #
-        # Increasing thread_count would allow callbacks from different event streams
-        # to execute concurrently, which may improve responsiveness for high-rate
-        # attributes. However, this would require all shared state, including
-        # component-state updates and subscription management, to be fully
-        # thread-safe.
-        #
-        # TODO: Evaluate increasing thread_count and allocating a dedicated queue for
-        # high-rate attributes (e.g. achievedPointing) if event-processing latency
-        # becomes an issue.
-        self._events_monitor = CallbackScheduler(
-            thread_count=1, logger=self.logger, name="events_monitor"
-        )
-        self._shared_events_queue = self._events_monitor.allocate_queue(queue_size=8132)
+        self._events_monitor: CallbackScheduler | None = None
 
         # make sure everything monitored is in the component state
         attr_names_lower = map(lambda x: x.lower(), monitored_attributes)
@@ -76,7 +58,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
         super().__init__(
             logger,
-            *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
             **kwargs,
@@ -170,7 +151,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 )
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
 
-    def _dispatch_event(self, event: type_hints.EventDataType) -> None:
+    def dispatch_event(self, event: type_hints.EventDataType) -> None:
         if not isinstance(event, tango.EventData):
             self.logger.warning(
                 "Ignoring unexpected event type %s received from device %s",
@@ -382,6 +363,50 @@ class TangoDeviceComponentManager(BaseComponentManager):
             )
             return result
 
+    def _initialize_events_monitor(self) -> None:
+        """Initialize the events monitor and queue."""
+        # NOTE:
+        # Keep thread_count=1 so that Tango events, component-state updates, and
+        # communication-state transitions are processed sequentially. This preserves
+        # the behaviour of the original TangoDeviceComponentManager and avoids
+        # concurrent access to shared component-manager state.
+        #
+        # Increasing thread_count would allow callbacks from different event streams
+        # to execute concurrently, which may improve responsiveness for high-rate
+        # attributes. However, this would require all shared state, including
+        # component-state updates and subscription management, to be fully
+        # thread-safe.
+        #
+        # TODO: Evaluate increasing thread_count and allocating a dedicated queue for
+        # high-rate attributes (e.g. achievedPointing) if event-processing latency
+        # becomes an issue.
+        self._events_monitor = CallbackScheduler(
+            thread_count=1, logger=self.logger, name="events_monitor"
+        )
+
+        shared_events_queue = self._events_monitor.allocate_queue(queue_size=32)
+
+        def queue_factory() -> Queue:
+            return shared_events_queue
+
+        # set up change events subscriptions for all monitored attributes
+        for attr in self._monitored_attributes:
+            self._events_monitor.register_event_callback(
+                self._tango_device_fqdn,
+                attr,
+                tango.EventType.CHANGE_EVENT,
+                self.dispatch_event,
+                queue_factory=queue_factory,
+            )
+
+    def _stop_event_monitoring(self) -> None:
+        """Shut down the events monitor and clear subscription tracking."""
+        if self._events_monitor is not None:
+            self._events_monitor.shutdown()
+
+        self._events_monitor = None
+        self._active_attr_event_subscriptions.clear()
+
     def start_communicating(self) -> None:
         """Establish communication with the device."""
         self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
@@ -389,14 +414,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
             f"Establishing communication with {self._tango_device_fqdn}.", extra=OPERATOR_TAG
         )
         self._dp_factory_signal.clear()
-        for attr in self._monitored_attributes:
-            self._events_monitor.register_event_callback(
-                self._tango_device_fqdn,
-                attr,
-                tango.EventType.CHANGE_EVENT,
-                self._dispatch_event,
-                queue_factory=lambda: self._shared_events_queue,
-            )
+        self._initialize_events_monitor()
 
     def stop_communicating(self) -> None:
         """Stop communication with the device."""
@@ -404,6 +422,5 @@ class TangoDeviceComponentManager(BaseComponentManager):
             f"Stopping communication with {self._tango_device_fqdn}.", extra=OPERATOR_TAG
         )
         self._dp_factory_signal.set()
-        self._events_monitor.disconnect_all()
-        self._active_attr_event_subscriptions.clear()
+        self._stop_event_monitoring()
         self._update_communication_state(CommunicationStatus.DISABLED)
