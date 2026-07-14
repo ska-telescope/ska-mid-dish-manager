@@ -3,8 +3,10 @@
 import logging
 import threading
 import time
+from datetime import datetime, timezone
 
 import pytest
+from tango import ApiUtil
 
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_B5DC_PROXY_TRL,
@@ -46,6 +48,25 @@ def pytest_addoption(parser):
         default=None,
         help="File path to store pointing files to when tests have the required fixture",
     )
+
+
+@pytest.fixture(autouse=True)
+def add_test_event_info_and_time(request):
+    """Print test information for acceptance tests."""
+    markers = [mark.name for mark in request.node.iter_markers()]
+    start = datetime.now(timezone.utc)
+    print(f"\n[{start.isoformat()}] START {request.node.nodeid}")
+    if "acceptance" in markers:
+        event_info = ApiUtil.query_event_system()
+        print(f"Event info before the test: {event_info}")
+    else:
+        print(f"Markers for the test: {markers}")
+    yield
+    end = datetime.now(timezone.utc)
+    print(f"[{end.isoformat()}] END   {request.node.nodeid}(duration: {end - start})")
+    if "acceptance" in markers:
+        event_info = ApiUtil.query_event_system()
+        print(f"Event info after the test: {event_info}")
 
 
 @pytest.fixture
