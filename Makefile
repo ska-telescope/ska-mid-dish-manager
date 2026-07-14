@@ -113,3 +113,7 @@ simlib:
 	@touch doc_errors.log
 	@echo "Docs generated called: $(DOC_OUTPUT)"
 	@echo "Errors (stderr) logged to doc_errors.log (if any)"
+
+export_kube_namespace:
+	@echo "Exporting KUBE_NAMESPACE=$(KUBE_NAMESPACE) to .env file"
+	@echo "KUBE_NAMESPACE=$(KUBE_NAMESPACE)" > .env
