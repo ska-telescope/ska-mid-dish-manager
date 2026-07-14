@@ -57,7 +57,8 @@ def add_test_event_info_and_time(request):
     start = datetime.now(timezone.utc)
     print(f"\n[{start.isoformat()}] START {request.node.nodeid}")
     if "acceptance" in markers:
-        event_info = ApiUtil.query_event_system()
+        api_util = ApiUtil.instance()
+        event_info = api_util.query_event_system()
         print(f"Event info before the test: {event_info}")
     else:
         print(f"Markers for the test: {markers}")
@@ -65,7 +66,8 @@ def add_test_event_info_and_time(request):
     end = datetime.now(timezone.utc)
     print(f"[{end.isoformat()}] END   {request.node.nodeid}(duration: {end - start})")
     if "acceptance" in markers:
-        event_info = ApiUtil.query_event_system()
+        api_util = ApiUtil.instance()
+        event_info = api_util.query_event_system()
         print(f"Event info after the test: {event_info}")
 
 
