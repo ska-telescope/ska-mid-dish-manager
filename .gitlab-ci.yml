@@ -120,3 +120,39 @@ stop-k8s-test-runner-incl-b5dc:
   extends: stop-k8s-test-runner
   variables:
     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+
+
+stream-processed-zmq-events:
+  variables:
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    DISH_MANAGER_POD: ds-dishmanager-001-0
+    DISH_MGR: mid-dish/dish-manager/SKA001
+    DS_MGR: mid-dish/ds-manager/SKA001
+  allow_failure: true
+  when: always
+  stage: test
+  script:
+    - git clone https://gitlab.com/ska-telescope/sdi/ska-cicd-makefile.git
+    - cd ska-cicd-makefile
+    - KUBE_APP=ska-mid-dish-manager make k8s-wait
+    - echo "Starting ZMQ event monitoring on $DISH_MGR and $DS_MGR in namespace $KUBE_NAMESPACE"
+    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- bash -c "sudo touch zmq-events.json && sudo chown tango zmq-events.json && /app/bin/ska-tango-event-monitor $DISH_MGR $DISH_MGR --monitor-perf --append --output zmq-events.json"
+
+stop-streaming-and-store-zmq-events:
+  variables:
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+    DISH_MANAGER_POD: ds-dishmanager-001-0
+  stage: test
+  when: always
+  allow_failure: true
+  script:
+    - echo "Test run has completed, collecting events recorded"
+    - mkdir -p build
+    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- cat zmq-events.json >> build/zmq-events.json
+    - kubectl exec -i $DISH_MANAGER_POD -n $KUBE_NAMESPACE -- pkill -f "/app/bin/ska-tango-event-monitor mid-dish/dish-manager/SKA001"
+  needs:
+    - k8s-test-runner
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_JOB_ID-recorded-events"
+    paths:
+      - build/
