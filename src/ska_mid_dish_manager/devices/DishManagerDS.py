@@ -502,6 +502,7 @@ class DishManager(SKAController):
             "autowindstowenabled": "autoWindStowEnabled",
             "lastcommandedmode": "lastCommandedMode",
             "lastcommandinvoked": "lastCommandInvoked",
+            "lastcommandfailure": "lastCommandFailure",
             "dscctrlstate": "dscCtrlState",
             "actiontimeoutseconds": "actionTimeoutSeconds",
             "b1lnahpowerstate": "b1LnaHPowerState",
@@ -636,6 +637,22 @@ class DishManager(SKAController):
     def lastCommandInvoked(self) -> tuple[str, str]:
         """Return the last command invoked and its timestamp."""
         return self.component_manager.component_state["lastcommandinvoked"]
+
+    @attribute(
+        dtype=(str, str, str),
+        max_dim_x=3,
+        access=AttrWriteType.READ,
+        doc=(
+            "The returned tuple contains:"
+            "- Timestamp of the failure (UNIX UTC format)"
+            "- Command name (Triggered on DishManager)"
+            "- Reason for failure (as returned by the command)"
+        ),
+    )
+    @requires_component_manager
+    def lastCommandFailure(self) -> tuple[str, str, str]:
+        """Return the last command failure on DM."""
+        return self.component_manager.component_state["lastcommandfailure"]
 
     # pylint: disable=invalid-name
     @attribute(

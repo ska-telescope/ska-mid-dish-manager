@@ -16,6 +16,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
   - spfcB4HealthState
   - spfcB5aHealthState
   - spfcB5bHealthState
+- lastCommandFailure attribute added.
 
 Version 10.0.0
 **************
