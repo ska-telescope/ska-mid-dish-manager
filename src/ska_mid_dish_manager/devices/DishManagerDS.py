@@ -65,6 +65,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     NoiseDiodeMode,
     PointingState,
     PowerState,
+    SPFHealthState,
     TrackInterpolationMode,
     TrackProgramMode,
     TrackTableLoadMode,
@@ -379,6 +380,7 @@ class DishManager(SKAController):
             setattr(self, attribute_variable, comp_state_value)
             self.push_change_event(attribute_name, comp_state_value)
             self.push_archive_event(attribute_name, comp_state_value)
+            self._submit_tango_operation("push_alarm_event", attribute_name, comp_state_value)
 
     def _wind_stow_inform(self, **computed_averages):
         """Updates the device state and status based on wind condition.
@@ -500,6 +502,7 @@ class DishManager(SKAController):
             "autowindstowenabled": "autoWindStowEnabled",
             "lastcommandedmode": "lastCommandedMode",
             "lastcommandinvoked": "lastCommandInvoked",
+            "lastcommandfailure": "lastCommandFailure",
             "dscctrlstate": "dscCtrlState",
             "actiontimeoutseconds": "actionTimeoutSeconds",
             "b1lnahpowerstate": "b1LnaHPowerState",
@@ -523,10 +526,18 @@ class DishManager(SKAController):
             "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
             "dscerrorstatuses": "dscErrorStatuses",
             "healthinfo": "healthInfo",
+            "b1healthstate": "spfcB1HealthState",
+            "b2healthstate": "spfcB2HealthState",
+            "b3healthstate": "spfcB3HealthState",
+            "b4healthstate": "spfcB4HealthState",
+            "b5ahealthstate": "spfcB5aHealthState",
+            "b5bhealthstate": "spfcB5bHealthState",
         }
         for attr in self._component_state_attr_map.values():
             self.set_change_event(attr, True, False)
             self.set_archive_event(attr, True, False)
+            # Manual push but allow filtering of alarms based on configured thresholds
+            self.set_alarm_event(attr, True, True)
 
         # Configure events for base class attributes
         for attr in (
@@ -542,6 +553,7 @@ class DishManager(SKAController):
             try:
                 self.set_change_event(attr, True, False)
                 self.set_archive_event(attr, True, False)
+                self.set_alarm_event(attr, True, True)
             except Exception:
                 pass
 
@@ -569,6 +581,7 @@ class DishManager(SKAController):
         ):
             self.set_change_event(attr, True, False)
             self.set_archive_event(attr, True, False)
+            self.set_alarm_event(attr, True, True)
 
         # Try to connect to DB and update memorized attributes if TANGO_HOST is set
         self.component_manager.try_update_memorized_attributes_from_db()
@@ -624,6 +637,22 @@ class DishManager(SKAController):
     def lastCommandInvoked(self) -> tuple[str, str]:
         """Return the last command invoked and its timestamp."""
         return self.component_manager.component_state["lastcommandinvoked"]
+
+    @attribute(
+        dtype=(str, str, str),
+        max_dim_x=3,
+        access=AttrWriteType.READ,
+        doc=(
+            "The returned tuple contains:"
+            "- Timestamp of the failure (UNIX UTC format)"
+            "- Command name (Triggered on DishManager)"
+            "- Reason for failure (as returned by the command)"
+        ),
+    )
+    @requires_component_manager
+    def lastCommandFailure(self) -> tuple[str, str, str]:
+        """Return the last command failure on DM."""
+        return self.component_manager.component_state["lastcommandfailure"]
 
     # pylint: disable=invalid-name
     @attribute(
@@ -2193,6 +2222,60 @@ class DishManager(SKAController):
     def healthInfo(self):
         """Report the reason for healthstate failures."""
         return self.component_manager.component_state.get("healthinfo", [])
+
+    @attribute(
+        dtype=SPFHealthState,
+        access=AttrWriteType.READ,
+        doc="The Band 1 healthState as reported by the SPF controller.",
+    )
+    def spfcB1HealthState(self):
+        """Return the Band 1 healthState as reported by the SPF controller."""
+        return self.component_manager.component_state.get("b1healthstate", SPFHealthState.UNKNOWN)
+
+    @attribute(
+        dtype=SPFHealthState,
+        access=AttrWriteType.READ,
+        doc="The Band 2 healthState as reported by the SPF controller.",
+    )
+    def spfcB2HealthState(self):
+        """Return the Band 2 healthState as reported by the SPF controller."""
+        return self.component_manager.component_state.get("b2healthstate", SPFHealthState.UNKNOWN)
+
+    @attribute(
+        dtype=SPFHealthState,
+        access=AttrWriteType.READ,
+        doc="The Band 3 healthState as reported by the SPF controller.",
+    )
+    def spfcB3HealthState(self):
+        """Return the Band 3 healthState as reported by the SPF controller."""
+        return self.component_manager.component_state.get("b3healthstate", SPFHealthState.UNKNOWN)
+
+    @attribute(
+        dtype=SPFHealthState,
+        access=AttrWriteType.READ,
+        doc="The Band 4 healthState as reported by the SPF controller.",
+    )
+    def spfcB4HealthState(self):
+        """Return the Band 4 healthState as reported by the SPF controller."""
+        return self.component_manager.component_state.get("b4healthstate", SPFHealthState.UNKNOWN)
+
+    @attribute(
+        dtype=SPFHealthState,
+        access=AttrWriteType.READ,
+        doc="The Band 5a healthState as reported by the SPF controller.",
+    )
+    def spfcB5aHealthState(self):
+        """Return the Band 5a healthState as reported by the SPF controller."""
+        return self.component_manager.component_state.get("b5ahealthstate", SPFHealthState.UNKNOWN)
+
+    @attribute(
+        dtype=SPFHealthState,
+        access=AttrWriteType.READ,
+        doc="The Band 5b healthState as reported by the SPF controller.",
+    )
+    def spfcB5bHealthState(self):
+        """Return the Band 5b healthState as reported by the SPF controller."""
+        return self.component_manager.component_state.get("b5bhealthstate", SPFHealthState.UNKNOWN)
 
     # --------
     # Commands

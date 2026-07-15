@@ -67,3 +67,19 @@ services:
           json2tango -w -a -u data/config.json && sleep infinity"
     volumes:
       - .:/data
+
+  cli:
+    platform: linux/amd64
+    image: artefact.skao.int/ska-tango-images-tango-itango:10.3.0
+    restart: unless-stopped
+    depends_on:
+      - databaseds
+    network_mode: ${NETWORK_MODE}
+    container_name: cli
+    environment:
+      - TANGO_HOST=${TANGO_HOST}
+    volumes:
+      - .:/training
+    working_dir: /training
+    command: >
+      tail -F /dev/null
