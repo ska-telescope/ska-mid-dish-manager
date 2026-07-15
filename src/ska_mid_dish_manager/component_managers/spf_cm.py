@@ -47,6 +47,12 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b4LnaPowerState",
             "b5aLnaPowerState",
             "b5bLnaPowerState",
+            "b1HealthState",
+            "b2HealthState",
+            "b3HealthState",
+            "b4HealthState",
+            "b5aHealthState",
+            "b5bHealthState",
         )
         super().__init__(
             tango_device_fqdn,
@@ -73,6 +79,12 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b4capabilitystate": SPFCapabilityStates,
             "b5acapabilitystate": SPFCapabilityStates,
             "b5bcapabilitystate": SPFCapabilityStates,
+            "b1healthstate": SPFHealthState,
+            "b2healthstate": SPFHealthState,
+            "b3healthstate": SPFHealthState,
+            "b4healthstate": SPFHealthState,
+            "b5ahealthstate": SPFHealthState,
+            "b5bhealthstate": SPFHealthState,
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:

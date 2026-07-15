@@ -5,7 +5,7 @@ import logging
 import time
 from typing import Any, Callable
 
-from ska_control_model import CommunicationStatus
+from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 
@@ -191,3 +191,49 @@ def log_tango_attr_write() -> Callable:
         return wrapper
 
     return decorator
+
+
+def last_command_failure_decorator(func: Any) -> Any:
+    """Record the last command failure."""
+
+    @functools.wraps(func)
+    def last_command_failure_wrapper(*args: Any, **kwargs: Any) -> Any:
+        device_instance = args[0]
+        try:
+            result = func(*args, **kwargs)
+            if isinstance(result, tuple):
+                status, reason = result
+                failure_states: tuple[Any, ...] = ()
+                if isinstance(status, TaskStatus):
+                    failure_states = (
+                        TaskStatus.FAILED,
+                        TaskStatus.REJECTED,
+                    )
+                elif isinstance(status, ResultCode):
+                    failure_states = (
+                        ResultCode.FAILED,
+                        ResultCode.REJECTED,
+                        ResultCode.NOT_ALLOWED,
+                        ResultCode.ABORTED,
+                        ResultCode.UNKNOWN,
+                    )
+                if status in failure_states:
+                    device_instance._update_component_state(
+                        lastcommandfailure=(
+                            str(time.time()),
+                            func.__name__,
+                            str(reason),
+                        )
+                    )
+            return result
+        except Exception as ex:
+            device_instance._update_component_state(
+                lastcommandfailure=(
+                    str(time.time()),
+                    func.__name__,
+                    str(ex),
+                )
+            )
+            raise
+
+    return last_command_failure_wrapper

@@ -9,9 +9,11 @@ from typing import Any, Callable, Optional
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
+from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 from ska_mid_dish_manager.models.dish_enums import FannedOutCommandStatus
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
+    convert_enums_to_names,
     report_awaited_attributes,
     report_task_progress,
 )
@@ -31,6 +33,7 @@ class FannedOutCommand:
         awaited_component_state: dict = {},
         timeout_s: float = 0,
         progress_callback: Optional[Callable] = None,
+        skip_if_already_satisfied: bool = False,
     ):
         """:param logger: Logger instance
         :type logger: Logger
@@ -53,6 +56,9 @@ class FannedOutCommand:
         :type timeout_s: float
         :param progress_callback: Optional callback to report progress updates.
         :type progress_callback: Callable
+        :param skip_if_already_satisfied: Toggle to skip fanning out the command if the awaited
+            component state is already satisfied.
+        :type skip_if_already_satisfied: bool
         """
         self.logger = logger
         self.device = device
@@ -69,9 +75,37 @@ class FannedOutCommand:
         self.component_state = component_state
         self.awaited_component_state = awaited_component_state
         self.awaited_update_reports = {attr: False for attr in awaited_component_state.keys()}
+        self.skip_if_already_satisfied = skip_if_already_satisfied
+
+    @property
+    def already_satisfied(self) -> bool:
+        """Check if the component is already in the awaited state."""
+        return check_component_state_matches_awaited(
+            self.component_state, self.awaited_component_state
+        )
+
+    def _report_already_satisfied(self) -> None:
+        """Report that the command is not being fanned out because its state is already met."""
+        attrs = list(self.awaited_component_state.keys())
+        values = convert_enums_to_names(list(self.awaited_component_state.values()))
+        attrs_str = ", ".join(attrs)
+        values_str = ", ".join(str(value) for value in values)
+        msg = (
+            f"{self.device} {attrs_str} already {values_str}, "
+            f"not fanning out {self.command_name} command"
+        )
+        self.logger.info(msg, extra=OPERATOR_TAG)
+        report_task_progress(msg, self._progress_callback)
 
     def execute(self, task_callback: Callable) -> None:
         """Execute the fanned out command."""
+        if self.skip_if_already_satisfied and self.already_satisfied:
+            self._report_already_satisfied()
+            self._status = FannedOutCommandStatus.IGNORED
+            self._task_finish_reported = True
+            self.awaited_update_reports = {attr: True for attr in self.awaited_update_reports}
+            return
+
         self.logger.debug(f"Executing {self.command_name} with arg {self.command_argument}")
         self._status = FannedOutCommandStatus.IN_PROGRESS
         self.start_time = time.time()
@@ -191,6 +225,7 @@ class FannedOutTangoCommand(FannedOutCommand):
         timeout_s: float = 0,
         progress_callback: Optional[Callable] = None,
         is_device_ignored: bool = False,
+        skip_if_already_satisfied: bool = False,
     ):
         """:param logger: Logger instance
         :type logger: Logger
@@ -211,6 +246,9 @@ class FannedOutTangoCommand(FannedOutCommand):
         :type progress_callback: Callable
         :param is_device_ignored: Toggle to ignore fanning out of command if the device is ignored.
         :type is_device_ignored: bool
+        :param skip_if_already_satisfied: Toggle to skip fanning out the command if the awaited
+            component state is already satisfied.
+        :type skip_if_already_satisfied: bool
         """
         self.device_component_manager = device_component_manager
         self.is_device_ignored = is_device_ignored
@@ -228,6 +266,7 @@ class FannedOutTangoCommand(FannedOutCommand):
             awaited_component_state=awaited_component_state,
             timeout_s=timeout_s,
             progress_callback=progress_callback,
+            skip_if_already_satisfied=skip_if_already_satisfied,
         )
 
     def _execute_tango_command(self) -> tuple:
@@ -259,6 +298,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         timeout_s: float = 0,
         progress_callback: Optional[Callable] = None,
         is_device_ignored: bool = False,
+        skip_if_already_satisfied: bool = False,
     ):
         """:param logger: Logger instance
         :type logger: Logger
@@ -279,6 +319,9 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         :type progress_callback: Callable
         :param is_device_ignored: Toggle to ignore fanning out of command if the device is ignored.
         :type is_device_ignored: bool
+        :param skip_if_already_satisfied: Toggle to skip fanning out the command if the awaited
+            component state is already satisfied.
+        :type skip_if_already_satisfied: bool
         """
         self.is_lrc_finished = False
         super().__init__(
@@ -291,6 +334,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
             timeout_s=timeout_s,
             progress_callback=progress_callback,
             is_device_ignored=is_device_ignored,
+            skip_if_already_satisfied=skip_if_already_satisfied,
         )
 
     def _execute_tango_command(self) -> tuple:
