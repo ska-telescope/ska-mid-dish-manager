@@ -13,7 +13,7 @@ from typing import Optional
 import pytest
 from ska_tango_event_monitor import QueryEventSystemResponse, ResponseChangeSummary
 from ska_tango_event_monitor.render import render_report
-from tango import DeviceProxy, Group
+from tango import ApiUtil, DeviceProxy, Group
 
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_B5DC_PROXY_TRL,
@@ -146,33 +146,36 @@ def add_test_event_info_and_time(
 ):
     """Record the event diagnostics per test in event-diag-file-path."""
     if is_acceptance_test and event_tracking_device_group and event_tracking_record_file:
-        event_info: dict[str, EventTrackingData] = {}
+        device_event_info: dict[str, EventTrackingData] = {}
+        test_event_info: EventTrackingData = EventTrackingData(
+            event_data_before=ApiUtil.instance().query_event_system(), event_data_after=""
+        )
         with event_tracking_record_file.open(mode="a", encoding="utf-8") as f:
             start = datetime.now(timezone.utc)
             f.write("\n*******************\n")
             f.write(f"\nSTART [{request.node.nodeid}] at [{start.isoformat()}]\n")
             f.write("\n*******************\n")
             replies = event_tracking_device_group.command_inout("QueryEventSystem")
-            f.write("\nEvent data before test\n")
             for reply in replies:
                 name = reply.dev_name()
-                event_info[name] = EventTrackingData(
+                device_event_info[name] = EventTrackingData(
                     event_data_before=reply.get_data(), event_data_after=""
                 )
-            f.write("\n========================\n")
 
     yield
 
     if is_acceptance_test and event_tracking_device_group and event_tracking_record_file:
+        test_event_info.event_data_after = ApiUtil.instance().query_event_system()
         with event_tracking_record_file.open(mode="a", encoding="utf-8") as f:
             replies = event_tracking_device_group.command_inout("QueryEventSystem")
-            f.write("\nEvent data after test\n")
             for reply in replies:
                 name = reply.dev_name()
-                event_info[name].event_data_after = reply.get_data()
-            for name, data in event_info.items():
-                f.write(f"Device: {name}\n")
+                device_event_info[name].event_data_after = reply.get_data()
+            for name, data in device_event_info.items():
+                f.write(f"Device Summary: {name}\n\n")
                 f.write(data.render_tracking_summary())
+            f.write("\nTest Summary:\n")
+            f.write(test_event_info.render_tracking_summary())
             end = datetime.now(timezone.utc)
             f.write(f"\nEND [{request.node.nodeid}] at [{end.isoformat()}]\n")
 
