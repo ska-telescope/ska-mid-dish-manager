@@ -1,12 +1,15 @@
 """Contains pytest fixtures for other tests setup."""
 
+import json
 import logging
 import threading
 import time
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
 
 import pytest
-from tango import ApiUtil
+from tango import DeviceProxy, Group
 
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_B5DC_PROXY_TRL,
@@ -48,27 +51,99 @@ def pytest_addoption(parser):
         default=None,
         help="File path to store pointing files to when tests have the required fixture",
     )
+    parser.addoption(
+        "--event-diag-file-path",
+        action="store",
+        default=None,
+        help="File path to store event diagnostic data.",
+    )
+    parser.addoption(
+        "--track-device-events",
+        action="append",
+        default=[],
+        help="List of device names to track events for.",
+    )
+
+
+@pytest.fixture
+def event_tracking_record_file(request) -> Optional[Path]:
+    """Creates a file path if specified and it does not exist."""
+    events_path = request.config.getoption("--event-diag-file-path")
+    if not events_path:
+        return None
+    file_path = Path(events_path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    return file_path
+
+
+@pytest.fixture
+def event_tracking_device_group(request) -> Optional[Group]:
+    """Creates a Tango device group of the associated admin devices."""
+    trls = request.config.getoption("--track-device-events")
+    if not trls:
+        return None
+    group = Group("EventTrackingGroup")
+    for trl in trls:
+        dp = DeviceProxy(trl)
+        group.add(dp.adm_name())
+    return group
+
+
+@pytest.fixture()
+def is_acceptance_test(request) -> bool:
+    """Returns whether this is an acceptance test or not."""
+    marker_names = [marker.name for marker in request.node.iter_markers()]
+    return "acceptance" in marker_names
 
 
 @pytest.fixture(autouse=True)
-def add_test_event_info_and_time(request):
-    """Print test information for acceptance tests."""
-    markers = [mark.name for mark in request.node.iter_markers()]
-    start = datetime.now(timezone.utc)
-    print(f"\n[{start.isoformat()}] START {request.node.nodeid}")
-    if "acceptance" in markers:
-        api_util = ApiUtil.instance()
-        event_info = api_util.query_event_system()
-        print(f"Event info before the test: {event_info}")
-    else:
-        print(f"Markers for the test: {markers}")
+def enable_event_tracking(
+    request, is_acceptance_test, event_tracking_device_group, event_tracking_record_file
+):
+    """Enable event tracking for acceptance tests."""
+    if is_acceptance_test and event_tracking_device_group and event_tracking_record_file:
+        tracking_enabled = getattr(request.node, "my_special_flag", False)
+        if not tracking_enabled:
+            event_tracking_device_group.command_inout("EnableEventSystemPerfMon", True)
+            request.node.tracking_enabled = True
     yield
-    end = datetime.now(timezone.utc)
-    print(f"[{end.isoformat()}] END   {request.node.nodeid}(duration: {end - start})")
-    if "acceptance" in markers:
-        api_util = ApiUtil.instance()
-        event_info = api_util.query_event_system()
-        print(f"Event info after the test: {event_info}")
+
+
+@pytest.fixture(autouse=True)
+def add_test_event_info_and_time(
+    request, is_acceptance_test, event_tracking_device_group, event_tracking_record_file
+):
+    """Record the event diagnostics per test in event-diag-file-path."""
+    if is_acceptance_test and event_tracking_device_group and event_tracking_record_file:
+        with event_tracking_record_file.open(mode="a", encoding="utf-8") as f:
+            start = datetime.now(timezone.utc)
+            f.write("\n*******************\n")
+            f.write(f"\nSTART [{request.node.nodeid}] at [{start.isoformat()}]\n")
+            f.write("\n*******************\n")
+            replies = event_tracking_device_group.command_inout("QueryEventSystem")
+            f.write("\nEvent data before test\n")
+            for reply in replies:
+                name = reply.dev_name()
+                f.write(f"Device: {name}\n")
+                data = json.loads(reply.get_data())
+                f.write(json.dumps(data, indent=2))
+                f.write("\n")
+            f.write("\n========================\n")
+
+    yield
+
+    if is_acceptance_test and event_tracking_device_group and event_tracking_record_file:
+        with event_tracking_record_file.open(mode="a", encoding="utf-8") as f:
+            replies = event_tracking_device_group.command_inout("QueryEventSystem")
+            f.write("\nEvent data after test\n")
+            for reply in replies:
+                name = reply.dev_name()
+                f.write(f"Device: {name}\n")
+                data = json.loads(reply.get_data())
+                f.write(json.dumps(data, indent=2))
+                f.write("\n")
+            end = datetime.now(timezone.utc)
+            f.write(f"\nEND [{request.node.nodeid}] at [{end.isoformat()}]\n")
 
 
 @pytest.fixture
