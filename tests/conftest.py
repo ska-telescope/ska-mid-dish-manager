@@ -76,6 +76,7 @@ def event_tracking_record_file(request) -> Optional[Path]:
     if not os.path.exists(os.path.dirname(events_path_dir)):
         os.makedirs(os.path.dirname(events_path_dir), exist_ok=True)
     file_name = f"{now.timestamp()}_event_diag_{request.node.name}.txt"
+    file_name = file_name.replace("/", "_").replace("\\", "_").replace("]", "_").replace("[", "_")
     file_path = Path(events_path_dir).joinpath(file_name)
     return file_path
 
@@ -86,11 +87,13 @@ def is_acceptance_test(request) -> bool:
     marker_names = [marker.name for marker in request.node.iter_markers()]
     if "unit" in marker_names:
         return False
+    if "unit" in request.node.nodeid:
+        return False
     return "acceptance" in marker_names
 
 
 @pytest.fixture
-def event_tracking_device_group(request) -> Optional[Group]:
+def event_tracking_device_group(request, is_acceptance_test) -> Optional[Group]:
     """Creates a Tango device group of the associated admin devices."""
     if not is_acceptance_test:
         return None
