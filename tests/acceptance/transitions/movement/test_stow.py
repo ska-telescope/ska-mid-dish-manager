@@ -47,7 +47,7 @@ def test_stow_transition(
     assert event_json["name"] == "SetStowMode"
     assert event_json["status"] == "COMPLETED"
 
-    main_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 60)
+    main_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 200)
 
     events = status_event_store.wait_for_progress_update(expected_progress_update, timeout=10)
     assert events

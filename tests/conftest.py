@@ -173,12 +173,12 @@ def add_test_event_info_and_time(
                 name = reply.dev_name()
                 device_event_info[name].event_data_after = reply.get_data()
             for name, data in device_event_info.items():
-                f.write(f"Device Summary: {name}\n\n")
+                f.write(f"\n\nDevice Summary: {name}\n\n")
                 f.write(data.render_tracking_summary())
-            f.write("\nTest Summary:\n")
+            f.write("\n\nTest Summary:\n\n")
             f.write(test_event_info.render_tracking_summary())
             end = datetime.now(timezone.utc)
-            f.write(f"\nEND [{request.node.nodeid}] at [{end.isoformat()}]\n")
+            f.write(f"\n\nEND [{request.node.nodeid}] at [{end.isoformat()}]\n")
 
 
 @pytest.fixture
