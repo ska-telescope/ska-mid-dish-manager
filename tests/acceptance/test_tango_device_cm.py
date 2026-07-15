@@ -115,15 +115,16 @@ def test_tango_device_component_manager_threads_management(
 
     threads = threading.enumerate()
 
-    # events_monitor thread i.e. CallbackScheduler, main thread
-    # and maybe the connection thread which might have already returned
-    assert len(threads) <= 3
-    thread_names = [t.name for t in threads]
+    try:
+        # events_monitor thread (CallbackScheduler), main thread
+        # and maybe the connection thread which might have already returned
+        assert len(threads) <= 3
 
-    assert "MainThread" in thread_names
-    assert "events_monitor" in thread_names
-
-    com_man.stop_communicating()
+        thread_names = [t.name for t in threads]
+        assert "MainThread" in thread_names
+        assert "events_monitor" in thread_names
+    finally:
+        com_man.stop_communicating()
 
     threads = threading.enumerate()
     assert len(threads) == 1

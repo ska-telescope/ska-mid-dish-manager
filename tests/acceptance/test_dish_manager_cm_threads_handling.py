@@ -46,21 +46,22 @@ def test_dish_manager_component_manager_threads_management(component_state_store
 
     cm.start_communicating()
 
-    threads = threading.enumerate()
-    # 3x events_monitor thread (CallbackScheduler), MonitorPing thread, main thread
-    # and maybe 3x connection thread which might have already returned
-    assert len(threads) <= 8
+    try:
+        threads = threading.enumerate()
+        # 3x events_monitor thread (CallbackScheduler), MonitorPing thread, main thread
+        # and maybe 3x connection thread which might have already returned
+        assert len(threads) <= 8
 
-    thread_names = [t.name for t in threads]
+        thread_names = [t.name for t in threads]
 
-    assert "MainThread" in thread_names
-    assert "MonitorPingThread" in thread_names
-    events_monitor_thread_count = sum(
-        1 for name in thread_names if name.startswith("events_monitor")
-    )
-    assert events_monitor_thread_count == 3
-
-    cm.stop_communicating()
+        assert "MainThread" in thread_names
+        assert "MonitorPingThread" in thread_names
+        events_monitor_thread_count = sum(
+            1 for name in thread_names if name.startswith("events_monitor")
+        )
+        assert events_monitor_thread_count == 3
+    finally:
+        cm.stop_communicating()
 
     threads = threading.enumerate()
     assert len(threads) == 1
