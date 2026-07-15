@@ -17,6 +17,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
   - spfcB5aHealthState
   - spfcB5bHealthState
 - lastCommandFailure attribute added.
+- `UpdateTZData` command added
+  - Downloads the latest TZ data file from the TZ_DATA_URL env var and uploads it to SPFRx
 
 Version 10.0.0
 **************
