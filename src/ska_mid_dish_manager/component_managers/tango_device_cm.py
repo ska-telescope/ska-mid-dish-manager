@@ -317,11 +317,14 @@ class TangoDeviceComponentManager(BaseComponentManager):
     @check_communicating
     def execute_command(self, command_name: str, command_arg: Any) -> Tuple[TaskStatus, Any]:
         """Check the connection and execute the command on the Tango device."""
+        arg_preview = str(command_arg)
+        if len(arg_preview) > 100:
+            arg_preview = f"{arg_preview[:100]}..."
         self.logger.debug(
             "About to execute command [%s] on device [%s] with param [%s]",
             command_name,
             self._tango_device_fqdn,
-            command_arg,
+            arg_preview,
         )
         reply = None
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
