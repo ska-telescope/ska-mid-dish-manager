@@ -19,8 +19,7 @@ def test_healthinfo(dish_manager_proxy, spfrx_device_proxy, spf_device_proxy, ev
 
     event_store.wait_for_value((), timeout=10)
     spfrx_device_proxy.write_attribute("healthState", HealthState.FAILED)
-    # Added to ensure that healthInfo doesn't throw a data size error when more
-    #  than 1 healthinfo update is received.
+    # Added to ensure that healthInfo doesn't throw a data size error.
     spf_device_proxy.write_attribute("healthState", SPFHealthState.DEGRADED)
 
     event_store.wait_for_value(

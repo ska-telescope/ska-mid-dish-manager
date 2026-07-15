@@ -2216,7 +2216,7 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=[str],
-        max_dim_x=3,
+        max_dim_x=256,
         access=AttrWriteType.READ,
         doc="Report the reason for healthstate failures.",
     )
