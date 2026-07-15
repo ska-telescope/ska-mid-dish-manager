@@ -116,8 +116,9 @@ def enable_event_tracking(
 ):
     """Enable event tracking for acceptance tests."""
     if is_acceptance_test and event_tracking_device_group and event_tracking_record_file:
-        tracking_enabled = getattr(request.node, "my_special_flag", False)
+        tracking_enabled = getattr(request.node, "tracking_enabled", False)
         if not tracking_enabled:
+            ApiUtil.instance().enable_event_system_perf_mon(True)
             event_tracking_device_group.command_inout("EnableEventSystemPerfMon", True)
             request.node.tracking_enabled = True
     yield
