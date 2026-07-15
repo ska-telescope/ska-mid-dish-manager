@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import threading
 import time
 from datetime import datetime, timezone
@@ -52,7 +53,7 @@ def pytest_addoption(parser):
         help="File path to store pointing files to when tests have the required fixture",
     )
     parser.addoption(
-        "--event-diag-file-path",
+        "--event-diag-file-dir",
         action="store",
         default=None,
         help="File path to store event diagnostic data.",
@@ -68,11 +69,14 @@ def pytest_addoption(parser):
 @pytest.fixture
 def event_tracking_record_file(request) -> Optional[Path]:
     """Creates a file path if specified and it does not exist."""
-    events_path = request.config.getoption("--event-diag-file-path")
-    if not events_path:
+    now = datetime.now(timezone.utc)
+    events_path_dir = request.config.getoption("--event-diag-file-dir")
+    if not events_path_dir:
         return None
-    file_path = Path(events_path)
-    file_path.parent.mkdir(parents=True, exist_ok=True)
+    if not os.path.exists(os.path.dirname(events_path_dir)):
+        os.makedirs(os.path.dirname(events_path_dir), exist_ok=True)
+    file_name = f"{now.timestamp()}_event_diag_{request.node.name}.txt"
+    file_path = Path(events_path_dir).joinpath(file_name)
     return file_path
 
 
