@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from ska_control_model import HealthState
+from ska_control_model import CommunicationStatus, HealthState
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -74,12 +74,21 @@ class StateTransition:
 
     def compute_dish_health_state(
         self,
+        ds_communication_state: CommunicationStatus,
+        spfrx_communication_state: CommunicationStatus,
+        spf_communcation_state: CommunicationStatus,
         ds_component_state: dict,  # type: ignore
         spfrx_component_state: Optional[dict] = None,  # type: ignore
         spf_component_state: Optional[dict] = None,  # type: ignore
     ) -> HealthState:
         """Compute the HealthState based off component_states.
 
+        :param ds_communication_state: DS device component communication state
+        :type ds_communication_state: CommunicationStatus
+        :param spfrx_communication_state: SPFRX device component communication state
+        :type spfrx_communication_state: CommunicationStatus
+        :param spf_communcation_state: SPF device component communication state
+        :type spf_communcation_state: CommunicationStatus
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
         :param spfrx_component_state: SPFRX device component state
@@ -93,11 +102,14 @@ class StateTransition:
             ds_component_state, spfrx_component_state, spf_component_state
         )
 
-        # Get the current enum
+        # Get the current healthState enum
         if ds_component_state:
             dish_manager_states["DS"]["healthstate"] = ds_component_state.get(
                 "healthstate", HealthState.UNKNOWN
             )
+            dish_manager_states["DS"]["connectionstate"] = CommunicationStatus(
+                ds_component_state.get("connectionstate", CommunicationStatus.DISABLED)
+            )  # <- Why does the internal section come back as the int and not the full enum???
         if spfrx_component_state:
             dish_manager_states["SPFRX"]["healthstate"] = spfrx_component_state.get(
                 "healthstate", HealthState.UNKNOWN
@@ -107,17 +119,45 @@ class StateTransition:
                 "healthstate", SPFHealthState.UNKNOWN
             )
 
+        # Add the subcomponent communication states to the dish manager states dict
+        if ds_component_state:
+            dish_manager_states["DS"]["dsconnectionstate"] = CommunicationStatus(
+                ds_communication_state
+            )
+
+        if spfrx_component_state:
+            dish_manager_states["SPFRX"]["spfrxconnectionstate"] = CommunicationStatus(
+                spfrx_communication_state
+            )
+
+        if spf_component_state:
+            dish_manager_states["SPF"]["spfconnectionstate"] = CommunicationStatus(
+                spf_communcation_state
+            )
+
         # Build the name used on the transition rules
         dish_manager_states["DS"]["healthstate"] = (
             f"HealthState.{dish_manager_states['DS']['healthstate'].name}"
+        )
+        dish_manager_states["DS"]["connectionstate"] = (
+            f"CommunicationState.{dish_manager_states['DS']['connectionstate'].name}"
+        )
+        dish_manager_states["DS"]["dsconnectionstate"] = (
+            f"CommunicationState.{dish_manager_states['DS']['dsconnectionstate'].name}"
         )
         if "SPFRX" in dish_manager_states:
             dish_manager_states["SPFRX"]["healthstate"] = (
                 f"HealthState.{dish_manager_states['SPFRX']['healthstate'].name}"
             )
+            dish_manager_states["SPFRX"]["spfrxconnectionstate"] = (
+                f"CommunicationState.{dish_manager_states['SPFRX']['spfrxconnectionstate'].name}"
+            )
         if "SPF" in dish_manager_states:
             dish_manager_states["SPF"]["healthstate"] = (
                 f"SPFHealthState.{dish_manager_states['SPF']['healthstate'].name}"
+            )
+            dish_manager_states["SPF"]["spfconnectionstate"] = (
+                f"CommunicationState.{dish_manager_states['SPF']['spfconnectionstate'].name}"
             )
 
         rules_to_use = health_state_rules_ds_only
