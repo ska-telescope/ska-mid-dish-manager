@@ -84,6 +84,8 @@ def event_tracking_record_file(request) -> Optional[Path]:
 def is_acceptance_test(request) -> bool:
     """Returns whether this is an acceptance test or not."""
     marker_names = [marker.name for marker in request.node.iter_markers()]
+    if "unit" in marker_names:
+        return False
     return "acceptance" in marker_names
 
 
