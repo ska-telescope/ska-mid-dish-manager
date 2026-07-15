@@ -5,11 +5,14 @@ import logging
 import os
 import threading
 import time
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
 import pytest
+from ska_tango_event_monitor import QueryEventSystemResponse, ResponseChangeSummary
+from ska_tango_event_monitor.render import render_report
 from tango import DeviceProxy, Group
 
 from ska_mid_dish_manager.models.constants import (
@@ -120,12 +123,30 @@ def enable_event_tracking(
     yield
 
 
+@dataclass
+class EventTrackingData:
+    """Data class to hold event tracking data."""
+
+    event_data_before: str
+    event_data_after: str
+
+    def render_tracking_summary(self) -> str:
+        """Render the event tracking data diff as a string."""
+        assert self.event_data_before is not None, "Event data before test is None"
+        assert self.event_data_after is not None, "Event data after test is None"
+
+        before_response = QueryEventSystemResponse.from_json(json.loads(self.event_data_before))
+        after_response = QueryEventSystemResponse.from_json(json.loads(self.event_data_after))
+        return render_report(ResponseChangeSummary.from_responses(after_response, before_response))
+
+
 @pytest.fixture(autouse=True)
 def add_test_event_info_and_time(
     request, is_acceptance_test, event_tracking_device_group, event_tracking_record_file
 ):
     """Record the event diagnostics per test in event-diag-file-path."""
     if is_acceptance_test and event_tracking_device_group and event_tracking_record_file:
+        event_info: dict[str, EventTrackingData] = {}
         with event_tracking_record_file.open(mode="a", encoding="utf-8") as f:
             start = datetime.now(timezone.utc)
             f.write("\n*******************\n")
@@ -135,10 +156,9 @@ def add_test_event_info_and_time(
             f.write("\nEvent data before test\n")
             for reply in replies:
                 name = reply.dev_name()
-                f.write(f"Device: {name}\n")
-                data = json.loads(reply.get_data())
-                f.write(json.dumps(data, indent=2))
-                f.write("\n")
+                event_info[name] = EventTrackingData(
+                    event_data_before=reply.get_data(), event_data_after=""
+                )
             f.write("\n========================\n")
 
     yield
@@ -149,10 +169,10 @@ def add_test_event_info_and_time(
             f.write("\nEvent data after test\n")
             for reply in replies:
                 name = reply.dev_name()
+                event_info[name].event_data_after = reply.get_data()
+            for name, data in event_info.items():
                 f.write(f"Device: {name}\n")
-                data = json.loads(reply.get_data())
-                f.write(json.dumps(data, indent=2))
-                f.write("\n")
+                f.write(data.render_tracking_summary())
             end = datetime.now(timezone.utc)
             f.write(f"\nEND [{request.node.nodeid}] at [{end.isoformat()}]\n")
 
