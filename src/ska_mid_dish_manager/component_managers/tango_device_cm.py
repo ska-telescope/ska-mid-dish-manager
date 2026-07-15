@@ -9,7 +9,7 @@ import tango
 from ska_control_model import CommunicationStatus, TaskStatus
 from ska_tango_base import type_hints
 from ska_tango_base.base import BaseComponentManager
-from ska_tango_base.callback_scheduler import CallbackScheduler, Queue
+from ska_tango_base.callback_scheduler import CallbackScheduler
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 from ska_mid_dish_manager.models.constants import OPERATOR_TAG
@@ -383,22 +383,12 @@ class TangoDeviceComponentManager(BaseComponentManager):
         #
         # Increasing thread_count would allow callbacks from different event streams
         # to execute concurrently, which may improve responsiveness for high-rate
-        # attributes. However, this would require all shared state, including
-        # component-state updates and subscription management, to be fully
-        # thread-safe.
+        # attributes.
         #
-        # TODO: Evaluate increasing thread_count and allocating a dedicated queue for
-        # high-rate attributes (e.g. achievedPointing) if event-processing latency
-        # becomes an issue.
+        # TODO: Evaluate increasing thread_count
         self._events_monitor = CallbackScheduler(
             thread_count=1, logger=self.logger, name="events_monitor"
         )
-
-        shared_events_queue = self._events_monitor.allocate_queue(queue_size=32)
-
-        def queue_factory() -> Queue:
-            return shared_events_queue
-
         # set up change events subscriptions for all monitored attributes
         for attr in self._monitored_attributes:
             self._events_monitor.register_event_callback(
@@ -406,7 +396,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 attr,
                 tango.EventType.CHANGE_EVENT,
                 self.dispatch_event,
-                queue_factory=queue_factory,
             )
 
     def _start_monitoring_when_proxy_available(self) -> None:
