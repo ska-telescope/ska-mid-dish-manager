@@ -2608,13 +2608,13 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
         doc_in=(
             "Downloads the latest TZ data file from the URL configured in the "
-            "TZDataURL environment variable and uploads it to SPFRx."
+            "TZ_DATA_URL environment variable and uploads it to SPFRx."
         ),
     )
     def UpdateTZData(self) -> DevVarLongStringArrayType:
         """Download the latest TZ data file and upload it to SPFRx.
 
-        The URL of the file to download is read from the ``TZDataURL`` environment
+        The URL of the file to download is read from the ``TZ_DATA_URL`` environment
         variable. The downloaded file is base64 encoded and forwarded to SPFRx
         via its ``UpdateTZData`` command.
         """

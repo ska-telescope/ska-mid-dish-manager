@@ -13,7 +13,7 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 def test_update_tz_data_fails_when_url_not_configured(dish_manager_proxy, event_store_class):
     """UpdateTZData reports FAILED when the TZ data URL is not configured.
 
-    The download URL is read server-side from the ``TZDataURL`` environment
+    The download URL is read server-side from the ``TZ_DATA_URL`` environment
     variable, which is not set in the deployment. Invoking the command over
     the Tango interface should therefore result in a FAILED long running command.
     """

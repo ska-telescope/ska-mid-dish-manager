@@ -7,7 +7,7 @@ SPFRx. When invoked, DishManager downloads the latest TZ data file, base64
 encodes it and forwards it to SPFRx via the SPFRx *UpdateTZData* command.
 
 The command takes no arguments. The location of the TZ data file is read from the
-``TZDataURL`` environment variable on the DishManager device server, so no URL is
+``TZ_DATA_URL`` environment variable on the DishManager device server, so no URL is
 passed by the caller.
 
 Because it is a long running command, the call returns immediately with a command
@@ -22,7 +22,7 @@ How it works
 
 When *UpdateTZData* is invoked, DishManager:
 
-#. Reads the download URL from the ``TZDataURL`` environment variable.
+#. Reads the download URL from the ``TZ_DATA_URL`` environment variable.
 
 #. Downloads the TZ data file from that URL.
 
@@ -45,8 +45,8 @@ Command Feedback: A collection of command responses and their meanings
    * - SPFRx is ignored
      - UpdateTZData rejected. SPFRx is ignored, cannot upload TZ data.
      - ResultCode.FAILED
-   * - ``TZDataURL`` not set or empty
-     - UpdateTZData failed. Environment variable 'TZDataURL' is not set or is empty; cannot determine where to download the TZ data from.
+   * - ``TZ_DATA_URL`` not set or empty
+     - UpdateTZData failed. Environment variable 'TZ_DATA_URL' is not set or is empty; cannot determine where to download the TZ data from.
      - ResultCode.FAILED
    * - Download failed
      - UpdateTZData failed. Could not download TZ data from <url>.

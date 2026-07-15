@@ -22,7 +22,7 @@ ELEVATION_SPEED_DEGREES_PER_SECOND = 1.0
 DEFAULT_ACTION_TIMEOUT_S = 120
 # Name of the environment variable holding the URL of the TZ data file that is
 # downloaded and forwarded to SPFRx by the UpdateTZData command.
-TZ_DATA_URL_ENV_VAR = "TZDataURL"
+TZ_DATA_URL_ENV_VAR = "TZ_DATA_URL"
 # Timeout (in seconds) for downloading the TZ data file from TZ_DATA_URL_ENV_VAR.
 TZ_DATA_DOWNLOAD_TIMEOUT_S = 60
 MAX_ELEVATION_SCIENCE = 85.0
