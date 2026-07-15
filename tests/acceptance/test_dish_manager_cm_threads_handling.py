@@ -7,7 +7,6 @@ from ska_tango_testing.mock import MockCallable
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
-    DEFAULT_B5DC_PROXY_TRL,
     DEFAULT_DISH_MANAGER_TRL,
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
@@ -33,7 +32,7 @@ def test_dish_manager_component_manager_threads_management(component_state_store
         ds_device_fqdn=DEFAULT_DS_MANAGER_TRL,
         spf_device_fqdn=DEFAULT_SPFC_TRL,
         spfrx_device_fqdn=DEFAULT_SPFRX_TRL,
-        b5dc_device_fqdn=DEFAULT_B5DC_PROXY_TRL,
+        b5dc_device_fqdn="",
         action_timeout_s=DEFAULT_ACTION_TIMEOUT_S,
         communication_state_callback=mock_callable,
         component_state_callback=component_state_store,
@@ -48,26 +47,21 @@ def test_dish_manager_component_manager_threads_management(component_state_store
     cm.start_communicating()
 
     threads = threading.enumerate()
+    # 3x events_monitor thread (CallbackScheduler), MonitorPing thread, main thread
+    # and maybe 3x connection thread which might have already returned
+    assert len(threads) <= 8
 
-    assert (
-        len(threads) == 10
-    )  # (4x Subscription thread, 4x Consumer thread, MonitorPing thread,main thread)
-    threads_names = [t.name for t in threads]
+    thread_names = [t.name for t in threads]
 
-    assert "MainThread" in threads_names
-    for device_fqdn in [
-        DEFAULT_DS_MANAGER_TRL,
-        DEFAULT_SPFC_TRL,
-        DEFAULT_SPFRX_TRL,
-        DEFAULT_B5DC_PROXY_TRL,
-    ]:
-        fqdn = device_fqdn.replace("-", "_").replace("/", ".")
-        assert f"{fqdn}.attribute_subscription_thread" in threads_names
-        assert f"{fqdn}.event_consumer_thread" in threads_names
-    assert "MonitorPingThread" in threads_names
+    assert "MainThread" in thread_names
+    assert "MonitorPingThread" in thread_names
+    events_monitor_thread_count = sum(
+        1 for name in thread_names if name.startswith("events_monitor")
+    )
+    assert events_monitor_thread_count == 3
 
     cm.stop_communicating()
 
     threads = threading.enumerate()
-    assert len(threads) == 1  # (main thread)
+    assert len(threads) == 1
     assert threads[0].name == "MainThread"

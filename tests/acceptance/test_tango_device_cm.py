@@ -115,16 +115,16 @@ def test_tango_device_component_manager_threads_management(
 
     threads = threading.enumerate()
 
-    assert len(threads) == 3  # (Subscription thread, Consumer thread,main thread)
-    threads_names = [t.name for t in threads]
+    # events_monitor thread i.e. CallbackScheduler, main thread
+    # and maybe the connection thread which might have already returned
+    assert len(threads) <= 3
+    thread_names = [t.name for t in threads]
 
-    assert "MainThread" in threads_names
-    device_fqdn = device_fqdn.replace("-", "_").replace("/", ".")
-    assert f"{device_fqdn}.attribute_subscription_thread" in threads_names
-    assert f"{device_fqdn}.event_consumer_thread" in threads_names
+    assert "MainThread" in thread_names
+    assert "events_monitor" in thread_names
 
     com_man.stop_communicating()
 
     threads = threading.enumerate()
-    assert len(threads) == 1  # (main thread)
+    assert len(threads) == 1
     assert threads[0].name == "MainThread"
