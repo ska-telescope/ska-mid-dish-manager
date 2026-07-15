@@ -76,9 +76,18 @@ def event_tracking_record_file(request) -> Optional[Path]:
     return file_path
 
 
+@pytest.fixture()
+def is_acceptance_test(request) -> bool:
+    """Returns whether this is an acceptance test or not."""
+    marker_names = [marker.name for marker in request.node.iter_markers()]
+    return "acceptance" in marker_names
+
+
 @pytest.fixture
 def event_tracking_device_group(request) -> Optional[Group]:
     """Creates a Tango device group of the associated admin devices."""
+    if not is_acceptance_test:
+        return None
     trls = request.config.getoption("--track-device-events")
     if not trls:
         return None
@@ -87,13 +96,6 @@ def event_tracking_device_group(request) -> Optional[Group]:
         dp = DeviceProxy(trl)
         group.add(dp.adm_name())
     return group
-
-
-@pytest.fixture()
-def is_acceptance_test(request) -> bool:
-    """Returns whether this is an acceptance test or not."""
-    marker_names = [marker.name for marker in request.node.iter_markers()]
-    return "acceptance" in marker_names
 
 
 @pytest.fixture(autouse=True)
