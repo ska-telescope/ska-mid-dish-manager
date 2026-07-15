@@ -84,7 +84,6 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         self,
         tango_device_fqdn: str,
         logger: logging.Logger,
-        state_update_lock: threading.Lock,
         *args: Any,
         communication_state_callback: Optional[Callable] = None,
         component_state_callback: Optional[Callable] = None,
@@ -135,8 +134,6 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             **kwargs,
         )
         self._monitor_ping_thread: Optional[MonitorPing] = None
-        self._communication_state_lock = state_update_lock
-        self._component_state_lock = state_update_lock
         self._ping_thread_stop_event = threading.Event()
 
     def _stop_ping_thread(self) -> None:

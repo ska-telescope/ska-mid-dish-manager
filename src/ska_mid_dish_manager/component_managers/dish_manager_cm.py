@@ -241,7 +241,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._dish_mode_model = DishModeModel()
         self._state_transition = StateTransition()
         self._command_tracker = command_tracker
-        self._state_update_lock = Lock()
+        self._aggregation_lock = Lock()
         self._stop_event = threading.Event()
         self.watchdog_timer = WatchdogTimer(
             callback_on_timeout=self._stow_on_watchdog_expiry,
@@ -258,7 +258,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "SPF": SPFComponentManager(
                 spf_device_fqdn,
                 logger,
-                self._state_update_lock,
                 operatingmode=SPFOperatingMode.UNKNOWN,
                 powerstate=SPFPowerState.UNKNOWN,
                 healthstate=SPFHealthState.UNKNOWN,
@@ -294,7 +293,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "DS": DSComponentManager(
                 ds_device_fqdn,
                 logger,
-                self._state_update_lock,
                 healthstate=HealthState.UNKNOWN,
                 operatingmode=DSOperatingMode.UNKNOWN,
                 pointingstate=PointingState.UNKNOWN,
@@ -332,7 +330,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
                 logger,
-                self._state_update_lock,
                 operatingmode=SPFRxOperatingMode.UNKNOWN,
                 configuredband=Band.NONE,
                 datafibercheck=False,  # Maps to Dish Managers "capturing" attribute
@@ -373,7 +370,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 communication_state_callback=partial(
                     self._update_connection_state_attribute, DishDevice.WMS
                 ),
-                state_update_lock=self._state_update_lock,
                 meanwindspeed=-1,
                 windgust=-1,
             )
@@ -383,7 +379,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self.sub_component_managers["B5DC"] = B5DCComponentManager(
                 b5dc_device_fqdn,
                 logger=logger,
-                state_update_lock=self._state_update_lock,
                 rfcmHAttenuation=0.0,
                 rfcmVAttenuation=0.0,
                 rfcmPllLock=B5dcPllState.NOT_LOCKED,
@@ -887,26 +882,27 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         )
 
         # report the communication state of the sub device on the connectionState attribute
-        self._update_connection_state_attribute(device.name, communication_state)
+        with self._aggregation_lock:
+            self._update_connection_state_attribute(device.name, communication_state)
 
-        active_sub_component_managers = self.get_active_sub_component_managers()
-        sub_devices_communication_states = [
-            sub_component_manager.communication_state
-            for sub_component_manager in active_sub_component_managers.values()
-        ]
+            active_sub_component_managers = self.get_active_sub_component_managers()
+            sub_devices_communication_states = [
+                sub_component_manager.communication_state
+                for sub_component_manager in active_sub_component_managers.values()
+            ]
 
-        if all(
-            communication_state == CommunicationStatus.ESTABLISHED
-            for communication_state in sub_devices_communication_states
-        ):
-            self._update_communication_state(CommunicationStatus.ESTABLISHED)
-        elif any(
-            communication_state == CommunicationStatus.NOT_ESTABLISHED
-            for communication_state in sub_devices_communication_states
-        ):
-            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-        else:
-            self._update_communication_state(CommunicationStatus.DISABLED)
+            if all(
+                communication_state == CommunicationStatus.ESTABLISHED
+                for communication_state in sub_devices_communication_states
+            ):
+                self._update_communication_state(CommunicationStatus.ESTABLISHED)
+            elif any(
+                communication_state == CommunicationStatus.NOT_ESTABLISHED
+                for communication_state in sub_devices_communication_states
+            ):
+                self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+            else:
+                self._update_communication_state(CommunicationStatus.DISABLED)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _sub_device_component_state_changed(self, device: DishDevice, *args, **kwargs):
@@ -921,300 +917,305 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         Note: This callback is triggered by the component managers of
         the subservient devices only. DishManager also has its own callback.
         """
-        ds_component_state = self.sub_component_managers["DS"].component_state
-        spf_component_state = self.sub_component_managers["SPF"].component_state
-        spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
+        with self._aggregation_lock:
+            ds_component_state = self.sub_component_managers["DS"].component_state
+            spf_component_state = self.sub_component_managers["SPF"].component_state
+            spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
 
-        if "powerstate" in kwargs:
-            new_power_state = self._state_transition.compute_power_state(
-                ds_component_state,
-                spf_component_state if not self.is_device_ignored("SPF") else None,
-            )
-            if new_power_state != self.component_state["powerstate"]:
-                self.logger.info(
-                    "Updating dish manager powerState to %s.",
-                    new_power_state.name,
-                    extra=OPERATOR_TAG,
-                )
-            self._update_component_state(powerstate=new_power_state)
-
-        if "buildstate" in kwargs:
-            self._build_state_callback(device, kwargs["buildstate"])
-
-        current_dish_mode = self.component_state["dishmode"]
-        # Update dishMode if there are operatingmode, indexerposition or adminmode changes
-        if (
-            "operatingmode" in kwargs
-            or "indexerposition" in kwargs
-            or "adminmode" in kwargs
-            or "powerstate" in kwargs
-        ):
-            # Do not compute dish mode if the dish is in MAINTENANCE mode
-            if current_dish_mode != DishMode.MAINTENANCE:
-                new_dish_mode = self._state_transition.compute_dish_mode(
+            if "powerstate" in kwargs:
+                new_power_state = self._state_transition.compute_power_state(
                     ds_component_state,
-                    spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
                     spf_component_state if not self.is_device_ignored("SPF") else None,
                 )
-
-                # If the dish is transitioning out of STOW mode, reenable the watchdog timer if
-                # the watchdog timeout is set
-                if current_dish_mode == DishMode.STOW and new_dish_mode != DishMode.STOW:
-                    self._reenable_watchdog_timer()
-
-                if new_dish_mode != current_dish_mode:
+                if new_power_state != self.component_state["powerstate"]:
                     self.logger.info(
-                        (
-                            "Updating dish manager dishMode to %s. "
-                            "Sub-components operatingMode: DS [%s], SPF [%s], SPFRX [%s]."
-                        ),
-                        new_dish_mode.name,
-                        ds_component_state["operatingmode"].name,
-                        spf_component_state["operatingmode"].name,
-                        spfrx_component_state["operatingmode"].name,
+                        "Updating dish manager powerState to %s.",
+                        new_power_state.name,
                         extra=OPERATOR_TAG,
                     )
-                self._update_component_state(dishmode=new_dish_mode)
+                self._update_component_state(powerstate=new_power_state)
 
-        if "healthstate" in kwargs:
-            new_health_state = self._state_transition.compute_dish_health_state(
-                ds_component_state,
-                spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                spf_component_state if not self.is_device_ignored("SPF") else None,
-            )
-            self.logger.debug(
-                (
-                    "Updating dish manager healthState with: [%s]. "
-                    "Sub-components healthState DS [%s], SPF [%s], SPFRX [%s]"
-                ),
-                new_health_state,
-                ds_component_state["healthstate"],
-                spf_component_state["healthstate"],
-                spfrx_component_state["healthstate"],
-            )
-            self._update_component_state(healthstate=new_health_state)
+            if "buildstate" in kwargs:
+                self._build_state_callback(device, kwargs["buildstate"])
 
-            new_health_info = self.generate_healthinfo()
-            self._update_component_state(healthinfo=new_health_info)
-
-        if "pointingstate" in kwargs:
-            pointing_state = ds_component_state["pointingstate"]
-            if pointing_state != self.component_state["pointingstate"]:
-                self.logger.info(
-                    "Updating dish manager pointingState to %s.",
-                    pointing_state.name,
-                    extra=OPERATOR_TAG,
-                )
-            self._update_component_state(pointingstate=ds_component_state["pointingstate"])
-
-        if "dscpowerlimitkw" in kwargs:
-            dsc_power_limit = ds_component_state["dscpowerlimitkw"]
-            self.logger.debug(
-                ("Updating dish manager dscPowerLimitKw with: [%s]."),
-                dsc_power_limit,
-            )
-            self._update_component_state(dscpowerlimitkw=ds_component_state["dscpowerlimitkw"])
-
-        if "dscctrlstate" in kwargs:
-            dsc_ctrl_state = ds_component_state["dscctrlstate"]
-            self.logger.debug(
-                ("Updating dish manager dscCtrlState with: [%s]."),
-                dsc_ctrl_state,
-            )
-            self._update_component_state(dscctrlstate=ds_component_state["dscctrlstate"])
-
-        # spf bandInFocus
-        if not self.is_device_ignored("SPF") and (
-            "indexerposition" in kwargs or "configuredband" in kwargs
-        ):
-            band_in_focus = self._state_transition.compute_spf_band_in_focus(
-                ds_component_state,
-                spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-            )
-            self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
-            # update the bandInFocus of SPF before configuredBand
-            spf_component_manager = self.sub_component_managers["SPF"]
-            try:
-                spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
-            except tango.DevFailed:
-                # this will impact configuredBand calculation on dish manager
-                pass
-            else:
-                spf_component_state["bandinfocus"] = band_in_focus
-
-        # kvalue
-        if "kvalue" in kwargs:
-            k_value = spfrx_component_state["kvalue"]
-            self.logger.debug(
-                ("Updating dish manager kvalue with: SPFRX kValue [%s]"),
-                k_value,
-            )
-            self._update_component_state(kvalue=k_value)
-
-        # configuredBand
-        if "indexerposition" in kwargs or "bandinfocus" in kwargs or "configuredband" in kwargs:
-            configured_band = self._state_transition.compute_configured_band(
-                ds_component_state,
-                spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                spf_component_state if not self.is_device_ignored("SPF") else None,
-            )
-            self.logger.debug(
-                (
-                    "Updating dish manager configuredBand with: [%s]. "
-                    "Sub-component bands DS [%s] SPF [%s] SPFRX [%s]"
-                ),
-                configured_band,
-                ds_component_state["indexerposition"],
-                spf_component_state["bandinfocus"],
-                spfrx_component_state["configuredband"],
-            )
-            self._update_component_state(configuredband=configured_band)
-
-        # update capturing attribute when SPFRx captures data
-        if "datafibercheck" in kwargs:
-            data_fiber_check = spfrx_component_state["datafibercheck"]
-            self.logger.debug(
-                ("Updating dish manager capturing with: SPFRx [%s]"),
-                data_fiber_check,
-            )
-            self._update_component_state(capturing=data_fiber_check)
-
-        # CapabilityStates
-        # Update all CapabilityStates when indexerposition, dish_mode or operatingmode changes
-        if (
-            "indexerposition" in kwargs
-            or "operatingmode" in kwargs
-            # Added in `powerstate` and `adminmode` so that if the dishmode changes earlier then
-            # the capability states are recalculated as well
-            or "powerstate" in kwargs
-            or "adminmode" in kwargs
-        ):
-            cap_state_updates = {}
-            for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
-                cap_state_name = f"{band}capabilitystate"
-                new_state = self._state_transition.compute_capability_state(
-                    band,
-                    ds_component_state,
-                    self.component_state,
-                    spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                    spf_component_state if not self.is_device_ignored("SPF") else None,
-                )
-                cap_state_updates[cap_state_name] = new_state
-            self.logger.debug(
-                "Updating dish manager capability states for %s with: [%s]",
-                list(cap_state_updates.keys()),
-                cap_state_updates,
-            )
-            self._update_component_state(**cap_state_updates)
-
-        # Update individual CapabilityStates if it changes
-        # b5 for SPF
-        for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
-            cap_state_name = f"{band}capabilitystate"
-            if cap_state_name in kwargs:
-                new_state = self._state_transition.compute_capability_state(
-                    band,
-                    ds_component_state,
-                    self.component_state,
-                    spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                    spf_component_state if not self.is_device_ignored("SPF") else None,
-                )
-                self.logger.debug(
-                    "Updating dish manager %s with: [%s]",
-                    cap_state_name,
-                    new_state,
-                )
-                self._update_component_state(**{cap_state_name: new_state})
-        # Update the pointing model params if they change
-        for band in ["0", "1", "2", "3", "4", "5a", "5b"]:
-            pointing_param_name = f"band{band}pointingmodelparams"
-
-            if pointing_param_name in kwargs:
-                self.logger.debug(
-                    ("Updating dish manager %s with: DS %s [%s]"),
-                    pointing_param_name,
-                    pointing_param_name,
-                    ds_component_state[pointing_param_name],
-                )
-                self._update_component_state(
-                    **{pointing_param_name: ds_component_state[pointing_param_name]}
-                )
-
-        # Update attributes that are mapped directly from subservient devices
-        attrs = self.direct_mapped_attrs[device]
-        cm_state = self.sub_component_managers[device.value].component_state
-
-        pointing_related_attrs = {
-            "desiredpointingaz",
-            "desiredpointingel",
-            "achievedpointing",
-            "tracktablecurrentindex",
-            "tracktableendindex",
-        }
-
-        b5dc_related_attrs = {
-            "rfcmplllock",
-            "clkphotodiodecurrent",
-            "rftemperature",
-            "rfcmpsupcbtemperature",
-            "hpolrfpowerin",
-            "hpolrfpowerout",
-            "vpolrfpowerin",
-            "vpolrfpowerout",
-        }
-
-        enum_attr_mapping = {
-            "trackInterpolationMode": TrackInterpolationMode,
-            "noiseDiodeMode": NoiseDiodeMode,
-        }
-        for attr in attrs:
-            attr_lower = attr.lower()
-
-            if attr_lower in kwargs:
-                new_value = None
-                new_value = cm_state[attr_lower]
-                mapped_enum = enum_attr_mapping.get(attr)
-                new_value = mapped_enum(new_value) if mapped_enum is not None else new_value
-                if (
-                    attr_lower not in pointing_related_attrs
-                    and attr_lower not in b5dc_related_attrs
-                ):
-                    self.logger.debug(
-                        ("Updating dish manager %s with: %s %s [%s]"),
-                        attr,
-                        device,
-                        attr,
-                        new_value,
+            current_dish_mode = self.component_state["dishmode"]
+            # Update dishMode if there are operatingmode, indexerposition or adminmode changes
+            if (
+                "operatingmode" in kwargs
+                or "indexerposition" in kwargs
+                or "adminmode" in kwargs
+                or "powerstate" in kwargs
+            ):
+                # Do not compute dish mode if the dish is in MAINTENANCE mode
+                if current_dish_mode != DishMode.MAINTENANCE:
+                    new_dish_mode = self._state_transition.compute_dish_mode(
+                        ds_component_state,
+                        spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                        spf_component_state if not self.is_device_ignored("SPF") else None,
                     )
 
-                self._update_component_state(**{attr_lower: new_value})
+                    # If the dish is transitioning out of STOW mode, reenable the watchdog timer if
+                    # the watchdog timeout is set
+                    if current_dish_mode == DishMode.STOW and new_dish_mode != DishMode.STOW:
+                        self._reenable_watchdog_timer()
 
-        # DS error status attributes
-        if any(key.lower() in kwargs for key in DS_ERROR_STATUS_ATTRIBUTES):
-            statuses = self._aggregate_dsc_error_statuses(ds_component_state)
-            self.logger.debug(
-                "Updating dscerrorstatuses with statuses: %s",
-                statuses,
-            )
-            self._update_component_state(dscerrorstatuses=statuses)
+                    if new_dish_mode != current_dish_mode:
+                        self.logger.info(
+                            (
+                                "Updating dish manager dishMode to %s. "
+                                "Sub-components operatingMode: DS [%s], SPF [%s], SPFRX [%s]."
+                            ),
+                            new_dish_mode.name,
+                            ds_component_state["operatingmode"].name,
+                            spf_component_state["operatingmode"].name,
+                            spfrx_component_state["operatingmode"].name,
+                            extra=OPERATOR_TAG,
+                        )
+                    self._update_component_state(dishmode=new_dish_mode)
 
-        # DS connectionState attribute
-        if device == DishDevice.DS and "connectionstate" in kwargs:
-            dscconnectionstate = kwargs["connectionstate"]
-            self.logger.debug(
-                "Updating dscconnectionstate with state: %s",
-                dscconnectionstate,
-            )
-            self._update_component_state(dscconnectionstate=dscconnectionstate)
+            if "healthstate" in kwargs:
+                new_health_state = self._state_transition.compute_dish_health_state(
+                    ds_component_state,
+                    spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                    spf_component_state if not self.is_device_ignored("SPF") else None,
+                )
+                self.logger.debug(
+                    (
+                        "Updating dish manager healthState with: [%s]. "
+                        "Sub-components healthState DS [%s], SPF [%s], SPFRX [%s]"
+                    ),
+                    new_health_state,
+                    ds_component_state["healthstate"],
+                    spf_component_state["healthstate"],
+                    spfrx_component_state["healthstate"],
+                )
+                self._update_component_state(healthstate=new_health_state)
 
-        # b5dcServerConnectionState attribute
-        if device == DishDevice.B5DC and "connectionstate" in kwargs:
-            b5dcserverconnectionstate = kwargs["connectionstate"]
-            self.logger.debug(
-                "Updating b5dcServerConnectionState with state: %s",
-                b5dcserverconnectionstate,
-            )
-            self._update_component_state(b5dcserverconnectionstate=b5dcserverconnectionstate)
+                new_health_info = self.generate_healthinfo()
+                self._update_component_state(healthinfo=new_health_info)
+
+            if "pointingstate" in kwargs:
+                pointing_state = ds_component_state["pointingstate"]
+                if pointing_state != self.component_state["pointingstate"]:
+                    self.logger.info(
+                        "Updating dish manager pointingState to %s.",
+                        pointing_state.name,
+                        extra=OPERATOR_TAG,
+                    )
+                self._update_component_state(pointingstate=ds_component_state["pointingstate"])
+
+            if "dscpowerlimitkw" in kwargs:
+                dsc_power_limit = ds_component_state["dscpowerlimitkw"]
+                self.logger.debug(
+                    ("Updating dish manager dscPowerLimitKw with: [%s]."),
+                    dsc_power_limit,
+                )
+                self._update_component_state(dscpowerlimitkw=ds_component_state["dscpowerlimitkw"])
+
+            if "dscctrlstate" in kwargs:
+                dsc_ctrl_state = ds_component_state["dscctrlstate"]
+                self.logger.debug(
+                    ("Updating dish manager dscCtrlState with: [%s]."),
+                    dsc_ctrl_state,
+                )
+                self._update_component_state(dscctrlstate=ds_component_state["dscctrlstate"])
+
+            # spf bandInFocus
+            if not self.is_device_ignored("SPF") and (
+                "indexerposition" in kwargs or "configuredband" in kwargs
+            ):
+                band_in_focus = self._state_transition.compute_spf_band_in_focus(
+                    ds_component_state,
+                    spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                )
+                self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
+                # update the bandInFocus of SPF before configuredBand
+                spf_component_manager = self.sub_component_managers["SPF"]
+                try:
+                    spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
+                except tango.DevFailed:
+                    # this will impact configuredBand calculation on dish manager
+                    pass
+                else:
+                    spf_component_state["bandinfocus"] = band_in_focus
+
+            # kvalue
+            if "kvalue" in kwargs:
+                k_value = spfrx_component_state["kvalue"]
+                self.logger.debug(
+                    ("Updating dish manager kvalue with: SPFRX kValue [%s]"),
+                    k_value,
+                )
+                self._update_component_state(kvalue=k_value)
+
+            # configuredBand
+            if (
+                "indexerposition" in kwargs
+                or "bandinfocus" in kwargs
+                or "configuredband" in kwargs
+            ):
+                configured_band = self._state_transition.compute_configured_band(
+                    ds_component_state,
+                    spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                    spf_component_state if not self.is_device_ignored("SPF") else None,
+                )
+                self.logger.debug(
+                    (
+                        "Updating dish manager configuredBand with: [%s]. "
+                        "Sub-component bands DS [%s] SPF [%s] SPFRX [%s]"
+                    ),
+                    configured_band,
+                    ds_component_state["indexerposition"],
+                    spf_component_state["bandinfocus"],
+                    spfrx_component_state["configuredband"],
+                )
+                self._update_component_state(configuredband=configured_band)
+
+            # update capturing attribute when SPFRx captures data
+            if "datafibercheck" in kwargs:
+                data_fiber_check = spfrx_component_state["datafibercheck"]
+                self.logger.debug(
+                    ("Updating dish manager capturing with: SPFRx [%s]"),
+                    data_fiber_check,
+                )
+                self._update_component_state(capturing=data_fiber_check)
+
+            # CapabilityStates
+            # Update all CapabilityStates when indexerposition, dish_mode or operatingmode changes
+            if (
+                "indexerposition" in kwargs
+                or "operatingmode" in kwargs
+                # Added in `powerstate` and `adminmode` so that if the dishmode
+                # changes earlier then the capability states are recalculated as well
+                or "powerstate" in kwargs
+                or "adminmode" in kwargs
+            ):
+                cap_state_updates = {}
+                for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
+                    cap_state_name = f"{band}capabilitystate"
+                    new_state = self._state_transition.compute_capability_state(
+                        band,
+                        ds_component_state,
+                        self.component_state,
+                        spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                        spf_component_state if not self.is_device_ignored("SPF") else None,
+                    )
+                    cap_state_updates[cap_state_name] = new_state
+                self.logger.debug(
+                    "Updating dish manager capability states for %s with: [%s]",
+                    list(cap_state_updates.keys()),
+                    cap_state_updates,
+                )
+                self._update_component_state(**cap_state_updates)
+
+            # Update individual CapabilityStates if it changes
+            # b5 for SPF
+            for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:
+                cap_state_name = f"{band}capabilitystate"
+                if cap_state_name in kwargs:
+                    new_state = self._state_transition.compute_capability_state(
+                        band,
+                        ds_component_state,
+                        self.component_state,
+                        spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
+                        spf_component_state if not self.is_device_ignored("SPF") else None,
+                    )
+                    self.logger.debug(
+                        "Updating dish manager %s with: [%s]",
+                        cap_state_name,
+                        new_state,
+                    )
+                    self._update_component_state(**{cap_state_name: new_state})
+            # Update the pointing model params if they change
+            for band in ["0", "1", "2", "3", "4", "5a", "5b"]:
+                pointing_param_name = f"band{band}pointingmodelparams"
+
+                if pointing_param_name in kwargs:
+                    self.logger.debug(
+                        ("Updating dish manager %s with: DS %s [%s]"),
+                        pointing_param_name,
+                        pointing_param_name,
+                        ds_component_state[pointing_param_name],
+                    )
+                    self._update_component_state(
+                        **{pointing_param_name: ds_component_state[pointing_param_name]}
+                    )
+
+            # Update attributes that are mapped directly from subservient devices
+            attrs = self.direct_mapped_attrs[device]
+            cm_state = self.sub_component_managers[device.value].component_state
+
+            pointing_related_attrs = {
+                "desiredpointingaz",
+                "desiredpointingel",
+                "achievedpointing",
+                "tracktablecurrentindex",
+                "tracktableendindex",
+            }
+
+            b5dc_related_attrs = {
+                "rfcmplllock",
+                "clkphotodiodecurrent",
+                "rftemperature",
+                "rfcmpsupcbtemperature",
+                "hpolrfpowerin",
+                "hpolrfpowerout",
+                "vpolrfpowerin",
+                "vpolrfpowerout",
+            }
+
+            enum_attr_mapping = {
+                "trackInterpolationMode": TrackInterpolationMode,
+                "noiseDiodeMode": NoiseDiodeMode,
+            }
+            for attr in attrs:
+                attr_lower = attr.lower()
+
+                if attr_lower in kwargs:
+                    new_value = None
+                    new_value = cm_state[attr_lower]
+                    mapped_enum = enum_attr_mapping.get(attr)
+                    new_value = mapped_enum(new_value) if mapped_enum is not None else new_value
+                    if (
+                        attr_lower not in pointing_related_attrs
+                        and attr_lower not in b5dc_related_attrs
+                    ):
+                        self.logger.debug(
+                            ("Updating dish manager %s with: %s %s [%s]"),
+                            attr,
+                            device,
+                            attr,
+                            new_value,
+                        )
+
+                    self._update_component_state(**{attr_lower: new_value})
+
+            # DS error status attributes
+            if any(key.lower() in kwargs for key in DS_ERROR_STATUS_ATTRIBUTES):
+                statuses = self._aggregate_dsc_error_statuses(ds_component_state)
+                self.logger.debug(
+                    "Updating dscerrorstatuses with statuses: %s",
+                    statuses,
+                )
+                self._update_component_state(dscerrorstatuses=statuses)
+
+            # DS connectionState attribute
+            if device == DishDevice.DS and "connectionstate" in kwargs:
+                dscconnectionstate = kwargs["connectionstate"]
+                self.logger.debug(
+                    "Updating dscconnectionstate with state: %s",
+                    dscconnectionstate,
+                )
+                self._update_component_state(dscconnectionstate=dscconnectionstate)
+
+            # b5dcServerConnectionState attribute
+            if device == DishDevice.B5DC and "connectionstate" in kwargs:
+                b5dcserverconnectionstate = kwargs["connectionstate"]
+                self.logger.debug(
+                    "Updating b5dcServerConnectionState with state: %s",
+                    b5dcserverconnectionstate,
+                )
+                self._update_component_state(b5dcserverconnectionstate=b5dcserverconnectionstate)
 
     def stow_to_maintenance_transition_callback(self, start: bool) -> None:
         """Handle the transition from STOW to MAINTENANCE mode.
