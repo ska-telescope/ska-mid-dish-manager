@@ -337,7 +337,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 self.logger.error(
                     "Encountered an error executing [%s] with arg [%s] on [%s]: %s",
                     command_name,
-                    command_arg,
+                    arg_preview,
                     self._tango_device_fqdn,
                     err_description,
                 )
