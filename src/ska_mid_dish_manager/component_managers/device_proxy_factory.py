@@ -3,7 +3,7 @@
 import logging
 from functools import wraps
 from threading import Event
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 import tango
 
@@ -89,11 +89,11 @@ class DeviceProxyManager:
 
     def __init__(
         self,
-        logger: logging.Logger = logging.getLogger(__name__),
+        logger: Optional[logging.Logger] = None,
         thread_event: Event | None = None,
     ):
         self._device_proxies: Dict[str, tango.DeviceProxy] = {}
-        self.logger = logger
+        self.logger = logger or logging.getLogger(__name__)
         self.event_signal = thread_event or Event()
 
     def __del__(self) -> None:
