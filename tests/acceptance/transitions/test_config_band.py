@@ -48,7 +48,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         # ConfigureBand2
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Awaiting configuredband change to B2",
         "DS indexerposition changed to B2",
         "DS.SetIndexPosition completed",
@@ -56,8 +56,8 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         "SPFRX.ConfigureBand2 completed",
         "ConfigureBand2 complete. Triggering on success action.",
         # Then SetOperateMode
-        "SPF already in operate state. Not fanning out SetOperateMode command.",
-        "DS already in point state. Not fanning out SetPointMode command.",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
         "SetOperateMode completed",
     ]
 
@@ -181,7 +181,7 @@ def test_configure_band_2_from_stow(
         # ConfigureBand2
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Awaiting configuredband change to B2",
         "DS indexerposition changed to B2",
         "DS.SetIndexPosition completed",
@@ -270,7 +270,7 @@ def test_configure_band_json(
         # ConfigureBand
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Awaiting configuredband change to B2",
         "DS indexerposition changed to B2",
         "DS.SetIndexPosition completed",
@@ -298,7 +298,7 @@ def test_configure_band_json(
 
     expected_progress_updates = [
         "Fanned out commands: SPFRX.ConfigureBand",
-        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Awaiting configuredband change to B2",
         "SPFRX configuredband changed to B2",
         "SPFRX.ConfigureBand completed",
@@ -403,7 +403,7 @@ def test_configure_band_json_with_b5dc_fanout(
     expected_status_updates = [
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand, B5DC.SetFrequency",
         "Awaiting DS indexerposition change to B5b",
-        "Awaiting SPFRX configuredband change to B1",
+        "Awaiting SPFRX configuredband, operatingmode change to B1, OPERATE",
         "Awaiting B5DC rfcmfrequency change to 11.1",
         "Awaiting configuredband change to B5b",
         "DS indexerposition changed to B5b",

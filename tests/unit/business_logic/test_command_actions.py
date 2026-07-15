@@ -203,6 +203,9 @@ class TestCommandActions:
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
                     "configuredband"
                 ] = Band.B2
+                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
+                    "operatingmode"
+                ] = SPFRxOperatingMode.OPERATE
                 self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
             elif "Awaiting dishmode change to OPERATE" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -239,7 +242,7 @@ class TestCommandActions:
             # ConfigureBand2
             "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
             "Awaiting DS indexerposition change to B2",
-            "Awaiting SPFRX configuredband change to B2",
+            "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
             "Awaiting configuredband change to B2",
             "DS indexerposition changed to B2",
             "DS.SetIndexPosition completed",
@@ -278,6 +281,9 @@ class TestCommandActions:
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
                     "configuredband"
                 ] = Band.B2
+                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
+                    "operatingmode"
+                ] = SPFRxOperatingMode.OPERATE
                 self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
             elif "Awaiting dishmode change to OPERATE" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -318,7 +324,7 @@ class TestCommandActions:
             # ConfigureBand
             "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
             "Awaiting DS indexerposition change to B2",
-            "Awaiting SPFRX configuredband change to B2",
+            "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
             "Awaiting configuredband change to B2",
             "DS indexerposition changed to B2",
             "DS.SetIndexPosition completed",
@@ -367,6 +373,9 @@ class TestCommandActions:
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
                     "configuredband"
                 ] = Band.B2
+                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
+                    "operatingmode"
+                ] = SPFRxOperatingMode.OPERATE
                 self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
             elif "Awaiting dishmode change to OPERATE" in msg:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -407,7 +416,7 @@ class TestCommandActions:
             # Then ConfigureBand2
             "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
             "Awaiting DS indexerposition change to B2",
-            "Awaiting SPFRX configuredband change to B2",
+            "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
             "Awaiting configuredband change to B2",
             "DS indexerposition changed to B2",
             "DS.SetIndexPosition completed",
@@ -481,21 +490,25 @@ class TestCommandActions:
         progress, results = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.STANDBY)
         assert "Fanned out commands: DS.SetPointMode" in progress
         assert not any("SPF.SetOperateMode" in msg for msg in progress)
-        assert "SPF already in operate state. Not fanning out SetOperateMode command." in progress
+        assert (
+            "SPF operatingmode already OPERATE, not fanning out SetOperateMode command" in progress
+        )
         assert (ResultCode.OK, "SetOperateMode completed.") in results
 
         # Case 3: DS already in POINT -> only SPF fanned out, DS reports a no-op progress update
         progress, results = run_scenario(SPFOperatingMode.STANDBY_LP, DSOperatingMode.POINT)
         assert "Fanned out commands: SPF.SetOperateMode" in progress
         assert not any("DS.SetPointMode" in msg for msg in progress)
-        assert "DS already in point state. Not fanning out SetPointMode command." in progress
+        assert "DS operatingmode already POINT, not fanning out SetPointMode command" in progress
         assert (ResultCode.OK, "SetOperateMode completed.") in results
 
         # Case 4: both already in state -> nothing fanned out, success triggered directly
         progress, results = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.POINT)
-        assert not any(msg.startswith("Fanned out commands") for msg in progress)
-        assert "SPF already in operate state. Not fanning out SetOperateMode command." in progress
-        assert "DS already in point state. Not fanning out SetPointMode command." in progress
+        assert "Fanned out commands: None" in progress
+        assert (
+            "SPF operatingmode already OPERATE, not fanning out SetOperateMode command" in progress
+        )
+        assert "DS operatingmode already POINT, not fanning out SetPointMode command" in progress
         assert "SetOperateMode completed." in progress
         assert (
             ResultCode.OK,
