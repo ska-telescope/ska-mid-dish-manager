@@ -113,16 +113,22 @@ def test_tango_device_component_manager_threads_management(
     )
     com_man.start_communicating()
 
-    threads = threading.enumerate()
-
     try:
-        # events_monitor thread (CallbackScheduler), main thread
-        # and maybe the connection thread which might have already returned
-        assert len(threads) <= 3
+        threads = threading.enumerate()
+        # The connection thread starts the event monitor before it exits, so there may
+        # be a brief overlap where both threads are running. Depending on timing, the
+        # active threads may include:
+        # 1. MainThread and the connection thread.
+        # 2. MainThread, the connection thread, and the event monitor.
+        # 3. MainThread and the event monitor.
+        assert 2 <= len(threads) <= 3
 
         thread_names = [t.name for t in threads]
         assert "MainThread" in thread_names
-        assert "events_monitor" in thread_names
+
+        device_fqdn = device_fqdn.replace("-", "_").replace("/", ".")
+        connection_thread_name = f"{device_fqdn}.connection_thread"
+        assert "events_monitor" in thread_names or connection_thread_name in thread_names
     finally:
         com_man.stop_communicating()
 

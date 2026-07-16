@@ -1033,7 +1033,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 spf_component_manager = self.sub_component_managers["SPF"]
                 try:
                     spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
-                except tango.DevFailed:
+                except (tango.DevFailed, ConnectionError):
                     # this will impact configuredBand calculation on dish manager
                     pass
                 else:

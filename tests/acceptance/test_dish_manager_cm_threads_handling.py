@@ -48,18 +48,42 @@ def test_dish_manager_component_manager_threads_management(component_state_store
 
     try:
         threads = threading.enumerate()
-        # 3x events_monitor thread (CallbackScheduler), MonitorPing thread, main thread
-        # and maybe 3x connection thread which might have already returned
-        assert len(threads) <= 8
+        # For each component, the connection thread starts its event monitor before
+        # exiting. Therefore, each component may temporarily have either its
+        # connection thread, its event-monitor thread, or both running.
+        #
+        # In addition to MainThread and MonitorPingThread,
+        # there should be between 5 - 8 threads.
+        assert 5 <= len(threads) <= 8
 
         thread_names = [t.name for t in threads]
 
         assert "MainThread" in thread_names
         assert "MonitorPingThread" in thread_names
+
+        connection_thread_names = {
+            f"{trl.replace('-', '_').replace('/', '.')}.connection_thread"
+            for trl in (
+                DEFAULT_DS_MANAGER_TRL,
+                DEFAULT_SPFC_TRL,
+                DEFAULT_SPFRX_TRL,
+            )
+        }
+
+        connection_thread_count = sum(name in connection_thread_names for name in thread_names)
         events_monitor_thread_count = sum(
-            1 for name in thread_names if name.startswith("events_monitor")
+            name.startswith("events_monitor") for name in thread_names
         )
-        assert events_monitor_thread_count == 3
+
+        # Depending on timing, between 0 and 3 event monitor threads may be running.
+        assert 0 <= events_monitor_thread_count <= 3
+
+        # Depending on timing, between 0 and 3 connection threads may still be running.
+        assert 0 <= connection_thread_count <= 3
+
+        # Each component must have at least one active thread, with both threads
+        # briefly running during handover, giving a combined total of 3 to 6.
+        assert 3 <= connection_thread_count + events_monitor_thread_count <= 6
     finally:
         cm.stop_communicating()
 
