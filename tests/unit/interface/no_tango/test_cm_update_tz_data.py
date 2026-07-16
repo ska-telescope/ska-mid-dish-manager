@@ -59,7 +59,9 @@ def test_update_tz_data_success(
     assert mock_get.call_args.args[0] == TZ_DATA_URL
 
     expected_encoded = base64.b64encode(TZ_DATA_BYTES).decode("ascii")
-    spfrx_cm.execute_command.assert_called_with("UpdateTZData", expected_encoded)
+    spfrx_cm.execute_command.assert_called_with(
+        "UpdateTZData", expected_encoded, truncate_arg_in_logs=True
+    )
     assert _get_result_code(task_callback) == ResultCode.OK
     assert _get_result_message(task_callback) == (
         "UpdateTZData completed. TZ data successfully uploaded to SPFRx."

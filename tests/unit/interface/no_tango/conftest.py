@@ -31,7 +31,7 @@ def callbacks() -> dict:
     }
 
 
-def execute_command_side_effect(command_name, command_arg=None):
+def execute_command_side_effect(command_name, command_arg=None, truncate_arg_in_logs=False):
     # fast commands
     if command_name in ["SetKValue", "TrackLoadTable", "ReleaseAuth"]:
         return (TaskStatus.COMPLETED, f"{command_name} successfully executed")

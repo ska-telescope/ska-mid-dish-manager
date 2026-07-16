@@ -12,7 +12,7 @@ from ska_tango_base.base import BaseComponentManager
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
-from ska_mid_dish_manager.models.constants import OPERATOR_TAG
+from ska_mid_dish_manager.models.constants import LOGGED_ARG_MAX_LENGTH, OPERATOR_TAG
 from ska_mid_dish_manager.utils.decorators import check_communicating
 
 
@@ -315,11 +315,18 @@ class TangoDeviceComponentManager(BaseComponentManager):
         return TaskStatus.IN_PROGRESS, reply
 
     @check_communicating
-    def execute_command(self, command_name: str, command_arg: Any) -> Tuple[TaskStatus, Any]:
-        """Check the connection and execute the command on the Tango device."""
-        arg_preview = str(command_arg)
-        if len(arg_preview) > 100:
-            arg_preview = f"{arg_preview[:100]}..."
+    def execute_command(
+        self, command_name: str, command_arg: Any, truncate_arg_in_logs: bool = False
+    ) -> Tuple[TaskStatus, Any]:
+        """Check the connection and execute the command on the Tango device.
+
+        Set `truncate_arg_in_logs` for commands whose argument is too large to log in full.
+        """
+        arg_preview = command_arg
+        if truncate_arg_in_logs:
+            arg_preview = str(command_arg)
+            if len(arg_preview) > LOGGED_ARG_MAX_LENGTH:
+                arg_preview = f"{arg_preview[:LOGGED_ARG_MAX_LENGTH]}..."
         self.logger.debug(
             "About to execute command [%s] on device [%s] with param [%s]",
             command_name,

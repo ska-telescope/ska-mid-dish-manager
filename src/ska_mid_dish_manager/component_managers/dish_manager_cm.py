@@ -1935,7 +1935,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         report_task_progress("Uploading TZ data to SPFRx", self._command_progress_callback)
         spfrx_cm = self.sub_component_managers["SPFRX"]
         try:
-            task_status, msg = spfrx_cm.execute_command("UpdateTZData", encoded_tz_data)
+            task_status, msg = spfrx_cm.execute_command(
+                "UpdateTZData", encoded_tz_data, truncate_arg_in_logs=True
+            )
         except Exception:  # pylint: disable=broad-except
             message = "UpdateTZData failed. Unexpected error while calling UpdateTZData on SPFRx."
             self.logger.exception(message)
