@@ -1,6 +1,7 @@
 """Specialization for SPF functionality."""
 
 import logging
+from threading import Lock
 from typing import Any, Callable, Optional
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
@@ -21,6 +22,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
         self,
         tango_device_fqdn: str,
         logger: logging.Logger,
+        state_update_lock: Lock,
         *args: Any,
         communication_state_callback: Optional[Callable] = None,
         component_state_callback: Optional[Callable] = None,
@@ -61,6 +63,8 @@ class SPFComponentManager(TangoDeviceComponentManager):
             component_state_callback=component_state_callback,
             **kwargs,
         )
+        self._communication_state_lock = state_update_lock
+        self._component_state_lock = state_update_lock
 
     def _update_component_state(self, **kwargs: Any) -> None:
         """Update the int we get from the event to the Enum."""

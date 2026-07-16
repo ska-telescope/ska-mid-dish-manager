@@ -1,6 +1,7 @@
 """Specialization for DS functionality."""
 
 import logging
+from threading import Lock
 from typing import Any, Callable, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
@@ -22,6 +23,7 @@ class DSComponentManager(TangoDeviceComponentManager):
         self,
         tango_device_fqdn: Any,
         logger: logging.Logger,
+        state_update_lock: Lock,
         *args: Any,
         communication_state_callback: Optional[Callable] = None,
         component_state_callback: Optional[Callable] = None,
@@ -68,6 +70,8 @@ class DSComponentManager(TangoDeviceComponentManager):
             component_state_callback=component_state_callback,
             **kwargs,
         )
+        self._communication_state_lock = state_update_lock
+        self._component_state_lock = state_update_lock
 
     def _update_component_state(self, **kwargs) -> None:  # type: ignore
         """Update the int we get from the event to the Enum."""

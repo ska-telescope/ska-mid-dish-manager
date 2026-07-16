@@ -49,14 +49,16 @@ class WMSComponentManager(BaseComponentManager):
         self,
         wms_device_names: List[str],
         *args: Any,
-        logger: Optional[logging.Logger] = None,
+        logger: Optional[logging.Logger] = logging.getLogger(__name__),
         component_state_callback: Optional[Callable] = None,
         communication_state_callback: Optional[Callable] = None,
+        state_update_lock: Optional[threading.Lock] = None,
         wms_polling_period: Optional[float] = 1.0,
         wind_speed_moving_average_period: Optional[float] = 600.0,
         wind_gust_period: Optional[float] = 3.0,
         **kwargs: Any,
     ):
+        self.logger = logger
         self._wms_device_names = wms_device_names
         self._wms_devices_count = len(wms_device_names)
         self._wms_polling_period = wms_polling_period
@@ -86,11 +88,14 @@ class WMSComponentManager(BaseComponentManager):
         self._stop_monitoring_flag = threading.Event()
 
         super().__init__(
-            logger or logging.getLogger(__name__),
+            logger,
+            *args,
             component_state_callback=component_state_callback,
             communication_state_callback=communication_state_callback,
             **kwargs,
         )
+        if state_update_lock is not None:
+            self._component_state_lock = state_update_lock
 
     def start_communicating(self) -> None:
         """Add WMS device(s) to group and initiate WMS attr polling."""
