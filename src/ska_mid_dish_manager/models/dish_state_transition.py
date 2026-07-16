@@ -76,10 +76,12 @@ class StateTransition:
         self,
         ds_communication_state: CommunicationStatus,
         spfrx_communication_state: CommunicationStatus,
-        spf_communcation_state: CommunicationStatus,
+        spf_communication_state: CommunicationStatus,
+        b5dc_communication_state: CommunicationStatus,
         ds_component_state: dict,  # type: ignore
         spfrx_component_state: Optional[dict] = None,  # type: ignore
         spf_component_state: Optional[dict] = None,  # type: ignore
+        b5dc_component_state: Optional[dict] = None,  # type: ignore
     ) -> HealthState:
         """Compute the HealthState based off component_states.
 
@@ -87,14 +89,18 @@ class StateTransition:
         :type ds_communication_state: CommunicationStatus
         :param spfrx_communication_state: SPFRX device component communication state
         :type spfrx_communication_state: CommunicationStatus
-        :param spf_communcation_state: SPF device component communication state
-        :type spf_communcation_state: CommunicationStatus
+        :param spf_communication_state: SPF device component communication state
+        :type spf_communication_state: CommunicationStatus
+        :param b5dc_communication_state: B5dc device component communication state
+        :type b5dc_communication_state: CommunicationStatus
         :param ds_component_state: DS device component state
         :type ds_component_state: dict
         :param spfrx_component_state: SPFRX device component state
         :type spfrx_component_state: dict
         :param spf_component_state: SPF device component state
         :type spf_component_state: dict
+        :param b5dc_component_state: B5dc device component state
+        :type b5dc_component_state: dict
         :return: the calculated HealthState
         :rtype: HealthState
         """
@@ -107,9 +113,6 @@ class StateTransition:
             dish_manager_states["DS"]["healthstate"] = ds_component_state.get(
                 "healthstate", HealthState.UNKNOWN
             )
-            dish_manager_states["DS"]["connectionstate"] = CommunicationStatus(
-                ds_component_state.get("connectionstate", CommunicationStatus.DISABLED)
-            )  # <- Why does the internal section come back as the int and not the full enum???
         if spfrx_component_state:
             dish_manager_states["SPFRX"]["healthstate"] = spfrx_component_state.get(
                 "healthstate", HealthState.UNKNOWN
@@ -119,45 +122,18 @@ class StateTransition:
                 "healthstate", SPFHealthState.UNKNOWN
             )
 
-        # Add the subcomponent communication states to the dish manager states dict
-        if ds_component_state:
-            dish_manager_states["DS"]["dsconnectionstate"] = CommunicationStatus(
-                ds_communication_state
-            )
-
-        if spfrx_component_state:
-            dish_manager_states["SPFRX"]["spfrxconnectionstate"] = CommunicationStatus(
-                spfrx_communication_state
-            )
-
-        if spf_component_state:
-            dish_manager_states["SPF"]["spfconnectionstate"] = CommunicationStatus(
-                spf_communcation_state
-            )
-
-        # Build the name used on the transition rules
+        # Build the names used in the transition rules
+        # --------------------------------------------
         dish_manager_states["DS"]["healthstate"] = (
             f"HealthState.{dish_manager_states['DS']['healthstate'].name}"
-        )
-        dish_manager_states["DS"]["connectionstate"] = (
-            f"CommunicationState.{dish_manager_states['DS']['connectionstate'].name}"
-        )
-        dish_manager_states["DS"]["dsconnectionstate"] = (
-            f"CommunicationState.{dish_manager_states['DS']['dsconnectionstate'].name}"
         )
         if "SPFRX" in dish_manager_states:
             dish_manager_states["SPFRX"]["healthstate"] = (
                 f"HealthState.{dish_manager_states['SPFRX']['healthstate'].name}"
             )
-            dish_manager_states["SPFRX"]["spfrxconnectionstate"] = (
-                f"CommunicationState.{dish_manager_states['SPFRX']['spfrxconnectionstate'].name}"
-            )
         if "SPF" in dish_manager_states:
             dish_manager_states["SPF"]["healthstate"] = (
                 f"SPFHealthState.{dish_manager_states['SPF']['healthstate'].name}"
-            )
-            dish_manager_states["SPF"]["spfconnectionstate"] = (
-                f"CommunicationState.{dish_manager_states['SPF']['spfconnectionstate'].name}"
             )
 
         rules_to_use = health_state_rules_ds_only
@@ -168,10 +144,53 @@ class StateTransition:
         elif spfrx_component_state:
             rules_to_use = health_state_rules_spf_ignored
 
+        # Tentatively configure the dish healthState to report UNKNOWN
+        dish_health_state = HealthState.UNKNOWN
+
+        # 1: Check healthState assuming all component connections are ESTABLISHED
+        # against the healthState rule engine
         for healthstate, rule in rules_to_use.items():
             if rule.matches(dish_manager_states):
-                return HealthState[healthstate]
-        return HealthState.UNKNOWN
+                dish_health_state = HealthState[healthstate]
+                break
+
+        # 2: Check if any expected components connections are DISABLED or NOT_ESTABLISHED.
+        # Dish healthState is FAILED if any expected subcomponent is unavailable
+        if ds_communication_state in [
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.NOT_ESTABLISHED,
+        ]:
+            dish_health_state = HealthState.FAILED
+        # The following if statement tests the DS Manager - DS Controller connection state
+        if CommunicationStatus(
+            ds_component_state.get("connectionstate", CommunicationStatus.DISABLED)
+        ) in [CommunicationStatus.DISABLED, CommunicationStatus.NOT_ESTABLISHED]:
+            dish_health_state = HealthState.FAILED
+        if spfrx_component_state:
+            if spfrx_communication_state in [
+                CommunicationStatus.DISABLED,
+                CommunicationStatus.NOT_ESTABLISHED,
+            ]:
+                dish_health_state = HealthState.FAILED
+        if spf_component_state:
+            if spf_communication_state in [
+                CommunicationStatus.DISABLED,
+                CommunicationStatus.NOT_ESTABLISHED,
+            ]:
+                dish_health_state = HealthState.FAILED
+        if b5dc_component_state:
+            if b5dc_communication_state in [
+                CommunicationStatus.DISABLED,
+                CommunicationStatus.NOT_ESTABLISHED,
+            ]:
+                dish_health_state = HealthState.FAILED
+            # The following if statement tests the B5dc proxy - B5dc server connection state
+            if CommunicationStatus(
+                b5dc_component_state.get("connectionstate", CommunicationStatus.DISABLED)
+            ) in [CommunicationStatus.DISABLED, CommunicationStatus.NOT_ESTABLISHED]:
+                dish_health_state = HealthState.FAILED
+
+        return dish_health_state
 
     # pylint: disable=too-many-arguments
     def compute_capability_state(

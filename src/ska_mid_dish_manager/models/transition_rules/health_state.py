@@ -2,16 +2,15 @@
 
 import rule_engine
 
+# NOTE! The following healthState computations apply under the assumption
+# that all components/subdevices that DishLMC is expected to monitor & control are
+# available and that connection with those components is ESTABLISHED
+
+# If a component is expected and its communicationState is DISABLED or
+# NOT_ESTABLISHED the computed dish healthState will be overwritten to report FAILED
+
 HEALTH_STATE_RULES_ALL_DEVICES = {
     "FAILED": rule_engine.Rule(
-        "DS.connectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "DS.dsconnectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "SPF.spfconnectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "SPFRX.spfrxconnectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
         "DS.healthstate == 'HealthState.FAILED' or "
         "SPF.healthstate == 'SPFHealthState.FAILED' or "
         "SPFRX.healthstate == 'HealthState.FAILED'"
@@ -73,14 +72,7 @@ HEALTH_STATE_RULES_ALL_DEVICES = {
 
 HEALTH_STATE_RULES_SPF_IGNORED = {
     "FAILED": rule_engine.Rule(
-        "DS.connectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "DS.dsconnectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "SPFRX.spfrxconnectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "DS.healthstate == 'HealthState.FAILED' or "
-        "SPFRX.healthstate == 'HealthState.FAILED'"
+        "DS.healthstate == 'HealthState.FAILED' or SPFRX.healthstate == 'HealthState.FAILED'"
     ),
     "DEGRADED": rule_engine.Rule(
         "("
@@ -110,14 +102,7 @@ HEALTH_STATE_RULES_SPF_IGNORED = {
 
 HEALTH_STATE_RULES_SPFRX_IGNORED = {
     "FAILED": rule_engine.Rule(
-        "DS.connectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "DS.dsconnectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "SPF.spfconnectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "DS.healthstate == 'HealthState.FAILED' or "
-        "SPF.healthstate == 'SPFHealthState.FAILED'"
+        "DS.healthstate == 'HealthState.FAILED' or SPF.healthstate == 'SPFHealthState.FAILED'"
     ),
     "DEGRADED": rule_engine.Rule(
         "("
@@ -146,13 +131,7 @@ HEALTH_STATE_RULES_SPFRX_IGNORED = {
 }
 
 HEALTH_STATE_RULES_DS_ONLY = {
-    "FAILED": rule_engine.Rule(
-        "DS.connectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "DS.dsconnectionstate in "
-        "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "DS.healthstate == 'HealthState.FAILED'"
-    ),
+    "FAILED": rule_engine.Rule("DS.healthstate == 'HealthState.FAILED'"),
     "DEGRADED": rule_engine.Rule("DS.healthstate == 'HealthState.DEGRADED'"),
     "OK": rule_engine.Rule("DS.healthstate == 'HealthState.OK'"),
     "UNKNOWN": rule_engine.Rule("DS.healthstate == 'HealthState.UNKNOWN'"),

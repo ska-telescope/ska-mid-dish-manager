@@ -830,6 +830,67 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
 
+    def _update_dish_health_state_and_info(self):
+        """Compute dish health state and info following health or communication state update."""
+        ds_component_state_dict = self.sub_component_managers["DS"].component_state
+        spf_component_state_dict = self.sub_component_managers["SPF"].component_state
+        spfrx_component_state_dict = self.sub_component_managers["SPFRX"].component_state
+
+        # Use the subcomponent manager objects to get the communication_state
+        # directly as communicationState is not part of the component state dict
+        active_sub_component_managers = self.get_active_sub_component_managers()
+
+        # Check the B5dc subcomponent manager exists and that the device is not ignored
+        is_b5dc_monitored = "B5DC" in active_sub_component_managers
+
+        if is_b5dc_monitored:
+            b5dc_component_state_dict = self.sub_component_managers["B5DC"].component_state
+
+        new_health_state = self._state_transition.compute_dish_health_state(
+            active_sub_component_managers["DS"].communication_state,
+            active_sub_component_managers["SPFRX"].communication_state,
+            active_sub_component_managers["SPF"].communication_state,
+            active_sub_component_managers["B5DC"].communication_state
+            if is_b5dc_monitored
+            else CommunicationStatus.DISABLED,
+            ds_component_state_dict,
+            spfrx_component_state_dict if not self.is_device_ignored("SPFRX") else None,
+            spf_component_state_dict if not self.is_device_ignored("SPF") else None,
+            b5dc_component_state_dict if is_b5dc_monitored else None,
+        )
+
+        self.logger.info(
+            (
+                "Updating dish manager healthState with: [%s]. "
+                "Sub-components healthStates: DS [%s], SPF [%s], SPFRX [%s]. "
+                "Sub-components communication states: DS [%s], DSC [%s], SPF [%s], SPFRX [%s], "
+                "B5DC Proxy [%s], B5DC Server [%s]. "
+            ),
+            new_health_state,
+            ds_component_state_dict["healthstate"],
+            spf_component_state_dict["healthstate"],
+            spfrx_component_state_dict["healthstate"],
+            active_sub_component_managers["DS"].communication_state,
+            CommunicationStatus(
+                ds_component_state_dict["connectionstate"]
+            ),  # TODO Investigate Enum conversion issue
+            active_sub_component_managers["SPFRX"].communication_state,
+            active_sub_component_managers["SPF"].communication_state,
+            active_sub_component_managers["B5DC"].communication_state
+            if is_b5dc_monitored
+            else "Dish LMC not configured for B5DC monitoring",
+            CommunicationStatus(b5dc_component_state_dict["connectionstate"])
+            if is_b5dc_monitored
+            else "Dish LMC not configured for B5DC monitoring",
+        )
+
+        # TODO: Investigate double healthState change events
+        self._update_component_state(healthstate=new_health_state)
+
+        # new_health_info = self.generate_healthinfo()
+        # TODO: Pull fix once merged
+        # self._update_component_state(healthinfo=new_health_info)
+
     # ---------
     # Callbacks
     # ---------
@@ -908,50 +969,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         else:
             self._update_communication_state(CommunicationStatus.DISABLED)
 
-        # Recompute the dish manager healthState following any update to the communication state
+        # Recompute the dish manager healthState following an update to the communication state
         self._update_dish_health_state_and_info()
-
-    def _update_dish_health_state_and_info(self):
-        """Compute dish health state and info from health or communication state update."""
-        ds_component_state = self.sub_component_managers["DS"].component_state
-        spf_component_state = self.sub_component_managers["SPF"].component_state
-        spfrx_component_state = self.sub_component_managers["SPFRX"].component_state
-
-        # Use the subcomponent manager objects to get the communication_state
-        # directly as it is not part of the component state dict
-        active_sub_component_managers = self.get_active_sub_component_managers()
-
-        new_health_state = self._state_transition.compute_dish_health_state(
-            active_sub_component_managers["DS"].communication_state,
-            active_sub_component_managers["SPFRX"].communication_state,
-            active_sub_component_managers["SPF"].communication_state,
-            ds_component_state,
-            spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-            spf_component_state if not self.is_device_ignored("SPF") else None,
-        )
-
-        self.logger.info(
-            (
-                "Updating dish manager healthState with: [%s]. "
-                "Sub-components healthStates: DS [%s], SPF [%s], SPFRX [%s]. "
-                "Sub-components communication states: DS [%s], DSC [%s], SPF [%s], SPFRX [%s]. "
-            ),
-            new_health_state,
-            ds_component_state["healthstate"],
-            spf_component_state["healthstate"],
-            spfrx_component_state["healthstate"],
-            active_sub_component_managers["DS"].communication_state,
-            CommunicationStatus(
-                ds_component_state["connectionstate"]
-            ),  # Investigate Enum conversion issue
-            active_sub_component_managers["SPFRX"].communication_state,
-            active_sub_component_managers["SPF"].communication_state,
-        )
-        self._update_component_state(healthstate=new_health_state)
-
-        # new_health_info = self.generate_healthinfo()
-        # TODO: Pull fix once merged
-        # self._update_component_state(healthinfo=new_health_info)
 
     # pylint: disable=unused-argument, too-many-branches, too-many-locals, too-many-statements
     def _sub_device_component_state_changed(self, device: DishDevice, *args, **kwargs):
@@ -1022,6 +1041,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(dishmode=new_dish_mode)
 
         if "healthstate" in kwargs:
+            # Recompute the dish manager healthState following an update to the health state
             self._update_dish_health_state_and_info()
 
         if "pointingstate" in kwargs:
@@ -1233,11 +1253,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 dscconnectionstate,
             )
             self._update_component_state(dscconnectionstate=dscconnectionstate)
-            # Recompute the healthState following a change to a subcomponent's
-            # connection/communication state
+
+            # Recompute the dish manager healthState following an update to DS
+            # Manager - DS Controller communicationState
             self._update_dish_health_state_and_info()
 
-        # b5dcServerConnectionState attribute
+        # B5dcServerConnectionState attribute
         if device == DishDevice.B5DC and "connectionstate" in kwargs:
             b5dcserverconnectionstate = kwargs["connectionstate"]
             self.logger.debug(
@@ -1245,6 +1266,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5dcserverconnectionstate,
             )
             self._update_component_state(b5dcserverconnectionstate=b5dcserverconnectionstate)
+
+            # Recompute the dish manager healthState following an update to the
+            # B5dc Proxy - B5dc Server communicationState
+            self._update_dish_health_state_and_info()
 
     def stow_to_maintenance_transition_callback(self, start: bool) -> None:
         """Handle the transition from STOW to MAINTENANCE mode.
