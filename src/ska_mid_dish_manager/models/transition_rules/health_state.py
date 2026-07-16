@@ -114,7 +114,7 @@ HEALTH_STATE_RULES_SPFRX_IGNORED = {
         "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
         "DS.dsconnectionstate in "
         "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
-        "SPF.spfrxconnectionstate in "
+        "SPF.spfconnectionstate in "
         "   ['CommunicationState.NOT_ESTABLISHED', 'CommunicationState.DISABLED'] or "
         "DS.healthstate == 'HealthState.FAILED' or "
         "SPF.healthstate == 'SPFHealthState.FAILED'"
