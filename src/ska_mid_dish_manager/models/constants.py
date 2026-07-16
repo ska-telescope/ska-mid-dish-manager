@@ -20,6 +20,11 @@ DEVICE_PROXY_TIMEOUT_MS = 5000
 STOW_ELEVATION_DEGREES = 90.2
 ELEVATION_SPEED_DEGREES_PER_SECOND = 1.0
 DEFAULT_ACTION_TIMEOUT_S = 120
+# SPFRx keeps reporting OPERATE for a short while after accepting a band configuration, only
+# moving to CONFIGURE once it starts configuring. Its state is not trusted to complete the
+# command until this has elapsed, otherwise the command completes against the state SPFRx was
+# in before it started configuring.
+SPFRX_CONFIGURE_COMPLETION_DELAY_S = 2.0
 MAX_ELEVATION_SCIENCE = 85.0
 MIN_ELEVATION_SCIENCE = 15.0
 MAX_AZIMUTH = 270.0

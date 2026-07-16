@@ -17,6 +17,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
   - spfcB5aHealthState
   - spfcB5bHealthState
 - lastCommandFailure attribute added.
+- Add param for delay to FannedOutCommand completion. Used for SPFRx ConfigureBand command.
 
 Version 10.0.0
 **************
