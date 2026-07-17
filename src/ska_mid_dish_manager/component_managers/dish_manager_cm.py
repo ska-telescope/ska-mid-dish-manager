@@ -840,16 +840,22 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # directly as communicationState is not part of the component state dict
         active_sub_component_managers = self.get_active_sub_component_managers()
 
-        # Check the B5dc subcomponent manager exists and that the device is not ignored
+        # Check the subcomponent managers exist and that the device is not ignored
         is_b5dc_monitored = "B5DC" in active_sub_component_managers
+        is_spf_monitored = "SPF" in active_sub_component_managers
+        is_spfrx_monitored = "SPFRX" in active_sub_component_managers
 
         if is_b5dc_monitored:
             b5dc_component_state_dict = self.sub_component_managers["B5DC"].component_state
 
         new_health_state = self._state_transition.compute_dish_health_state(
             active_sub_component_managers["DS"].communication_state,
-            active_sub_component_managers["SPFRX"].communication_state,
-            active_sub_component_managers["SPF"].communication_state,
+            active_sub_component_managers["SPFRX"].communication_state
+            if is_spfrx_monitored
+            else CommunicationStatus.DISABLED,
+            active_sub_component_managers["SPF"].communication_state
+            if is_spf_monitored
+            else CommunicationStatus.DISABLED,
             active_sub_component_managers["B5DC"].communication_state
             if is_b5dc_monitored
             else CommunicationStatus.DISABLED,
@@ -871,17 +877,19 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             spf_component_state_dict["healthstate"],
             spfrx_component_state_dict["healthstate"],
             active_sub_component_managers["DS"].communication_state,
-            CommunicationStatus(
-                ds_component_state_dict["connectionstate"]
-            ),  # TODO Investigate Enum conversion issue
-            active_sub_component_managers["SPFRX"].communication_state,
-            active_sub_component_managers["SPF"].communication_state,
+            CommunicationStatus(ds_component_state_dict["connectionstate"]),
+            active_sub_component_managers["SPF"].communication_state
+            if is_spf_monitored
+            else "DishLMC not configured for SPFC monitoring",
+            active_sub_component_managers["SPFRX"].communication_state
+            if is_spfrx_monitored
+            else "DishLMC not configured for SPFRX monitoring",
             active_sub_component_managers["B5DC"].communication_state
             if is_b5dc_monitored
-            else "Dish LMC not configured for B5DC monitoring",
+            else "DishLMC not configured for B5DC monitoring",
             CommunicationStatus(b5dc_component_state_dict["connectionstate"])
             if is_b5dc_monitored
-            else "Dish LMC not configured for B5DC monitoring",
+            else "DishLMC not configured for B5DC monitoring",
         )
 
         # TODO: Investigate double healthState change events
