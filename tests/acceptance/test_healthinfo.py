@@ -10,6 +10,7 @@ from ska_mid_dish_manager.models.dish_enums import SPFHealthState
 # in an unexpected state for subsequent tests, clean up fixture
 # is needed
 
+
 @pytest.mark.acceptance
 def test_healthinfo(dish_manager_proxy, spfrx_device_proxy, spf_device_proxy, event_store_class):
     """Test the healthInfo attribute."""
