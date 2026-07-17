@@ -477,16 +477,17 @@ def test_compute_dish_healthstate_ignoring_spf(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
-"""
 @pytest.mark.unit
 @pytest.mark.parametrize(
     (
         "ds_comms_state, "
         "spfrx_comms_state, "
         "spf_comms_state, "
+        "b5dc_comms_state, "
         "ds_comp_state, "
-        "spfrx_comp_state, "
         "spf_comp_state, "
+        "spfrx_comp_state, "
+        "b5dc_comp_state, "
         "expected_dish_healthstate"
     ),
     [
@@ -495,9 +496,11 @@ def test_compute_dish_healthstate_ignoring_spf(
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.DISABLED),
-            dict(healthstate=HealthState.DEGRADED),
             None,
+            dict(healthstate=HealthState.DEGRADED),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # DS Controller disconnected
@@ -505,9 +508,11 @@ def test_compute_dish_healthstate_ignoring_spf(
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.NOT_ESTABLISHED),
-            dict(healthstate=HealthState.OK),
             None,
+            dict(healthstate=HealthState.OK),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # DS Manager expected but disabled
@@ -515,9 +520,11 @@ def test_compute_dish_healthstate_ignoring_spf(
             CommunicationStatus.DISABLED,
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.DISABLED),
-            dict(healthstate=HealthState.OK),
             None,
+            dict(healthstate=HealthState.OK),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # DS Manager disconnected
@@ -525,9 +532,11 @@ def test_compute_dish_healthstate_ignoring_spf(
             CommunicationStatus.NOT_ESTABLISHED,
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.DISABLED),
-            dict(healthstate=HealthState.OK),
             None,
+            dict(healthstate=HealthState.OK),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # SPFRx expected but disabled
@@ -535,9 +544,11 @@ def test_compute_dish_healthstate_ignoring_spf(
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=HealthState.UNKNOWN),
             None,
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # SPFRx disconnected
@@ -545,9 +556,59 @@ def test_compute_dish_healthstate_ignoring_spf(
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.NOT_ESTABLISHED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=HealthState.UNKNOWN),
             None,
+            dict(healthstate=HealthState.UNKNOWN),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
+            HealthState.FAILED,
+        ),
+        # B5dc proxy expected but disabled
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.DISABLED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.OK),
+            dict(connectionstate=CommunicationStatus.DISABLED),
+            HealthState.FAILED,
+        ),
+        # B5dc proxy disconnected
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.NOT_ESTABLISHED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.OK),
+            dict(connectionstate=CommunicationStatus.NOT_ESTABLISHED),
+            HealthState.FAILED,
+        ),
+        # B5dc server expected but disabled
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.OK),
+            dict(connectionstate=CommunicationStatus.DISABLED),
+            HealthState.FAILED,
+        ),
+        # B5dc server expected but disabled
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.OK),
+            dict(connectionstate=CommunicationStatus.NOT_ESTABLISHED),
             HealthState.FAILED,
         ),
     ],
@@ -556,9 +617,11 @@ def test_compute_dish_healthstate_ignoring_spf_with_component_disconnections(
     ds_comms_state,
     spfrx_comms_state,
     spf_comms_state,
+    b5dc_comms_state,
     ds_comp_state,
     spf_comp_state,
     spfrx_comp_state,
+    b5dc_comp_state,
     expected_dish_healthstate,
     state_transition,
 ):
@@ -566,9 +629,11 @@ def test_compute_dish_healthstate_ignoring_spf_with_component_disconnections(
         ds_communication_state=ds_comms_state,
         spfrx_communication_state=spfrx_comms_state,
         spf_communication_state=spf_comms_state,
+        b5dc_communication_state=b5dc_comms_state,
         ds_component_state=ds_comp_state,
         spfrx_component_state=spfrx_comp_state,
         spf_component_state=spf_comp_state,
+        b5dc_component_state=b5dc_comp_state,
     )
     assert expected_dish_healthstate == actual_dish_healthstate
 
@@ -674,9 +739,11 @@ def test_compute_dish_healthstate_ignoring_spfrx(
         ds_communication_state=CommunicationStatus.ESTABLISHED,
         spfrx_communication_state=CommunicationStatus.DISABLED,
         spf_communication_state=CommunicationStatus.ESTABLISHED,
+        b5dc_communication_state=CommunicationStatus.ESTABLISHED,
         ds_component_state=ds_comp_state,
         spfrx_component_state=spfrx_comp_state,
         spf_component_state=spf_comp_state,
+        b5dc_component_state=dict(connectionstate=CommunicationStatus.ESTABLISHED),
     )
     assert expected_dish_healthstate == actual_dish_healthstate
 
@@ -687,9 +754,11 @@ def test_compute_dish_healthstate_ignoring_spfrx(
         "ds_comms_state, "
         "spfrx_comms_state, "
         "spf_comms_state, "
+        "b5dc_comms_state, "
         "ds_comp_state, "
         "spfrx_comp_state, "
         "spf_comp_state, "
+        "b5dc_comp_state, "
         "expected_dish_healthstate"
     ),
     [
@@ -698,9 +767,11 @@ def test_compute_dish_healthstate_ignoring_spfrx(
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.DISABLED),
             None,
             dict(healthstate=SPFHealthState.NORMAL),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # DS Controller disconnected
@@ -708,9 +779,11 @@ def test_compute_dish_healthstate_ignoring_spfrx(
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.NOT_ESTABLISHED),
             None,
             dict(healthstate=SPFHealthState.NORMAL),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # DS Manager expected but disabled
@@ -718,9 +791,11 @@ def test_compute_dish_healthstate_ignoring_spfrx(
             CommunicationStatus.DISABLED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.DISABLED),
             None,
             dict(healthstate=SPFHealthState.NORMAL),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # DS Manager disconnected
@@ -728,9 +803,11 @@ def test_compute_dish_healthstate_ignoring_spfrx(
             CommunicationStatus.NOT_ESTABLISHED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.DISABLED),
             None,
             dict(healthstate=SPFHealthState.NORMAL),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # SPF expected but disabled
@@ -738,9 +815,11 @@ def test_compute_dish_healthstate_ignoring_spfrx(
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
             None,
             dict(healthstate=SPFHealthState.UNKNOWN),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # SPF disconnected
@@ -748,9 +827,59 @@ def test_compute_dish_healthstate_ignoring_spfrx(
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.NOT_ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
             None,
             dict(healthstate=SPFHealthState.UNKNOWN),
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
+            HealthState.FAILED,
+        ),
+        # B5DC proxy expected but disabled
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=SPFHealthState.NORMAL),
+            dict(connectionstate=CommunicationStatus.DISABLED),
+            HealthState.FAILED,
+        ),
+        # B5DC proxy disconnected
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.NOT_ESTABLISHED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=SPFHealthState.NORMAL),
+            dict(connectionstate=CommunicationStatus.NOT_ESTABLISHED),
+            HealthState.FAILED,
+        ),
+        # B5DC server expected but disabled
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=SPFHealthState.NORMAL),
+            dict(connectionstate=CommunicationStatus.DISABLED),
+            HealthState.FAILED,
+        ),
+        # B5DC server disconnected
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.ESTABLISHED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=SPFHealthState.NORMAL),
+            dict(connectionstate=CommunicationStatus.NOT_ESTABLISHED),
             HealthState.FAILED,
         ),
     ],
@@ -759,9 +888,11 @@ def test_compute_dish_healthstate_ignoring_spfrx_with_component_disconnections(
     ds_comms_state,
     spfrx_comms_state,
     spf_comms_state,
+    b5dc_comms_state,
     ds_comp_state,
     spf_comp_state,
     spfrx_comp_state,
+    b5dc_comp_state,
     expected_dish_healthstate,
     state_transition,
 ):
@@ -769,9 +900,11 @@ def test_compute_dish_healthstate_ignoring_spfrx_with_component_disconnections(
         ds_communication_state=ds_comms_state,
         spfrx_communication_state=spfrx_comms_state,
         spf_communication_state=spf_comms_state,
+        b5dc_communication_state=b5dc_comms_state,
         ds_component_state=ds_comp_state,
         spfrx_component_state=spfrx_comp_state,
         spf_component_state=spf_comp_state,
+        b5dc_component_state=b5dc_comp_state,
     )
     assert expected_dish_healthstate == actual_dish_healthstate
 
@@ -819,9 +952,11 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
         ds_communication_state=CommunicationStatus.ESTABLISHED,
         spfrx_communication_state=CommunicationStatus.DISABLED,
         spf_communication_state=CommunicationStatus.DISABLED,
+        b5dc_communication_state=CommunicationStatus.ESTABLISHED,
         ds_component_state=ds_comp_state,
         spfrx_component_state=spfrx_comp_state,
         spf_component_state=spf_comp_state,
+        b5dc_component_state=dict(connectionstate=CommunicationStatus.ESTABLISHED),
     )
     assert expected_dish_healthstate == actual_dish_healthstate
 
@@ -832,9 +967,11 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
         "ds_comms_state, "
         "spfrx_comms_state, "
         "spf_comms_state, "
+        "b5dc_comms_state, "
         "ds_comp_state, "
         "spfrx_comp_state, "
         "spf_comp_state, "
+        "b5dc_comp_state, "
         "expected_dish_healthstate"
     ),
     [
@@ -843,9 +980,11 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.DISABLED),
             None,
             None,
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # DS Controller disconnected
@@ -853,9 +992,11 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
             CommunicationStatus.ESTABLISHED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.NOT_ESTABLISHED),
             None,
             None,
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # DS Manager expected but disabled
@@ -863,9 +1004,11 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
             CommunicationStatus.DISABLED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.DISABLED),
             None,
             None,
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
             HealthState.FAILED,
         ),
         # DS Manager disconnected
@@ -873,9 +1016,59 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
             CommunicationStatus.NOT_ESTABLISHED,
             CommunicationStatus.DISABLED,
             CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
             dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.DISABLED),
             None,
             None,
+            dict(connectionstate=CommunicationStatus.ESTABLISHED),
+            HealthState.FAILED,
+        ),
+        # B5dc proxy expected but disabled
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.DISABLED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            None,
+            dict(connectionstate=CommunicationStatus.DISABLED),
+            HealthState.FAILED,
+        ),
+        # B5dc proxy expected disconnected
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.NOT_ESTABLISHED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            None,
+            dict(connectionstate=CommunicationStatus.NOT_ESTABLISHED),
+            HealthState.FAILED,
+        ),
+        # B5dc server expected but disabled
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            None,
+            dict(connectionstate=CommunicationStatus.DISABLED),
+            HealthState.FAILED,
+        ),
+        # B5dc server disconnected
+        (
+            CommunicationStatus.ESTABLISHED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.ESTABLISHED,
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            None,
+            dict(connectionstate=CommunicationStatus.NOT_ESTABLISHED),
             HealthState.FAILED,
         ),
     ],
@@ -884,9 +1077,11 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx_with_component_disconne
     ds_comms_state,
     spfrx_comms_state,
     spf_comms_state,
+    b5dc_comms_state,
     ds_comp_state,
     spf_comp_state,
     spfrx_comp_state,
+    b5dc_comp_state,
     expected_dish_healthstate,
     state_transition,
 ):
@@ -894,9 +1089,10 @@ def test_compute_dish_healthstate_ignoring_spf_and_spfrx_with_component_disconne
         ds_communication_state=ds_comms_state,
         spfrx_communication_state=spfrx_comms_state,
         spf_communication_state=spf_comms_state,
+        b5dc_communication_state=b5dc_comms_state,
         ds_component_state=ds_comp_state,
         spfrx_component_state=spfrx_comp_state,
         spf_component_state=spf_comp_state,
+        b5dc_component_state=b5dc_comp_state,
     )
     assert expected_dish_healthstate == actual_dish_healthstate
-"""
