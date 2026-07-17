@@ -899,9 +899,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # TODO: Investigate double healthState change events
         self._update_component_state(healthstate=new_health_state)
 
-        # new_health_info = self.generate_healthinfo()
-        # TODO: Pull fix once merged
-        # self._update_component_state(healthinfo=new_health_info)
+        new_health_info = self.generate_healthinfo()
+        self._update_component_state(healthinfo=new_health_info)
 
     # ---------
     # Callbacks

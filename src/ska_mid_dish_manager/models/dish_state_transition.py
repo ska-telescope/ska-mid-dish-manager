@@ -1,7 +1,5 @@
 """State transition computation."""
 
-import enum
-import logging
 from typing import Optional
 
 from ska_control_model import CommunicationStatus, HealthState
@@ -126,33 +124,16 @@ class StateTransition:
 
         # Build the names used in the transition rules
         # --------------------------------------------
-        # TODO: Investigate why some callbacks result in the healthState
-        # being returned as an int and not the enum value from the component
-        # state dict
-        def _normalize_enum_and_return_name(value, enum: enum.IntEnum):
-            try:
-                if isinstance(value, enum):
-                    return value.name
-                if isinstance(value, int):
-                    return enum(value).name
-            except (ValueError, TypeError) as e:
-                logging.error(f">>> Failed to convert enum value {value}: {e}")
-                # TODO !!! Fix the error handling in the noralization here
-
-        ds_healthstate_name = _normalize_enum_and_return_name(
-            dish_manager_states["DS"]["healthstate"], HealthState
-        )
+        # Normalize the enum values for cases where comp_state.get returned the int and
+        # not the enum
+        ds_healthstate_name = HealthState(dish_manager_states["DS"]["healthstate"]).name
         dish_manager_states["DS"]["healthstate"] = f"HealthState.{ds_healthstate_name}"
 
         if "SPFRX" in dish_manager_states:
-            spfrx_healthstate_name = _normalize_enum_and_return_name(
-                dish_manager_states["SPFRX"]["healthstate"], HealthState
-            )
+            spfrx_healthstate_name = HealthState(dish_manager_states["SPFRX"]["healthstate"]).name
             dish_manager_states["SPFRX"]["healthstate"] = f"HealthState.{spfrx_healthstate_name}"
         if "SPF" in dish_manager_states:
-            spf_healthstate_name = _normalize_enum_and_return_name(
-                dish_manager_states["SPF"]["healthstate"], SPFHealthState
-            )
+            spf_healthstate_name = SPFHealthState(dish_manager_states["SPF"]["healthstate"]).name
             dish_manager_states["SPF"]["healthstate"] = f"SPFHealthState.{spf_healthstate_name}"
 
         rules_to_use = health_state_rules_ds_only
@@ -166,8 +147,8 @@ class StateTransition:
         # Tentatively configure the dish healthState to report UNKNOWN
         dish_health_state = HealthState.UNKNOWN
 
-        # 1: Check healthState assuming all component connections are ESTABLISHED
-        # against the healthState rule engine
+        # 1: Check healthState assuming all expected component connections
+        # are ESTABLISHED against the healthState rule engine
         for healthstate, rule in rules_to_use.items():
             if rule.matches(dish_manager_states):
                 dish_health_state = HealthState[healthstate]
