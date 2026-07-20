@@ -84,6 +84,19 @@ def event_tracking_record_file(request) -> Optional[Path]:
     return file_path
 
 
+@pytest.fixture
+def session_event_tracking_record_file(request) -> Optional[Path]:
+    """Creates a file path if specified and it does not exist."""
+    events_path_dir = request.config.getoption("--event-diag-file-dir")
+    if not events_path_dir:
+        return None
+    if not os.path.exists(os.path.dirname(events_path_dir)):
+        os.makedirs(os.path.dirname(events_path_dir), exist_ok=True)
+    file_name = "test_session_stats.txt"
+    file_path = Path(events_path_dir).joinpath(file_name)
+    return file_path
+
+
 @pytest.fixture()
 def is_acceptance_test(request) -> bool:
     """Returns whether this is an acceptance test or not."""
@@ -176,6 +189,46 @@ def add_test_event_info_and_time(
                 f.write(f"\n\nDevice Summary: {name}\n\n")
                 f.write(data.render_tracking_summary())
             f.write("\n\nTest Summary:\n\n")
+            f.write(test_event_info.render_tracking_summary())
+            end = datetime.now(timezone.utc)
+            f.write(f"\n\nEND [{request.node.nodeid}] at [{end.isoformat()}]\n")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def add_test_event_info_and_time_per_session(
+    request, is_acceptance_test, event_tracking_device_group, session_event_tracking_record_file
+):
+    """Record the event diagnostics per test in event-diag-file-path."""
+    if is_acceptance_test and event_tracking_device_group and session_event_tracking_record_file:
+        device_event_info: dict[str, EventTrackingData] = {}
+        test_event_info: EventTrackingData = EventTrackingData(
+            event_data_before=ApiUtil.instance().query_event_system(), event_data_after=""
+        )
+        with session_event_tracking_record_file.open(mode="a", encoding="utf-8") as f:
+            start = datetime.now(timezone.utc)
+            f.write("\n*******************\n")
+            f.write(f"\nSESSION START [{request.node.nodeid}] at [{start.isoformat()}]\n")
+            f.write("\n*******************\n")
+            replies = event_tracking_device_group.command_inout("QueryEventSystem")
+            for reply in replies:
+                name = reply.dev_name()
+                device_event_info[name] = EventTrackingData(
+                    event_data_before=reply.get_data(), event_data_after=""
+                )
+
+    yield
+
+    if is_acceptance_test and event_tracking_device_group and session_event_tracking_record_file:
+        test_event_info.event_data_after = ApiUtil.instance().query_event_system()
+        with session_event_tracking_record_file.open(mode="a", encoding="utf-8") as f:
+            replies = event_tracking_device_group.command_inout("QueryEventSystem")
+            for reply in replies:
+                name = reply.dev_name()
+                device_event_info[name].event_data_after = reply.get_data()
+            for name, data in device_event_info.items():
+                f.write(f"\n\nDevice Summary: {name}\n\n")
+                f.write(data.render_tracking_summary())
+            f.write("\n\nSession Test Summary:\n\n")
             f.write(test_event_info.render_tracking_summary())
             end = datetime.now(timezone.utc)
             f.write(f"\n\nEND [{request.node.nodeid}] at [{end.isoformat()}]\n")
