@@ -21,7 +21,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - `UpdateTZData` command added
 
   - Downloads the latest TZ data file from the TZ_DATA_URL env var and uploads it to SPFRx
-- Update receiver band to Band for SPFRx if requested band is B5b
+- Update receiver band to Band1 for SPFRx if requested band is B5b
 
 Version 10.0.0
 **************
