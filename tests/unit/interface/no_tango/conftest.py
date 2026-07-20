@@ -73,6 +73,11 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             disable=MagicMock(),
         ),
         patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
+        # TODO Remove if not needed later
+        patch.multiple(
+            "ska_mid_dish_manager.component_managers.dish_manager_cm.DishManagerComponentManager",
+            _update_dish_health_state_and_info=MagicMock(),
+        ),
     ):
         dish_manager_cm = DishManagerComponentManager(
             LOGGER,
