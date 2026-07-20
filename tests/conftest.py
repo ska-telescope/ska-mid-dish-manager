@@ -134,6 +134,21 @@ def event_tracking_device_group(request, is_acceptance_test) -> Optional[Group]:
     return group
 
 
+@pytest.fixture
+def event_tracking_device_group_session(request, is_acceptance_test) -> Optional[Group]:
+    """Creates a Tango device group of the associated admin devices."""
+    if not is_acceptance_test:
+        return None
+    trls = request.config.getoption("--track-device-events")
+    if not trls:
+        return None
+    group = Group("EventTrackingGroup")
+    for trl in trls:
+        dp = DeviceProxy(trl)
+        group.add(dp.adm_name())
+    return group
+
+
 @pytest.fixture(autouse=True)
 def enable_event_tracking(
     request, is_acceptance_test, event_tracking_device_group, event_tracking_record_file
@@ -209,13 +224,13 @@ def add_test_event_info_and_time(
 def add_test_event_info_and_time_per_session(
     request,
     is_acceptance_test_session,
-    event_tracking_device_group,
+    event_tracking_device_group_session,
     session_event_tracking_record_file,
 ):
     """Record the event diagnostics per test in event-diag-file-path."""
     if (
         is_acceptance_test_session
-        and event_tracking_device_group
+        and event_tracking_device_group_session
         and session_event_tracking_record_file
     ):
         device_event_info: dict[str, EventTrackingData] = {}
@@ -227,7 +242,7 @@ def add_test_event_info_and_time_per_session(
             f.write("\n*******************\n")
             f.write(f"\nSESSION START [{request.node.nodeid}] at [{start.isoformat()}]\n")
             f.write("\n*******************\n")
-            replies = event_tracking_device_group.command_inout("QueryEventSystem")
+            replies = event_tracking_device_group_session.command_inout("QueryEventSystem")
             for reply in replies:
                 name = reply.dev_name()
                 device_event_info[name] = EventTrackingData(
@@ -238,12 +253,12 @@ def add_test_event_info_and_time_per_session(
 
     if (
         is_acceptance_test_session
-        and event_tracking_device_group
+        and event_tracking_device_group_session
         and session_event_tracking_record_file
     ):
         test_event_info.event_data_after = ApiUtil.instance().query_event_system()
         with session_event_tracking_record_file.open(mode="a", encoding="utf-8") as f:
-            replies = event_tracking_device_group.command_inout("QueryEventSystem")
+            replies = event_tracking_device_group_session.command_inout("QueryEventSystem")
             for reply in replies:
                 name = reply.dev_name()
                 device_event_info[name].event_data_after = reply.get_data()
