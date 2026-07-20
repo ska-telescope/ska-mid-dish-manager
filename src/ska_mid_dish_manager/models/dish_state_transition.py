@@ -124,8 +124,6 @@ class StateTransition:
 
         # Build the names used in the transition rules
         # --------------------------------------------
-        # Normalize the enum values for cases where comp_state.get returned the int and
-        # not the enum
         ds_healthstate_name = HealthState(dish_manager_states["DS"]["healthstate"]).name
         dish_manager_states["DS"]["healthstate"] = f"HealthState.{ds_healthstate_name}"
 

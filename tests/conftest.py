@@ -20,7 +20,6 @@ LOGGER = logging.getLogger(__name__)
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     """Log remaining threads at the end."""
-    return
     time.sleep(1)
     threads = threading.enumerate()
     for t in threads:
