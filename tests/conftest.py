@@ -84,7 +84,7 @@ def event_tracking_record_file(request) -> Optional[Path]:
     return file_path
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def session_event_tracking_record_file(request) -> Optional[Path]:
     """Creates a file path if specified and it does not exist."""
     events_path_dir = request.config.getoption("--event-diag-file-dir")
@@ -134,10 +134,10 @@ def event_tracking_device_group(request, is_acceptance_test) -> Optional[Group]:
     return group
 
 
-@pytest.fixture
-def event_tracking_device_group_session(request, is_acceptance_test) -> Optional[Group]:
+@pytest.fixture(scope="session")
+def event_tracking_device_group_session(request, is_acceptance_test_session) -> Optional[Group]:
     """Creates a Tango device group of the associated admin devices."""
-    if not is_acceptance_test:
+    if not is_acceptance_test_session:
         return None
     trls = request.config.getoption("--track-device-events")
     if not trls:
