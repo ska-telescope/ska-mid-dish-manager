@@ -108,6 +108,17 @@ def is_acceptance_test(request) -> bool:
     return "acceptance" in marker_names
 
 
+@pytest.fixture(scope="session")
+def is_acceptance_test_session(request) -> bool:
+    """Returns whether this is an acceptance test or not."""
+    marker_names = [marker.name for marker in request.node.iter_markers()]
+    if "unit" in marker_names:
+        return False
+    if "unit" in request.node.nodeid:
+        return False
+    return "acceptance" in marker_names
+
+
 @pytest.fixture
 def event_tracking_device_group(request, is_acceptance_test) -> Optional[Group]:
     """Creates a Tango device group of the associated admin devices."""
@@ -196,10 +207,17 @@ def add_test_event_info_and_time(
 
 @pytest.fixture(scope="session", autouse=True)
 def add_test_event_info_and_time_per_session(
-    request, is_acceptance_test, event_tracking_device_group, session_event_tracking_record_file
+    request,
+    is_acceptance_test_session,
+    event_tracking_device_group,
+    session_event_tracking_record_file,
 ):
     """Record the event diagnostics per test in event-diag-file-path."""
-    if is_acceptance_test and event_tracking_device_group and session_event_tracking_record_file:
+    if (
+        is_acceptance_test_session
+        and event_tracking_device_group
+        and session_event_tracking_record_file
+    ):
         device_event_info: dict[str, EventTrackingData] = {}
         test_event_info: EventTrackingData = EventTrackingData(
             event_data_before=ApiUtil.instance().query_event_system(), event_data_after=""
@@ -218,7 +236,11 @@ def add_test_event_info_and_time_per_session(
 
     yield
 
-    if is_acceptance_test and event_tracking_device_group and session_event_tracking_record_file:
+    if (
+        is_acceptance_test_session
+        and event_tracking_device_group
+        and session_event_tracking_record_file
+    ):
         test_event_info.event_data_after = ApiUtil.instance().query_event_system()
         with session_event_tracking_record_file.open(mode="a", encoding="utf-8") as f:
             replies = event_tracking_device_group.command_inout("QueryEventSystem")
