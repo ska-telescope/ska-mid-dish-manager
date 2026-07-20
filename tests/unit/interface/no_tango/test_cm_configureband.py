@@ -1,7 +1,8 @@
 """Tests dish manager component manager configureband command handler."""
 
+import json
 import logging
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
@@ -389,6 +390,22 @@ def test_configureband_5b_with_subband(
     for count, mock_call in enumerate(actual_call_kwargs):
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
+
+    # Build the JSON expected by SPFRX.
+    expected_config = json.loads(configure_json)
+    dish_config = expected_config["dish"]
+
+    dish_config["receiver_band"] = "1"
+
+    if "band5_downconversion_subband" in dish_config:
+        dish_config["sub_band"] = dish_config.pop("band5_downconversion_subband")
+
+    expected_json = json.dumps(expected_config)
+
+    # check that the SPFRX component manager received the expected ConfigureBand command
+    spfrx_cm = component_manager.sub_component_managers["SPFRX"]
+    spfrx_cm_calls = spfrx_cm.execute_command.call_args_list
+    assert call("ConfigureBand", expected_json) in spfrx_cm_calls
 
     msgs = [
         "Awaiting DS indexerposition change to B5b",
