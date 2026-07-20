@@ -836,6 +836,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def _update_dish_health_state_and_info(self):
         """Compute dish health state and info following health or communication state update."""
+        # Get current thread id and print it
+        # thread_id = threading.get_ident()
+        # print(f">>> Current healthState update thread id: {thread_id}")
+
         ds_component_state_dict = self.sub_component_managers["DS"].component_state
         spf_component_state_dict = self.sub_component_managers["SPF"].component_state
         spfrx_component_state_dict = self.sub_component_managers["SPFRX"].component_state
