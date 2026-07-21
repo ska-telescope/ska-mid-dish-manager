@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 10.0.1
+**************
+- Update receiver band to Band1 for SPFRx if requested band is B5b
+- Resolve SKB-1438: Add param for delay to FannedOutCommand completion. Used for SPFRx ConfigureBand command.
 
 Version 10.0.0
 **************
