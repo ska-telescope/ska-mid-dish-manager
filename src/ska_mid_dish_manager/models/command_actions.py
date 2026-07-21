@@ -552,7 +552,7 @@ class ConfigureBandAction(Action):
                 self.data = json.dumps(data_json)
                 # await for B1 band to be configured on SPFRx if the requested band is B5b
                 spfrx_awaited_band = Band.B1
-                self.logger.warning("B5b receiver band B5b mapped to B1 for SPFRx configuration")
+                self.logger.warning("B5b receiver band mapped to B1 for SPFRx configuration")
 
                 b5dc_manager = self.dish_manager_cm.sub_component_managers.get("B5DC")
                 if not b5dc_manager:
