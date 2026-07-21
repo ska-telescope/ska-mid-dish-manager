@@ -17,6 +17,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
     DSC_MIN_POWER_LIMIT_KW,
     OPERATOR_TAG,
+    SPFRX_CONFIGURE_COMPLETION_DELAY_S,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -551,7 +552,7 @@ class ConfigureBandAction(Action):
                 self.data = json.dumps(data_json)
                 # await for B1 band to be configured on SPFRx if the requested band is B5b
                 spfrx_awaited_band = Band.B1
-                self.logger.warning("B5b receiver band B5b mapped to B1 for SPFRx configuration")
+                self.logger.warning("B5b receiver band mapped to B1 for SPFRx configuration")
 
                 b5dc_manager = self.dish_manager_cm.sub_component_managers.get("B5DC")
                 if not b5dc_manager:
@@ -585,6 +586,10 @@ class ConfigureBandAction(Action):
                     "configuredband": spfrx_awaited_band,
                     "operatingmode": SPFRxOperatingMode.OPERATE,
                 },
+                # SPFRx only moves to CONFIGURE a moment after accepting the command. Without
+                # this the awaited state is sometimes matched against the OPERATE it was already
+                # in when the command was fanned out, completing before SPFRx has configured.
+                completion_delay_s=SPFRX_CONFIGURE_COMPLETION_DELAY_S,
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
@@ -608,6 +613,10 @@ class ConfigureBandAction(Action):
                     "configuredband": spfrx_awaited_band,
                     "operatingmode": SPFRxOperatingMode.OPERATE,
                 },
+                # SPFRx only moves to CONFIGURE a moment after accepting the command. Without
+                # this the awaited state is sometimes matched against the OPERATE it was already
+                # in when the command was fanned out, completing before SPFRx has configured.
+                completion_delay_s=SPFRX_CONFIGURE_COMPLETION_DELAY_S,
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )

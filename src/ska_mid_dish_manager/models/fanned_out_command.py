@@ -34,6 +34,7 @@ class FannedOutCommand:
         timeout_s: float = 0,
         progress_callback: Optional[Callable] = None,
         skip_if_already_satisfied: bool = False,
+        completion_delay_s: float = 0,
     ):
         """:param logger: Logger instance
         :type logger: Logger
@@ -59,6 +60,12 @@ class FannedOutCommand:
         :param skip_if_already_satisfied: Toggle to skip fanning out the command if the awaited
             component state is already satisfied.
         :type skip_if_already_satisfied: bool
+        :param completion_delay_s: How long (in seconds) after the command is fanned out before
+            the awaited component state is trusted to complete it. Use it for devices that keep
+            reporting their pre-command state for a short while after accepting a command, where
+            the awaited component state would otherwise be matched against the state the device
+            was in before it started working.
+        :type completion_delay_s: float
         """
         self.logger = logger
         self.device = device
@@ -76,6 +83,7 @@ class FannedOutCommand:
         self.awaited_component_state = awaited_component_state
         self.awaited_update_reports = {attr: False for attr in awaited_component_state.keys()}
         self.skip_if_already_satisfied = skip_if_already_satisfied
+        self.completion_delay_s = completion_delay_s
 
     @property
     def already_satisfied(self) -> bool:
@@ -83,6 +91,11 @@ class FannedOutCommand:
         return check_component_state_matches_awaited(
             self.component_state, self.awaited_component_state
         )
+
+    @property
+    def completion_delay_elapsed(self) -> bool:
+        """Check if the component state can be trusted to complete the command."""
+        return time.time() - self.start_time >= self.completion_delay_s
 
     def _report_already_satisfied(self) -> None:
         """Report that the command is not being fanned out because its state is already met."""
@@ -157,7 +170,7 @@ class FannedOutCommand:
         """Update the status of the command based on component state and timeout checks."""
         if self._status == FannedOutCommandStatus.IN_PROGRESS:
             # completed
-            if check_component_state_matches_awaited(
+            if self.completion_delay_elapsed and check_component_state_matches_awaited(
                 self.component_state, self.awaited_component_state
             ):
                 self._status = FannedOutCommandStatus.COMPLETED
@@ -226,6 +239,7 @@ class FannedOutTangoCommand(FannedOutCommand):
         progress_callback: Optional[Callable] = None,
         is_device_ignored: bool = False,
         skip_if_already_satisfied: bool = False,
+        completion_delay_s: float = 0,
     ):
         """:param logger: Logger instance
         :type logger: Logger
@@ -249,6 +263,9 @@ class FannedOutTangoCommand(FannedOutCommand):
         :param skip_if_already_satisfied: Toggle to skip fanning out the command if the awaited
             component state is already satisfied.
         :type skip_if_already_satisfied: bool
+        :param completion_delay_s: How long (in seconds) after the command is fanned out before
+            the awaited component state is trusted to complete it.
+        :type completion_delay_s: float
         """
         self.device_component_manager = device_component_manager
         self.is_device_ignored = is_device_ignored
@@ -267,6 +284,7 @@ class FannedOutTangoCommand(FannedOutCommand):
             timeout_s=timeout_s,
             progress_callback=progress_callback,
             skip_if_already_satisfied=skip_if_already_satisfied,
+            completion_delay_s=completion_delay_s,
         )
 
     def _execute_tango_command(self) -> tuple:
@@ -447,9 +465,12 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
 
             # Final component state check
             if self.is_lrc_finished:
-                component_ready = check_component_state_matches_awaited(
-                    self.component_state,
-                    self.awaited_component_state,
+                component_ready = (
+                    self.completion_delay_elapsed
+                    and check_component_state_matches_awaited(
+                        self.component_state,
+                        self.awaited_component_state,
+                    )
                 )
 
                 if component_ready:
