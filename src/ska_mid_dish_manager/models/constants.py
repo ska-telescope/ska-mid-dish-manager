@@ -25,6 +25,13 @@ DEFAULT_ACTION_TIMEOUT_S = 120
 # command until this has elapsed, otherwise the command completes against the state SPFRx was
 # in before it started configuring.
 SPFRX_CONFIGURE_COMPLETION_DELAY_S = 2.0
+# Name of the environment variable holding the URL of the TZ data file that is
+# downloaded and forwarded to SPFRx by the UpdateTZData command.
+TZ_DATA_URL_ENV_VAR = "TZ_DATA_URL"
+# Timeout (in seconds) for downloading the TZ data file from TZ_DATA_URL_ENV_VAR.
+TZ_DATA_DOWNLOAD_TIMEOUT_S = 60
+# Number of characters of a command argument kept in logs when it is truncated.
+LOGGED_ARG_MAX_LENGTH = 100
 MAX_ELEVATION_SCIENCE = 85.0
 MIN_ELEVATION_SCIENCE = 15.0
 MAX_AZIMUTH = 270.0

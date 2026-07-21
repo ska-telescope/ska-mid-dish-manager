@@ -179,6 +179,7 @@ class DishManager(SKAController):
             ("EndScan", "end_scan"),
             ("SetOperateMode", "set_operate_mode"),
             ("InterlockAck", "interlock_acknowledge"),
+            ("UpdateTZData", "update_tz_data"),
         ]:
             self.register_command_object(
                 command_name,
@@ -2595,6 +2596,30 @@ class DishManager(SKAController):
     def EndScan(self) -> DevVarLongStringArrayType:
         """This command clears out the scan_id."""
         handler = self.get_command_object("EndScan")
+        result_code, unique_id = handler()
+
+        return ([result_code], [unique_id])
+
+    @record_command(False)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
+    @command(
+        dtype_in=None,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in=(
+            "Downloads the latest TZ data file from the URL configured in the "
+            "TZ_DATA_URL environment variable and uploads it to SPFRx."
+        ),
+    )
+    def UpdateTZData(self) -> DevVarLongStringArrayType:
+        """Download the latest TZ data file and upload it to SPFRx.
+
+        The URL of the file to download is read from the ``TZ_DATA_URL`` environment
+        variable. The downloaded file is base64 encoded and forwarded to SPFRx
+        via its ``UpdateTZData`` command.
+        """
+        handler = self.get_command_object("UpdateTZData")
         result_code, unique_id = handler()
 
         return ([result_code], [unique_id])

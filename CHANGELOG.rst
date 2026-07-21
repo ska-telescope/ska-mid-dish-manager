@@ -16,7 +16,13 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
   - spfcB4HealthState
   - spfcB5aHealthState
   - spfcB5bHealthState
+
 - lastCommandFailure attribute added.
+- `UpdateTZData` command added
+
+  - Downloads the latest TZ data file from the TZ_DATA_URL env var and uploads it to SPFRx
+
+- Update receiver band to Band1 for SPFRx if requested band is B5b
 - Add param for delay to FannedOutCommand completion. Used for SPFRx ConfigureBand command.
 
 Version 10.0.0

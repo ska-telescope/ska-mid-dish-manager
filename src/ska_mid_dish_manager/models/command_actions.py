@@ -546,12 +546,13 @@ class ConfigureBandAction(Action):
 
             if receiver_band == "5b":
                 # NOTE according to ADR-102 dish lmc should send B1 to SPFRx if the receiver band
-                # is B5b. SPFRx firmware is handling this mapping internally, so no need to send B1
-                # to SPFRx from dish manager. Keep an eye on SPFRx firmware releases in case this
-                # changes and we need to add mapping in dish manager as well.
-
+                # is B5b. SPFRx firmware v3.1.0, does not handle that mapping internally, so we
+                # need to override the receiver_band in the json data to B1
+                data_json["dish"]["receiver_band"] = "1"
+                self.data = json.dumps(data_json)
                 # await for B1 band to be configured on SPFRx if the requested band is B5b
                 spfrx_awaited_band = Band.B1
+                self.logger.warning("B5b receiver band B5b mapped to B1 for SPFRx configuration")
 
                 b5dc_manager = self.dish_manager_cm.sub_component_managers.get("B5DC")
                 if not b5dc_manager:
