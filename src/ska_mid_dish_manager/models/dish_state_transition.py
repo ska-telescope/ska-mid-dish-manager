@@ -104,6 +104,49 @@ class StateTransition:
         :return: the calculated HealthState
         :rtype: HealthState
         """
+        # Tentatively configure the dish healthState to report UNKNOWN
+        dish_health_state = HealthState.UNKNOWN
+
+        if ds_communication_state in [
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.NOT_ESTABLISHED,
+        ]:
+            dish_health_state = HealthState.FAILED
+        # The following if statement tests the DS Manager - DS Controller connection state
+        if CommunicationStatus(
+            ds_component_state.get("connectionstate", CommunicationStatus.DISABLED)
+        ) in [CommunicationStatus.DISABLED, CommunicationStatus.NOT_ESTABLISHED]:
+            dish_health_state = HealthState.FAILED
+        if spfrx_component_state:
+            if spfrx_communication_state in [
+                CommunicationStatus.DISABLED,
+                CommunicationStatus.NOT_ESTABLISHED,
+            ]:
+                dish_health_state = HealthState.FAILED
+        if spf_component_state:
+            if spf_communication_state in [
+                CommunicationStatus.DISABLED,
+                CommunicationStatus.NOT_ESTABLISHED,
+            ]:
+                dish_health_state = HealthState.FAILED
+        if b5dc_component_state:
+            # The following if statement tests the Dish Manager - B5dc proxy connection state
+            if b5dc_communication_state in [
+                CommunicationStatus.DISABLED,
+                CommunicationStatus.NOT_ESTABLISHED,
+            ]:
+                dish_health_state = HealthState.FAILED
+            # The following if statement tests the B5dc proxy - B5dc server connection state
+            if CommunicationStatus(
+                b5dc_component_state.get("connectionstate", CommunicationStatus.DISABLED)
+            ) in [CommunicationStatus.DISABLED, CommunicationStatus.NOT_ESTABLISHED]:
+                dish_health_state = HealthState.FAILED
+
+        # If a disconnection event drove the healthState to FAILED return immediately,
+        # else, compute healthState from the component healthStates using the rule engine
+        if dish_health_state == HealthState.FAILED:
+            return dish_health_state
+
         dish_manager_states = self._collapse(
             ds_component_state, spfrx_component_state, spf_component_state
         )
@@ -142,52 +185,10 @@ class StateTransition:
         elif spfrx_component_state:
             rules_to_use = health_state_rules_spf_ignored
 
-        # Tentatively configure the dish healthState to report UNKNOWN
-        dish_health_state = HealthState.UNKNOWN
-
-        # 1: Check healthState assuming all expected component connections
-        # are ESTABLISHED against the healthState rule engine
         for healthstate, rule in rules_to_use.items():
             if rule.matches(dish_manager_states):
                 dish_health_state = HealthState[healthstate]
                 break
-
-        # 2: Check if any expected components connections are DISABLED or NOT_ESTABLISHED.
-        # Dish healthState is FAILED if any expected subcomponent is unavailable
-        if ds_communication_state in [
-            CommunicationStatus.DISABLED,
-            CommunicationStatus.NOT_ESTABLISHED,
-        ]:
-            dish_health_state = HealthState.FAILED
-        # The following if statement tests the DS Manager - DS Controller connection state
-        if CommunicationStatus(
-            ds_component_state.get("connectionstate", CommunicationStatus.DISABLED)
-        ) in [CommunicationStatus.DISABLED, CommunicationStatus.NOT_ESTABLISHED]:
-            dish_health_state = HealthState.FAILED
-        if spfrx_component_state:
-            if spfrx_communication_state in [
-                CommunicationStatus.DISABLED,
-                CommunicationStatus.NOT_ESTABLISHED,
-            ]:
-                dish_health_state = HealthState.FAILED
-        if spf_component_state:
-            if spf_communication_state in [
-                CommunicationStatus.DISABLED,
-                CommunicationStatus.NOT_ESTABLISHED,
-            ]:
-                dish_health_state = HealthState.FAILED
-        if b5dc_component_state:
-            # The following if statement tests the Dish Manager - B5dc proxy connection state
-            if b5dc_communication_state in [
-                CommunicationStatus.DISABLED,
-                CommunicationStatus.NOT_ESTABLISHED,
-            ]:
-                dish_health_state = HealthState.FAILED
-            # The following if statement tests the B5dc proxy - B5dc server connection state
-            if CommunicationStatus(
-                b5dc_component_state.get("connectionstate", CommunicationStatus.DISABLED)
-            ) in [CommunicationStatus.DISABLED, CommunicationStatus.NOT_ESTABLISHED]:
-                dish_health_state = HealthState.FAILED
 
         return dish_health_state
 
