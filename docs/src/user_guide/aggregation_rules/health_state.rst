@@ -60,11 +60,11 @@ reported by the DS, SPF and SPFRx devices.
 **HealthState FAILED on component disconnection**
 
 Should any of the devices that Dish Manager is configured to monitor and control become unavailable or disconnected,
-as shown by their respective connectionState attributes transitioning to `DISABLED` or `NOT_ESTABLISHED`, the aggregated Dish Manager
+as shown by their respective connection state attributes transitioning to `DISABLED` or `NOT_ESTABLISHED`, the aggregated Dish Manager
 healthState will be overwritten to report `FAILED`.
 
 The table below shows the connection state attributes that are taken into account when the dish `healthState` is computed, and the conditions
-under which their states will not be considered when the dish `healthState` is computed.
+under which their states will not be considered.
 
 .. list-table::
    :header-rows: 1
