@@ -13,6 +13,9 @@ def state_transition():
     return StateTransition()
 
 
+# -----------------------------------------------------------
+# Tests healthState assuming no hardware disconnections occur
+# -----------------------------------------------------------
 @pytest.mark.unit
 @pytest.mark.parametrize(
     (
@@ -179,6 +182,282 @@ def test_compute_dish_healthstate(
     assert expected_dish_healthstate == actual_dish_healthstate
 
 
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
+    [
+        (
+            dict(
+                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
+            ),
+            None,
+            dict(healthstate=HealthState.OK),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(
+                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
+            ),
+            None,
+            dict(healthstate=HealthState.UNKNOWN),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(
+                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
+            ),
+            None,
+            dict(healthstate=HealthState.DEGRADED),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.DEGRADED),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.DEGRADED),
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.OK),
+            HealthState.OK,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.OK),
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.FAILED),
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.FAILED),
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.UNKNOWN),
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.OK),
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.UNKNOWN),
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            dict(healthstate=HealthState.UNKNOWN),
+            HealthState.UNKNOWN,
+        ),
+    ],
+)
+def test_compute_dish_healthstate_ignoring_spf(
+    ds_comp_state,
+    spf_comp_state,
+    spfrx_comp_state,
+    expected_dish_healthstate,
+    state_transition,
+):
+    # Test runs with B5dc DISABLED to show that it doesnt impact the calculation
+    actual_dish_healthstate = state_transition.compute_dish_health_state(
+        ds_communication_state=CommunicationStatus.ESTABLISHED,
+        spfrx_communication_state=CommunicationStatus.ESTABLISHED,
+        spf_communication_state=CommunicationStatus.DISABLED,
+        b5dc_communication_state=CommunicationStatus.DISABLED,
+        ds_component_state=ds_comp_state,
+        spfrx_component_state=spfrx_comp_state,
+        spf_component_state=spf_comp_state,
+        b5dc_component_state=None,
+    )
+    assert expected_dish_healthstate == actual_dish_healthstate
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
+    [
+        (
+            dict(
+                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
+            ),
+            dict(healthstate=SPFHealthState.NORMAL),
+            None,
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(
+                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
+            ),
+            dict(healthstate=SPFHealthState.UNKNOWN),
+            None,
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(
+                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
+            ),
+            dict(healthstate=SPFHealthState.DEGRADED),
+            None,
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            dict(healthstate=SPFHealthState.DEGRADED),
+            None,
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
+            dict(healthstate=SPFHealthState.DEGRADED),
+            None,
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            dict(healthstate=SPFHealthState.NORMAL),
+            None,
+            HealthState.OK,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED, connectionstate=CommunicationStatus.ESTABLISHED),
+            dict(healthstate=SPFHealthState.NORMAL),
+            None,
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED, connectionstate=CommunicationStatus.ESTABLISHED),
+            dict(healthstate=SPFHealthState.FAILED),
+            None,
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            dict(healthstate=SPFHealthState.FAILED),
+            None,
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
+            dict(healthstate=SPFHealthState.UNKNOWN),
+            None,
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
+            dict(healthstate=SPFHealthState.NORMAL),
+            None,
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            dict(healthstate=SPFHealthState.UNKNOWN),
+            None,
+            HealthState.UNKNOWN,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
+            dict(healthstate=SPFHealthState.UNKNOWN),
+            None,
+            HealthState.UNKNOWN,
+        ),
+    ],
+)
+def test_compute_dish_healthstate_ignoring_spfrx(
+    ds_comp_state,
+    spf_comp_state,
+    spfrx_comp_state,
+    expected_dish_healthstate,
+    state_transition,
+):
+    actual_dish_healthstate = state_transition.compute_dish_health_state(
+        ds_communication_state=CommunicationStatus.ESTABLISHED,
+        spfrx_communication_state=CommunicationStatus.DISABLED,
+        spf_communication_state=CommunicationStatus.ESTABLISHED,
+        b5dc_communication_state=CommunicationStatus.ESTABLISHED,
+        ds_component_state=ds_comp_state,
+        spfrx_component_state=spfrx_comp_state,
+        spf_component_state=spf_comp_state,
+        b5dc_component_state=dict(connectionstate=CommunicationStatus.ESTABLISHED),
+    )
+    assert expected_dish_healthstate == actual_dish_healthstate
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
+    [
+        (
+            dict(
+                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
+            ),
+            None,
+            None,
+            HealthState.DEGRADED,
+        ),
+        (
+            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            None,
+            HealthState.OK,
+        ),
+        (
+            dict(healthstate=HealthState.FAILED, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            None,
+            HealthState.FAILED,
+        ),
+        (
+            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
+            None,
+            None,
+            HealthState.UNKNOWN,
+        ),
+    ],
+)
+def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
+    ds_comp_state,
+    spf_comp_state,
+    spfrx_comp_state,
+    expected_dish_healthstate,
+    state_transition: StateTransition,
+):
+    actual_dish_healthstate = state_transition.compute_dish_health_state(
+        ds_communication_state=CommunicationStatus.ESTABLISHED,
+        spfrx_communication_state=CommunicationStatus.DISABLED,
+        spf_communication_state=CommunicationStatus.DISABLED,
+        b5dc_communication_state=CommunicationStatus.ESTABLISHED,
+        ds_component_state=ds_comp_state,
+        spfrx_component_state=spfrx_comp_state,
+        spf_component_state=spf_comp_state,
+        b5dc_component_state=dict(connectionstate=CommunicationStatus.ESTABLISHED),
+    )
+    assert expected_dish_healthstate == actual_dish_healthstate
+
+
+# -----------------------------------------------------------
+# Tests healthState assuming a component disconnection occurs
+# -----------------------------------------------------------
 @pytest.mark.unit
 @pytest.mark.parametrize(
     (
@@ -369,116 +648,6 @@ def test_compute_dish_healthstate_with_component_disconnections(
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
-    [
-        (
-            dict(
-                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
-            ),
-            None,
-            dict(healthstate=HealthState.OK),
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(
-                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
-            ),
-            None,
-            dict(healthstate=HealthState.UNKNOWN),
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(
-                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
-            ),
-            None,
-            dict(healthstate=HealthState.DEGRADED),
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            dict(healthstate=HealthState.DEGRADED),
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            dict(healthstate=HealthState.DEGRADED),
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            dict(healthstate=HealthState.OK),
-            HealthState.OK,
-        ),
-        (
-            dict(healthstate=HealthState.FAILED, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            dict(healthstate=HealthState.OK),
-            HealthState.FAILED,
-        ),
-        (
-            dict(healthstate=HealthState.FAILED, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            dict(healthstate=HealthState.FAILED),
-            HealthState.FAILED,
-        ),
-        (
-            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            dict(healthstate=HealthState.FAILED),
-            HealthState.FAILED,
-        ),
-        (
-            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            dict(healthstate=HealthState.UNKNOWN),
-            HealthState.UNKNOWN,
-        ),
-        (
-            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            dict(healthstate=HealthState.OK),
-            HealthState.UNKNOWN,
-        ),
-        (
-            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            dict(healthstate=HealthState.UNKNOWN),
-            HealthState.UNKNOWN,
-        ),
-        (
-            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            dict(healthstate=HealthState.UNKNOWN),
-            HealthState.UNKNOWN,
-        ),
-    ],
-)
-def test_compute_dish_healthstate_ignoring_spf(
-    ds_comp_state,
-    spf_comp_state,
-    spfrx_comp_state,
-    expected_dish_healthstate,
-    state_transition,
-):
-    actual_dish_healthstate = state_transition.compute_dish_health_state(
-        ds_communication_state=CommunicationStatus.ESTABLISHED,
-        spfrx_communication_state=CommunicationStatus.ESTABLISHED,
-        spf_communication_state=CommunicationStatus.DISABLED,
-        b5dc_communication_state=CommunicationStatus.DISABLED,
-        ds_component_state=ds_comp_state,
-        spfrx_component_state=spfrx_comp_state,
-        spf_component_state=spf_comp_state,
-        b5dc_component_state=None,
-    )
-    assert expected_dish_healthstate == actual_dish_healthstate
-
-
-@pytest.mark.unit
-@pytest.mark.parametrize(
     (
         "ds_comms_state, "
         "spfrx_comms_state, "
@@ -640,116 +809,6 @@ def test_compute_dish_healthstate_ignoring_spf_with_component_disconnections(
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
-    [
-        (
-            dict(
-                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
-            ),
-            dict(healthstate=SPFHealthState.NORMAL),
-            None,
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(
-                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
-            ),
-            dict(healthstate=SPFHealthState.UNKNOWN),
-            None,
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(
-                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
-            ),
-            dict(healthstate=SPFHealthState.DEGRADED),
-            None,
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=SPFHealthState.DEGRADED),
-            None,
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=SPFHealthState.DEGRADED),
-            None,
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=SPFHealthState.NORMAL),
-            None,
-            HealthState.OK,
-        ),
-        (
-            dict(healthstate=HealthState.FAILED, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=SPFHealthState.NORMAL),
-            None,
-            HealthState.FAILED,
-        ),
-        (
-            dict(healthstate=HealthState.FAILED, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=SPFHealthState.FAILED),
-            None,
-            HealthState.FAILED,
-        ),
-        (
-            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=SPFHealthState.FAILED),
-            None,
-            HealthState.FAILED,
-        ),
-        (
-            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=SPFHealthState.UNKNOWN),
-            None,
-            HealthState.UNKNOWN,
-        ),
-        (
-            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=SPFHealthState.NORMAL),
-            None,
-            HealthState.UNKNOWN,
-        ),
-        (
-            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=SPFHealthState.UNKNOWN),
-            None,
-            HealthState.UNKNOWN,
-        ),
-        (
-            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
-            dict(healthstate=SPFHealthState.UNKNOWN),
-            None,
-            HealthState.UNKNOWN,
-        ),
-    ],
-)
-def test_compute_dish_healthstate_ignoring_spfrx(
-    ds_comp_state,
-    spf_comp_state,
-    spfrx_comp_state,
-    expected_dish_healthstate,
-    state_transition,
-):
-    actual_dish_healthstate = state_transition.compute_dish_health_state(
-        ds_communication_state=CommunicationStatus.ESTABLISHED,
-        spfrx_communication_state=CommunicationStatus.DISABLED,
-        spf_communication_state=CommunicationStatus.ESTABLISHED,
-        b5dc_communication_state=CommunicationStatus.ESTABLISHED,
-        ds_component_state=ds_comp_state,
-        spfrx_component_state=spfrx_comp_state,
-        spf_component_state=spf_comp_state,
-        b5dc_component_state=dict(connectionstate=CommunicationStatus.ESTABLISHED),
-    )
-    assert expected_dish_healthstate == actual_dish_healthstate
-
-
-@pytest.mark.unit
-@pytest.mark.parametrize(
     (
         "ds_comms_state, "
         "spfrx_comms_state, "
@@ -905,58 +964,6 @@ def test_compute_dish_healthstate_ignoring_spfrx_with_component_disconnections(
         spfrx_component_state=spfrx_comp_state,
         spf_component_state=spf_comp_state,
         b5dc_component_state=b5dc_comp_state,
-    )
-    assert expected_dish_healthstate == actual_dish_healthstate
-
-
-@pytest.mark.unit
-@pytest.mark.parametrize(
-    ("ds_comp_state, spf_comp_state, spfrx_comp_state, expected_dish_healthstate"),
-    [
-        (
-            dict(
-                healthstate=HealthState.DEGRADED, connectionstate=CommunicationStatus.ESTABLISHED
-            ),
-            None,
-            None,
-            HealthState.DEGRADED,
-        ),
-        (
-            dict(healthstate=HealthState.OK, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            None,
-            HealthState.OK,
-        ),
-        (
-            dict(healthstate=HealthState.FAILED, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            None,
-            HealthState.FAILED,
-        ),
-        (
-            dict(healthstate=HealthState.UNKNOWN, connectionstate=CommunicationStatus.ESTABLISHED),
-            None,
-            None,
-            HealthState.UNKNOWN,
-        ),
-    ],
-)
-def test_compute_dish_healthstate_ignoring_spf_and_spfrx(
-    ds_comp_state,
-    spf_comp_state,
-    spfrx_comp_state,
-    expected_dish_healthstate,
-    state_transition: StateTransition,
-):
-    actual_dish_healthstate = state_transition.compute_dish_health_state(
-        ds_communication_state=CommunicationStatus.ESTABLISHED,
-        spfrx_communication_state=CommunicationStatus.DISABLED,
-        spf_communication_state=CommunicationStatus.DISABLED,
-        b5dc_communication_state=CommunicationStatus.ESTABLISHED,
-        ds_component_state=ds_comp_state,
-        spfrx_component_state=spfrx_comp_state,
-        spf_component_state=spf_comp_state,
-        b5dc_component_state=dict(connectionstate=CommunicationStatus.ESTABLISHED),
     )
     assert expected_dish_healthstate == actual_dish_healthstate
 

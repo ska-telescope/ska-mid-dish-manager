@@ -72,6 +72,58 @@ class StateTransition:
                 return DishMode[mode]
         return DishMode.UNKNOWN
 
+    def _monitored_subdevice_disconnected(
+        self,
+        ds_communication_state: CommunicationStatus,
+        spfrx_communication_state: CommunicationStatus,
+        spf_communication_state: CommunicationStatus,
+        b5dc_communication_state: CommunicationStatus,
+        ds_component_state: dict,
+        spfrx_component_state: Optional[dict] = None,
+        spf_component_state: Optional[dict] = None,
+        b5dc_component_state: Optional[dict] = None,
+    ) -> bool:
+        """Return a flag indicating whether the expected subdevices are connected or not."""
+        # Tentatively assume all expected subdevices are connected
+        device_disconnected = False
+
+        if ds_communication_state in [
+            CommunicationStatus.DISABLED,
+            CommunicationStatus.NOT_ESTABLISHED,
+        ]:
+            device_disconnected = True
+        # The following if statement tests the DS Manager - DS Controller connection state
+        if CommunicationStatus(
+            ds_component_state.get("connectionstate", CommunicationStatus.DISABLED)
+        ) in [CommunicationStatus.DISABLED, CommunicationStatus.NOT_ESTABLISHED]:
+            device_disconnected = True
+        if spfrx_component_state:
+            if spfrx_communication_state in [
+                CommunicationStatus.DISABLED,
+                CommunicationStatus.NOT_ESTABLISHED,
+            ]:
+                device_disconnected = True
+        if spf_component_state:
+            if spf_communication_state in [
+                CommunicationStatus.DISABLED,
+                CommunicationStatus.NOT_ESTABLISHED,
+            ]:
+                device_disconnected = True
+        if b5dc_component_state:
+            # The following if statement tests the Dish Manager - B5dc proxy connection state
+            if b5dc_communication_state in [
+                CommunicationStatus.DISABLED,
+                CommunicationStatus.NOT_ESTABLISHED,
+            ]:
+                device_disconnected = True
+            # The following if statement tests the B5dc proxy - B5dc server connection state
+            if CommunicationStatus(
+                b5dc_component_state.get("connectionstate", CommunicationStatus.DISABLED)
+            ) in [CommunicationStatus.DISABLED, CommunicationStatus.NOT_ESTABLISHED]:
+                device_disconnected = True
+
+        return device_disconnected
+
     def compute_dish_health_state(
         self,
         ds_communication_state: CommunicationStatus,
@@ -104,48 +156,17 @@ class StateTransition:
         :return: the calculated HealthState
         :rtype: HealthState
         """
-        # Tentatively configure the dish healthState to report UNKNOWN
-        dish_health_state = HealthState.UNKNOWN
-
-        if ds_communication_state in [
-            CommunicationStatus.DISABLED,
-            CommunicationStatus.NOT_ESTABLISHED,
-        ]:
-            dish_health_state = HealthState.FAILED
-        # The following if statement tests the DS Manager - DS Controller connection state
-        if CommunicationStatus(
-            ds_component_state.get("connectionstate", CommunicationStatus.DISABLED)
-        ) in [CommunicationStatus.DISABLED, CommunicationStatus.NOT_ESTABLISHED]:
-            dish_health_state = HealthState.FAILED
-        if spfrx_component_state:
-            if spfrx_communication_state in [
-                CommunicationStatus.DISABLED,
-                CommunicationStatus.NOT_ESTABLISHED,
-            ]:
-                dish_health_state = HealthState.FAILED
-        if spf_component_state:
-            if spf_communication_state in [
-                CommunicationStatus.DISABLED,
-                CommunicationStatus.NOT_ESTABLISHED,
-            ]:
-                dish_health_state = HealthState.FAILED
-        if b5dc_component_state:
-            # The following if statement tests the Dish Manager - B5dc proxy connection state
-            if b5dc_communication_state in [
-                CommunicationStatus.DISABLED,
-                CommunicationStatus.NOT_ESTABLISHED,
-            ]:
-                dish_health_state = HealthState.FAILED
-            # The following if statement tests the B5dc proxy - B5dc server connection state
-            if CommunicationStatus(
-                b5dc_component_state.get("connectionstate", CommunicationStatus.DISABLED)
-            ) in [CommunicationStatus.DISABLED, CommunicationStatus.NOT_ESTABLISHED]:
-                dish_health_state = HealthState.FAILED
-
-        # If a disconnection event drove the healthState to FAILED return immediately,
-        # else, compute healthState from the component healthStates using the rule engine
-        if dish_health_state == HealthState.FAILED:
-            return dish_health_state
+        if self._monitored_subdevice_disconnected(
+            ds_communication_state,
+            spfrx_communication_state,
+            spf_communication_state,
+            b5dc_communication_state,
+            ds_component_state,
+            spfrx_component_state,
+            spf_component_state,
+            b5dc_component_state,
+        ):
+            return HealthState.FAILED
 
         dish_manager_states = self._collapse(
             ds_component_state, spfrx_component_state, spf_component_state
@@ -187,10 +208,9 @@ class StateTransition:
 
         for healthstate, rule in rules_to_use.items():
             if rule.matches(dish_manager_states):
-                dish_health_state = HealthState[healthstate]
-                break
+                return HealthState[healthstate]
 
-        return dish_health_state
+        return HealthState.UNKNOWN
 
     # pylint: disable=too-many-arguments
     def compute_capability_state(
