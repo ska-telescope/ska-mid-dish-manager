@@ -2,7 +2,7 @@
 Health State Aggregation Rules
 ==============================
 
-The Dish Manager derives the aggregated health state from the health states
+The Dish Manager derives the aggregated health state from the health states and connection states
 reported by the DS, SPF and SPFRx devices.
 
 .. note::
@@ -57,3 +57,43 @@ reported by the DS, SPF and SPFRx devices.
        * ``SPF.healthstate == UNKNOWN``
        * ``SPFRX.healthstate == UNKNOWN``
 
+**HealthState FAILED on component disconnection**
+
+Should any of the devices that Dish Manager is configured to monitor and control become unavailable or disconnected,
+as shown by their respective connectionState attributes transitioning to `DISABLED` or `NOT_ESTABLISHED`, the aggregated Dish Manager
+healthState will be overwritten to report `FAILED`.
+
+The table below shows the connection state attributes that are taken into account when the dish `healthState` is computed, and the conditions
+under which their states will not be considered when the dish `healthState` is computed.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 33 33 33
+
+   * - Attribute
+     - Connection represented by the attribute
+     - Condition where the state of the connection is ignored
+
+   * - `dsConnectionState`
+     - `Dish Manager` to/from `DS Manager`
+     - Cannot be ignored
+  
+   * - `dscConnectionState`
+     - `DS Manager` to/from `Dish structure controller`
+     - Cannot be ignored
+  
+   * - `spfConnectionState`
+     - `Dish Manager` to/from `SPF controller`
+     - `ignoreSpf` == `True`
+  
+   * - `spfrxConnectionState`
+     - `Dish Manager` to/from `SPFRx`
+     - `ignoreSpfrx` == `True`
+
+   * - `b5dcConnectionState`
+     - `Dish Manager` to/from `B5dc Proxy`
+     - `ignoreB5dc` == `True`
+  
+   * - `b5dcServerConnectionState`
+     - `B5dc Proxy` to/from `B5dc Server`
+     - `ignoreB5dc` == `True`

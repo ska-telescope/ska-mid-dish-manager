@@ -10,11 +10,6 @@ import rule_engine
 # NOT_ESTABLISHED the computed dish healthState will be overwritten to report FAILED
 
 HEALTH_STATE_RULES_ALL_DEVICES = {
-    "FAILED": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.FAILED' or "
-        "SPF.healthstate == 'SPFHealthState.FAILED' or "
-        "SPFRX.healthstate == 'HealthState.FAILED'"
-    ),
     "DEGRADED": rule_engine.Rule(
         "("
         "    DS.healthstate == 'HealthState.DEGRADED' and "
@@ -57,6 +52,11 @@ HEALTH_STATE_RULES_ALL_DEVICES = {
         "    SPFRX.healthstate == 'HealthState.DEGRADED'"
         ")"
     ),
+    "FAILED": rule_engine.Rule(
+        "DS.healthstate == 'HealthState.FAILED' or "
+        "SPF.healthstate == 'SPFHealthState.FAILED' or "
+        "SPFRX.healthstate == 'HealthState.FAILED'"
+    ),
     "OK": rule_engine.Rule(
         "DS.healthstate == 'HealthState.OK' and "
         "SPF.healthstate == 'SPFHealthState.NORMAL' and "
@@ -71,9 +71,6 @@ HEALTH_STATE_RULES_ALL_DEVICES = {
 
 
 HEALTH_STATE_RULES_SPF_IGNORED = {
-    "FAILED": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.FAILED' or SPFRX.healthstate == 'HealthState.FAILED'"
-    ),
     "DEGRADED": rule_engine.Rule(
         "("
         "    DS.healthstate == 'HealthState.DEGRADED' and "
@@ -92,6 +89,9 @@ HEALTH_STATE_RULES_SPF_IGNORED = {
         "    SPFRX.healthstate == 'HealthState.DEGRADED'"
         ")"
     ),
+    "FAILED": rule_engine.Rule(
+        "DS.healthstate == 'HealthState.FAILED' or SPFRX.healthstate == 'HealthState.FAILED'"
+    ),
     "OK": rule_engine.Rule(
         "DS.healthstate == 'HealthState.OK' and SPFRX.healthstate == 'HealthState.OK'"
     ),
@@ -101,9 +101,6 @@ HEALTH_STATE_RULES_SPF_IGNORED = {
 }
 
 HEALTH_STATE_RULES_SPFRX_IGNORED = {
-    "FAILED": rule_engine.Rule(
-        "DS.healthstate == 'HealthState.FAILED' or SPF.healthstate == 'SPFHealthState.FAILED'"
-    ),
     "DEGRADED": rule_engine.Rule(
         "("
         "    DS.healthstate == 'HealthState.DEGRADED' and "
@@ -122,6 +119,9 @@ HEALTH_STATE_RULES_SPFRX_IGNORED = {
         "    SPF.healthstate == 'SPFHealthState.DEGRADED' "
         ")"
     ),
+    "FAILED": rule_engine.Rule(
+        "DS.healthstate == 'HealthState.FAILED' or SPF.healthstate == 'SPFHealthState.FAILED'"
+    ),
     "OK": rule_engine.Rule(
         "DS.healthstate == 'HealthState.OK' and SPF.healthstate == 'SPFHealthState.NORMAL'"
     ),
@@ -131,8 +131,8 @@ HEALTH_STATE_RULES_SPFRX_IGNORED = {
 }
 
 HEALTH_STATE_RULES_DS_ONLY = {
-    "FAILED": rule_engine.Rule("DS.healthstate == 'HealthState.FAILED'"),
     "DEGRADED": rule_engine.Rule("DS.healthstate == 'HealthState.DEGRADED'"),
+    "FAILED": rule_engine.Rule("DS.healthstate == 'HealthState.FAILED'"),
     "OK": rule_engine.Rule("DS.healthstate == 'HealthState.OK'"),
     "UNKNOWN": rule_engine.Rule("DS.healthstate == 'HealthState.UNKNOWN'"),
 }
