@@ -13,3 +13,4 @@ User Guide
    Tracking<tracking>
    Troubleshooting<troubleshooting>
    Aggregation Rules<aggregation_rules/aggregation_rules>
+   Alarms<alarms>
