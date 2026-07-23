@@ -6,13 +6,39 @@ from ska_control_model import HealthState
 
 from ska_mid_dish_manager.models.dish_enums import SPFHealthState
 
-# TODO: If the test fails during execution it leaves the healthState
-# in an unexpected state for subsequent tests, clean up fixture
-# is needed
+
+@pytest.fixture
+def ensure_health_state_returns_to_ok(
+    event_store_class,
+    dish_manager_proxy: tango.DeviceProxy,
+    spf_device_proxy: tango.DeviceProxy,
+    spfrx_device_proxy: tango.DeviceProxy,
+):
+    """Ensure dish healthState is restored to OK after test."""
+    yield
+
+    if dish_manager_proxy.healthState != HealthState.OK:
+        health_state_events = event_store_class()
+        sub_id = dish_manager_proxy.subscribe_event(
+            "healthState", tango.EventType.CHANGE_EVENT, health_state_events
+        )
+
+        spfrx_device_proxy.write_attribute("healthState", HealthState.OK)
+        spf_device_proxy.write_attribute("healthState", SPFHealthState.NORMAL)
+
+        health_state_events.wait_for_value(HealthState.OK, timeout=7)
+
+        dish_manager_proxy.unsubscribe_event(sub_id)
 
 
 @pytest.mark.acceptance
-def test_healthinfo(dish_manager_proxy, spfrx_device_proxy, spf_device_proxy, event_store_class):
+def test_healthinfo(
+    dish_manager_proxy,
+    spfrx_device_proxy,
+    spf_device_proxy,
+    event_store_class,
+    ensure_health_state_returns_to_ok,
+):
     """Test the healthInfo attribute."""
     event_store = event_store_class()
     sub_id = dish_manager_proxy.subscribe_event(
