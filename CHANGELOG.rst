@@ -19,6 +19,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - lastCommandFailure attribute added.
 - `UpdateTZData` command added
   - Downloads the latest TZ data file from the TZ_DATA_URL env var and uploads it to SPFRx
+- Expanded healthState aggregation logic to report healthState `FAILED` if a monitored component's connection is lost
 
 Version 10.0.0
 **************

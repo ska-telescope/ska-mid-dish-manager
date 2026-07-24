@@ -840,8 +840,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         spf_component_state_dict = self.sub_component_managers["SPF"].component_state
         spfrx_component_state_dict = self.sub_component_managers["SPFRX"].component_state
 
-        # Use the subcomponent manager objects to get the communication_state
-        # directly as communicationState is not part of the component state dict
         active_sub_component_managers = self.get_active_sub_component_managers()
 
         # Check the b5dc subcomponent managers exist and that the device is not ignored
@@ -851,6 +849,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if is_b5dc_monitored:
             b5dc_component_state_dict = self.sub_component_managers["B5DC"].component_state
 
+        # Use the subcomponent manager objects to get the communication_state
+        # directly as communicationState is not part of the component state dict
         ds_comm_state = getattr(
             active_sub_component_managers.get("DS", {}),
             "communication_state",
