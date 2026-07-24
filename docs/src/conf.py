@@ -88,6 +88,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinxcontrib.plantuml",
     "sphinx_copybutton",
+    "IPython.sphinxext.ipython_console_highlighting"
 ]
 autoclass_content = "class"
 plantuml_syntax_error_image = True

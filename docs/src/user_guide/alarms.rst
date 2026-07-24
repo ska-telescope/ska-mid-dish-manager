@@ -12,7 +12,7 @@ Usage
 -----
 This code block below illustrates how to setup the alarm thresholds for an attribute and subscribe to the alarm events.
 
-.. code-block:: python
+.. code-block:: ipython
 
     In [1]: dm = DeviceProxy("mid-dish/dish-manager/SKA001")
     In [2]: dm.hPolRfPowerOut
