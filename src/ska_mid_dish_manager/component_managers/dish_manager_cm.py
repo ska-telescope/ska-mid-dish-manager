@@ -844,25 +844,39 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # directly as communicationState is not part of the component state dict
         active_sub_component_managers = self.get_active_sub_component_managers()
 
-        # Check the subcomponent managers exist and that the device is not ignored
+        # Check the b5dc subcomponent managers exist and that the device is not ignored
         is_b5dc_monitored = "B5DC" in active_sub_component_managers
-        is_spf_monitored = "SPF" in active_sub_component_managers
-        is_spfrx_monitored = "SPFRX" in active_sub_component_managers
 
+        b5dc_component_state_dict = {}
         if is_b5dc_monitored:
             b5dc_component_state_dict = self.sub_component_managers["B5DC"].component_state
 
+        ds_comm_state = getattr(
+            active_sub_component_managers.get("DS", {}),
+            "communication_state",
+            CommunicationStatus.DISABLED,
+        )
+        spfrx_comm_state = getattr(
+            active_sub_component_managers.get("SPFRX", {}),
+            "communication_state",
+            CommunicationStatus.DISABLED,
+        )
+        spf_comm_state = getattr(
+            active_sub_component_managers.get("SPF", {}),
+            "communication_state",
+            CommunicationStatus.DISABLED,
+        )
+        b5dc_comm_state = getattr(
+            active_sub_component_managers.get("B5DC", {}),
+            "communication_state",
+            CommunicationStatus.DISABLED,
+        )
+
         new_health_state = self._state_transition.compute_dish_health_state(
-            active_sub_component_managers["DS"].communication_state,
-            active_sub_component_managers["SPFRX"].communication_state
-            if is_spfrx_monitored
-            else CommunicationStatus.DISABLED,
-            active_sub_component_managers["SPF"].communication_state
-            if is_spf_monitored
-            else CommunicationStatus.DISABLED,
-            active_sub_component_managers["B5DC"].communication_state
-            if is_b5dc_monitored
-            else CommunicationStatus.DISABLED,
+            ds_comm_state,
+            spfrx_comm_state,
+            spf_comm_state,
+            b5dc_comm_state,
             ds_component_state_dict,
             spfrx_component_state_dict if not self.is_device_ignored("SPFRX") else None,
             spf_component_state_dict if not self.is_device_ignored("SPF") else None,
@@ -872,28 +886,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.info(
             (
                 "Updating dish manager healthState with: [%s]. "
-                "Sub-components healthStates: DS [%s], SPF [%s], SPFRX [%s]. "
+                "Sub-components healthStates: DS [%s], SPFRX [%s], SPF [%s]. "
                 "Sub-components communication states: DS [%s], DSC [%s], SPF [%s], SPFRX [%s], "
                 "B5DC Proxy [%s], B5DC Server [%s]. "
             ),
             new_health_state,
             ds_component_state_dict["healthstate"],
-            spf_component_state_dict["healthstate"],
             spfrx_component_state_dict["healthstate"],
-            active_sub_component_managers["DS"].communication_state,
+            spf_component_state_dict["healthstate"],
+            ds_comm_state,
             CommunicationStatus(ds_component_state_dict["connectionstate"]),
-            active_sub_component_managers["SPF"].communication_state
-            if is_spf_monitored
-            else "DishLMC not configured for SPFC monitoring",
-            active_sub_component_managers["SPFRX"].communication_state
-            if is_spfrx_monitored
-            else "DishLMC not configured for SPFRX monitoring",
-            active_sub_component_managers["B5DC"].communication_state
-            if is_b5dc_monitored
-            else "DishLMC not configured for B5DC monitoring",
-            CommunicationStatus(b5dc_component_state_dict["connectionstate"])
-            if is_b5dc_monitored
-            else "DishLMC not configured for B5DC monitoring",
+            spfrx_comm_state,
+            spf_comm_state,
+            b5dc_comm_state,
+            b5dc_component_state_dict.get("connectionstate", CommunicationStatus.DISABLED),
         )
 
         # TODO: Investigate double healthState change events
@@ -1052,7 +1058,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(dishmode=new_dish_mode)
 
         if "healthstate" in kwargs:
-            # Recompute the dish manager healthState following an update to the health state
             self._update_dish_health_state_and_info()
 
         if "pointingstate" in kwargs:
@@ -1265,10 +1270,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             self._update_component_state(dscconnectionstate=dscconnectionstate)
 
-            # Recompute the dish manager healthState following an update to DS
-            # Manager - DS Controller communicationState
-            self._update_dish_health_state_and_info()
-
         # B5dcServerConnectionState attribute
         if device == DishDevice.B5DC and "connectionstate" in kwargs:
             b5dcserverconnectionstate = kwargs["connectionstate"]
@@ -1278,8 +1279,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             self._update_component_state(b5dcserverconnectionstate=b5dcserverconnectionstate)
 
-            # Recompute the dish manager healthState following an update to the
-            # B5dc Proxy - B5dc Server communicationState
+        if "connectionstate" in kwargs:
             self._update_dish_health_state_and_info()
 
     def stow_to_maintenance_transition_callback(self, start: bool) -> None:

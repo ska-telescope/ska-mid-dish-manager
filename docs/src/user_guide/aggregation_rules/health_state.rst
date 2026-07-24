@@ -92,7 +92,7 @@ under which their states will not be considered.
 
    * - `b5dcConnectionState`
      - `Dish Manager` to/from `B5dc Proxy`
-     - `ignoreB5dc` == `True`
+     - `ignoreB5dc` == `True` OR If no configured B5dc Proxy TRL is setup to be monitored
   
    * - `b5dcServerConnectionState`
      - `B5dc Proxy` to/from `B5dc Server`

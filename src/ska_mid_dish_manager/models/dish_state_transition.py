@@ -83,7 +83,27 @@ class StateTransition:
         spf_component_state: Optional[dict] = None,
         b5dc_component_state: Optional[dict] = None,
     ) -> bool:
-        """Return a flag indicating whether the expected subdevices are connected or not."""
+        """Return a flag indicating whether the expected subdevices are connected or not.
+
+        :param ds_communication_state: DS device component communication state
+        :type ds_communication_state: CommunicationStatus
+        :param spfrx_communication_state: SPFRX device component communication state
+        :type spfrx_communication_state: CommunicationStatus
+        :param spf_communication_state: SPF device component communication state
+        :type spf_communication_state: CommunicationStatus
+        :param b5dc_communication_state: B5dc device component communication state
+        :type b5dc_communication_state: CommunicationStatus
+        :param ds_component_state: DS device component state
+        :type ds_component_state: dict
+        :param spfrx_component_state: SPFRX device component state
+        :type spfrx_component_state: dict
+        :param spf_component_state: SPF device component state
+        :type spf_component_state: dict
+        :param b5dc_component_state: B5dc device component state
+        :type b5dc_component_state: dict
+        :return: Flag indicating whether an expected device is disconnected
+        :rtype: bool
+        """
         # Tentatively assume all expected subdevices are connected
         device_disconnected = False
 
