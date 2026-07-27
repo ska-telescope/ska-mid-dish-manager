@@ -18,7 +18,7 @@ def _make_baseline_healthy(dish_manager_cm) -> None:
 @pytest.mark.unit
 @pytest.mark.forked
 def test_healthinfo_reports_ds_reasons(dish_manager_resources, event_store_class):
-    """healthInfo reports DS's real reasons instead of the generic placeholder."""
+    """HealthInfo reports DS's real reasons instead of the generic placeholder."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     ds_fqdn = ds_cm._tango_device_fqdn
@@ -43,7 +43,7 @@ def test_healthinfo_reports_ds_reasons(dish_manager_resources, event_store_class
 def test_healthinfo_reports_ds_reasons_without_healthstate_change(
     dish_manager_resources, event_store_class
 ):
-    """healthInfo is kept in sync when DS's healthInfo changes without healthState changing.
+    """HealthInfo is kept in sync when DS's healthInfo changes without healthState changing.
 
     DS's healthState only reflects mode/application state, so DSC errors/safety issues or a
     lost connection can update DS's healthInfo independently of healthState.
@@ -64,7 +64,7 @@ def test_healthinfo_reports_ds_reasons_without_healthstate_change(
 @pytest.mark.unit
 @pytest.mark.forked
 def test_healthinfo_reports_multiple_ds_reasons(dish_manager_resources, event_store_class):
-    """healthInfo reports every DS reason as its own entry when DS has multiple at once.
+    """HealthInfo reports every DS reason as its own entry when DS has multiple at once.
 
     DS itself joins multiple active flags within one aggregated status (e.g. dscErrorStatus)
     with "; ", so a DS healthInfo entry can already contain more than one DSC error - that
@@ -103,7 +103,7 @@ def test_healthinfo_reports_multiple_ds_reasons(dish_manager_resources, event_st
 def test_healthinfo_falls_back_to_placeholder_when_ds_reports_no_reasons(
     dish_manager_resources, event_store_class
 ):
-    """healthInfo falls back to the generic placeholder if DS hasn't reported specific reasons."""
+    """HealthInfo falls back to the generic placeholder if DS hasn't reported specific reasons."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     ds_fqdn = ds_cm._tango_device_fqdn
