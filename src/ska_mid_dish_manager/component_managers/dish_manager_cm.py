@@ -768,7 +768,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def generate_healthinfo(self) -> List[str]:
         """Report the reason for healthstate failures.
 
-        TODO work out how to get the actual reasons.
+        DS reports its own real reasons via its `healthInfo` attribute. SPF and SPFRx don't expose
+        an equivalent attribute, so they fall back to an unknown placeholder.
         """
         health_info = []
         for key, com_man in self.sub_component_managers.items():
@@ -782,6 +783,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     health_info.append(
                         f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
                     )
+            elif key == "DS":
+                ds_health_info = com_man.component_state.get("healthinfo") or []
+                if ds_health_info:
+                    for reason in ds_health_info:
+                        health_info.append(f'{com_man._tango_device_fqdn}: ["{reason}"]')
+                elif health_state == HealthState.UNKNOWN:
+                    health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
+                elif health_state in (HealthState.FAILED, HealthState.DEGRADED):
+                    health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
             else:
                 if health_state == HealthState.UNKNOWN:
                     health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
@@ -1057,7 +1067,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     )
                 self._update_component_state(dishmode=new_dish_mode)
 
-        if "healthstate" in kwargs:
+        if "healthstate" in kwargs or "healthinfo" in kwargs:
+            # "healthinfo" is included as DS's healthInfo can change (e.g. a DSC error or
+            # connection loss) independently of its healthState, so healthInfo needs to stay
+            # in sync even when healthState itself hasn't flipped.
             self._update_dish_health_state_and_info()
 
         if "pointingstate" in kwargs:
