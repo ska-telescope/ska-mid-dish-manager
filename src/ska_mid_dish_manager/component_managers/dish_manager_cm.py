@@ -326,6 +326,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 tracktableendindex=0,
                 dscctrlstate=DscCtrlState.NO_AUTHORITY,
                 connectionstate=CommunicationStatus.DISABLED,
+                dscerrorstatus="OK",
+                dscwarningstatus="OK",
+                dscsafetystatus="OK",
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.DS
                 ),
@@ -422,6 +425,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "trackTableCurrentIndex",
                 "trackTableEndIndex",
                 "dscCtrlState",
+                "dscerrorstatus",
+                "dscwarningstatus",
+                "dscsafetystatus",
             ],
             "SPFRX": [
                 "noiseDiodeMode",
