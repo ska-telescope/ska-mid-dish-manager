@@ -9,6 +9,7 @@ Component Managers
     DS Component Manager<ds_cm>
     SPF Component Manager<spf_cm>
     SPFRX Component Manager<spfrx_cm>
+    B5DC Component Manager<b5dc_cm>
     WMS Component Manager<wms_cm>
     DishManager Component Manager<dish_manager_cm>
     Generic Component Manager<tango_device_cm>

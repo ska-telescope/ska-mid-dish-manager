@@ -31,7 +31,7 @@ def callbacks() -> dict:
     }
 
 
-def execute_command_side_effect(command_name, command_arg=None):
+def execute_command_side_effect(command_name, command_arg=None, truncate_arg_in_logs=False):
     # fast commands
     if command_name in ["SetKValue", "TrackLoadTable", "ReleaseAuth"]:
         return (TaskStatus.COMPLETED, f"{command_name} successfully executed")
@@ -74,6 +74,10 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             disable=MagicMock(),
         ),
         patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
+        patch.multiple(
+            "ska_mid_dish_manager.component_managers.dish_manager_cm.DishManagerComponentManager",
+            _update_dish_health_state_and_info=MagicMock(),
+        ),
     ):
         dish_manager_cm = DishManagerComponentManager(
             LOGGER,

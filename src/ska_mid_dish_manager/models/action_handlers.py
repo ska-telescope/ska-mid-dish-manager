@@ -249,6 +249,7 @@ class ActionHandler:
             f"{cmd.device}.{cmd.command_name}"
             for cmd in self.fanned_out_commands
             if not getattr(cmd, "is_device_ignored", False)
+            and not (cmd.skip_if_already_satisfied and cmd.already_satisfied)
         ]
         fanned_out_commands_str = ", ".join(fanned_out_commands) if fanned_out_commands else "None"
         self.logger.info(
@@ -382,6 +383,7 @@ class SequentialActionHandler(ActionHandler):
             f"{cmd.device}.{cmd.command_name}"
             for cmd in self.fanned_out_commands
             if not getattr(cmd, "is_device_ignored", False)
+            and not (cmd.skip_if_already_satisfied and cmd.already_satisfied)
         ]
         sequential_commands_str = ", ".join(sequential_commands) if sequential_commands else "None"
         self.logger.info(

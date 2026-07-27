@@ -8,7 +8,8 @@ User Guide
    Getting Started<getting_started>
    How To<how_to>
    Abort on DishManager<abort>
-   Apply Pointing Model<apply_pointing_model> 
+   Apply Pointing Model<apply_pointing_model>
+   Update SPFRx timezone data<update_tz_data>
    Tracking<tracking>
    Troubleshooting<troubleshooting>
    Aggregation Rules<aggregation_rules/aggregation_rules>
