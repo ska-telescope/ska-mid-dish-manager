@@ -526,6 +526,8 @@ class DishManager(SKAController):
             "rftemperature": "rfTemperature",
             "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
             "dscerrorstatuses": "dscErrorStatuses",
+            "dscwarningstatuses": "dscWarningStatuses",
+            "dscsafetystatuses": "dscSafetyStatuses",
             "healthinfo": "healthInfo",
             "b1healthstate": "spfcB1HealthState",
             "b2healthstate": "spfcB2HealthState",
@@ -2204,6 +2206,26 @@ class DishManager(SKAController):
     def rfcmPsuPcbTemperature(self):
         """Return the temperature of the RFCM PSU PCB in deg."""
         return self.component_manager.component_state.get("rfcmpsupcbtemperature", 0.0)
+
+    @attribute(
+        dtype=str,
+        access=AttrWriteType.READ,
+        doc="Report the current DSC safety status as a semicolon-delimited list. "
+        "Reports 'OK' if no safety statuses are present.",
+    )
+    def dscSafetyStatuses(self):
+        """Return the aggregated safety statuses from the DSC."""
+        return self.component_manager.component_state.get("dscsafetystatuses", "")
+
+    @attribute(
+        dtype=str,
+        access=AttrWriteType.READ,
+        doc="Report the current DSC warning as a semicolon-delimited list. Reports 'OK' if no "
+        "warnings are present.",
+    )
+    def dscWarningStatuses(self):
+        """Return the aggregated warning statuses from the DSC."""
+        return self.component_manager.component_state.get("dscwarningstatuses", "")
 
     @attribute(
         dtype=str,

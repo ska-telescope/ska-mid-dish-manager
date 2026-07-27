@@ -24,6 +24,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 - Update receiver band to Band1 for SPFRx if requested band is B5b
 - Add param for delay to FannedOutCommand completion. Used for SPFRx ConfigureBand command.
+- Added `dscWarningStatus` and `dscSafetyStatus` attributes.
+- Migrated `dscErrorStatus` aggregation logic to dish structure manager.
 
 Version 10.0.0
 **************

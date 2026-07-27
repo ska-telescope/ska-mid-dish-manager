@@ -8,7 +8,7 @@ import threading
 import time
 from functools import partial
 from threading import Lock
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import requests
 import tango
@@ -41,7 +41,6 @@ from ska_mid_dish_manager.models.command_actions import (
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
-    DS_ERROR_STATUS_ATTRIBUTES,
     DSC_MIN_POWER_LIMIT_KW,
     MAINTENANCE_MODE_ACTIVE_PROPERTY,
     MAINTENANCE_MODE_FALSE_VALUE,
@@ -226,7 +225,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             b4lnapowerstate=False,
             b5alnapowerstate=False,
             b5blnapowerstate=False,
-            dscerrorstatuses=self._aggregate_dsc_error_statuses({}),
+            dscerrorstatuses="OK",
+            dscwarningstatuses="OK",
+            dscsafetystatuses="OK",
             dscconnectionstate=CommunicationStatus.DISABLED,
             b5dcserverconnectionstate=CommunicationStatus.DISABLED,
             healthinfo=[],
@@ -1193,15 +1194,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 self._update_component_state(**{attr_lower: new_value})
 
-        # DS error status attributes
-        if any(key.lower() in kwargs for key in DS_ERROR_STATUS_ATTRIBUTES):
-            statuses = self._aggregate_dsc_error_statuses(ds_component_state)
-            self.logger.debug(
-                "Updating dscerrorstatuses with statuses: %s",
-                statuses,
-            )
-            self._update_component_state(dscerrorstatuses=statuses)
-
         # DS connectionState attribute
         if device == DishDevice.DS and "connectionstate" in kwargs:
             dscconnectionstate = kwargs["connectionstate"]
@@ -1244,21 +1236,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Cannot transition to MAINTENANCE mode from %s mode.",
                     self.component_state["dishmode"],
                 )
-
-    def _aggregate_dsc_error_statuses(self, ds_component_state: dict[str, Any]):
-        """Aggregate any error statuses from the DSC into one string."""
-        active_errors: list[str] = []
-
-        for key, description in DS_ERROR_STATUS_ATTRIBUTES.items():
-            comp_state_key = key.lower()
-            if ds_component_state.get(comp_state_key) is True:
-                active_errors.append(description)
-
-        if active_errors:
-            summary = "; ".join(active_errors)
-        else:
-            summary = "OK"
-        return summary
 
     # ----------------------------------------
     # Command object/ attribute write handlers
