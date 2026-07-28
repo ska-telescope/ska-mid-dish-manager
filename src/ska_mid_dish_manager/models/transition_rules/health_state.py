@@ -2,6 +2,13 @@
 
 import rule_engine
 
+# NOTE! The following healthState computations apply under the assumption
+# that all components/subdevices that DishLMC is expected to monitor & control are
+# available and that connection with those components is ESTABLISHED
+
+# If a component is expected and its communicationState is DISABLED or
+# NOT_ESTABLISHED the computed dish healthState will be overwritten to report FAILED
+
 HEALTH_STATE_RULES_ALL_DEVICES = {
     "DEGRADED": rule_engine.Rule(
         "("

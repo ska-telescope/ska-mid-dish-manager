@@ -14,6 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.unit
 @mock.patch("ska_mid_dish_manager.component_managers.device_proxy_factory.tango")
+@mock.patch("ska_mid_dish_manager.component_managers.tango_device_cm.CallbackScheduler")
 def test_monitor_ping_is_executed_on_spfrx_while_communication_is_sought(patch_tango, caplog):
     """Test that the 'MonitorPing' command is executed on the
     SPFRxComponentManager when communication is initiated.
