@@ -622,6 +622,7 @@ class ConfigureBandAction(Action):
                         sub_band_int = 3
                     elif sub_band_int == 3:
                         sub_band_int = 2
+                    self.logger.warning("Swapping sub-band 2 and 3 to resolve SKB-1475.")
                     # Remove after DD and ICD discrepancy resolved
 
                     b5dc_freq_enum = B5dcFrequency(sub_band_int)
