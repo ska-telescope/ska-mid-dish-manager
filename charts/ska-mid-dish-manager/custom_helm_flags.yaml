@@ -31,11 +31,3 @@ dishmanager:
     station_ids: ["1"]
   b5dcproxy:
     monitoring: true
-
-ska-mid-dish-ds-manager:
-  dsmanager:
-    image:
-      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
-      image: ska-mid-dish-ds-manager
-      tag: 8.2.6-dev.c93b4002e
-      pullPolicy: IfNotPresent
