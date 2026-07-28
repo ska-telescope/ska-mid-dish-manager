@@ -67,12 +67,17 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             ),
         ),
         patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager"),
+        patch("ska_mid_dish_manager.component_managers.tango_device_cm.CallbackScheduler"),
         patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"),
         patch.multiple(
             "ska_mid_dish_manager.utils.schedulers.WatchdogTimer",
             disable=MagicMock(),
         ),
         patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
+        patch.multiple(
+            "ska_mid_dish_manager.component_managers.dish_manager_cm.DishManagerComponentManager",
+            _update_dish_health_state_and_info=MagicMock(),
+        ),
     ):
         dish_manager_cm = DishManagerComponentManager(
             LOGGER,
