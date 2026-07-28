@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added workaround to resolve sub-band mapping for discrepancy between B5DC ICD and design document (SKB-1475).
 
 Version 10.0.0-rc.1
 *******************

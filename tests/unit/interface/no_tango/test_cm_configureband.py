@@ -351,6 +351,21 @@ def test_configureband_b5b_without_expected_subband_values(
                 ]
             }
         }""",
+            13.86,
+        ),
+        (
+            """{
+            "dish": {
+                "receiver_band": "5b",
+                "sub_band": "3",
+                "spfrx_processing_parameters": [
+                    {
+                        "dishes": ["all"],
+                        "sync_pps": true
+                    }
+                ]
+            }
+        }""",
             13.2,
         ),
     ],
