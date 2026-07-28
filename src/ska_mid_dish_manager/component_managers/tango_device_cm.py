@@ -199,7 +199,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
             try:
                 version = f"{attribute} - {self.read_attribute_value(attribute)}"
             except tango.DevFailed:
-                version = f"{attribute}, N/A"
+                version = f"{attribute} - N/A"
             version_strs.append(version)
         return "; ".join(version_strs)
 
