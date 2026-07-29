@@ -64,12 +64,7 @@ def test_healthinfo_reports_ds_reasons_without_healthstate_change(
 @pytest.mark.unit
 @pytest.mark.forked
 def test_healthinfo_reports_multiple_ds_reasons(dish_manager_resources, event_store_class):
-    """HealthInfo reports every DS reason as its own entry when DS has multiple at once.
-
-    DS itself joins multiple active flags within one aggregated status (e.g. dscErrorStatus)
-    with "; ", so a DS healthInfo entry can already contain more than one DSC error - that
-    stays intact as a single DishManager healthInfo entry, alongside the other DS reasons.
-    """
+    """HealthInfo reports every DS reason as its own entry when DS has multiple at once."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     ds_fqdn = ds_cm._tango_device_fqdn

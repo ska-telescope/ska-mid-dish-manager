@@ -1068,9 +1068,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self._update_component_state(dishmode=new_dish_mode)
 
         if "healthstate" in kwargs or "healthinfo" in kwargs:
-            # "healthinfo" is included as DS's healthInfo can change (e.g. a DSC error or
-            # connection loss) independently of its healthState, so healthInfo needs to stay
-            # in sync even when healthState itself hasn't flipped.
             self._update_dish_health_state_and_info()
 
         if "pointingstate" in kwargs:
