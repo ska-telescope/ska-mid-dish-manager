@@ -768,39 +768,26 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def generate_healthinfo(self) -> List[str]:
         """Report the reason for healthstate failures.
 
-        DS reports its own real reasons via its `healthInfo` attribute. SPF and SPFRx don't expose
-        an equivalent attribute, so they fall back to an unknown placeholder.
+        DS reports its own real reasons via its `healthInfo` attribute. SPF, SPFRx, and B5DC don't
+        expose an equivalent attribute, so they fall back to an unknown placeholder.
         """
         health_info = []
+
         for key, com_man in self.sub_component_managers.items():
             health_state = com_man.component_state.get("healthstate")
-            if key == "SPF":
-                if health_state == SPFHealthState.UNKNOWN:
-                    health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
-                if health_state == SPFHealthState.FAILED:
-                    health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
-                if health_state == SPFHealthState.DEGRADED:
-                    health_info.append(
-                        f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
-                    )
-            elif key == "DS":
-                ds_health_info = com_man.component_state.get("healthinfo") or []
-                if ds_health_info:
-                    for reason in ds_health_info:
-                        health_info.append(f'{com_man._tango_device_fqdn}: ["{reason}"]')
-                elif health_state == HealthState.UNKNOWN:
-                    health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
-                elif health_state in (HealthState.FAILED, HealthState.DEGRADED):
-                    health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
-            else:
-                if health_state == HealthState.UNKNOWN:
-                    health_info.append(f'{com_man._tango_device_fqdn}: ["reason unknown"]')
-                if health_state == HealthState.FAILED:
-                    health_info.append(f'{com_man._tango_device_fqdn}: ["Unknown failure reason"]')
-                if health_state == HealthState.DEGRADED:
-                    health_info.append(
-                        f'{com_man._tango_device_fqdn}: ["Unknown degraded reason"]'
-                    )
+            fqdn = com_man._tango_device_fqdn
+            state_label = f'{type(health_state).__name__}.{health_state.name}'
+
+            if key == "DS" and com_man.component_state.get("healthinfo"):
+                for reason in com_man.component_state["healthinfo"]:
+                    health_info.append(f'{fqdn}: {state_label}, ["{reason}"]')
+            elif health_state.name == "UNKNOWN":
+                health_info.append(f'{fqdn}: {state_label}, ["reason unknown"]')
+            elif health_state.name == "FAILED":
+                health_info.append(f'{fqdn}: {state_label}, ["Unknown failure reason"]')
+            elif health_state.name == "DEGRADED":
+                health_info.append(f'{fqdn}: {state_label}, ["Unknown degraded reason"]')
+
         return health_info
 
     def _start_abort_sequence(
