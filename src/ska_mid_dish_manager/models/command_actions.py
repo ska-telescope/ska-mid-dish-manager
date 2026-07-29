@@ -592,6 +592,7 @@ class ConfigureBandAction(Action):
                 completion_delay_s=SPFRX_CONFIGURE_COMPLETION_DELAY_S,
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
+                skip_if_already_satisfied=True,
             )
 
         else:
@@ -619,6 +620,7 @@ class ConfigureBandAction(Action):
                 completion_delay_s=SPFRX_CONFIGURE_COMPLETION_DELAY_S,
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
+                skip_if_already_satisfied=True,
             )
 
         fanned_out_commands = [spfrx_configure_band_command]
