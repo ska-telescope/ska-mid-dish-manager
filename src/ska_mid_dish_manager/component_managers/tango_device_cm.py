@@ -199,7 +199,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
             try:
                 version = f"{attribute} - {self.read_attribute_value(attribute)}"
             except tango.DevFailed:
-                version = f"{attribute} - N/A"
+                version = f"{attribute} - Unable to be read"
             version_strs.append(version)
         return "; ".join(version_strs)
 
@@ -213,7 +213,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
             try:
                 build_state = f"{self.read_attribute_value('buildState')}"
             except tango.DevFailed:
-                build_state = "buildState not available"
+                build_state = "Unable to read buildState"
         self._update_component_state(buildstate=build_state)
 
     def sync_communication_to_valid_event(self, event_attr_name: str) -> None:
