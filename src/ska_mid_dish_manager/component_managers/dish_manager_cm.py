@@ -773,7 +773,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """
         health_info = []
 
-        for key, com_man in self.sub_component_managers.items():
+        for key, com_man in self.get_active_sub_component_managers().items():
             health_state = com_man.component_state.get("healthstate")
             if health_state is None:
                 continue
