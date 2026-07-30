@@ -62,7 +62,8 @@ def test_healthinfo(
     spf_device_proxy.write_attribute("healthState", SPFHealthState.NORMAL)
     spfrx_device_proxy.write_attribute("healthState", HealthState.DEGRADED)
     event_store.wait_for_value(
-        ('mid-dish/simulator-spfrx/SKA001: HealthState.DEGRADED, ["Unknown degraded reason"]',), timeout=10
+        ('mid-dish/simulator-spfrx/SKA001: HealthState.DEGRADED, ["Unknown degraded reason"]',),
+        timeout=10,
     )
 
     spfrx_device_proxy.write_attribute("healthState", HealthState.OK)

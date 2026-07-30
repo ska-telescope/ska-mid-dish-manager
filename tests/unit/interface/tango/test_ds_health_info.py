@@ -32,7 +32,9 @@ def test_healthinfo_reports_ds_reasons(dish_manager_resources, event_store_class
         healthstate=HealthState.FAILED,
         healthinfo=["DSC error status: General error"],
     )
-    event_store.wait_for_value((f'{ds_fqdn}: HealthState.FAILED, ["DSC error status: General error"]',))
+    event_store.wait_for_value(
+        (f'{ds_fqdn}: HealthState.FAILED, ["DSC error status: General error"]',)
+    )
 
     ds_cm._update_component_state(healthstate=HealthState.OK, healthinfo=[])
     event_store.wait_for_value(())
@@ -58,7 +60,9 @@ def test_healthinfo_reports_ds_reasons_without_healthstate_change(
     event_store.wait_for_value(())
 
     ds_cm._update_component_state(healthinfo=["DSC safety status: E-stop pressed Pedestal"])
-    event_store.wait_for_value((f'{ds_fqdn}: HealthState.OK, ["DSC safety status: E-stop pressed Pedestal"]',))
+    event_store.wait_for_value(
+        (f'{ds_fqdn}: HealthState.OK, ["DSC safety status: E-stop pressed Pedestal"]',)
+    )
 
 
 @pytest.mark.unit
@@ -85,10 +89,12 @@ def test_healthinfo_reports_multiple_ds_reasons(dish_manager_resources, event_st
     )
     event_store.wait_for_value(
         (
-            f'{ds_fqdn}: HealthState.FAILED, ["Connection to DSC is not established: NOT_ESTABLISHED"]',
-            f'{ds_fqdn}: HealthState.FAILED, ["General failure: DSC is not in the expected mode and application '
-            'state for normal operation"]',
-            f'{ds_fqdn}: HealthState.FAILED, ["DSC error status: General error; Tracking Controller error"]',
+            f'{ds_fqdn}: HealthState.FAILED, ["Connection to DSC is not established: '
+            'NOT_ESTABLISHED"]',
+            f'{ds_fqdn}: HealthState.FAILED, ["General failure: DSC is not in the expected mode '
+            'and application state for normal operation"]',
+            f'{ds_fqdn}: HealthState.FAILED, ["DSC error status: General error; Tracking '
+            'Controller error"]',
         )
     )
 

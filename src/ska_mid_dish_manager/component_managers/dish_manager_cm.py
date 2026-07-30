@@ -776,7 +776,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         for key, com_man in self.sub_component_managers.items():
             health_state = com_man.component_state.get("healthstate")
             fqdn = com_man._tango_device_fqdn
-            state_label = f'{type(health_state).__name__}.{health_state.name}'
+            state_label = f"{type(health_state).__name__}.{health_state.name}"
 
             if key == "DS" and com_man.component_state.get("healthinfo"):
                 for reason in com_man.component_state["healthinfo"]:
