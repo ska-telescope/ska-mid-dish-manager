@@ -41,7 +41,7 @@ class TestDishManagerVersioning:
 
             class PatchedDM(DishManager):
                 B5DCDeviceFqdn = tango.server.device_property(
-                    dtype=tango.DevVarStringArray, default_value="a/b/c"
+                    dtype=tango.DevString, default_value="a/b/c"
                 )
 
             self.tango_context = DeviceTestContext(PatchedDM)
@@ -69,7 +69,7 @@ class TestDishManagerVersioning:
         assert build_state_json["spfc_device"]["version"] == ""
         assert build_state_json["spfc_device"]["address"] == DEFAULT_SPFC_TRL
         assert build_state_json["b5dc_device"]["version"] == ""
-        assert build_state_json["b5dc_device"]["address"] == ["a/b/c"]
+        assert build_state_json["b5dc_device"]["address"] == "a/b/c"
 
     def test_build_state_updates_through_cm(self):
         """Test the the build state gets updated when subdevice buildstate changes."""
@@ -101,14 +101,16 @@ class TestDishManagerVersioning:
         assert build_state_json["b5dc_device"]["version"] == build_state_update_b5dc
 
     @pytest.mark.parametrize(
-        "device, build_state_key",
+        "device, build_state_key, extended_version",
         [
-            ("SPF", "spfc_device"),
-            ("SPFRX", "spfrx_device"),
-            ("B5DC", "b5dc_device"),
+            ("SPF", "spfc_device", True),
+            ("SPFRX", "spfrx_device", True),
+            ("B5DC", "b5dc_device", False),
         ],
     )
-    def test_build_state_update_on_subdevice_connection(self, device: str, build_state_key: str):
+    def test_build_state_update_on_subdevice_connection(
+        self, device: str, build_state_key: str, extended_version: bool
+    ):
         """Test that spfc, spfrx and b5dc build states of subdevices get updated when a subdevice
         establishes connection.
         """
@@ -121,7 +123,13 @@ class TestDishManagerVersioning:
 
         build_state = self._dish_manager_proxy.buildState
         build_state_json = json.loads(build_state)
-        assert build_state_json[build_state_key]["version"] == dummy_build_state_version
+        if extended_version:
+            assert build_state_json[build_state_key]["version"] == (
+                f"serialNumbers - {dummy_build_state_version}; swVersions - "
+                f"{dummy_build_state_version}; fwVersions - {dummy_build_state_version}"
+            )
+        else:
+            assert build_state_json[build_state_key]["version"] == dummy_build_state_version
 
     def test_ds_version_update_on_subdevice_connection(self):
         """Test that the ds build state gets updated when the subdevice establishes

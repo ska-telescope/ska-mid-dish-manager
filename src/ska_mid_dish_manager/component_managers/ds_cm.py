@@ -33,6 +33,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "operatingMode",
             "powerState",
             "healthState",
+            "healthInfo",
             "pointingState",
             "indexerPosition",
             "desiredPointingAz",

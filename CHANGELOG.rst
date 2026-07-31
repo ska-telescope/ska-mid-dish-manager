@@ -7,6 +7,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added "serialNumbers", "swVersions" and "fwVersions" to SPFRx and SPFC `BuildState`
+
+  - Resolves SKB-1476, SKB-1479
+
 - Configured alarm events for all attributes.
 - Exposed SPFc per band healthState attributes on the dish manager interface.
 

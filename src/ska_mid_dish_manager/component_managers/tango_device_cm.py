@@ -189,18 +189,31 @@ class TangoDeviceComponentManager(BaseComponentManager):
     # helper methods
     # --------------
 
+    def _fetch_spf_spfrx_build_state_information(self) -> str:
+        """Read the version attributes and build the string.
+
+        Report attributes: "serialNumbers", "swVersions", "fwVersions".
+        """
+        version_strs = []
+        for attribute in ["serialNumbers", "swVersions", "fwVersions"]:
+            try:
+                version = f"{attribute} - {self.read_attribute_value(attribute)}"
+            except tango.DevFailed:
+                version = f"{attribute} - Unable to be read"
+            version_strs.append(version)
+        return "; ".join(version_strs)
+
     def _fetch_build_state_information(self) -> None:
-        if isinstance(self._tango_device_fqdn, tuple):
-            self._tango_device_fqdn = self._tango_device_fqdn[0]
-        build_state_attr = (
-            "swVersions" if "spf" in self._tango_device_fqdn.lower() else "buildState"
-        )
-        try:
-            build_state = self.read_attribute_value(build_state_attr)
-        except tango.DevFailed:
-            build_state = ""
+        """Get the buildState for every device."""
+        build_state = ""
+        if "spf" in self._tango_device_fqdn.lower():
+            build_state = self._fetch_spf_spfrx_build_state_information()
         else:
-            build_state = str(build_state)
+            # DSManager, B5DCProxy etc.
+            try:
+                build_state = f"{self.read_attribute_value('buildState')}"
+            except tango.DevFailed:
+                build_state = "Unable to read buildState"
         self._update_component_state(buildstate=build_state)
 
     def sync_communication_to_valid_event(self, event_attr_name: str) -> None:
