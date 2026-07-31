@@ -887,7 +887,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             (
                 "Updating dish manager healthState with: [%s]. "
                 "Sub-components healthStates: DS [%s], SPFRX [%s], SPF [%s]. "
-                "Sub-components communication states: DS [%s], DSC [%s], SPF [%s], SPFRX [%s], "
+                "Sub-components communication states: DS [%s], DSC [%s], SPFRX [%s], SPF [%s], "
                 "B5DC Proxy [%s], B5DC Server [%s]. "
             ),
             new_health_state,
