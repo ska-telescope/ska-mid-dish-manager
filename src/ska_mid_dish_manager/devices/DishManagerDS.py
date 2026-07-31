@@ -525,9 +525,9 @@ class DishManager(SKAController):
             "vpolrfpowerout": "vPolRfPowerOut",
             "rftemperature": "rfTemperature",
             "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
-            "dscerrorstatus": "dscErrorStatus",
-            "dscwarningstatus": "dscWarningStatus",
-            "dscsafetystatus": "dscSafetyStatus",
+            "dscerrorstatus": "dscErrorStatuses",
+            "dscwarningstatus": "dscWarningStatuses",
+            "dscsafetystatus": "dscSafetyStatuses",
             "healthinfo": "healthInfo",
             "b1healthstate": "spfcB1HealthState",
             "b2healthstate": "spfcB2HealthState",
@@ -2213,7 +2213,7 @@ class DishManager(SKAController):
         doc="Report the current DSC safety status as a semicolon-delimited list. "
         "Reports 'OK' if no safety statuses are present.",
     )
-    def dscSafetyStatus(self):
+    def dscSafetyStatuses(self):
         """Return the aggregated safety statuses from the DSC."""
         return self.component_manager.component_state.get("dscsafetystatus", "")
 
@@ -2223,7 +2223,7 @@ class DishManager(SKAController):
         doc="Report the current DSC warning as a semicolon-delimited list. Reports 'OK' if no "
         "warnings are present.",
     )
-    def dscWarningStatus(self):
+    def dscWarningStatuses(self):
         """Return the aggregated warning statuses from the DSC."""
         return self.component_manager.component_state.get("dscwarningstatus", "")
 
@@ -2233,7 +2233,7 @@ class DishManager(SKAController):
         doc="Report the current DSC errors as a semicolon-delimited list. Reports 'OK' if no "
         "errors are present.",
     )
-    def dscErrorStatus(self):
+    def dscErrorStatuses(self):
         """Return the aggregated error statuses from the DSC."""
         return self.component_manager.component_state.get("dscerrorstatus", "")
 

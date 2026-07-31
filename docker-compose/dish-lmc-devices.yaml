@@ -69,7 +69,7 @@ services:
 
   ds-manager:
     platform: linux/amd64
-    image: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager/ska-mid-dish-ds-manager:9.0.0
+    image: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager/ska-mid-dish-ds-manager:9.1.0
     container_name: ds-manager
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
