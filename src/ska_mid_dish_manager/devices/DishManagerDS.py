@@ -525,7 +525,9 @@ class DishManager(SKAController):
             "vpolrfpowerout": "vPolRfPowerOut",
             "rftemperature": "rfTemperature",
             "rfcmpsupcbtemperature": "rfcmPsuPcbTemperature",
-            "dscerrorstatuses": "dscErrorStatuses",
+            "dscerrorstatus": "dscErrorStatuses",
+            "dscwarningstatus": "dscWarningStatuses",
+            "dscsafetystatus": "dscSafetyStatuses",
             "healthinfo": "healthInfo",
             "b1healthstate": "spfcB1HealthState",
             "b2healthstate": "spfcB2HealthState",
@@ -2208,12 +2210,32 @@ class DishManager(SKAController):
     @attribute(
         dtype=str,
         access=AttrWriteType.READ,
+        doc="Report the current DSC safety status as a semicolon-delimited list. "
+        "Reports 'OK' if no safety statuses are present.",
+    )
+    def dscSafetyStatuses(self):
+        """Return the aggregated safety statuses from the DSC."""
+        return self.component_manager.component_state.get("dscsafetystatus", "")
+
+    @attribute(
+        dtype=str,
+        access=AttrWriteType.READ,
+        doc="Report the current DSC warning as a semicolon-delimited list. Reports 'OK' if no "
+        "warnings are present.",
+    )
+    def dscWarningStatuses(self):
+        """Return the aggregated warning statuses from the DSC."""
+        return self.component_manager.component_state.get("dscwarningstatus", "")
+
+    @attribute(
+        dtype=str,
+        access=AttrWriteType.READ,
         doc="Report the current DSC errors as a semicolon-delimited list. Reports 'OK' if no "
         "errors are present.",
     )
     def dscErrorStatuses(self):
         """Return the aggregated error statuses from the DSC."""
-        return self.component_manager.component_state.get("dscerrorstatuses", "")
+        return self.component_manager.component_state.get("dscerrorstatus", "")
 
     @attribute(
         dtype=[str],
