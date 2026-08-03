@@ -8,6 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 10.0.2
+**************
+- Added workaround to resolve sub-band mapping for discrepancy between B5DC ICD and design document (SKB-1475).
+
 Version 10.0.1
 **************
 - Update receiver band to Band1 for SPFRx if requested band is B5b
