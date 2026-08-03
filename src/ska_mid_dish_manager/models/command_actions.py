@@ -562,7 +562,18 @@ class ConfigureBandAction(Action):
                         extra=OPERATOR_TAG,
                     )
                 else:
-                    b5dc_freq_enum = B5dcFrequency(int(sub_band))
+                    sub_band_int = int(sub_band)
+                    # WORKAROUND for B5DC DD versus ICD discrepancy
+                    # Swap the subband 2 and 3
+                    # https://jira.skatelescope.org/browse/SKB-1475
+                    if sub_band_int == 2:
+                        sub_band_int = 3
+                    elif sub_band_int == 3:
+                        sub_band_int = 2
+                    self.logger.warning("Swapping sub-band 2 and 3 to resolve SKB-1475.")
+                    # Remove after DD and ICD discrepancy resolved
+
+                    b5dc_freq_enum = B5dcFrequency(sub_band_int)
                     b5dc_set_frequency_command = FannedOutTangoLongRunningCommand(
                         logger=self.logger,
                         device="B5DC",
