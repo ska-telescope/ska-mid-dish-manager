@@ -31,6 +31,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Add param for delay to FannedOutCommand completion. Used for SPFRx ConfigureBand command.
 - Added `dscWarningStatuses` and `dscSafetyStatuses` attributes.
 - Migrated `dscErrorStatuses` aggregation logic to dish structure manager.
+- Added workaround to resolve sub-band mapping for discrepancy between B5DC ICD and design document (SKB-1475).
 
 Version 10.0.0
 **************
