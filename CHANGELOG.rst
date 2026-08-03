@@ -16,6 +16,8 @@ Version 10.0.1
 
   - Addresses SKB-1437 by increasing timeout for B5DC server requests
 
+- Added workaround to resolve sub-band mapping for discrepancy between B5DC ICD and design document (SKB-1475).
+
 Version 10.0.0
 **************
 - Cleaned up "Abort" LRC response message strings - response codes remain unchanged.
