@@ -1154,7 +1154,7 @@ requires-dist = [
     { name = "ska-control-model", specifier = ">=1.0.0" },
     { name = "ska-mid-dish-dcp-lib", specifier = ">=0.0.9,<0.0.10" },
     { name = "ska-ser-logging", specifier = ">=0.4.1" },
-    { name = "ska-tango-base", specifier = ">=1.6.1,<2.0.0" },
+    { name = "ska-tango-base", specifier = "==1.6.1" },
     { name = "typing-extensions", specifier = ">=4.3.0" },
 ]
 
@@ -1218,7 +1218,7 @@ wheels = [
 
 [[package]]
 name = "ska-tango-base"
-version = "1.7.0"
+version = "1.6.1"
 source = { registry = "https://artefact.skao.int/repository/pypi-internal/simple" }
 dependencies = [
     { name = "debugpy" },
@@ -1229,9 +1229,9 @@ dependencies = [
     { name = "ska-ser-logging" },
     { name = "transitions" },
 ]
-sdist = { url = "https://artefact.skao.int/repository/pypi-internal/packages/ska-tango-base/1.7.0/ska_tango_base-1.7.0.tar.gz", hash = "sha256:1446539b8537857ada3a096f05dc4eb3fd94f8ea7130a7b6ca2ca1314f40937a" }
+sdist = { url = "https://artefact.skao.int/repository/pypi-internal/packages/ska-tango-base/1.6.1/ska_tango_base-1.6.1.tar.gz", hash = "sha256:0dc25a265c005b7664d90c4aaa855df22578e24fe042c0e812b91d468736d7f8" }
 wheels = [
-    { url = "https://artefact.skao.int/repository/pypi-internal/packages/ska-tango-base/1.7.0/ska_tango_base-1.7.0-py3-none-any.whl", hash = "sha256:71564dd2a5c5de8c96217cd2f5442d21084fa12918b2e3e83b44f2159ff041b8" },
+    { url = "https://artefact.skao.int/repository/pypi-internal/packages/ska-tango-base/1.6.1/ska_tango_base-1.6.1-py3-none-any.whl", hash = "sha256:8bc7eab1f826b652e7962afb76468210c5af9b025ecac205948c66518f3963c1" },
 ]
 
 [[package]]
