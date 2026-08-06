@@ -74,8 +74,8 @@ dev = [
     "ty>=0.0.69",
 ]
 docs = [
-    "sphinx>=6.2.1,<7.0.0",
-    "docutils<0.20",
+    "sphinx>=9.1.0",
+    "docutils",
     "sphinx-tabs",
     "typing_extensions",
     "sphinx-copybutton",
