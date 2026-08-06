@@ -28,10 +28,12 @@ class TangoDeviceComponentManager(BaseComponentManager):
         communication_state_callback: Any = None,
         component_state_callback: Any = None,
         quality_state_callback: Any = None,
+        tango_error_callback: Any = None,
         quality_monitored_attributes: Tuple[str, ...] = (),
         **kwargs: Any,
     ):
         self._quality_state_callback = quality_state_callback
+        self._tango_error_callback = tango_error_callback
         self._tango_device_fqdn = tango_device_fqdn
         self._monitored_attributes = tuple(attr.lower() for attr in monitored_attributes)
         self._quality_monitored_attributes = tuple(
@@ -124,6 +126,8 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # the heart beat has failed. For now, only heart beat failures on the event channel will
         # be further actioned after logging.
         dev_error = errors[0]
+        self._report_tango_error(attr_name, dev_error.reason)
+
         if dev_error.reason == "API_EventTimeout":
             device_proxy = self._device_proxy_factory.get_cached_proxy(self._tango_device_fqdn)
             try:
@@ -149,6 +153,20 @@ class TangoDeviceComponentManager(BaseComponentManager):
                     extra=OPERATOR_TAG,
                 )
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+
+    def _report_tango_error(self, attr_name: str, reason: str) -> None:
+        """Report the details of an error event to the tango error callback.
+
+        :param attr_name: name of the attribute the error event was emitted for
+        :param reason: the reason reported on the tango error
+        """
+        if self._tango_error_callback is None:
+            return
+
+        try:
+            self._tango_error_callback(self._tango_device_fqdn, attr_name, reason)
+        except Exception:  # pylint:disable=broad-except
+            self.logger.exception("Error occured reporting the last tango error")
 
     def dispatch_event(self, event: type_hints.EventDataType) -> None:
         """Route a Tango event to the appropriate event handler.

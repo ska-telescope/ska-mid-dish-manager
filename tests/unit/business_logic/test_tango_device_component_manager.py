@@ -179,3 +179,57 @@ def test_device_goes_away(patch_cache_proxy, caplog):
     # wait a bit for the state to change
     communication_state_changed.wait(timeout=1)
     assert tc_manager.communication_state == CommunicationStatus.ESTABLISHED
+
+
+@pytest.mark.unit
+@patch(
+    "ska_mid_dish_manager.component_managers.device_proxy_factory.DeviceProxyManager.get_cached_proxy"
+)
+def test_error_event_details_are_reported(patch_cache_proxy, caplog):
+    """Error events report the device, attribute and reason on the error callback."""
+    caplog.set_level(logging.DEBUG)
+
+    tango_error_callback = MagicMock(name="mock_tango_error_callback")
+    tc_manager = TangoDeviceComponentManager(
+        "a/b/c",
+        LOGGER,
+        ("some_attr",),
+        tango_error_callback=tango_error_callback,
+    )
+
+    # errors which are not actioned any further are still reported
+    tc_manager.dispatch_event(construct_mock_error_event_data("some_attr", "API_MissedEvent"))
+    tango_error_callback.assert_called_once_with("a/b/c", "some_attr", "API_MissedEvent")
+
+    # so are the errors which flip the communication state
+    mock_device_proxy = MagicMock(name="mock_device_proxy")
+    mock_device_proxy.ping.side_effect = tango.DevFailed()
+    patch_cache_proxy.return_value = mock_device_proxy
+
+    tc_manager.dispatch_event(construct_mock_error_event_data("some_attr", "API_EventTimeout"))
+    tango_error_callback.assert_called_with("a/b/c", "some_attr", "API_EventTimeout")
+    assert tc_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED
+
+    # the callback is not called for valid events
+    assert tango_error_callback.call_count == 2
+    tc_manager.dispatch_event(construct_mock_valid_event_data("some_attr"))
+    assert tango_error_callback.call_count == 2
+
+
+@pytest.mark.unit
+def test_error_event_reporting_failure_is_contained(caplog):
+    """A failing tango error callback does not break error event handling."""
+    caplog.set_level(logging.DEBUG)
+
+    tango_error_callback = MagicMock(name="mock_tango_error_callback")
+    tango_error_callback.side_effect = ValueError("something went wrong")
+    tc_manager = TangoDeviceComponentManager(
+        "a/b/c",
+        LOGGER,
+        ("some_attr",),
+        tango_error_callback=tango_error_callback,
+    )
+
+    tc_manager.dispatch_event(construct_mock_error_event_data("some_attr", "API_MissedEvent"))
+
+    assert "Error occured reporting the last tango error" in caplog.text

@@ -119,6 +119,7 @@ def monitor_tango_servers(request: pytest.FixtureRequest, dish_manager_proxy, ds
             "spfrxconnectionstate",
             "dsconnectionstate",
             "b5dcconnectionstate",
+            "lastTangoError",
             "lrcExecuting",
             "lrcFinished",
             "lrcQueue",

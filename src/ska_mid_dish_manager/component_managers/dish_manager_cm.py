@@ -204,6 +204,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             lastcommandedmode=("0.0", ""),
             lastcommandinvoked=("0.0", ""),
             lastcommandfailure=("0.0", "", ""),
+            lasttangoerror=("0.0", "", "", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
             rfcmplllock=B5dcPllState.NOT_LOCKED,
             rfcmhattenuation=0.0,
@@ -295,6 +296,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_device_component_state_changed, DishDevice.SPF
                 ),
                 quality_state_callback=self._quality_state_callback,
+                tango_error_callback=self._sub_device_tango_error_occurred,
             ),
             "DS": DSComponentManager(
                 ds_device_fqdn,
@@ -336,6 +338,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_device_component_state_changed, DishDevice.DS
                 ),
                 quality_state_callback=self._quality_state_callback,
+                tango_error_callback=self._sub_device_tango_error_occurred,
             ),
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
@@ -369,6 +372,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._sub_device_component_state_changed, DishDevice.SPFRX
                 ),
                 quality_state_callback=self._quality_state_callback,
+                tango_error_callback=self._sub_device_tango_error_occurred,
             ),
         }
 
@@ -410,6 +414,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 component_state_callback=partial(
                     self._sub_device_component_state_changed, DishDevice.B5DC
                 ),
+                tango_error_callback=self._sub_device_tango_error_occurred,
             )
 
         self.direct_mapped_attrs = {
@@ -918,6 +923,28 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     # ---------
     # Callbacks
     # ---------
+
+    def _sub_device_tango_error_occurred(
+        self, device_name: str, attribute_name: str, reason: str
+    ) -> None:
+        """Callback triggered by the component manager of the subservient device
+        when an error event is received on one of its attribute subscriptions.
+
+        DishManager reports the details of the error on the lastTangoError attribute.
+
+        :param device_name: TRL of the device which emitted the error event
+        :param attribute_name: name of the attribute the error event was emitted for
+        :param reason: the reason reported on the tango error
+        """
+        self.logger.debug(
+            "Tango error reported by %s on attribute %s: %s",
+            device_name,
+            attribute_name,
+            reason,
+        )
+        self._update_component_state(
+            lasttangoerror=(str(time.time()), device_name, attribute_name, reason)
+        )
 
     def _update_connection_state_attribute(
         self, device: str, connection_state: CommunicationStatus
