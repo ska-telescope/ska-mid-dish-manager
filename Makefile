@@ -15,13 +15,11 @@ CLUSTER_DOMAIN ?= cluster.local ## Domain used for naming Tango Device Servers
 
 DOCGEN_TARGETS := html singlehtml
 DOCGEN_OUTPUT_DIR := docs/src/api/devices
+DOCS_PYTHON_RUNNER = uv run python
 
 ifneq (,$(filter $(DOCS_TARGET_ARGS),$(DOCGEN_TARGETS)))
 docs-pre-build:
-	@if [ -v CI_JOB_TOKEN ]; then \
-		poetry install --only-root; \
-	fi
-	tangodocgen --auto -o $(DOCGEN_OUTPUT_DIR)
+	uv run tangodocgen --auto -o $(DOCGEN_OUTPUT_DIR)
 endif
 
 #############################
@@ -39,22 +37,22 @@ python-test: MARK = unit and (not forked)
 k8s-test-runner: MARK = $(K8S_TEST_RUNNER_MARK)
 k8s-test-runner: TANGO_HOST = tango-databaseds.$(KUBE_NAMESPACE).svc.$(CLUSTER_DOMAIN):10000
 
--include .make/python.mk
+-include .make/python-uv.mk
 
 python-test-forked: MARK = forked
 python-test-forked: PYTHON_VARS_AFTER_PYTEST += --forked
 python-test-forked: python-pre-test python-do-test python-post-test
 
 python-do-format:
-	$(PYTHON_RUNNER) ruff format $(PYTHON_LINT_TARGET)
-	$(PYTHON_RUNNER) ruff check --fix $(PYTHON_LINT_TARGET)
+	$(PYTHON_RUNNER) uv run ruff format $(PYTHON_LINT_TARGET)
+	$(PYTHON_RUNNER) uv run ruff check --fix $(PYTHON_LINT_TARGET)
 
 python-do-lint:
 	@mkdir -p build/reports
 	@rc=0; \
 	set -x; \
-	$(PYTHON_RUNNER) ruff format --check $(PYTHON_LINT_TARGET) || rc=1; \
-	$(PYTHON_RUNNER) ruff check $(PYTHON_LINT_TARGET) || rc=1; \
+	$(PYTHON_RUNNER) uv run ruff format --check $(PYTHON_LINT_TARGET) || rc=1; \
+	$(PYTHON_RUNNER) uv run ruff check $(PYTHON_LINT_TARGET) || rc=1; \
 	exit $$rc
 
 #############################

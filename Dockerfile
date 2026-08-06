@@ -1,20 +1,20 @@
-FROM artefact.skao.int/ska-tango-images-tango-dsconfig:1.5.13 as tools
-FROM artefact.skao.int/ska-build-python:0.5.0 as build
+FROM artefact.skao.int/ska-tango-images-tango-dsconfig:1.8.7 as tools
+FROM artefact.skao.int/ska-build-python-ubuntu26:1.0.0 as build
+
+ENV UV_NO_DEV=1
 
 WORKDIR /app
-COPY pyproject.toml poetry.lock ./
 
-ENV POETRY_NO_INTERACTION=1
-ENV POETRY_VIRTUALENVS_IN_PROJECT=1
-ENV POETRY_VIRTUALENVS_CREATE=1
+COPY README.md pyproject.toml uv.lock ./
 
-RUN poetry install --no-root
+RUN uv sync --locked --no-install-project
 
+COPY README.md ./
 COPY src /app/src
-COPY README.md /app/README.md
-RUN poetry install --only-root
 
-FROM artefact.skao.int/ska-python:0.3.1
+RUN uv sync --locked
+
+FROM artefact.skao.int/ska-python-py314:1.0.0
 WORKDIR /app
 
 ENV VIRTUAL_ENV=/app/.venv
@@ -23,8 +23,8 @@ COPY --from=build /app/src /app/src
 COPY --from=tools /usr/local/bin/retry /usr/local/bin/retry
 COPY --from=tools /usr/local/bin/wait-for-it.sh /usr/local/bin/wait-for-it.sh
 
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-ENV PYTHONPATH="/app/src:app/.venv/lib/python3.10/site-packages/:${PYTHONPATH}"
+ENV PATH="$PATH:$VIRTUAL_ENV/bin"
+ENV PYTHONPATH="/app/src:/app/.venv/lib/python3.14/site-packages/:${PYTHONPATH}"
 
 # Metadata labels
 LABEL int.skao.image.team="TEAM KAROO" \

@@ -1,8 +1,8 @@
 import logging
 import threading
+from unittest.mock import MagicMock
 
 import pytest
-from ska_tango_testing.mock import MockCallable
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.constants import (
@@ -22,7 +22,7 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.acceptance
 def test_dish_manager_component_manager_threads_management(component_state_store):
     """Test dish manager component mananger clears threads on stop communication."""
-    mock_callable = MockCallable(timeout=5)
+    mock_callable = MagicMock()
     cm = DishManagerComponentManager(
         LOGGER,
         command_tracker=mock_callable,

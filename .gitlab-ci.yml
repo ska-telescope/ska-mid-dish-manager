@@ -23,7 +23,7 @@ include:
 
   # Python packages build,lint, test and publish
   - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/python.gitlab-ci.yml'
+    file: 'gitlab-ci/includes/python-uv.gitlab-ci.yml'
 
   # OCI images build and publish
   - project: 'ska-telescope/templates-repository'
@@ -50,17 +50,16 @@ python-test-forked:
   script:
     - make python-test-forked;
 
-mypy:
+type-check:
   stage: lint
   script:
-    - pip install mypy
-    - mypy --ignore-missing-imports --config-file mypy.ini
-      src/ska_mid_dish_manager/component_managers/ds_cm.py
-      src/ska_mid_dish_manager/component_managers/spf_cm.py
-      src/ska_mid_dish_manager/component_managers/spfrx_cm.py
-      src/ska_mid_dish_manager/models/dish_mode_model.py
-      src/ska_mid_dish_manager/models/dish_state_transition.py
+    - pip install uv
+    - uv sync --locked
+    - uv run ty check --error all --output-format gitlab | tee gl-code-quality-report.json
   allow_failure: true
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
 
 k8s-test-runner:
   variables:
@@ -120,3 +119,11 @@ stop-k8s-test-runner-incl-b5dc:
   extends: stop-k8s-test-runner
   variables:
     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+
+python-uv-test:
+  artifacts:
+    reports:
+      junit: build/reports/unit-tests.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: build/reports/code-coverage.xml
