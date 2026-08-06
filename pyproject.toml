@@ -74,15 +74,15 @@ dev = [
     "ty>=0.0.69",
 ]
 docs = [
+    "sphinx>=6.2.1,<7.0.0",
     "docutils<0.20",
-    "Sphinx>=5.3.0,<6.0.0",
-    "ska-ser-sphinx-theme>=0.2.1,<0.3.0",
-    "sphinx-copybutton",
     "sphinx-tabs",
-    "sphinx-autodoc-typehints",
-    "sphinxcontrib-plantuml",
     "typing_extensions",
-    "ska-tango-difdoc>=0.5.0,<1.0.0",
+    "sphinx-copybutton",
+    "ska-ser-sphinx-theme>=0.2.1,<0.3.0",
+    "sphinx-autodoc-typehints>=1.23.0,<2.0.0",
+    "sphinxcontrib-plantuml>=0.30,<0.31",
+    "ska-tango-difdoc>=0.5.0,<0.6.0",
 ]
 
 [tool.pytest.ini_options]
