@@ -23,6 +23,12 @@ COPY --from=build /app/src /app/src
 COPY --from=tools /usr/local/bin/retry /usr/local/bin/retry
 COPY --from=tools /usr/local/bin/wait-for-it.sh /usr/local/bin/wait-for-it.sh
 
+# Override the default python
+RUN rm /app/.venv/bin/python
+RUN rm /app/.venv/bin/python3
+RUN ln -s  /usr/local/bin/python3   /app/.venv/bin/python3
+
+
 ENV PATH="$PATH:$VIRTUAL_ENV/bin"
 ENV PYTHONPATH="/app/src:/app/.venv/lib/python3.14/site-packages/:${PYTHONPATH}"
 
