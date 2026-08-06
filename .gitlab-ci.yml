@@ -46,7 +46,7 @@ include:
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
 python-test-forked:
-  extends: python-test
+  extends: python-uv-test
   script:
     - make python-test-forked;
 
