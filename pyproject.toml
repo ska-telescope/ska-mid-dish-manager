@@ -83,6 +83,7 @@ docs = [
     "sphinx-autodoc-typehints>=1.23.0,<2.0.0",
     "sphinxcontrib-plantuml>=0.30,<0.31",
     "ska-tango-difdoc>=0.5.0,<0.6.0",
+    "sphinx-theme-builder>=0.3.2",
 ]
 
 [tool.pytest.ini_options]

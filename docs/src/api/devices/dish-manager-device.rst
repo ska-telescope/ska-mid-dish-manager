@@ -1198,7 +1198,7 @@ Attributes
 	Read the logging level of the device.
 
 	Initialises to LoggingLevelDefault on startup.
-	See :class:`~ska_control_model.LoggingLevel`
+	See :py:class:`~ska_control_model.LoggingLevel`
 
 	:access: READ_WRITE
 	:data type: DevEnum
@@ -1226,7 +1226,14 @@ Attributes
 .. py:attribute:: longRunningCommandIDsInQueue
 	:module: DishManager
 
-	A Tango attribute backed by a software signal.
+	Read the IDs of the long running commands in the queue.
+
+	Every client that executes a command will receive a command ID as response.
+	Keep track of IDs currently allocated.
+	Entries are removed ``self._command_tracker._removal_time`` seconds
+	after they have finished.
+
+	**DEPRECATED**: A client can check for the queued command(s) in 'lrcQueue'.
 
 	:access: READ
 	:data type: DevString
@@ -1239,7 +1246,12 @@ Attributes
 .. py:attribute:: longRunningCommandInProgress
 	:module: DishManager
 
-	A Tango attribute backed by a software signal.
+	Read the name(s) of the currently executing long running command(s).
+
+	Name(s) of command and possible abort in progress or empty string(s).
+
+	**DEPRECATED**: A client can check for the command(s) in progress in
+	'lrcExecuting'.
 
 	:access: READ
 	:data type: DevString
@@ -1252,7 +1264,13 @@ Attributes
 .. py:attribute:: longRunningCommandProgress
 	:module: DishManager
 
-	A Tango attribute backed by a software signal.
+	Read the progress of the currently executing long running command(s).
+
+	ID, progress of the currently executing command(s).
+	Clients can subscribe to on change event and wait
+	for the ID they are interested in.
+
+	**DEPRECATED**: A client can check the progress of command(s) in 'lrcExecuting'.
 
 	:access: READ
 	:data type: DevString
@@ -1265,7 +1283,13 @@ Attributes
 .. py:attribute:: longRunningCommandResult
 	:module: DishManager
 
-	A Tango attribute backed by a software signal.
+	Read the result of the completed long running command.
+
+	Reports unique ID and json-encoded result.
+	Clients can subscribe to on change event and wait for
+	the ID they are interested in.
+
+	**DEPRECATED**: A client can check for the result of a command in 'lrcFinished'.
 
 	:access: READ
 	:data type: DevString
@@ -1278,7 +1302,14 @@ Attributes
 .. py:attribute:: longRunningCommandStatus
 	:module: DishManager
 
-	A Tango attribute backed by a software signal.
+	Read the status of the currently executing long running commands.
+
+	ID, status pairs of the currently executing commands.
+	Clients can subscribe to on change event and wait for the
+	ID they are interested in.
+
+	**DEPRECATED**: A client can check for the status of a command in the
+	'lrcQueue', 'lrcExecuting' and 'lrcFinished' attributes.
 
 	:access: READ
 	:data type: DevString
@@ -1291,7 +1322,13 @@ Attributes
 .. py:attribute:: longRunningCommandsInQueue
 	:module: DishManager
 
-	A Tango attribute backed by a software signal.
+	Read the long running commands in the queue.
+
+	Keep track of which commands are that are currently known about.
+	Entries are removed ``self._command_tracker._removal_time`` seconds
+	after they have finished.
+
+	**DEPRECATED**: A client can check for the queued command(s) in 'lrcQueue'.
 
 	:access: READ
 	:data type: DevString
@@ -1604,7 +1641,7 @@ Attributes
 .. py:attribute:: simulationMode
 	:module: DishManager
 
-	When TRUE the device is using a simulator.
+	When TRUE the device is using a simulator
 
 	:access: READ_WRITE
 	:data type: DevEnum
@@ -1745,7 +1782,7 @@ Attributes
 .. py:attribute:: testMode
 	:module: DishManager
 
-	If TEST the device is using testing logic.
+	If TEST the device is using testing logic
 
 	:access: READ_WRITE
 	:data type: DevEnum
