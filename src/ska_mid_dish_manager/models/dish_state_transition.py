@@ -409,7 +409,7 @@ class StateTransition:
                 case enum.IntEnum():
                     dish_manager_states["DS"][key] = f"{val.__class__.__name__}.{val.name}"
                 case _:
-                    dish_manager_states["DS"][key] = val
+                    dish_manager_states["DS"][key] = str(val)
 
         if spfrx_component_state:
             dish_manager_states["SPFRX"] = {}
@@ -420,7 +420,7 @@ class StateTransition:
                     case enum.IntEnum():
                         dish_manager_states["SPFRX"][key] = f"{val.__class__.__name__}.{val.name}"
                     case _:
-                        dish_manager_states["SPFRX"][key] = val
+                        dish_manager_states["SPFRX"][key] = str(val)
 
         if spf_component_state:
             dish_manager_states["SPF"] = {}
@@ -431,7 +431,7 @@ class StateTransition:
                     case enum.IntEnum():
                         dish_manager_states["SPF"][key] = f"{val.__class__.__name__}.{val.name}"
                     case _:
-                        dish_manager_states["SPF"][key] = val
+                        dish_manager_states["SPF"][key] = str(val)
 
         if dish_manager_component_state:
             dish_manager_states["DM"] = {}
@@ -442,6 +442,6 @@ class StateTransition:
                     case enum.IntEnum():
                         dish_manager_states["DM"][key] = f"{val.__class__.__name__}.{val.name}"
                     case _:
-                        dish_manager_states["DM"][key] = val
+                        dish_manager_states["DM"][key] = str(val)
 
         return dish_manager_states
