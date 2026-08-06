@@ -14,6 +14,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
 )
+from tests.utils import MethodCallsStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ def test_tango_device_component_manager_state(
     monitor_tango_servers, component_state_store, ds_device_fqdn
 ):
     """Test commands and monitoring."""
-    mock_callable = MagicMock()
+    mock_callable = MethodCallsStore()
 
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
 
@@ -42,10 +43,10 @@ def test_tango_device_component_manager_state(
     assert com_man.communication_state == CommunicationStatus.DISABLED
     try:
         com_man.start_communicating()
+        mock_callable.wait_for_args((CommunicationStatus.NOT_ESTABLISHED,))
         assert com_man.communication_state == CommunicationStatus.NOT_ESTABLISHED
 
-        mock_callable.assert_called_with(CommunicationStatus.ESTABLISHED)
-
+        mock_callable.wait_for_args((CommunicationStatus.ESTABLISHED,))
         assert com_man.communication_state == CommunicationStatus.ESTABLISHED
 
         test_mode_initial_val = device_proxy.read_attribute("testmode").value
