@@ -88,6 +88,13 @@ class SPFComponentManager(TangoDeviceComponentManager):
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:
-                kwargs[attr] = enum_(kwargs[attr])
+                if enum_ is SPFHealthState and kwargs[attr] is None:
+                    self.logger.warning(
+                        "Received None for SPF health-state attribute '%s', setting to UNKNOWN.",
+                        attr,
+                    )
+                    kwargs[attr] = SPFHealthState.UNKNOWN
+                else:
+                    kwargs[attr] = enum_(kwargs[attr])
 
         super()._update_component_state(**kwargs)
