@@ -1128,13 +1128,13 @@ wheels = [
 
 [[package]]
 name = "rule-engine"
-version = "3.6.0"
+version = "3.5.0"
 source = { registry = "https://pypi.org/simple/" }
 dependencies = [
     { name = "ply" },
     { name = "python-dateutil" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e8/df/b28aa0b06c22f2e8585507c0ed0b3ab5337073a92572b3325412dead54bb/rule-engine-3.6.0.tar.gz", hash = "sha256:c177480fe34195e4e0d98f4c113b62a0358b65437303b112d54ca44802263608", size = 34806, upload-time = "2023-06-17T16:22:36.049Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fa/fe/aaa30c39acd2ee0dee79a3780c0d9af3148ce017bde5de80d676b26cdfcb/rule-engine-3.5.0.tar.gz", hash = "sha256:7f26767f56a45ed0041f6990bf16e87fc98769654fc3cf44dfcbb14496794878", size = 40112, upload-time = "2022-07-16T15:12:26.078Z" }
 
 [[package]]
 name = "setuptools"
@@ -1238,7 +1238,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.3" },
     { name = "pytango", specifier = ">=10.3.1,<11.0.0" },
     { name = "requests", specifier = ">=2.34.2,<3.0.0" },
-    { name = "rule-engine", specifier = ">=3.5.0,<4.0.0" },
+    { name = "rule-engine", specifier = "==3.5.0" },
     { name = "ska-control-model", specifier = ">=1.0.0" },
     { name = "ska-mid-dish-dcp-lib", specifier = ">=0.0.9,<0.0.10" },
     { name = "ska-ser-logging", specifier = ">=0.4.1" },

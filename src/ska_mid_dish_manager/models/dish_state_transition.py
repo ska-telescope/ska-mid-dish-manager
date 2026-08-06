@@ -402,21 +402,45 @@ class StateTransition:
         dish_manager_states = {"DS": {}}  # type: ignore
 
         for key, val in ds_component_state.items():
-            dish_manager_states["DS"][key] = str(val)
+            match val:
+                case str():
+                    dish_manager_states["DS"][key] = val
+                case None:
+                    dish_manager_states["DS"][key] = ""
+                case _:
+                    dish_manager_states["DS"][key] = f"{val.__class__.__name__}.{val.name}"
 
         if spfrx_component_state:
             dish_manager_states["SPFRX"] = {}
             for key, val in spfrx_component_state.items():
-                dish_manager_states["SPFRX"][key] = str(val)
+                match val:
+                    case str():
+                        dish_manager_states["SPFRX"][key] = val
+                    case None:
+                        dish_manager_states["SPFRX"][key] = ""
+                    case _:
+                        dish_manager_states["SPFRX"][key] = f"{val.__class__.__name__}.{val.name}"
 
         if spf_component_state:
             dish_manager_states["SPF"] = {}
             for key, val in spf_component_state.items():
-                dish_manager_states["SPF"][key] = str(val)
+                match val:
+                    case str():
+                        dish_manager_states["SPF"][key] = val
+                    case None:
+                        dish_manager_states["SPF"][key] = ""
+                    case _:
+                        dish_manager_states["SPF"][key] = f"{val.__class__.__name__}.{val.name}"
 
         if dish_manager_component_state:
             dish_manager_states["DM"] = {}
             for key, val in dish_manager_component_state.items():
-                dish_manager_states["DM"][key] = str(val)
+                match val:
+                    case str():
+                        dish_manager_states["DM"][key] = val
+                    case None:
+                        dish_manager_states["DM"][key] = ""
+                    case _:
+                        dish_manager_states["DM"][key] = f"{val.__class__.__name__}.{val.name}"
 
         return dish_manager_states

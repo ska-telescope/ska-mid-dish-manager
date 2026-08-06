@@ -21,7 +21,7 @@ dependencies = [
     "ska-ser-logging>=0.4.1",
     "ska-tango-base==1.6.1",
     "networkx>=2.6.3,<3.0.0",
-    "rule-engine>=3.5.0,<4.0.0",
+    "rule-engine==3.5.0",
     "astropy>=6.0.1",
     "typing-extensions>=4.3.0",
     "ska-mid-dish-dcp-lib>=0.0.9,<0.0.10",
