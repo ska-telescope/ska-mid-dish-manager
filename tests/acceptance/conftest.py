@@ -19,6 +19,13 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 
+@pytest.fixture(scope="function", autouse=True)
+def log_test_lifecycle(request):
+    logger.info(f"== START TEST: {request.node.name} ==")
+    yield
+    logger.info(f"== END TEST: {request.node.name} ==")
+
+
 @pytest.fixture
 def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
     """Undo any updates to raiseCmdException in SPF and SPFRx."""
