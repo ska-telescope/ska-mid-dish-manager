@@ -6,12 +6,13 @@ from typing import Any, Callable, Optional
 
 import tango
 from ska_control_model import AdminMode, HealthState
+from tango.utils import PyTangoThread
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
 
 
-class MonitorPing(threading.Thread):
+class MonitorPing(PyTangoThread):
     """A thread that executes SPFRx's MonitorPing command at a specified interval."""
 
     PING_ERROR_LOG_REPEAT = 5
@@ -62,17 +63,16 @@ class MonitorPing(threading.Thread):
             "type_error": f"DeviceProxy to {self._spfrx_trl} failed for MonitorPing",
             "other_errors": f"Failed to execute MonitorPing on {self._spfrx_trl}",
         }
-        with tango.EnsureOmniThread():
-            self._create_device_proxy()
-            try:
-                self._device_proxy.command_inout("MonitorPing", None)  # type: ignore
-            except Exception:
-                if self._log_counter < self.PING_ERROR_LOG_REPEAT:
-                    if self._device_proxy is None:
-                        self._logger.error(error_msg["type_error"])
-                    else:
-                        self._logger.error(error_msg["other_errors"])
-                    self._log_counter += 1
+        self._create_device_proxy()
+        try:
+            self._device_proxy.command_inout("MonitorPing", None)  # type: ignore
+        except Exception:
+            if self._log_counter < self.PING_ERROR_LOG_REPEAT:
+                if self._device_proxy is None:
+                    self._logger.error(error_msg["type_error"])
+                else:
+                    self._logger.error(error_msg["other_errors"])
+                self._log_counter += 1
 
 
 class SPFRxComponentManager(TangoDeviceComponentManager):
