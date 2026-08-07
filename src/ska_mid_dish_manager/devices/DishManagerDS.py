@@ -504,7 +504,7 @@ class DishManager(SKAController):
             "lastcommandedmode": "lastCommandedMode",
             "lastcommandinvoked": "lastCommandInvoked",
             "lastcommandfailure": "lastCommandFailure",
-            "lasttangoerror": "lastTangoError",
+            "lasttangoeventerror": "lastTangoEventError",
             "dscctrlstate": "dscCtrlState",
             "actiontimeoutseconds": "actionTimeoutSeconds",
             "b1lnahpowerstate": "b1LnaHPowerState",
@@ -672,9 +672,9 @@ class DishManager(SKAController):
         ),
     )
     @requires_component_manager
-    def lastTangoError(self) -> tuple[str, str, str, str]:
+    def lastTangoEventError(self) -> tuple[str, str, str, str]:
         """Return the last tango error reported by a subservient device."""
-        return self.component_manager.component_state["lasttangoerror"]
+        return self.component_manager.component_state["lasttangoeventerror"]
 
     # pylint: disable=invalid-name
     @attribute(

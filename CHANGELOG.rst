@@ -32,7 +32,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Added `dscWarningStatuses` and `dscSafetyStatuses` attributes.
 - Migrated `dscErrorStatuses` aggregation logic to dish structure manager.
 - Added workaround to resolve sub-band mapping for discrepancy between B5DC ICD and design document (SKB-1475).
-- Added `lastTangoError` attribute reporting the timestamp, device name, attribute name and reason of the last tango error event received from a subservient device.
+- Added `lastTangoEventError` attribute reporting the timestamp, device name, attribute name and reason of the last tango error event received from a subservient device.
 
 Version 10.0.0
 **************

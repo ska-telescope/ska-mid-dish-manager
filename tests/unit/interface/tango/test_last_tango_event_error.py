@@ -1,4 +1,4 @@
-"""Unit test for lastTangoError attribute."""
+"""Unit test for lastTangoEventError attribute."""
 
 from unittest.mock import MagicMock, patch
 
@@ -23,7 +23,7 @@ def test_last_tango_error_defaults_to_empty_record(dish_manager_resources):
     """Test that an empty record is reported until an error event is received."""
     device_proxy, _ = dish_manager_resources
 
-    timestamp, device_name, attribute_name, reason = device_proxy.lastTangoError
+    timestamp, device_name, attribute_name, reason = device_proxy.lastTangoEventError
 
     assert timestamp == "0.0"
     assert device_name == ""
@@ -36,7 +36,7 @@ def test_last_tango_error_defaults_to_empty_record(dish_manager_resources):
 @patch(
     "ska_mid_dish_manager.component_managers.device_proxy_factory.DeviceProxyManager.get_cached_proxy"
 )
-def test_last_tango_error_reports_error_event_details(
+def test_last_tango_event_error_reports_error_event_details(
     patch_cache_proxy,
     dish_manager_resources,
     event_store_class,
@@ -50,7 +50,7 @@ def test_last_tango_error_reports_error_event_details(
 
     last_tango_error_event_store = event_store_class()
     device_proxy.subscribe_event(
-        "lastTangoError",
+        "lastTangoEventError",
         tango.EventType.CHANGE_EVENT,
         last_tango_error_event_store,
     )
@@ -67,4 +67,4 @@ def test_last_tango_error_reports_error_event_details(
     assert reason == "API_EventTimeout"
 
     # the attribute read reports the same record as the change event
-    assert list(device_proxy.lastTangoError) == [timestamp, device_name, attribute_name, reason]
+    assert list(device_proxy.lastTangoEventError) == [timestamp, device_name, attribute_name, reason]
