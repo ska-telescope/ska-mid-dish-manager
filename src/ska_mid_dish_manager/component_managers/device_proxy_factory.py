@@ -3,7 +3,7 @@
 import logging
 from functools import wraps
 from threading import Event
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict
 
 import tango
 
@@ -88,19 +88,17 @@ class DeviceProxyManager:
     """
 
     def __init__(
-        self,
-        logger: Optional[logging.Logger] = None,
-        thread_event: Event | None = None,
+        self, logger: logging.Logger = logging.getLogger(__name__), thread_event: Event = Event()
     ):
         self._device_proxies: Dict[str, tango.DeviceProxy] = {}
-        self.logger = logger or logging.getLogger(__name__)
-        self.event_signal = thread_event or Event()
+        self.logger = logger
+        self.event_signal = thread_event
 
     def __del__(self) -> None:
         """Remove all device proxies when the object is deleted."""
         self.factory_reset()
 
-    def __call__(self, trl: str) -> tango.DeviceProxy:
+    def __call__(self, trl: str) -> Any:
         device_proxy = self._device_proxies.get(trl)
 
         if device_proxy is None:
@@ -111,7 +109,7 @@ class DeviceProxyManager:
                 self.logger.warning(
                     "Failed creating DeviceProxy to device at %s", trl, extra=OPERATOR_TAG
                 )
-                raise
+                return device_proxy
             self._device_proxies[trl] = device_proxy
 
         if not self._is_tango_device_running(device_proxy):
@@ -142,10 +140,6 @@ class DeviceProxyManager:
                 is_device_running = True
 
         return is_device_running
-
-    def get_cached_proxy(self, trl: str) -> tango.DeviceProxy | None:
-        """Return an existing proxy without creating or reconnecting it."""
-        return self._device_proxies.get(trl)
 
     @retry_connection
     def wait_for_device(
@@ -179,4 +173,10 @@ class DeviceProxyManager:
 
     def factory_reset(self) -> Any:
         """Remove device proxy references to the devices."""
+        # delete all references to the device proxies to prevent potential memory leak
+        trls = list(self._device_proxies.keys())
+        for trl in trls:
+            del self._device_proxies[trl]
+
+        # finally, clear any remaining proxies (if any) to ensure memory cleanup
         self._device_proxies.clear()
