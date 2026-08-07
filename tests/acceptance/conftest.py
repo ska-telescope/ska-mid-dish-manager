@@ -5,6 +5,7 @@ import os
 
 import pytest
 import tango
+from ska_ser_logging import configure_logging
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
 from ska_mid_dish_manager.models.dish_enums import (
@@ -14,7 +15,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup_subscriptions
 
-logging.basicConfig(level=logging.DEBUG)
+configure_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -199,9 +200,10 @@ def reset_dish_to_standby(
             update_messages.append("DS not in standby, got it into STANDBY and LOW_POWER")
 
         # go to FP
-        ds_device_proxy.SetPowerMode([0.0, 14.7])
-        power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=10)
-        update_messages.append("Got DS to FP")
+        if ds_device_proxy.powerState != DSPowerState.FULL_POWER:
+            ds_device_proxy.SetPowerMode([0.0, 14.7])
+            power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=20)
+            update_messages.append("Got DS to FP")
 
         if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
             dish_manager_proxy.SetStandbyFPMode()
