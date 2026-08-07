@@ -181,6 +181,8 @@ def reset_dish_to_standby(
     spfrx_device_proxy.ResetToDefault()
     spf_device_proxy.ResetToDefault()
 
+    update_messages = []
+
     try:
         if dish_manager_proxy.dishMode == DishMode.MAINTENANCE:
             ds_device_proxy.TakeAuthority()
@@ -188,29 +190,32 @@ def reset_dish_to_standby(
             dish_mode_events.get_queue_values(timeout=10)
             dish_manager_proxy.SetStowMode()
             dish_mode_events.wait_for_value(DishMode.STOW, timeout=120)
+            update_messages.append("Got dishmode out of MAINTENANCE into STOW")
 
         if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY:
             ds_device_proxy.SetStandbyMode()
             op_mode_events.wait_for_value(DSOperatingMode.STANDBY, timeout=10)
             power_state_events.wait_for_value(DSPowerState.LOW_POWER, timeout=10)
+            update_messages.append("DS not in standby, got it into STANDBY and LOW_POWER")
+
         # go to FP
         ds_device_proxy.SetPowerMode([0.0, 14.7])
         power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=10)
+        update_messages.append("Got DS to FP")
 
-    except (RuntimeError, AssertionError):
-        pass
-
-    if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
-        try:
+        if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
             dish_manager_proxy.SetStandbyFPMode()
             dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
-        except (RuntimeError, tango.DevFailed):
-            logger.debug("DishManager commands: %s", dish_manager_proxy.status())
-            logger.debug("DSManager commands: %s", ds_device_proxy.status())
-            logger.debug("\n\nDM component state: %s\n\n", dish_manager_proxy.GetComponentStates())
-            remove_subscriptions(subscriptions)
-            raise
 
-    remove_subscriptions(subscriptions)
+    except (RuntimeError, tango.DevFailed, AssertionError):
+        logger.exception(
+            "Failed to get to known state. Successfully completed: %s", update_messages
+        )
+        logger.debug("DishManager status: %s", dish_manager_proxy.status())
+        logger.debug("DSManager status: %s", ds_device_proxy.status())
+        logger.debug("\n\nDM component state: %s\n\n", dish_manager_proxy.GetComponentStates())
+        raise
+    finally:
+        remove_subscriptions(subscriptions)
 
     yield
