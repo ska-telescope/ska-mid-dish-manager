@@ -348,24 +348,23 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 self._tango_device_fqdn,
             )
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
-        with tango.EnsureOmniThread():
-            try:
-                result = device_proxy.read_attribute(attribute_name).value
-            except tango.DevFailed:
-                self.logger.exception(
-                    "Could not read attribute [%s] on [%s]",
-                    attribute_name,
-                    self._tango_device_fqdn,
-                )
-                raise
-            if log_read:
-                self.logger.debug(
-                    "Result of reading [%s] on [%s] is [%s]",
-                    attribute_name,
-                    self._tango_device_fqdn,
-                    result,
-                )
-            return result
+        try:
+            result = device_proxy.read_attribute(attribute_name).value
+        except tango.DevFailed:
+            self.logger.exception(
+                "Could not read attribute [%s] on [%s]",
+                attribute_name,
+                self._tango_device_fqdn,
+            )
+            raise
+        if log_read:
+            self.logger.debug(
+                "Result of reading [%s] on [%s] is [%s]",
+                attribute_name,
+                self._tango_device_fqdn,
+                result,
+            )
+        return result
 
     @check_communicating
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
@@ -376,25 +375,24 @@ class TangoDeviceComponentManager(BaseComponentManager):
             self._tango_device_fqdn,
         )
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
-        with tango.EnsureOmniThread():
-            result = None
-            try:
-                result = device_proxy.write_attribute(attribute_name, attribute_value)
-            except tango.DevFailed:
-                self.logger.exception(
-                    "Could not write to attribute [%s] with [%s] on [%s]",
-                    attribute_name,
-                    attribute_value,
-                    self._tango_device_fqdn,
-                )
-                raise
-            self.logger.debug(
-                "Result of writing [%s] on [%s] is [%s]",
+        result = None
+        try:
+            result = device_proxy.write_attribute(attribute_name, attribute_value)
+        except tango.DevFailed:
+            self.logger.exception(
+                "Could not write to attribute [%s] with [%s] on [%s]",
                 attribute_name,
+                attribute_value,
                 self._tango_device_fqdn,
-                result,
             )
-            return result
+            raise
+        self.logger.debug(
+            "Result of writing [%s] on [%s] is [%s]",
+            attribute_name,
+            self._tango_device_fqdn,
+            result,
+        )
+        return result
 
     def _initialize_events_monitor(self) -> None:
         """Initialize the events monitor and queue."""
