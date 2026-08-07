@@ -196,7 +196,18 @@ class TangoDeviceMonitor:
         self._logger.info("Check %s is up", self._tango_fqdn)
 
         while not exit_thread_event.is_set():
-            dev_proxy = self._device_proxy_factory(self._tango_fqdn)
+            try:
+                dev_proxy = self._device_proxy_factory(self._tango_fqdn)
+            except RuntimeError:
+                # DeviceProxyManager raises RuntimeError when communication is stopped
+                # (e.g. stop_communicating) while a connection attempt is in progress.
+                return
+            except tango.DevFailed:
+                self._logger.debug(
+                    "Unable to connect to device %s; retrying.",
+                    self._tango_fqdn,
+                )
+                continue
             if dev_proxy:
                 on_verified_callback(exit_thread_event)
                 return
