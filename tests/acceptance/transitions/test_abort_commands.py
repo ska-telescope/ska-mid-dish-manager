@@ -180,23 +180,25 @@ def test_abort_commands_during_slew(
     """Test that Abort aborts the executing slew command."""
     result_event_store = event_store_class()
     main_event_store = event_store_class()
+    pointing_state_event_store = event_store_class()
+    configured_band_event_store = event_store_class()
 
     attr_cb_mapping = {
         "dishMode": main_event_store,
-        "pointingState": main_event_store,
+        "pointingState": pointing_state_event_store,
         "lrcFinished": result_event_store,
-        "configuredBand": main_event_store,
+        "configuredBand": configured_band_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(Band.B1, timeout=30)
+    configured_band_event_store.wait_for_value(Band.B1, timeout=30)
 
     # Slew the dish
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
     requested_az, requested_el = calculate_slew_target(current_az, current_el, 30.0, 15.0)
     dish_manager_proxy.Slew([requested_az, requested_el])
-    main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
