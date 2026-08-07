@@ -67,4 +67,9 @@ def test_last_tango_event_error_reports_error_event_details(
     assert reason == "API_EventTimeout"
 
     # the attribute read reports the same record as the change event
-    assert list(device_proxy.lastTangoEventError) == [timestamp, device_name, attribute_name, reason]
+    assert list(device_proxy.lastTangoEventError) == [
+        timestamp,
+        device_name,
+        attribute_name,
+        reason,
+    ]
