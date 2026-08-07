@@ -65,7 +65,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
         super().__init__(
             logger,
-            *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
             **kwargs,
@@ -74,6 +73,34 @@ class TangoDeviceComponentManager(BaseComponentManager):
     # ---------
     # Callbacks
     # ---------
+
+    def dispatch_event(self, event: tango.EventData) -> None:
+        """Route a Tango event to the appropriate event handler.
+
+        Events marked as errors are handled by ``_handle_error_event()``, except
+        when the attribute quality is ``ATTR_INVALID``. Invalid-quality attribute
+        events are treated as state updates rather than communication failures.
+
+        :param event: Tango event received.
+        """
+        # an invalid attribute event should not
+        # be treated as a communication failure.
+        error = event.err
+        if (
+            error
+            and event.attr_value is not None
+            and event.attr_value.quality == tango.AttrQuality.ATTR_INVALID
+        ):
+            error = False
+
+        if error:
+            self._handle_error_event(event)
+        else:
+            self._update_state_from_event(event)
+
+    # --------------
+    # helper methods
+    # --------------
 
     def _update_state_from_event(self, event_data: tango.EventData) -> None:
         """Update component state as the change events come in.
@@ -106,7 +133,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # update the communication state in case the error event callback flipped it
         self.sync_communication_to_valid_event(attr_name)
 
-    def _handle_error_events(self, event_data: tango.EventData) -> None:
+    def _handle_error_event(self, event_data: tango.EventData) -> None:
         """Handle error events from attr subscription.
 
         :param event_data: data representing tango event
@@ -134,30 +161,30 @@ class TangoDeviceComponentManager(BaseComponentManager):
         # be further actioned after logging.
         dev_error = errors[0]
         if dev_error.reason == "API_EventTimeout":
-            # Important: _device_proxy_factory performs retries to check device liveness.
-            # This operation can be expensive, so it is only triggered for
-            # API_EventTimeout errors.
-            device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
+            device_proxy = self._device_proxy_factory.get_cached_proxy(self._tango_device_fqdn)
             try:
                 self._active_attr_event_subscriptions.remove(attr_name)
             except KeyError:
                 pass
-            try:
-                device_proxy.ping()
-            except tango.DevFailed:
-                dev_name = device_proxy.dev_name()
-                self.logger.exception(
-                    "Failed to ping device proxy: %s after an %s error. Communication Status"
-                    " degraded to 'Not Established'.",
-                    dev_name,
-                    dev_error.reason,
+
+            if device_proxy is None:
+                device_available = False
+            else:
+                try:
+                    device_proxy.ping()
+                except tango.DevFailed:
+                    device_available = False
+                else:
+                    device_available = True
+
+            if not device_available:
+                self.logger.debug(
+                    "Device at %s is unavailable. Communication status is being "
+                    "set to NOT_ESTABLISHED.",
+                    self._tango_device_fqdn,
                     extra=OPERATOR_TAG,
                 )
                 self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
-
-    # --------------
-    # helper methods
-    # --------------
 
     def _fetch_spf_spfrx_build_state_information(self) -> str:
         """Read the version attributes and build the string.
@@ -266,25 +293,13 @@ class TangoDeviceComponentManager(BaseComponentManager):
     def _event_consumer(
         cls,
         event_queue: Queue,
-        valid_event_cb: Callable,
+        event_handler: Callable,
         task_abort_event: Optional[Event] = None,
-        error_event_cb: Optional[Callable] = None,  # type: ignore
     ) -> None:
         while task_abort_event and not task_abort_event.is_set():
             try:
                 event_data = event_queue.get(timeout=1)
-                error = event_data.err
-                # If a tango error has been flagged, due to an invalid attribute, do not
-                # interpret it as communication error.
-                if error and event_data.attr_value:
-                    if event_data.attr_value.quality == tango.AttrQuality.ATTR_INVALID:
-                        error = False
-
-                if error:
-                    if error_event_cb:
-                        error_event_cb(event_data)
-                    continue
-                valid_event_cb(event_data)
+                event_handler(event_data)
             except Empty:
                 pass
 
@@ -311,9 +326,8 @@ class TangoDeviceComponentManager(BaseComponentManager):
             target=self._event_consumer,
             args=[
                 self._events_queue,
-                self._update_state_from_event,
+                self.dispatch_event,
                 self._event_consumer_abort_event,
-                self._handle_error_events,
             ],
         )
 

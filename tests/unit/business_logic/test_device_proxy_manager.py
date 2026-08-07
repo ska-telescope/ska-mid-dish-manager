@@ -43,7 +43,8 @@ class TestDeviceProxyManager:
         patch_dp.side_effect = tango.DevFailed("FAIL")
 
         trl = "a/b/c"
-        self.dev_factory(trl)
+        with pytest.raises(tango.DevFailed):
+            self.dev_factory(trl)
 
         default_retry_times = [1, 2, 3, 4, 6]
         logs = [record.message for record in caplog.records]
@@ -60,9 +61,9 @@ class TestDeviceProxyManager:
 
         trl = "a/device/address"
         self.signal.set()
-        dev_proxy = self.dev_factory(trl)
+        with pytest.raises(RuntimeError):
+            self.dev_factory(trl)
 
-        assert dev_proxy is None
         logs = [record.message for record in caplog.records]
         cancellation_log = "Connection to device cancelled"
         failure_log = f"Failed creating DeviceProxy to device at {trl}"
