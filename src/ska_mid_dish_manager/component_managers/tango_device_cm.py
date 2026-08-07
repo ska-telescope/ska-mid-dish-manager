@@ -77,7 +77,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         attr_name = event_data.attr_value.name.lower()
         quality = event_data.attr_value.quality
         try:
-            if attr_name in self._quality_monitored_attributes:
+            if (attr_name in self._quality_monitored_attributes) and (quality is not None):
                 self._quality_state_callback(attr_name, quality)
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error occurred on attribute quality state update")
