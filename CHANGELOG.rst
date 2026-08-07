@@ -33,6 +33,19 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Migrated `dscErrorStatuses` aggregation logic to dish structure manager.
 - Added workaround to resolve sub-band mapping for discrepancy between B5DC ICD and design document (SKB-1475).
 
+Version 10.0.2
+**************
+- Added workaround to resolve sub-band mapping for discrepancy between B5DC ICD and design document (SKB-1475).
+
+Version 10.0.1
+**************
+- Update receiver band to Band1 for SPFRx if requested band is B5b
+- Resolve SKB-1438: Add param for delay to FannedOutCommand completion. Used for SPFRx ConfigureBand command.
+- Upgraded ska-mid-dish-b5dc-proxy chart to v0.1.2
+
+  - Addresses SKB-1437 by increasing timeout for B5DC server requests
+
+
 Version 10.0.0
 **************
 - Cleaned up "Abort" LRC response message strings - response codes remain unchanged.
