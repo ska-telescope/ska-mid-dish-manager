@@ -219,9 +219,9 @@ def reset_dish_to_standby(
         logger.exception(
             "Failed to get to known state. Successfully completed: %s", update_messages
         )
-        logger.debug("DishManager status: %s", dish_manager_proxy.status())
-        logger.debug("DSManager status: %s", ds_device_proxy.status())
-        logger.debug("\n\nDM component state: %s\n\n", dish_manager_proxy.GetComponentStates())
+        logger.error("DishManager status: %s", dish_manager_proxy.status())
+        logger.error("DSManager status: %s", ds_device_proxy.status())
+        logger.error("\n\nDM component state: %s\n\n", dish_manager_proxy.GetComponentStates())
         raise
     finally:
         remove_subscriptions(subscriptions)
