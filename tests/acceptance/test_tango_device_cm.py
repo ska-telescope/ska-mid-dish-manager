@@ -113,25 +113,18 @@ def test_tango_device_component_manager_threads_management(
     )
     com_man.start_communicating()
 
-    try:
-        threads = threading.enumerate()
-        # The connection thread starts the event monitor before it exits, so there may
-        # be a brief overlap where both threads are running. Depending on timing, the
-        # active threads may include:
-        # 1. MainThread and the connection thread.
-        # 2. MainThread, the connection thread, and the event monitor.
-        # 3. MainThread and the event monitor.
-        assert 2 <= len(threads) <= 3
+    threads = threading.enumerate()
 
-        thread_names = [t.name for t in threads]
-        assert "MainThread" in thread_names
+    assert len(threads) == 3  # (Subscription thread, Consumer thread,main thread)
+    threads_names = [t.name for t in threads]
 
-        device_fqdn = device_fqdn.replace("-", "_").replace("/", ".")
-        connection_thread_name = f"{device_fqdn}.connection_thread"
-        assert "events_monitor" in thread_names or connection_thread_name in thread_names
-    finally:
-        com_man.stop_communicating()
+    assert "MainThread" in threads_names
+    device_fqdn = device_fqdn.replace("-", "_").replace("/", ".")
+    assert f"{device_fqdn}.attribute_subscription_thread" in threads_names
+    assert f"{device_fqdn}.event_consumer_thread" in threads_names
+
+    com_man.stop_communicating()
 
     threads = threading.enumerate()
-    assert len(threads) == 1
+    assert len(threads) == 1  # (main thread)
     assert threads[0].name == "MainThread"
