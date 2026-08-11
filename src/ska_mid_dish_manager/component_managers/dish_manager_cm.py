@@ -897,16 +897,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Sub-components communication states: DS [%s], DSC [%s], SPFRX [%s], SPF [%s], "
                 "B5DC Proxy [%s], B5DC Server [%s]. "
             ),
-            new_health_state,
-            ds_component_state_dict["healthstate"],
-            spfrx_component_state_dict["healthstate"],
-            spf_component_state_dict["healthstate"],
-            ds_comm_state,
-            CommunicationStatus(ds_component_state_dict["connectionstate"]),
-            spfrx_comm_state,
-            spf_comm_state,
-            b5dc_comm_state,
-            b5dc_component_state_dict.get("connectionstate", CommunicationStatus.DISABLED),
+            new_health_state.name,
+            ds_component_state_dict["healthstate"].name,
+            spfrx_component_state_dict["healthstate"].name,
+            spf_component_state_dict["healthstate"].name,
+            ds_comm_state.name,
+            CommunicationStatus(ds_component_state_dict["connectionstate"]).name,
+            spfrx_comm_state.name,
+            spf_comm_state.name,
+            b5dc_comm_state.name,
+            b5dc_component_state_dict.get("connectionstate", CommunicationStatus.DISABLED).name,
         )
 
         # TODO: Investigate double healthState change events
@@ -1133,10 +1133,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     "Updating dish manager configuredBand with: [%s]. "
                     "Sub-component bands DS [%s] SPF [%s] SPFRX [%s]"
                 ),
-                configured_band,
-                ds_component_state["indexerposition"],
-                spf_component_state["bandinfocus"],
-                spfrx_component_state["configuredband"],
+                configured_band.name,
+                ds_component_state["indexerposition"].name,
+                spf_component_state["bandinfocus"].name,
+                spfrx_component_state["configuredband"].name,
             )
             self._update_component_state(configuredband=configured_band)
 
@@ -1192,7 +1192,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 self.logger.debug(
                     "Updating dish manager %s with: [%s]",
                     cap_state_name,
-                    new_state,
+                    new_state.name,
                 )
                 self._update_component_state(**{cap_state_name: new_state})
         # Update the pointing model params if they change
