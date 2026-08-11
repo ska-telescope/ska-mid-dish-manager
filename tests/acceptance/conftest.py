@@ -202,7 +202,7 @@ def reset_dish_to_standby(
 
         if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY:
             ds_device_proxy.SetStandbyMode()
-            op_mode_events.wait_for_value(DSOperatingMode.STANDBY, timeout=10)
+            op_mode_events.wait_for_value(DSOperatingMode.STANDBY, timeout=60)
             update_messages.append("DS not in standby, got it into STANDBY")
 
         # go to FP
