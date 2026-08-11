@@ -113,7 +113,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         attr_name = event_data.attr_value.name.lower()
         quality = event_data.attr_value.quality
         try:
-            if (attr_name in self._quality_monitored_attributes) and (quality is not None):
+            if attr_name in self._quality_monitored_attributes:
                 self._quality_state_callback(attr_name, quality)
         except Exception:  # pylint:disable=broad-except
             self.logger.exception("Error occurred on attribute quality state update")
@@ -392,23 +392,24 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 self._tango_device_fqdn,
             )
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
-        try:
-            result = device_proxy.read_attribute(attribute_name).value
-        except tango.DevFailed:
-            self.logger.exception(
-                "Could not read attribute [%s] on [%s]",
-                attribute_name,
-                self._tango_device_fqdn,
-            )
-            raise
-        if log_read:
-            self.logger.debug(
-                "Result of reading [%s] on [%s] is [%s]",
-                attribute_name,
-                self._tango_device_fqdn,
-                result,
-            )
-        return result
+        with tango.EnsureOmniThread():
+            try:
+                result = device_proxy.read_attribute(attribute_name).value
+            except tango.DevFailed:
+                self.logger.exception(
+                    "Could not read attribute [%s] on [%s]",
+                    attribute_name,
+                    self._tango_device_fqdn,
+                )
+                raise
+            if log_read:
+                self.logger.debug(
+                    "Result of reading [%s] on [%s] is [%s]",
+                    attribute_name,
+                    self._tango_device_fqdn,
+                    result,
+                )
+            return result
 
     @check_communicating
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
@@ -419,24 +420,25 @@ class TangoDeviceComponentManager(BaseComponentManager):
             self._tango_device_fqdn,
         )
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
-        result = None
-        try:
-            result = device_proxy.write_attribute(attribute_name, attribute_value)
-        except tango.DevFailed:
-            self.logger.exception(
-                "Could not write to attribute [%s] with [%s] on [%s]",
+        with tango.EnsureOmniThread():
+            result = None
+            try:
+                result = device_proxy.write_attribute(attribute_name, attribute_value)
+            except tango.DevFailed:
+                self.logger.exception(
+                    "Could not write to attribute [%s] with [%s] on [%s]",
+                    attribute_name,
+                    attribute_value,
+                    self._tango_device_fqdn,
+                )
+                raise
+            self.logger.debug(
+                "Result of writing [%s] on [%s] is [%s]",
                 attribute_name,
-                attribute_value,
                 self._tango_device_fqdn,
+                result,
             )
-            raise
-        self.logger.debug(
-            "Result of writing [%s] on [%s] is [%s]",
-            attribute_name,
-            self._tango_device_fqdn,
-            result,
-        )
-        return result
+            return result
 
     def start_communicating(self) -> None:
         """Establish communication with the device."""
