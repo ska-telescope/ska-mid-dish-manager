@@ -3,7 +3,7 @@
 import logging
 import time
 from abc import ABC
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
 
@@ -14,6 +14,7 @@ from ska_mid_dish_manager.models.constants import (
 from ska_mid_dish_manager.models.fanned_out_command import (
     FannedOutCommand,
     FannedOutTangoCommand,
+    FannedOutTangoLongRunningCommand,
 )
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
@@ -103,7 +104,9 @@ class ActionHandler:
         self,
         logger: logging.Logger,
         action_name: str,
-        fanned_out_commands: List[FannedOutCommand | FannedOutTangoCommand],
+        fanned_out_commands: list[FannedOutCommand]
+        | list[FannedOutTangoCommand]
+        | list[FannedOutTangoLongRunningCommand],
         component_state: dict,
         awaited_component_state: Optional[dict] = {},
         action_on_success: Optional[Action] = None,
