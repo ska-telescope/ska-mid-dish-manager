@@ -26,7 +26,7 @@ def test_read_band_static_pointing_model_parameters(
     tango_attribute: str, dish_manager_proxy: tango.DeviceProxy
 ) -> None:
     """Test BandN Static Pointing Model Parameters."""
-    band_pointing_model_params = dish_manager_proxy.read_attribute(tango_attribute).value
+    band_pointing_model_params = dish_manager_proxy.read_attribute(tango_attribute).value  # ty: ignore[unresolved-attribute]
 
     assert len(band_pointing_model_params) == BAND_POINTING_MODEL_PARAMS_LENGTH
     assert band_pointing_model_params.dtype.name == "float64"

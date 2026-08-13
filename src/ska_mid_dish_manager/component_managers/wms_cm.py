@@ -375,3 +375,16 @@ class WMSComponentManager(BaseComponentManager):
             if average is not None
         }
         super()._update_component_state(**new_component_state)
+
+    def _fetch_build_state_information(self) -> None:
+        """Fetch build state information from the WMS Tango device.
+
+        TODO: Expand this method to fetch build state information from all WMS device
+
+        """
+        build_state = "WMS Buildtate Unknown"
+        self._update_component_state(buildstate=build_state)
+
+    def execute_command(self, command_name: str, *args: Any) -> Any:
+        """Execute a command on the WMS Tango device group."""
+        raise NotImplementedError("Command execution on WMS device group is not implemented")

@@ -60,7 +60,7 @@ def test_abort_handler(
     abort_method: str,
     component_manager: DishManagerComponentManager,
     mock_command_tracker: MagicMock,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of Abort command handler.
 

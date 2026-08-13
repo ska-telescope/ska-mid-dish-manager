@@ -3,6 +3,7 @@ import logging
 import threading
 import time
 import weakref
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -13,7 +14,7 @@ from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
 LOGGER = logging.getLogger(__name__)
 
 
-def force_gc_on_weak_ref(weak_ref: weakref.ref) -> None:
+def force_gc_on_weak_ref(weak_ref: weakref.ref[Any]) -> None:
     """Force garbage collection of the component manager referenced by a weak reference."""
     for _ in range(10):
         if weak_ref() is None:

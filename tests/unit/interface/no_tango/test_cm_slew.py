@@ -1,5 +1,7 @@
 """Tests dish manager component manager slew command handler."""
 
+from unittest.mock import MagicMock
+
 import pytest
 from ska_control_model import ResultCode, TaskStatus
 
@@ -10,7 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 @pytest.mark.unit
 def test_slew_handler(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of Slew command handler.
 
@@ -82,7 +84,7 @@ def test_slew_handler(
 )
 def test_slew_rejection(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
     invalid_slew_args,
 ) -> None:
     """Verify behaviour of a Slew rejection given too many arguments."""

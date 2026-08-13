@@ -78,8 +78,8 @@ class ComponentStateStore:
         :return: True if found
         :rtype: bool
         """
+        component_state = []
         try:
-            component_state = []
             while True:
                 state = self._queue.get(timeout=timeout)
                 if state.get(key) == value:
@@ -101,33 +101,33 @@ class MethodCallsStore:
 
     def __init__(self) -> None:
         """Init the class."""
-        self._queue_args: queue.Queue = queue.Queue()
-        self._queue_kwargs: queue.Queue = queue.Queue()
+        self._queue_args: queue.Queue[tuple[Any, ...]] = queue.Queue()
+        self._queue_kwargs: queue.Queue[dict[str, Any]] = queue.Queue()
 
-    def __call__(self, *args: tuple, **kwargs: dict) -> None:
+    def __call__(self, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> None:
         """Store the kwargs used in calls to the MethodCallsStore class.
 
         :param kwargs: The method parameters
-        :type kwargs: dict
+        :type kwargs: dict[str, Any]
         """
         if kwargs:
             self._queue_kwargs.put(kwargs)
         if args:
             self._queue_args.put(args)
 
-    def wait_for_kwargs(self, expected_kwargs: dict, timeout: int = 3) -> bool:
+    def wait_for_kwargs(self, expected_kwargs: dict[str, Any], timeout: int = 3) -> bool:
         """Wait for a specific dict to arrive.
 
         :param expected_kwargs: The kwargs we're expecting
-        :type expected_kwargs: dict
+        :type expected_kwargs: dict[str, Any]
         :param timeout: How long to wait, defaults to 3
         :type timeout: int, optional
         :raises RuntimeError: When the expected value is not fuond
         :return: Whether it was found or not
         :rtype: bool
         """
+        queue_values = []
         try:
-            queue_values = []
             while True:
                 queue_kwargs = self._queue_kwargs.get(timeout=timeout)
                 filtered_queue_kwargs = {k: v for k, v in queue_kwargs.items() if v is not None}
@@ -137,19 +137,19 @@ class MethodCallsStore:
         except queue.Empty as err:
             raise RuntimeError(f"Never got a {expected_kwargs}, but got {queue_values}") from err
 
-    def wait_for_args(self, expected_args: tuple, timeout: int = 3) -> bool:
+    def wait_for_args(self, expected_args: tuple[Any, ...], timeout: int = 3) -> bool:
         """Wait for a specific arg list to arrive.
 
         :param expected_args: The args we're expecting
-        :type expected_args: tuple
+        :type expected_args: tuple[Any, ...]
         :param timeout: How long to wait, defaults to 3
         :type timeout: int, optional
         :raises RuntimeError: When the expected value is not found
         :return: Whether it was found or not
         :rtype: bool
         """
+        queue_values = []
         try:
-            queue_values = []
             while True:
                 queue_args = self._queue_args.get(timeout=timeout)
                 queue_values.append(queue_args)
@@ -158,7 +158,7 @@ class MethodCallsStore:
         except queue.Empty as err:
             raise RuntimeError(f"Never got a {expected_args}, but got {queue_values}") from err
 
-    def get_args_queue(self, timeout: int = 3) -> List[tuple]:
+    def get_args_queue(self, timeout: int = 3) -> List[tuple[Any, ...]]:
         """Get all args from the queue.
 
         :param timeout: How long to wait, defaults to 3
@@ -174,13 +174,13 @@ class MethodCallsStore:
         except queue.Empty:
             return items
 
-    def get_kwargs_queue(self, timeout: int = 3) -> List[dict]:
+    def get_kwargs_queue(self, timeout: int = 3) -> List[dict[str, Any]]:
         """Get all kwargs from the queue.
 
         :param timeout: How long to wait, defaults to 3
         :type timeout: int, optional
         :return: List of kwargs dicts
-        :rtype: List[dict]
+        :rtype: List[dict[str, Any]]
         """
         items = []
         try:
@@ -224,8 +224,8 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
+        events = []
         try:
-            events = []
             while True:
                 event = self._queue.get(timeout=timeout)
                 events.append(event)
@@ -251,7 +251,7 @@ class EventStore:
                 ) from err
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 
-    def wait_for_condition(self, condition: Callable, timeout: int = 3) -> bool:
+    def wait_for_condition(self, condition: Callable[[Any], bool], timeout: int = 3) -> bool:
         """Wait for a generic condition.
 
         Wait `timeout` seconds for each fetch.
@@ -264,8 +264,8 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
+        events = []
         try:
-            events = []
             while True:
                 event = self._queue.get(timeout=timeout)
                 events.append(event)
@@ -292,8 +292,8 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
+        events = []
         try:
-            events = []
             while True:
                 event = self._queue.get(timeout=timeout)
                 events.append(event)

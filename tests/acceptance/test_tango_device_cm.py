@@ -78,10 +78,10 @@ def test_stress_component_monitor(monitor_tango_servers, component_state_store, 
         mock_callable.assert_called_with(CommunicationStatus.ESTABLISHED)
 
         device_proxy = tango.DeviceProxy(ds_device_fqdn)
-        test_mode_initial_val = device_proxy.read_attribute("testmode").value
+        test_mode_initial_val = device_proxy.read_attribute("testmode").value  # ty: ignore[unresolved-attribute]
 
         for _ in range(10):
-            current_val = device_proxy.read_attribute("testmode").value
+            current_val = device_proxy.read_attribute("testmode").value  # ty: ignore[unresolved-attribute]
             new_val = 0 if current_val else 1
             device_proxy.testmode = new_val
             assert component_state_store.wait_for_value("testmode", new_val, timeout=30)

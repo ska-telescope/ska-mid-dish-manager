@@ -1,5 +1,7 @@
 """Tests dish manager component manager trackloadstaticoff command handler."""
 
+from unittest.mock import MagicMock
+
 import pytest
 from ska_control_model import ResultCode, TaskStatus
 
@@ -9,7 +11,7 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
 @pytest.mark.unit
 def test_track_load_static_off_handler(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of TrackLoadStaticOff command handler.
 
@@ -66,7 +68,7 @@ def test_track_load_static_off_handler(
 )
 def test_track_load_static_off_rejects_invalid_args_count(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
     values: list[float],
 ) -> None:
     """Verify invalid argument counts are rejected."""

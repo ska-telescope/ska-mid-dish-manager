@@ -1,5 +1,7 @@
 """Tests dish manager component manager track command handler."""
 
+from unittest.mock import MagicMock
+
 import pytest
 from ska_control_model import ResultCode, TaskStatus
 
@@ -10,7 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 @pytest.mark.unit
 def test_track_handler(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of Track command handler.
 

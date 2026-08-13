@@ -63,8 +63,9 @@ class MonitorPing(threading.Thread):
             "other_errors": f"Failed to execute MonitorPing on {self._spfrx_trl}",
         }
         with tango.EnsureOmniThread():
-            self._create_device_proxy()
             try:
+                if not self._device_proxy:
+                    raise Exception("DeviceProxy not created.")
                 self._device_proxy.command_inout("MonitorPing", None)
             except Exception:
                 if self._log_counter < self.PING_ERROR_LOG_REPEAT:

@@ -19,7 +19,7 @@ def mock_command_tracker() -> MagicMock:
 
 
 @pytest.fixture()
-def callbacks() -> dict:
+def callbacks() -> dict[str, MagicMock | ComponentStateStore | MethodCallsStore]:
     """Return a dictionary of callbacks."""
     return {
         "build_state_cb": MagicMock(),
@@ -41,7 +41,9 @@ def execute_command_side_effect(command_name, command_arg=None, truncate_arg_in_
 
 
 @pytest.fixture()
-def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Generator:
+def component_manager(
+    mock_command_tracker: MagicMock, callbacks: dict[str, MagicMock]
+) -> Generator[DishManagerComponentManager]:
     """Fixture that returns the component manager under test.
 
     :param callbacks: a dictionary of mocks passed as callbacks

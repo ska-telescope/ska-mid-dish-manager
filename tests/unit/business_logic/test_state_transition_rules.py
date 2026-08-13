@@ -1,7 +1,7 @@
 """Unit tests verifying model against dishMode transitions."""
 
 import pytest
-from ska_control_model import AdminMode
+from ska_control_model import AdminMode  # ty: ignore[deprecated]
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -196,7 +196,7 @@ def test_compute_dish_mode(
                 powerstate=DSPowerState.LOW_POWER,
             ),
             None,
-            dict(operatingmode=SPFRxOperatingMode.UNKNOWN, adminmode=AdminMode.ONLINE),
+            dict(operatingmode=SPFRxOperatingMode.UNKNOWN, adminmode=AdminMode.ONLINE),  # ty: ignore[deprecated]
             DishMode.STOW,
         ),
         (

@@ -25,7 +25,10 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
     ],
 )
 def test_get_attribute_property_value(
-    mock_command_tracker: MagicMock, callbacks: dict, read_response, expected_response
+    mock_command_tracker: MagicMock,
+    callbacks: dict[str, MagicMock],
+    read_response,
+    expected_response,
 ):
     """Test the attribute property read."""
     with mock.patch(
