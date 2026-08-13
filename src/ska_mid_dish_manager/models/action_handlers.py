@@ -13,6 +13,7 @@ from ska_mid_dish_manager.models.constants import (
 )
 from ska_mid_dish_manager.models.fanned_out_command import (
     FannedOutCommand,
+    FannedOutTangoCommand,
 )
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
@@ -102,7 +103,7 @@ class ActionHandler:
         self,
         logger: logging.Logger,
         action_name: str,
-        fanned_out_commands: List[FannedOutCommand],
+        fanned_out_commands: List[FannedOutCommand | FannedOutTangoCommand],
         component_state: dict,
         awaited_component_state: Optional[dict] = {},
         action_on_success: Optional[Action] = None,
