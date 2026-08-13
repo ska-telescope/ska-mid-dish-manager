@@ -93,7 +93,7 @@ def test_configure_band_b(
     """Test ConfigureBand."""
     # Just skip the band we already are in
     if expected_band == dish_manager_proxy.configuredBand:
-        pytest.skip(f"Already in band {expected_band}")
+        pytest.skip(f"Already in band {expected_band}")  # ty: ignore[too-many-positional-arguments]
 
     main_event_store = event_store_class()
     result_event_store = event_store_class()

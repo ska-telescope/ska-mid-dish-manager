@@ -55,7 +55,7 @@ def event_store():
 
 
 @pytest.fixture
-def event_store_class():
+def event_store_class() -> type[EventStore]:
     """Fixture for storing events."""
     return EventStore
 
