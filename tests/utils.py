@@ -493,7 +493,11 @@ class EventStore:
         :return: Filtered list of events
         :rtype: List[tango.EventData]
         """
-        return [event for event in events if unique_id in str(event.attr_value.value)]
+        return [
+            event
+            for event in events
+            if event.attr_value and unique_id in str(event.attr_value.value)
+        ]
 
     def wait_for_n_events(self, event_count: int, timeout: int = 3):
         """Wait for N number of events.
@@ -536,16 +540,18 @@ class EventStore:
             return items
 
     @classmethod
-    def extract_event_values(cls, events: List[tango.EventData]) -> List[Tuple]:
+    def extract_event_values(cls, events: List[tango.EventData]) -> List[Tuple[str, Any, str]]:
         """Get the values out of events.
 
         :param events: List of events
         :type events: List[tango.EventData]
         :return: List of value tuples
-        :rtype: List[Tuple]
+        :rtype: List[Tuple[str, Any, str]]
         """
-        event_info = [
-            (event.attr_value.name, event.attr_value.value, event.device) for event in events
+        event_info: List[Tuple[str, Any, str]] = [
+            (event.attr_value.name, event.attr_value.value, event.device)
+            for event in events
+            if event.attr_value
         ]
         return event_info
 
@@ -568,9 +574,11 @@ class EventStore:
         :param events: list of
         :type events: List[tango.EventData]
         """
-        return [(event.attr_value.name, event.attr_value.value) for event in events]
+        return [
+            (event.attr_value.name, event.attr_value.value) for event in events if event.attr_value
+        ]
 
-    def wait_for_lrcvalue(self, key: str, value: any, timeout: int = 3) -> Dict:
+    def wait_for_lrcvalue(self, key: str, value: Any, timeout: int = 3) -> Dict:
         """Wait for a long running command to get to lrc[Executing/Finished/Queue]
         depending on which subscription you passed in.
 
@@ -612,14 +620,14 @@ class TrackedDevice:
     """Class to group tracked device information."""
 
     device_proxy: tango.DeviceProxy
-    attribute_names: Tuple[str]
+    attribute_names: tuple[str, ...]
     subscription_ids: List[int] = field(default_factory=list)
 
 
 class EventPrinter:
     """Class that writes to attribte changes to a file."""
 
-    def __init__(self, filename: str, tracked_devices: Tuple[TrackedDevice] = ()) -> None:
+    def __init__(self, filename: str, tracked_devices: tuple[TrackedDevice, ...] = ()) -> None:
         self.tracked_devices = tracked_devices
         self.filename = filename
 
@@ -636,7 +644,7 @@ class EventPrinter:
                 dp = tracked_device.device_proxy
                 for sub_id in tracked_device.subscription_ids:
                     dp.unsubscribe_event(sub_id)
-            except tango.DevError:
+            except tango.DevFailed:
                 pass
 
     def push_event(self, ev: tango.EventData):
@@ -644,7 +652,7 @@ class EventPrinter:
             if ev.err:
                 err = ev.errors[0]
                 open_file.write(f"\nEvent Error {err.desc} {err.origin} {err.reason}")
-            else:
+            if ev.attr_value:
                 attr_name = ev.attr_name.split("/")[-1]
                 attr_value = ev.attr_value.value
                 if ev.attr_value.type == tango.CmdArgType.DevEnum:
