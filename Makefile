@@ -55,6 +55,13 @@ python-do-lint:
 	$(PYTHON_RUNNER) uv run ruff check $(PYTHON_LINT_TARGET) || rc=1; \
 	exit $$rc
 
+python-do-type-check:
+	@mkdir -p build/reports
+	@rc=0; \
+	set -x; \
+	$(PYTHON_RUNNER) uv run ty check --error all || rc=1; \
+	exit $$rc
+
 #############################
 # OCI, K8s, Helm
 #############################
