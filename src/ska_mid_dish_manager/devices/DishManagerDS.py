@@ -2897,7 +2897,7 @@ class DishManager(SKAController):
     @record_command(False)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(  # type: ignore[misc]
+    @command(
         dtype_in=(float,),
         dtype_out="DevVarLongStringArray",
         doc_in="""
@@ -3226,7 +3226,7 @@ class DishManager(SKAController):
     @record_command(False)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(  # type: ignore[misc]
+    @command(
         dtype_out="DevVarLongStringArray",
         doc_in=(
             "Clear the interlock status once interlocks or E-Stops have been"

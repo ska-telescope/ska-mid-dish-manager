@@ -25,7 +25,7 @@ def time_tango_write() -> Callable:
                 if duration > SLOW_WRITE_WARN_THRESHOLD_SECONDS:
                     self.logger.warning(
                         "SLOW WRITE: %s took %.3f s",
-                        func.__name__,
+                        func.__name__,  # ty: ignore[unresolved-attribute]
                         duration,
                     )
 
@@ -46,7 +46,7 @@ def record_command(record_mode: bool = False) -> Callable:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             device_instance = args[0]
             component_manager = device_instance.component_manager
-            command_and_time = (str(time.time()), func.__name__)
+            command_and_time = (str(time.time()), func.__name__)  # ty: ignore[unresolved-attribute]
             # record both if True
             if record_mode:
                 component_manager._update_component_state(
@@ -151,14 +151,14 @@ def log_tango_command() -> Callable:
                 if args:
                     logger.info(
                         "Tango command %s called with param %s.",
-                        func.__name__,
+                        func.__name__,  # ty: ignore[unresolved-attribute]
                         args,
                         extra=OPERATOR_TAG,
                     )
                 else:
                     logger.info(
                         "Tango command %s called.",
-                        func.__name__,
+                        func.__name__,  # ty: ignore[unresolved-attribute]
                         extra=OPERATOR_TAG,
                     )
             return func(self, *args, **kwargs)
@@ -182,7 +182,7 @@ def log_tango_attr_write() -> Callable:
             if logger:
                 logger.info(
                     "Tango attribute write called on %s with param %s.",
-                    func.__name__,
+                    func.__name__,  # ty: ignore[unresolved-attribute]
                     args,
                     extra=OPERATOR_TAG,
                 )

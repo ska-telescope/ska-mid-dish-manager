@@ -1,7 +1,7 @@
 """This module provides functionality related to scheduling and managing of tasks."""
 
 import threading
-from typing import Callable
+from typing import Callable, Optional
 
 DEFAULT_WATCHDOG_TIMEOUT = 10.0  # seconds
 
@@ -12,7 +12,9 @@ class WatchdogTimerInactiveError(RuntimeError):
 
 class WatchdogTimer:
     def __init__(
-        self, callback_on_timeout: Callable = None, timeout: float = DEFAULT_WATCHDOG_TIMEOUT
+        self,
+        callback_on_timeout: Optional[Callable] = None,
+        timeout: float = DEFAULT_WATCHDOG_TIMEOUT,
     ):
         """This class implements a watchdog timer that will make a callback
         when the timer expires.
@@ -31,7 +33,7 @@ class WatchdogTimer:
         self._lock = threading.RLock()
         self._enabled = False
 
-    def enable(self, timeout: float = None):
+    def enable(self, timeout: Optional[float] = None):
         """Enable the watchdog timer.
 
         :param timeout: Time in seconds, defaults to None

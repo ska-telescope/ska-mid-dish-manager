@@ -65,7 +65,7 @@ class MonitorPing(threading.Thread):
         with tango.EnsureOmniThread():
             self._create_device_proxy()
             try:
-                self._device_proxy.command_inout("MonitorPing", None)  # type: ignore
+                self._device_proxy.command_inout("MonitorPing", None)
             except Exception:
                 if self._log_counter < self.PING_ERROR_LOG_REPEAT:
                     if self._device_proxy is None:

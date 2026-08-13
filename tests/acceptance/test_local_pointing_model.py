@@ -29,7 +29,7 @@ def test_read_band_static_pointing_model_parameters(
     band_pointing_model_params = dish_manager_proxy.read_attribute(tango_attribute).value
 
     assert len(band_pointing_model_params) == BAND_POINTING_MODEL_PARAMS_LENGTH
-    assert band_pointing_model_params.dtype.name == "float64"  # type: ignore
+    assert band_pointing_model_params.dtype.name == "float64"
 
 
 @pytest.mark.acceptance

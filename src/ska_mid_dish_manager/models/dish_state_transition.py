@@ -42,9 +42,9 @@ class StateTransition:
 
     def compute_dish_mode(
         self,
-        ds_component_state: dict,  # type: ignore
-        spfrx_component_state: Optional[dict] = None,  # type: ignore
-        spf_component_state: Optional[dict] = None,  # type: ignore
+        ds_component_state: dict,
+        spfrx_component_state: Optional[dict] = None,
+        spf_component_state: Optional[dict] = None,
     ) -> DishMode:
         """Compute the dishMode based off component_states.
         :param ds_component_state: DS device component state
@@ -151,10 +151,10 @@ class StateTransition:
         spfrx_communication_state: CommunicationStatus,
         spf_communication_state: CommunicationStatus,
         b5dc_communication_state: CommunicationStatus,
-        ds_component_state: dict,  # type: ignore
-        spfrx_component_state: Optional[dict] = None,  # type: ignore
-        spf_component_state: Optional[dict] = None,  # type: ignore
-        b5dc_component_state: Optional[dict] = None,  # type: ignore
+        ds_component_state: dict,
+        spfrx_component_state: Optional[dict] = None,
+        spf_component_state: Optional[dict] = None,
+        b5dc_component_state: Optional[dict] = None,
     ) -> HealthState:
         """Compute the HealthState based off component_states.
 
@@ -237,10 +237,10 @@ class StateTransition:
     def compute_capability_state(
         self,
         band: str,  # Literal["b1", "b2", "b3", "b4", "b5a", "b5b"],
-        ds_component_state: dict,  # type: ignore
-        dish_manager_component_state: dict,  # type: ignore
-        spfrx_component_state: Optional[dict] = None,  # type: ignore
-        spf_component_state: Optional[dict] = None,  # type: ignore
+        ds_component_state: dict,
+        dish_manager_component_state: dict,
+        spfrx_component_state: Optional[dict] = None,
+        spf_component_state: Optional[dict] = None,
     ) -> CapabilityStates:
         """Compute the capabilityState based off component_states.
 
@@ -307,9 +307,9 @@ class StateTransition:
 
     def compute_configured_band(
         self,
-        ds_component_state: dict,  # type: ignore
-        spfrx_component_state: Optional[dict] = None,  # type: ignore
-        spf_component_state: Optional[dict] = None,  # type: ignore
+        ds_component_state: dict,
+        spfrx_component_state: Optional[dict] = None,
+        spf_component_state: Optional[dict] = None,
     ) -> Band:
         """Compute the configuredband based off component_states.
 
@@ -340,8 +340,8 @@ class StateTransition:
 
     def compute_spf_band_in_focus(
         self,
-        ds_component_state: dict,  # type: ignore
-        spfrx_component_state: Optional[dict] = None,  # type: ignore
+        ds_component_state: dict,
+        spfrx_component_state: Optional[dict] = None,
     ) -> SPFBandInFocus:
         """Compute the bandinfocus based off component_states.
 
@@ -364,8 +364,8 @@ class StateTransition:
 
     def compute_power_state(
         self,
-        ds_component_state: dict,  # type: ignore
-        spf_component_state: Optional[dict] = None,  # type: ignore
+        ds_component_state: dict,
+        spf_component_state: Optional[dict] = None,
     ) -> PowerState:
         """Compute the powerstate based off component_states.
 
@@ -394,13 +394,13 @@ class StateTransition:
     @classmethod
     def _collapse(
         cls,
-        ds_component_state: dict,  # type: ignore
+        ds_component_state: dict,
         spfrx_component_state: Optional[dict] = None,
-        spf_component_state: Optional[dict] = None,  # type: ignore
-        dish_manager_component_state: Optional[dict] = None,  # type: ignore
-    ) -> dict:  # type: ignore
+        spf_component_state: Optional[dict] = None,
+        dish_manager_component_state: Optional[dict] = None,
+    ) -> dict:
         """Collapse multiple state dicts into one."""
-        dish_manager_states = {"DS": {}}  # type: ignore
+        dish_manager_states = {"DS": {}}
 
         for key, val in ds_component_state.items():
             match val:
