@@ -8,11 +8,17 @@ import threading
 import time
 from functools import partial
 from threading import Lock
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, cast
 
 import requests
 import tango
-from ska_control_model import AdminMode, CommunicationStatus, HealthState, ResultCode, TaskStatus
+from ska_control_model import (
+    AdminMode,  # ty: ignore[deprecated]
+    CommunicationStatus,
+    HealthState,
+    ResultCode,
+    TaskStatus,
+)
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
@@ -138,9 +144,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             default_dish_mode = DishMode.MAINTENANCE
 
         # clean up WMSDeviceNames
-        configured_wms_devices = list(wms_device_names) or []
+        configured_wms_devices: list[str] = list(wms_device_names) or []
         # filter out empty strings from the list
-        configured_wms_devices = [instance for instance in configured_wms_devices if instance]
+        configured_wms_devices: list[str] = [
+            instance for instance in configured_wms_devices if instance
+        ]
 
         super().__init__(
             logger,
@@ -260,7 +268,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         }
 
         # SPF has to go first
-        self.sub_component_managers = {
+        self.sub_component_managers: dict[
+            str,
+            SPFComponentManager
+            | DSComponentManager
+            | SPFRxComponentManager
+            | WMSComponentManager
+            | B5DCComponentManager,
+        ] = {
             "SPF": SPFComponentManager(
                 spf_device_fqdn,
                 logger,
@@ -364,7 +379,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 noisediodemode=NoiseDiodeMode.OFF,
                 periodicnoisediodepars=[0, 0, 0],
                 pseudorandomnoisediodepars=[0, 0, 0],
-                adminmode=AdminMode.OFFLINE,
+                adminmode=AdminMode.OFFLINE,  # ty: ignore[deprecated]
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPFRX
                 ),
@@ -379,7 +394,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         # Enable WMS
         if configured_wms_devices:
             self.sub_component_managers["WMS"] = WMSComponentManager(
-                configured_wms_devices,
+                wms_device_names=configured_wms_devices,
                 logger=logger,
                 component_state_callback=self._evaluate_wind_speed_averages,
                 communication_state_callback=partial(
@@ -537,7 +552,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         Or calulate it manually if that fails.
         """
         try:
-            ds_cm = self.sub_component_managers["DS"]
+            ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
             task_status, msg = ds_cm.execute_command("GetCurrentTAIOffset", None)
         except (ConnectionError, KeyError):
             self.logger.debug("Calculating TAI offset manually.")
@@ -841,7 +856,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         on_abort_task_complete = partial(
             self.abort_sequence_handler.on_abort_task_complete, task_callback
         )
-        self.abort_tasks(task_callback=on_abort_task_complete)
+        self.abort_tasks(task_callback=on_abort_task_complete)  # ty: ignore[invalid-argument-type]
         self.logger.debug("Queue is being aborted")
 
         return TaskStatus.IN_PROGRESS, "Abort sequence has started"
@@ -1136,7 +1151,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             )
             self.logger.debug("Setting bandInFocus to %s on SPF", band_in_focus)
             # update the bandInFocus of SPF before configuredBand
-            spf_component_manager = self.sub_component_managers["SPF"]
+            spf_component_manager: SPFComponentManager = cast(
+                SPFComponentManager, self.sub_component_managers["SPF"]
+            )
             try:
                 spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
             except (tango.DevFailed, ConnectionError):
@@ -1337,7 +1354,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if not start:
             if self.component_state["dishmode"] == DishMode.STOW:
                 self.logger.debug("Releasing authority from DS.")
-                ds_cm = self.sub_component_managers["DS"]
+                ds_cm: DSComponentManager = cast(
+                    DSComponentManager, self.sub_component_managers["DS"]
+                )
                 ds_cm.execute_command("ReleaseAuth", None)
                 self.logger.debug("Transitioning from STOW to MAINTENANCE mode.")
                 self._set_maintenance_mode_active()
@@ -1482,9 +1501,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Syncing component states")
         if self.sub_component_managers:
             for device, component_manager in self.sub_component_managers.items():
-                if not self.is_device_ignored(device) and device != "WMS":
-                    component_manager.clear_monitored_attributes()
-                    component_manager.update_state_from_monitored_attributes()
+                if not isinstance(component_manager, WMSComponentManager):
+                    if not self.is_device_ignored(device) and device != "WMS":
+                        component_manager.clear_monitored_attributes()
+                        component_manager.update_state_from_monitored_attributes()
 
     def update_pointing_model_params(self, attr: str, values: list[float]) -> None:
         """Update band pointing model parameters for the given attribute."""
@@ -1496,7 +1516,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 self.logger.error(err_msg)
                 raise ValueError(err_msg)
-            ds_com_man = self.sub_component_managers["DS"]
+            ds_com_man: DSComponentManager = cast(
+                DSComponentManager, self.sub_component_managers["DS"]
+            )
             ds_com_man.write_attribute_value(attr, values)
         except tango.DevFailed:
             raise
@@ -1508,7 +1530,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Load the track table."""
         float_list = [load_mode, sequence_length]
         float_list.extend(table)
-        ds_cm = self.sub_component_managers["DS"]
+        ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
         task_status, msg = ds_cm.execute_command("TrackLoadTable", float_list)
         return task_status, msg
 
@@ -1803,7 +1825,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     @last_command_failure_decorator
     def set_stow_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode."""
-        ds_cm = self.sub_component_managers["DS"]
+        ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
         task_status, msg = ds_cm.execute_command("Stow", None)
         if task_status == TaskStatus.FAILED:
             update_task_status(task_callback, status=TaskStatus.FAILED, exception=msg)
@@ -1931,7 +1953,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         Note that it will only take effect after
         SPFRx has been restarted.
         """
-        spfrx_cm = self.sub_component_managers["SPFRX"]
+        spfrx_cm: SPFRxComponentManager = cast(
+            SPFRxComponentManager, self.sub_component_managers["SPFRX"]
+        )
         task_status, msg = spfrx_cm.execute_command("SetKValue", k_value)
         if task_status == TaskStatus.FAILED:
             return (ResultCode.FAILED, msg)
@@ -2021,7 +2045,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Forward the encoded TZ data to SPFRx.
         report_task_progress("Uploading TZ data to SPFRx", self._command_progress_callback)
-        spfrx_cm = self.sub_component_managers["SPFRX"]
+        spfrx_cm: SPFRxComponentManager = cast(
+            SPFRxComponentManager, self.sub_component_managers["SPFRX"]
+        )
         try:
             task_status, msg = spfrx_cm.execute_command(
                 "UpdateTZData", encoded_tz_data, truncate_arg_in_logs=True
@@ -2088,7 +2114,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "HESE8": {"unit": "arcsec"},
         }
 
-        ds_cm = self.sub_component_managers["DS"]
+        ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
         coeff_keys = []
         band_coeffs_values = []
         result_code = ResultCode.REJECTED
@@ -2222,7 +2248,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_track_interpolation_mode(self, interpolation_mode) -> Tuple[ResultCode, str]:
         """Set the trackInterpolationMode on the DS."""
-        ds_cm = self.sub_component_managers["DS"]
+        ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
         try:
             ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
             self.logger.debug("Successfully updated trackInterpolationMode on DSManager.")
@@ -2232,7 +2258,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_noise_diode_mode(self, noise_diode_mode) -> Tuple[ResultCode, str]:
         """Set the noiseDiodeMode on the SPFRx."""
-        spfrx_cm = self.sub_component_managers["SPFRX"]
+        spfrx_cm: SPFRxComponentManager = cast(
+            SPFRxComponentManager, self.sub_component_managers["SPFRX"]
+        )
         try:
             spfrx_cm.write_attribute_value("noiseDiodeMode", noise_diode_mode)
             self.logger.debug("Successfully updated noiseDiodeMode on SPFRx.")
@@ -2252,7 +2280,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ]
 
         if spfrx_operating_mode == SPFRxOperatingMode.STANDBY:
-            spfrx_cm = self.sub_component_managers["SPFRX"]
+            spfrx_cm: SPFRxComponentManager = cast(
+                SPFRxComponentManager, self.sub_component_managers["SPFRX"]
+            )
             try:
                 spfrx_cm.write_attribute_value("periodicNoiseDiodePars", values)
                 self.logger.debug("Successfully updated periodicNoiseDiodePars on SPFRx.")
@@ -2279,7 +2309,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ]
 
         if spfrx_operating_mode == SPFRxOperatingMode.STANDBY:
-            spfrx_cm = self.sub_component_managers["SPFRX"]
+            spfrx_cm: SPFRxComponentManager = cast(
+                SPFRxComponentManager, self.sub_component_managers["SPFRX"]
+            )
             try:
                 spfrx_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
                 self.logger.debug("Successfully updated pseudoRandomNoiseDiodePars on SPFRx.")
@@ -2330,7 +2362,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_dsc_power_limit_kw(self, power_limit: float) -> Tuple[ResultCode, str]:
         """Set the DSC Power Limit kW on the DS."""
-        ds_cm = self.sub_component_managers["DS"]
+        ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
         try:
             ds_cm.write_attribute_value("dscPowerLimitKw", power_limit)
             self.logger.debug("Successfully updated dscPowerLimitKw on DS.")
@@ -2370,7 +2402,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Cannot set attenuation. Monitoring and control not set up for B5DC device.",
             )
 
-        b5dc_cm = self.sub_component_managers["B5DC"]
+        b5dc_cm: B5DCComponentManager = cast(
+            B5DCComponentManager, self.sub_component_managers["B5DC"]
+        )
         task_status, msg = b5dc_cm.execute_command("SetHPolAttenuation", value)
         if task_status == TaskStatus.FAILED:
             return (ResultCode.FAILED, msg)
@@ -2385,7 +2419,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Cannot set attenuation. Monitoring and control not set up for B5DC device.",
             )
 
-        b5dc_cm = self.sub_component_managers["B5DC"]
+        b5dc_cm: B5DCComponentManager = cast(
+            B5DCComponentManager, self.sub_component_managers["B5DC"]
+        )
         task_status, msg = b5dc_cm.execute_command("SetVPolAttenuation", value)
         if task_status == TaskStatus.FAILED:
             return (ResultCode.FAILED, msg)
@@ -2400,7 +2436,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "Cannot set frequency. Monitoring and control not set up for B5DC device.",
             )
 
-        b5dc_cm = self.sub_component_managers["B5DC"]
+        b5dc_cm: B5DCComponentManager = cast(
+            B5DCComponentManager, self.sub_component_managers["B5DC"]
+        )
         task_status, msg = b5dc_cm.execute_command("SetFrequency", value)
         if task_status == TaskStatus.FAILED:
             return (ResultCode.FAILED, msg)
