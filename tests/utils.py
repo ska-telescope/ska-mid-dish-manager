@@ -13,6 +13,7 @@ import numpy as np
 import tango
 from matplotlib import pyplot as plt
 from ska_control_model import CommunicationStatus
+from tango.utils import EventCallback
 
 from ska_mid_dish_manager.models.dish_enums import PointingState, TrackTableLoadMode
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
@@ -1148,7 +1149,7 @@ def compare_trajectories(
 
 def setup_subscriptions(
     device_proxy: tango.DeviceProxy,
-    attr_callback_map: Dict[str, EventStore],
+    attr_callback_map: Dict[str, EventStore] | Dict[str, EventCallback],
     event_type: tango.EventType = tango.EventType.CHANGE_EVENT,
     reset_queue: bool = True,
 ) -> Dict[tango.DeviceProxy, List[int]]:

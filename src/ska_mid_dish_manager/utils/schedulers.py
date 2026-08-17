@@ -13,7 +13,7 @@ class WatchdogTimerInactiveError(RuntimeError):
 class WatchdogTimer:
     def __init__(
         self,
-        callback_on_timeout: Optional[Callable] = None,
+        callback_on_timeout: Optional[Callable[[], None]] = None,
         timeout: float = DEFAULT_WATCHDOG_TIMEOUT,
     ):
         """This class implements a watchdog timer that will make a callback

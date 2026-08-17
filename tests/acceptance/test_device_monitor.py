@@ -5,6 +5,7 @@ import threading
 from functools import partial
 from queue import Empty, Queue
 from threading import Event
+from typing import cast
 
 import pytest
 import tango
@@ -32,7 +33,7 @@ def test_device_monitor(monitor_tango_servers, caplog, spf_device_fqdn):
     event_queue = Queue()
     device_proxy_factory = DeviceProxyManager(LOGGER, Event())
     tdm = TangoDeviceMonitor(
-        spf_device_fqdn, device_proxy_factory, ["powerState"], event_queue, LOGGER
+        spf_device_fqdn, device_proxy_factory, ("powerState",), event_queue, LOGGER
     )
     tdm.monitor()
     event = event_queue.get(timeout=4)
@@ -88,14 +89,14 @@ def test_device_monitor_stress(spf_device_fqdn):
     def add_log(logs_queue, *args):
         logs_queue.put(args)
 
-    mocked_logger = MagicMock()
-    mocked_logger.info.side_effect = partial(add_log, logs_queue)
-    mocked_logger.debug.side_effect = partial(add_log, logs_queue)
+    mocked_logger = cast(logging.Logger, MagicMock())
+    mocked_logger.info.side_effect = partial(add_log, logs_queue)  # ty: ignore[unresolved-attribute]
+    mocked_logger.debug.side_effect = partial(add_log, logs_queue)  # ty: ignore[unresolved-attribute]
 
     event_queue = Queue()
     device_proxy_factory = DeviceProxyManager(mocked_logger, Event())
     tdm = TangoDeviceMonitor(
-        spf_device_fqdn, device_proxy_factory, ["powerState"], event_queue, mocked_logger
+        spf_device_fqdn, device_proxy_factory, ("powerState",), event_queue, mocked_logger
     )
     for i in range(10):
         tdm.monitor()
@@ -134,7 +135,7 @@ def test_connection_error(caplog):
     event_queue = Queue()
     device_proxy_factory = DeviceProxyManager(LOGGER, Event())
     tdm = TangoDeviceMonitor(
-        "fake_device", device_proxy_factory, ["powerState"], event_queue, LOGGER
+        "fake_device", device_proxy_factory, ("powerState",), event_queue, LOGGER
     )
     tdm.monitor()
     with pytest.raises(Empty):
