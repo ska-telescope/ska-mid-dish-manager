@@ -2,11 +2,11 @@
 
 import logging
 import threading
+from unittest.mock import MagicMock
 
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
-from ska_tango_testing.mock import MockCallable
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.constants import (
@@ -14,6 +14,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
 )
+from tests.utils import MethodCallsStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ def test_tango_device_component_manager_state(
     monitor_tango_servers, component_state_store, ds_device_fqdn
 ):
     """Test commands and monitoring."""
-    mock_callable = MockCallable(timeout=5)
+    mock_callable = MethodCallsStore()
 
     device_proxy = tango.DeviceProxy(ds_device_fqdn)
 
@@ -42,10 +43,10 @@ def test_tango_device_component_manager_state(
     assert com_man.communication_state == CommunicationStatus.DISABLED
     try:
         com_man.start_communicating()
+        mock_callable.wait_for_args((CommunicationStatus.NOT_ESTABLISHED,))
         assert com_man.communication_state == CommunicationStatus.NOT_ESTABLISHED
 
-        mock_callable.assert_call(CommunicationStatus.ESTABLISHED, lookahead=3)
-
+        mock_callable.wait_for_args((CommunicationStatus.ESTABLISHED,))
         assert com_man.communication_state == CommunicationStatus.ESTABLISHED
 
         test_mode_initial_val = device_proxy.read_attribute("testmode").value
@@ -62,7 +63,7 @@ def test_tango_device_component_manager_state(
 @pytest.mark.acceptance
 def test_stress_component_monitor(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates."""
-    mock_callable = MockCallable(timeout=5)
+    mock_callable = MagicMock()
 
     com_man = TangoDeviceComponentManager(
         ds_device_fqdn,
@@ -74,7 +75,7 @@ def test_stress_component_monitor(monitor_tango_servers, component_state_store, 
 
     try:
         com_man.start_communicating()
-        mock_callable.assert_call(CommunicationStatus.ESTABLISHED, lookahead=3)
+        mock_callable.assert_called_with(CommunicationStatus.ESTABLISHED)
 
         device_proxy = tango.DeviceProxy(ds_device_fqdn)
         test_mode_initial_val = device_proxy.read_attribute("testmode").value
@@ -103,7 +104,7 @@ def test_tango_device_component_manager_threads_management(
     component_state_store, device_fqdn, subscribed_attrs
 ):
     """Test tango_device component mananger clears threads as expected."""
-    mock_callable = MockCallable(timeout=5)
+    mock_callable = MagicMock()
     com_man = TangoDeviceComponentManager(
         device_fqdn,
         LOGGER,

@@ -151,6 +151,7 @@ def test_exiting_maintenance_mode_when_ds_not_on_stow(
     event_store_class: EventStore,
     dish_manager_proxy: DeviceProxy,
     ds_device_proxy: DeviceProxy,
+    monitor_tango_servers,
 ) -> None:
     # Put dish into maintenance mode
     mode_event_store = event_store_class()

@@ -1,5 +1,6 @@
 """State transition computation."""
 
+import enum
 from typing import Optional
 
 from ska_control_model import CommunicationStatus, HealthState
@@ -402,21 +403,45 @@ class StateTransition:
         dish_manager_states = {"DS": {}}  # type: ignore
 
         for key, val in ds_component_state.items():
-            dish_manager_states["DS"][key] = str(val)
+            match val:
+                case None:
+                    dish_manager_states["DS"][key] = ""
+                case enum.IntEnum():
+                    dish_manager_states["DS"][key] = f"{val.__class__.__name__}.{val.name}"
+                case _:
+                    dish_manager_states["DS"][key] = str(val)
 
         if spfrx_component_state:
             dish_manager_states["SPFRX"] = {}
             for key, val in spfrx_component_state.items():
-                dish_manager_states["SPFRX"][key] = str(val)
+                match val:
+                    case None:
+                        dish_manager_states["SPFRX"][key] = ""
+                    case enum.IntEnum():
+                        dish_manager_states["SPFRX"][key] = f"{val.__class__.__name__}.{val.name}"
+                    case _:
+                        dish_manager_states["SPFRX"][key] = str(val)
 
         if spf_component_state:
             dish_manager_states["SPF"] = {}
             for key, val in spf_component_state.items():
-                dish_manager_states["SPF"][key] = str(val)
+                match val:
+                    case None:
+                        dish_manager_states["SPF"][key] = ""
+                    case enum.IntEnum():
+                        dish_manager_states["SPF"][key] = f"{val.__class__.__name__}.{val.name}"
+                    case _:
+                        dish_manager_states["SPF"][key] = str(val)
 
         if dish_manager_component_state:
             dish_manager_states["DM"] = {}
             for key, val in dish_manager_component_state.items():
-                dish_manager_states["DM"][key] = str(val)
+                match val:
+                    case None:
+                        dish_manager_states["DM"][key] = ""
+                    case enum.IntEnum():
+                        dish_manager_states["DM"][key] = f"{val.__class__.__name__}.{val.name}"
+                    case _:
+                        dish_manager_states["DM"][key] = str(val)
 
         return dish_manager_states

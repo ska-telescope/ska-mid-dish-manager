@@ -56,6 +56,8 @@ Properties
 .. py:attribute:: GroupDefinitions
 	:module: DishManager
 
+	Each string in the list is a JSON serialised dict defining the ``group_name``, ``devices`` and ``subgroups`` in the group. A Tango Group object is created for each item in the list, according to the hierarchy defined. This provides easy access to the managed devices in bulk, or individually.
+
 	:data type: DevVarStringArray
 
 .. index::
@@ -63,6 +65,8 @@ Properties
 
 .. py:attribute:: LoggingLevelDefault
 	:module: DishManager
+
+	Default logging level at device startup.
 
 	:data type: DevUShort
 	:default value: 4
@@ -73,6 +77,8 @@ Properties
 .. py:attribute:: LoggingTargetsDefault
 	:module: DishManager
 
+	Default logging targets at device startup.
+
 	:data type: DevVarStringArray
 	:default value: ['tango::logger']
 
@@ -81,6 +87,8 @@ Properties
 
 .. py:attribute:: MaxCapabilities
 	:module: DishManager
+
+	List of maximum number of instances per capability type provided by this element.
 
 	:data type: DevVarStringArray
 
@@ -118,6 +126,8 @@ Properties
 
 .. py:attribute:: SkaLevel
 	:module: DishManager
+
+	Indication of importance of the device in the SKA hierarchy to support drill-down navigation: 1..6, with 1 highest.
 
 	:data type: DevShort
 	:default value: 4
@@ -240,10 +250,9 @@ Attributes
 .. py:attribute:: adminMode
 	:module: DishManager
 
-	Read the Admin Mode of the device.
+	The Admin Mode of the device.
 
-	It may interpret the current device condition and condition of all managed
-	devices to set this. Most possibly an aggregate attribute.
+	It may interpret the current device condition and condition of all managed devices to set this.
 
 	:access: READ_WRITE
 	:data type: DevEnum
@@ -797,11 +806,9 @@ Attributes
 .. py:attribute:: commandedState
 	:module: DishManager
 
-	Read the last commanded operating state of the device.
+	The last commanded Operating State of the device.
 
-	Initial string is "None". Only other strings it can change to is "OFF",
-	"STANDBY" or "ON", following the start of the Off(), Standby(), On() or Reset()
-	long running commands.
+	Initial string is "None".  Only other strings it can change to is "OFF", "STANDBY" or "ON", following the Off(), Standby() or On() commands. If the state transition commands are long running commands the commanded state will only update when the long running command starts executing.
 
 	:access: READ
 	:data type: DevString
@@ -839,12 +846,9 @@ Attributes
 .. py:attribute:: controlMode
 	:module: DishManager
 
-	Read the Control Mode of the device.
+	The control mode of the device.
 
-	The control mode of the device are REMOTE, LOCAL
-	Tango Device accepts only from a ‘local’ client and ignores commands and
-	queries received from TM or any other ‘remote’ clients. The Local clients
-	has to release LOCAL control before REMOTE clients can take control again.
+	A Tango Device accepts only from a 'local' client and ignores commands and queries received from TM or any other 'remote' clients. The local client has to release LOCAL control before REMOTE clients can take control again.
 
 	:access: READ_WRITE
 	:data type: DevEnum
@@ -963,6 +967,30 @@ Attributes
 	:data format: SCALAR
 
 .. index::
+	single: dscSafetyStatuses; DishManager.dscSafetyStatuses
+
+.. py:attribute:: dscSafetyStatuses
+	:module: DishManager
+
+	Report the current DSC safety status as a semicolon-delimited list. Reports 'OK' if no safety statuses are present.
+
+	:access: READ
+	:data type: DevString
+	:data format: SCALAR
+
+.. index::
+	single: dscWarningStatuses; DishManager.dscWarningStatuses
+
+.. py:attribute:: dscWarningStatuses
+	:module: DishManager
+
+	Report the current DSC warning as a semicolon-delimited list. Reports 'OK' if no warnings are present.
+
+	:access: READ
+	:data type: DevString
+	:data format: SCALAR
+
+.. index::
 	single: dshMaxShortTermPower; DishManager.dshMaxShortTermPower
 
 .. py:attribute:: dshMaxShortTermPower
@@ -985,67 +1013,6 @@ Attributes
 	:access: READ_WRITE
 	:data type: DevBoolean
 	:data format: SCALAR
-
-.. index::
-	single: elementAlarmAddress; DishManager.elementAlarmAddress
-
-.. py:attribute:: elementAlarmAddress
-	:module: DishManager
-
-	FQDN of Element Alarm Handlers
-
-	:access: READ
-	:data type: DevString
-	:data format: SCALAR
-
-.. index::
-	single: elementDatabaseAddress; DishManager.elementDatabaseAddress
-
-.. py:attribute:: elementDatabaseAddress
-	:module: DishManager
-
-	FQDN of Element Database device
-
-	:access: READ
-	:data type: DevString
-	:data format: SCALAR
-
-.. index::
-	single: elementLoggerAddress; DishManager.elementLoggerAddress
-
-.. py:attribute:: elementLoggerAddress
-	:module: DishManager
-
-	FQDN of Element Logger
-
-	:access: READ
-	:data type: DevString
-	:data format: SCALAR
-
-.. index::
-	single: elementTelStateAddress; DishManager.elementTelStateAddress
-
-.. py:attribute:: elementTelStateAddress
-	:module: DishManager
-
-	FQDN of Element TelState device
-
-	:access: READ
-	:data type: DevString
-	:data format: SCALAR
-
-.. index::
-	single: spectrumSample; DishManager.spectrumSample
-
-.. py:attribute:: spectrumSample
-	:module: DishManager
-
-	Note: This attribute maps to the spectrum sample attribute from the SPFRxReport the SPFRX spectrum sample data Spectrum sample data from the spectrometer as a packed DevFloat array. The array contains a UTC timestamp followed by multiple spectral datasets. Index layout: [0-1]: UTC timestamp in seconds, [2-1026]: P_on,X (1025 floats), [1027-2051]: P_on,Y (1025 floats), [2052-3076]: P_on,XY real (1025 floats), [3077-4101]: P_on,XY imaginary (1025 floats), [4102-5126]: P_off,X (1025 floats), [5127-6151]: P_off,Y (1025 floats), [6152-7176]: P_off,XY real (1025 floats), [7177-8201]: P_off,XY imaginary (1025 floats).
-
-	:access: READ
-	:data type: DevDouble
-	:data format: SPECTRUM
-	:max_dim_x: 8202
 
 .. index::
 	single: hPolRfPowerIn; DishManager.hPolRfPowerIn
@@ -1082,6 +1049,7 @@ Attributes
 	:access: READ
 	:data type: DevString
 	:data format: SPECTRUM
+	:max_dim_x: 256
 
 .. index::
 	single: healthState; DishManager.healthState
@@ -1091,8 +1059,7 @@ Attributes
 
 	Read the Health State of the device.
 
-	It interprets the current device condition and condition of
-	all managed devices to set this. Most possibly an aggregate attribute.
+	It interprets the current device condition and condition of all managed devices to set this.
 
 	:access: READ
 	:data type: DevEnum
@@ -1158,6 +1125,19 @@ Attributes
 	:access: READ
 	:data type: DevLong64
 	:data format: SCALAR
+
+.. index::
+	single: lastCommandFailure; DishManager.lastCommandFailure
+
+.. py:attribute:: lastCommandFailure
+	:module: DishManager
+
+	The returned tuple contains:- Timestamp of the failure (UNIX UTC format)- Command name (Triggered on DishManager)- Reason for failure (as returned by the command)
+
+	:access: READ
+	:data type: DevString
+	:data format: SPECTRUM
+	:max_dim_x: 3
 
 .. index::
 	single: lastCommandInvoked; DishManager.lastCommandInvoked
@@ -1239,6 +1219,7 @@ Attributes
 	:data type: DevString
 	:data format: SPECTRUM
 	:max_dim_x: 4
+
 .. index::
 	single: longRunningCommandIDsInQueue; DishManager.longRunningCommandIDsInQueue
 
@@ -1249,8 +1230,10 @@ Attributes
 
 	Every client that executes a command will receive a command ID as response.
 	Keep track of IDs currently allocated.
-	Entries are removed `self._command_tracker._removal_time` seconds
+	Entries are removed ``self._command_tracker._removal_time`` seconds
 	after they have finished.
+
+	**DEPRECATED**: A client can check for the queued command(s) in 'lrcQueue'.
 
 	:access: READ
 	:data type: DevString
@@ -1267,6 +1250,9 @@ Attributes
 
 	Name(s) of command and possible abort in progress or empty string(s).
 
+	**DEPRECATED**: A client can check for the command(s) in progress in
+	'lrcExecuting'.
+
 	:access: READ
 	:data type: DevString
 	:data format: SPECTRUM
@@ -1281,8 +1267,10 @@ Attributes
 	Read the progress of the currently executing long running command(s).
 
 	ID, progress of the currently executing command(s).
-	Clients can subscribe to on_change event and wait
+	Clients can subscribe to on change event and wait
 	for the ID they are interested in.
+
+	**DEPRECATED**: A client can check the progress of command(s) in 'lrcExecuting'.
 
 	:access: READ
 	:data type: DevString
@@ -1297,9 +1285,11 @@ Attributes
 
 	Read the result of the completed long running command.
 
-	Reports unique_id, json-encoded result.
-	Clients can subscribe to on_change event and wait for
+	Reports unique ID and json-encoded result.
+	Clients can subscribe to on change event and wait for
 	the ID they are interested in.
+
+	**DEPRECATED**: A client can check for the result of a command in 'lrcFinished'.
 
 	:access: READ
 	:data type: DevString
@@ -1315,8 +1305,11 @@ Attributes
 	Read the status of the currently executing long running commands.
 
 	ID, status pairs of the currently executing commands.
-	Clients can subscribe to on_change event and wait for the
+	Clients can subscribe to on change event and wait for the
 	ID they are interested in.
+
+	**DEPRECATED**: A client can check for the status of a command in the
+	'lrcQueue', 'lrcExecuting' and 'lrcFinished' attributes.
 
 	:access: READ
 	:data type: DevString
@@ -1332,8 +1325,10 @@ Attributes
 	Read the long running commands in the queue.
 
 	Keep track of which commands are that are currently known about.
-	Entries are removed `self._command_tracker._removal_time` seconds
+	Entries are removed ``self._command_tracker._removal_time`` seconds
 	after they have finished.
+
+	**DEPRECATED**: A client can check for the queued command(s) in 'lrcQueue'.
 
 	:access: READ
 	:data type: DevString
@@ -1346,14 +1341,12 @@ Attributes
 .. py:attribute:: lrcExecuting
 	:module: DishManager
 
-	Read info of the currently executing long running commands.
-
-	Returns a list of info JSON blobs of the currently executing commands.
+	A list of info JSON blobs of the currently executing commands.
 
 	:access: READ
 	:data type: DevString
 	:data format: SPECTRUM
-	:max_dim_x: 3
+	:max_dim_x: 2
 
 .. index::
 	single: lrcFinished; DishManager.lrcFinished
@@ -1361,7 +1354,7 @@ Attributes
 .. py:attribute:: lrcFinished
 	:module: DishManager
 
-	Read info of the finished long running commands.
+	A list of info JSON blobs of the finished long running commands.
 
 	:access: READ
 	:data type: DevString
@@ -1387,14 +1380,12 @@ Attributes
 .. py:attribute:: lrcQueue
 	:module: DishManager
 
-	Read info of the long running commands in queue.
-
-	Returns a list of info JSON blobs of the commands in queue.
+	A list of info JSON blobs of the commands in queue.
 
 	:access: READ
 	:data type: DevString
 	:data format: SPECTRUM
-	:max_dim_x: 66
+	:max_dim_x: 32
 
 .. index::
 	single: maxCapabilities; DishManager.maxCapabilities
@@ -1650,11 +1641,7 @@ Attributes
 .. py:attribute:: simulationMode
 	:module: DishManager
 
-	Read the Simulation Mode of the device.
-
-	Some devices may implement
-	both modes, while others will have simulators that set simulationMode
-	to True while the real devices always set simulationMode to False.
+	When TRUE the device is using a simulator
 
 	:access: READ_WRITE
 	:data type: DevEnum
@@ -1681,12 +1668,97 @@ Attributes
 	:data format: SCALAR
 
 .. index::
+	single: spectrumSample; DishManager.spectrumSample
+
+.. py:attribute:: spectrumSample
+	:module: DishManager
+
+	Note: This attribute maps to the spectrum sample attribute from the SPFRxReport the SPFRX spectrum sample data Spectrum sample data from the spectrometer as a packed DevFloat array. The array contains a UTC timestamp followed by multiple spectral datasets. Index layout: [0-1]: UTC timestamp in seconds, [2-1026]: P_on,X (1025 floats), [1027-2051]: P_on,Y (1025 floats), [2052-3076]: P_on,XY real (1025 floats), [3077-4101]: P_on,XY imaginary (1025 floats), [4102-5126]: P_off,X (1025 floats), [5127-6151]: P_off,Y (1025 floats), [6152-7176]: P_off,XY real (1025 floats), [7177-8201]: P_off,XY imaginary (1025 floats).
+
+	:access: READ
+	:data type: DevDouble
+	:data format: SPECTRUM
+	:max_dim_x: 8202
+
+.. index::
 	single: spfConnectionState; DishManager.spfConnectionState
 
 .. py:attribute:: spfConnectionState
 	:module: DishManager
 
 	Displays connection status to SPF device
+
+	:access: READ
+	:data type: DevEnum
+	:data format: SCALAR
+
+.. index::
+	single: spfcB1HealthState; DishManager.spfcB1HealthState
+
+.. py:attribute:: spfcB1HealthState
+	:module: DishManager
+
+	The Band 1 healthState as reported by the SPF controller.
+
+	:access: READ
+	:data type: DevEnum
+	:data format: SCALAR
+
+.. index::
+	single: spfcB2HealthState; DishManager.spfcB2HealthState
+
+.. py:attribute:: spfcB2HealthState
+	:module: DishManager
+
+	The Band 2 healthState as reported by the SPF controller.
+
+	:access: READ
+	:data type: DevEnum
+	:data format: SCALAR
+
+.. index::
+	single: spfcB3HealthState; DishManager.spfcB3HealthState
+
+.. py:attribute:: spfcB3HealthState
+	:module: DishManager
+
+	The Band 3 healthState as reported by the SPF controller.
+
+	:access: READ
+	:data type: DevEnum
+	:data format: SCALAR
+
+.. index::
+	single: spfcB4HealthState; DishManager.spfcB4HealthState
+
+.. py:attribute:: spfcB4HealthState
+	:module: DishManager
+
+	The Band 4 healthState as reported by the SPF controller.
+
+	:access: READ
+	:data type: DevEnum
+	:data format: SCALAR
+
+.. index::
+	single: spfcB5aHealthState; DishManager.spfcB5aHealthState
+
+.. py:attribute:: spfcB5aHealthState
+	:module: DishManager
+
+	The Band 5a healthState as reported by the SPF controller.
+
+	:access: READ
+	:data type: DevEnum
+	:data format: SCALAR
+
+.. index::
+	single: spfcB5bHealthState; DishManager.spfcB5bHealthState
+
+.. py:attribute:: spfcB5bHealthState
+	:module: DishManager
+
+	The Band 5b healthState as reported by the SPF controller.
 
 	:access: READ
 	:data type: DevEnum
@@ -1710,9 +1782,7 @@ Attributes
 .. py:attribute:: testMode
 	:module: DishManager
 
-	Read the Test Mode of the device.
-
-	Either no test mode or an indication of the test mode.
+	If TEST the device is using testing logic
 
 	:access: READ_WRITE
 	:data type: DevEnum
@@ -1873,11 +1943,11 @@ Commands
 .. py:method:: AbortCommands() -> DevVarLongStringArray
 	:module: DishManager
 
-	No input parameter (DevVoid)
+	Empty out long running commands in queue.
 
-	:returns: A tuple containing a return code and a string
-		message indicating status. The message is for
-		information purpose only.
+	**DEPRECATED**: A client should call the tracked 'Abort' long running command instead.
+
+	:returns: [ResultCode.STARTED]['Aborting commands']
 
 .. index::
 	single: ApplyPointingModel; DishManager.ApplyPointingModel
@@ -1908,7 +1978,7 @@ Commands
 	"sky_rms": {...}
 	}
 	}
-	
+
 	:returns: :return: (not documented)
 		:rtype: DevVarLongStringArray
 
@@ -1918,9 +1988,10 @@ Commands
 .. py:method:: CheckLongRunningCommandStatus(DevString) -> DevString
 	:module: DishManager
 
-	argin (None): the command id
+	Check the status of a long running command by ID.
 
-	:returns: command status
+	:returns: Status of the asynchronous task.
+
 .. index::
 	single: ConfigureBand; DishManager.ConfigureBand
 
@@ -2047,7 +2118,7 @@ Commands
 .. py:method:: DebugDevice() -> DevUShort
 	:module: DishManager
 
-	No input parameter (DevVoid)
+	Enable remote debugging of this device.
 
 	:returns: The TCP port the debugger is listening on.
 
@@ -2061,16 +2132,6 @@ Commands
 
 	:returns: :return: (not documented)
 		:rtype: DevVarLongStringArray
-
-.. index::
-	single: ExecutePendingOperations; DishManager.ExecutePendingOperations
-
-.. py:method:: ExecutePendingOperations() -> DevVoid
-	:module: DishManager
-
-	No input parameter (DevVoid)
-
-	:returns: No output parameter (DevVoid)
 
 .. index::
 	single: FlushCommandQueue; DishManager.FlushCommandQueue
@@ -2098,9 +2159,9 @@ Commands
 .. py:method:: GetVersionInfo() -> DevVarStringArray
 	:module: DishManager
 
-	No input parameter (DevVoid)
+	Get the version information of the device.
 
-	:returns: The result code and the command unique ID
+	:returns: The device class name and its package information.
 
 .. index::
 	single: Init; DishManager.Init
@@ -2127,9 +2188,11 @@ Commands
 .. py:method:: IsCapabilityAchievable(DevVarLongStringArray) -> DevBoolean
 	:module: DishManager
 
-	[nrInstances][Capability types]
+	Check if provided capabilities can be achieved by the resource(s).
 
-	:returns: (ResultCode, 'Command unique ID')
+	:parameter: [No. of instances][Capability types]
+
+	:returns: [ResultCode][Command ID]
 
 .. index::
 	single: Off; DishManager.Off
@@ -2421,3 +2484,14 @@ Commands
 
 	:returns: A tuple containing a return code and a string
 		message indicating status.
+
+.. index::
+	single: UpdateTZData; DishManager.UpdateTZData
+
+.. py:method:: UpdateTZData() -> DevVarLongStringArray
+	:module: DishManager
+
+	Downloads the latest TZ data file from the URL configured in the TZ_DATA_URL environment variable and uploads it to SPFRx.
+
+	:returns: :return: (not documented)
+		:rtype: DevVarLongStringArray
