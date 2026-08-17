@@ -2,6 +2,7 @@
 
 import functools
 import logging
+import typing
 from typing import Any, Optional
 
 from ska_control_model import ResultCode, TaskStatus
@@ -242,6 +243,7 @@ class SetHPolAttenuationCommand(FastCommand):
         self._component_manager = component_manager
         super().__init__(logger)
 
+    @typing.override
     def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
         """Implement SetHPolAttenuation command functionality.
 
@@ -265,6 +267,7 @@ class ResetTrackTableCommand(FastCommand):
         self._component_manager = component_manager
         super().__init__(logger)
 
+    @typing.override
     def do(self, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
         """Implement ResetTrackTable command functionality.
 
@@ -277,6 +280,7 @@ class ResetTrackTableCommand(FastCommand):
 class StowCommand(SubmittedSlowCommand):
     """A custom class for Stow Command."""
 
+    @typing.override
     def do(self: SubmittedSlowCommand, *args: Any, **kwargs: Any) -> tuple[ResultCode, str]:
         """Stateless hook for command functionality.
 

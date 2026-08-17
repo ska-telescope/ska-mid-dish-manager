@@ -12,8 +12,8 @@ from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 SLOW_WRITE_WARN_THRESHOLD_SECONDS = 0.5
 
 
-def time_tango_write() -> Callable:
-    def decorator(func: Callable) -> Callable:
+def time_tango_write() -> Callable[[Any], Any]:
+    def decorator(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
         @functools.wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             start = time.perf_counter()
@@ -34,14 +34,14 @@ def time_tango_write() -> Callable:
     return decorator
 
 
-def record_command(record_mode: bool = False) -> Callable:
+def record_command(record_mode: bool = False) -> Callable[[Any], Any]:
     """Return a function that records the 'lastcommandinvoked' and or 'lastcommandedmode'
        before calling the command.
 
     :param record_mode: Flag to update both or only 'lastcommandinvoked', 'lastcommandedmode'.
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             device_instance = args[0]
@@ -136,14 +136,14 @@ def requires_component_manager(func: Any) -> Any:
     return _wrapper
 
 
-def log_tango_command() -> Callable:
+def log_tango_command() -> Callable[[Any], Any]:
     """Log Tango command details with operator tag.
 
     This decorator logs the command name and arguments using the device logger
     so logs can be filtered downstream via the operator tag.
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
         @functools.wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             logger = getattr(self, "logger", None)
@@ -168,14 +168,14 @@ def log_tango_command() -> Callable:
     return decorator
 
 
-def log_tango_attr_write() -> Callable:
+def log_tango_attr_write() -> Callable[[Any], Any]:
     """Log Tango attribute write details with operator tag.
 
     This decorator logs the attribute name and value using the device logger
     so logs can be filtered downstream via the operator tag.
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
         @functools.wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             logger = getattr(self, "logger", None)

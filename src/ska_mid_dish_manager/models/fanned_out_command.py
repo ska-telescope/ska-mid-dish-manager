@@ -4,6 +4,7 @@ import enum
 import json
 import logging
 import time
+import typing
 from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
@@ -27,12 +28,12 @@ class FannedOutCommand:
         logger: logging.Logger,
         device: str,
         command_name: str,
-        command: Callable,
-        component_state: dict,
+        command: Callable[..., Any],
+        component_state: dict[str, Any],
         command_argument: Any = None,
-        awaited_component_state: dict = {},
+        awaited_component_state: dict[str, Any] = {},
         timeout_s: float = 0,
-        progress_callback: Optional[Callable] = None,
+        progress_callback: Optional[Callable[..., None]] = None,
         skip_if_already_satisfied: bool = False,
         completion_delay_s: float = 0,
     ):
@@ -46,7 +47,7 @@ class FannedOutCommand:
         :type command: str
         :param component_state: The component state containing the attributes to wait for updates
             on.
-        :type component_state: Optional[dict]
+        :type component_state: Optional[dict[str, Any]]
         :param command_argument: Argument for the requested command
         :type command_argument: Any
         :param awaited_component_state: The component state containing the attributes and values to
@@ -110,7 +111,7 @@ class FannedOutCommand:
         self.logger.info(msg, extra=OPERATOR_TAG)
         report_task_progress(msg, self._progress_callback)
 
-    def execute(self, task_callback: Callable) -> None:
+    def execute(self, task_callback: Callable[..., Any]) -> None:
         """Execute the fanned out command."""
         if self.skip_if_already_satisfied and self.already_satisfied:
             self._report_already_satisfied()
@@ -166,7 +167,7 @@ class FannedOutCommand:
         """Check if the fanned out command has finished."""
         return self.failed or self.successful
 
-    def _update_status(self, task_callback: Callable) -> None:
+    def _update_status(self, task_callback: Callable[..., Any]) -> None:
         """Update the status of the command based on component state and timeout checks."""
         if self._status == FannedOutCommandStatus.IN_PROGRESS:
             # completed
@@ -178,7 +179,7 @@ class FannedOutCommand:
             if self.timeout_s > 0 and time.time() - self.start_time > self.timeout_s:
                 self._status = FannedOutCommandStatus.TIMED_OUT
 
-    def report_progress(self, task_callback: Callable) -> None:
+    def report_progress(self, task_callback: Callable[..., Any]) -> None:
         """Report the progress of fanned out command."""
         current_comp_state = dict(self.component_state)
 
@@ -234,9 +235,9 @@ class FannedOutTangoCommand(FannedOutCommand):
         command_name: str,
         device_component_manager: TangoDeviceComponentManager,
         command_argument: Any = None,
-        awaited_component_state: dict = {},
+        awaited_component_state: dict[str, Any] = {},
         timeout_s: float = 0,
-        progress_callback: Optional[Callable] = None,
+        progress_callback: Optional[Callable[..., None]] = None,
         is_device_ignored: bool = False,
         skip_if_already_satisfied: bool = False,
         completion_delay_s: float = 0,
@@ -287,7 +288,7 @@ class FannedOutTangoCommand(FannedOutCommand):
             completion_delay_s=completion_delay_s,
         )
 
-    def _execute_tango_command(self) -> tuple:
+    def _execute_tango_command(self) -> tuple[TaskStatus | None, str | None]:
         """Fan out the respective command to the subservient devices."""
         if self.is_device_ignored:
             self.logger.debug(
@@ -312,9 +313,9 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         command_name: str,
         device_component_manager: TangoDeviceComponentManager,
         command_argument: Any = None,
-        awaited_component_state: dict = {},
+        awaited_component_state: dict[str, Any] = {},
         timeout_s: float = 0,
-        progress_callback: Optional[Callable] = None,
+        progress_callback: Optional[Callable[..., None]] = None,
         is_device_ignored: bool = False,
         skip_if_already_satisfied: bool = False,
     ):
@@ -355,7 +356,8 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
             skip_if_already_satisfied=skip_if_already_satisfied,
         )
 
-    def _execute_tango_command(self) -> tuple:
+    @typing.override
+    def _execute_tango_command(self) -> tuple[TaskStatus | None, str | None]:
         """Fan out the respective command to the device and handle task status response."""
         task_status, msg = super()._execute_tango_command()
 
@@ -408,7 +410,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                 return True
         return False
 
-    def _get_command_lrc_finished_dict(self) -> Optional[dict]:
+    def _get_command_lrc_finished_dict(self) -> Optional[dict[str, Any]]:
         """Get the lrcFinished dict for the long running command."""
         lrc_finished = self.device_component_manager.read_attribute_value(
             "lrcfinished", log_read=False
@@ -430,7 +432,8 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                 return finished_cmd_dict
         return None
 
-    def _update_status(self, task_callback: Callable) -> None:
+    @typing.override
+    def _update_status(self, task_callback: Callable[..., None]) -> None:
         """Update the status of the fanned out command based on the LRC status and component state.
 
         Requires both the LRC to have completed and the component states to match to complete.
@@ -512,6 +515,7 @@ class DishManagerCMMethod(FannedOutCommand):
             timeout_s,
         )
 
+    @typing.override
     def execute(self, task_callback) -> None:
         """Execute the command."""
         self.logger.debug(
@@ -574,6 +578,7 @@ class DishManagerCMMethodCallBack(FannedOutCommand):
             if status in (TaskStatus.QUEUED, TaskStatus.STAGING, TaskStatus.IN_PROGRESS):
                 self._status = FannedOutCommandStatus.IN_PROGRESS
 
+    @typing.override
     def execute(self, task_callback) -> None:
         """Execute the command."""
         self._status = FannedOutCommandStatus.IN_PROGRESS
@@ -625,6 +630,7 @@ class DishManagerCMMethodResultCode(FannedOutCommand):
             timeout_s,
         )
 
+    @typing.override
     def execute(self, task_callback) -> None:
         """Execute the command."""
         self._status = FannedOutCommandStatus.IN_PROGRESS

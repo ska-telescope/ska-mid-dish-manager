@@ -1171,7 +1171,7 @@ def setup_subscriptions(
         sub_ids.append(sub_id)
         # clear the queue if the callback has a clear_queue method
         if hasattr(callback, "clear_queue") and reset_queue:
-            callback.clear_queue()
+            callback.clear_queue()  # ty: ignore[call-non-callable]
     return {device_proxy: sub_ids}
 
 

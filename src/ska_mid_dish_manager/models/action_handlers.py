@@ -108,7 +108,7 @@ class ActionHandler:
         | list[FannedOutTangoCommand]
         | list[FannedOutTangoLongRunningCommand],
         component_state: dict,
-        awaited_component_state: Optional[dict] = {},
+        awaited_component_state: Optional[dict[str, Any]] = {},
         action_on_success: Optional[Action] = None,
         action_on_failure: Optional[Action] = None,
         waiting_callback: Optional[Callable] = None,
@@ -123,10 +123,10 @@ class ActionHandler:
         :type fanned_out_commands: list[FannedOutCommand]
         :param component_state: The component state containing the attributes to wait for updates
             on.
-        :type component_state: Optional[dict]
+        :type component_state: Optional[dict[str, Any]]
         :param awaited_component_state: The component state containing the attributes and values to
             wait for.
-        :type awaited_component_state: Optional[dict]
+        :type awaited_component_state: Optional[dict[str, Any]]
         :param action_on_success: Optional Action to execute on success.
         :type action_on_success: Callable
         :param action_on_success: Optional Action to execute on failure.
