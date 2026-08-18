@@ -55,7 +55,7 @@ type-check:
   script:
     - pip install uv
     - uv sync --locked
-    - uv run ty check --error all --output-format gitlab | tee gl-code-quality-report.json || true
+    - uv run ty check --error all --output-format gitlab > gl-code-quality-report.json || true
     - uv run ty check --error all
   allow_failure: true
   artifacts:
