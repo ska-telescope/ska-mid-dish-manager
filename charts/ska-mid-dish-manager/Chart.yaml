@@ -24,7 +24,7 @@ maintainers:
   - name: Mpumelelo Nzama
     email: mnzama@sarao.ac.za
   - name: Yashren Reddi
-    email: yreddi@sarao.ac.za  
+    email: yreddi@sarao.ac.za
 dependencies:
 - name: ska-tango-util
   version: 1.2.1
@@ -34,11 +34,11 @@ dependencies:
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-tango-base.enabled
 - name: ska-mid-dish-simulators
-  version: 5.11.0
+  version: 5.12.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-simulators.enabled
 - name: ska-mid-dish-ds-manager
-  version: 9.1.0
+  version: 9.2.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-ds-manager.enabled
 - name: ska-mid-wms
