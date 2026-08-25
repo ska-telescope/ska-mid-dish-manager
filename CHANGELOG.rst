@@ -7,6 +7,11 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 11.0.0
+**************
+- Migrated from `poetry`` to `uv`
+- Upgraded to Python3.14
 - Added "serialNumbers", "swVersions" and "fwVersions" to SPFRx and SPFC `BuildState`
 
   - Resolves SKB-1476, SKB-1479
@@ -100,7 +105,7 @@ Version 9.5.0-rc.1
     - Added attribute 'spectrumSample' to SPFRx simulator
     - Implemented ReTakeAuth command on DSC simulator.
     - Updated TakeAuth command arguments to include immutable user ID on DSC simulator.
-    - Updated DSC simulator AxisSelect node to match ICD. 
+    - Updated DSC simulator AxisSelect node to match ICD.
 
 - Upgraded ska-tango-base to v1.1.1
 - Upgraded ska-tango-util to v1.1.1
@@ -109,7 +114,7 @@ Version 9.5.0-rc.1
 
   - Implemented the ability to retake authority from DSC implicitly through commands that require authority.
   - Added a new command, RetakeAuthority, which can be used to retake authority from the DSC explicitly.
-  
+
 - Limited build state fetch to only positive transitions to communication status ESTABLISHED.
 - Allowed DS and B5DC build state information to be driven by change events.
 
@@ -135,12 +140,12 @@ Version 9.4.0-rc.1
   - We cannot resolve the root cause, but we added an additional check to see if the device we connected responds to a ping.
   - See https://jira.skatelescope.org/browse/SPRTS-906 for further comments.
 
-- Added tag user=operator to INFO logs for filtering operator related logs. 
+- Added tag user=operator to INFO logs for filtering operator related logs.
 - Addressed the cleanup of allocated resources when Init() is called.
 - Added new b5dcServerConnectionState attribute to reflect the state of connectivity to the B5dc component
 - Added in supplementary verification ping when an API_TimeEvent error is received before setting the devices CommunicationStatus.
 - Added a tango command to force reconnection on dish manager's subservient devices.
-- Extended the SetStandbyFPModeAction to fan out the SetOperateMode command to the SPF device  
+- Extended the SetStandbyFPModeAction to fan out the SetOperateMode command to the SPF device
 
 - Upgraded ska-mid-dish-b5dc-proxy chart to v0.1.0
 
@@ -386,7 +391,7 @@ Version 7.3.0
 - Upgraded ska-mid-dish-simulators chart to v4.4.2
 
   - Removed intermediate `READY` PointingState to align with PLC and resolve SKB-768
-  
+
 - Upgraded ska-mid-dish-ds-manager chart to v4.2.1
 - Upgraded ska-tango-util to v0.4.19
 - Upgraded ska-tango-base to v0.4.19
@@ -488,7 +493,7 @@ Version 5.0.0
   - `DishMode` required to be in `OPERATE` and `PointingState` required to be `READY`
 
 - Updated ska-tango-base and ska-tango-util to version 0.4.12
-- Added an atrtribute called `last_commanded_pointing_params` that reports the last updated pointing parameters. 
+- Added an atrtribute called `last_commanded_pointing_params` that reports the last updated pointing parameters.
 
 
 Version 4.0.0
@@ -544,7 +549,7 @@ Version 2.6.0
 - Resolved a bug raised on setting the kValue on the SPFRx
 - Added configureTargetLock implementation
 - Updated implementation of pointing model parameters for bands 1, 3 and 4
-- Added testing of aborting of long running commands 
+- Added testing of aborting of long running commands
 
 Version 2.5.0
 *************
@@ -559,14 +564,14 @@ Version 2.4.0
 - Updated docs to demonstrate running devices as nodb
 - Added MonitoringPing command to the device server API
 - Implemented a workaround to fix segfault errors in python-test job
-- Updated dish simulators version to v1.6.6 
+- Updated dish simulators version to v1.6.6
 - Updated ds-manager version to v1.2.7
 - Applies bug fix which causes intermittent failures in the test run
 
 Version 2.3.6
 *************
 - Updated dish manager tango device name to conform to ADR-9
-- Updated dish simulators version to v1.6.5 
+- Updated dish simulators version to v1.6.5
 - Updated ds-manager version to v1.2.6
 - Updated ska-tango-base to v0.4.9
 - Added track table time conversion and input validation
