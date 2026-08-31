@@ -22,6 +22,9 @@ from ska_mid_dish_manager.utils.action_helpers import (
 class FannedOutCommand:
     """Defines a single command to be fanned out as part of a Action."""
 
+    # Overridden by subclasses which can be disabled via the ignored devices configuration.
+    is_device_ignored: bool = False
+
     def __init__(
         self,
         logger: logging.Logger,
@@ -85,6 +88,28 @@ class FannedOutCommand:
         self.skip_if_already_satisfied = skip_if_already_satisfied
         self.completion_delay_s = completion_delay_s
 
+    def _set_status(self, status: FannedOutCommandStatus) -> None:
+        """Set the status of the command and log the transition.
+
+        All status changes go through here so that the life cycle of a command can be followed
+        in the logs.
+
+        :param status: The status to move to.
+        :type status: FannedOutCommandStatus
+        """
+        if status == self._status:
+            return
+        self.logger.debug(
+            f"{self.device}.{self.command_name} {self._status.name} -> {status.name}"
+        )
+        self._status = status
+
+    def refresh_state_from_device(self) -> None:
+        """Refresh the component state this command waits on by reading from the device.
+
+        Used as a fallback when change events may have been missed. Does nothing by default.
+        """
+
     @property
     def already_satisfied(self) -> bool:
         """Check if the component is already in the awaited state."""
@@ -110,17 +135,17 @@ class FannedOutCommand:
         self.logger.info(msg, extra=OPERATOR_TAG)
         report_task_progress(msg, self._progress_callback)
 
-    def execute(self, task_callback: Callable) -> None:
+    def execute(self) -> None:
         """Execute the fanned out command."""
         if self.skip_if_already_satisfied and self.already_satisfied:
             self._report_already_satisfied()
-            self._status = FannedOutCommandStatus.IGNORED
+            self._set_status(FannedOutCommandStatus.IGNORED)
             self._task_finish_reported = True
             self.awaited_update_reports = {attr: True for attr in self.awaited_update_reports}
             return
 
         self.logger.debug(f"Executing {self.command_name} with arg {self.command_argument}")
-        self._status = FannedOutCommandStatus.IN_PROGRESS
+        self._set_status(FannedOutCommandStatus.IN_PROGRESS)
         self.start_time = time.time()
 
         try:
@@ -130,7 +155,7 @@ class FannedOutCommand:
             )
             self.executed_cmd_response, self.executed_cmd_message = res
 
-            if self.awaited_component_state is not None:
+            if self.awaited_component_state:
                 awaited_attributes = list(self.awaited_component_state.keys())
                 awaited_values = list(self.awaited_component_state.values())
                 report_awaited_attributes(
@@ -138,7 +163,7 @@ class FannedOutCommand:
                 )
         except RuntimeError as e:
             self.logger.error(f"FannedOutCommand '{self.command_name}' failed to execute: {e}")
-            self._status = FannedOutCommandStatus.FAILED
+            self._set_status(FannedOutCommandStatus.FAILED)
             self.executed_cmd_response = f"{e.args[0]}"
 
     @property
@@ -166,19 +191,19 @@ class FannedOutCommand:
         """Check if the fanned out command has finished."""
         return self.failed or self.successful
 
-    def _update_status(self, task_callback: Callable) -> None:
+    def _update_status(self) -> None:
         """Update the status of the command based on component state and timeout checks."""
         if self._status == FannedOutCommandStatus.IN_PROGRESS:
             # completed
             if self.completion_delay_elapsed and check_component_state_matches_awaited(
                 self.component_state, self.awaited_component_state
             ):
-                self._status = FannedOutCommandStatus.COMPLETED
+                self._set_status(FannedOutCommandStatus.COMPLETED)
             # timeout
             if self.timeout_s > 0 and time.time() - self.start_time > self.timeout_s:
-                self._status = FannedOutCommandStatus.TIMED_OUT
+                self._set_status(FannedOutCommandStatus.TIMED_OUT)
 
-    def report_progress(self, task_callback: Callable) -> None:
+    def report_progress(self) -> None:
         """Report the progress of fanned out command."""
         current_comp_state = dict(self.component_state)
 
@@ -198,7 +223,7 @@ class FannedOutCommand:
                         self.awaited_update_reports[attr_name] = True
 
         # Update the commands status
-        self._update_status(task_callback)
+        self._update_status()
 
         # Report if the command has finished
         if self.finished and not self._task_finish_reported:
@@ -287,13 +312,19 @@ class FannedOutTangoCommand(FannedOutCommand):
             completion_delay_s=completion_delay_s,
         )
 
+    def refresh_state_from_device(self) -> None:
+        """Read the awaited attributes off the device to refresh the component state."""
+        self.device_component_manager.update_state_from_monitored_attributes(
+            tuple(self.awaited_component_state.keys())
+        )
+
     def _execute_tango_command(self) -> tuple:
         """Fan out the respective command to the subservient devices."""
         if self.is_device_ignored:
             self.logger.debug(
                 f"{self.device} device is disabled. {self.command_name} call ignored"
             )
-            self._status = FannedOutCommandStatus.IGNORED
+            self._set_status(FannedOutCommandStatus.IGNORED)
             return None, None
 
         task_status, msg = self.device_component_manager.execute_command(
@@ -430,7 +461,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                 return finished_cmd_dict
         return None
 
-    def _update_status(self, task_callback: Callable) -> None:
+    def _update_status(self) -> None:
         """Update the status of the fanned out command based on the LRC status and component state.
 
         Requires both the LRC to have completed and the component states to match to complete.
@@ -450,18 +481,18 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                         # Don't mark it as completed yet, still need to check component state
                         self.is_lrc_finished = True
                     elif lrc_status == TaskStatus.ABORTED.name:
-                        self._status = FannedOutCommandStatus.ABORTED
+                        self._set_status(FannedOutCommandStatus.ABORTED)
                         return
                     elif lrc_status == TaskStatus.REJECTED.name:
-                        self._status = FannedOutCommandStatus.REJECTED
+                        self._set_status(FannedOutCommandStatus.REJECTED)
                         return
                     elif lrc_status == TaskStatus.FAILED.name:
-                        self._status = FannedOutCommandStatus.FAILED
+                        self._set_status(FannedOutCommandStatus.FAILED)
                         return
                 elif self._is_command_in_lrc_executing():
-                    self._status = FannedOutCommandStatus.IN_PROGRESS
+                    self._set_status(FannedOutCommandStatus.IN_PROGRESS)
                 elif self._is_command_in_lrc_queued():
-                    self._status = FannedOutCommandStatus.QUEUED
+                    self._set_status(FannedOutCommandStatus.QUEUED)
 
             # Final component state check
             if self.is_lrc_finished:
@@ -474,19 +505,19 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                 )
 
                 if component_ready:
-                    self._status = FannedOutCommandStatus.COMPLETED
+                    self._set_status(FannedOutCommandStatus.COMPLETED)
                     return
 
             # timeout
             if self.timeout_s > 0 and time.time() - self.start_time > self.timeout_s:
-                self._status = FannedOutCommandStatus.TIMED_OUT
+                self._set_status(FannedOutCommandStatus.TIMED_OUT)
 
 
 class DishManagerCMMethod(FannedOutCommand):
     """Class that executes the method, args and kwargs passed to it.
 
     This class specifically handles the case where the method responds with a result or raises
-    an exception.
+    an exception. Subclasses override `_handle_result` to interpret the response differently.
     """
 
     def __init__(
@@ -512,7 +543,16 @@ class DishManagerCMMethod(FannedOutCommand):
             timeout_s,
         )
 
-    def execute(self, task_callback) -> None:
+    def _handle_result(self, result: Any) -> None:
+        """Set the status and response of the command from the value the method returned.
+
+        :param result: The value returned by the method.
+        :type result: Any
+        """
+        self.executed_cmd_response = result
+        self._set_status(FannedOutCommandStatus.COMPLETED)
+
+    def execute(self) -> None:
         """Execute the command."""
         self.logger.debug(
             (
@@ -520,133 +560,68 @@ class DishManagerCMMethod(FannedOutCommand):
                 f"and kwargs. {self.command_kwargs}"
             )
         )
-        self._status = FannedOutCommandStatus.IN_PROGRESS
+        self._set_status(FannedOutCommandStatus.IN_PROGRESS)
         self.start_time = time.time()
         try:
-            res = self.command(*self.command_args, **self.command_kwargs)
-            self.logger.debug(f"Result: {res}")
-            self.executed_cmd_response = res
-            self._status = FannedOutCommandStatus.COMPLETED
+            result = self.command(*self.command_args, **self.command_kwargs)
+            self.logger.debug(f"Result: {result}")
+            self._handle_result(result)
         except Exception as e:
             self.logger.exception(f"FannedOutCommand '{self.command_name}' failed to execute: {e}")
-            self._status = FannedOutCommandStatus.FAILED
+            self._set_status(FannedOutCommandStatus.FAILED)
             self.executed_cmd_response = f"{e}"
 
 
-class DishManagerCMMethodCallBack(FannedOutCommand):
+class DishManagerCMMethodResultCode(DishManagerCMMethod):
+    """Class that executes the method, args and kwargs passed to it.
+
+    This class specifically handles the case where method responds with a ResultCode immediately.
+    """
+
+    def _handle_result(self, result: Any) -> None:
+        """Complete the command on ResultCode.OK and fail it on anything else.
+
+        Any response that gets queued/aborted/etc is considered failed. In those cases use
+        another Action.
+
+        :param result: The (ResultCode, message) tuple returned by the method.
+        :type result: Any
+        """
+        result_code, message = result
+        self.logger.debug(f"Result: {result_code}, Message: {message}")
+        self.executed_cmd_response = result_code
+        if result_code == ResultCode.OK:
+            self._set_status(FannedOutCommandStatus.COMPLETED)
+        else:
+            self._set_status(FannedOutCommandStatus.FAILED)
+
+
+class DishManagerCMMethodCallBack(DishManagerCMMethod):
     """Class that executes the method, args and kwargs passed to it.
 
     This class specifically handles the case where the task_callback is used to
-    track method result.
+    track method result. The status follows the callback rather than the return value.
     """
 
-    def __init__(
-        self,
-        logger,
-        method,
-        component_state,
-        command_args=(),
-        command_kwargs={},
-        awaited_component_state={},
-        timeout_s=0,
-    ):
-        self.command_args = command_args
-        self.command_kwargs = command_kwargs
-        super().__init__(
-            logger,
-            "DishManager",
-            str(method),
-            method,
-            component_state,
-            None,
-            awaited_component_state,
-            timeout_s,
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.command_args = (self._task_callback, *self.command_args)
 
     def _task_callback(self, *args, **kwargs):
         """Update the status from the callback."""
         status = kwargs.get("status", None)
         if status:
             if status == TaskStatus.COMPLETED:
-                self._status = FannedOutCommandStatus.COMPLETED
+                self._set_status(FannedOutCommandStatus.COMPLETED)
             if status in (TaskStatus.FAILED, TaskStatus.ABORTED, TaskStatus.NOT_FOUND):
-                self._status = FannedOutCommandStatus.FAILED
+                self._set_status(FannedOutCommandStatus.FAILED)
             if status in (TaskStatus.QUEUED, TaskStatus.STAGING, TaskStatus.IN_PROGRESS):
-                self._status = FannedOutCommandStatus.IN_PROGRESS
+                self._set_status(FannedOutCommandStatus.IN_PROGRESS)
 
-    def execute(self, task_callback) -> None:
-        """Execute the command."""
-        self._status = FannedOutCommandStatus.IN_PROGRESS
-        self.start_time = time.time()
-        self.command_args = list(self.command_args)
-        self.command_args.insert(0, self._task_callback)
-        try:
-            self.logger.debug(
-                (
-                    f"Executing {self.command_name} with args {self.command_args} "
-                    f"and kwargs. {self.command_kwargs}"
-                )
-            )
-            res = self.command(*self.command_args, **self.command_kwargs)
-            self.logger.debug(f"Result: {res}")
-            self.executed_cmd_response = res
-        except Exception as e:
-            self.logger.exception(f"FannedOutCommand '{self.command_name}' failed to execute: {e}")
-            self._status = FannedOutCommandStatus.FAILED
-            self.executed_cmd_response = f"{e}"
+    def _handle_result(self, result: Any) -> None:
+        """Record the response only, the status is driven by the task callback.
 
-
-class DishManagerCMMethodResultCode(FannedOutCommand):
-    """Class that executes the method, args and kwargs passed to it.
-
-    This class specifically handles the case where method responds with a ResultCode immediately.
-    """
-
-    def __init__(
-        self,
-        logger,
-        method,
-        component_state,
-        command_args=(),
-        command_kwargs={},
-        awaited_component_state={},
-        timeout_s=0,
-    ):
-        self.command_args = command_args
-        self.command_kwargs = command_kwargs
-        super().__init__(
-            logger,
-            "DishManager",
-            str(method),
-            method,
-            component_state,
-            None,
-            awaited_component_state,
-            timeout_s,
-        )
-
-    def execute(self, task_callback) -> None:
-        """Execute the command."""
-        self._status = FannedOutCommandStatus.IN_PROGRESS
-        self.start_time = time.time()
-        try:
-            self.logger.debug(
-                (
-                    f"Executing {self.command_name} with args {self.command_args} "
-                    f"and kwargs. {self.command_kwargs}"
-                )
-            )
-            result_code, message = self.command(*self.command_args, **self.command_kwargs)
-            self.logger.debug(f"Result: {result_code}, Message: {message}")
-            self.executed_cmd_response = result_code
-            # For DishManagerCMMethodResultCode, we expect an immediate response.
-            # Any response that gets queued/aborted/etc is considered failed.
-            # In those cases use another Action.
-            if result_code == ResultCode.OK:
-                self._status = FannedOutCommandStatus.COMPLETED
-            else:
-                self._status = FannedOutCommandStatus.FAILED
-        except Exception as e:
-            self.logger.exception(f"FannedOutCommand '{self.command_name}' failed to execute: {e}")
-            self._status = FannedOutCommandStatus.FAILED
-            self.executed_cmd_response = f"{e}"
+        :param result: The value returned by the method.
+        :type result: Any
+        """
+        self.executed_cmd_response = result

@@ -26,6 +26,8 @@ Version 11.0.0
   - spfcB5aHealthState
   - spfcB5bHealthState
 
+- Tidied up the command fan-out classes and documented them under
+  Developer Guide > Command Fan-out > Actions and Handlers.
 - lastCommandFailure attribute added.
 - `UpdateTZData` command added
 

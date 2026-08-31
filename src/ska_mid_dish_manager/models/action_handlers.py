@@ -155,6 +155,46 @@ class ActionHandler:
         max_timeout = max((c.timeout_s for c in self.fanned_out_commands), default=0)
         return max_timeout + 5 if max_timeout > 0 else 0
 
+    def _handle_abort(self, task_callback) -> None:
+        """Report the action as aborted.
+
+        :param task_callback: Callback function used for reporting.
+        :type task_callback: Callable
+        """
+        self.logger.warning(f"Action '{self.action_name}' aborted.", extra=OPERATOR_TAG)
+        report_task_progress(f"{self.action_name} aborted", self.progress_callback)
+        update_task_status(
+            task_callback,
+            status=TaskStatus.ABORTED,
+            result=(ResultCode.ABORTED, f"{self.action_name} aborted"),
+        )
+
+    def _commands_to_run(self) -> List[str]:
+        """List the fanned out commands which will actually be dispatched.
+
+        Commands for ignored devices and commands whose awaited state is already satisfied are
+        left out.
+
+        :return: The "device.command" names of the commands that will be dispatched.
+        :rtype: list[str]
+        """
+        return [
+            f"{cmd.device}.{cmd.command_name}"
+            for cmd in self.fanned_out_commands
+            if not cmd.is_device_ignored
+            and not (cmd.skip_if_already_satisfied and cmd.already_satisfied)
+        ]
+
+    def _command_statuses(self) -> dict:
+        """Map every fanned out command to its current status, for reporting.
+
+        :return: The status name of each command, keyed on "device.command".
+        :rtype: dict
+        """
+        return {
+            f"{cmd.device}.{cmd.command_name}": cmd.status.name for cmd in self.fanned_out_commands
+        }
+
     def _trigger_failure(
         self,
         task_callback,
@@ -234,23 +274,12 @@ class ActionHandler:
         :type completed_response_msg: str
         """
         if task_abort_event.is_set():
-            self.logger.warning(f"Action '{self.action_name}' aborted.", extra=OPERATOR_TAG)
-            report_task_progress(f"{self.action_name} aborted", self.progress_callback)
-            update_task_status(
-                task_callback,
-                status=TaskStatus.ABORTED,
-                result=(ResultCode.ABORTED, f"{self.action_name} aborted"),
-            )
+            self._handle_abort(task_callback)
             return
 
         update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
 
-        fanned_out_commands = [
-            f"{cmd.device}.{cmd.command_name}"
-            for cmd in self.fanned_out_commands
-            if not getattr(cmd, "is_device_ignored", False)
-            and not (cmd.skip_if_already_satisfied and cmd.already_satisfied)
-        ]
+        fanned_out_commands = self._commands_to_run()
         fanned_out_commands_str = ", ".join(fanned_out_commands) if fanned_out_commands else "None"
         self.logger.info(
             f"Starting Action {self.action_name}. Fanning out {fanned_out_commands_str} commands.",
@@ -259,7 +288,7 @@ class ActionHandler:
 
         # Fan-out: Dispatch all fanned-out commands
         for cmd in self.fanned_out_commands:
-            cmd.execute(task_callback)
+            cmd.execute()
             if cmd.failed:
                 self._trigger_failure(
                     task_callback,
@@ -288,34 +317,25 @@ class ActionHandler:
         while deadline > time.time():
             # Handle abort
             if task_abort_event.is_set():
-                self.logger.warning(f"Action '{self.action_name}' aborted.", extra=OPERATOR_TAG)
-                report_task_progress(f"{self.action_name} aborted", self.progress_callback)
-                update_task_status(
-                    task_callback,
-                    status=TaskStatus.ABORTED,
-                    result=(ResultCode.ABORTED, f"{self.action_name} aborted"),
-                )
+                self._handle_abort(task_callback)
                 return
 
             # Update status of all running commands
             for cmd in self.fanned_out_commands:
-                cmd.report_progress(task_callback)
+                cmd.report_progress()
 
             # Handle any failed fanned out command
             if any(cmd.failed for cmd in self.fanned_out_commands):
-                command_statuses = {
-                    f"{foc.device}.{foc.command_name}": foc.status.name
-                    for foc in self.fanned_out_commands
-                }
                 message = (
-                    f"Action '{self.action_name}' failed. Fanned out commands: {command_statuses}"
+                    f"Action '{self.action_name}' failed. "
+                    f"Fanned out commands: {self._command_statuses()}"
                 )
                 self._trigger_failure(task_callback, task_abort_event, message)
                 return
 
             # Check if all commands have succeeded
             if all(cmd.successful for cmd in self.fanned_out_commands):
-                if self.awaited_component_state is None or check_component_state_matches_awaited(
+                if check_component_state_matches_awaited(
                     self.component_state, self.awaited_component_state
                 ):
                     self._trigger_success(task_callback, task_abort_event, completed_response_msg)
@@ -330,23 +350,19 @@ class ActionHandler:
         # this is a fallback in case the change event subscriptions missed updates
         for cmd in self.fanned_out_commands:
             if not cmd.finished:
-                if hasattr(cmd, "device_component_manager"):
-                    device_component_manager = getattr(cmd, "device_component_manager")
-                    device_component_manager.update_state_from_monitored_attributes(
-                        tuple(cmd.awaited_component_state.keys())
-                    )
+                cmd.refresh_state_from_device()
         if all([cmd.successful for cmd in self.fanned_out_commands]):
-            if self.awaited_component_state is None or check_component_state_matches_awaited(
+            if check_component_state_matches_awaited(
                 self.component_state, self.awaited_component_state
             ):
                 self._trigger_success(task_callback, task_abort_event, completed_response_msg)
                 return
 
         # Handle timeout
-        command_statuses = {
-            f"{sc.device}.{sc.command_name}": sc.status.name for sc in self.fanned_out_commands
-        }
-        message = f"Action '{self.action_name}' timed out. Fanned out commands: {command_statuses}"
+        message = (
+            f"Action '{self.action_name}' timed out. "
+            f"Fanned out commands: {self._command_statuses()}"
+        )
         self._trigger_failure(task_callback, task_abort_event, message)
 
 
@@ -368,23 +384,12 @@ class SequentialActionHandler(ActionHandler):
         :type completed_response_msg: str
         """
         if task_abort_event.is_set():
-            self.logger.warning(f"Action '{self.action_name}' aborted.", extra=OPERATOR_TAG)
-            report_task_progress(f"{self.action_name} aborted", self.progress_callback)
-            update_task_status(
-                task_callback,
-                status=TaskStatus.ABORTED,
-                result=(ResultCode.ABORTED, f"{self.action_name} aborted"),
-            )
+            self._handle_abort(task_callback)
             return
 
         update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
 
-        sequential_commands = [
-            f"{cmd.device}.{cmd.command_name}"
-            for cmd in self.fanned_out_commands
-            if not getattr(cmd, "is_device_ignored", False)
-            and not (cmd.skip_if_already_satisfied and cmd.already_satisfied)
-        ]
+        sequential_commands = self._commands_to_run()
         sequential_commands_str = ", ".join(sequential_commands) if sequential_commands else "None"
         self.logger.info(
             (
@@ -395,7 +400,7 @@ class SequentialActionHandler(ActionHandler):
         )
 
         for cmd in self.fanned_out_commands:
-            cmd.execute(task_callback)
+            cmd.execute()
             if cmd.failed:
                 self._trigger_failure(
                     task_callback,
@@ -425,18 +430,10 @@ class SequentialActionHandler(ActionHandler):
             while deadline > time.time():
                 # Handle abort
                 if task_abort_event.is_set():
-                    self.logger.warning(
-                        f"Action '{self.action_name}' aborted.", extra=OPERATOR_TAG
-                    )
-                    report_task_progress(f"{self.action_name} aborted", self.progress_callback)
-                    update_task_status(
-                        task_callback,
-                        status=TaskStatus.ABORTED,
-                        result=(ResultCode.ABORTED, f"{self.action_name} aborted"),
-                    )
+                    self._handle_abort(task_callback)
                     return
 
-                cmd.report_progress(task_callback)
+                cmd.report_progress()
 
                 if cmd.failed or cmd.successful:
                     break
