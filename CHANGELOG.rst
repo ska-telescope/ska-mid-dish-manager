@@ -7,6 +7,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Tidied up the command fan-out classes and documented them under
+  Developer Guide > Command Fan-out > Actions and Handlers.
 
 Version 11.0.0
 **************
@@ -25,9 +27,6 @@ Version 11.0.0
   - spfcB4HealthState
   - spfcB5aHealthState
   - spfcB5bHealthState
-
-- Tidied up the command fan-out classes and documented them under
-  Developer Guide > Command Fan-out > Actions and Handlers.
 - lastCommandFailure attribute added.
 - `UpdateTZData` command added
 
