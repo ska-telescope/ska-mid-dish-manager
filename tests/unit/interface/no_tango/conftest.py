@@ -67,6 +67,7 @@ def component_manager(mock_command_tracker: MagicMock, callbacks: dict) -> Gener
             ),
         ),
         patch("ska_mid_dish_manager.component_managers.tango_device_cm.DeviceProxyManager"),
+        patch("ska_mid_dish_manager.component_managers.tango_device_cm.CallbackScheduler"),
         patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"),
         patch.multiple(
             "ska_mid_dish_manager.utils.schedulers.WatchdogTimer",
