@@ -24,12 +24,15 @@ its handler in ``__init__``, and is used by the ``DishManagerComponentManager`` 
 For example, the SetStandbyLPMode Action has one handler holding 3 fanned out commands, each
 waiting on its own device, while the handler waits for ``dishmode`` to become STANDBY_LP.
 
-An Action does not have to be built up front in the ``__init__``. ConfigureBandActionSequence`` has
+An Action does not have to be built up front in the ``__init__``. ``ConfigureBandActionSequence``
+has
 no handler of its own and defines nothing in ``__init__``, it assembles the whole chain inside
 ``execute`` because the steps depend on the dish mode at the time the command runs. It applies the
 pointing model, chains SetOperateMode on unless we are in STOW, and starts with SetStandbyFPMode if
 we are in STANDBY_LP. Build the commands at run time whenever the steps of the action is only known
 then.
+
+.. uml:: actions_and_handlers_class_diagram.uml
 
 FannedOutCommand implementations
 --------------------------------
@@ -45,11 +48,12 @@ FannedOutCommand implementations
 - ``DishManagerCMMethodResultCode`` is used for a method which returns a ResultCode immediately.
   Anything other than ``ResultCode.OK`` is treated as a failure. If the work gets queued then use a
   separate Action instead.
+- ``DishManagerCMMethodCallBack`` is used for a method which reports its result through a task
+  callback rather than a return value. (NOTE: Nothing uses it at the moment).
 
 The ``DishManagerCMMethod`` implementations share one ``execute`` and differ only in
-``_handle_result``, which interprets the return value. Add a new one by subclassing and overriding
-that method. Both of them reach a final status as soon as the call returns, so they never wait on
-an awaited component state.
+``_handle_result``, which interprets the return value. They both reach a final status as soon as
+the call returns, so they never wait on an awaited component state.
 
 Command status
 --------------
