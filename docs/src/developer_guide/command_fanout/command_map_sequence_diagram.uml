@@ -1,28 +1,52 @@
 @startuml
 
-Client -> DishManager: dishMode
-DishManager --> Client: get current dishMode
-note right 
-	Checking the current dishMode 
-	Pre-condition dishMode = STANDBY_LP.
-end note
+title SetStandbyFPMode
 
-Client -> DishManager: Subscribe to LRC Progress
+participant Client
+participant DishManager
+participant ActionHandler
+participant DS
+participant SPF
 
+Client -> DishManager: Subscribe to LRC progress
 Client -> DishManager: SetStandbyFPMode()
 
-  DishManager -> DishManager: is_command_allowed()
-  alt Allowed
-      DishManager -> DS: SetStandbyFPMode()
-      DishManager -> SPF: SetOperateMode()
-      DishManager -x SPFRx
-      note left of SPFRx: No command is sent to SPFRx
-      DishManager --> Client: Change event with progress (progress updates)
-      note left of DishManager: Signifies the command called on each device \nInitiates command on the devices.\nReports command completed.
-      Client -> DishManager: read dishMode
-      DishManager --> Client: dishMode = STANDBY_FP
-      note left of DishManager: Checking the current dishMode \nPost-condition dishMode = STANDBY_FP.
-  else Not Allowed
-      DishManager --> Client: Error: Command not allowed
-  end
+DishManager -> DishManager: is_command_allowed()
+
+alt Command not allowed
+    DishManager --> Client: Error: command not allowed
+else Command allowed
+    DishManager --> Client: LRC queued, command id
+    DishManager -> ActionHandler: SetStandbyFPModeAction.execute()
+
+    group Fan out
+        ActionHandler -> DS: SetStandbyMode()
+        ActionHandler -> DS: SetPowerMode(false, dscPowerLimitkW)
+        ActionHandler -> SPF: SetOperateMode()
+        note right of ActionHandler
+          SPFRx takes no part in
+          SetStandbyFPMode
+        end note
+        ActionHandler --> Client: progress: fanned out commands
+    end
+
+    group Wait
+        DS --> DishManager: operatingmode = STANDBY
+        DS --> DishManager: powerstate = FULL_POWER
+        SPF --> DishManager: operatingmode = OPERATE
+        DishManager -> DishManager: compute_dish_mode()
+        ActionHandler -> ActionHandler: poll until every command's\nawaited state matches
+        ActionHandler --> Client: progress: attribute changes
+    end
+
+    ActionHandler --> Client: LRC completed
+    note left of ActionHandler
+      Completes only once every command
+      succeeded and dishMode = STANDBY_FP
+    end note
+
+    Client -> DishManager: read dishMode
+    DishManager --> Client: dishMode = STANDBY_FP
+end
+
 @enduml
