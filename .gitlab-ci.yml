@@ -141,3 +141,6 @@ gemnasium-python-dependency_scanning:
       - gl-dependency-scanning-report.json
     reports:
       dependency_scanning: gl-dependency-scanning-report.json
+
+python-suggest-remediations:
+  image: artefact.skao.int/ska-build-python-ubuntu26:1.0.0
