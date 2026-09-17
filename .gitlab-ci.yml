@@ -144,3 +144,5 @@ gemnasium-python-dependency_scanning:
 
 python-suggest-remediations:
   image: registry.gitlab.com/ska-telescope/ska-python-uv/ska-build-python-uv:5587d20c
+  variables:
+    FAIL_ON: critical
