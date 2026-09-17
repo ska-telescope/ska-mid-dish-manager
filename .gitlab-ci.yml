@@ -45,6 +45,12 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
+  # Security scan mitigation suggestions
+  - project: ska-telescope/ska-python-uv
+    ref: 93cabc4348e08bda123734c8244c382ea25dc085
+    file:
+      - gitlab-ci/python-suggest-remediations.yml
+
 python-test-forked:
   extends: python-uv-test
   script:
@@ -128,3 +134,10 @@ python-uv-test:
       coverage_report:
         coverage_format: cobertura
         path: build/reports/code-coverage.xml
+
+gemnasium-python-dependency_scanning:
+  artifacts:
+    paths:
+      - gl-dependency-scanning-report.json
+    reports:
+      dependency_scanning: gl-dependency-scanning-report.json
