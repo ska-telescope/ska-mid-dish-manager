@@ -38,8 +38,6 @@ DishManager = 'ska_mid_dish_manager.devices.DishManagerDS:main'
 [tool.uv]
 default-groups = ["dev", "docs"]
 
-
-
 [[tool.uv.index]]
 name = "ska-nexus"
 url = "https://artefact.skao.int/repository/pypi-internal/simple"
@@ -49,6 +47,7 @@ default = true
 name = "pypi-public"
 url = "https://pypi.org/simple/"
 
+[dependency-groups]
 dev = [
     "black (>=24.3.0,<25.0.0)",  # Remediation for CVE-2024-21503
     "isort>=5.6.4,<6.0.0",
