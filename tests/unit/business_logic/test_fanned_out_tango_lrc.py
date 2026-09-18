@@ -161,7 +161,7 @@ class TestFannedOutTangoLongRunningCommand:
         self.command._is_command_in_lrc_executing = mock.MagicMock(return_value=True)
         self.command._is_command_in_lrc_queued = mock.MagicMock(return_value=False)
 
-        self.command._update_status(mock.MagicMock())
+        self.command._update_status()
 
         assert self.command._status == FannedOutCommandStatus.IN_PROGRESS
 
@@ -175,7 +175,7 @@ class TestFannedOutTangoLongRunningCommand:
         self.command._is_command_in_lrc_executing = mock.MagicMock(return_value=False)
         self.command._is_command_in_lrc_queued = mock.MagicMock(return_value=True)
 
-        self.command._update_status(mock.MagicMock())
+        self.command._update_status()
 
         assert self.command._status == FannedOutCommandStatus.QUEUED
 
@@ -188,7 +188,7 @@ class TestFannedOutTangoLongRunningCommand:
         self.command.component_state = {}
         self.command.awaited_component_state = {}
 
-        self.command._update_status(mock.MagicMock())
+        self.command._update_status()
 
         assert self.command._status == FannedOutCommandStatus.COMPLETED
 
@@ -201,7 +201,7 @@ class TestFannedOutTangoLongRunningCommand:
         self.command.component_state = {}
         self.command.awaited_component_state = {"some_attr": 123}
 
-        self.command._update_status(mock.MagicMock())
+        self.command._update_status()
 
         assert self.command._status == FannedOutCommandStatus.IN_PROGRESS
 
@@ -215,7 +215,7 @@ class TestFannedOutTangoLongRunningCommand:
         self.command._is_command_in_lrc_executing = mock.MagicMock(return_value=True)
         self.command._is_command_in_lrc_queued = mock.MagicMock(return_value=False)
 
-        self.command._update_status(mock.MagicMock())
+        self.command._update_status()
 
         assert self.command._status == FannedOutCommandStatus.IN_PROGRESS
 
@@ -233,7 +233,7 @@ class TestFannedOutTangoLongRunningCommand:
             }
         )
 
-        self.command._update_status(mock.MagicMock())
+        self.command._update_status()
 
         assert self.command._status == FannedOutCommandStatus.FAILED
         assert self.command.executed_cmd_response == "command failed"
@@ -252,7 +252,7 @@ class TestFannedOutTangoLongRunningCommand:
             }
         )
 
-        self.command._update_status(mock.MagicMock())
+        self.command._update_status()
 
         assert self.command._status == FannedOutCommandStatus.REJECTED
         assert self.command.executed_cmd_response == "command rejected"
@@ -271,7 +271,7 @@ class TestFannedOutTangoLongRunningCommand:
             }
         )
 
-        self.command._update_status(mock.MagicMock())
+        self.command._update_status()
 
         assert self.command._status == FannedOutCommandStatus.ABORTED
         assert self.command.executed_cmd_response == "command aborted"
@@ -290,6 +290,6 @@ class TestFannedOutTangoLongRunningCommand:
         self.command._is_command_in_lrc_queued = mock.MagicMock(return_value=False)
 
         with mock.patch("time.time", return_value=106):
-            self.command._update_status(mock.MagicMock())
+            self.command._update_status()
 
         assert self.command._status == FannedOutCommandStatus.TIMED_OUT
