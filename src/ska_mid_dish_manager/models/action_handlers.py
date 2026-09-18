@@ -179,7 +179,7 @@ class ActionHandler:
             result=(ResultCode.ABORTED, f"{self.action_name} aborted"),
         )
 
-    def _commands_to_run(self) -> List[str]:
+    def _commands_to_run(self) -> list[str]:
         """List the fanned out commands which will actually be dispatched.
 
         Commands for ignored devices and commands whose awaited state is already satisfied are
