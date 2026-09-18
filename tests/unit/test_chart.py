@@ -52,7 +52,7 @@ def test_chart_versions():
 
     if "rc" not in chart_version:
         # docs rc version can be 9.2.1rc1 and chart version 9.2.1-rc.1
-        assert docs_version == chart_version, (
+        assert docs_version.value == chart_version, (
             f"Docs version {docs_version} must match chart version {chart_version}."
         )
 
