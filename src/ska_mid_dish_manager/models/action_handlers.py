@@ -144,7 +144,11 @@ class ActionHandler:
         self.action_on_failure: Optional[Action] = action_on_failure
         self.waiting_callback = waiting_callback
         self.progress_callback = progress_callback
-        self.timeout_s = timeout_s or self._compute_timeout()
+
+        # Default to 0 if timeout_s is 0 or less
+        self.timeout_s = 0
+        if timeout_s > 0:
+            self.timeout_s = self._compute_timeout()
 
     def _compute_timeout(self) -> float:
         """Compute the timeout for the action based on the fanned out command timeouts.
