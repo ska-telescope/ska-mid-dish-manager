@@ -56,8 +56,9 @@ a list of FannedOutCommand objects.
 Each fanned out command will wait for an attribute update from the subservient device while the
 ActionHandler will wait for an aggregated attribute update on the DishManager device.
 
-The FannedOutSlowCommand is an implementation of the FannedOutCommand which is more Tango focused
-and is coupled to the SKA BaseComponentManager and CommandTracker classes.
+The FannedOutTangoCommand is an implementation of the FannedOutCommand which is more Tango focused
+and is coupled to the SKA BaseComponentManager and CommandTracker classes. See
+:doc:`command_fanout/actions_and_handlers` for a breakdown of the classes involved.
 
 The Action class can be extended to define concrete Actions with their list of fanned out commands,
 awaited component states, handlers, and any specific behavior. These actions are then used by the

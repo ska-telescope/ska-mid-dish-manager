@@ -1,0 +1,99 @@
+@startuml
+
+abstract class Action {
+  dish_manager_cm
+  timeout_s
+  action_on_success
+  action_on_failure
+  --
+  handler
+  execute(task_callback, task_abort_event)
+}
+
+class ActionHandler {
+  action_name
+  fanned_out_commands
+  component_state
+  awaited_component_state
+  timeout_s
+  --
+  execute(task_callback, task_abort_event)
+  _trigger_success()
+  _trigger_failure()
+}
+
+class SequentialActionHandler {
+  execute(task_callback, task_abort_event)
+}
+
+class FannedOutCommand {
+  device
+  command_name
+  component_state
+  awaited_component_state
+  timeout_s
+  is_device_ignored
+  skip_if_already_satisfied
+  completion_delay_s
+  --
+  status / failed / successful / finished
+  execute()
+  report_progress()
+  refresh_state_from_device()
+  _update_status()
+  _set_status()
+}
+
+class FannedOutTangoCommand {
+  device_component_manager
+  --
+  _execute_tango_command()
+  refresh_state_from_device()
+}
+
+class FannedOutTangoLongRunningCommand {
+  is_lrc_finished
+  --
+  _update_status()
+}
+
+class DishManagerCMMethod {
+  command_args
+  command_kwargs
+  --
+  execute()
+  _handle_result()
+}
+
+class DishManagerCMMethodResultCode {
+  _handle_result()
+}
+
+class DishManagerCMMethodCallBack {
+  _handle_result()
+  _task_callback()
+}
+
+Action *-- "1" ActionHandler : builds
+Action --> "0..1" Action : action_on_success\naction_on_failure
+ActionHandler o-- "1..*" FannedOutCommand : dispatches and polls
+ActionHandler <|-- SequentialActionHandler
+
+FannedOutCommand <|-- FannedOutTangoCommand
+FannedOutTangoCommand <|-- FannedOutTangoLongRunningCommand
+FannedOutCommand <|-- DishManagerCMMethod
+DishManagerCMMethod <|-- DishManagerCMMethodResultCode
+DishManagerCMMethod <|-- DishManagerCMMethodCallBack
+
+note right of FannedOutCommand
+  Waits on its own device state.
+  Never decides the outcome
+  of the overall action.
+end note
+
+note right of ActionHandler
+  Waits on the aggregated
+  DishManager attribute.
+end note
+
+@enduml
