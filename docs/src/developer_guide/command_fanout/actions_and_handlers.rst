@@ -85,9 +85,8 @@ the handler and takes neither argument.
 The commands are given the private ``_component_state`` dict rather than the ``component_state``
 property, because the property deep copies and the commands need a live reference to see updates.
 
-A ``timeout_s`` of 0 or less means do not wait. The handler will dispatch and report success
-immediately, and if the handler itself is given no timeout it derives one from the longest command
-timeout.
+The timout for an actionhandler is the maximum value between ``timeout_s``, or the longest of its
+own fanned out command plus 5s.
 
 ``skip_if_already_satisfied`` skips the fan-out when the awaited state already matches and marks
 the command IGNORED, and ``completion_delay_s`` covers devices which keep reporting their

@@ -144,14 +144,13 @@ class ActionHandler:
         self.action_on_failure: Optional[Action] = action_on_failure
         self.waiting_callback = waiting_callback
         self.progress_callback = progress_callback
-
-        # Default to 0 if timeout_s is 0 or less
-        self.timeout_s = 0
-        if timeout_s > 0:
-            self.timeout_s = self._compute_timeout()
+        self.timeout_s = max(timeout_s, self._compute_timeout())
 
     def _compute_timeout(self) -> float:
         """Compute the timeout for the action based on the fanned out command timeouts.
+
+        Adds 5s to the longest timeout of the fanned out commands. If there is no fanned out
+        commands or they have timeouts of 0, then default to 0.
 
         :return: The timeout value in seconds.
         :rtype: float
