@@ -73,7 +73,7 @@ class WMSComponentManager(BaseComponentManager):
         if self._wms_polling_period is None:
             self._wms_polling_period = 1.0
         if self._wind_gust_period is None:
-            self._wind_gust_period = 600.0
+            self._wind_gust_period = 3.0
 
         # Determine the max buffer length. Once the buffer is full we will have enough data
         # points to determine the mean wind speed and wind gust values. The additions of
