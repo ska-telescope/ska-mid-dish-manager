@@ -8,8 +8,8 @@ from typing import Optional
 class DeviceInfoDataClass:
     """Format of subdevice information."""
 
-    address: Optional[str] = ""
-    version: Optional[str] = ""
+    address: str = ""
+    version: str = ""
 
 
 @dataclass

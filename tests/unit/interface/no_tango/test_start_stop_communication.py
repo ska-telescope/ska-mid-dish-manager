@@ -1,5 +1,7 @@
 """Tests dish manager component manager start/stop communication command handler."""
 
+from typing import Any
+
 import pytest
 from ska_control_model import CommunicationStatus
 
@@ -10,7 +12,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 @pytest.mark.unit
 def test_start_stop_communication(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, Any],
 ) -> None:
     """Verify behaviour of start_communication/ stop_communication command handler.
 
@@ -32,7 +34,7 @@ def test_start_stop_communication(
     component_state_cb.wait_for_value("dishmode", DishMode.STANDBY_FP)
 
     # Now we call stop communicating
-    assert component_manager.watchdog_timer.disable.call_count == 0
+    assert component_manager.watchdog_timer.disable.call_count == 0  # ty: ignore[unresolved-attribute]
     component_manager.stop_communicating()
     assert component_manager.communication_state == CommunicationStatus.DISABLED
     # Check that the watchdog timer is disabled on communication stop

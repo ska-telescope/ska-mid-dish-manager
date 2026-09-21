@@ -1,6 +1,6 @@
 """Tests dish manager component manager setstow command handler."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from ska_control_model import TaskStatus
@@ -16,7 +16,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 )
 def test_set_stow_mode_handler(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of SetStowMode command handler.
 

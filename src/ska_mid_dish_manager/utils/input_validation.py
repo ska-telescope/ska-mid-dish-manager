@@ -1,7 +1,7 @@
 """Input validation and formatting."""
 
 import json
-from typing import List
+from typing import Any, List
 
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
@@ -14,7 +14,7 @@ class TrackTableTimestampError(ValueError):
     """Class that is used to represent timestamp errors in the track load table."""
 
 
-def validate_configure_band_input(data: str) -> dict:
+def validate_configure_band_input(data: str) -> dict[str, Any]:
     """Validate the input JSON for configure_band command.
 
     :param data: JSON string containing the configure band parameters.

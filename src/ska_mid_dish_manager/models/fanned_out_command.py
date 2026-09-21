@@ -4,6 +4,7 @@ import enum
 import json
 import logging
 import time
+import typing
 from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
@@ -30,12 +31,12 @@ class FannedOutCommand:
         logger: logging.Logger,
         device: str,
         command_name: str,
-        command: Callable,
-        component_state: dict,
+        command: Callable[..., Any],
+        component_state: dict[str, Any],
         command_argument: Any = None,
-        awaited_component_state: dict = {},
+        awaited_component_state: dict[str, Any] = {},
         timeout_s: float = 0,
-        progress_callback: Optional[Callable] = None,
+        progress_callback: Optional[Callable[..., None]] = None,
         skip_if_already_satisfied: bool = False,
         completion_delay_s: float = 0,
     ):
@@ -49,7 +50,7 @@ class FannedOutCommand:
         :type command: str
         :param component_state: The component state containing the attributes to wait for updates
             on.
-        :type component_state: Optional[dict]
+        :type component_state: Optional[dict[str, Any]]
         :param command_argument: Argument for the requested command
         :type command_argument: Any
         :param awaited_component_state: The component state containing the attributes and values to
@@ -259,9 +260,9 @@ class FannedOutTangoCommand(FannedOutCommand):
         command_name: str,
         device_component_manager: TangoDeviceComponentManager,
         command_argument: Any = None,
-        awaited_component_state: dict = {},
+        awaited_component_state: dict[str, Any] = {},
         timeout_s: float = 0,
-        progress_callback: Optional[Callable] = None,
+        progress_callback: Optional[Callable[..., None]] = None,
         is_device_ignored: bool = False,
         skip_if_already_satisfied: bool = False,
         completion_delay_s: float = 0,
@@ -343,9 +344,9 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
         command_name: str,
         device_component_manager: TangoDeviceComponentManager,
         command_argument: Any = None,
-        awaited_component_state: dict = {},
+        awaited_component_state: dict[str, Any] = {},
         timeout_s: float = 0,
-        progress_callback: Optional[Callable] = None,
+        progress_callback: Optional[Callable[..., None]] = None,
         is_device_ignored: bool = False,
         skip_if_already_satisfied: bool = False,
     ):
@@ -386,7 +387,8 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
             skip_if_already_satisfied=skip_if_already_satisfied,
         )
 
-    def _execute_tango_command(self) -> tuple:
+    @typing.override
+    def _execute_tango_command(self) -> tuple[TaskStatus | None, str | None]:
         """Fan out the respective command to the device and handle task status response."""
         task_status, msg = super()._execute_tango_command()
 
@@ -439,7 +441,7 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                 return True
         return False
 
-    def _get_command_lrc_finished_dict(self) -> Optional[dict]:
+    def _get_command_lrc_finished_dict(self) -> Optional[dict[str, Any]]:
         """Get the lrcFinished dict for the long running command."""
         lrc_finished = self.device_component_manager.read_attribute_value(
             "lrcfinished", log_read=False

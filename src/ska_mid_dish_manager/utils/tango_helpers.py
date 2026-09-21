@@ -30,6 +30,9 @@ class TangoDbAccessor:
         :return: value for the given property
         :rtype: Optional[str]
         """
+        if not self._database:
+            self._logger.error("Database connection is not available")
+            return None
         self._logger.debug("Getting device property value for %s.", property_name)
         try:
             device_properties = self._database.get_device_property(
@@ -51,6 +54,9 @@ class TangoDbAccessor:
         :param value: Value to set for the property
         :type value: str
         """
+        if not self._database:
+            self._logger.error("Database connection is not available")
+            return
         self._logger.debug("Setting device property %s to value %s.", property_name, value)
         try:
             self._database.put_device_property(self._tango_device_name, {property_name: value})

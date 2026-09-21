@@ -6,7 +6,7 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from ska_control_model import AdminMode, TaskStatus
+from ska_control_model import AdminMode, TaskStatus  # ty: ignore[deprecated]
 
 from ska_mid_dish_manager.models.command_actions import SetStandbyLPModeAction
 from ska_mid_dish_manager.models.dish_enums import (
@@ -53,7 +53,7 @@ class TestCommandActionsIgnoringDevices:
             "SPFRX": mock.MagicMock(
                 _component_state={
                     "operatingmode": SPFRxOperatingMode.STANDBY,
-                    "adminmode": AdminMode.ONLINE,
+                    "adminmode": AdminMode.ONLINE,  # ty: ignore[deprecated]
                 },
                 execute_command=mock.MagicMock(return_value=(None, None)),
             ),

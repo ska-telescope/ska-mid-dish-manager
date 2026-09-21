@@ -67,15 +67,21 @@ class ReleaseInfo:
             version_info = json.loads(ds_manager_version)
         except (json.JSONDecodeError, TypeError):
             version_info = BAD_JSON_FORMAT_VERSION
-        self._build_state.ds_manager_device.version = version_info
+        self._build_state.ds_manager_device = DeviceInfoDataClass(
+            version=version_info, address=self._ds_manager_device_info.address
+        )
 
     def _update_spfc_version(self, spfc_version: str) -> None:
         """Update SPFC version information."""
-        self._build_state.spfc_device.version = spfc_version
+        self._build_state.spfc_device = DeviceInfoDataClass(
+            version=spfc_version, address=self._spfc_device_info.address
+        )
 
     def _update_spfrx_version(self, spfrx_version: str) -> None:
         """Update SPFRx version information."""
-        self._build_state.spfrx_device.version = spfrx_version
+        self._build_state.spfrx_device = DeviceInfoDataClass(
+            version=spfrx_version, address=self._spfrx_device_info.address
+        )
 
     def _update_b5dc_version(self, b5dc_version: str) -> None:
         """Update B5DC version information."""

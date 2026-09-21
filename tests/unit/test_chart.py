@@ -1,6 +1,7 @@
 """General chart tests."""
 
 import ast
+from ast import Module
 from pathlib import Path
 
 import pytest
@@ -22,7 +23,7 @@ def test_chart_versions():
     docs_version = ""
     with open(docs_conf_path.as_posix(), "r") as f:
         source_code = f.read()
-    docs_conf_tree = ast.parse(source_code)
+    docs_conf_tree: Module = ast.parse(source_code)
     for node in docs_conf_tree.body:
         if not isinstance(node, ast.Assign):
             continue
@@ -30,7 +31,7 @@ def test_chart_versions():
             continue
         if node.targets[0].id != "release":
             continue
-        docs_version = node.value.value
+        docs_version = node.value
 
     # YAML files
     chart_def_yaml = ""
@@ -51,7 +52,7 @@ def test_chart_versions():
 
     if "rc" not in chart_version:
         # docs rc version can be 9.2.1rc1 and chart version 9.2.1-rc.1
-        assert docs_version == chart_version, (
+        assert docs_version.value == chart_version, (
             f"Docs version {docs_version} must match chart version {chart_version}."
         )
 

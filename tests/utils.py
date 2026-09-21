@@ -13,6 +13,7 @@ import numpy as np
 import tango
 from matplotlib import pyplot as plt
 from ska_control_model import CommunicationStatus
+from tango.utils import EventCallback
 
 from ska_mid_dish_manager.models.dish_enums import PointingState, TrackTableLoadMode
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
@@ -78,8 +79,8 @@ class ComponentStateStore:
         :return: True if found
         :rtype: bool
         """
+        component_state = []
         try:
-            component_state = []
             while True:
                 state = self._queue.get(timeout=timeout)
                 if state.get(key) == value:
@@ -101,33 +102,33 @@ class MethodCallsStore:
 
     def __init__(self) -> None:
         """Init the class."""
-        self._queue_args: queue.Queue = queue.Queue()
-        self._queue_kwargs: queue.Queue = queue.Queue()
+        self._queue_args: queue.Queue[tuple[Any, ...]] = queue.Queue()
+        self._queue_kwargs: queue.Queue[dict[str, Any]] = queue.Queue()
 
-    def __call__(self, *args: tuple, **kwargs: dict) -> None:
+    def __call__(self, *args: tuple[Any, ...], **kwargs: dict[str, Any]) -> None:
         """Store the kwargs used in calls to the MethodCallsStore class.
 
         :param kwargs: The method parameters
-        :type kwargs: dict
+        :type kwargs: dict[str, Any]
         """
         if kwargs:
             self._queue_kwargs.put(kwargs)
         if args:
             self._queue_args.put(args)
 
-    def wait_for_kwargs(self, expected_kwargs: dict, timeout: int = 3) -> bool:
+    def wait_for_kwargs(self, expected_kwargs: dict[str, Any], timeout: int = 3) -> bool:
         """Wait for a specific dict to arrive.
 
         :param expected_kwargs: The kwargs we're expecting
-        :type expected_kwargs: dict
+        :type expected_kwargs: dict[str, Any]
         :param timeout: How long to wait, defaults to 3
         :type timeout: int, optional
         :raises RuntimeError: When the expected value is not fuond
         :return: Whether it was found or not
         :rtype: bool
         """
+        queue_values = []
         try:
-            queue_values = []
             while True:
                 queue_kwargs = self._queue_kwargs.get(timeout=timeout)
                 filtered_queue_kwargs = {k: v for k, v in queue_kwargs.items() if v is not None}
@@ -137,19 +138,19 @@ class MethodCallsStore:
         except queue.Empty as err:
             raise RuntimeError(f"Never got a {expected_kwargs}, but got {queue_values}") from err
 
-    def wait_for_args(self, expected_args: tuple, timeout: int = 3) -> bool:
+    def wait_for_args(self, expected_args: tuple[Any, ...], timeout: int = 3) -> bool:
         """Wait for a specific arg list to arrive.
 
         :param expected_args: The args we're expecting
-        :type expected_args: tuple
+        :type expected_args: tuple[Any, ...]
         :param timeout: How long to wait, defaults to 3
         :type timeout: int, optional
         :raises RuntimeError: When the expected value is not found
         :return: Whether it was found or not
         :rtype: bool
         """
+        queue_values = []
         try:
-            queue_values = []
             while True:
                 queue_args = self._queue_args.get(timeout=timeout)
                 queue_values.append(queue_args)
@@ -158,7 +159,7 @@ class MethodCallsStore:
         except queue.Empty as err:
             raise RuntimeError(f"Never got a {expected_args}, but got {queue_values}") from err
 
-    def get_args_queue(self, timeout: int = 3) -> List[tuple]:
+    def get_args_queue(self, timeout: int = 3) -> List[tuple[Any, ...]]:
         """Get all args from the queue.
 
         :param timeout: How long to wait, defaults to 3
@@ -174,13 +175,13 @@ class MethodCallsStore:
         except queue.Empty:
             return items
 
-    def get_kwargs_queue(self, timeout: int = 3) -> List[dict]:
+    def get_kwargs_queue(self, timeout: int = 3) -> List[dict[str, Any]]:
         """Get all kwargs from the queue.
 
         :param timeout: How long to wait, defaults to 3
         :type timeout: int, optional
         :return: List of kwargs dicts
-        :rtype: List[dict]
+        :rtype: List[dict[str, Any]]
         """
         items = []
         try:
@@ -224,8 +225,8 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
+        events = []
         try:
-            events = []
             while True:
                 event = self._queue.get(timeout=timeout)
                 events.append(event)
@@ -251,7 +252,7 @@ class EventStore:
                 ) from err
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 
-    def wait_for_condition(self, condition: Callable, timeout: int = 3) -> bool:
+    def wait_for_condition(self, condition: Callable[[Any], bool], timeout: int = 3) -> bool:
         """Wait for a generic condition.
 
         Wait `timeout` seconds for each fetch.
@@ -264,8 +265,8 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
+        events = []
         try:
-            events = []
             while True:
                 event = self._queue.get(timeout=timeout)
                 events.append(event)
@@ -292,8 +293,8 @@ class EventStore:
         :return: True if found
         :rtype: bool
         """
+        events = []
         try:
-            events = []
             while True:
                 event = self._queue.get(timeout=timeout)
                 events.append(event)
@@ -493,7 +494,11 @@ class EventStore:
         :return: Filtered list of events
         :rtype: List[tango.EventData]
         """
-        return [event for event in events if unique_id in str(event.attr_value.value)]
+        return [
+            event
+            for event in events
+            if event.attr_value and unique_id in str(event.attr_value.value)
+        ]
 
     def wait_for_n_events(self, event_count: int, timeout: int = 3):
         """Wait for N number of events.
@@ -536,16 +541,18 @@ class EventStore:
             return items
 
     @classmethod
-    def extract_event_values(cls, events: List[tango.EventData]) -> List[Tuple]:
+    def extract_event_values(cls, events: List[tango.EventData]) -> List[Tuple[str, Any, str]]:
         """Get the values out of events.
 
         :param events: List of events
         :type events: List[tango.EventData]
         :return: List of value tuples
-        :rtype: List[Tuple]
+        :rtype: List[Tuple[str, Any, str]]
         """
-        event_info = [
-            (event.attr_value.name, event.attr_value.value, event.device) for event in events
+        event_info: List[Tuple[str, Any, str]] = [
+            (event.attr_value.name, event.attr_value.value, event.device)
+            for event in events
+            if event.attr_value
         ]
         return event_info
 
@@ -568,9 +575,11 @@ class EventStore:
         :param events: list of
         :type events: List[tango.EventData]
         """
-        return [(event.attr_value.name, event.attr_value.value) for event in events]
+        return [
+            (event.attr_value.name, event.attr_value.value) for event in events if event.attr_value
+        ]
 
-    def wait_for_lrcvalue(self, key: str, value: any, timeout: int = 3) -> Dict:
+    def wait_for_lrcvalue(self, key: str, value: Any, timeout: int = 3) -> Dict:
         """Wait for a long running command to get to lrc[Executing/Finished/Queue]
         depending on which subscription you passed in.
 
@@ -612,14 +621,14 @@ class TrackedDevice:
     """Class to group tracked device information."""
 
     device_proxy: tango.DeviceProxy
-    attribute_names: Tuple[str]
+    attribute_names: tuple[str, ...]
     subscription_ids: List[int] = field(default_factory=list)
 
 
 class EventPrinter:
     """Class that writes to attribte changes to a file."""
 
-    def __init__(self, filename: str, tracked_devices: Tuple[TrackedDevice] = ()) -> None:
+    def __init__(self, filename: str, tracked_devices: tuple[TrackedDevice, ...] = ()) -> None:
         self.tracked_devices = tracked_devices
         self.filename = filename
 
@@ -636,7 +645,7 @@ class EventPrinter:
                 dp = tracked_device.device_proxy
                 for sub_id in tracked_device.subscription_ids:
                     dp.unsubscribe_event(sub_id)
-            except tango.DevError:
+            except (tango.DevFailed, tango.EventSystemFailed, KeyError):
                 pass
 
     def push_event(self, ev: tango.EventData):
@@ -644,7 +653,7 @@ class EventPrinter:
             if ev.err:
                 err = ev.errors[0]
                 open_file.write(f"\nEvent Error {err.desc} {err.origin} {err.reason}")
-            else:
+            if ev.attr_value:
                 attr_name = ev.attr_name.split("/")[-1]
                 attr_value = ev.attr_value.value
                 if ev.attr_value.type == tango.CmdArgType.DevEnum:
@@ -1140,7 +1149,7 @@ def compare_trajectories(
 
 def setup_subscriptions(
     device_proxy: tango.DeviceProxy,
-    attr_callback_map: Dict[str, EventStore],
+    attr_callback_map: Dict[str, EventStore] | Dict[str, EventCallback],
     event_type: tango.EventType = tango.EventType.CHANGE_EVENT,
     reset_queue: bool = True,
 ) -> Dict[tango.DeviceProxy, List[int]]:
@@ -1162,7 +1171,7 @@ def setup_subscriptions(
         sub_ids.append(sub_id)
         # clear the queue if the callback has a clear_queue method
         if hasattr(callback, "clear_queue") and reset_queue:
-            callback.clear_queue()
+            callback.clear_queue()  # ty: ignore[call-non-callable]
     return {device_proxy: sub_ids}
 
 

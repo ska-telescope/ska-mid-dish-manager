@@ -2,6 +2,7 @@
 
 import time
 from math import pi, sin
+from typing import Any
 
 import pytest
 import tango
@@ -145,7 +146,7 @@ def test_track_and_track_stop_cmds(
         assert message in events_string
 
     # Check that we get to last entry
-    def check_final_points_reached(value: any) -> bool:
+    def check_final_points_reached(value: Any) -> bool:
         return (
             abs(value[1] - final_position[0]) < TRACKING_POSITION_THRESHOLD_ERROR_DEG
             and abs(value[2] - final_position[1]) < TRACKING_POSITION_THRESHOLD_ERROR_DEG
@@ -248,7 +249,7 @@ def test_append_dvs_case(
         time.sleep(1)
 
     # Check that we get to last entry
-    def check_final_points_reached(value: any) -> bool:
+    def check_final_points_reached(value: Any) -> bool:
         final_az = track_table[-2]
         final_el = track_table[-1]
 

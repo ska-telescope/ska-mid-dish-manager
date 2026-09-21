@@ -2,6 +2,7 @@
 
 from unittest.mock import Mock
 
+import numpy
 import pytest
 import tango
 from ska_control_model import ResultCode, TaskStatus
@@ -67,4 +68,4 @@ def test_max_track_table(dish_manager_resources, event_store_class):
     device_proxy.programTrackTable = track_table
     main_event_store.wait_for_value(track_table)
 
-    assert all(device_proxy.programTrackTable == track_table)
+    assert numpy.array_equal(device_proxy.programTrackTable, track_table)

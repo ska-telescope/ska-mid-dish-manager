@@ -5,7 +5,7 @@ import logging
 from typing import Callable, Optional
 
 import tango
-from ska_control_model import AdminMode, ResultCode, TaskStatus
+from ska_control_model import AdminMode, ResultCode, TaskStatus  # ty: ignore[deprecated]
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
 from ska_mid_dish_manager.models.action_handlers import (
@@ -116,9 +116,9 @@ class SetStandbyLPModeAction(Action):
     def execute(self, task_callback, task_abort_event, completed_response_msg: str = ""):
         if not self.dish_manager_cm.is_device_ignored("SPFRX"):
             spfrx_cm = self.dish_manager_cm.sub_component_managers["SPFRX"]
-            if spfrx_cm._component_state["adminmode"] == AdminMode.ENGINEERING:
+            if spfrx_cm._component_state["adminmode"] == AdminMode.ENGINEERING:  # ty: ignore[deprecated]
                 try:
-                    spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)
+                    spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)  # ty: ignore[deprecated]
                 except tango.DevFailed:
                     self.handler._trigger_failure(
                         task_callback,
@@ -632,7 +632,7 @@ class ConfigureBandAction(Action):
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
 
-        fanned_out_commands = [spfrx_configure_band_command]
+        fanned_out_commands: list[FannedOutTangoCommand] = [spfrx_configure_band_command]
         # Only fan out the DS SetIndexPosition command if the band is changing
         if self.dish_manager_cm._component_state["configuredband"] != self.band:
             ds_set_index_position_command = FannedOutTangoLongRunningCommand(
@@ -751,12 +751,13 @@ class ConfigureBandActionSequence(Action):
                 return TaskStatus.FAILED, str(err)
 
         else:
+            band_name = "Band name not set"
             # Case for Non json arg configureband commands
             if self.band in [Band.B5a, Band.B5b]:
                 enum_name = self.band.name
                 # Band name becomes '5a' or '5b'
                 band_name = enum_name[1:]
-            else:
+            elif self.band:
                 band_name = str(self.band.value)
             band_param_name = f"band{band_name}pointingmodelparams"
 

@@ -2,12 +2,14 @@
 
 import json
 import logging
-from unittest.mock import Mock, call, patch
+from typing import cast
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
 from ska_mid_dish_manager.models.command_actions import apply_pointing_model
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -28,7 +30,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 def test_configureband_handler(
     mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of ConfigureBand[x] command handler.
 
@@ -101,7 +103,7 @@ def test_configureband_handler(
 def test_configureband_json_handler_happy(
     mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of ConfigureBand for json happy case.
 
@@ -189,7 +191,7 @@ def test_configureband_json_handler_happy(
 )
 def test_configureband_badly_formatted_json(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of ConfigureBand for json badly formatted case.
 
@@ -220,7 +222,7 @@ def test_configureband_badly_formatted_json(
 )
 def test_configureband_b5b_without_subband(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of ConfigureBand for json missing subband case.
 
@@ -293,7 +295,7 @@ def test_configureband_b5b_without_subband(
 )
 def test_configureband_b5b_without_expected_subband_values(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
     configure_json: str,
 ) -> None:
     """Verify behaviour of ConfigureBand for json missing subband case.
@@ -373,7 +375,7 @@ def test_configureband_b5b_without_expected_subband_values(
 )
 def test_configureband_5b_with_subband(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
     configure_json: str,
     sub_band_frequency: float,
 ) -> None:
@@ -418,7 +420,7 @@ def test_configureband_5b_with_subband(
     expected_json = json.dumps(expected_config)
 
     # check that the SPFRX component manager received the expected ConfigureBand command
-    spfrx_cm = component_manager.sub_component_managers["SPFRX"]
+    spfrx_cm = cast(SPFRxComponentManager, component_manager.sub_component_managers["SPFRX"])
     spfrx_cm_calls = spfrx_cm.execute_command.call_args_list
     assert call("ConfigureBand", expected_json) in spfrx_cm_calls
 
@@ -470,7 +472,7 @@ def test_configureband_5b_with_subband(
 def test_configureband_5b_with_subband_ignore_b5dc(
     mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of ConfigureBand for Band 5b with sub-band when B5DC is ignored.
 
@@ -556,7 +558,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
 )
 def test_configureband_bad_root_key(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, Mock],
 ) -> None:
     """Verify behaviour of ConfigureBand for json missing subband case.
 
@@ -593,7 +595,7 @@ def test_configureband_bad_root_key(
 )
 def test_configureband_invalid_receiver_band(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, Mock],
 ) -> None:
     """Verify behaviour of ConfigureBand for json with invalid receiver band.
 
@@ -630,7 +632,7 @@ def test_configureband_invalid_receiver_band(
 def test_configureband_without_b5dc_component_manager(
     caplog: pytest.LogCaptureFixture,
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, Mock],
 ) -> None:
     """Verify behaviour when B5DC component manager is not present.
 

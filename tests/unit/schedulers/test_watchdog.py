@@ -1,6 +1,7 @@
 """Unit tests for watchdog timer class."""
 
 import time
+from typing import override
 
 import pytest
 
@@ -145,6 +146,7 @@ class TestWatchdogTimer(TestWatchdogTimerBase):
 class TestWatchdogTimerDefault(TestWatchdogTimerBase):
     """Tests for WatchdogTimer default case."""
 
+    @override
     def setup_method(self):
         """Set up context."""
         self.timeout_expire_buffer = 0.2

@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, List, Optional
 
 import tango
-from ska_control_model import AdminMode, CommunicationStatus
+from ska_control_model import AdminMode, CommunicationStatus  # ty: ignore[deprecated]
 from ska_tango_base.base import BaseComponentManager
 
 GROUP_REQUEST_TIMEOUT_MS = 3000
@@ -49,7 +49,7 @@ class WMSComponentManager(BaseComponentManager):
         self,
         wms_device_names: List[str],
         *args: Any,
-        logger: Optional[logging.Logger] = logging.getLogger(__name__),
+        logger: logging.Logger = logging.getLogger(__name__),
         component_state_callback: Optional[Callable] = None,
         communication_state_callback: Optional[Callable] = None,
         state_update_lock: Optional[threading.Lock] = None,
@@ -66,6 +66,14 @@ class WMSComponentManager(BaseComponentManager):
         self._wind_gust_period = wind_gust_period
 
         self._wms_device_group = tango.Group("wms_devices")
+
+        # Defaults since we cannot do math on None's
+        if self._wind_speed_moving_average_period is None:
+            self._wind_speed_moving_average_period = 600.0
+        if self._wms_polling_period is None:
+            self._wms_polling_period = 1.0
+        if self._wind_gust_period is None:
+            self._wind_gust_period = 3.0
 
         # Determine the max buffer length. Once the buffer is full we will have enough data
         # points to determine the mean wind speed and wind gust values. The additions of
@@ -120,7 +128,7 @@ class WMSComponentManager(BaseComponentManager):
         """Start WMS Tango device monitoring of the weather station servers."""
         while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
-                self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)
+                self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)  # ty: ignore[deprecated]
                 break
             except tango.DevFailed:
                 self.logger.error(
@@ -139,8 +147,8 @@ class WMSComponentManager(BaseComponentManager):
         self._wind_gust_buffer.clear()
 
         try:
-            self.write_wms_group_attribute_value("adminMode", AdminMode.OFFLINE)
-            self._wms_device_group.remove_all()
+            self.write_wms_group_attribute_value("adminMode", AdminMode.OFFLINE)  # ty: ignore[deprecated]
+            self._wms_device_group.remove_all()  # ty: ignore[unresolved-attribute]
         except tango.DevFailed:
             self.logger.error(
                 "Failed to set WMS device(s) adminMode to OFFLINE. "
@@ -179,7 +187,7 @@ class WMSComponentManager(BaseComponentManager):
 
     def _compute_mean_wind_speed(
         self,
-        wind_speed_data: list[list[float, float]],
+        wind_speed_data: list[list[float]],
         current_time: float,
     ) -> float:
         """Calculate the mean wind speed from buffered wind speed data.
@@ -216,7 +224,7 @@ class WMSComponentManager(BaseComponentManager):
 
     def _process_wind_gust(
         self,
-        wind_speed_data_list: list[list[float, float]],
+        wind_speed_data_list: list[list[float]],
         current_time: float,
     ) -> float:
         """Determines the wind gust value from a buffer of maximum wind speed data points
@@ -306,7 +314,7 @@ class WMSComponentManager(BaseComponentManager):
                     err_msg = (
                         f"Failed to read attribute [{attribute_name}] "
                         f"on device [{reply.dev_name()}] of "
-                        f"group [{self._wms_device_group.get_name()}]",
+                        f"group [{self._wms_device_group.get_name()}]",  # ty: ignore[unresolved-attribute]
                     )
                     self.logger.error(err_msg)
                     read_error_raised = True
@@ -320,7 +328,7 @@ class WMSComponentManager(BaseComponentManager):
             self.logger.error(
                 "Exception raised on attempt to "
                 f"read attribute [{attribute_name}] "
-                f"of group [{self._wms_device_group.get_name()}]: {err}",
+                f"of group [{self._wms_device_group.get_name()}]: {err}",  # ty: ignore[unresolved-attribute]
             )
         return reply_values
 
@@ -348,7 +356,7 @@ class WMSComponentManager(BaseComponentManager):
             self.logger.error(
                 "Exception raised on attempt to "
                 f"write attribute [{attribute_name}] "
-                f"of group [{self._wms_device_group.get_name()}]: {err}",
+                f"of group [{self._wms_device_group.get_name()}]: {err}",  # ty: ignore[unresolved-attribute]
             )
             raise
 
@@ -361,3 +369,16 @@ class WMSComponentManager(BaseComponentManager):
             if average is not None
         }
         super()._update_component_state(**new_component_state)
+
+    def _fetch_build_state_information(self) -> None:
+        """Fetch build state information from the WMS Tango device.
+
+        TODO: Expand this method to fetch build state information from all WMS device
+
+        """
+        build_state = "WMS Buildtate Unknown"
+        self._update_component_state(buildstate=build_state)
+
+    def execute_command(self, command_name: str, *args: Any) -> Any:
+        """Execute a command on the WMS Tango device group."""
+        raise NotImplementedError("Command execution on WMS device group is not implemented")

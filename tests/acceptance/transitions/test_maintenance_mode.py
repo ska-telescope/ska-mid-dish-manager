@@ -21,7 +21,7 @@ REQUESTED_ELEVATION_VALUE = 60.0
 
 @pytest.mark.acceptance
 def test_maintenance_mode_cmd(
-    event_store_class: EventStore,
+    event_store_class: type[EventStore],
     dish_manager_proxy: DeviceProxy,
     ds_device_proxy: DeviceProxy,
     spf_device_proxy: DeviceProxy,
@@ -79,7 +79,7 @@ def test_maintenance_mode_cmd(
 @pytest.mark.movement
 @pytest.mark.acceptance
 def test_power_cycle_in_maintenance_mode(
-    event_store_class: EventStore,
+    event_store_class: type[EventStore],
     dish_manager_proxy: DeviceProxy,
 ) -> None:
     # Put dish into maintenance mode
@@ -115,7 +115,7 @@ def test_power_cycle_in_maintenance_mode(
 @pytest.mark.movement
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_on_stow(
-    event_store_class: EventStore,
+    event_store_class: type[EventStore],
     dish_manager_proxy: DeviceProxy,
     ds_device_proxy: DeviceProxy,
 ) -> None:
@@ -148,7 +148,7 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
 @pytest.mark.movement
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_not_on_stow(
-    event_store_class: EventStore,
+    event_store_class: type[EventStore],
     dish_manager_proxy: DeviceProxy,
     ds_device_proxy: DeviceProxy,
     monitor_tango_servers,
