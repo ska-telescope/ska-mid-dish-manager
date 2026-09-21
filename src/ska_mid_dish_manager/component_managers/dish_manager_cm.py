@@ -25,6 +25,7 @@ from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
 from ska_tango_base.executor import TaskExecutorComponentManager
 
 from ska_mid_dish_manager.component_managers.b5dc_cm import B5DCComponentManager
+from ska_mid_dish_manager.component_managers.component_manager_types import SubComponentManagers
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
@@ -268,14 +269,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         }
 
         # SPF has to go first
-        self.sub_component_managers: dict[
-            str,
-            SPFComponentManager
-            | DSComponentManager
-            | SPFRxComponentManager
-            | WMSComponentManager
-            | B5DCComponentManager,
-        ] = {
+        self.sub_component_managers: dict[str, SubComponentManagers] = {
             "SPF": SPFComponentManager(
                 spf_device_fqdn,
                 logger,
@@ -1501,10 +1495,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Syncing component states")
         if self.sub_component_managers:
             for device, component_manager in self.sub_component_managers.items():
-                if not isinstance(component_manager, WMSComponentManager):
-                    if not self.is_device_ignored(device) and device != "WMS":
-                        component_manager.clear_monitored_attributes()
-                        component_manager.update_state_from_monitored_attributes()
+                if not isinstance(
+                    component_manager, WMSComponentManager
+                ) and not self.is_device_ignored(device):
+                    component_manager.clear_monitored_attributes()
+                    component_manager.update_state_from_monitored_attributes()
 
     def update_pointing_model_params(self, attr: str, values: list[float]) -> None:
         """Update band pointing model parameters for the given attribute."""

@@ -67,12 +67,12 @@ class WMSComponentManager(BaseComponentManager):
 
         self._wms_device_group = tango.Group("wms_devices")
 
-        # Defaults since we cannot to math on None's
-        if not self._wind_speed_moving_average_period:
+        # Defaults since we cannot do math on None's
+        if self._wind_speed_moving_average_period is None:
             self._wind_speed_moving_average_period = 600.0
-        if not self._wms_polling_period:
+        if self._wms_polling_period is None:
             self._wms_polling_period = 1.0
-        if not self._wind_gust_period:
+        if self._wind_gust_period is None:
             self._wind_gust_period = 600.0
 
         # Determine the max buffer length. Once the buffer is full we will have enough data
