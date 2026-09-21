@@ -64,10 +64,9 @@ class MonitorPing(threading.Thread):
         }
         with tango.EnsureOmniThread():
             try:
-                self._create_device_proxy()
                 if not self._device_proxy:
-                    raise Exception("DeviceProxy not created.")
-                self._device_proxy.command_inout("MonitorPing", None)
+                    self._create_device_proxy()
+                self._device_proxy.command_inout("MonitorPing", None)  # ty: ignore[unresolved-attribute]
             except Exception:
                 if self._log_counter < self.PING_ERROR_LOG_REPEAT:
                     if self._device_proxy is None:
