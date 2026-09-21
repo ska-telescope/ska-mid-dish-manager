@@ -645,7 +645,7 @@ class EventPrinter:
                 dp = tracked_device.device_proxy
                 for sub_id in tracked_device.subscription_ids:
                     dp.unsubscribe_event(sub_id)
-            except tango.DevFailed:
+            except (tango.DevFailed, tango.EventSystemFailed, KeyError):
                 pass
 
     def push_event(self, ev: tango.EventData):

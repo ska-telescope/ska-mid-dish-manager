@@ -208,9 +208,6 @@ class WMSComponentManager(BaseComponentManager):
         """
         self._wind_speed_buffer.extend(wind_speed_data)
 
-        if self._wind_speed_moving_average_period is None:
-            self._wind_speed_moving_average_period = 600.0
-
         self._prune_stale_windspeed_data(
             current_time,
             self._wind_speed_moving_average_period,
@@ -257,9 +254,6 @@ class WMSComponentManager(BaseComponentManager):
             self._wind_gust_buffer.append(wind_speed_data_list[max_inst_ws_index])
         else:
             self._wind_gust_buffer.append(wind_speed_data_list[0])
-
-        if not self._wind_gust_period:
-            self._wind_gust_period = 600.0
 
         self._prune_stale_windspeed_data(
             current_time,
