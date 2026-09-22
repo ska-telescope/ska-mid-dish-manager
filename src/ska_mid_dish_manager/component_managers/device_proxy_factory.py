@@ -48,7 +48,7 @@ def retry_connection(func: Callable) -> Any:
                 return func(device_proxy_manager, *args, **kwargs)
             except tango.DevFailed:
                 # build up the log message for the specific function
-                if "wait" in func.__name__:
+                if "wait" in func.__name__:  # ty: ignore[unresolved-attribute]
                     dev_name = args[0].dev_name()
                     msg = (
                         f"Try number {try_count}: Failed to reconnect to device "

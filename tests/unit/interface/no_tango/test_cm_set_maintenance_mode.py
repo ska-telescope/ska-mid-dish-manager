@@ -1,7 +1,7 @@
 """Tests dish manager component manager set_maintenance_mode command handler."""
 
 import logging
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
@@ -23,7 +23,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 def test_set_maintenance_mode_handler(
     caplog,
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of SetMaintenanceMode command handler.
 

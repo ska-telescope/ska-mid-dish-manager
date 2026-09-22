@@ -35,8 +35,8 @@ def test_initial_power_limit(
     # value is from the reset fixture
     initial_value = 14.7
     assert (
-        ds_device_proxy.read_attribute("dscPowerLimitkW").value
-        == dish_manager_proxy.read_attribute("dscPowerLimitkW").value
+        ds_device_proxy.read_attribute("dscPowerLimitkW").value  # ty: ignore[unresolved-attribute]
+        == dish_manager_proxy.read_attribute("dscPowerLimitkW").value  # ty: ignore[unresolved-attribute]
         == initial_value
     )
 
@@ -86,8 +86,8 @@ def test_incorrect_power_limit_change(
     for proxy, power_limit in zip([ds_device_proxy, dish_manager_proxy], power_limit_list):
         with pytest.raises(tango.DevFailed):
             proxy.write_attribute("dscPowerLimitkW", power_limit)  # This should raise ValueError
-            ds_value = ds_device_proxy.read_attribute("dscPowerLimitkW").value
-            dish_value = dish_manager_proxy.read_attribute("dscPowerLimitkW").value
+            ds_value = ds_device_proxy.read_attribute("dscPowerLimitkW").value  # ty: ignore[unresolved-attribute]
+            dish_value = dish_manager_proxy.read_attribute("dscPowerLimitkW").value  # ty: ignore[unresolved-attribute]
             assert ds_value == dish_value == DEFAULT_POWER_LIMIT
 
 

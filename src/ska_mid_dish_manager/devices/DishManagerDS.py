@@ -185,7 +185,7 @@ class DishManager(SKAController):
                 command_name,
                 SubmittedSlowCommand(
                     command_name,
-                    self._command_tracker,
+                    self._command_tracker,  # ty: ignore[invalid-argument-type]
                     self.component_manager,
                     method_name,
                     callback=None,
@@ -200,7 +200,7 @@ class DishManager(SKAController):
             "SetMaintenanceMode",
             SubmittedSlowCommand(
                 "SetMaintenanceMode",
-                self._command_tracker,
+                self._command_tracker,  # ty: ignore[invalid-argument-type]
                 self.component_manager,
                 "set_maintenance_mode",
                 callback=self.component_manager.stow_to_maintenance_transition_callback,
@@ -212,7 +212,7 @@ class DishManager(SKAController):
             "SetStowMode",
             StowCommand(
                 "SetStowMode",
-                self._command_tracker,
+                self._command_tracker,  # ty: ignore[invalid-argument-type]
                 self.component_manager,
                 "set_stow_mode",
                 callback=None,
@@ -605,7 +605,7 @@ class DishManager(SKAController):
             def filter(self, record: logging.LogRecord) -> bool:
                 user_type = getattr(record, "user", "")
                 if user_type:
-                    record.tags += f",user:{user_type}"
+                    record.tags += f",user:{user_type}"  # ty: ignore[unresolved-attribute]
 
                 return True
 
@@ -2897,7 +2897,7 @@ class DishManager(SKAController):
     @record_command(False)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(  # type: ignore[misc]
+    @command(
         dtype_in=(float,),
         dtype_out="DevVarLongStringArray",
         doc_in="""
@@ -3226,7 +3226,7 @@ class DishManager(SKAController):
     @record_command(False)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(  # type: ignore[misc]
+    @command(
         dtype_out="DevVarLongStringArray",
         doc_in=(
             "Clear the interlock status once interlocks or E-Stops have been"

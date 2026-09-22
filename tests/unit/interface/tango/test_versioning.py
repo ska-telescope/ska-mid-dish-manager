@@ -1,12 +1,17 @@
 """Unit tests for the versioning dish manager."""
 
 import json
+from typing import cast
 from unittest.mock import Mock, patch
 
 import pytest
 import tango
+from tango import DeviceProxy, server
 from tango.test_context import DeviceTestContext
 
+from ska_mid_dish_manager.component_managers.component_manager_types import SubComponentManagers
+from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
+from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_DS_MANAGER_TRL,
@@ -40,15 +45,17 @@ class TestDishManagerVersioning:
         ):
 
             class PatchedDM(DishManager):
-                B5DCDeviceFqdn = tango.server.device_property(
+                B5DCDeviceFqdn = server.device_property(
                     dtype=tango.DevString, default_value="a/b/c"
                 )
 
             self.tango_context = DeviceTestContext(PatchedDM)
             self.tango_context.start()
-            self._dish_manager_proxy = self.tango_context.device
-            class_instance = PatchedDM.instances.get(self._dish_manager_proxy.name())
-            self.dish_manager_cm = class_instance.component_manager
+            self._dish_manager_proxy = cast(DeviceProxy, self.tango_context.device)
+            class_instance = cast(
+                PatchedDM, PatchedDM.instances.get(self._dish_manager_proxy.name())
+            )
+            self.dish_manager_cm: DishManagerComponentManager = class_instance.component_manager
 
     def teardown_method(self):
         """Tear down context."""
@@ -116,7 +123,7 @@ class TestDishManagerVersioning:
         """
         # configure a mock build state
         dummy_build_state_version = generate_random_text()
-        cm = self.dish_manager_cm.sub_component_managers[device]
+        cm: SubComponentManagers = self.dish_manager_cm.sub_component_managers[device]
         setattr(cm, "read_attribute_value", Mock(return_value=dummy_build_state_version))
         # trigger a build state update
         cm._fetch_build_state_information()
@@ -138,7 +145,7 @@ class TestDishManagerVersioning:
         # configure a mock build state
         build_state_update_json = {"version": generate_random_text()}
         build_state_update = json.dumps(build_state_update_json)
-        cm = self.dish_manager_cm.sub_component_managers["DS"]
+        cm = cast(DSComponentManager, self.dish_manager_cm.sub_component_managers["DS"])
         setattr(cm, "read_attribute_value", Mock(return_value=build_state_update))
         # trigger a build state update
         cm._fetch_build_state_information()

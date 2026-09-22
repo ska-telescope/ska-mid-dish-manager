@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 @pytest.fixture
 def plot_dish_manager_pointing(
     request: pytest.FixtureRequest, dish_manager_proxy: tango.DeviceProxy
-) -> Generator:
+) -> Generator[None]:
     """Monitor achievedPointing and plot a graph of the values over the test execution."""
     file_storage_dir = request.config.getoption("--pointing-files-path")
 

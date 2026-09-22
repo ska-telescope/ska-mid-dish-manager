@@ -4,7 +4,9 @@ import enum
 from typing import Any, Callable, Optional
 
 
-def check_component_state_matches_awaited(component_state: dict, awaited_state: dict) -> bool:
+def check_component_state_matches_awaited(
+    component_state: dict[str, Any], awaited_state: dict[str, Any]
+) -> bool:
     """Check if the given component state matches the awaited state."""
     for awaited_attr, awaited_attr_value in awaited_state.items():
         if awaited_attr not in component_state:
@@ -15,7 +17,7 @@ def check_component_state_matches_awaited(component_state: dict, awaited_state: 
     return True
 
 
-def update_task_status(task_callback: Optional[Callable], **task_statuses: Any) -> None:
+def update_task_status(task_callback: Optional[Callable[..., None]], **task_statuses: Any) -> None:
     """Wraps the task callback to report lrc statuses."""
     if task_callback:
         task_callback(**task_statuses)
@@ -23,7 +25,7 @@ def update_task_status(task_callback: Optional[Callable], **task_statuses: Any) 
 
 def report_task_progress(
     progress_msg: str,
-    command_progress_callback: Optional[Callable] = None,
+    command_progress_callback: Optional[Callable[..., None]] = None,
     user_operator: bool = False,
 ) -> None:
     """Wraps the command progress callback to update device status."""
@@ -43,7 +45,7 @@ def convert_enums_to_names(values: list[Any]) -> list[str]:
 
 
 def report_awaited_attributes(
-    progress_callback: Optional[Callable],
+    progress_callback: Optional[Callable[[Any], Any]],
     awaited_attributes: list[Any],
     awaited_values: list[Any],
     device: Any = None,

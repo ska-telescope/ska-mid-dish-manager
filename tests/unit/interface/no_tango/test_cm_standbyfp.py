@@ -1,6 +1,6 @@
 """Tests dish manager component manager setstandbyfp command handler."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
@@ -21,7 +21,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 def test_set_standbyfp_handler(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of SetStandbyFP command handler.
 

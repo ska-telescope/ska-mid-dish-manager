@@ -35,7 +35,7 @@ def test_spf_lna_power_state_attributes_initial_values(
     init_value = False
     attributes = dish_manager_proxy.get_attribute_list()
     assert attribute_name in attributes
-    assert dish_manager_proxy.read_attribute(attribute_name).value == init_value
+    assert dish_manager_proxy.read_attribute(attribute_name).value == init_value  # ty: ignore[unresolved-attribute]
     remove_subscriptions(subscriptions)
 
 
@@ -59,7 +59,7 @@ def test_spf_lna_power_state_attributes_types(
     """Test the spf lna attribute configurations are read and write."""
     attr_cb_mapping = {}
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    attribute_type = dish_manager_proxy.get_attribute_config(attribute_name).writable
+    attribute_type = dish_manager_proxy.get_attribute_config(attribute_name).writable  # ty: ignore[unresolved-attribute]
     assert attribute_type == AttrWriteType.READ_WRITE
     remove_subscriptions(subscriptions)
 
@@ -89,7 +89,7 @@ def test_spf_lna_power_state_rejects_attribute_writes(
     attr_cb_mapping = {}
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     err_msg = "Cannot change LNA power state while dish is not in operate or maintanance mode."
-    assert dish_manager_proxy.read_attribute("dishMode").value not in [
+    assert dish_manager_proxy.read_attribute("dishMode").value not in [  # ty: ignore[unresolved-attribute]
         DishMode.OPERATE,
         DishMode.MAINTENANCE,
     ]

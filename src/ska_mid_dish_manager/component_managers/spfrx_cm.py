@@ -5,7 +5,7 @@ import threading
 from typing import Any, Callable, Optional
 
 import tango
-from ska_control_model import AdminMode, HealthState
+from ska_control_model import AdminMode, HealthState  # ty: ignore[deprecated]
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
@@ -63,9 +63,10 @@ class MonitorPing(threading.Thread):
             "other_errors": f"Failed to execute MonitorPing on {self._spfrx_trl}",
         }
         with tango.EnsureOmniThread():
-            self._create_device_proxy()
             try:
-                self._device_proxy.command_inout("MonitorPing", None)  # type: ignore
+                if not self._device_proxy:
+                    self._create_device_proxy()
+                self._device_proxy.command_inout("MonitorPing", None)  # ty: ignore[unresolved-attribute]
             except Exception:
                 if self._log_counter < self.PING_ERROR_LOG_REPEAT:
                     if self._device_proxy is None:
@@ -173,7 +174,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "b4capabilitystate": SPFRxCapabilityStates,
             "b5acapabilitystate": SPFRxCapabilityStates,
             "b5bcapabilitystate": SPFRxCapabilityStates,
-            "adminmode": AdminMode,
+            "adminmode": AdminMode,  # ty: ignore[deprecated]
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:

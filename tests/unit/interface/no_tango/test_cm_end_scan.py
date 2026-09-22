@@ -1,5 +1,7 @@
 """Tests dish manager component manager endscan command handler."""
 
+from unittest.mock import MagicMock
+
 import pytest
 from ska_control_model import ResultCode, TaskStatus
 
@@ -9,7 +11,7 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
 @pytest.mark.unit
 def test_end_scan_handler(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of EndScan command handler.
 

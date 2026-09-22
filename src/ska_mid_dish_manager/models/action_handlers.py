@@ -3,7 +3,7 @@
 import logging
 import time
 from abc import ABC
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
 
@@ -13,6 +13,8 @@ from ska_mid_dish_manager.models.constants import (
 )
 from ska_mid_dish_manager.models.fanned_out_command import (
     FannedOutCommand,
+    FannedOutTangoCommand,
+    FannedOutTangoLongRunningCommand,
 )
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
@@ -102,9 +104,11 @@ class ActionHandler:
         self,
         logger: logging.Logger,
         action_name: str,
-        fanned_out_commands: List[FannedOutCommand],
+        fanned_out_commands: list[FannedOutCommand]
+        | list[FannedOutTangoCommand]
+        | list[FannedOutTangoLongRunningCommand],
         component_state: dict,
-        awaited_component_state: Optional[dict] = {},
+        awaited_component_state: Optional[dict[str, Any]] = {},
         action_on_success: Optional[Action] = None,
         action_on_failure: Optional[Action] = None,
         waiting_callback: Optional[Callable] = None,
@@ -119,10 +123,10 @@ class ActionHandler:
         :type fanned_out_commands: list[FannedOutCommand]
         :param component_state: The component state containing the attributes to wait for updates
             on.
-        :type component_state: Optional[dict]
+        :type component_state: Optional[dict[str, Any]]
         :param awaited_component_state: The component state containing the attributes and values to
             wait for.
-        :type awaited_component_state: Optional[dict]
+        :type awaited_component_state: Optional[dict[str, Any]]
         :param action_on_success: Optional Action to execute on success.
         :type action_on_success: Callable
         :param action_on_success: Optional Action to execute on failure.
@@ -175,7 +179,7 @@ class ActionHandler:
             result=(ResultCode.ABORTED, f"{self.action_name} aborted"),
         )
 
-    def _commands_to_run(self) -> List[str]:
+    def _commands_to_run(self) -> list[str]:
         """List the fanned out commands which will actually be dispatched.
 
         Commands for ignored devices and commands whose awaited state is already satisfied are

@@ -10,7 +10,7 @@ from unittest import mock
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from ska_control_model import AdminMode, CommunicationStatus
+from ska_control_model import AdminMode, CommunicationStatus  # ty: ignore[deprecated]
 
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 
@@ -51,14 +51,14 @@ def test_wms_group_activation_and_polling_starts(mock_tango_group):
 
     wms.start_communicating()
 
-    tango_group_device_list = wms._wms_device_group.get_device_list()
+    tango_group_device_list = wms._wms_device_group.get_device_list()  # ty: ignore[unresolved-attribute]
     for device_name in test_wms_device_names:
         assert device_name in tango_group_device_list
 
     wait_event = threading.Event()
     wait_event.wait(timeout=wms._wms_polling_period)
 
-    wms.write_wms_group_attribute_value.assert_called_with("adminMode", AdminMode.ONLINE)
+    wms.write_wms_group_attribute_value.assert_called_with("adminMode", AdminMode.ONLINE)  # ty: ignore[deprecated]
     wms._run_wms_group_polling.assert_called()
 
 
@@ -85,6 +85,7 @@ def test_wms_cm_wind_gust_and_mean_wind_speed_updates(mock_tango_group):
         meanwindspeed=-1,
         windgust=-1,
     )
+    assert wms._wms_polling_period, "_wms_polling_period not defined"
     wait_event = threading.Event()
     wms._communication_state_callback = partial(comm_state_callback, wait_event)
 

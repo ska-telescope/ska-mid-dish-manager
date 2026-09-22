@@ -9,6 +9,7 @@ import numpy as np
 import tango
 from ska_control_model import CommunicationStatus, TaskStatus
 from ska_tango_base.base import BaseComponentManager
+from tango import DeviceAttribute
 
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
@@ -112,6 +113,8 @@ class TangoDeviceComponentManager(BaseComponentManager):
         """
         # I get lowercase and uppercase "State" from events
         # for some reason, stick to lowercase to avoid duplicates
+        if not event_data.attr_value:
+            return
         attr_name = event_data.attr_value.name.lower()
         quality = event_data.attr_value.quality
         try:
@@ -299,8 +302,8 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
         monitored_attribute_values = {}
         for attr_value in attribute_values:
-            attr_name = attr_value.name.lower()
-            value = attr_value.value
+            attr_name: str = attr_value.name.lower()
+            value: Any = attr_value.value  # ty: ignore[unresolved-attribute]
             if isinstance(value, np.ndarray):
                 value = list(value)
             monitored_attribute_values[attr_name] = value
@@ -412,7 +415,8 @@ class TangoDeviceComponentManager(BaseComponentManager):
         device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
         with tango.EnsureOmniThread():
             try:
-                result = device_proxy.read_attribute(attribute_name).value
+                device_attribute: DeviceAttribute = device_proxy.read_attribute(attribute_name)
+                result = device_attribute.value  # ty: ignore[unresolved-attribute]
             except tango.DevFailed:
                 self.logger.exception(
                     "Could not read attribute [%s] on [%s]",

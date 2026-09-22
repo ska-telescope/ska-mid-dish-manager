@@ -1,13 +1,16 @@
 """Contains pytest fixtures for tango unit tests setup."""
 
 import json
+from typing import cast
 from unittest.mock import Mock, patch
 
 import pytest
 import tango
 from ska_control_model import CommunicationStatus, TaskStatus
+from tango import server
 from tango.test_context import DeviceTestContext
 
+from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
@@ -30,9 +33,10 @@ def dish_manager_resources():
         tango_context = DeviceTestContext(DishManager)
         tango_context.start()
         device_proxy = tango_context.device
+        assert device_proxy is not None
 
-        class_instance = DishManager.instances.get(device_proxy.name())
-        dish_manager_cm = class_instance.component_manager
+        class_instance = cast(DishManager, DishManager.instances.get(device_proxy.name()))
+        dish_manager_cm = cast(DishManagerComponentManager, class_instance.component_manager)
         ds_cm = dish_manager_cm.sub_component_managers["DS"]
         spf_cm = dish_manager_cm.sub_component_managers["SPF"]
         spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
@@ -91,7 +95,7 @@ def dish_manager_resources_with_b5dc_monitoring():
     ):
 
         class PatchedDM(DishManager):
-            B5DCDeviceFqdn = tango.server.device_property(
+            B5DCDeviceFqdn = server.device_property(
                 dtype=tango.DevVarStringArray, default_value="a/b/c"
             )
 
@@ -99,9 +103,10 @@ def dish_manager_resources_with_b5dc_monitoring():
 
         tango_context.start()
         device_proxy = tango_context.device
+        assert device_proxy is not None
 
-        class_instance = DishManager.instances.get(device_proxy.name())
-        dish_manager_cm = class_instance.component_manager
+        class_instance = cast(DishManager, DishManager.instances.get(device_proxy.name()))
+        dish_manager_cm = cast(DishManagerComponentManager, class_instance.component_manager)
 
         ds_cm = dish_manager_cm.sub_component_managers["DS"]
         spf_cm = dish_manager_cm.sub_component_managers["SPF"]

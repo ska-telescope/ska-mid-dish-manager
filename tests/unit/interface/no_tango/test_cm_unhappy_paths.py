@@ -1,5 +1,7 @@
 """Tests dish manager component manager unhappy paths for command handlers."""
 
+from unittest.mock import MagicMock
+
 import pytest
 from ska_control_model import TaskStatus
 
@@ -9,7 +11,7 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
 @pytest.mark.unit
 def test_slew_with_invalid_input(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of Slew command using invalid input.
 
@@ -25,7 +27,7 @@ def test_slew_with_invalid_input(
 @pytest.mark.unit
 def test_track_load_static_off_with_invalid_input(
     component_manager: DishManagerComponentManager,
-    callbacks: dict,
+    callbacks: dict[str, MagicMock],
 ) -> None:
     """Verify behaviour of Trackloadoffstatic command using invalid input.
 

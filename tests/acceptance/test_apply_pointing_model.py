@@ -21,7 +21,7 @@ def read_file_contents(
     unit: Optional[bool] = False,
     value_range: Optional[bool] = False,
     coeff: Optional[str] = None,
-) -> tuple[str, dict]:
+) -> tuple[str, dict[str, Any]]:
     """Read out the JSON file. Object used when calling ApplyPointingModel command."""
     # Ingest the file as JSON string and configure band selection
     # Get the directory where the test file is located
@@ -76,7 +76,9 @@ def take_auth(ds_device_proxy):
     ],
 )
 def test_best_case_json(
-    band_selection: tuple[str, str], dish_manager_proxy: tango.DeviceProxy, event_store_class: Any
+    band_selection: tuple[str, str, str],
+    dish_manager_proxy: tango.DeviceProxy,
+    event_store_class: Any,
 ) -> None:
     """Test that global pointing parameters are applied correctly from incoming JSON definition."""
     pointing_model_param_events = event_store_class()
@@ -112,7 +114,7 @@ def test_last_commanded_pointing_params(dish_manager_proxy: tango.DeviceProxy) -
     dish_manager_proxy.ApplyPointingModel(pointing_model_json_str)
     last_requested_parameters = dish_manager_proxy.read_attribute(
         "lastCommandedPointingParams"
-    ).value
+    ).value  # ty: ignore[unresolved-attribute]
     try:
         last_requested_parameters = json.loads(last_requested_parameters)
     except json.JSONDecodeError as json_error:

@@ -52,9 +52,7 @@ def test_abort_scan_from_slew(
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=300)
 
     # Wait for the command to finish
-    abort_completed_info: tango.EventType.CHANGE_EVENT = lrcfin_event_store.wait_for_lrcvalue(
-        key="uid", value=command_id
-    )
+    abort_completed_info = lrcfin_event_store.wait_for_lrcvalue(key="uid", value=command_id)
     assert abort_completed_info["result"]
     assert ResultCode(abort_completed_info["result"][0]) == ResultCode.OK
     assert dish_manager_proxy.scanID == ""
@@ -100,9 +98,7 @@ def test_abort_scan_from_non_slew(
     ]
 
     # Wait for the command to finish
-    abort_completed_info: tango.EventType.CHANGE_EVENT = lrcfin_event_store.wait_for_lrcvalue(
-        key="uid", value=command_id
-    )
+    abort_completed_info = lrcfin_event_store.wait_for_lrcvalue(key="uid", value=command_id)
     assert abort_completed_info["result"]
     assert ResultCode(abort_completed_info["result"][0]) == ResultCode.OK, abort_completed_info
     assert dish_manager_proxy.scanID == ""

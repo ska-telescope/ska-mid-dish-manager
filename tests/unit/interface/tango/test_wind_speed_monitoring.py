@@ -3,11 +3,13 @@
 import threading
 import time
 from collections import deque
+from typing import cast
 from unittest import mock
 
 import pytest
 import tango
 from ska_control_model import CommunicationStatus, TaskStatus
+from tango import DeviceProxy, server
 from tango.test_context import DeviceTestContext
 
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
@@ -34,15 +36,17 @@ def configure_mocks_for_dish_manager():
     ):
 
         class PatchedDM(DishManager):
-            WMSDeviceNames = tango.server.device_property(
+            WMSDeviceNames = server.device_property(
                 dtype=tango.DevVarStringArray, default_value="a/b/c"
             )
 
         tango_context = DeviceTestContext(PatchedDM)
         tango_context.start()
-        device_proxy = tango_context.device
+        device_proxy = cast(DeviceProxy, tango_context.device)
 
-        class_instance = PatchedDM.instances.get(device_proxy.name())
+        class_instance: DishManager = cast(
+            DishManager, PatchedDM.instances.get(device_proxy.name())
+        )
         dish_manager_cm = class_instance.component_manager
         wms_cm = dish_manager_cm.sub_component_managers["WMS"]
         wms_cm._update_communication_state(CommunicationStatus.ESTABLISHED)

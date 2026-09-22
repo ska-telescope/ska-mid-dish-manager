@@ -50,7 +50,7 @@ def test_track_pattern(
     request: pytest.FixtureRequest,
     dish_manager_proxy: tango.DeviceProxy,
     ds_device_proxy: tango.DeviceProxy,
-    plot_dish_manager_pointing: Generator,
+    plot_dish_manager_pointing: Generator[None],
 ) -> None:
     """Test tracking the points from the given csv file."""
     main_event_store = event_store_class()
