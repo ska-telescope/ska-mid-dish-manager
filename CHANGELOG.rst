@@ -5,8 +5,9 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
-## unreleased
-*************
+Version 10.0.3
+**************
+- Fixed exception being raised in event handler when tango sub-devices are not available and set to ignored. 
 
 Version 10.0.2
 **************
