@@ -922,6 +922,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     self._reenable_watchdog_timer()
 
                 if new_dish_mode != current_dish_mode:
+                    spf_opmode = (
+                        spf_component_state["operatingmode"]
+                        if not self.is_device_ignored("SPF")
+                        else "ignored"
+                    )
+                    spfrx_opmode = (
+                        spfrx_component_state["operatingmode"]
+                        if not self.is_device_ignored("SPFRX")
+                        else "ignored"
+                    )
                     self.logger.info(
                         (
                             "Updating dish manager dishMode to %s. "
@@ -929,8 +939,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         ),
                         new_dish_mode.name,
                         ds_component_state["operatingmode"].name,
-                        spf_component_state["operatingmode"].name,
-                        spfrx_component_state["operatingmode"].name,
+                        spf_opmode,
+                        spfrx_opmode,
                         extra=OPERATOR_TAG,
                     )
                 self._update_component_state(dishmode=new_dish_mode)
