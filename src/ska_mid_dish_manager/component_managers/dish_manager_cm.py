@@ -1114,7 +1114,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                         spfrx_opmode,
                         extra=OPERATOR_TAG,
                     )
-                self._update_component_state(dishmode=new_dish_mode)
+                    self._update_component_state(dishmode=new_dish_mode)
 
         if "healthstate" in kwargs or "healthinfo" in kwargs:
             self._update_dish_health_state_and_info()
