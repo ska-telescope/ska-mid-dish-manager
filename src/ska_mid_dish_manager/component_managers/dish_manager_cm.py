@@ -1094,12 +1094,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
                 if new_dish_mode != current_dish_mode:
                     spf_opmode = (
-                        spf_component_state["operatingmode"]
+                        spf_component_state["operatingmode"].name
                         if not self.is_device_ignored("SPF")
                         else "ignored"
                     )
                     spfrx_opmode = (
-                        spfrx_component_state["operatingmode"]
+                        spfrx_component_state["operatingmode"].name
                         if not self.is_device_ignored("SPFRX")
                         else "ignored"
                     )
