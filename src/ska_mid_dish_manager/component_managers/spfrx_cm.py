@@ -50,6 +50,11 @@ class MonitorPing(threading.Thread):
         if self._device_proxy is None:
             try:
                 self._device_proxy = tango.DeviceProxy(self._spfrx_trl)
+                # Compensate for SPFRx slowness, see SKB-1593
+                # SKAO-DISH_SRx_REQ-211, states that "MID SPFRx, when commanded to CONFIGURE
+                # a frequency band, shall configure to operate in the commanded frequency
+                # band within 10 seconds
+                self._device_proxy.set_timeout_millis(12000)
             except tango.DevFailed:
                 pass
 
