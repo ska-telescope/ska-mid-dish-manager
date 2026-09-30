@@ -7,7 +7,9 @@ from typing import Any, Callable, Optional
 import tango
 from ska_control_model import AdminMode, HealthState
 
+from ska_mid_dish_manager.component_managers.device_proxy_factory import SlowDeviceProxyManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
+from ska_mid_dish_manager.models.constants import SLOW_DEVICE_PROXY_TIMEOUT_MS
 from ska_mid_dish_manager.models.dish_enums import Band, SPFRxCapabilityStates, SPFRxOperatingMode
 
 
@@ -54,7 +56,7 @@ class MonitorPing(threading.Thread):
                 # SKAO-DISH_SRx_REQ-211, states that "MID SPFRx, when commanded to CONFIGURE
                 # a frequency band, shall configure to operate in the commanded frequency
                 # band within 10 seconds
-                self._device_proxy.set_timeout_millis(12000)
+                self._device_proxy.set_timeout_millis(SLOW_DEVICE_PROXY_TIMEOUT_MS)
             except tango.DevFailed:
                 pass
 
@@ -143,6 +145,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
         self._communication_state_lock = state_update_lock
         self._component_state_lock = state_update_lock
         self._ping_thread_stop_event = threading.Event()
+        self._device_proxy_factory = SlowDeviceProxyManager(self.logger, self._dp_factory_signal)
 
     def _stop_ping_thread(self) -> None:
         """Stop the periodic MonitorPing thread if it is running."""

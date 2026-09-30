@@ -7,7 +7,11 @@ from typing import Any, Callable, Dict
 
 import tango
 
-from ska_mid_dish_manager.models.constants import DEVICE_PROXY_TIMEOUT_MS, OPERATOR_TAG
+from ska_mid_dish_manager.models.constants import (
+    DEVICE_PROXY_TIMEOUT_MS,
+    OPERATOR_TAG,
+    SLOW_DEVICE_PROXY_TIMEOUT_MS,
+)
 
 
 def retry_connection(func: Callable) -> Any:
@@ -180,3 +184,12 @@ class DeviceProxyManager:
 
         # finally, clear any remaining proxies (if any) to ensure memory cleanup
         self._device_proxies.clear()
+
+
+class SlowDeviceProxyManager(DeviceProxyManager):
+    """DeviceProxyManager with a timeout of SLOW_DEVICE_PROXY_TIMEOUT_MS."""
+
+    def __call__(self, *args, **kwargs) -> Any:
+        device_proxy = super().__call__(*args, **kwargs)
+        device_proxy.set_timeout_millis(SLOW_DEVICE_PROXY_TIMEOUT_MS)
+        return device_proxy
