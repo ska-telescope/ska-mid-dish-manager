@@ -1178,7 +1178,7 @@ wheels = [
 
 [[package]]
 name = "ska-mid-dish-manager"
-version = "11.0.0"
+version = "11.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "astropy" },
