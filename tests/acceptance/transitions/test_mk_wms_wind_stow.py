@@ -49,21 +49,16 @@ def test_mk_wms_wind_stow(
     """Test that the dish stows when the wind speed exceeds the threshold."""
     dish_mode_event_store = event_store_class()
     wind_gust_event_store = event_store_class()
-    connection_state_event_store = event_store_class()
 
     dm_attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
         "windGust": wind_gust_event_store,
-        "wmsConnectionState": connection_state_event_store,
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, dm_attr_cb_mapping)
 
     try:
-        connection_state_event_store.wait_for_value(
-            CommunicationStatus.ESTABLISHED,
-            timeout=30,
-        )
+        assert dish_manager_proxy.wmsConnectionState == CommunicationStatus.ESTABLISHED
         # Set the control mode (control & monitor)
         wms_device_proxy.controlMode = 2
 
@@ -108,20 +103,16 @@ def test_mk_wms_no_wind_stow(
 ):
     """Test that the dish does not stow when auto wind stow is disabled."""
     wind_gust_event_store = event_store_class()
-    connection_state_event_store = event_store_class()
 
     dm_attr_cb_mapping = {
         "windGust": wind_gust_event_store,
-        "wmsConnectionState": connection_state_event_store,
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, dm_attr_cb_mapping)
 
     try:
-        connection_state_event_store.wait_for_value(
-            CommunicationStatus.ESTABLISHED,
-            timeout=30,
-        )
+        assert dish_manager_proxy.wmsConnectionState == CommunicationStatus.ESTABLISHED
+
         # Set the control mode (control & monitor)
         wms_device_proxy.controlMode = 2
 
