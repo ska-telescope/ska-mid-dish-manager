@@ -1,6 +1,6 @@
 global:
   minikube: true
-  operator: false
+  operator: true
   dishes: ["001", "MKT111"]
   station_ids: ["s1"]
 
@@ -9,14 +9,6 @@ ska-tango-base:
 
 ska-mid-dish-ds-manager:
   enabled: true
-
-  resources:
-    limits:
-      cpu: 300m
-      memory: 1500Mi
-    requests:
-      cpu: 100m
-      memory: 512Mi
 
 ska-mid-dish-simulators:
   enabled: true
@@ -63,7 +55,7 @@ ska-mid-meerkat-wms-simulator:
       pullPolicy: IfNotPresent
 
 ska-mid-dish-b5dc-proxy:
-  enabled: false
+  enabled: true
 
 dishmanager:
   wms:
@@ -72,4 +64,4 @@ dishmanager:
     device_family: "mk-weather-monitoring"
     station_ids: ["s1"]
   b5dcproxy:
-    monitoring: false
+    monitoring: true

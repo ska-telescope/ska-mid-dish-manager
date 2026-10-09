@@ -133,6 +133,11 @@ stop-k8s-test-runner-incl-b5dc:
   variables:
     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
 
+stop-k8s-test-mk-lmc-wms-wind-stow:
+  extends: stop-k8s-test-runner
+  variables:
+    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+
 python-uv-test:
   artifacts:
     reports:
