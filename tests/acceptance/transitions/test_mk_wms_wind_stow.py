@@ -13,7 +13,7 @@ def test_meerkat_weather_device_wind_speed(
     event_store_class: Any,
     dish_manager_proxy: tango.DeviceProxy,
 ):
-    wms_device_proxy.write_attribute_value("controlMode", 2)
+    wms_device_proxy.write_attribute("controlMode", 2)
     connection_state_event_store = event_store_class()
 
     attr_cb_mapping = {
