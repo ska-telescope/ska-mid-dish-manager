@@ -21,7 +21,7 @@ def test_meerkat_weather_device_wind_speed(
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    connection_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=30)
+    connection_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=30)
 
     # Verify the Tango device is reachable
     assert wms_device_proxy.ping() > 0
