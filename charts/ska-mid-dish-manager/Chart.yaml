@@ -54,3 +54,14 @@ dependencies:
   version: 0.0.11
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-dcp-lib.enabled
+# Meerkat Tango Device
+- name: ska-mid-meerkat-wms-tango-device
+  version: 0.1.0
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-mid-meerkat-wms-tango-device.enabled
+# Meerkat Weather Simulator
+- name: ska-mid-meerkat-wms-simulator
+  version: 0.1.0
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-mid-meerkat-wms-simulator.enabled
+

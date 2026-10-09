@@ -22,6 +22,7 @@ global:
   tango_host: databaseds-tango-base-test:10000
   retry:
   - "--tries=10"
+  station_ids: ["1"]
 
   ## Order of instances resolution ##
   # .Values.global.dishes
@@ -122,6 +123,7 @@ ska-mid-wms:
     wms:
       enabled: true
       station_ids: ["1"]
+      device_family: "weather-monitoring"
       modbus_server_hostnames: ["wms-sim-1"]
       modbus_server_ports: ["1502"]
   simulator:
@@ -129,3 +131,10 @@ ska-mid-wms:
 
 ska-mid-dish-b5dc-proxy:
   enabled: false
+
+ska-mid-meerkat-wms-tango-device:
+  enabled: true
+
+ska-mid-meerkat-wms-simulator:
+  enabled: true
+

@@ -80,6 +80,18 @@ k8s-test-runner-incl-b5dc:
     on_stop: stop-k8s-test-runner-incl-b5dc
     auto_stop_in: 1 minute
 
+k8s-test-mk-lmc-wms-wind-stow:
+  extends: k8s-test-runner
+  allow_failure: true
+  variables:
+     K8S_TEST_RUNNER_MARK: "acceptance_mk_lmc_wms_wind_stow"
+     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+     VALUES_FILE: charts/ska-mid-dish-manager/custom_helm_flags.yaml
+  environment:
+    name: test/$CI_COMMIT_REF_SLUG
+    on_stop: stop-k8s-test-mk-lmc-wms-wind-stow
+    auto_stop_in: 1 minute
+
 k8s-test-runner-movement:
   extends: k8s-test-runner
   variables:

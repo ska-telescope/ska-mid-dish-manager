@@ -1,10 +1,12 @@
 """Fixtures for running ska-mid-dish-manager acceptance tests."""
 
+import asyncio
 import logging
 import os
 
 import pytest
 import tango
+from aiokatcp import Client
 from ska_ser_logging import configure_logging
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
@@ -89,6 +91,26 @@ def spfrx_device_proxy(spfrx_device_fqdn):
 @pytest.fixture(scope="package")
 def wms_device_proxy(wms_device_fqdn):
     return tango.DeviceProxy(wms_device_fqdn)
+
+
+@pytest.fixture(scope="package")
+def trigger_weather_sensor(weather_simulator_host):
+    def trigger(sensor, value, duration):
+        async def _trigger():
+            client = await Client.connect(weather_simulator_host, 7147)
+            try:
+                return await client.request(
+                    "trigger-weather-sensor",
+                    sensor,
+                    str(value),
+                    str(duration),
+                )
+            finally:
+                client.close()
+
+        return asyncio.run(_trigger())
+
+    return trigger
 
 
 @pytest.fixture

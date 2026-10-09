@@ -81,7 +81,7 @@ server:
                   {{- if $.Values.dishmanager.wms.monitoring }}
                   values:
                     {{- range $.Values.dishmanager.wms.station_ids }}
-                    - "ska-mid/weather-monitoring/{{ . }}"
+                    - "ska-mid/{{ $.Values.dishmanager.wms.device_family }}/{{ . }}"
                     {{- end }}
                   {{ else }}
                   values: []
