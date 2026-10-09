@@ -1,22 +1,40 @@
+from typing import Any
+
 import pytest
+import tango
+from ska_control_model import CommunicationStatus
+
+from tests.utils import remove_subscriptions, setup_subscriptions
 
 
 @pytest.mark.acceptance_mk_lmc_wms_wind_stow
 def test_meerkat_weather_device_wind_speed(
     wms_device_proxy,
+    event_store_class: Any,
+    dish_manager_proxy: tango.DeviceProxy,
 ):
-    device = wms_device_proxy
+    wms_device_proxy.write_attribute_value("controlMode", 2)
+    connection_state_event_store = event_store_class()
+
+    attr_cb_mapping = {
+        "wmsConnectionState": connection_state_event_store,
+    }
+
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    connection_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=30)
 
     # Verify the Tango device is reachable
-    assert device.ping() > 0
+    assert wms_device_proxy.ping() > 0
 
     # Verify the expected attribute exists
-    attributes = device.get_attribute_list()
+    attributes = wms_device_proxy.get_attribute_list()
     assert "windSpeed" in attributes
 
     # Verify windSpeed can be read and returns a value
-    wind_speed = device.read_attribute("windSpeed").value
+    wind_speed = wms_device_proxy.read_attribute("windSpeed").value
     assert wind_speed is not None
+
+    remove_subscriptions(subscriptions)
 
 
 # @pytest.mark.acceptance_mk_lmc_wms_wind_stow
