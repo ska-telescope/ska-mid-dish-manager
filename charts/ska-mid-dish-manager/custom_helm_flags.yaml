@@ -31,13 +31,6 @@ ska-mid-meerkat-wms-tango-device:
       enabled: true
       file: "data/weather_tango_device.yaml"
 
-  weathertangodevice:
-    image:
-      registry: artefact.skao.int
-      image: ska-mid-meerkat-lmc
-      tag: 0.1.0
-      pullPolicy: IfNotPresent
-
   dsconfig:
     image:
       registry: artefact.skao.int
@@ -48,11 +41,6 @@ ska-mid-meerkat-wms-simulator:
   enabled: true
   weatherstation:
     enabled: true
-    image:
-      registry: artefact.skao.int
-      image: ska-mid-meerkat-lmc-katcp-sims
-      tag: 0.1.0
-      pullPolicy: IfNotPresent
 
 ska-mid-dish-b5dc-proxy:
   enabled: true
@@ -60,7 +48,6 @@ ska-mid-dish-b5dc-proxy:
 dishmanager:
   wms:
     monitoring: true
-    station_ids: ["1"]
     device_family: "mk-weather-monitoring"
     station_ids: ["s1"]
   b5dcproxy:

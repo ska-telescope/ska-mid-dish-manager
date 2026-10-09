@@ -86,7 +86,7 @@ k8s-test-mk-lmc-wms-wind-stow:
   variables:
      K8S_TEST_RUNNER_MARK: "acceptance_mk_lmc_wms_wind_stow"
      KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
-     VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_with_mk_wms.yaml
+     VALUES_FILE: charts/ska-mid-dish-manager/custom_helm_flags.yaml
   environment:
     name: test/$CI_COMMIT_REF_SLUG
     on_stop: stop-k8s-test-mk-lmc-wms-wind-stow
