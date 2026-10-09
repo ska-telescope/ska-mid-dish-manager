@@ -3,6 +3,21 @@ revision = 3
 requires-python = "==3.14.*"
 
 [[package]]
+name = "aiokatcp"
+version = "2.3.0"
+source = { registry = "https://pypi.org/simple/" }
+dependencies = [
+    { name = "async-timeout" },
+    { name = "decorator" },
+    { name = "katcp-codec" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b7/20/dc1836dbc763c0ce693922eb7d87e331432f989bed8eb609f8d36a1bd14d/aiokatcp-2.3.0.tar.gz", hash = "sha256:2178a69eb7dfcd904ea45623ee7e77268115f557ede8142a2d1821ec19ae21a9", size = 111056, upload-time = "2026-07-20T14:25:31.388Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9a/7e/c6fb667e5f4ec6b910639ac9711342a0659b2d06fdacd6e6f19f1e7502ac/aiokatcp-2.3.0-py3-none-any.whl", hash = "sha256:eeb818ff75835b6dbef1ca332ad41f27a790aa4f4a4150f99ded045c3f9c6189", size = 61455, upload-time = "2026-07-20T14:25:29.535Z" },
+]
+
+[[package]]
 name = "alabaster"
 version = "0.7.16"
 source = { registry = "https://pypi.org/simple/" }
@@ -63,6 +78,15 @@ source = { registry = "https://pypi.org/simple/" }
 sdist = { url = "https://files.pythonhosted.org/packages/ca/cc/d3e76a4179f156c78f389122b4be6fc676cda4fad679aa056671e0757b7c/astropy_iers_data-0.2026.8.3.0.53.6.tar.gz", hash = "sha256:1daecf2acc6800652f713d4e075fdbae3bfd3f841e05dc5e1f01caffb2da1f47", size = 1942713, upload-time = "2026-08-03T00:53:48.917Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/30/3e/d13ac778ca4040cb09d3ca58e7179d425b2cee66e51e6df8982cb89f8e3c/astropy_iers_data-0.2026.8.3.0.53.6-py3-none-any.whl", hash = "sha256:89cfc77a74050af3d3723544a6c0c4632b72a900e0e02bd7b647a6152e8c56da", size = 1998175, upload-time = "2026-08-03T00:53:47.21Z" },
+]
+
+[[package]]
+name = "async-timeout"
+version = "5.0.1"
+source = { registry = "https://pypi.org/simple/" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/ae/136395dfbfe00dfc94da3f3e136d0b13f394cba8f4841120e34226265780/async_timeout-5.0.1.tar.gz", hash = "sha256:d9321a7a3d5a6a5e187e824d2fa0793ce379a202935782d555d6e9d2735677d3", size = 9274, upload-time = "2024-11-06T16:41:39.6Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fe/ba/e2081de779ca30d473f21f5b30e0e737c438205440784c7dfc81efc2b029/async_timeout-5.0.1-py3-none-any.whl", hash = "sha256:39e3809566ff85354557ec2398b55e096c8364bacac9405a7a1fa429e77fe76c", size = 6233, upload-time = "2024-11-06T16:41:37.9Z" },
 ]
 
 [[package]]
@@ -222,6 +246,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/97/47/d1aa6d64005a98a9144647d99306b419396f9ad7bf1d73c119e17a81fb4d/debugpy-1.8.21-cp314-cp314-win32.whl", hash = "sha256:15d4963bd5ffa48f0da0947fd06757fa7621945048a14ad7705431566d3c0e7c", size = 5336724, upload-time = "2026-06-01T19:31:07.711Z" },
     { url = "https://files.pythonhosted.org/packages/5f/67/b905b90d163af11878c1af8abafa4a25206335e112e284e413454543a6da/debugpy-1.8.21-cp314-cp314-win_amd64.whl", hash = "sha256:fe0744a12353406de0ae8ccff0d0a4a666f00801a3db8fd04e7a5f761cd520e8", size = 5373803, upload-time = "2026-06-01T19:31:09.469Z" },
     { url = "https://files.pythonhosted.org/packages/95/51/67e7cf11a53e40694f720457d5b3a1cdaaa3d5a9a633e482f225456b93ff/debugpy-1.8.21-py2.py3-none-any.whl", hash = "sha256:b1e37d333663c8851516a47364ef473da127f9caebe4417e6df6f5825a7e9a92", size = 5352888, upload-time = "2026-06-01T19:31:25.186Z" },
+]
+
+[[package]]
+name = "decorator"
+version = "5.3.1"
+source = { registry = "https://pypi.org/simple/" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/8b/32f9823da46cde7df2087faa08cd98d01b908f8dcab982cdba9c84e85355/decorator-5.3.1.tar.gz", hash = "sha256:4cbcdd55a6efadb9dbea26b858f4fb3264567b52d69ca0d25b721b553f60ea82", size = 58084, upload-time = "2026-05-18T06:03:28.057Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl", hash = "sha256:f47fe6fdbd2edd623ecfe36875d37aba411624e2670dd395dddae1358689bb3c", size = 10365, upload-time = "2026-05-18T06:03:26.517Z" },
 ]
 
 [[package]]
@@ -398,6 +431,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/4d/f2/a99adf9deb57949b81ff8e113edf971da1840251794a6f4184d61faa5a65/junit-xml-2-1.9.tar.gz", hash = "sha256:3b8d9635c5215f754c7807104f6493e3ea3bc9481e2d33db294560da3a1b00f7", size = 5242, upload-time = "2020-09-30T22:26:00.395Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/11/49/b58b5f249f7cab5ffcd5daada6620d1cf8b1fc6636b9a91f14eb7baf1da2/junit_xml_2-1.9-py2.py3-none-any.whl", hash = "sha256:05093d75fe11120ccd51293884b5ee334ff3bc4b5106647c2bcc928486600588", size = 10135, upload-time = "2020-09-30T22:25:59.046Z" },
+]
+
+[[package]]
+name = "katcp-codec"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple/" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6f/76/80820d42faddde7a5d401508cae0f3e30e4d4e7b791c665083fee9e3f711/katcp_codec-0.2.2.tar.gz", hash = "sha256:320e7eb6046a4b48dfff00710ea05d0b755d25b9cf18eca4428fa5ccdb650647", size = 40003, upload-time = "2026-07-02T15:05:15.544Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/49/c1/51c2f26ef5023eed777639ecb40bd579c36124d6a9939729ec98a004f2bd/katcp_codec-0.2.2-cp311-abi3-macosx_10_12_x86_64.whl", hash = "sha256:0dd73abf553a9f2ca9633ab3e04833c87a24ce6d26944ad9c85082394e285839", size = 208897, upload-time = "2026-07-02T15:04:52.49Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/ee/2481152e0b0173ca34c18d6cf90d2341bfcb8edfd23d97c2deaea1bc2e46/katcp_codec-0.2.2-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:9623487570dc20049b491236e76ccfdec1835fb08bf98ff846d1f20f2f2891a3", size = 201349, upload-time = "2026-07-02T15:04:54.575Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/3e/8d95ec0b881567c40186f8400f71842311453bdd17e64637a14af0e9cb9d/katcp_codec-0.2.2-cp311-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:612af7f4e34dcb0e0482608b66576727d9c00c811ee80f2e1c4e64b4196b9267", size = 219515, upload-time = "2026-07-02T15:04:56.239Z" },
+    { url = "https://files.pythonhosted.org/packages/39/8c/a2d20d588e59fec9328b38833f56f6f99f4090ae090bdceb6e52b283fee5/katcp_codec-0.2.2-cp311-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:47eca73fcc1ec6e28c21d2784f02e4b95d9b036dec7ad8cc42325cee091a95c7", size = 227383, upload-time = "2026-07-02T15:04:57.962Z" },
 ]
 
 [[package]]
@@ -1196,6 +1244,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "aiokatcp" },
     { name = "black" },
     { name = "coverage" },
     { name = "flake8" },
@@ -1248,6 +1297,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "aiokatcp" },
     { name = "black", specifier = ">=22.3.0,<23.0.0" },
     { name = "coverage", specifier = ">=6.1.1,<7.0.0" },
     { name = "flake8", specifier = ">=3.8.4,<4.0.0" },
