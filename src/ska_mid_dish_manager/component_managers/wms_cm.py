@@ -165,22 +165,23 @@ class WMSComponentManager(BaseComponentManager):
                 # timestamp and index 1 is the polled windspeed
                 # eg: [[timestamp, windspeed_wms_1], [timestamp, windspeed_wms_2],...]
 
-                _current_time = wind_speed_data_list[0][0]
+                if wind_speed_data_list:
+                    _current_time = wind_speed_data_list[0][0]
 
-                mws = self._compute_mean_wind_speed(
-                    wind_speed_data_list,
-                    _current_time,
-                )
+                    mws = self._compute_mean_wind_speed(
+                        wind_speed_data_list,
+                        _current_time,
+                    )
 
-                wg = self._process_wind_gust(
-                    wind_speed_data_list,
-                    _current_time,
-                )
+                    wg = self._process_wind_gust(
+                        wind_speed_data_list,
+                        _current_time,
+                    )
 
-                self._update_component_state(
-                    meanwindspeed=mws,
-                    windgust=wg,
-                )
+                    self._update_component_state(
+                        meanwindspeed=mws,
+                        windgust=wg,
+                    )
             except Exception:
                 self.logger.exception("Unexpected exception during WMS group polling")
             self._stop_monitoring_flag.wait(timeout=self._wms_polling_period)
