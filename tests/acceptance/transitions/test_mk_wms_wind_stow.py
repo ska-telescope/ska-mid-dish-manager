@@ -59,7 +59,7 @@ def test_mk_wms_wind_stow(
             remove_subscriptions(subscriptions)
 
 
-@pytest.mark.acceptance_mk_lmc_wms_wind_stow
+@pytest.mark.acceptance
 def test_mk_wms_no_wind_stow(
     monitor_tango_servers,
     event_store_class,

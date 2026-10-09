@@ -99,6 +99,7 @@ markers = [
     "track_patterns",
     "movement",
     "acceptance_incl_b5dc",
+    "acceptance_mk_lmc_wms_wind_stow",
 ]
 log_cli = true  # show logs if test fails
 log_cli_level = "ERROR"
