@@ -93,8 +93,6 @@ def wms_device_proxy(wms_device_fqdn):
     return tango.DeviceProxy(wms_device_fqdn)
 
 
-
-
 def pytest_addoption(parser):
     """Register the KATCP weather simulator endpoint."""
     tango_host = os.environ.get("TANGO_HOST", "")
