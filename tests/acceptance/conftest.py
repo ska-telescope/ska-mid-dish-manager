@@ -9,7 +9,11 @@ import tango
 from aiokatcp import Client
 from ska_ser_logging import configure_logging
 
-from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
+from ska_mid_dish_manager.models.constants import (
+    DEFAULT_ACTION_TIMEOUT_S,
+    DEFAULT_KUBE_NAMESPACE,
+    DEFAULT_WMS_HOST,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
@@ -91,6 +95,12 @@ def spfrx_device_proxy(spfrx_device_fqdn):
 @pytest.fixture(scope="package")
 def wms_device_proxy(wms_device_fqdn):
     return tango.DeviceProxy(wms_device_fqdn)
+
+
+@pytest.fixture(scope="session")
+def weather_simulator_host():
+    namespace = os.getenv("KUBE_NAMESPACE", DEFAULT_KUBE_NAMESPACE)
+    return f"{DEFAULT_WMS_HOST}.{namespace}.svc.cluster.local"
 
 
 @pytest.fixture(scope="package")
