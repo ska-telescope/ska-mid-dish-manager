@@ -9,9 +9,7 @@ import tango
 from aiokatcp import Client
 from ska_ser_logging import configure_logging
 
-from ska_mid_dish_manager.models.constants import (
-    DEFAULT_ACTION_TIMEOUT_S,
-)
+from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
@@ -95,23 +93,45 @@ def wms_device_proxy(wms_device_fqdn):
     return tango.DeviceProxy(wms_device_fqdn)
 
 
+def pytest_addoption(parser):
+    """Register the KATCP weather simulator endpoint."""
+    parser.addoption(
+        "--weather-simulator-endpoint",
+        action="store",
+        default="katcp-wms-sim-s1-svc:7147",
+        help="Endpoint for the KATCP weather simulator",
+    )
+
+
+@pytest.fixture(scope="session")
+def weather_simulator_endpoint(request):
+    """Retrieve the KATCP weather simulator endpoint."""
+    return request.config.getoption("--weather-simulator-endpoint")
+
+
 @pytest.fixture(scope="package")
-def trigger_weather_sensor(weather_simulator_host):
+def trigger_weather_sensor(weather_simulator_endpoint):
+    """Trigger a weather sensor on the KATCP weather simulator."""
+
     def trigger(sensor, value, duration):
         async def _trigger():
+            host, port = weather_simulator_endpoint.rsplit(":", 1)
+            port = int(port)
+
             logger.info(
-                "Connecting to weather simulator at %s:7147",
-                weather_simulator_host,
+                "Connecting to weather simulator at %s:%s",
+                host,
+                port,
             )
 
             try:
                 client = await asyncio.wait_for(
-                    Client.connect(weather_simulator_host, 7147),
+                    Client.connect(host, port),
                     timeout=10,
                 )
             except asyncio.TimeoutError as exc:
                 raise TimeoutError(
-                    f"Timed out connecting to weather simulator at {weather_simulator_host}:7147"
+                    f"Timed out connecting to weather simulator at {host}:{port}"
                 ) from exc
 
             try:
@@ -137,7 +157,7 @@ def trigger_weather_sensor(weather_simulator_host):
 
             except asyncio.TimeoutError as exc:
                 raise TimeoutError(
-                    f"Timed out triggering sensor {sensor!r} at {weather_simulator_host}:7147"
+                    f"Timed out triggering sensor {sensor!r} at {host}:{port}"
                 ) from exc
 
             finally:
