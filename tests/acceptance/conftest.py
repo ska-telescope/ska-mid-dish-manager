@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+import time
 
 import pytest
 import tango
@@ -95,6 +96,28 @@ def wms_device_proxy(wms_device_fqdn):
 
 @pytest.fixture(scope="package")
 def trigger_weather_sensor(weather_simulator_host):
+    async def wait_for_simulator(timeout=60):
+        deadline = time.monotonic() + timeout
+        last_error = None
+
+        while time.monotonic() < deadline:
+            try:
+                client = await Client.connect(
+                    weather_simulator_host,
+                    7147,
+                )
+                client.close()
+                return
+            except (OSError, asyncio.TimeoutError) as exc:
+                last_error = exc
+                await asyncio.sleep(1)
+
+        raise TimeoutError(
+            f"Weather simulator at {weather_simulator_host}:7147 "
+            f"was not reachable within {timeout}s. "
+            f"Last error: {last_error}"
+        )
+
     def trigger(sensor, value, duration):
         async def _trigger():
             client = await Client.connect(weather_simulator_host, 7147)
@@ -108,6 +131,7 @@ def trigger_weather_sensor(weather_simulator_host):
             finally:
                 client.close()
 
+        asyncio.run(wait_for_simulator())
         return asyncio.run(_trigger())
 
     return trigger
