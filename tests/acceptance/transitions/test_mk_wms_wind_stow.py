@@ -72,20 +72,20 @@ def test_mk_wms_wind_stow(
         assert random_wind_value_before_trigger < WIND_GUST_THRESHOLD_MPS
 
         # Trigger the simulator to produce a high wind
-        # trigger_weather_sensor("wind-speed", 25, 5)
+        trigger_weather_sensor("wind-speed", 25, 5)
 
-        # wind_value_after_trigger = wms_device_proxy.read_attribute("windSpeed").value
-        # assert wind_value_after_trigger == 25
-        # assert random_wind_value_before_trigger != wind_value_after_trigger
+        wind_value_after_trigger = wms_device_proxy.read_attribute("windSpeed").value
+        assert wind_value_after_trigger == 25
+        assert random_wind_value_before_trigger != wind_value_after_trigger
 
-        # # Wait for Dish Manager to react
-        # dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=20)
+        # Wait for Dish Manager to react
+        dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=20)
 
-        # # Wait for the gust to finish
-        # wind_gust_event_store.wait_for_condition(
-        #     lambda value: value < WIND_GUST_THRESHOLD_MPS,
-        #     timeout=10,
-        # )
+        # Wait for the gust to finish
+        wind_gust_event_store.wait_for_condition(
+            lambda value: value < WIND_GUST_THRESHOLD_MPS,
+            timeout=10,
+        )
     finally:
         try:
             dish_manager_proxy.autoWindStowEnabled = False
@@ -123,18 +123,18 @@ def test_mk_wms_no_wind_stow(
         # Assert that the dish is not in STOW before the gust
         assert dish_manager_proxy.dishMode != DishMode.STOW
 
-        # # Trigger the simulator to produce a high wind
-        # trigger_weather_sensor("wind-speed", 35, 5)
+        # Trigger the simulator to produce a high wind
+        trigger_weather_sensor("wind-speed", 35, 5)
 
-        # wind_value_after_trigger = wms_device_proxy.read_attribute("windSpeed").value
-        # assert wind_value_after_trigger == 35
+        wind_value_after_trigger = wms_device_proxy.read_attribute("windSpeed").value
+        assert wind_value_after_trigger == 35
 
-        # # Wait for the gust to finish
-        # wind_gust_event_store.wait_for_condition(
-        #     lambda value: value < WIND_GUST_THRESHOLD_MPS,
-        #     timeout=10,
-        # )
+        # Wait for the gust to finish
+        wind_gust_event_store.wait_for_condition(
+            lambda value: value < WIND_GUST_THRESHOLD_MPS,
+            timeout=10,
+        )
 
-        # assert dish_manager_proxy.dishMode != DishMode.STOW
+        assert dish_manager_proxy.dishMode != DishMode.STOW
     finally:
         remove_subscriptions(subscriptions)
