@@ -11,8 +11,6 @@ from ska_ser_logging import configure_logging
 
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
-    DEFAULT_KUBE_NAMESPACE,
-    DEFAULT_WMS_HOST,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -97,19 +95,6 @@ def wms_device_proxy(wms_device_fqdn):
     return tango.DeviceProxy(wms_device_fqdn)
 
 
-@pytest.fixture(scope="session")
-def weather_simulator_host():
-    namespace = os.getenv("KUBE_NAMESPACE", DEFAULT_KUBE_NAMESPACE)
-    host = f"{DEFAULT_WMS_HOST}.{namespace}.svc.cluster.local"
-
-    logger.info(
-        "Weather simulator configuration: KUBE_NAMESPACE=%r, host=%s",
-        namespace,
-        host,
-    )
-    return host
-
-
 @pytest.fixture(scope="package")
 def trigger_weather_sensor(weather_simulator_host):
     def trigger(sensor, value, duration):
@@ -131,7 +116,7 @@ def trigger_weather_sensor(weather_simulator_host):
 
             try:
                 logger.info(
-                    "Connected. Triggering sensor=%s, value=%s, duration=%s",
+                    "Triggering sensor=%s, value=%s, duration=%s",
                     sensor,
                     value,
                     duration,
@@ -152,8 +137,7 @@ def trigger_weather_sensor(weather_simulator_host):
 
             except asyncio.TimeoutError as exc:
                 raise TimeoutError(
-                    f"Timed out triggering weather sensor {sensor!r} "
-                    f"on {weather_simulator_host}:7147"
+                    f"Timed out triggering sensor {sensor!r} at {weather_simulator_host}:7147"
                 ) from exc
 
             finally:
