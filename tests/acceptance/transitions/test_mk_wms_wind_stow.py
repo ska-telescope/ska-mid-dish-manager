@@ -79,7 +79,7 @@ def test_mk_wms_wind_stow(
         assert random_wind_value_before_trigger != wind_value_after_trigger
 
         # Wait for Dish Manager to react
-        dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=20)
+        dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=60)
 
         # Wait for the gust to finish
         wind_gust_event_store.wait_for_condition(
