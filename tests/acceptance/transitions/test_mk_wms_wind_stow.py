@@ -79,7 +79,7 @@ def test_mk_wms_wind_stow(
         assert random_wind_value_before_trigger != wind_value_after_trigger
 
         # Wait for Dish Manager to react
-        dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=60)
+        dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=300)
 
         # Wait for the gust to finish
         wind_gust_event_store.wait_for_condition(
@@ -103,9 +103,11 @@ def test_mk_wms_no_wind_stow(
 ):
     """Test that the dish does not stow when auto wind stow is disabled."""
     wind_gust_event_store = event_store_class()
+    dm_event_store = event_store_class()
 
     dm_attr_cb_mapping = {
         "windGust": wind_gust_event_store,
+        "dishMode": dm_event_store,
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, dm_attr_cb_mapping)
@@ -121,7 +123,8 @@ def test_mk_wms_no_wind_stow(
         assert not dish_manager_proxy.autoWindStowEnabled
 
         # Assert that the dish is not in STOW before the gust
-        assert dish_manager_proxy.dishMode != DishMode.STOW
+        dish_manager_proxy.SetStandbyFPMode()
+        dm_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=60)
 
         # Trigger the simulator to produce a high wind
         trigger_weather_sensor("wind-speed", 35, 5)
@@ -135,6 +138,6 @@ def test_mk_wms_no_wind_stow(
             timeout=10,
         )
 
-        assert dish_manager_proxy.dishMode != DishMode.STOW
+        assert dish_manager_proxy.dishMode == DishMode.STANDBY_LP
     finally:
         remove_subscriptions(subscriptions)

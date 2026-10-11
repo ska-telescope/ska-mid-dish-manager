@@ -75,7 +75,6 @@ k8s-test-runner-incl-b5dc:
      K8S_TEST_RUNNER_MARK: "acceptance_incl_b5dc"
      KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
      VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_with_b5dc_proxy.yaml
-     CI_KEEP_NAMESPACE: "true"
   environment:
     name: test/$CI_COMMIT_REF_SLUG
     on_stop: stop-k8s-test-runner-incl-b5dc
