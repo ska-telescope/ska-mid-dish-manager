@@ -93,12 +93,25 @@ def wms_device_proxy(wms_device_fqdn):
     return tango.DeviceProxy(wms_device_fqdn)
 
 
+
+
 def pytest_addoption(parser):
     """Register the KATCP weather simulator endpoint."""
+    tango_host = os.environ.get("TANGO_HOST", "")
+    tango_hostname = tango_host.rsplit(":", 1)[0]
+    parts = tango_hostname.split(".")
+
+    default_endpoint = "katcp-wms-sim-s1-svc:7147"
+
+    if len(parts) >= 5 and parts[0] == "tango-databaseds" and parts[2] == "svc":
+        namespace = parts[1]
+        cluster_domain = ".".join(parts[3:])
+        default_endpoint = f"katcp-wms-sim-s1-svc.{namespace}.svc.{cluster_domain}:7147"
+
     parser.addoption(
         "--weather-simulator-endpoint",
         action="store",
-        default="katcp-wms-sim-s1-svc:7147",
+        default=default_endpoint,
         help="Endpoint for the KATCP weather simulator",
     )
 
