@@ -107,39 +107,14 @@ def weather_simulator_host():
 def trigger_weather_sensor(weather_simulator_host):
     def trigger(sensor, value, duration):
         async def _trigger():
-            print(f"Connecting to weather simulator at {weather_simulator_host}:7147")
-
+            client = await Client.connect(weather_simulator_host, 7147)
             try:
-                client = await asyncio.wait_for(
-                    Client.connect(weather_simulator_host, 7147),
-                    timeout=10,
+                return await client.request(
+                    "trigger-weather-sensor",
+                    sensor,
+                    str(value),
+                    str(duration),
                 )
-            except asyncio.TimeoutError as exc:
-                raise TimeoutError(
-                    f"Timed out connecting to weather simulator "
-                    f"at {weather_simulator_host}:7147 after 10 seconds"
-                ) from exc
-
-            try:
-                print(f"Connected. Triggering {sensor}={value} for {duration}s")
-
-                try:
-                    result = await asyncio.wait_for(
-                        client.request(
-                            "trigger-weather-sensor",
-                            sensor,
-                            str(value),
-                            str(duration),
-                        ),
-                        timeout=10,
-                    )
-                except asyncio.TimeoutError as exc:
-                    raise TimeoutError(
-                        f"Timed out waiting for simulator response to trigger {sensor}={value}"
-                    ) from exc
-
-                print(f"Simulator trigger response: {result}")
-                return result
             finally:
                 client.close()
 
