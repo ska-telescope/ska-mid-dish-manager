@@ -126,8 +126,7 @@ def trigger_weather_sensor(weather_simulator_host):
                 )
             except asyncio.TimeoutError as exc:
                 raise TimeoutError(
-                    f"Timed out connecting to weather simulator "
-                    f"at {weather_simulator_host}:7147"
+                    f"Timed out connecting to weather simulator at {weather_simulator_host}:7147"
                 ) from exc
 
             try:
