@@ -100,21 +100,63 @@ def wms_device_proxy(wms_device_fqdn):
 @pytest.fixture(scope="session")
 def weather_simulator_host():
     namespace = os.getenv("KUBE_NAMESPACE", DEFAULT_KUBE_NAMESPACE)
-    return f"{DEFAULT_WMS_HOST}.{namespace}.svc.cluster.local"
+    host = f"{DEFAULT_WMS_HOST}.{namespace}.svc.cluster.local"
+
+    logger.info(
+        "Weather simulator configuration: KUBE_NAMESPACE=%r, host=%s",
+        namespace,
+        host,
+    )
+    return host
 
 
 @pytest.fixture(scope="package")
 def trigger_weather_sensor(weather_simulator_host):
     def trigger(sensor, value, duration):
         async def _trigger():
-            client = await Client.connect(weather_simulator_host, 7147)
+            logger.info(
+                "Connecting to weather simulator at %s:7147",
+                weather_simulator_host,
+            )
+
             try:
-                return await client.request(
-                    "trigger-weather-sensor",
-                    sensor,
-                    str(value),
-                    str(duration),
+                client = await asyncio.wait_for(
+                    Client.connect(weather_simulator_host, 7147),
+                    timeout=10,
                 )
+            except asyncio.TimeoutError as exc:
+                raise TimeoutError(
+                    f"Timed out connecting to weather simulator "
+                    f"at {weather_simulator_host}:7147"
+                ) from exc
+
+            try:
+                logger.info(
+                    "Connected. Triggering sensor=%s, value=%s, duration=%s",
+                    sensor,
+                    value,
+                    duration,
+                )
+
+                result = await asyncio.wait_for(
+                    client.request(
+                        "trigger-weather-sensor",
+                        sensor,
+                        str(value),
+                        str(duration),
+                    ),
+                    timeout=10,
+                )
+
+                logger.info("Weather sensor trigger response: %s", result)
+                return result
+
+            except asyncio.TimeoutError as exc:
+                raise TimeoutError(
+                    f"Timed out triggering weather sensor {sensor!r} "
+                    f"on {weather_simulator_host}:7147"
+                ) from exc
+
             finally:
                 client.close()
 
