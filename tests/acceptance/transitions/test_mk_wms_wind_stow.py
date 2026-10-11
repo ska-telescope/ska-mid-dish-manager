@@ -123,7 +123,7 @@ def test_mk_wms_no_wind_stow(
         assert not dish_manager_proxy.autoWindStowEnabled
 
         # Assert that the dish is not in STOW before the gust
-        dish_manager_proxy.SetStandbyFPMode()
+        dish_manager_proxy.SetStandbyLPMode()
         dm_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=60)
 
         # Trigger the simulator to produce a high wind
