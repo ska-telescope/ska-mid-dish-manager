@@ -1,6 +1,5 @@
 """Test ConfigureBand2."""
 
-
 import pytest
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
@@ -517,7 +516,7 @@ def test_configure_band_6_from_stow(
 def test_slow_spfrx_configure_band(
     monitor_tango_servers, event_store_class, dish_manager_proxy, slow_spfrx_proxy
 ):
-    """Test ConfigureBand with JSON string."""
+    """Test ConfigureBand with JSON string with a slow SPFRx."""
     assert slow_spfrx_proxy.configureBandStartDelay == 10
     assert slow_spfrx_proxy.configureModeDuration == 10
     dm_event_store = event_store_class()
