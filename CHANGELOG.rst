@@ -7,12 +7,17 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+
+Version 11.0.1
+**************
 - Tidied up the command fan-out classes and documented them under
   Developer Guide > Command Fan-out > Actions and Handlers.
+- Fixed exception being raised in event handler when tango sub-devices are not available and set to ignored.
+- Extended SPFRx command timeout, SKB-1593
 
 Version 11.0.0
 **************
-- Migrated from `poetry`` to `uv`
+- Migrated from `poetry` to `uv`
 - Upgraded to Python3.14
 - Added "serialNumbers", "swVersions" and "fwVersions" to SPFRx and SPFC `BuildState`
 
