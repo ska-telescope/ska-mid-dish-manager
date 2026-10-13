@@ -597,6 +597,7 @@ def test_slow_spfrx_configure_band(
     # Do it again to check result
     result_event_store.clear_queue()
     status_event_store.clear_queue()
+    dm_event_store.clear_queue()
     # Check that dish manager allows configure band when already in requested band
     # but does not set the indexer position again.
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
