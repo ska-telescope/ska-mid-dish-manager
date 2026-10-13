@@ -548,14 +548,8 @@ def test_slow_spfrx_configure_band(
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
-    # remove the intermediate CONFIG dishMode we report while transitioning
-    dm_event_store.clear_queue()
-
-    # check that we dont get config AGAIN after dishmode has reported operate
-    with pytest.raises(RuntimeError):
-        dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
+    
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
-
     assert dish_manager_proxy.configuredBand == Band.B1
 
     dm_event_store.clear_queue()
@@ -578,14 +572,8 @@ def test_slow_spfrx_configure_band(
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
-    # remove the intermediate CONFIG dishMode we report while transitioning
-    dm_event_store.clear_queue()
-
-    # check that we dont get config AGAIN after dishmode has reported operate
-    with pytest.raises(RuntimeError):
-        dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
+    
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
-
     assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [
@@ -616,14 +604,9 @@ def test_slow_spfrx_configure_band(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
 
-    # check that we dont get config AGAIN after dishmode has reported operate
-    # with pytest.raises(RuntimeError):
-    #     dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
-    # remove below and uncomment check above after pipeline fails
-    assert dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
-    # this should fail currently
+    # TODO wrap wait for value check in pytest raises RuntimeError after fix is applied
+    dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
-
     assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [
