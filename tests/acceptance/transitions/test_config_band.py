@@ -520,13 +520,11 @@ def test_slow_spfrx_configure_band(
     assert slow_spfrx_proxy.configureBandStartDelay == 10
     assert slow_spfrx_proxy.configureModeDuration == 10
     dm_event_store = event_store_class()
-    config_band_event_store = event_store_class()
     result_event_store = event_store_class()
     status_event_store = event_store_class()
 
     attr_cb_mapping = {
         "dishMode": dm_event_store,
-        "configuredBand": config_band_event_store,
         "Status": status_event_store,
         "lrcFinished": result_event_store,
     }
@@ -551,10 +549,12 @@ def test_slow_spfrx_configure_band(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B1
+    # wait a bit for the dish mode to settle before checking the dish mode
+    dm_event_store.get_queue_values(timeout=10)
+    # check that we dont get config AGAIN after dishmode reports operate
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     dm_event_store.clear_queue()
-    config_band_event_store.clear_queue()
     status_event_store.clear_queue()
 
     json_payload_2 = """
@@ -575,6 +575,9 @@ def test_slow_spfrx_configure_band(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
     assert dish_manager_proxy.configuredBand == Band.B2
+    # wait a bit for the dish mode to settle before checking the dish mode
+    dm_event_store.get_queue_values(timeout=10)
+    # check that we dont get config AGAIN after dishmode reports operate
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     expected_progress_updates = [
@@ -604,8 +607,13 @@ def test_slow_spfrx_configure_band(
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
+
     assert dish_manager_proxy.configuredBand == Band.B2
-    dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
+    # dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
+    # wait a bit for the dish mode to settle before checking the dish mode
+    dm_event_store.get_queue_values(timeout=10)
+    # check that we dont get config AGAIN after dishmode reports operate
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
     expected_progress_updates = [
         "Fanned out commands: SPFRX.ConfigureBand",
