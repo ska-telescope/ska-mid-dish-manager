@@ -512,7 +512,7 @@ def test_configure_band_6_from_stow(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.acceptance
+@pytest.mark.this
 def test_slow_spfrx_configure_band(
     monitor_tango_servers, event_store_class, dish_manager_proxy, slow_spfrx_proxy
 ):
