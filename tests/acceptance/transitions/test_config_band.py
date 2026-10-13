@@ -548,11 +548,15 @@ def test_slow_spfrx_configure_band(
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
-    assert dish_manager_proxy.configuredBand == Band.B1
-    # wait a bit for the dish mode to settle before checking the dish mode
-    dm_event_store.get_queue_values(timeout=10)
-    # check that we dont get config AGAIN after dishmode reports operate
+    # remove the intermediate CONFIG dishMode we report while transitioning
+    dm_event_store.clear_queue()
+
+    # check that we dont get config AGAIN after dishmode has reported operate
+    with pytest.raises(RuntimeError):
+        dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
+
+    assert dish_manager_proxy.configuredBand == Band.B1
 
     dm_event_store.clear_queue()
     status_event_store.clear_queue()
@@ -574,11 +578,15 @@ def test_slow_spfrx_configure_band(
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
-    assert dish_manager_proxy.configuredBand == Band.B2
-    # wait a bit for the dish mode to settle before checking the dish mode
-    dm_event_store.get_queue_values(timeout=10)
-    # check that we dont get config AGAIN after dishmode reports operate
+    # remove the intermediate CONFIG dishMode we report while transitioning
+    dm_event_store.clear_queue()
+
+    # check that we dont get config AGAIN after dishmode has reported operate
+    with pytest.raises(RuntimeError):
+        dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
+
+    assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [
         # ConfigureBand
@@ -608,12 +616,15 @@ def test_slow_spfrx_configure_band(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
 
-    assert dish_manager_proxy.configuredBand == Band.B2
-    # dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
-    # wait a bit for the dish mode to settle before checking the dish mode
-    dm_event_store.get_queue_values(timeout=10)
-    # check that we dont get config AGAIN after dishmode reports operate
+    # check that we dont get config AGAIN after dishmode has reported operate
+    # with pytest.raises(RuntimeError):
+    #     dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
+    # remove below and uncomment check above after pipeline fails
+    assert dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
+    # this should fail currently
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
+
+    assert dish_manager_proxy.configuredBand == Band.B2
 
     expected_progress_updates = [
         "Fanned out commands: SPFRX.ConfigureBand",
