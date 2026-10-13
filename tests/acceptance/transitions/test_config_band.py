@@ -548,7 +548,7 @@ def test_slow_spfrx_configure_band(
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
-    
+
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
     assert dish_manager_proxy.configuredBand == Band.B1
 
@@ -572,7 +572,7 @@ def test_slow_spfrx_configure_band(
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
-    
+
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
     assert dish_manager_proxy.configuredBand == Band.B2
 
