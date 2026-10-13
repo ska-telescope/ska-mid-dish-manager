@@ -17,7 +17,7 @@ def test_build_state(
     assert build_state["last_updated"]
     assert build_state["spfrx_device"]["version"] == (
         "serialNumbers - ('SPFRx:1234', 'SPFRx:2345', 'SPFRx:3456'); swVersions -"
-        " ('SPFRx:5.12.0', 'SPFRx:5678', 'SPFRx:6789'); fwVersions - "
+        " ('SPFRx:6.0.2', 'SPFRx:5678', 'SPFRx:6789'); fwVersions - "
         "('SPFRx:7890', 'SPFRx:8901', 'SPFRx:9012')"
     )
     assert build_state["spfc_device"]["version"] == (
