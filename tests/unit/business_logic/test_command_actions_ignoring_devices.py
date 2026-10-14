@@ -8,8 +8,12 @@ from unittest import mock
 import pytest
 from ska_control_model import AdminMode, TaskStatus  # ty: ignore[deprecated]
 
+from ska_mid_dish_manager.component_managers.dish_manager_cm import (
+    DishManagerComponentManager,
+)
 from ska_mid_dish_manager.models.command_actions import SetStandbyLPModeAction
 from ska_mid_dish_manager.models.dish_enums import (
+    DishDevice,
     DishMode,
     DSOperatingMode,
     DSPowerState,
@@ -142,6 +146,35 @@ class TestCommandActionsIgnoringDevices:
             self.progress_callback.wait_for_args((msg,))
 
         assert "SPFRX device is disabled. SetStandbyMode call ignored" in caplog.text
+
+    @pytest.mark.unit
+    def test_ignored_spfrx_operating_mode_is_logged_as_ignored(self):
+        """Test an ignored SPFRx operating mode is not read when dish mode changes."""
+        self.set_devices_ignored(spf_ignored=False, spfrx_ignored=True)
+        self.dish_manager_cm_mock.component_state = self.dish_manager_cm_mock._component_state
+        for sub_component_manager in self.dish_manager_cm_mock.sub_component_managers.values():
+            sub_component_manager.component_state = sub_component_manager._component_state
+
+        # Simulate the case where SPFRX has not reported its operating mode.
+        spfrx_state = self.dish_manager_cm_mock.sub_component_managers["SPFRX"].component_state
+        del spfrx_state["operatingmode"]
+
+        self.dish_manager_cm_mock.logger = mock.MagicMock()
+        self.dish_manager_cm_mock.direct_mapped_attrs = {DishDevice.SPFRX: []}
+        self.dish_manager_cm_mock._state_transition.compute_dish_mode.return_value = (
+            DishMode.STANDBY_FP
+        )
+
+        DishManagerComponentManager._sub_device_component_state_changed(
+            self.dish_manager_cm_mock,
+            DishDevice.SPFRX,
+            operatingmode=SPFRxOperatingMode.STANDBY,
+        )
+
+        assert self.dish_manager_cm_mock.logger.info.call_args.args[-1] == "ignored"
+        self.dish_manager_cm_mock._update_component_state.assert_any_call(
+            dishmode=DishMode.STANDBY_FP
+        )
 
     @pytest.mark.unit
     def test_ignoring_both_sub(self, caplog):
