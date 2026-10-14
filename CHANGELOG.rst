@@ -9,6 +9,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - Tidied up the command fan-out classes and documented them under
   Developer Guide > Command Fan-out > Actions and Handlers.
+- Inclued Meerkat LMC Weather charts into Dish Manager.
 
 Version 11.0.0
 **************
