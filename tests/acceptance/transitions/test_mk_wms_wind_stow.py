@@ -8,6 +8,9 @@ from ska_mid_dish_manager.models.constants import WIND_GUST_THRESHOLD_MPS
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
+FIRST_WIND_TRIGGER = 25
+SECOND_WIND_TRIGGER = 35
+
 
 @pytest.mark.acceptance_mk_lmc_wms_wind_stow
 def test_meerkat_weather_device_wind_speed(
@@ -72,11 +75,10 @@ def test_mk_wms_wind_stow(
         assert random_wind_value_before_trigger < WIND_GUST_THRESHOLD_MPS
 
         # Trigger the simulator to produce a high wind
-        trigger_weather_sensor("wind-speed", 25, 5)
+        trigger_weather_sensor("wind-speed", FIRST_WIND_TRIGGER, 5)
 
-        wind_value_after_trigger = wms_device_proxy.read_attribute("windSpeed").value
-        assert wind_value_after_trigger == 25
-        assert random_wind_value_before_trigger != wind_value_after_trigger
+        wind_gust_event_store.wait_for_value(FIRST_WIND_TRIGGER, timeout=10)
+        assert random_wind_value_before_trigger != FIRST_WIND_TRIGGER
 
         # Wait for Dish Manager to react
         dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=300)
@@ -127,10 +129,9 @@ def test_mk_wms_no_wind_stow(
         dm_event_store.wait_for_value(DishMode.STANDBY_LP, timeout=300)
 
         # Trigger the simulator to produce a high wind
-        trigger_weather_sensor("wind-speed", 35, 5)
+        trigger_weather_sensor("wind-speed", SECOND_WIND_TRIGGER, 5)
 
-        wind_value_after_trigger = wms_device_proxy.read_attribute("windSpeed").value
-        assert wind_value_after_trigger == 35
+        wind_gust_event_store.wait_for_value(SECOND_WIND_TRIGGER, timeout=10)
 
         # Wait for the gust to finish
         wind_gust_event_store.wait_for_condition(
