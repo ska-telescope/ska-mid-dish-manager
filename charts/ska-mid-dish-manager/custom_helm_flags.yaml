@@ -31,3 +31,12 @@ dishmanager:
     station_ids: ["1"]
   b5dcproxy:
     monitoring: true
+
+ska-mid-meerkat-ap-manager:
+  enabled: true
+  meerkatapmanager:
+    deviceproperties:
+      katcp_hosts: []
+      katcp_ports: []
+      sampling_strategies: []
+      sensors_to_ignore: []

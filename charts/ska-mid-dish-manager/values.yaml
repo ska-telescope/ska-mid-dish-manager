@@ -129,3 +129,8 @@ ska-mid-wms:
 
 ska-mid-dish-b5dc-proxy:
   enabled: false
+
+ska-mid-meerkat-ap-manager:
+  enabled: false
+
+

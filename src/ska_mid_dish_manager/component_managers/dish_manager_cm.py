@@ -24,6 +24,7 @@ from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
 )
 from ska_tango_base.executor import TaskExecutorComponentManager
 
+from ska_mid_dish_manager.component_managers.ap_manager_cm import APComponentManager
 from ska_mid_dish_manager.component_managers.b5dc_cm import B5DCComponentManager
 from ska_mid_dish_manager.component_managers.component_manager_types import SubComponentManagers
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
@@ -307,6 +308,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
                 tango_error_callback=self._sub_device_tango_error_occurred,
             ),
+            # DS subcomponent manager is the regular DSC component manager
+            # if the TRL indicates so, otherwise, if the TRL indicates that
+            # the AP Manager is standing in place of the DSC instatiate the AP
+            # Component manager class
             "DS": DSComponentManager(
                 ds_device_fqdn,
                 logger,
@@ -331,6 +336,49 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band5bpointingmodelparams=[],
                 dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
+                actstaticoffsetvaluexel=None,
+                actstaticoffsetvalueel=None,
+                tracktablecurrentindex=0,
+                tracktableendindex=0,
+                dscctrlstate=DscCtrlState.NO_AUTHORITY,
+                connectionstate=CommunicationStatus.DISABLED,
+                dscerrorstatus="OK",
+                dscwarningstatus="OK",
+                dscsafetystatus="OK",
+                communication_state_callback=partial(
+                    self._sub_device_communication_state_changed, DishDevice.DS
+                ),
+                component_state_callback=partial(
+                    self._sub_device_component_state_changed, DishDevice.DS
+                ),
+                quality_state_callback=self._quality_state_callback,
+                tango_error_callback=self._sub_device_tango_error_occurred,
+            )
+            if "ds-manager" in ds_device_fqdn
+            else APComponentManager(
+                ds_device_fqdn,
+                logger,
+                self._state_update_lock,
+                healthstate=HealthState.UNKNOWN,
+                operatingmode=DSOperatingMode.UNKNOWN,
+                pointingstate=PointingState.UNKNOWN,
+                achievedtargetlock=None,
+                dsccmdauth=DscCmdAuthType.NO_AUTHORITY,
+                configuretargetlock=None,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=None,
+                desiredpointingaz=[0.0, 0.0],
+                desiredpointingel=[0.0, 0.0],
+                achievedpointing=[0.0, 0.0, 0.0],
+                band0pointingmodelparams=None,
+                band1pointingmodelparams=None,
+                band2pointingmodelparams=None,
+                band3pointingmodelparams=None,
+                band4pointingmodelparams=None,
+                band5apointingmodelparams=None,
+                band5bpointingmodelparams=None,
+                dscpowerlimitkw=None,
+                trackinterpolationmode=None,
                 actstaticoffsetvaluexel=None,
                 actstaticoffsetvalueel=None,
                 tracktablecurrentindex=0,
