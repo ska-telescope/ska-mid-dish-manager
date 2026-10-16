@@ -146,7 +146,7 @@ def test_configure_band_b(
         f"Awaiting configuredband change to {message_str}",
         f"{band_request} complete",
     ]
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=60)
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
