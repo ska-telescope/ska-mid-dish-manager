@@ -156,6 +156,12 @@ class FannedOutCommand:
             )
             self.executed_cmd_response, self.executed_cmd_message = res
 
+            # Ignored devices are not sent the command, so only report it when it was dispatched
+            if self._status == FannedOutCommandStatus.IN_PROGRESS:
+                report_task_progress(
+                    f"{self.device}.{self.command_name} started", self._progress_callback
+                )
+
             if self.awaited_component_state:
                 awaited_attributes = list(self.awaited_component_state.keys())
                 awaited_values = list(self.awaited_component_state.values())

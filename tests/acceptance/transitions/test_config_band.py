@@ -552,8 +552,9 @@ def test_slow_spfrx_configure_band(
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
     assert dish_manager_proxy.configuredBand == Band.B1
 
-    dm_event_store.clear_queue()
+    result_event_store.clear_queue()
     status_event_store.clear_queue()
+    dm_event_store.clear_queue()
 
     json_payload_2 = """
     {
@@ -575,22 +576,27 @@ def test_slow_spfrx_configure_band(
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
     assert dish_manager_proxy.configuredBand == Band.B2
-
-    expected_progress_updates = [
-        # ConfigureBand
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
-        "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
-        "Awaiting configuredband change to B2",
-        "DS indexerposition changed to B2",
-        "DS.SetIndexPosition completed",
-        "SPFRX configuredband changed to B2",
-        "SPFRX.ConfigureBand completed",
-    ]
-
     events = status_event_store.get_queue_values(timeout=0)
 
-    events_string = "".join([str(attr_value) for _, attr_value in events])
+    expected_progress_updates = (
+        "ConfigureBand started",
+        "SPFRX.ConfigureBand started",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
+        "Awaiting configuredband change to B2",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX configuredband changed to B2",
+        "SPFRX.ConfigureBand completed",
+        "ConfigureBand complete. Triggering on success action.",
+        "SetOperateMode started",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
+    )
+
+    events_string = " ".join([str(attr_value) for _, attr_value in events])
     for message in expected_progress_updates:
         assert message in events_string
 
@@ -601,21 +607,39 @@ def test_slow_spfrx_configure_band(
     # Check that dish manager allows configure band when already in requested band
     # but does not set the indexer position again.
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
-    result_event_store.wait_for_finished_command_result(
+    result_event = result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "SetOperateMode completed."]', timeout=30
     )
 
-    # TODO wrap wait for value check in pytest raises RuntimeError after fix is applied
-    dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
-    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    config_event = dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
+    operate_event = dm_event_store.wait_for_value(DishMode.OPERATE, timeout=20)
     assert dish_manager_proxy.configuredBand == Band.B2
 
+    # Check that the LRC finishes AFTER all the mode transitions
+    assert result_event.reception_date.totime() > config_event.reception_date.totime()
+    assert result_event.reception_date.totime() > operate_event.reception_date.totime()
+
+    # Check that we go CONFIG -> OPERATE
+    assert operate_event.reception_date.totime() > config_event.reception_date.totime()
+
     expected_progress_updates = [
-        "Fanned out commands: SPFRX.ConfigureBand",
+        # ConfigureBand action
+        "ConfigureBand started",
+        "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Fanned out commands: SPFRX.ConfigureBand",
         "Awaiting configuredband change to B2",
         "SPFRX configuredband changed to B2",
+        "SPFRX operatingmode changed to OPERATE",
         "SPFRX.ConfigureBand completed",
+        "ConfigureBand complete. Triggering on success action.",
+        # SetOperateMode action
+        "SetOperateMode started",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
     ]
 
     events = status_event_store.get_queue_values(timeout=0)
