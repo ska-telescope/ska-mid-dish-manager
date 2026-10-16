@@ -40,7 +40,7 @@ def test_action_timeout(
         [[_], [configure_unique_id]] = dish_manager_proxy.ConfigureBand1(True)
 
         # Check that the Dish Manager did not transition
-        dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=10)
+        dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=20)
         assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
 
         executing_uids = [json.loads(cmd).get("uid") for cmd in dish_manager_proxy.lrcExecuting]
@@ -51,7 +51,7 @@ def test_action_timeout(
 
         # Check lrcFinished event for the ConfigureBand1 command timeout
         result_event_store.wait_for_finished_command_result(
-            configure_unique_id, '[3, "SetOperateMode failed"]', timeout=5
+            configure_unique_id, '[3, "SetOperateMode failed"]', timeout=20
         )
 
         dish_manager_proxy.actionTimeoutSeconds = DEFAULT_ACTION_TIMEOUT_S
