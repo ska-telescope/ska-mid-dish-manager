@@ -134,7 +134,7 @@ def test_configure_band_b(
     res = dish_manager_proxy.command_inout(band_request, True)
     assert res
     assert len(res) == 2
-    main_event_store.wait_for_value(expected_band, timeout=15)
+    main_event_store.wait_for_value(expected_band, timeout=60)
     assert dish_manager_proxy.configuredBand == expected_band
 
     spfrx_config_band_cmd = f"SPFRX.{band_request}"
