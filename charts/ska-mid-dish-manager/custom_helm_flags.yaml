@@ -31,11 +31,11 @@ ska-mid-meerkat-wms-tango-device:
       enabled: true
       file: "data/weather_tango_device.yaml"
 
-  dsconfig:
-    image:
-      registry: artefact.skao.int
-      image: ska-tango-images-tango-dsconfig
-      tag: 1.8.5
+  # dsconfig:
+  #   image:
+  #     registry: artefact.skao.int
+  #     image: ska-tango-images-tango-dsconfig
+  #     tag: 1.8.5
 # Meerkat weather simulator
 ska-mid-meerkat-wms-simulator:
   enabled: true
