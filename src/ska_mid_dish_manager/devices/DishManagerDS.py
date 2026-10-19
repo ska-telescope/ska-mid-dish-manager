@@ -6,6 +6,7 @@ and the subservient devices
 
 import json
 import logging
+import time
 import weakref
 from datetime import datetime
 from functools import reduce
@@ -28,6 +29,7 @@ from tango import (
 )
 from tango.server import attribute, command, device_property, run
 
+from ska_mid_dish_manager.component_managers.ap_manager_cm import APComponentManager
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
@@ -590,6 +592,25 @@ class DishManager(SKAController):
         # Try to connect to DB and update memorized attributes if TANGO_HOST is set
         self.component_manager.try_update_memorized_attributes_from_db()
 
+        # Invalidate a set of irrelevant attrs if the AP Manager is being monitored
+        ds_sub_cm = self.component_manager.sub_component_managers["DS"]
+        if isinstance(ds_sub_cm, APComponentManager):
+            invaliation_time = time.time()
+            # The dict key is the attr to invalidate, with the value being the
+            # attr value to be assigned to the invalid attribute
+            attrs_to_invalidate = {
+                "actStaticOffsetValueEl": 0.0,
+                "actStaticOffsetValueXel": 0.0,
+            }
+
+            for attr_name, attr_value in attrs_to_invalidate.items():
+                attr_obj = getattr(self, attr_name)
+                attr_obj.set_value_date_quality(
+                    attr_value,
+                    invaliation_time,
+                    AttrQuality.ATTR_INVALID,
+                )
+
         # Register device instance and continue initialization
         self.instances[self.get_name()] = self
         self.logger.info("Device Initialization: Complete", extra=OPERATOR_TAG)
@@ -940,7 +961,7 @@ class DishManager(SKAController):
     )
     def actStaticOffsetValueXel(self) -> float:
         """Indicate actual cross-elevation static offset in arcsec."""
-        return self.component_manager.component_state.get("actstaticoffsetvaluexel", 0.0)
+        return self.component_manager.component_state.get("actstaticoffsetvaluexel")
 
     @attribute(
         dtype=float,
@@ -949,7 +970,7 @@ class DishManager(SKAController):
     )
     def actStaticOffsetValueEl(self) -> float:
         """Indicate actual elevation static offset in arcsec."""
-        return self.component_manager.component_state.get("actstaticoffsetvalueel", 0.0)
+        return self.component_manager.component_state.get("actstaticoffsetvalueel")
 
     @attribute(
         dtype=(float,),
