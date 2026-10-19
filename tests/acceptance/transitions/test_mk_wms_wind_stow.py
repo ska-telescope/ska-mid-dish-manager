@@ -57,10 +57,8 @@ def test_mk_wms_wind_stow(
             timeout=10,
         )
     finally:
-        try:
-            dish_manager_proxy.autoWindStowEnabled = False
-        finally:
-            remove_subscriptions(subscriptions)
+        dish_manager_proxy.autoWindStowEnabled = False
+        remove_subscriptions(subscriptions)
 
 
 @pytest.mark.acceptance_mk_lmc_wms_wind_stow

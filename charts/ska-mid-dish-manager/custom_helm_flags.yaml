@@ -29,7 +29,6 @@ ska-mid-meerkat-wms-tango-device:
   deviceServers:
     meerkatwms:
       enabled: true
-      file: "data/weather_tango_device.yaml"
   
 # Meerkat weather simulator
 ska-mid-meerkat-wms-simulator:

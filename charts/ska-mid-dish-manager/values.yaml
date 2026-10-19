@@ -22,7 +22,6 @@ global:
   tango_host: databaseds-tango-base-test:10000
   retry:
   - "--tries=10"
-  station_ids: ["1"]
 
   ## Order of instances resolution ##
   # .Values.global.dishes
