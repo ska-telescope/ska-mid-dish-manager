@@ -80,17 +80,18 @@ k8s-test-runner-incl-b5dc:
     on_stop: stop-k8s-test-runner-incl-b5dc
     auto_stop_in: 1 minute
 
-k8s-test-runner-incl-meerkat-ap:
-  extends: k8s-test-runner
-  allow_failure: true
-  variables:
-     K8S_TEST_RUNNER_MARK: "acceptance and not movement"
-     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
-     VALUES_FILE: charts/ska-mid-dish-manager/deployment_with_mk_ap_manager.yaml
-  environment:
-    name: test/$CI_COMMIT_REF_SLUG
-    on_stop: stop-k8s-test-runner-incl-meerkat-ap
-    auto_stop_in: 1 minute
+# TODO: Enable once the AP simulator and AP Manager Tango device becomes available
+# k8s-test-runner-incl-meerkat-ap:
+#   extends: k8s-test-runner
+#   allow_failure: true
+#   variables:
+#      K8S_TEST_RUNNER_MARK: "acceptance and not movement"
+#      KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+#      VALUES_FILE: charts/ska-mid-dish-manager/deployment_with_mk_ap_manager.yaml
+#   environment:
+#     name: test/$CI_COMMIT_REF_SLUG
+#     on_stop: stop-k8s-test-runner-incl-meerkat-ap
+#     auto_stop_in: 1 minute
 
 k8s-test-runner-movement:
   extends: k8s-test-runner
@@ -133,10 +134,11 @@ stop-k8s-test-runner-incl-b5dc:
   variables:
     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
 
-stop-k8s-test-runner-incl-meerkat-ap:
-  extends: stop-k8s-test-runner
-  variables:
-    KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
+# TODO: Enable once the AP simulator and AP Manager Tango device becomes available
+# stop-k8s-test-runner-incl-meerkat-ap:
+#   extends: stop-k8s-test-runner
+#   variables:
+#     KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
 
 python-uv-test:
   artifacts:
