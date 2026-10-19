@@ -171,8 +171,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dsconnectionstate=CommunicationStatus.DISABLED,
             wmsconnectionstate=CommunicationStatus.DISABLED,
             b5dcconnectionstate=CommunicationStatus.DISABLED,
-            # TODO we may want to set these to None and ensure that they are invalid
-            # on startup, and remain that way in the event that the AP Manager is used
             band0pointingmodelparams=[],
             band1pointingmodelparams=[],
             band2pointingmodelparams=[],

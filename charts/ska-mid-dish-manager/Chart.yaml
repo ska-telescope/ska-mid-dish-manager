@@ -53,6 +53,7 @@ dependencies:
   version: 0.2.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-meerkat-ap-manager.enabled
+# TODO: Add AP Simulator chart to run Dish Manager - AP Manager tests
 # DCP Library dependency included to enable the use of the B5dc simulator
 - name: ska-mid-dish-dcp-lib
   version: 0.0.11

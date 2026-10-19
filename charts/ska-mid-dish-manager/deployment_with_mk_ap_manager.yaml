@@ -45,11 +45,11 @@ ska-mid-meerkat-ap-manager:
       enabled: true
 
   meerkatapmanager:
-    image:
-      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
-      image: ska-mid-meerkat-lmc
-      tag: 0.2.0-dev.ce74d0374
-      pullPolicy: IfNotPresent
+    # image:
+    #   registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
+    #   image: ska-mid-meerkat-lmc
+    #   tag: 0.2.0-dev.ce74d0374
+    #   pullPolicy: IfNotPresent
 
     # Configure MK AP server instance to connect to
     deviceproperties:
@@ -59,3 +59,4 @@ ska-mid-meerkat-ap-manager:
       sensors_to_ignore: []
     
     # TODO Make the AP simulator available
+    
