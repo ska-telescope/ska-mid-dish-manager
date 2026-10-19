@@ -85,6 +85,7 @@ class APComponentManager(TangoDeviceComponentManager):
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
+            quality_monitored_attributes=monitored_attr_names,
             **kwargs,
         )
         self._communication_state_lock = state_update_lock
