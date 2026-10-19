@@ -41,7 +41,7 @@ dsconfig:
   image:
     registry: artefact.skao.int
     image: ska-tango-images-tango-dsconfig
-    tag: 1.5.11
+    tag: 1.9.2
     pullPolicy: IfNotPresent
 
 dishmanager:
