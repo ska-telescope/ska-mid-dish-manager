@@ -58,7 +58,7 @@ def test_wms_group_activation_and_polling_starts(mock_tango_group):
     wait_event = threading.Event()
     wait_event.wait(timeout=wms._wms_polling_period)
 
-    wms.write_wms_group_attribute_value.assert_called_with("controlMode", 2)  # ty: ignore[deprecated]
+    wms.write_wms_group_attribute_value.assert_called_with("controlMode", 1)  # ty: ignore[deprecated]
     wms._run_wms_group_polling.assert_called()
 
 

@@ -31,7 +31,7 @@ def test_mk_wms_wind_stow(
     try:
         assert dish_manager_proxy.wmsConnectionState == CommunicationStatus.ESTABLISHED
         # Set the control mode (control & monitor)
-        wms_device_proxy.controlMode = 2
+        wms_device_proxy.controlMode = 1
 
         # Enable automatic wind stow
         dish_manager_proxy.autoWindStowEnabled = True
@@ -86,7 +86,7 @@ def test_mk_wms_no_wind_stow(
         assert dish_manager_proxy.wmsConnectionState == CommunicationStatus.ESTABLISHED
 
         # Set the control mode (control & monitor)
-        wms_device_proxy.controlMode = 2
+        wms_device_proxy.controlMode = 1
 
         # Disable automatic wind stow
         dish_manager_proxy.autoWindStowEnabled = False
