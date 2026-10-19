@@ -19,12 +19,23 @@ ska-mid-dish-simulators:
   dsOpcuaSimulator:
     enabled: false
 
-# Configure the DS TRL to point to an AP Manager instance
+ska-mid-dish-b5dc-proxy:
+  enabled: false
+
+# -----------------------------------------------------------------------------
+# Dish Manager config - Configure the DS TRL to point to an AP Manager instance
+# -----------------------------------------------------------------------------
 dishmanager:
+  b5dcproxy:
+    monitoring: false
   ds:
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "meerkat-ap-manager"
+
+# -------------------------------------------------------
+# MeerKAT AP Manager and AP Simulator (TBD) configuration
+# -------------------------------------------------------
 
 ska-mid-meerkat-ap-manager:
   enabled: true
