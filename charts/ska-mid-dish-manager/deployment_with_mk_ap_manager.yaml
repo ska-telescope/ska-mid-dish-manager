@@ -1,0 +1,50 @@
+# deploy dish-manager with spfrx and spf sim with default instance 001, substituting DS with an AP Manager
+global:
+  minikube: true
+  operator: true
+
+ska-mid-dish-ds-manager:
+  enabled: false
+
+ska-tango-base:
+  enabled: true
+
+ska-mid-dish-simulators:
+  enabled: true
+  deviceServers:
+    spfdevice:
+      enabled: true
+    spfrxdevice:
+      enabled: true
+  dsOpcuaSimulator:
+    enabled: false
+
+# Configure the DS TRL to point to an AP Manager instance
+dishmanager:
+  ds:
+    fqdn: ""
+    domain_name: "mid-dish"
+    family_name: "meerkat-ap-manager"
+
+ska-mid-meerkat-ap-manager:
+  enabled: true
+
+  deviceServers:
+    meerkatapmanager:
+      enabled: true
+
+  meerkatapmanager:
+    image:
+      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
+      image: ska-mid-meerkat-lmc
+      tag: 0.2.0-dev.ce74d0374
+      pullPolicy: IfNotPresent
+
+    # Configure MK AP server instance to connect to
+    deviceproperties:
+      katcp_hosts: []
+      katcp_ports: []
+      sampling_strategies: []
+      sensors_to_ignore: []
+    
+    # TODO Make the AP simulator available
