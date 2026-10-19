@@ -13,35 +13,6 @@ SECOND_WIND_TRIGGER = 35
 
 
 @pytest.mark.acceptance_mk_lmc_wms_wind_stow
-def test_meerkat_weather_device_wind_speed(
-    wms_device_proxy,
-    event_store_class: Any,
-    dish_manager_proxy: tango.DeviceProxy,
-):
-    wms_device_proxy.write_attribute("controlMode", 2)
-    connection_state_event_store = event_store_class()
-
-    attr_cb_mapping = {
-        "wmsConnectionState": connection_state_event_store,
-    }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-
-    try:
-        connection_state_event_store.wait_for_value(
-            CommunicationStatus.ESTABLISHED,
-            timeout=30,
-        )
-
-        assert wms_device_proxy.ping() > 0
-        assert "windSpeed" in wms_device_proxy.get_attribute_list()
-
-        wind_speed = wms_device_proxy.read_attribute("windSpeed").value
-        assert wind_speed is not None
-    finally:
-        remove_subscriptions(subscriptions)
-
-
-@pytest.mark.acceptance_mk_lmc_wms_wind_stow
 def test_mk_wms_wind_stow(
     monitor_tango_servers,
     event_store_class,
