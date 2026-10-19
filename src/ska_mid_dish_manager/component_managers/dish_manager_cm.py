@@ -171,6 +171,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             dsconnectionstate=CommunicationStatus.DISABLED,
             wmsconnectionstate=CommunicationStatus.DISABLED,
             b5dcconnectionstate=CommunicationStatus.DISABLED,
+            # TODO we may want to set these to None and ensure that they are invalid
+            # on startup, and remain that way in the event that the AP Manager is used
             band0pointingmodelparams=[],
             band1pointingmodelparams=[],
             band2pointingmodelparams=[],
@@ -308,11 +310,53 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
                 tango_error_callback=self._sub_device_tango_error_occurred,
             ),
-            # DS subcomponent manager is the regular DSC component manager
-            # if the TRL indicates so, otherwise, if the TRL indicates that
-            # the AP Manager is standing in place of the DSC instatiate the AP
-            # Component manager class
-            "DS": DSComponentManager(
+            # Override DS subcomponent manager to use APComponentManager if
+            # DS device TRL indicates so, else, use the standard SKA DS manager
+            # subcomponent manager
+            "DS": APComponentManager(
+                ds_device_fqdn,
+                logger,
+                self._state_update_lock,
+                healthstate=HealthState.UNKNOWN,
+                operatingmode=DSOperatingMode.UNKNOWN,
+                pointingstate=PointingState.UNKNOWN,
+                achievedtargetlock=None,
+                dsccmdauth=DscCmdAuthType.NO_AUTHORITY,
+                configuretargetlock=None,
+                indexerposition=IndexerPosition.UNKNOWN,
+                powerstate=DSPowerState.UNKNOWN,
+                desiredpointingaz=[0.0, 0.0],
+                desiredpointingel=[0.0, 0.0],
+                achievedpointing=[0.0, 0.0, 0.0],
+                band0pointingmodelparams=[],
+                band1pointingmodelparams=[],
+                band2pointingmodelparams=[],
+                band3pointingmodelparams=[],
+                band4pointingmodelparams=[],
+                band5apointingmodelparams=[],
+                band5bpointingmodelparams=[],
+                dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
+                trackinterpolationmode=None,
+                actstaticoffsetvaluexel=None,
+                actstaticoffsetvalueel=None,
+                tracktablecurrentindex=0,
+                tracktableendindex=0,
+                dscctrlstate=DscCtrlState.NO_AUTHORITY,
+                connectionstate=CommunicationStatus.DISABLED,
+                dscerrorstatus="OK",
+                dscwarningstatus="OK",
+                dscsafetystatus="OK",
+                communication_state_callback=partial(
+                    self._sub_device_communication_state_changed, DishDevice.DS
+                ),
+                component_state_callback=partial(
+                    self._sub_device_component_state_changed, DishDevice.DS
+                ),
+                quality_state_callback=self._quality_state_callback,
+                tango_error_callback=self._sub_device_tango_error_occurred,
+            )
+            if "meerkat-ap-manager" in ds_device_fqdn
+            else DSComponentManager(
                 ds_device_fqdn,
                 logger,
                 self._state_update_lock,
@@ -336,49 +380,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 band5bpointingmodelparams=[],
                 dscpowerlimitkw=DSC_MIN_POWER_LIMIT_KW,
                 trackinterpolationmode=TrackInterpolationMode.SPLINE,
-                actstaticoffsetvaluexel=None,
-                actstaticoffsetvalueel=None,
-                tracktablecurrentindex=0,
-                tracktableendindex=0,
-                dscctrlstate=DscCtrlState.NO_AUTHORITY,
-                connectionstate=CommunicationStatus.DISABLED,
-                dscerrorstatus="OK",
-                dscwarningstatus="OK",
-                dscsafetystatus="OK",
-                communication_state_callback=partial(
-                    self._sub_device_communication_state_changed, DishDevice.DS
-                ),
-                component_state_callback=partial(
-                    self._sub_device_component_state_changed, DishDevice.DS
-                ),
-                quality_state_callback=self._quality_state_callback,
-                tango_error_callback=self._sub_device_tango_error_occurred,
-            )
-            if "ds-manager" in ds_device_fqdn
-            else APComponentManager(
-                ds_device_fqdn,
-                logger,
-                self._state_update_lock,
-                healthstate=HealthState.UNKNOWN,
-                operatingmode=DSOperatingMode.UNKNOWN,
-                pointingstate=PointingState.UNKNOWN,
-                achievedtargetlock=None,
-                dsccmdauth=DscCmdAuthType.NO_AUTHORITY,
-                configuretargetlock=None,
-                indexerposition=IndexerPosition.UNKNOWN,
-                powerstate=None,
-                desiredpointingaz=[0.0, 0.0],
-                desiredpointingel=[0.0, 0.0],
-                achievedpointing=[0.0, 0.0, 0.0],
-                band0pointingmodelparams=None,
-                band1pointingmodelparams=None,
-                band2pointingmodelparams=None,
-                band3pointingmodelparams=None,
-                band4pointingmodelparams=None,
-                band5apointingmodelparams=None,
-                band5bpointingmodelparams=None,
-                dscpowerlimitkw=None,
-                trackinterpolationmode=None,
                 actstaticoffsetvaluexel=None,
                 actstaticoffsetvalueel=None,
                 tracktablecurrentindex=0,
@@ -590,11 +591,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self._update_component_state(lastcommandfailure=failure)
 
     def get_current_tai_offset_from_dsc_with_manual_fallback(self) -> float:
-        """Try and get the TAI offset from the DSManager device.
+        """Try and get the TAI offset from the DSManager or APManager device.
         Or calulate it manually if that fails.
         """
         try:
-            ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
+            ds_cm: DSComponentManager | APComponentManager = cast(
+                DSComponentManager | APComponentManager, self.sub_component_managers["DS"]
+            )
             task_status, msg = ds_cm.execute_command("GetCurrentTAIOffset", None)
         except (ConnectionError, KeyError):
             self.logger.debug("Calculating TAI offset manually.")
@@ -1392,32 +1395,57 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if "connectionstate" in kwargs:
             self._update_dish_health_state_and_info()
 
-    def stow_to_maintenance_transition_callback(self, start: bool) -> None:
-        """Handle the transition from STOW to MAINTENANCE mode.
+    def complete_maintenance_transition_callback(self, start: bool) -> None:
+        """Handle the transition to MAINTENANCE mode.
 
         This will set the MaintenanceModeActive property to true and
-        set the dish mode to MAINTENANCE if the dish is in STOW mode.
-        If the dish is not in STOW mode, it will log a warning.
+        set the dish mode to MAINTENANCE.
+
+        If the dish structure instance is the SKA DS controller
+        the above transition will occur if the dish is in STOW mode.
+        If the dish is not in STOW mode, it will log a error.
+
+        If the dish structure instance is the MeerKAT AP the above transition
+        will occur once the AP reports Maintenance mode.
+        If the AP is not currently reporting mode MAINTENANCE an error is logged.
 
         :param start: If false then callback runs when long running command is completed.
                       If true then callback runs when long running command is started.
         :type start: bool
         """
         if not start:
-            if self.component_state["dishmode"] == DishMode.STOW:
-                self.logger.debug("Releasing authority from DS.")
-                ds_cm: DSComponentManager = cast(
-                    DSComponentManager, self.sub_component_managers["DS"]
-                )
-                ds_cm.execute_command("ReleaseAuth", None)
-                self.logger.debug("Transitioning from STOW to MAINTENANCE mode.")
-                self._set_maintenance_mode_active()
-                self._update_component_state(dishmode=DishMode.MAINTENANCE)
+            ds_cm: DSComponentManager | APComponentManager = cast(
+                DSComponentManager | APComponentManager, self.sub_component_managers["DS"]
+            )
+            # Handle completion of MAINTENANCE mode transition if DS is an
+            # DS Manager instance
+            if isinstance(ds_cm, DSComponentManager):
+                if self.component_state["dishmode"] == DishMode.STOW:
+                    self.logger.debug("Releasing authority from DS.")
+
+                    ds_cm.execute_command("ReleaseAuth", None)
+                    self.logger.debug("Transitioning from STOW to MAINTENANCE mode.")
+                    self._set_maintenance_mode_active()
+                    self._update_component_state(dishmode=DishMode.MAINTENANCE)
+                else:
+                    self.logger.error(
+                        "Cannot transition to MAINTENANCE mode from %s mode.",
+                        self.component_state["dishmode"],
+                    )
             else:
-                self.logger.error(
-                    "Cannot transition to MAINTENANCE mode from %s mode.",
-                    self.component_state["dishmode"],
-                )
+                # Handle completion of MAINTENANCE mode transition if DS is an
+                # AP Manager instance
+                ap_operating_mode = ds_cm._component_state.get("operatingMode")
+                if ap_operating_mode == DSOperatingMode.MAINTENANCE:
+                    self.logger.debug("Completing transition to MAINTENANCE mode.")
+                    self._set_maintenance_mode_active()
+                    self._update_component_state(dishmode=DishMode.MAINTENANCE)
+                else:
+                    self.logger.error(
+                        "Cannot transition to MAINTENANCE mode while AP Manager is not "
+                        "reporting mode MAINTENANCE. AP Manager is currently reporting mode: "
+                        f"{ap_operating_mode}.",
+                    )
 
     # ----------------------------------------
     # Command object/ attribute write handlers
@@ -1460,7 +1488,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         upper_cased_device_name = device_name.upper()
         component_device_names = ["SPF", "SPFRX", "DS", "B5DC"]
         if upper_cased_device_name not in component_device_names:
-            err_msg = "Incorrect input, command only accept SPF, SPFRX, DS, B5DC"
+            err_msg = "Incorrect input, command only accepts SPF, SPFRX, DS, B5DC"
             self.logger.error(err_msg, extra=OPERATOR_TAG)
             raise ValueError(err_msg)
 
@@ -1569,8 +1597,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 )
                 self.logger.error(err_msg)
                 raise ValueError(err_msg)
-            ds_com_man: DSComponentManager = cast(
-                DSComponentManager, self.sub_component_managers["DS"]
+            ds_com_man: DSComponentManager | APComponentManager = cast(
+                DSComponentManager | APComponentManager, self.sub_component_managers["DS"]
             )
             ds_com_man.write_attribute_value(attr, values)
         except tango.DevFailed:
@@ -1583,7 +1611,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         """Load the track table."""
         float_list = [load_mode, sequence_length]
         float_list.extend(table)
-        ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
+        ds_cm: DSComponentManager | APComponentManager = cast(
+            DSComponentManager | APComponentManager, self.sub_component_managers["DS"]
+        )
         task_status, msg = ds_cm.execute_command("TrackLoadTable", float_list)
         return task_status, msg
 
@@ -1878,7 +1908,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     @last_command_failure_decorator
     def set_stow_mode(self, task_callback: Optional[Callable] = None) -> Tuple[TaskStatus, str]:
         """Transition the dish to STOW mode."""
-        ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
+        ds_cm: DSComponentManager | APComponentManager = cast(
+            DSComponentManager | APComponentManager, self.sub_component_managers["DS"]
+        )
         task_status, msg = ds_cm.execute_command("Stow", None)
         if task_status == TaskStatus.FAILED:
             update_task_status(task_callback, status=TaskStatus.FAILED, exception=msg)
@@ -2167,7 +2199,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "HESE8": {"unit": "arcsec"},
         }
 
-        ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
+        ds_cm: DSComponentManager | APComponentManager = cast(
+            DSComponentManager | APComponentManager, self.sub_component_managers["DS"]
+        )
         coeff_keys = []
         band_coeffs_values = []
         result_code = ResultCode.REJECTED
@@ -2300,8 +2334,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return result_code, message
 
     def set_track_interpolation_mode(self, interpolation_mode) -> Tuple[ResultCode, str]:
-        """Set the trackInterpolationMode on the DS."""
-        ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
+        """Set the trackInterpolationMode on the DS or AP Manager."""
+        ds_cm: DSComponentManager | APComponentManager = cast(
+            DSComponentManager | APComponentManager, self.sub_component_managers["DS"]
+        )
         try:
             ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
             self.logger.debug("Successfully updated trackInterpolationMode on DSManager.")
@@ -2414,8 +2450,10 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         return status, response
 
     def set_dsc_power_limit_kw(self, power_limit: float) -> Tuple[ResultCode, str]:
-        """Set the DSC Power Limit kW on the DS."""
-        ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
+        """Set the DSC Power Limit kW on the DS or AP Manager."""
+        ds_cm: DSComponentManager | APComponentManager = cast(
+            DSComponentManager | APComponentManager, self.sub_component_managers["DS"]
+        )
         try:
             ds_cm.write_attribute_value("dscPowerLimitKw", power_limit)
             self.logger.debug("Successfully updated dscPowerLimitKw on DS.")

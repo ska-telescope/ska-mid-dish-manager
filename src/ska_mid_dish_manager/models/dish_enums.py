@@ -47,6 +47,7 @@ class DSOperatingMode(enum.IntEnum):
     STOW = 3
     LOCKED = 4
     POINT = 5
+    MAINTENANCE = 6
 
 
 class PointingState(enum.IntEnum):

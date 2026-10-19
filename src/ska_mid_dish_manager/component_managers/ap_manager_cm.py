@@ -31,17 +31,18 @@ class APComponentManager(TangoDeviceComponentManager):
         # The following is a set of commands, usually fanned out to the
         # DS Manager, that are not implemented on the AP Manager
         self.unmapped_ds_manager_commands = set(
-            "ds_manager_command_that_ap_manager_doesnt_execute",
+            [
+                "TrackLoadStaticOff",
+            ]
         )
-
-        # The following is a dict of attrs, usually writable on the
-        # DS Manager, that can only be written on the AP Manager by means of
-        # executing a command on the AP interface
-        self.attr_writes_to_command_map = {"some_ds_attr": "some_ap_command"}
 
         # The following is a set of attrs, usually writable on the
         # DS Manager, that cannot be written on the AP Manager
-        self.unmapped_dsm_attr_writes = set("some_unwritable_dsm_attr")
+        self.unwritable_dsm_attrs = set(
+            [
+                "trackInterpolationMode",
+            ]
+        )
 
         monitored_attr_names: tuple[str, ...] = (
             "buildState",
@@ -104,38 +105,26 @@ class APComponentManager(TangoDeviceComponentManager):
 
         super()._update_component_state(**kwargs)
 
-    # For commands that the AP cannot execute we could intercept any calls to execute_command
-    # 1: Check that it isnt in a list of commands not implemented
-    # 2: If its not return taskStatus = Completed (?)
     @override
     def execute_command(
         self, command_name: str, command_arg: Any, truncate_arg_in_logs: bool = False
     ) -> Tuple[TaskStatus, Any]:
         """Intercept any commands that are known not to be executable on the AP Manager."""
         if command_name in self.unmapped_ds_manager_commands:
-            # TODO: Decide what is appropriate to return to the listening client
             return (
                 TaskStatus.COMPLETED,
-                "This DS Manager command is not executed whilst monitoring and "
+                f"This DS Manager command [{command_name}] is not executed whilst monitoring and "
                 "controlling an AP Manager instance.",
             )
         else:
             return super().execute_command(command_name, command_arg, truncate_arg_in_logs)
 
-    # For attributes that cant be written directly we could against have a list of unwritable attrs
-    # 1: If the attr can be write by executing some command, execute
-    #   the command (CM or Tango device responsibility)
-    # 2: Else, if the attr has no way to be written
     @override
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
         """Call the appropriate write command or do nothing if AP Man attr write not possible."""
-        if attribute_name in self.unmapped_dsm_attr_writes:
-            self.logger.debug(
-                f"Attribute [{attribute_name}] cannot be written whilst monitoring and "
-                "controlling an AP Manager instance."
-            )
-            return
-        elif attribute_name in self.attr_writes_to_command_map.keys():
-            self.execute_command(self.attr_writes_to_command_map[attribute_name], attribute_value)
+        if attribute_name in self.unwritable_dsm_attrs:
+            write_unavailable_msg = f"Attribute [{attribute_name}] cannot be written whilst "
+            "monitoring and controlling an AP Manager instance."
+            self.logger.warning(write_unavailable_msg)
         else:
             return super().write_attribute_value(attribute_name, attribute_value)

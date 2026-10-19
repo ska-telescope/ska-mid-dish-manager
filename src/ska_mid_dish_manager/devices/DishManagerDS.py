@@ -203,7 +203,7 @@ class DishManager(SKAController):
                 self._command_tracker,  # ty: ignore[invalid-argument-type]
                 self.component_manager,
                 "set_maintenance_mode",
-                callback=self.component_manager.stow_to_maintenance_transition_callback,
+                callback=self.component_manager.complete_maintenance_transition_callback,
                 logger=self.logger,
             ),
         )

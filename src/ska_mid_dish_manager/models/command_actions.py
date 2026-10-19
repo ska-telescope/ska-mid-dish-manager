@@ -8,6 +8,7 @@ import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus  # ty: ignore[deprecated]
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
+from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.models.action_handlers import (
     Action,
     ActionHandler,
@@ -293,14 +294,31 @@ class SetMaintenanceModeAction(Action):
         )
         # This is not a FannedOutTangoLongRunningCommand because DSManager bypasses the lrcQueue
         # and does not return the command ID in its response.
-        ds_command = FannedOutTangoCommand(
-            logger=self.logger,
-            device="DS",
-            command_name="Stow",
-            device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            awaited_component_state={"operatingmode": DSOperatingMode.STOW},
-            progress_callback=self._progress_callback,
-        )
+
+        # The command fanout to DS on going to DishMode MAINTENANCE requires fanning out;
+        # - Command Stow() if the regular SKA DS Controller is being controlled
+        # - Command APMaintenance() if the MeerKAT AP is being controlled
+        ds_sub_component_manager = self.dish_manager_cm.sub_component_managers["DS"]
+        if isinstance(ds_sub_component_manager, DSComponentManager):
+            ds_command = FannedOutTangoCommand(
+                logger=self.logger,
+                device="DS",
+                command_name="Stow",
+                device_component_manager=ds_sub_component_manager,
+                awaited_component_state={"operatingmode": DSOperatingMode.STOW},
+                progress_callback=self._progress_callback,
+            )
+        else:
+            ds_command = FannedOutTangoCommand(
+                logger=self.logger,
+                device="DS",
+                command_name="APMaintenance",
+                device_component_manager=ds_sub_component_manager,
+                awaited_component_state={
+                    "operatingmode": DSOperatingMode.MAINTENANCE,
+                },
+                progress_callback=self._progress_callback,
+            )
         spfrx_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPFRX",
