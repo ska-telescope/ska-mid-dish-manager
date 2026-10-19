@@ -1,7 +1,4 @@
-from typing import Any
-
 import pytest
-import tango
 from ska_control_model import CommunicationStatus
 
 from ska_mid_dish_manager.models.constants import WIND_GUST_THRESHOLD_MPS
