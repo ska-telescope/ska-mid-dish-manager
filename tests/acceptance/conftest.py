@@ -20,6 +20,8 @@ from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup
 configure_logging()
 logger = logging.getLogger(__name__)
 
+DEFAULT_MK_WEATHER_SIMULATOR_PORT = "7147"
+
 
 @pytest.fixture(scope="function", autouse=True)
 def log_test_lifecycle(request):
@@ -95,13 +97,17 @@ def wms_device_proxy(wms_device_fqdn):
 
 def pytest_addoption(parser):
     """Register the KATCP weather simulator endpoint."""
+    default_mk_wms_svc_name = "katcp-wms-sim-s1-svc"
     namespace = os.environ.get("KUBE_NAMESPACE", "")
     cluster_domain = os.environ.get("CLUSTER_DOMAIN", "")
 
     if namespace and cluster_domain:
-        default_endpoint = f"katcp-wms-sim-s1.{namespace}.svc.{cluster_domain}:7147"
+        default_endpoint = (
+            f"{default_mk_wms_svc_name}.{namespace}.svc.{cluster_domain}:"
+            f"{DEFAULT_MK_WEATHER_SIMULATOR_PORT}"
+        )
     else:
-        default_endpoint = "katcp-wms-sim-s1-svc:7147"
+        default_endpoint = f"{default_mk_wms_svc_name}:{DEFAULT_MK_WEATHER_SIMULATOR_PORT}"
 
     parser.addoption(
         "--weather-simulator-endpoint",
