@@ -16,6 +16,13 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSPowerState,
 )
 from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup_subscriptions
+from kubernetes import client, config
+
+config.load_incluster_config()
+v1 = client.CoreV1Api()
+
+namespace = os.environ.get("KUBE_NAMESPACE")
+cluster_domain = os.environ.get("CLUSTER_DOMAIN")
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -95,16 +102,20 @@ def wms_device_proxy(wms_device_fqdn):
 
 def pytest_addoption(parser):
     """Register the KATCP weather simulator endpoint."""
-    tango_host = os.environ.get("TANGO_HOST", "")
-    tango_hostname = tango_host.rsplit(":", 1)[0]
-    parts = tango_hostname.split(".")
+    # tango_host = os.environ.get("TANGO_HOST", "")
+    # tango_hostname = tango_host.rsplit(":", 1)[0]
+    # parts = tango_hostname.split(".")
 
-    default_endpoint = "katcp-wms-sim-s1-svc:7147"
+    # default_endpoint = "katcp-wms-sim-s1-svc:7147"
 
-    if len(parts) >= 5 and parts[0] == "tango-databaseds" and parts[2] == "svc":
-        namespace = parts[1]
-        cluster_domain = ".".join(parts[3:])
-        default_endpoint = f"katcp-wms-sim-s1-svc.{namespace}.svc.{cluster_domain}:7147"
+    # if len(parts) >= 5 and parts[0] == "tango-databaseds" and parts[2] == "svc":
+    #     namespace = parts[1]
+    #     cluster_domain = ".".join(parts[3:])
+    #     default_endpoint = f"katcp-wms-sim-s1-svc.{namespace}.svc.{cluster_domain}:7147"
+    services = v1.list_namespaced_service(namespace=namespace)
+    for service in services.items:
+        print(service.metadata.name)
+    assert False
 
     parser.addoption(
         "--weather-simulator-endpoint",

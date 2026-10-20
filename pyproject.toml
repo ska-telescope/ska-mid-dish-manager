@@ -26,6 +26,7 @@ dependencies = [
     "typing-extensions>=4.3.0",
     "ska-mid-dish-dcp-lib>=0.0.9,<0.0.10",
     "requests>=2.34.2,<3.0.0",
+    "kubernetes>=37.0.1",
 ]
 
 [project.urls]
