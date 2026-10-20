@@ -23,7 +23,7 @@ def slow_spfrx_proxy(spfrx_device_proxy, event_store_class):
     timeout = 60
 
     counter = 0
-    while spfrx_device_proxy.configureBandStartDelay != 0.5 or counter <= timeout:
+    while spfrx_device_proxy.configureBandStartDelay != 0.5 and counter <= timeout:
         counter += 1
         try:
             spfrx_device_proxy.configureBandStartDelay = 0.5
