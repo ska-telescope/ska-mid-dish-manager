@@ -7,6 +7,7 @@ import os
 import pytest
 import tango
 from aiokatcp import Client
+from kubernetes import client, config
 from ska_ser_logging import configure_logging
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
@@ -16,7 +17,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSPowerState,
 )
 from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup_subscriptions
-from kubernetes import client, config
 
 config.load_incluster_config()
 v1 = client.CoreV1Api()
@@ -117,12 +117,12 @@ def pytest_addoption(parser):
         print(service.metadata.name)
     assert False
 
-    parser.addoption(
-        "--weather-simulator-endpoint",
-        action="store",
-        default=default_endpoint,
-        help="Endpoint for the KATCP weather simulator",
-    )
+    # parser.addoption(
+    #     "--weather-simulator-endpoint",
+    #     action="store",
+    #     default=default_endpoint,
+    #     help="Endpoint for the KATCP weather simulator",
+    # )
 
 
 @pytest.fixture(scope="session")
