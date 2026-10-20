@@ -2,7 +2,7 @@ global:
   minikube: true
   operator: true
   dishes: ["001", "MKT111"]
-  station_ids: ["s1"]
+  station_ids: ["s1"] # station ids of the meerkat weather stations
 
 ska-tango-base:
   enabled: true
