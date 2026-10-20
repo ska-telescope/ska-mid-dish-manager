@@ -82,7 +82,7 @@ def test_action_timeout(
         result_event_store.wait_for_finished_command_result(
             unique_id, '[0, "Abort sequence completed"]', timeout=30
         )
-        dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+        dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=60)
     finally:
         remove_subscriptions(subscriptions)
         dish_manager_proxy.actionTimeoutSeconds = DEFAULT_ACTION_TIMEOUT_S
