@@ -15,8 +15,6 @@ maintainers:
     email: samuel.twum@skao.int
   - name: Barbara Ojur
     email: bojur@sarao.ac.za
-  - name: Devon Petrie
-    email: dpetrie@sarao.ac.za
   - name: Abednigo Lethole
     email: alethole@sarao.ac.za
   - name: Umkhulu Silere
@@ -25,6 +23,8 @@ maintainers:
     email: mnzama@sarao.ac.za
   - name: Yashren Reddi
     email: yreddi@sarao.ac.za
+  - name: Maryna Shedzko
+    email: maryna.shedzko@skao.int
 dependencies:
 - name: ska-tango-util
   version: 1.2.1
@@ -54,3 +54,14 @@ dependencies:
   version: 0.0.11
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-dcp-lib.enabled
+# Meerkat Tango Device
+- name: ska-mid-meerkat-wms-tango-device
+  version: 0.2.0
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-mid-meerkat-wms-tango-device.enabled
+# Meerkat Weather Simulator
+- name: ska-mid-meerkat-wms-simulator
+  version: 0.2.0
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-mid-meerkat-wms-simulator.enabled
+

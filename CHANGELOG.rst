@@ -14,6 +14,7 @@ Version 11.0.1
   Developer Guide > Command Fan-out > Actions and Handlers.
 - Fixed exception being raised in event handler when tango sub-devices are not available and set to ignored.
 - Extended SPFRx command timeout, SKB-1593
+- Inclued Meerkat LMC Weather charts into Dish Manager.
 
 Version 11.0.0
 **************
