@@ -8,6 +8,13 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 
+Version 11.1.0
+**************
+- Updated the connection logic to support monitoring either the MeerKAT Weather Device or the SKA Weather Device.
+- Included Meerkat LMC Weather helm charts v0.2.0 into Dish Manager.
+
+  - Deploys MeerKAT Weather Tango Device, enabling weather monitoring through either the KATCP Weather Simulator or a real KATCP proxy.
+
 Version 11.0.1
 **************
 - Tidied up the command fan-out classes and documented them under
