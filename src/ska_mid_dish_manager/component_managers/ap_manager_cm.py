@@ -4,7 +4,8 @@ import logging
 from threading import Lock
 from typing import Any, Callable, Optional, Tuple, override
 
-from ska_control_model import HealthState, TaskStatus
+from ska_control_model import CommunicationStatus, HealthState, TaskStatus
+from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -78,6 +79,39 @@ class APComponentManager(TangoDeviceComponentManager):
             "dscSafetyStatus",
         )
 
+        quality_monitored_attrs: tuple[str, ...] = (
+            "buildState",
+            "operatingMode",
+            "powerState",
+            "healthState",
+            "healthInfo",
+            "pointingState",
+            "indexerPosition",
+            "desiredPointingAz",
+            "desiredPointingEl",
+            "achievedPointing",
+            "band0PointingModelParams",
+            "band1PointingModelParams",
+            "band2PointingModelParams",
+            "band3PointingModelParams",
+            "band4PointingModelParams",
+            "band5aPointingModelParams",
+            "band5bPointingModelParams",
+            "trackInterpolationMode",
+            "achievedTargetLock",
+            "dscCmdAuth",
+            "actStaticOffsetValueXel",
+            "actStaticOffsetValueEl",
+            "dscpowerlimitkw",
+            "trackTableCurrentIndex",
+            "trackTableEndIndex",
+            "dscCtrlState",
+            "connectionState",
+            "dscErrorStatus",
+            "dscWarningStatus",
+            "dscSafetyStatus",
+        )
+
         super().__init__(
             tango_device_fqdn,
             logger,
@@ -85,7 +119,7 @@ class APComponentManager(TangoDeviceComponentManager):
             *args,
             communication_state_callback=communication_state_callback,
             component_state_callback=component_state_callback,
-            quality_monitored_attributes=monitored_attr_names,
+            quality_monitored_attributes=quality_monitored_attrs,
             **kwargs,
         )
         self._communication_state_lock = state_update_lock
@@ -129,3 +163,41 @@ class APComponentManager(TangoDeviceComponentManager):
             self.logger.warning(write_unavailable_msg)
         else:
             return super().write_attribute_value(attribute_name, attribute_value)
+
+    @override
+    def _update_communication_state(self, communication_state: CommunicationStatus) -> None:
+        """Set AP Manager controlMode on every transition into ESTABLISHED.
+
+        On every transition from another communicationState to state ESTABLISHED
+        request the controlMode of the AP Manager to go to MONITOR_AND_CONTROL to
+        enable monitoring of the under AP server
+        """
+        prev_comm_state = self.communication_state
+        super()._update_communication_state(communication_state)
+
+        if (
+            communication_state != CommunicationStatus.ESTABLISHED
+            or prev_comm_state == CommunicationStatus.ESTABLISHED
+        ):
+            return
+
+        try:
+            self.write_attribute_value(
+                "controlMode",
+                ControlMode.MONITOR_AND_CONTROL,
+            )
+        except Exception:
+            self.logger.exception("Failed to set AP Manager controlMode to MONITOR_AND_CONTROL")
+
+    @override
+    def stop_communicating(self) -> None:
+        """Stop the AP server monitoring on call to stop communicating."""
+        try:
+            self.write_attribute_value(
+                "controlMode",
+                ControlMode.NO_MONITOR_NO_CONTROL,
+            )
+        except Exception:
+            self.logger.exception("Failed to set AP Manager controlMode to NO_MONITOR_NO_CONTROL")
+        finally:
+            super().stop_communicating()

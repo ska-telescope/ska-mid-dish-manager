@@ -121,7 +121,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
             if attr_name in self._quality_monitored_attributes:
                 self._quality_state_callback(attr_name, quality)
         except Exception:  # pylint:disable=broad-except
-            self.logger.exception("Error occurred on attribute quality state update")
+            self.logger.exception(
+                f"Error occurred on attribute [{attr_name}] quality state update"
+            )
 
         if quality is not tango.AttrQuality.ATTR_INVALID:
             try:
